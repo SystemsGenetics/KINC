@@ -1,0 +1,19 @@
+RMTGeneNet
+==========
+To Install RMTGeneNet the following dependencies must first be met:
+
+*  Intel Math Kernal Library (MKL) 
+
+Before compiling, first edit the Makefile and change the following
+variables to suit your environment:
+
+* MKLROOT:  The location where the Intel MKL library is installed
+* CC:       set the compiler. Include -m64 flag for compilation on
+            64-bit machines
+* EXE_DIR:  The location where the perl script and ccm and rmm 
+            binaries should be installed.
+
+To compile simply run
+
+make
+make install

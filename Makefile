@@ -1,13 +1,13 @@
 MKLROOT = /opt/intel/composerxe-2011.0.084/mkl
-
 CC = gcc -m64
+EXE_DIR = /common1/feltus/co-expression_networks/software/bin
+
 CCFLAGS = -g
 LDFLAGS = -lm -lgslcblas -lgsl -g -Wall -fopenmp -lpthread \
 	-L$(MKLROOT)/lib/intel64 -lmkl_intel_lp64 -lmkl_gnu_thread -lmkl_core -fopenmp -lpthread
 
 OBJS = ccm.o RandomMatrixModeling.v3.1.o RandomMatrix.v2-3.o
 EXE = ccm rmm
-EXE_DIR = /common1/feltus/co-expression_networks/software/bin
 
 all: ${OBJS}
 	${CC} ccm.o  ${LDFLAGS} -o ccm 
@@ -28,3 +28,4 @@ clean:
 install: all
 	install -m 0755 ccm ${EXE_DIR}
 	install -m 0755 rmm ${EXE_DIR}
+	install -m 0755 parse_pearson_bin.pl ${EXE_DIR}
