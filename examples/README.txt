@@ -11,7 +11,9 @@ total, expression levels from 1535 samples are included in this dataset.
 For this example, the file 'yeast-s_cerevisiae1.global.RMA.nc-no-na-nh.txt'
 contains the expression matrix for all 1535 samples.  The columns of the
 matrix correspond to the samples and the rows correspond to the probesets
-on the array.  The expression levels in this file have already been
+on the array.  The column headers have been removed from this file, but
+the exact order of samples for the columns is found in the 'samples.txt' 
+file. The expression levels in this file have already been
 normalized.  Control probes and ambiguous probes have been removed as well
 as outlier samples. In total, 10359 probesets remain in the file.  For 
 detailed instructions about the quality control steps used, please see the 
@@ -20,13 +22,6 @@ publication:
 Gibson SM, Ficklin SP, Isaacson S, Luo F, Feltus FA, et al. (2013)
 Massive-Scale Gene Co-Expression Network Construction and Robustness Testing
 Using Random Matrix Theory. PLoS ONE 8(2): e55871.
-doi:10.1371/journal.pone.0055871
-
-Additionally, the file 'yeast-s_cerevisiae1.global.RMA.nc-no-na.txt' 
-(almost identically named as the file just described) is an exact
-copy of the file 'yeast-s_cerevisiae1.global.RMA.nc-no-na-nh.txt' but
-with column headers.  RMTGeneNet does not currently support headers. 
-The file with headers is included simply for reference.
 
 
 Step 1: Construct correlation matrix
