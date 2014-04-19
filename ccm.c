@@ -1,142 +1,266 @@
-// Calculate Correlation Matrix ccm.c
-// calculates a pearson correlation coefficient matrix based on input data
-// Scott Gibson
-// October 2011
+/* 
+ * Description:
+ * ------------
+ * Calculates a pearson correlation coefficient matrix from an n x m 
+ * expression matrix where the columns are the samples and rows are
+ * the genes or probesets. Cells represent expression levels. The first
+ * column of the expression matrix should be the name of the gene or
+ * probeset.
+ *
+ *
+ * Change Log:
+ * ----------
+ * 10/2014
+ * 1) Input files no longer require an implied .txt extesion but the full filename
+ *    should be specified
+ * 2) Removed the spaces in the output file name and renamed file.
+ * 3) Incorporated GSL Pearson calculation function because the pre-calculating
+ *    of sum of row and sum of squared of the row couldn't account for missing values
+ *
+ * History:
+ * --------
+ * 04/2014
+ * Stephen Ficklin added support for missing values and added comments to the code
+ * and changed it so the '.txt' extension is no longer implied for incoming
+ * file names
+ *
+ * 10/2011 
+ * Created by Scott Gibson at Clemson University under direction of 
+ * Dr. Melissa Smith in Collaboration with Alex Feltus, Feng Luo and Stephen
+ * Ficklin
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <libgen.h>
+#include <string.h>
+#include <math.h>
 
-#define ROWS_PER_OUTPUT_FILE 10000
-#define COUNT_POINTS 101
+#include <gsl/gsl_statistics.h>
 
-int main(int argc, char *argv[])
-{
-	if(argc != 4 && argc != 5)
-	{
-		printf("Usage: ./ccm <input file (without .txt)> <rows> <cols> <turn off perf monitor with '0'>\n");
+/*******************************************************************************
+ * GLOBAL VALUES
+ ******************************************************************************/
+// a global variable for the number of rows in each output file
+int ROWS_PER_OUTPUT_FILE = 10000;
+
+// the number of bins in the historgram of correlation values
+int HIST_BINS = 100;
+
+// specify the value to be used as a missing value
+int MISSING_VALUE = -1;
+
+
+/*******************************************************************************
+ * MAIN
+ ******************************************************************************/
+int main(int argc, char *argv[]) {
+
+  // variables used for file I/O
+	FILE *infile, *outfile;// pointers to the input and output files
+	char gene_name[255];   // holds the gene or probeset name from the first column
+  char outfilename[50];  // the output file name
+  char *infilename;      // the input file name
+  char fileprefix[1024]; // the input filename without the prefix 
+
+  // variables specified by the user on the command-line
+  int rows;              // the number of rows in the expression matrix
+  int cols;              // the number of cols in the expression matrix
+  int perf = 0;          // indicates if performance monitoring should be enabled
+  int omit_na = 0;       // indicates if missing values should be ignored
+  int min_obs = 30;      // the minimum number of observations to calculate correlation
+  int do_hist = 0;       // set to 1 to enable creation of correlation histogram
+  char *na_val;          // specifies the value that represents a missing value
+  char func[10];         // specifies the transformation function: log2, none
+  int do_log2;           // set to 1 to perform log2 transformation
+
+  // variables used for calculating Pearson's correlation
+	int i, j, k, m;
+	double **data;          // holds the expressionn matrix
+  float one = 1.0;       // used for pairwise comparision of the same gene
+
+  // variables used for timing of the software
+	time_t start_time, end_time;
+
+
+  // make sure we have between 4 and 5 incoming arguments
+	if(argc < 4 || argc > 10) {
+		printf("Usage: ./ccm <ematrix> <rows> <cols> [<omit_na> <na_val> <hist> <perf>]\n");
+    printf("  <ematrix>: the file name that contains the expression matrix. The rows must be genes or probesets and columns are samples\n");
+    printf("  <rows>:    the number of lines in the input file\n");
+    printf("  <cols>:    the number of columns in the input file minus the first column that contains gene names\n");
+    printf("  <omit_na>: set to 1 to ignore missing values. Defaults to 0.\n");
+    printf("  <na_val>:  a string representing the missing values in the input file (e.g. NA or 0.000)\n");
+    printf("  <min_obs>: the minimum number of observations (after missing values removed) that must be present to perform correlation. Default is 30\n");
+    printf("  <func>:    a transformation function to apply to elements of the ematrix. Values include: log2 or none. Default is none\n");
+    printf("  <hist>:    set to 1 to enable creation of correlation historgram. Defaults to 0.\n");
+    printf("  <perf>:    set to 1 t0 enable performance monitoring. Defaults to 0\n");
 		exit(-1);
 	}	
 
-	FILE *infile, *outfile;
+  // get the incoming arguments
+  infilename = argv[1];
+  rows = atoi(argv[2]);  // the number of rows in the expression matrix
+  cols = atoi(argv[3]);  // the number of cols in the expression matrix
 
-	char string[50], outfilename[50], infilename[50];
-
-	int i, j, k, m, rows = atoi(argv[2]), cols = atoi(argv[3]), perf = 1, corrdata = 0;
-
-	float **data, r, one = 1.0;
-
-	double *sum, *sumsquared, xy, x, y, x2, y2;
-
-	time_t start_time, end_time;
+  // get the incoming arguments related to missing values
+	if (argc >= 5) {
+		omit_na = atoi(argv[4]);
+	}
+  if (argc >= 6) {
+		na_val = argv[5];
+	}
+  if (argc >= 7) {
+		min_obs = atoi(argv[6]);
+	}
+  strcpy(func, "none");
+  do_log2 = 0;
+  if (argc >= 8 && strcmp(argv[7], "log2") == 0) {
+		strcpy(func, "log2");
+    do_log2 = 1;
+	}
+  if (argc >= 9 && atoi(argv[8]) == 1) {
+    do_hist = 1;
+	}
 
 	// if all arguments are present and the final one is '0', disable performance monitoring
-	if(argc == 5 && atoi(argv[4]) == 0)
-	{
-		perf = 0;
+	if (argc == 10 && atoi(argv[9]) == 1) {
+		perf = 1;
 	}
 
-	if(perf) time(&start_time);
+  // if performance monitoring is enabled the set the start time
+	if (perf) { 
+    time(&start_time);
+  }
 
-	// add ".txt" to the input file name
-	sprintf(infilename, "%s.txt", argv[1]);
+  // remove the path and extension from the filename
+  strcpy(fileprefix, basename(infilename));
+  char *p = rindex(fileprefix, '.');
+  p[0] = 0;
 
-	// space for data to be read in
-	data = (float**) malloc(sizeof(float *) * rows);
-	for(i = 0; i < rows; i++)
-	{
-		data[i] = malloc(sizeof(float) * cols);
+	// allocate the data array for storing the input expression matrix
+	data = (double**) malloc(sizeof(double *) * rows);
+	for (i = 0; i < rows; i++) {
+		data[i] = malloc(sizeof(double) * cols);
 	}
 
-	// sum of elements and sum of squares of elements for each row
-	sum = (double*) malloc(sizeof(double) * rows);
-	sumsquared = (double*) malloc(sizeof(double) * rows);
-
-	// read in data from user-specified file
+	// read in expression matrix from the user-specified file
+  printf("Reading input file '%s'...\n", infilename);
 	infile = fopen(infilename, "r");
-	for(i = 0; i < rows; i++)
-	{	// the first entry on every line is a label string - read that in before the numerical data
-		fscanf(infile, "%s", string);
-		for(j = 0; j < cols; j++)
-		{
-			if(fscanf(infile, "%f", &data[i][j]) == EOF)
-			{
+	for (i = 0; i < rows; i++) {	
+
+    // the first entry on every line is a label string - read that in before the numerical data
+		fscanf(infile, "%s", gene_name);
+
+		for (j = 0; j < cols; j++) {
+      char element[50]; // used for reading in each element of the expression matrix
+			if (fscanf(infile, "%s", element) != EOF) {
+        // if this is a missing value and omission of missing values is enabled then 
+        // rewrite this value as MISSING_VALUE
+        if (omit_na && strcmp(element, na_val) == 0) {
+          data[i][j] = MISSING_VALUE;
+        }
+        else {
+          if (do_log2) {
+            data[i][j] = log2(atof(element));
+          }
+          else {
+            data[i][j] = atof(element);
+          }
+        }
+      }
+      else {
 				printf("Error: EOF reached early. Exiting.\n");
 				exit(-1);
 			}
 		}
 	}
 
-	// calculate the sum and sumsquared of each row's data (to be used in the Pearson correlation formula)
-	for(i = 0; i < rows; i++)
-	{
-		sum[i] = sumsquared[i] = 0;
-
-		for(j = 0; j < cols; j++)
-		{
-			sum[i] = sum[i] + data[i][j];
-			sumsquared[i] = sumsquared[i] + data[i][j] * data[i][j];
-		}
-	}
-
 	// output a maximum of ROWS_PER_OUTPUT_FILE rows and then start a new file
-	int z = (rows-1) / ROWS_PER_OUTPUT_FILE, j_limit;
+	int z = (rows - 1) / ROWS_PER_OUTPUT_FILE;
+  int j_limit;
 	
-	// keep track of the distribution of coefficients 
-	// (if 'corrdata' is not FALSE, this option is used for debugging to check coefficient distribution)
-	int count[COUNT_POINTS];
-	
-	if(corrdata) for(m = 0; m < COUNT_POINTS; m++) count[m] = 0;
+	// create and initialize the histogram array for the distribution of coefficients 
+	int histogram[HIST_BINS + 1];
+	if (do_hist) {
+    for (m = 0; m < HIST_BINS + 1; m++) {
+      histogram[m] = 0;
+    }
+  }
+
+  // make sure the Pearson directory exists
+  struct stat st = {0};
+  if (stat("./Pearson", &st) == -1) {
+      mkdir("./Pearson", 0700);
+  }
 
 	// each iteration of m is a new output file
-	for(m = 0; m <= z; m++)
-	{
-		//printf("m = %d / %d\n", m, z);
+  printf("Calculating correlations...\n");
+	for (m = 0; m <= z; m++) {
 
 		// the output file will be located in the Pearson directory and named based on the input file info
-		sprintf(outfilename, "./Pearson/%s Pearson Correlation %d.bin", argv[1], m);
+		sprintf(outfilename, "./Pearson/%s.pc%02d.bin", fileprefix, m);
+    printf("Writing file %d of %d: %s... \n", m + 1, z + 1, outfilename);
 
 		outfile = fopen(outfilename, "wb");
 
 		// calculate the limit on the rows to output based on where we are in the calculation
-		if(m < z) j_limit = (m + 1) * ROWS_PER_OUTPUT_FILE;
-		else j_limit = rows;
+		if (m < z) {
+      j_limit = (m + 1) * ROWS_PER_OUTPUT_FILE;
+    }
+		else {
+      j_limit = rows;
+    }
 
-		// output the size of the overall matrix for the next step to use
+		// output the size of the overall matrix
 		fwrite(&rows, sizeof(rows), 1, outfile);
 
 		// determine and output the number of rows that will be stored in the current file
 		i = j_limit - m * ROWS_PER_OUTPUT_FILE;
 		fwrite(&i, sizeof(i), 1, outfile);
 
-		for(j = m * ROWS_PER_OUTPUT_FILE; j < j_limit; j++)
-		{	// lower triangular symmetric matrix (stop when col# > row#) 
-			for(k = 0; k <= j; k++)
-			{
-				if(j == k)
-				{	// correlation of an element with itself is 1
+		for (j = m * ROWS_PER_OUTPUT_FILE; j < j_limit; j++) {	
+      // lower triangular symmetric matrix (stop when col# > row#) 
+			for (k = 0; k <= j; k++) {
+				if (j == k) {	
+          // correlation of an element with itself is 1
 					fwrite(&one, sizeof(one), 1, outfile);
 				}
-				else
-				{
-					xy = 0;
-
-					// calculate sum of XY for this pairwise correlation
-					for(i = 0; i < cols; i++)
-					{
-						xy = xy + data[j][i] * data[k][i];
+				else {
+					// build the vectors for calculating Pearson's
+          double x[cols];
+          double y[cols];
+          int n = 0;
+					for (i = 0; i < cols; i++) {
+            // if either of these elements is missing then don't include the 
+            // elements from this sample
+            if (data[j][i] == MISSING_VALUE || data[k][i] == MISSING_VALUE) {
+              continue;
+            }
+            x[n] = data[j][i];
+            y[n] = data[k][i];
+  				  n++;
 					}
 
-					// Pearson's correlation formula
-					r = (xy - sum[j] * sum[k] / cols) / sqrt( (sumsquared[j] - sum[j] * sum[j] / cols) * (sumsquared[k] - sum[k] * sum[k] / cols) );
+          // calculate Pearsons if we have enough observations
+          float pearson = 0;
+          if (n >= min_obs) {
+            pearson = gsl_stats_correlation(x, 1, y, 1, n);
+          }
+					fwrite(&pearson, sizeof(float), 1, outfile);
 
-					fwrite(&r, sizeof(r), 1, outfile);
-					
-					if(corrdata)
-					{
-						if(r < 0) r = -r;
-						count[(int)(r * (COUNT_POINTS-1))]++;
+
+          // if the historgram is turned on then store the value in the correct bin
+					if (do_hist) {
+						if (pearson < 0) {
+              pearson = -pearson;
+            }
+						histogram[(int)(pearson * HIST_BINS)]++;
 					}
 				}
 			}
@@ -144,26 +268,22 @@ int main(int argc, char *argv[])
 		fclose(outfile);
 	}
 	
-	if(corrdata)
-	{
-		outfile = fopen("corrdata.txt", "w");
-		
-		for(m = 0; m < COUNT_POINTS; m++)
-		{
-			fprintf(outfile, "%lf\t%d\n", 1.0 * m / (COUNT_POINTS-1), count[m]);
+  // if do_hist is not zero then output the correlation histogram
+	if (do_hist) {
+		outfile = fopen("corrhist.txt", "w");
+		for (m = 0; m < HIST_BINS; m++) {
+			fprintf(outfile, "%lf\t%d\n", 1.0 * m / (HIST_BINS), histogram[m]);
 		}
-		
 		fclose(outfile);
 	}
 
-	if(perf)
-	{
+  // if performance monitoring is enabled then write the timing data
+	if(perf) {
 		time(&end_time);
-
 		outfile = fopen("timingdata.txt", "a");
-		
 		fprintf(outfile, "CCM Runtime with %d x %d %s input dataset: %.2lf min\n", rows, cols, infilename, difftime(end_time, start_time)/60.0);
 	}
 
+  printf("Done.\n");
 	return 0;
 }
