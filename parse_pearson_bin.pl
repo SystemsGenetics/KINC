@@ -126,7 +126,7 @@ while($bin_file = readdir(BINDIR)){
 close(BINDIR);
 
 if($t and scalar(@psets) != $files{0}{cols}){
-   print "ERROR: The probesets file is the incorrect size. It is expected to be ".scalar(@psets)."\n";
+   print "ERROR: The probesets file is the incorrect size: " . $files{0}{cols} . " != " . scalar(@psets) . "\n";
    exit;
 }
 
@@ -154,9 +154,9 @@ sub get_edges {
    my $data;
 
    # open the file
-   open(EDGES,">$prefix.psetnet.edges.txt") or die "$!: $prefix.psetnet.edges.txt\n";
-   open(EDGESN,">$prefix.neg.psetnet.edges.txt") or die "$!: $prefix.neg.psetnet.edges.txt\n";
-   open(EDGESP,">$prefix.pos.psetnet.edges.txt") or die "$!: $prefix.pos.psetnet.edges.txt\n";
+   open(EDGES,">$prefix.coexpnet.edges.txt") or die "$!: $prefix.coexpnet.edges.txt\n";
+   open(EDGESN,">$prefix.neg.coexpnet.edges.txt") or die "$!: $prefix.neg.coexpnet.edges.txt\n";
+   open(EDGESP,">$prefix.pos.coexpnet.edges.txt") or die "$!: $prefix.pos.coexpnet.edges.txt\n";
 
    # get the size of the matrix in one dimension (i.e. mxm)
    $m = $files->{$bin_i}{cols}; # the matrix is square so the size is same as num of columns
