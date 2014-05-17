@@ -32,26 +32,35 @@ in the file.  The cells in the matrix should contain the measured expression
 levels. The file should be named with a .txt extension.
 
 Step 1: Calculate Pearson Corrleations
-First create a 'Pearson' directory:
-
-   mkdir Pearson
-
-Next, use the 'ccm' binary to construct pearson correlations.  The binary can be
+Use the 'ccm' binary to construct pearson correlations.  The binary can be
 executed in the following way:
 
-   ccm <input file> <rows> <cols> 
+   ccm <ematrix> <rows> <cols> [<omit_na> <na_val> <hist> <perf> <headers>]
 
 Where:
-   <input file> is the name of the expression matrix file.  Do not include the
-                .txt extension, just the name.
-   <rows>       the number of measurable units (or rows) in the matrix
-   <cols>       the number of samples in the matrix. This should be one minus
-                the actual number of columns because the first column is the
-                probeset name.
+    <ematrix>: the file name that contains the expression matrix. The rows must 
+               be genes or probesets and columns are samples.
+    <rows>:    the number of lines in the input file minus the header column if 
+               it exists.
+    <cols>:    the number of columns in the input file minus the first column 
+               that contains gene names.
+    <omit_na>: set to 1 to ignore missing values. Defaults to 0.
+    <na_val>:  a string representing the missing values in the input file 
+               (e.g. NA or 0.000).
+    <min_obs>: the minimum number of observations (after missing values removed) 
+               that must be present to perform correlation. Default is 30.
+    <func>:    a transformation function to apply to elements of the ematrix. 
+               Values include: log2 or none. Default is none.
+    <hist>:    set to 1 to enable creation of correlation historgram. Defaults 
+               to 0.
+    <perf>:    set to 1 to enable performance monitoring. Defaults to 0.
+    <headers>: set to 1 if the first line contains headers. Defaults to 0.
+    
 
-The 'ccm' binary will create several binary files inside of the 'Pearson'
+The 'ccm' binary will create several binary files inside of a 'Pearson'
 directory.  These binary files contain the pair-wise Pearson correlation
-values for every unit.
+values for every unit.  Correlation value is set to NaN if there weren't enough 
+observations to perform the calculation.
 
 
 Step 2:  Calculate a Network Threshold
@@ -64,25 +73,31 @@ Luo F, Yang Y, Zhong J, Gao H, Khan L, Thompson DK, Zhou J (2007) Constructing
    gene co-expression networks and predicting functions of unknown genes by 
    random matrix theory.  BMC Bioinformatics 8: 299
 
-To find the network threshold execute the 'rmm' binary in the following way:
+To find the network threshold execute the 'rmm' with the following arguments:
 
-   rmm -i <input file> 
+    '-i': The input file name. Same as used in previous step.
+        Must be the same as the name used in the matrix binary
+        files.  This name will also be used to create files 
+        associated with this run of the program.
+        
+Optional:
+    
+    '-b': The initial threshold(+1*step) value that will be used.
+        [b=Begin value] Default: 0.9200
+    '-s': The threshold step size used each iteration. Default: 0.001
+    '-c': The chi-square test value that the loop will stop on.
+        Default: 200
+    '-v': Set the performance collection. Has two values possible values,
+        ON/OFF . [v=Verbose] Default: ON
+        
+Examples:
 
-Where:
-
-   <input file> is the name of the expression matrix file.  Do not include the
-                .txt extension, just the name.
-
-By default the 'rmm' binary will being selection of the threshold at a
-correlation value of 0.92. If this is not the correct threshold, it will
-repeatedly decrease the correlation value in increments of 0.001 until it
-finds the threshold.  The starting threshold and step increment can be
-specified at run time.  For further instructions, execute the 'rmm' binary
-with no arguments.
-
-Note:  If the underlying data set is highly correlated, the 'rmm' binary may
+    <executable> -i <input.file.name> 
+    <exec> -i <input.file.name> -s <0.0001> -v ON
+    
+Argument order is not important, but spaces are required between the flag and  
+value. If the underlying data set is highly correlated, the 'rmm' binary may
 not be able to find a threshold.
-
 
 Step 3: Generate the Network
 Once a threshold has been determined, the Perl script named
