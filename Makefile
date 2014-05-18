@@ -6,21 +6,19 @@ CCFLAGS = -g
 
 LDFLAGS =  -g -Wall -lm -lgsl -lgslcblas -fopenmp -llapack -lblas -lpthread -lm
 
-OBJS = ccm.o RandomMatrixModeling.v3.1.o RandomMatrix.v2-3.o
+OBJS = ccm.o rmm.o
 EXE = ccm rmm
 
 all: ${OBJS}
 	${CC} ccm.o  ${LDFLAGS} -o ccm 
-	${CC} RandomMatrixModeling.v3.1.o RandomMatrix.v2-3.o  ${LDFLAGS} -o rmm
+	${CC} rmm.o  ${LDFLAGS} -o rmm
 
 ccm.o: ccm.c
 	${CC} -c ${CCFLAGS} ccm.c
 
-RandomMatrixModeling.v3.1.o: RandomMatrixModeling.v3.1.c RandomMatrix.h 
-	${CC} -c ${CCFLAGS} RandomMatrixModeling.v3.1.c
+rmm.o: rmm.c rmm.h 
+	${CC} -c ${CCFLAGS} rmm.c
 
-RandomMatrix.v2-3.o: RandomMatrix.v2-3.c
-	${CC} -c ${CCFLAGS} RandomMatrix.v2-3.c
 
 clean:
 	rm -f ${OBJS} ${EXE}
