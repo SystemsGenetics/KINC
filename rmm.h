@@ -3,12 +3,12 @@
 
 typedef struct{
 
-	double nnsdHistogramBin;
-	double chiSquareTestThreshold;
-	int minUnfoldingPace;
-	int maxUnfoldingPace;
-	int mimiModuleSize;
-	double edHistogramBin; // Eigenvalue Histogram Bin size
+  double nnsdHistogramBin;
+  double chiSquareTestThreshold;
+  int minUnfoldingPace;
+  int maxUnfoldingPace;
+  int mimiModuleSize;
+  double edHistogramBin; // Eigenvalue Histogram Bin size
 
 } RMTParameters;
 

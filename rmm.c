@@ -8,7 +8,16 @@
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_matrix.h>
 #include <math.h>
+#include <setjmp.h>
 #include "rmm.h"
+
+/**
+ * Definitions for mimicing a try, catch block.
+ */
+#define TRY do{ jmp_buf ex_buf__; if( !setjmp(ex_buf__) ){
+#define CATCH } else {
+#define ETRY } }while(0)
+#define THROW longjmp(ex_buf__, 1)
 
 /**
  * Globals
@@ -45,8 +54,6 @@ char* itoa(int val, char* ptr){
   return ptr;
 } 
 
-
-
 int findNumUsed(){
   int i,sum=0;
   for(i=0;i<numGenes;i++){
@@ -65,9 +72,6 @@ void setIndexArray(){
   }
   return;
 }
-
-
-
 
 
 /**
@@ -547,7 +551,11 @@ FILE * fileOpenHelper(char* extension) {
   return fp;
 }
 
-
+/**
+ * @param double* l
+ * @param int idx1
+ * @param int idx2
+ */
 void swapD(double* l, int idx1, int idx2){
   double temp = l[idx1];
   l[idx1] = l[idx2];
@@ -555,6 +563,11 @@ void swapD(double* l, int idx1, int idx2){
   return;
 }
 
+/**
+ * @param float* l
+ * @param int idx1
+ * @param int idx2
+ */
 void swapF(float* l, int idx1, int idx2){
   float temp = l[idx1];
   l[idx1] = l[idx2];
@@ -562,6 +575,10 @@ void swapF(float* l, int idx1, int idx2){
   return;
 }
 
+/**
+ * @param double* l
+ * @param int size
+ */
 void quickSortD(double* l, int size){
   if(size<=1) return;
   int pivIdx = (int) size/1.618;//golden ratio
@@ -581,6 +598,10 @@ void quickSortD(double* l, int size){
   return;
 }
 
+/**
+ * @param float* l
+ * @param int size
+ */
 void quickSortF(float* l, int size){
   if(size<=1) return;
   int pivIdx = (int) size/1.618;//golden ratio
@@ -640,7 +661,13 @@ float* calculateEigen(float* mat, int size){
   return W;
 }
 
-//returned array will always be sorted and of length size-1
+/**
+ * returned array will always be sorted and of length size-1
+ *
+ * @param float* e
+ * @param int size
+ * @param int m
+ */
 double* unfolding(float* e, int size, int m){
   int count=1, i,j=0;//count equals 1 initially because of 2 lines following loop which propogates the arrays
   for(i=0; i<size-m; i+=m) count++;
@@ -682,6 +709,11 @@ double* unfolding(float* e, int size, int m){
   return yy;
 }
 
+/**
+ * @param float* eigens
+ * @param int size
+ * @param int* newSize
+ */
 float* degenerate(float* eigens, int size, int* newSize){
   int i, j=0, count=1;//because one flag is set before the loop
   for(i=0;i<size;i++){
@@ -713,7 +745,12 @@ float* degenerate(float* eigens, int size, int* newSize){
   return remDups;
 }
 
-
+/**
+ * @param float* eigens
+ * @param int size
+ * @param double bin
+ * @param int pace
+ */
 double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace){
   int newSize;
   float* newE;
@@ -740,7 +777,15 @@ double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bi
   return chi;
 }
 
-//calls same name, 4 args instead of 5
+/**
+ * calls same name, 4 args instead of 5
+ *
+ * @param float* eigens
+ * @param int size
+ * @param double double bin
+ * @param int minPace
+ * @param int maxPace
+ */
 double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, double bin, int minPace, int maxPace){
   double chiTest =0;
   int i = 0;
@@ -748,7 +793,7 @@ double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, double bin
 
   i=0;
   for(m = minPace; m<maxPace; m++){
-    chiTest+=chiSquareTestUnfoldingNNSDWithPoisson4(eigens, size, bin, m);
+    chiTest += chiSquareTestUnfoldingNNSDWithPoisson4(eigens, size, bin, m);
     i++;
   }
 

@@ -283,7 +283,7 @@ int main(int argc, char *argv[]) {
             if (pearson < 0) {
               pearson = -pearson;
             }
-            //histogram[(int)(pearson * HIST_BINS)]++;
+            histogram[(int)(pearson * HIST_BINS)]++;
           }
         }
       }
