@@ -41,8 +41,14 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
+#include <getopt.h>
 
 #include <gsl/gsl_statistics.h>
+
+/**
+ * Function Prototypes
+ */
+void print_usage();
 
 /**
  * Constants
@@ -59,88 +65,149 @@ int MISSING_VALUE = -1;
 
 
 /**
- * Main Subroutine
+ * Globals
+ */
+
+// Command-line option flags
+static int perf;          // indicates if performance monitoring should be enabled
+static int omit_na;       // indicates if missing values should be ignored
+static int do_hist;
+static int headers;
+
+// Command-line option values
+int rows = 0;          // the number of rows in the expression matrix
+int cols = 0;          // the number of columns in the expression matrix
+char *infilename = 0;  // the input file name
+char *na_val = 0;      // specifies the value that represents a missing value
+char func[10] = "none";// specifies the transformation function: log2, none
+int min_obs = 30;      // the minimum number of observations to calculate correlation
+
+// other global variables
+int do_log2 = 0;       // set to 1 to perform log2 transformation
+char fileprefix[1024]; // the input filename without the prefix
+char outfilename[50];  // the output file name
+char gene_name[255];   // holds the gene or probe set name from the first column
+
+
+/**
+ * The main subroutine.  Parses the input parameters and executes the program
+ * accordingly.
  */
 int main(int argc, char *argv[]) {
 
-  // variables used for file I/O
-  FILE *infile, *outfile;// pointers to the input and output files
-  char gene_name[255];   // holds the gene or probeset name from the first column
-  char outfilename[50];  // the output file name
-  char *infilename;      // the input file name
-  char fileprefix[1024]; // the input filename without the prefix 
+  time_t start_time, end_time;  // variables used for timing of the software
+  int c;                        // the value returned by getopt_long
+  int option_index = 0;         // the option index set by getopt_long
 
-  // variables specified by the user on the command-line
-  int rows;              // the number of rows in the expression matrix
-  int cols;              // the number of cols in the expression matrix
-  int perf = 0;          // indicates if performance monitoring should be enabled
-  int omit_na = 0;       // indicates if missing values should be ignored
-  int min_obs = 30;      // the minimum number of observations to calculate correlation
-  int do_hist = 0;       // set to 1 to enable creation of correlation histogram
-  char *na_val;          // specifies the value that represents a missing value
-  char func[10];         // specifies the transformation function: log2, none
-  int do_log2;           // set to 1 to perform log2 transformation
-  int headers = 0;       // set to 1 if the first line contains headers
+  // loop through the incoming arguments until the
+  // getopt_long function returns -1. Then we break out of the loop
+  while(1) {
+    int option_index = 0;
 
-  // variables used for calculating Pearson's correlation
-  int i, j, k, m;
-  double **data;          // holds the expressionn matrix
-  float one = 1.0;       // used for pairwise comparision of the same gene
+    // specify the long options. The values returned are specified to be the
+    // short options which are then handled by the case statement below
+    static struct option long_options[] = {
+      {"help",    no_argument,       0,  'h' },
+      {"omit_na", no_argument,       &omit_na,  1 },
+      {"hist",    no_argument,       &do_hist,  1 },
+      {"perf",    no_argument,       &perf,     1 },
+      {"headers", no_argument,       &headers,  1 },
+      {"ematrix", required_argument, 0,  'e' },
+      {"rows",    required_argument, 0,  'r' },
+      {"cols",    required_argument, 0,  'c' },
+      {"min_obs", required_argument, 0,  'm' },
+      {"func",    required_argument, 0,  'f' },
+      {"na_val",  required_argument, 0,  'n' },
+      {0, 0, 0,  0 }  // last element required to be all zeros
+    };
 
-  // variables used for timing of the software
-  time_t start_time, end_time;
+    // get the next option
+    c = getopt_long(argc, argv, "he:r:c:m:n:f:", long_options, &option_index);
 
+    // if the index is -1 then we have reached the end of the options list
+    // and we break out of the while loop
+    if (c == -1) {
+      break;
+    }
 
-  // make sure we have between 4 and 5 incoming arguments
-  if(argc < 4 || argc > 11) {
-    printf("Usage: ./ccm <ematrix> <rows> <cols> [<omit_na> <na_val> <hist> <perf> <headers>]\n");
-    printf("  <ematrix>: the file name that contains the expression matrix. The rows must be genes or probesets and columns are samples\n");
-    printf("  <rows>:    the number of lines in the input file minus the header column if it exists\n");
-    printf("  <cols>:    the number of columns in the input file minus the first column that contains gene names\n");
-    printf("  <omit_na>: set to 1 to ignore missing values. Defaults to 0.\n");
-    printf("  <na_val>:  a string representing the missing values in the input file (e.g. NA or 0.000)\n");
-    printf("  <min_obs>: the minimum number of observations (after missing values removed) that must be present to perform correlation. Default is 30\n");
-    printf("  <func>:    a transformation function to apply to elements of the ematrix. Values include: log2 or none. Default is none\n");
-    printf("  <hist>:    set to 1 to enable creation of correlation historgram. Defaults to 0.\n");
-    printf("  <perf>:    set to 1 to enable performance monitoring. Defaults to 0\n");
-    printf("  <headers>: set to 1 if the first line contains headers. Defaults to 0\n");
-    printf("Note: Correlation value is set to NaN if there weren't enough observations to perform the calculation.\n");
+    // handle the options
+    switch (c) {
+      case 0:
+        break;
+      case 'e':
+        infilename = optarg;
+        break;
+      case 'r':
+        rows = atoi(optarg);
+        break;
+      case 'c':
+        cols = atoi(optarg);
+        break;
+      case 'm':
+        min_obs = atoi(optarg);
+        break;
+      case 'n':
+        na_val = optarg;
+        break;
+      case 'f':
+        strcpy(func, optarg);
+        break;
+      case 'h':
+        print_usage();
+        break;
+      case '?':
+        exit(-1);
+        break;
+      case ':':
+        print_usage();
+        exit(-1);
+        break;
+      default:
+        print_usage();
+    }
+  }
+
+  // make sure the required arguments are set and appropriate
+  if (!infilename) {
+    printf("Please provide an expression matrix (--ematrix option). Use the -h option for help.\n");
     exit(-1);
   }
 
-  // get the incoming arguments
-  infilename = argv[1];
-  rows = atoi(argv[2]);  // the number of rows in the expression matrix
-  cols = atoi(argv[3]);  // the number of cols in the expression matrix
+  // make sure we have a positive integer for the rows and columns of the matrix
+  if (rows < 0 || rows == 0) {
+    printf("Please provide a positive integer value for the number of rows in the \n");
+    printf("expression matrix (--rows option). Use the -h option for help.\n");
+    exit(-1);
+  }
+  if (cols < 0 || cols == 0) {
+    printf("Please provide a positive integer value for the number of columns in\n");
+    printf("the expression matrix (--cols option). Use the -h option for help.\n");
+    exit(-1);
+  }
 
-  // get the incoming arguments related to missing values
-  if (argc >= 5) {
-    omit_na = atoi(argv[4]);
+  // make sure the input file exists
+  if (access(infilename, F_OK) == -1) {
+    printf("Error: The input file does not exists or is not readable.\n");
+    exit(-1);
   }
-  if (argc >= 6) {
-    na_val = argv[5];
+
+  // remove the path and extension from the filename
+  char * filename = basename(infilename);
+  strcpy(fileprefix, filename);
+  char * p = rindex(fileprefix, '.');
+  if (p) {
+    p[0] = 0;
   }
-  if (argc >= 7) {
-    min_obs = atoi(argv[6]);
-  }
-  strcpy(func, "none");
-  do_log2 = 0;
-  if (argc >= 8 && strcmp(argv[7], "log2") == 0) {
+
+  // if the function is log2 then set the do_log2 flag
+  if (strcmp(func, "log2") == 0) {
     strcpy(func, "log2");
     do_log2 = 1;
   }
-  if (argc >= 9 && atoi(argv[8]) == 1) {
-    do_hist = 1;
-  }
 
-  // enable performance monitoring if 10th argument is set
-  if (argc >= 10 && atoi(argv[9]) == 1) {
-    perf = 1;
-  }
-
-  // skip header line if 11th argument is set
-  if (argc == 11 && atoi(argv[10]) == 1) {
-    headers = 1;
+  // if we have a header line in the input file then subtract one from the number of rows
+  if (headers) {
+    rows--;
   }
 
   // if performance monitoring is enabled the set the start time
@@ -148,10 +215,33 @@ int main(int argc, char *argv[]) {
     time(&start_time);
   }
 
-  // remove the path and extension from the filename
-  strcpy(fileprefix, basename(infilename));
-  char *p = rindex(fileprefix, '.');
-  p[0] = 0;
+  calculate_pearson();
+
+  // if performance monitoring is enabled then write the timing data
+  if(perf) {
+    time(&end_time);
+    FILE * timingfile = fopen("timingdata.txt", "a");
+    fprintf(timingfile, "CCM Runtime with %d x %d %s input dataset: %.2lf min\n", rows, cols, infilename, difftime(end_time, start_time)/60.0);
+  }
+
+  printf("Done.\n");
+}
+
+
+
+int calculate_MI() {
+
+}
+/**
+ * Main Subroutine
+ */
+int calculate_pearson() {
+  FILE *infile, *outfile;// pointers to the input and output files
+
+  // variables used for calculating Pearson's correlation
+  int i, j, k, m;
+  double **data;         // holds the expression matrix
+  float one = 1.0;       // used for pairwise comparision of the same gene
 
   // allocate the data array for storing the input expression matrix
   data = (double**) malloc(sizeof(double *) * rows);
@@ -266,12 +356,12 @@ int main(int argc, char *argv[]) {
             n++;
           }
 
-          // calculate Pearsons if we have enough observations.  We default the
-          // pearson value to NaN if we do not have the minimum number
+          // Calculate Pearson's if we have enough observations.  We default the
+          // Pearson value to NaN if we do not have the minimum number
           // of observations to do the calculation.  This is better than storing
           // a zero which indicates no correlation.  If we stored zero then
           // we'd be providing a false correlation as no correlation calculation
-          // actually occured.
+          // actually occurred.
           float pearson = NAN;
           if (n >= min_obs) {
             pearson = gsl_stats_correlation(x, 1, y, 1, n);
@@ -300,13 +390,38 @@ int main(int argc, char *argv[]) {
     fclose(outfile);
   }
 
-  // if performance monitoring is enabled then write the timing data
-  if(perf) {
-    time(&end_time);
-    outfile = fopen("timingdata.txt", "a");
-    fprintf(outfile, "CCM Runtime with %d x %d %s input dataset: %.2lf min\n", rows, cols, infilename, difftime(end_time, start_time)/60.0);
-  }
 
-  printf("Done.\n");
   return 0;
+}
+
+/**
+ *
+ */
+void print_usage() {
+  printf("\n");
+  printf("Usage: ./ccm [options]\n");
+  printf("The list of required options:\n");
+  printf("  --ematrix|-e The file name that contains the expression matrix.\n");
+  printf("                 The rows must be genes or probe sets and columns are samples\n");
+  printf("  --rows|-r    The number of lines in the input file including the header\n");
+  printf("                 column if it exists\n");
+  printf("  --cols|-c    The number of columns in the input file minus the first\n");
+  printf("                 column that contains gene names\n");
+  printf("\n");
+  printf("Optional:\n");
+  printf("  --omit_na     Provide this flag to ignore missing values. Defaults to 0.\n");
+  printf("  --na_val|-n   A string representing the missing values in the input file\n");
+  printf("                  (e.g. NA or 0.000)\n");
+  printf("  --min_obs|-m  The minimum number of observations (after missing values\n");
+  printf("                  removed) that must be present to perform correlation.\n");
+  printf("                  Default is 30.\n");
+  printf("  --func|-f     A transformation function to apply to elements of the ematrix.\n");
+  printf("                  Values include: log2 or none. Default is none\n");
+  printf("  --hist        Provide this flag enable creation of correlation histogram.\n");
+  printf("  --perf        Provide this flag to enable performance monitoring.\n");
+  printf("  --headers     Provide this flag if the first line of the matrix contains\n");
+  printf("                  headers.\n");
+  printf("\n");
+  printf("Note: Correlation values are set to NaN if there weren't enough observations\n");
+  printf("to perform the calculation.\n");
 }
