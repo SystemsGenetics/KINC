@@ -1,23 +1,7 @@
-#include <time.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <gsl/gsl_interp.h>
-#include <gsl/gsl_spline.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_eigen.h>
-#include <gsl/gsl_matrix.h>
-#include <math.h>
-#include <setjmp.h>
+
 #include "rmm.h"
 
-/**
- * Definitions for mimicing a try, catch block.
- */
-#define TRY do{ jmp_buf ex_buf__; if( !setjmp(ex_buf__) ){
-#define CATCH } else {
-#define ETRY } }while(0)
-#define THROW longjmp(ex_buf__, 1)
+
 
 /**
  * Globals

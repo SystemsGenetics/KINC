@@ -14,7 +14,7 @@ all: ${OBJS}
 	${CC} ccm.o  ${LDFLAGS} -o ccm 
 	${CC} rmm.o  ${LDFLAGS} -o rmm
 
-ccm.o: ccm.c
+ccm.o: ccm.c ccm.h
 	${CC} -c ${CCFLAGS} ${INCLUDES} ccm.c
 
 rmm.o: rmm.c rmm.h 
