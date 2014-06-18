@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
     exit(0);
   }
 
-  inputDir = "Pearson/";
+  inputDir = "MI/";
 
   // initialize default values, which may be overwritten in the command
   verbose=1;
@@ -144,14 +144,14 @@ int main(int argc, char** argv) {
   char num[4];
   int len = strlen(inputFileName);
   len += strlen(inputDir);
-  len += strlen(".pc");
+  len += strlen(".mi");
   len += strlen("xxx.bin");
   len++;
   filename = (char*)malloc(sizeof(char)*len);
   memset(filename, '\0', len);
   strcat(filename, inputDir);
   strcat(filename, inputFileName);
-  strcat(filename, ".pc");
+  strcat(filename, ".mi");
   strcat(filename, itoa(0, num));
   strcat(filename, ".bin");
   FILE* info;
@@ -407,7 +407,7 @@ float * readPearsonCorrelationMatrix(float th, int * size) {
   // reserve the proper amount of memory for the filename and path
   len =  strlen(inputFileName);
   len += strlen(inputDir);
-  len += strlen(".pc");
+  len += strlen(".mi");
   len += strlen("xxx.bin");
   len++;
   filename = (char*) malloc(sizeof(char) * len);
@@ -430,7 +430,7 @@ float * readPearsonCorrelationMatrix(float th, int * size) {
     memset(filename, '\0', len);
     strcat(filename, inputDir);
     strcat(filename, inputFileName);
-    strcat(filename, ".pc");
+    strcat(filename, ".mi");
     strcat(filename, itoa(i, num));
     strcat(filename, ".bin");
     in = fopen(filename, "rb");
@@ -485,7 +485,7 @@ float * readPearsonCorrelationMatrix(float th, int * size) {
     memset(filename,'\0', len );
     strcat(filename, inputDir);
     strcat(filename, inputFileName);
-    strcat(filename, ".pc");
+    strcat(filename, ".mi");
     strcat(filename, itoa(h, num));
     strcat(filename, ".bin");
     in = fopen(filename, "rb");

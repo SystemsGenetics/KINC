@@ -4,7 +4,8 @@ EXE_DIR = /common1/feltus/co-expression_networks/software/bin
 
 CCFLAGS = -g
 
-LDFLAGS =  -g -Wall -lm -lgsl -lgslcblas -fopenmp -llapack -lblas -lpthread -lm
+INCLUDES = -I../MIToolbox/
+LDFLAGS =  -g -Wall -lm -lgsl -lgslcblas -fopenmp -llapack -lblas -lpthread -lm -L../MIToolbox -lMIToolbox 
 
 OBJS = ccm.o rmm.o
 EXE = ccm rmm
@@ -14,7 +15,7 @@ all: ${OBJS}
 	${CC} rmm.o  ${LDFLAGS} -o rmm
 
 ccm.o: ccm.c
-	${CC} -c ${CCFLAGS} ccm.c
+	${CC} -c ${CCFLAGS} ${INCLUDES} ccm.c
 
 rmm.o: rmm.c rmm.h 
 	${CC} -c ${CCFLAGS} rmm.c
