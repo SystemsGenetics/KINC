@@ -1,11 +1,12 @@
 
 #include "rmm.h"
 
+/*
 
 
-/**
+*
  * Globals
- */
+
 
 int* UsedFlag; // holds an array flagging use of indicies in the matrix
 int* index1;   // had to rename because index was already taken
@@ -24,13 +25,13 @@ float thresholdStep;  //the threshold step for each iteration of generation
 float chiSoughtValue; //the chiValue the while loop will end on
 
 
-/* SSYEV prototype */
+ SSYEV prototype
 extern void ssyev_( char* jobz, char* uplo, int* n, float* a, int* lda,
                     float* w, float* work, int* lwork, int* info );
 
-/**
+*
  * Subroutines
- */
+
 
 //writes a value to a string, then returns the pointer.  Only supports base 10 numbers.
 char* itoa(int val, char* ptr){
@@ -58,9 +59,9 @@ void setIndexArray(){
 }
 
 
-/**
+*
  * The main subroutine
- */
+
 int main(int argc, char** argv) {
   int i, size;
 
@@ -192,9 +193,9 @@ int main(int argc, char** argv) {
 }
 
 
-/**
+*
  *
- */
+
 int determinePearsonCorrelationThreshold_LargeMatrix() {
   float* newM;
   int size;
@@ -241,7 +242,7 @@ int determinePearsonCorrelationThreshold_LargeMatrix() {
 //      if(verbose){
 //        fprintf(timing,"Minutes calculating Eigens: %f\n", (end-start)/60.0);
 //      }
-      /* print out eigenvalues to file */
+       print out eigenvalues to file
       // fprintf(eigenF, "%f\t", th);
       // for(i=0 ; i<size ; i++){
         // fprintf(eigenF, "%f\t", E[i]);
@@ -278,9 +279,9 @@ int determinePearsonCorrelationThreshold_LargeMatrix() {
   }
   while(maxChi < chiSoughtValue || size == numGenes);
 
-  /*
+
    If finalChi is still greater than threshold, check the small scale
-  */
+
 
   if (finalChi > rmtParameter.chiSquareTestThreshold){
   // fprintf(runInfo,"checking small scale\n");
@@ -303,7 +304,7 @@ int determinePearsonCorrelationThreshold_LargeMatrix() {
 //          fprintf(timing,"Minutes for cut matrix: %f\n", (end-start)/60.0);
 //        }
         free(newM);
-        /* print out eigenvalues to file */
+         print out eigenvalues to file
         // fprintf(eigenF, "%f\t", th);
         // for(i=0 ; i<size ; i++){
           // fprintf(eigenF, "%f\t", E[i]);
@@ -335,9 +336,9 @@ int determinePearsonCorrelationThreshold_LargeMatrix() {
   //close the chi and eigen files now that results are written
   fclose(chiF);
   // fclose(eigenF);
-  /*
+
   Set the Properties file according to success or failure
-  */
+
   // fprintf(runInfo, "==================================\n");
   if(finalChi < rmtParameter.chiSquareTestThreshold){
     finalTH = ceil(finalTH * 10000) / 10000.0;
@@ -353,7 +354,7 @@ int determinePearsonCorrelationThreshold_LargeMatrix() {
   }
 }
 
-/**
+*
  * Parses the correlation bin files to find pairs of genes with a 
  * correlation value greater than the given theshold and constructs
  * a new correlation matrix that only contains those pairs of genes.
@@ -368,7 +369,7 @@ int determinePearsonCorrelationThreshold_LargeMatrix() {
  *  matrix containing only the genes that have at least one correlation value 
  *  greater than the given threshold.
  *
- */
+
 float * readPearsonCorrelationMatrix(float th, int * size) {
 
   float * rowj;
@@ -501,7 +502,7 @@ float * readPearsonCorrelationMatrix(float th, int * size) {
   return cutM;
 }
 
-/**
+*
  * Opens a file using the input file name as theprefix and a given string
  * as a suffix.
  *
@@ -510,7 +511,7 @@ float * readPearsonCorrelationMatrix(float th, int * size) {
  *
  * @return 
  *   A file pointer
- */
+
 FILE * fileOpenHelper(char* extension) {
   char * filename; // filename buffer
   FILE * fp;       // file pointer to be returned
@@ -535,11 +536,11 @@ FILE * fileOpenHelper(char* extension) {
   return fp;
 }
 
-/**
+*
  * @param double* l
  * @param int idx1
  * @param int idx2
- */
+
 void swapD(double* l, int idx1, int idx2){
   double temp = l[idx1];
   l[idx1] = l[idx2];
@@ -547,11 +548,11 @@ void swapD(double* l, int idx1, int idx2){
   return;
 }
 
-/**
+*
  * @param float* l
  * @param int idx1
  * @param int idx2
- */
+
 void swapF(float* l, int idx1, int idx2){
   float temp = l[idx1];
   l[idx1] = l[idx2];
@@ -559,10 +560,10 @@ void swapF(float* l, int idx1, int idx2){
   return;
 }
 
-/**
+*
  * @param double* l
  * @param int size
- */
+
 void quickSortD(double* l, int size){
   if(size<=1) return;
   int pivIdx = (int) size/1.618;//golden ratio
@@ -582,10 +583,10 @@ void quickSortD(double* l, int size){
   return;
 }
 
-/**
+*
  * @param float* l
  * @param int size
- */
+
 void quickSortF(float* l, int size){
   if(size<=1) return;
   int pivIdx = (int) size/1.618;//golden ratio
@@ -605,7 +606,7 @@ void quickSortF(float* l, int size){
   return;
 }
 
-/**
+*
  * Calculates the eigenvalues of the given matrix.  This function is a wrapper
  * for the ssyev_ function of the LAPACK package.
  *
@@ -618,7 +619,7 @@ void quickSortF(float* l, int size){
  * @return
  *   A pointer to an array of floating point numbers representing the
  *   array of eigenvalues
- */
+
 float* calculateEigen(float* mat, int size){
 
   char jobz = 'N';      // N means to not don't compute eigenvectors, just eigenvalues
@@ -645,13 +646,13 @@ float* calculateEigen(float* mat, int size){
   return W;
 }
 
-/**
+*
  * returned array will always be sorted and of length size-1
  *
  * @param float* e
  * @param int size
  * @param int m
- */
+
 double* unfolding(float* e, int size, int m){
   int count=1, i,j=0;//count equals 1 initially because of 2 lines following loop which propogates the arrays
   for(i=0; i<size-m; i+=m) count++;
@@ -693,11 +694,11 @@ double* unfolding(float* e, int size, int m){
   return yy;
 }
 
-/**
+*
  * @param float* eigens
  * @param int size
  * @param int* newSize
- */
+
 float* degenerate(float* eigens, int size, int* newSize){
   int i, j=0, count=1;//because one flag is set before the loop
   for(i=0;i<size;i++){
@@ -729,12 +730,12 @@ float* degenerate(float* eigens, int size, int* newSize){
   return remDups;
 }
 
-/**
+*
  * @param float* eigens
  * @param int size
  * @param double bin
  * @param int pace
- */
+
 double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace){
   int newSize;
   float* newE;
@@ -761,7 +762,7 @@ double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bi
   return chi;
 }
 
-/**
+*
  * calls same name, 4 args instead of 5
  *
  * @param float* eigens
@@ -769,7 +770,7 @@ double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bi
  * @param double double bin
  * @param int minPace
  * @param int maxPace
- */
+
 double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, double bin, int minPace, int maxPace){
   double chiTest =0;
   int i = 0;
@@ -783,3 +784,4 @@ double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, double bin
 
   return chiTest/i;
 }
+*/

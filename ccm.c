@@ -232,7 +232,15 @@ int main(int argc, char *argv[]) {
   printf("Done.\n");
 }
 
-
+/**
+ * Reads in the expression matrix
+ *
+ * @param CCMParameters params
+ *   An instance of the CCM parameters struct
+ *
+ * @return
+ *   A pointer to a two-dimensional array of doubles
+ */
 double ** load_ematrix(CCMParameters params) {
 
   FILE *infile; // pointers to the input
@@ -296,7 +304,17 @@ double ** load_ematrix(CCMParameters params) {
   return data;
 }
 
-
+/**
+ * Creates an integer array, initialized with all values to zero for
+ * storing a histogram. The number of bins in the histogram is
+ * specified by the HIST_BINS global variable
+ *
+ * @param CCMParameters params
+ *   An instance of the CCM parameters struct
+ *
+ * @return
+ *   A pointer to an array of integers
+ */
 int * init_histogram(CCMParameters params) {
   int * histogram = (int *) malloc(sizeof(int) * HIST_BINS + 1);
 
@@ -309,6 +327,17 @@ int * init_histogram(CCMParameters params) {
   return histogram;
 }
 
+/**
+ * Prints the histogram to a file.
+ *
+ * @param CCMParameters params
+ *   An instance of the CCM parameters struct
+ *
+ * @param int * histogram
+ *   An integer array created by the init_histogram function and
+ *   populated by calculate_MI or calculate_person.
+ *
+ */
 void print_histogram(CCMParameters params, int * histogram) {
   int m; // integer used or looping
   char outfilename[50];  // the output file name
@@ -323,6 +352,19 @@ void print_histogram(CCMParameters params, int * histogram) {
   fclose(outfile);
 }
 
+/**
+ * Calculates the Mutual Information matrix
+ *
+ * @param CCMParameters params
+ *   An instance of the CCM parameters struct
+ * @param double ** data
+ *   A pointer to a two dimensional array of doubles containing the
+ *   expression values
+ * @param int * histogram
+ *   An integer array created by the init_histogram function and
+ *   used for building the histogram.
+ *
+ */
 void calculate_MI(CCMParameters params, double ** data, int * histogram) {
   int i, j, k, m;   // integers for looping
   float one = 1.0;  // used for pairwise comparison of the same gene
@@ -372,8 +414,8 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
       // lower triangular symmetric matrix (stop when col# > row#)
       for (k = 0; k <= j; k++) {
         n_comps++;
-        if (n_comps % 1000 == 0) {
-          printf("Percent complete: %.2f%%\r", (n_comps/(float)total_comps)*100);
+        if (n_comps % 100 == 0) {
+          //printf("Percent complete: %.2f%%\r", (n_comps/(float)total_comps)*100);
         }
         if (j == k) {
           // correlation of an element with itself is 1
@@ -383,18 +425,36 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
           // build the vectors for calculating MI
           double x[params.cols+1];
           double y[params.cols+1];
+          double xmin = 9999999;
+          double ymin = 9999999;
+          double xmax = 0;
+          double ymax = 0;
           int n = 0;
           for (i = 0; i < params.cols; i++) {
             // if either of these elements is missing then don't include the
             // elements from this sample
-            if (data[j][i] == NAN || data[k][i] == NAN || isinf(data[j][i]) || isinf(data[k][i])) {
+            if (isnan(data[j][i]) || isnan(data[k][i]) || isinf(data[j][i]) || isinf(data[k][i])) {
               continue;
             }
             // the calculateMutualInformation will reduce the values to integers
             // therefore, to maintain precision to at least 4 decimal places
             // we multiply each value by 1000
-            x[n] = data[j][i] * 1000;
-            y[n] = data[k][i] * 1000;
+            x[n] = data[j][i];
+            y[n] = data[k][i];
+
+            // calculate the x and y minimum
+            if (x[n] < xmin) {
+              xmin = x[n];
+            }
+            if (x[n] > xmax) {
+              xmax = x[n];
+            }
+            if (y[n] < ymin) {
+              ymin = y[n];
+            }
+            if (y[n] > ymax) {
+              ymax = y[n];
+            }
             n++;
           }
 
@@ -405,8 +465,23 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
           // we'd be providing a false correlation as no correlation calculation
           // actually occurred.
           double mi = NAN;
+
+//          if (j == 1311 && k == 1310) {
+//            int s = 0;
+//            for (s = 0; s < n; s++) {
+//              printf("%f ", x[s]);
+//            }
+//            printf("\n");
+//            for (s = 0; s < n; s++) {
+//              printf("%f ", y[s]);
+//            }
+//            printf("\n");
+//          }
+
           if (n >= params.min_obs) {
-            mi = calculateMutualInformation(x, y, n);
+            //printf("%d, %d\n", j, k);
+            //mi = calculateMutualInformation(x, y, n);
+            mi = calculateBSplineMI(x, y, n, 5, 3, xmin, ymin, xmax, ymax);
           }
           fwrite(&mi, sizeof(float), 1, outfile);
 
@@ -425,6 +500,118 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
   }
 }
 
+/**
+ * @param double *x
+ *   A vector of expression values
+ * @param double *y
+ *   A vector of expression values the same size as x
+ * @param int n
+ *   The number of data points to fit (or, the size of vectors x and y)
+ * @param int m
+ *   The number of bins or break points
+ * @param int k
+ *   The B-splines order or degree of the polynomial.
+ * @param int xmin
+ * @param int ymin
+ * @param int xmax
+ * @param int ymax
+ *
+ */
+double calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xmin, double ymin, double xmax, double ymax) {
+
+  int i, j, ncoeffs;
+  double zx[n], zy[n];
+  double mi;
+  gsl_vector *x, *y, *Bx, *By;
+  gsl_bspline_workspace * bw;
+
+  // copy the values into a gsl_vector
+  x = gsl_vector_alloc(n);
+  y = gsl_vector_alloc(n);
+  for (i = 0; i < n; i++) {
+    gsl_vector_set(x, i, v1[i]);
+    gsl_vector_set(y, i, v2[i]);
+  }
+
+  // allocate a bspline workspace and add the knots.
+  bw = gsl_bspline_alloc(k, m);
+  // a uniform distribution of knots between zero and 1.  For example,
+  // where k = 3 and m =5 the knots will be: 0, 0, 0, 0.25, 0.5, 0.75, 1, 1, 1
+  gsl_bspline_knots_uniform(0, 1, bw);
+
+  // normalize the vector so it fits within the domain of the knot vector [0, 1]
+  // ????? should this normalization be for the max of the vector or the
+  // max expression level across all ??????????
+  gsl_vector_add_constant(x, -xmin);
+  gsl_vector_scale(x, 1/xmax);
+  gsl_vector_add_constant(y, -ymin);
+  gsl_vector_scale(y, 1/ymax);
+
+  // calculate marginal entropy for the variables x and y
+  for (i = 0; i < n; i++) {
+    zx[i] = gsl_vector_get(x, i) - (xmin * ((m - k + 1) / (xmax - xmin)));
+    zy[i] = gsl_vector_get(y, i) - (ymin * ((m - k + 1) / (ymax - ymin)));
+  }
+
+  // calculate MI
+  ncoeffs = gsl_bspline_ncoeffs(bw);
+  Bx = gsl_vector_alloc(ncoeffs);
+  By = gsl_vector_alloc(ncoeffs);
+  double px;      // probability of x value
+  double py;      // probability of y value
+  double pxy;     // joint probability
+  double ex = 0;  // Shannon entropy of x
+  double ey = 0;  // Shannon entropy of y
+  double exy = 0; // Joint shannon entropy of x and y
+  for (i = 0; i < n; ++i) {
+    gsl_bspline_eval(zx[i], Bx, bw);
+    gsl_bspline_eval(zy[i], By, bw);
+    px = 0;
+    py = 0;
+    // iterate through the coefficents and store them in a matrix
+    for (j = 0; j < ncoeffs; j++) {
+      px += gsl_vector_get(Bx, j);
+      py += gsl_vector_get(By, j);
+      pxy += gsl_vector_get(Bx, j) * gsl_vector_get(By, j);
+    }
+    px = px / n;
+    py = py / n;
+    pxy = pxy / n;
+    ex = px * log(px);
+    ey = py * log(px);
+    exy = pxy * log(pxy);
+  }
+  ex = - ex;  // H(A)
+  ey = - ey;  // H(B)
+  exy = - exy;// H(A,B)
+
+  // calculate the mutual information using the formula
+  // MI(A,B) = H(A) + H(B) - H(A,B)
+  mi = ex + ey - exy;
+
+  // free up allocated memory
+  gsl_bspline_free(bw);
+  gsl_vector_free(x);
+  gsl_vector_free(y);
+  gsl_vector_free(Bx);
+  gsl_vector_free(By);
+
+  return mi;
+}
+
+/**
+ * Calculates the Pearson correlation matrix
+ *
+ * @param CCMParameters params
+ *   An instance of the CCM parameters struct
+ * @param double ** data
+ *   A pointer to a two dimensional array of doubles containing the
+ *   expression values
+ * @param int * histogram
+ *   An integer array created by the init_histogram function and
+ *   used for building the histogram.
+ *
+ */
 void calculate_pearson(CCMParameters params, double ** data, int * histogram) {
   char gene_name[255];   // holds the gene or probe set name from the first column
   char outfilename[50];  // the output file name
@@ -490,7 +677,7 @@ void calculate_pearson(CCMParameters params, double ** data, int * histogram) {
           for (i = 0; i < params.cols; i++) {
             // if either of these elements is missing then don't include the 
             // elements from this sample
-            if (data[j][i] == NAN || data[k][i] == NAN || isinf(data[j][i]) || isinf(data[k][i])) {
+            if (isnan(data[j][i]) || isnan(data[k][i]) || isinf(data[j][i]) || isinf(data[k][i])) {
               continue;
             }
             x[n] = data[j][i];
@@ -523,7 +710,9 @@ void calculate_pearson(CCMParameters params, double ** data, int * histogram) {
     fclose(outfile);
   }
 }
-
+/**
+ * Prints the command-line usage instructions for the user.
+ */
 void print_usage() {
   printf("\n");
   printf("Usage: ./ccm [options]\n");
@@ -548,7 +737,6 @@ void print_usage() {
   printf("  --func|-f     A transformation function to apply to elements of the ematrix.\n");
   printf("                  Values include: log, log2 or log10. Default is to not perform\n");
   printf("                  any transformation.\n");
-  printf("  --hist        Provide this flag enable creation of correlation histogram.\n");
   printf("  --perf        Provide this flag to enable performance monitoring.\n");
   printf("  --headers     Provide this flag if the first line of the matrix contains\n");
   printf("                  headers.\n");

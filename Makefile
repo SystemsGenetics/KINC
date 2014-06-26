@@ -2,17 +2,17 @@ MKLROOT = /opt/intel/composerxe-2011.0.084/mkl
 CC = gcc -m64
 EXE_DIR = /common1/feltus/co-expression_networks/software/bin
 
-CCFLAGS = -g
+CCFLAGS =
 
 INCLUDES = -I../MIToolbox/
-LDFLAGS =  -g -Wall -lm -lgsl -lgslcblas -fopenmp -llapack -lblas -lpthread -lm -L../MIToolbox -lMIToolbox 
+LDFLAGS = -Wall -lm -lgsl -lgslcblas -fopenmp -llapack -lblas -lpthread -lm -L../MIToolbox -lMIToolbox 
 
 OBJS = ccm.o rmm.o
 EXE = ccm rmm
 
 all: ${OBJS}
-	${CC} ccm.o  ${LDFLAGS} -o ccm 
-	${CC} rmm.o  ${LDFLAGS} -o rmm
+	${CC} ccm.o  ${LDFLAGS} -o ccm
+#	${CC} rmm.o  ${LDFLAGS} -o rmm
 
 ccm.o: ccm.c ccm.h
 	${CC} -c ${CCFLAGS} ${INCLUDES} ccm.c
