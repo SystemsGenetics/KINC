@@ -415,11 +415,14 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
       for (k = 0; k <= j; k++) {
         n_comps++;
         if (n_comps % 100 == 0) {
-          //printf("Percent complete: %.2f%%\r", (n_comps/(float)total_comps)*100);
+          printf("Percent complete: %.2f%%\r", (n_comps/(float)total_comps)*100);
         }
         if (j == k) {
           // correlation of an element with itself is 1
           fwrite(&one, sizeof(one), 1, outfile);
+        }
+        if (k != 24 || j != 220) {
+          continue;
         }
         else {
           // build the vectors for calculating MI
@@ -466,22 +469,11 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
           // actually occurred.
           double mi = NAN;
 
-//          if (j == 1311 && k == 1310) {
-//            int s = 0;
-//            for (s = 0; s < n; s++) {
-//              printf("%f ", x[s]);
-//            }
-//            printf("\n");
-//            for (s = 0; s < n; s++) {
-//              printf("%f ", y[s]);
-//            }
-//            printf("\n");
-//          }
-
           if (n >= params.min_obs) {
             //printf("%d, %d\n", j, k);
             //mi = calculateMutualInformation(x, y, n);
             mi = calculateBSplineMI(x, y, n, 5, 3, xmin, ymin, xmax, ymax);
+            printf("%d, %d = %f\n", j, k, mi);
           }
           fwrite(&mi, sizeof(float), 1, outfile);
 
@@ -519,11 +511,25 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
  */
 double calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xmin, double ymin, double xmax, double ymax) {
 
-  int i, j, ncoeffs;
-  double zx[n], zy[n];
+  // used for iterating through loops
+  int i, j, q;
+  // holds the number of histogram "bins" used to represent the
+  // probability distribution for each gene
+  int ncoeffs;
+  // the final Mutual Information value
   double mi;
-  gsl_vector *x, *y, *Bx, *By;
+  // the observations (e.g. gene x, gene y)
+  gsl_vector *x, *y;
+  // the spline coefficent vectors
+  gsl_vector *Bx, *By;
+  // all spline coefficient vecotrs stored in a matrix
+  gsl_matrix *BX, *BY;
+  // probability distribution vectors
+  gsl_vector *px, *py;
+  gsl_matrix *pxy;
+  // the B-spline workspace structure
   gsl_bspline_workspace * bw;
+
 
   // copy the values into a gsl_vector
   x = gsl_vector_alloc(n);
@@ -539,55 +545,96 @@ double calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xm
   // where k = 3 and m =5 the knots will be: 0, 0, 0, 0.25, 0.5, 0.75, 1, 1, 1
   gsl_bspline_knots_uniform(0, 1, bw);
 
-  // normalize the vector so it fits within the domain of the knot vector [0, 1]
-  // ????? should this normalization be for the max of the vector or the
-  // max expression level across all ??????????
-  gsl_vector_add_constant(x, -xmin);
-  gsl_vector_scale(x, 1/xmax);
-  gsl_vector_add_constant(y, -ymin);
-  gsl_vector_scale(y, 1/ymax);
-
-  // calculate marginal entropy for the variables x and y
-  for (i = 0; i < n; i++) {
-    zx[i] = gsl_vector_get(x, i) - (xmin * ((m - k + 1) / (xmax - xmin)));
-    zy[i] = gsl_vector_get(y, i) - (ymin * ((m - k + 1) / (ymax - ymin)));
-  }
+  // normalize the observations so they fit within the domain of the knot vector [0, 1]
+  gsl_vector_add_constant(x, - xmin);
+  gsl_vector_scale(x, 1/(xmax - xmin));
+  gsl_vector_add_constant(y, - ymin);
+  gsl_vector_scale(y, 1/(ymax - ymin));
 
   // calculate MI
   ncoeffs = gsl_bspline_ncoeffs(bw);
   Bx = gsl_vector_alloc(ncoeffs);
   By = gsl_vector_alloc(ncoeffs);
-  double px;      // probability of x value
-  double py;      // probability of y value
-  double pxy;     // joint probability
-  double ex = 0;  // Shannon entropy of x
-  double ey = 0;  // Shannon entropy of y
-  double exy = 0; // Joint shannon entropy of x and y
+  BX = gsl_matrix_alloc(n, ncoeffs);
+  BY = gsl_matrix_alloc(n, ncoeffs);
+
+  // iterate through each value of x and y and retrieve
+  // the co-efficients for the splines these will serve as weights
+  // for the probability distribution histograms used by MI
   for (i = 0; i < n; ++i) {
-    gsl_bspline_eval(zx[i], Bx, bw);
-    gsl_bspline_eval(zy[i], By, bw);
-    px = 0;
-    py = 0;
-    // iterate through the coefficents and store them in a matrix
+    gsl_bspline_eval(gsl_vector_get(x, i), Bx, bw);
+    gsl_bspline_eval(gsl_vector_get(y, i), By, bw);
+    // save these co-efficients in a matrix for later use
     for (j = 0; j < ncoeffs; j++) {
-      px += gsl_vector_get(Bx, j);
-      py += gsl_vector_get(By, j);
-      pxy += gsl_vector_get(Bx, j) * gsl_vector_get(By, j);
+      gsl_matrix_set(BX, i, j, gsl_vector_get(Bx, j));
+      gsl_matrix_set(BY, i, j, gsl_vector_get(By, j));
     }
-    px = px / n;
-    py = py / n;
-    pxy = pxy / n;
-    ex = px * log(px);
-    ey = py * log(px);
-    exy = pxy * log(pxy);
   }
-  ex = - ex;  // H(A)
-  ey = - ey;  // H(B)
-  exy = - exy;// H(A,B)
+
+  // construct the probability distribution vectors used for MI for each gene
+  px = gsl_vector_alloc(ncoeffs);  // probability distribution of x
+  py = gsl_vector_alloc(ncoeffs);  // probability distribution of y
+  for (j = 0; j < ncoeffs; j++) {
+    double px_j = 0;  // the probability of x in bin j
+    double py_j = 0;  // the probability of y in bin j
+    for (i = 0; i < n; ++i) {
+      double wx = gsl_matrix_get(BX, i, j);
+      double wy = gsl_matrix_get(BY, i, j);
+      px_j += wx;
+      py_j += wy;
+    }
+    px_j /= n;
+    py_j /= n;
+    gsl_vector_set(px, j, px_j);
+    gsl_vector_set(py, j, py_j);
+  }
+
+  // construct the joint probability distribution
+  pxy = gsl_matrix_alloc(ncoeffs, ncoeffs); // joint probability distribution
+  for (j = 0; j < ncoeffs; j++) {
+    for (q = 0; q < ncoeffs; ++q) {
+      double pxy_jq = 0;
+      for (i = 0; i < n; ++i) {
+        double wxj = gsl_matrix_get(BX, i, j);
+        double wyq = gsl_matrix_get(BY, i, q);
+        pxy_jq += (wxj * wyq);
+      }
+      pxy_jq /= n;
+      gsl_matrix_set(pxy, j, q, pxy_jq);
+    }
+  }
+
+  // calculate the shannon entropy for x, y
+  double hx = 0; // shannon entropy for x
+  double hy = 0; // shannon entropy fo y
+  for (j = 0; j < ncoeffs; j++) {
+    double px_j = gsl_vector_get(px, j);
+    double py_j = gsl_vector_get(py, j);
+    if (px_j != 0) {
+      hx += px_j * log(px_j);
+    }
+    if (py_j != 0) {
+      hy += py_j * log(py_j);
+    }
+  }
+  hx = - hx;
+  hy = - hy;
+
+  // calcualte the shannon entropy for the joint x,y
+  double hxy = 0;
+  for (j = 0; j < ncoeffs; j++) {
+    for (q = 0; q < ncoeffs; ++q) {
+      double pxy_jq = gsl_matrix_get(pxy, j, q);
+      if (pxy_jq != 0) {
+        hxy += pxy_jq * log(pxy_jq);
+      }
+    }
+  }
+  hxy = - hxy;
 
   // calculate the mutual information using the formula
   // MI(A,B) = H(A) + H(B) - H(A,B)
-  mi = ex + ey - exy;
+  mi = hx + hy - hxy;
 
   // free up allocated memory
   gsl_bspline_free(bw);
@@ -595,6 +642,11 @@ double calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xm
   gsl_vector_free(y);
   gsl_vector_free(Bx);
   gsl_vector_free(By);
+  gsl_vector_free(px);
+  gsl_vector_free(py);
+  gsl_matrix_free(BX);
+  gsl_matrix_free(BY);
+  gsl_matrix_free(pxy);
 
   return mi;
 }
