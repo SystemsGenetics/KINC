@@ -15,7 +15,6 @@
 #include <getopt.h>
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_bspline.h>
-#include <MutualInformation.h>
 
 
 typedef struct{

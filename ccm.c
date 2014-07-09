@@ -417,74 +417,64 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
         if (n_comps % 100 == 0) {
           printf("Percent complete: %.2f%%\r", (n_comps/(float)total_comps)*100);
         }
-        if (j == k) {
-          // correlation of an element with itself is 1
-          fwrite(&one, sizeof(one), 1, outfile);
+
+        // build the vectors for calculating MI
+        double x[params.cols + 1];
+        double y[params.cols + 1];
+        double xmin = 9999999;
+        double ymin = 9999999;
+        double xmax = 0;
+        double ymax = 0;
+        int n = 0;
+        for (i = 0; i < params.cols; i++) {
+          // if either of these elements is missing then don't include the
+          // elements from this sample
+          if (isnan(data[j][i]) || isnan(data[k][i]) || isinf(data[j][i]) || isinf(data[k][i])) {
+            continue;
+          }
+          // save the x & y vectors
+          x[n] = data[j][i];
+          y[n] = data[k][i];
+
+          // calculate the x and y minimum
+          if (x[n] < xmin) {
+            xmin = x[n];
+          }
+          if (x[n] > xmax) {
+            xmax = x[n];
+          }
+          if (y[n] < ymin) {
+            ymin = y[n];
+          }
+          if (y[n] > ymax) {
+            ymax = y[n];
+          }
+          n++;
         }
-        if (k != 24 || j != 220) {
-          continue;
+
+        // Calculate Mutual Information if we have enough observations.  We default the
+        // MI value to NaN if we do not have the minimum number
+        // of observations to do the calculation.  This is better than storing
+        // a zero which indicates no correlation.  If we stored zero then
+        // we'd be providing a false correlation as no correlation calculation
+        // actually occurred.
+        double mi = NAN;
+
+        if (n >= params.min_obs) {
+          //printf("%d, %d\n", j, k);
+          //mi = calculateMutualInformation(x, y, n);
+          mi = calculateBSplineMI(x, y, n, (int) sqrt(n) + 1, 3, xmin, ymin, xmax, ymax);
+          //printf("%d, %d = %f\n", j, k, mi);
         }
-        else {
-          // build the vectors for calculating MI
-          double x[params.cols+1];
-          double y[params.cols+1];
-          double xmin = 9999999;
-          double ymin = 9999999;
-          double xmax = 0;
-          double ymax = 0;
-          int n = 0;
-          for (i = 0; i < params.cols; i++) {
-            // if either of these elements is missing then don't include the
-            // elements from this sample
-            if (isnan(data[j][i]) || isnan(data[k][i]) || isinf(data[j][i]) || isinf(data[k][i])) {
-              continue;
-            }
-            // the calculateMutualInformation will reduce the values to integers
-            // therefore, to maintain precision to at least 4 decimal places
-            // we multiply each value by 1000
-            x[n] = data[j][i];
-            y[n] = data[k][i];
+        fwrite(&mi, sizeof(float), 1, outfile);
 
-            // calculate the x and y minimum
-            if (x[n] < xmin) {
-              xmin = x[n];
-            }
-            if (x[n] > xmax) {
-              xmax = x[n];
-            }
-            if (y[n] < ymin) {
-              ymin = y[n];
-            }
-            if (y[n] > ymax) {
-              ymax = y[n];
-            }
-            n++;
+
+        // if the historgram is turned on then store the value in the correct bin
+        if (mi < 1 && mi > -1) {
+          if (mi < 0) {
+            mi = -mi;
           }
-
-          // Calculate Mutual Information if we have enough observations.  We default the
-          // MI value to NaN if we do not have the minimum number
-          // of observations to do the calculation.  This is better than storing
-          // a zero which indicates no correlation.  If we stored zero then
-          // we'd be providing a false correlation as no correlation calculation
-          // actually occurred.
-          double mi = NAN;
-
-          if (n >= params.min_obs) {
-            //printf("%d, %d\n", j, k);
-            //mi = calculateMutualInformation(x, y, n);
-            mi = calculateBSplineMI(x, y, n, 5, 3, xmin, ymin, xmax, ymax);
-            printf("%d, %d = %f\n", j, k, mi);
-          }
-          fwrite(&mi, sizeof(float), 1, outfile);
-
-
-          // if the historgram is turned on then store the value in the correct bin
-          if (mi < 1 && mi > -1) {
-            if (mi < 0) {
-              mi = -mi;
-            }
-            histogram[(int)(mi * HIST_BINS)]++;
-          }
+          histogram[(int)(mi * HIST_BINS)]++;
         }
       }
     }
@@ -544,6 +534,14 @@ double calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xm
   // a uniform distribution of knots between zero and 1.  For example,
   // where k = 3 and m =5 the knots will be: 0, 0, 0, 0.25, 0.5, 0.75, 1, 1, 1
   gsl_bspline_knots_uniform(0, 1, bw);
+/*  gsl_vector * knots;
+  knots = gsl_vector_alloc(m);
+  gsl_vector_set(knots, 0, 0);
+  gsl_vector_set(knots, 1, 0);
+  gsl_vector_set(knots, 2, 1);
+  gsl_vector_set(knots, 3, 2);
+  gsl_vector_set(knots, 4, 3);
+  gsl_bspline_knots(knots, bw);*/
 
   // normalize the observations so they fit within the domain of the knot vector [0, 1]
   gsl_vector_add_constant(x, - xmin);
@@ -593,7 +591,7 @@ double calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xm
   pxy = gsl_matrix_alloc(ncoeffs, ncoeffs); // joint probability distribution
   for (j = 0; j < ncoeffs; j++) {
     for (q = 0; q < ncoeffs; ++q) {
-      double pxy_jq = 0;
+      double pxy_jq =  0;
       for (i = 0; i < n; ++i) {
         double wxj = gsl_matrix_get(BX, i, j);
         double wyq = gsl_matrix_get(BY, i, q);
@@ -606,27 +604,27 @@ double calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xm
 
   // calculate the shannon entropy for x, y
   double hx = 0; // shannon entropy for x
-  double hy = 0; // shannon entropy fo y
+  double hy = 0; // shannon entropy for y
   for (j = 0; j < ncoeffs; j++) {
     double px_j = gsl_vector_get(px, j);
     double py_j = gsl_vector_get(py, j);
     if (px_j != 0) {
-      hx += px_j * log(px_j);
+      hx += px_j * log2(px_j);
     }
     if (py_j != 0) {
-      hy += py_j * log(py_j);
+      hy += py_j * log2(py_j);
     }
   }
   hx = - hx;
   hy = - hy;
 
-  // calcualte the shannon entropy for the joint x,y
+  // calculate the shannon entropy for the joint x,y
   double hxy = 0;
   for (j = 0; j < ncoeffs; j++) {
     for (q = 0; q < ncoeffs; ++q) {
       double pxy_jq = gsl_matrix_get(pxy, j, q);
       if (pxy_jq != 0) {
-        hxy += pxy_jq * log(pxy_jq);
+        hxy += pxy_jq * log2(pxy_jq);
       }
     }
   }
