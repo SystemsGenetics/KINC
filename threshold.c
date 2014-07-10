@@ -1,213 +1,199 @@
+#include "threshold.h"
 
-#include "rmm.h"
+/**
+ * The function to call when running the 'similarity' command.
+ */
+int do_threshold(int argc, char *argv[]) {
 
-/*
+  time_t start_time, end_time;  // variables used for timing of the software
+  int c;                        // the value returned by getopt_long
 
+  static RMTParameters params;
 
-*
- * Globals
+  // initialize some of the program parameters
+  params.perf = 1;
+  params.thresholdStart = 0.99;
+  params.thresholdStep  = 0.001;
+  params.chiSoughtValue = 200;
+  strcpy(params.method, "pc");
 
+  // loop through the incoming arguments until the
+  // getopt_long function returns -1. Then we break out of the loop
+  while(1) {
+    int option_index = 0;
 
-int* UsedFlag; // holds an array flagging use of indicies in the matrix
-int* index1;   // had to rename because index was already taken
-int numGenes;
-char* inputFileName;
-char* inputDir;
-int numLinesPerFile;
-RMTParameters rmtParameter;
-FILE* timing;
-// FILE* runInfo;
-int verbose; //a boolean for whether or not to print timing data
+    // specify the long options. The values returned are specified to be the
+    // short options which are then handled by the case statement below
+    static struct option long_options[] = {
+      {"perf",    no_argument,       &params.perf,     1 },
+      {"ematrix", required_argument, 0,  'e' },
+      {"method",  required_argument, 0,  'm' },
+      {"th",      required_argument, 0,  't' },
+      {"chi",     required_argument, 0,  'c' },
+      {"step",    required_argument, 0,  's' },
+      {0, 0, 0,  0 }  // last element required to be all zeros
+    };
 
-//set some global params for the RMM stepping
-float thresholdStart; //the threshold to start generating cutMatrices with (actually, +thresholdStep)
-float thresholdStep;  //the threshold step for each iteration of generation
-float chiSoughtValue; //the chiValue the while loop will end on
+    // get the next option
+    c = getopt_long(argc, argv, "e:m:t:c:s:", long_options, &option_index);
 
+    // if the index is -1 then we have reached the end of the options list
+    // and we break out of the while loop
+    if (c == -1) {
+      break;
+    }
 
- SSYEV prototype
-extern void ssyev_( char* jobz, char* uplo, int* n, float* a, int* lda,
-                    float* w, float* work, int* lwork, int* info );
+    // handle the options
+    switch (c) {
+      case 0:
+        break;
+      case 'e':
+        params.infilename = optarg;
+        break;
+      case 'm':
+        strcpy(params.method, optarg);
+        printf("  Using method: '%s'\n", params.method);
+        break;
+      case 't':
+        params.thresholdStart = atof(optarg);
+        printf("  Start treshold: %f\n", params.thresholdStart);
+        break;
+      case 'c':
+        params.chiSoughtValue = atof(optarg);
+        printf("  Desired Chi-square %f\n", params.chiSoughtValue);
+        break;
+      case 's':
+        params.thresholdStep = atof(optarg);
+        printf("  Step per iteration: %f\n", params.thresholdStep);
+        break;
+      case '?':
+        exit(-1);
+        break;
+      case ':':
+        print_threshold_usage();
+        exit(-1);
+        break;
+      default:
+        print_threshold_usage();
+    }
+  }
 
-*
- * Subroutines
+  // make sure the required arguments are set and appropriate
+  if (!params.infilename) {
+    printf("Please provide an expression matrix (--ematrix option). Use the -h option for help.\n");
+    exit(-1);
+  }
 
+  if (!params.method) {
+    printf("Please provide the method (--method option). Use the -h option for help.\n");
+    exit(-1);
+  }
 
-//writes a value to a string, then returns the pointer.  Only supports base 10 numbers.
+  // make sure the input file exists
+  if (access(params.infilename, F_OK) == -1) {
+    printf("Error: The input file does not exists or is not readable.\n");
+    exit(-1);
+  }
+
+  if (strcmp(params.method, "pc") != 0 && strcmp(params.method, "mi") != 0) {
+    printf("Error: The method (--method option) must either be 'pc' or 'mi'. Use the -h option for help.\n");
+    exit(-1);
+  }
+
+  // remove the path and extension from the filename
+  char * temp = basename(params.infilename);
+  strcpy(params.fileprefix, temp);
+  char * p = rindex(params.fileprefix, '.');
+  if (p) {
+    p[0] = 0;
+  }
+
+  // if performance monitoring is enabled the set the start time
+  if (params.perf) {
+    time(&start_time);
+  }
+
+  if (strcmp(params.method, "mi") == 0) {
+    params.inputDir = "MI/";
+  }
+  else if (strcmp(params.method, "pc") == 0) {
+    params.inputDir = "Pearson/";
+  }
+
+  // open the file and get the number of genes and the lines per file
+  // these data are the first two integers in the file
+  char filename[1024];
+  FILE* info;
+  sprintf(filename, "%s.%s%d.bin", params.fileprefix, params.method, 0);
+  info = fopen(filename, "rb");
+  fread(&params.numGenes, sizeof(int), 1, info);
+  fread(&params.numLinesPerFile, sizeof(int), 1, info);
+  fclose(info);
+
+  //initialize the global RMTParameters struct
+  params.nnsdHistogramBin       = 0.05;
+  params.chiSquareTestThreshold = 99.607;
+  params.minUnfoldingPace       = 10;
+  params.maxUnfoldingPace       = 41;
+  params.mimiModuleSize         = 4;
+  params.edHistogramBin         = 0.1;
+
+  // allocate memory for UsedFlags
+  params.UsedFlag = (int *) malloc(params.numGenes * sizeof(int));
+
+  // allocate memory for index
+  params.index1 = (int *) malloc(params.numGenes * sizeof(int));
+
+  find_threshold(params);
+
+  free(params.index1);
+  free(params.UsedFlag);
+
+  // fclose(runInfo);
+
+  // if performance monitoring is enabled then write the timing data
+  if(params.perf) {
+    time(&end_time);
+    FILE * timingfile = fopen("timingdata.txt", "a");
+    fprintf(timingfile, "Minutes in determining: %f\n", (end_time - start_time) / 60.0);
+  }
+
+  printf("Done.\n");
+  return 1;
+}
+
+/**
+ * writes a value to a string, then returns the pointer.
+ * Only supports base 10 numbers.
+ */
 char* itoa(int val, char* ptr){
   sprintf(ptr,"%d",val);
   return ptr;
-} 
-
-int findNumUsed(){
-  int i,sum=0;
-  for(i=0;i<numGenes;i++){
-    if(UsedFlag[i]!=0) sum++;
-  }
-  return sum;
 }
 
-void setIndexArray(){
-  int i,j=0;
-  for(i=0;i<numGenes;i++){
-    if(UsedFlag[i]!=0){
-      index1[i]=j;
-      j++;
-    }
-  }
-  return;
-}
-
-
-*
- * The main subroutine
-
-int main(int argc, char** argv) {
-  int i, size;
-
-  if(argc==1){
-    printf("The arguments for this fucntion are:\n\n");
-    printf("'-i': The input file name without the path and without the final extenson.\n");
-    printf("      This should be the prefix of the files in the Pearson directory\n");
-    printf("      prior to the '.pcX.bin' extension.\n\n");
-    printf("Optional:\n\n");
-    printf("'-b': The initial threshold (+1*step) value that will be used.\n");
-    printf("      Default: 0.9600\n");
-    printf("'-s': The threshold step size used each iteration. Default: 0.001\n");
-    printf("'-c': The chi-square test value that the loop will stop on.\n");
-    printf("      Default: 200\n\n");
-    printf("'-v': Set the performance collection. Has two values possible values,\n");
-    printf("      ON/OFF . Default: ON\n");
-    printf("Examples:\n");
-    printf("<executable> -i <input.file.name> \n");
-    printf("<exec> -i <input.file.name> -s <0.0001> -v ON\n\n");
-    printf("Note: Order is not important, but spaces are required between the \n");
-    printf("flag and its value.  Also note that erroneous inputs could cause the\n");
-    printf("program to crash without a helpful error message...so get it right.\n\n");
-    printf("Exiting.\n");
-    exit(0);
-  }
-
-  inputDir = "MI/";
-
-  // initialize default values, which may be overwritten in the command
-  verbose=1;
-  thresholdStart = 0.96;
-  thresholdStep = 0.001;
-  chiSoughtValue = 200;
-
-  // parse the command line flags
-  for (i = 1; i < argc; i += 2) {
-    if (argv[i][1] == 'i'){
-      inputFileName = argv[i+1];
-    }
-    else if (argv[i][1] == 'b') {
-      thresholdStart = atof(argv[i+1]);
-    }
-    else if (argv[i][1] == 's') {
-      thresholdStep = atof(argv[i+1]);
-    }
-    else if (argv[i][1] == 'c') {
-      chiSoughtValue = atof(argv[i+1]);
-    }
-    else if (argv[i][1] == 'v') {
-      if (strcmp(argv[i+1], "ON") == 0 || strcmp(argv[i+1], "on") == 0 || strcmp(argv[i+1],"On") == 0 || strcmp(argv[i+1],"oN") == 0) {
-        verbose = 1;
-      }
-      else{
-        verbose = 0;
-      }
-    }
-    else {
-      printf("Flag '%s' not recognized, exiting.", argv[i]);
-      exit(0);
-    }
-  }
-
-  // read from first matrix file to determine some stuff
-  char* filename;
-  char num[4];
-  int len = strlen(inputFileName);
-  len += strlen(inputDir);
-  len += strlen(".mi");
-  len += strlen("xxx.bin");
-  len++;
-  filename = (char*)malloc(sizeof(char)*len);
-  memset(filename, '\0', len);
-  strcat(filename, inputDir);
-  strcat(filename, inputFileName);
-  strcat(filename, ".mi");
-  strcat(filename, itoa(0, num));
-  strcat(filename, ".bin");
-  FILE* info;
-  info = fopen(filename, "rb");
-  fread(&numGenes, sizeof(int), 1, info);
-  fread(&numLinesPerFile, sizeof(int), 1, info);
-  fclose(info);
-  free(filename);
-
-  // initialize some global file pointers that will be used throughout
-  // runInfo = fileOpenHelper(".runInfo.txt");
-
-  if(verbose == 1){
-    timing = fileOpenHelper(".timing.txt");
-  }
-
-  // print some preliminary run info to the runInfo file
-  // fprintf(runInfo, "number of genes: %d\n", numGenes);
-  // fprintf(runInfo, "threshold start: %f\n", thresholdStart);
-  // fprintf(runInfo, "threshold step:  %f\n", thresholdStep);
-  // fprintf(runInfo, "sought chi val:  %f\n\n", chiSoughtValue);
-  // fprintf(runInfo, "Below are the thresholds and corresponding cut matrix sizes\n");
-
-  //initialize the global RMTParameters struct
-  rmtParameter.nnsdHistogramBin = 0.05;
-  rmtParameter.chiSquareTestThreshold = 99.607;
-  rmtParameter.minUnfoldingPace = 10;
-  rmtParameter.maxUnfoldingPace = 41;
-  rmtParameter.mimiModuleSize = 4;
-  rmtParameter.edHistogramBin = 0.1;
-
-  //allocate memory for UsedFlags
-  UsedFlag = (int *) malloc(numGenes * sizeof(int));
-
-  //allocate memory for index
-  index1 = (int *) malloc(numGenes * sizeof(int));
-
-  time_t start, end;
-  fflush(timing);
-  time(&start);
-  int rc = determinePearsonCorrelationThreshold_LargeMatrix();
-  time(&end);
-  if (verbose) {
-    fprintf(timing, "Minutes in determining: %f\n", (end - start) / 60.0);
-  }
-  free(index1);
-  free(UsedFlag);
-
-  // fclose(runInfo);
-  if(verbose){
-    fclose(timing);
-  }
-  exit(rc);
-}
-
-
-*
+/*
  *
-
-int determinePearsonCorrelationThreshold_LargeMatrix() {
+ *
+ */
+int find_threshold(RMTParameters params) {
   float* newM;
   int size;
   time_t start, end;
   FILE* eigenF, *chiF;
+  char chi_filename[1024];  // the output file name
+  char eigen_filename[1024];  // the output file name
+
 
   // open the output files
-  // eigenF = fileOpenHelper(".eigens.txt");
-  chiF = fileOpenHelper(".chiVals.txt");
+  sprintf(chi_filename, "%s.chiVals.txt", params.fileprefix);
+  chiF = fopen(chi_filename, "w");
+  sprintf(eigen_filename, "%s.eigenVals.txt", params.fileprefix);
+  eigenF = fopen(eigen_filename, "w");
+
+
   fprintf(chiF, "Threshold\tChi-square\tCut Matrix Size\n");  
 
-  float th = thresholdStart;
+  float th = params.thresholdStart;
   double finalTH  = 0.0;
   double finalChi = 10000.0;
   double minTH    = 1.0;
@@ -220,55 +206,41 @@ int determinePearsonCorrelationThreshold_LargeMatrix() {
 
   do {
     // decrement the threshold using the step value and then retreive the 
-    // matrix that contains only the threshold and above
-    th = th - thresholdStep;
-    printf("Testing threshold: %f...\n", th);
-//    time(&start);
+    // matrix that contains only the threshold and higher
+    th = th - params.thresholdStep;
+    printf("  testing threshold: %f...\n", th);
     printf("  reading bin files...\n");
-    newM = readPearsonCorrelationMatrix(th, &size);
-//    time(&end);
-//    if(verbose){
-//      fprintf(timing,"Minutes for cut matrix: %f\n", (end-start)/60.0);
-//    }
-//    fprintf(runInfo,"%f\t%d\n",th,size);
-//    fflush(runInfo);
-    if (size >= 100) {
-//      time(&start);
-      printf("  calculating eigenvalues for n x n matrix of size n = %d...\n", size);
-      E = calculateEigen(newM, size);
-//      time(&end);
+    newM = read_similarity_matrix(th, &size, params);
 
+    printf("  found matrix of size n x n, n = %d...\n", size);
+    if (size >= 100) {
+      printf("  calculating eigenvalues...\n");
+      E = calculateEigen(newM, size);
       free(newM);
-//      if(verbose){
-//        fprintf(timing,"Minutes calculating Eigens: %f\n", (end-start)/60.0);
-//      }
-       print out eigenvalues to file
-      // fprintf(eigenF, "%f\t", th);
-      // for(i=0 ; i<size ; i++){
-        // fprintf(eigenF, "%f\t", E[i]);
-      // }
-      // fprintf(eigenF,"\n");
-//      time(&start);
+
+      // print out eigenvalues to file
+      fprintf(eigenF, "%f\t", th);
+      for(i=0 ; i<size ; i++){
+        fprintf(eigenF, "%f\t", E[i]);
+      }
+      fprintf(eigenF,"\n");
+
       printf("  testing similarity of NNSD with Poisson...\n");
-      chi = chiSquareTestUnfoldingNNSDWithPoisson(E, size, rmtParameter.nnsdHistogramBin, rmtParameter.minUnfoldingPace, rmtParameter.maxUnfoldingPace);
-//      time(&end);
-//      if(verbose){
-//        fprintf(timing,"Minutes Chi Square Testing: %f\n", (end-start)/60.0);
-//      }
-//      fflush(timing);
+      chi = chiSquareTestUnfoldingNNSDWithPoisson(E, size, params.nnsdHistogramBin, params.minUnfoldingPace, params.maxUnfoldingPace);
       fprintf(chiF, "%f\t%f\t%d\n", th, chi, size);
       fflush(chiF);
       free(E);
+
       printf("  chi = %f\n", chi);
       if(chi < minChi){
         minChi = chi;
         minTH = th;
       }
-      if (chi < rmtParameter.chiSquareTestThreshold){
+      if (chi < params.chiSquareTestThreshold){
         finalTH = th;
         finalChi = chi;
       }
-      if (finalChi < rmtParameter.chiSquareTestThreshold && chi > finalChi && th < finalTH){
+      if (finalChi < params.chiSquareTestThreshold && chi > finalChi && th < finalTH){
         maxChi = chi;
         maxTH = th;
       }
@@ -277,73 +249,58 @@ int determinePearsonCorrelationThreshold_LargeMatrix() {
       free(newM);
     }
   }
-  while(maxChi < chiSoughtValue || size == numGenes);
+  while(maxChi < params.chiSoughtValue || size == params.numGenes);
 
 
-   If finalChi is still greater than threshold, check the small scale
-
-
-  if (finalChi > rmtParameter.chiSquareTestThreshold){
-  // fprintf(runInfo,"checking small scale\n");
+  // If finalChi is still greater than threshold, check the small scale
+  if (finalChi > params.chiSquareTestThreshold) {
     fprintf(chiF, "checking small scale\n");
     th = (float)minTH + 0.2;
-    for(i = 0 ; i <= 40 ; i++){
-      th = th - thresholdStep*i;
-//      time(&start);
-      newM = readPearsonCorrelationMatrix(th, &size);
-//      time(&end);
-//      if(verbose){
-//        fprintf(timing,"Minutes for cut matrix: %f\n", (end-start)/60.0);
-//      }
-      // fprintf(runInfo,"%f\t%d\n",th,size);
-      if(size >= 100){
-//        time(&start);
+    for (i = 0 ; i <= 40 ; i++) {
+      th = th - params.thresholdStep * i;
+      newM = read_similarity_matrix(th, &size, params);
+
+      if (size >= 100) {
         E = calculateEigen(newM, size);
-//        time(&end);
-//        if(verbose){
-//          fprintf(timing,"Minutes for cut matrix: %f\n", (end-start)/60.0);
-//        }
         free(newM);
-         print out eigenvalues to file
-        // fprintf(eigenF, "%f\t", th);
-        // for(i=0 ; i<size ; i++){
-          // fprintf(eigenF, "%f\t", E[i]);
-        // }
-        // fprintf(eigenF,"\n");
-//        time(&start);
-        chi = chiSquareTestUnfoldingNNSDWithPoisson(E, size, rmtParameter.nnsdHistogramBin, rmtParameter.minUnfoldingPace, rmtParameter.maxUnfoldingPace);
-//        time(&end);
-//        if(verbose){
-//          fprintf(timing,"Minutes Chi Square Testing: %f\n", (end-start)/60.0);
-//        }
+
+        // print out eigenvalues to file
+        fprintf(eigenF, "%f\t", th);
+        for (i=0 ; i<size ; i++) {
+          fprintf(eigenF, "%f\t", E[i]);
+        }
+        fprintf(eigenF, "\n");
+        chi = chiSquareTestUnfoldingNNSDWithPoisson(E, size, params.nnsdHistogramBin, params.minUnfoldingPace, params.maxUnfoldingPace);
         fprintf(chiF, "%f\t%f\t%d\n", th, chi, size);
+        fflush(chiF);
         free(E);
-        if(chi < minChi){
+
+        if (chi < minChi) {
           minChi = chi;
           minTH = th;
         }
-        if (chi < rmtParameter.chiSquareTestThreshold){
+        if (chi < params.chiSquareTestThreshold) {
           finalTH = th;
           finalChi = chi;
         }
-      }//end if size >= 100
+      } // end if size >= 100
       else{
         free(newM);
       }
-    }//end for 1 -> 40 loop
-  }//end if finalChi > rmt...
+    } // end for 1 -> 40 loop
+  } // end if finalChi > rmt...
 
-  //close the chi and eigen files now that results are written
+  // close the chi and eigen files now that results are written
   fclose(chiF);
-  // fclose(eigenF);
+  fclose(eigenF);
 
-  Set the Properties file according to success or failure
-
-  // fprintf(runInfo, "==================================\n");
-  if(finalChi < rmtParameter.chiSquareTestThreshold){
+  // Set the Properties file according to success or failure
+  if(finalChi < params.chiSquareTestThreshold){
     finalTH = ceil(finalTH * 10000) / 10000.0;
     FILE* th;
-    th = fileOpenHelper(".th.txt");
+    char filename[1024];
+    sprintf(filename, "%s.th.txt", params.fileprefix);
+    th = fopen(filename, "w");
     fprintf(th, "%f", finalTH);
     fclose(th);
     return 0;
@@ -354,7 +311,7 @@ int determinePearsonCorrelationThreshold_LargeMatrix() {
   }
 }
 
-*
+/*
  * Parses the correlation bin files to find pairs of genes with a 
  * correlation value greater than the given theshold and constructs
  * a new correlation matrix that only contains those pairs of genes.
@@ -368,12 +325,11 @@ int determinePearsonCorrelationThreshold_LargeMatrix() {
  *  A pointer to a floating point array.  The array is a correlation
  *  matrix containing only the genes that have at least one correlation value 
  *  greater than the given threshold.
- *
+ */
 
-float * readPearsonCorrelationMatrix(float th, int * size) {
+float * read_similarity_matrix(float th, int * size, RMTParameters params) {
 
   float * rowj;
-  char * filename; // the name of the correlation matrix bin file
   char num[4];
   int len;         // the length of the filename and path to the correlation bin file
   int i, h;        // used to iterate through the bin files
@@ -384,19 +340,11 @@ float * readPearsonCorrelationMatrix(float th, int * size) {
   int limit;       // the maximum row in the current correlation bin file
   int junk;        // a dummy variable
   FILE* in;
+  char filename[1024]; // used for storing the bin file name
 
-  memset(index1, -1, sizeof(int) * (numGenes));
+  memset(params.index1, -1, sizeof(int) * (params.numGenes));
 
-  rowj = (float*) malloc(sizeof(float) * numGenes);
-
-  // reserve the proper amount of memory for the filename and path
-  len =  strlen(inputFileName);
-  len += strlen(inputDir);
-  len += strlen(".mi");
-  len += strlen("xxx.bin");
-  len++;
-  filename = (char*) malloc(sizeof(char) * len);
-  memset(filename, '\0', len);
+  rowj = (float*) malloc(sizeof(float) * params.numGenes);
 
   // we need to know how many rows and columns we will have in our cut matrix.
   // the cut matrix is the matrix that only contains genes with a threshold
@@ -410,36 +358,32 @@ float * readPearsonCorrelationMatrix(float th, int * size) {
   // ------------------------------
   // Step #1: iterate through the binary correlation files to find out how many
   // genes there will be in the cut matrix.
-  z = (numGenes - 1) / numLinesPerFile;
+  z = (params.numGenes - 1) / params.numLinesPerFile;
   for (i = 0; i <= z; i++) {
-    memset(filename, '\0', len);
-    strcat(filename, inputDir);
-    strcat(filename, inputFileName);
-    strcat(filename, ".mi");
-    strcat(filename, itoa(i, num));
-    strcat(filename, ".bin");
+
+    sprintf(filename, "%s/%s.%s%d.bin", params.inputDir, params.fileprefix, params.method, i);
     in = fopen(filename, "rb");
     fread(&junk, sizeof(int), 1, in); // numGenes
     fread(&junk, sizeof(int), 1, in); // numLinesPerFile
     if (i != z) {
-      limit = (i + 1) * numLinesPerFile;
+      limit = (i + 1) * params.numLinesPerFile;
     }
     else{
-      limit = numGenes;
+      limit = params.numGenes;
     }
 
     // iterate through the rows and columns of the file and look for 
     // entries greater than the provided threshold.  When found, use
     // the row and column indexes to set a '1' in the UsedFlag array.
     // this array indicates which genes have values we want to keep. 
-    for (j = i * numLinesPerFile; j < limit; j++) {
+    for (j = i * params.numLinesPerFile; j < limit; j++) {
       fread(rowj, sizeof(float), j + 1, in);
       for (k = 0; k < j + 1; k++) {
         // if the correlation value is greater than the given threshold then 
         // flag the row/column indexes
         if (k != j && fabs(rowj[k]) > th) {
-          UsedFlag[k] = 1;
-          UsedFlag[j] = 1;
+          params.UsedFlag[k] = 1;
+          params.UsedFlag[j] = 1;
         }
       }
     }
@@ -448,12 +392,19 @@ float * readPearsonCorrelationMatrix(float th, int * size) {
 
   // get the number of genes (or probesets) that have a correlation value
   // greater than the provided threshold value
-  used = findNumUsed();
-  setIndexArray();
+  used = 0;
+  j = 0;
+  for (i = 0; i < params.numGenes; i++) {
+    if (params.UsedFlag[i] != 0) {
+      used++;
+      params.index1[i] = j;
+      j++;
+    }
+  }
 
   // now that we know how many genes have a threshold greater than the
   // given we can allocate memory for new cut matrix
-  float* cutM = (float*)calloc(used*used, sizeof(float));
+  float * cutM = (float *) calloc(used * used, sizeof(float));
 
   // initialize the diagonal to 1
   for (i = 0; i < used; i++) {
@@ -467,30 +418,25 @@ float * readPearsonCorrelationMatrix(float th, int * size) {
   // Step #2: Now build the cut matrix by retreiving the correlation values
   // for each of the genes identified previously
   for(h = 0; h < z; h++){
-    memset(filename,'\0', len );
-    strcat(filename, inputDir);
-    strcat(filename, inputFileName);
-    strcat(filename, ".mi");
-    strcat(filename, itoa(h, num));
-    strcat(filename, ".bin");
+    sprintf(filename, "%s/%s.%s%d.bin", params.inputDir, params.fileprefix, params.method, h);
     in = fopen(filename, "rb");
     fread(&junk, sizeof(int), 1, in); // numGenes
     fread(&junk, sizeof(int), 1, in); // numLinesPerFile
     if (i != z) {
-      limit = (h + 1) * numLinesPerFile;
+      limit = (h + 1) * params.numLinesPerFile;
     }
     else{
-      limit = numGenes;
+      limit = params.numGenes;
     }
 
     // iterate through the rows of the bin file
-    for (i = h * numLinesPerFile; i < limit; i++) {
+    for (i = h * params.numLinesPerFile; i < limit; i++) {
       fread(rowj, sizeof(float), i+1, in);
       // iterate through the columns of the bin file
       for (j = 0; j < i + 1; j++){
         // if the correlation value is greater than the given then save the value
         if (i != j && fabs(rowj[j]) > th){
-          cutM[index1[j] + used * index1[i]] = rowj[j];
+          cutM[params.index1[j] + used * params.index1[i]] = rowj[j];
         }
       }
     }
@@ -498,48 +444,14 @@ float * readPearsonCorrelationMatrix(float th, int * size) {
   }
 
   free(rowj);
-  free(filename);
   return cutM;
 }
 
-*
- * Opens a file using the input file name as theprefix and a given string
- * as a suffix.
- *
- * @param char * extension
- *   A string to be used as the file suffix.
- *
- * @return 
- *   A file pointer
-
-FILE * fileOpenHelper(char* extension) {
-  char * filename; // filename buffer
-  FILE * fp;       // file pointer to be returned
-  int len;         // holds the length of the newly created file name
-
-  // determine the size of the file name and build the filename
-  len = strlen(inputFileName);
-  len += strlen(extension);
-  len++;
-  filename = (char *) malloc(sizeof(char) * len);
-  memset(filename,'\0', len);
-  strcat(filename,inputFileName);
-  strcat(filename,extension);
-
-  // open the file
-  fp = fopen(filename, "w");
-  if (fp == NULL) {
-    printf("\nUnable to create file '%s' . Please check input filename for validity.\nExiting.\n", filename);
-    exit(0);
-  }
-  free(filename);
-  return fp;
-}
-
-*
+/*
  * @param double* l
  * @param int idx1
  * @param int idx2
+ */
 
 void swapD(double* l, int idx1, int idx2){
   double temp = l[idx1];
@@ -548,10 +460,11 @@ void swapD(double* l, int idx1, int idx2){
   return;
 }
 
-*
+/*
  * @param float* l
  * @param int idx1
  * @param int idx2
+ */
 
 void swapF(float* l, int idx1, int idx2){
   float temp = l[idx1];
@@ -560,9 +473,10 @@ void swapF(float* l, int idx1, int idx2){
   return;
 }
 
-*
+/*
  * @param double* l
  * @param int size
+ */
 
 void quickSortD(double* l, int size){
   if(size<=1) return;
@@ -583,9 +497,10 @@ void quickSortD(double* l, int size){
   return;
 }
 
-*
+/*
  * @param float* l
  * @param int size
+ */
 
 void quickSortF(float* l, int size){
   if(size<=1) return;
@@ -606,7 +521,7 @@ void quickSortF(float* l, int size){
   return;
 }
 
-*
+/*
  * Calculates the eigenvalues of the given matrix.  This function is a wrapper
  * for the ssyev_ function of the LAPACK package.
  *
@@ -619,6 +534,7 @@ void quickSortF(float* l, int size){
  * @return
  *   A pointer to an array of floating point numbers representing the
  *   array of eigenvalues
+ */
 
 float* calculateEigen(float* mat, int size){
 
@@ -646,12 +562,13 @@ float* calculateEigen(float* mat, int size){
   return W;
 }
 
-*
+/*
  * returned array will always be sorted and of length size-1
  *
  * @param float* e
  * @param int size
  * @param int m
+ */
 
 double* unfolding(float* e, int size, int m){
   int count=1, i,j=0;//count equals 1 initially because of 2 lines following loop which propogates the arrays
@@ -694,10 +611,11 @@ double* unfolding(float* e, int size, int m){
   return yy;
 }
 
-*
+/*
  * @param float* eigens
  * @param int size
  * @param int* newSize
+ */
 
 float* degenerate(float* eigens, int size, int* newSize){
   int i, j=0, count=1;//because one flag is set before the loop
@@ -730,11 +648,12 @@ float* degenerate(float* eigens, int size, int* newSize){
   return remDups;
 }
 
-*
+/*
  * @param float* eigens
  * @param int size
  * @param double bin
  * @param int pace
+ */
 
 double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace){
   int newSize;
@@ -762,7 +681,7 @@ double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bi
   return chi;
 }
 
-*
+/*
  * calls same name, 4 args instead of 5
  *
  * @param float* eigens
@@ -770,6 +689,7 @@ double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bi
  * @param double double bin
  * @param int minPace
  * @param int maxPace
+ */
 
 double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, double bin, int minPace, int maxPace){
   double chiTest =0;
@@ -777,11 +697,36 @@ double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, double bin
   int m;
 
   i=0;
-  for(m = minPace; m<maxPace; m++){
+  for(m = minPace; m < maxPace; m++){
     chiTest += chiSquareTestUnfoldingNNSDWithPoisson4(eigens, size, bin, m);
     i++;
   }
 
   return chiTest/i;
 }
-*/
+
+/**
+ * Prints the command-line usage instructions for the similarity command
+ */
+void print_threshold_usage() {
+  printf("\n");
+  printf("Usage: ./RMTGeneNet threshold [options]\n");
+  printf("The list of required options:\n");
+  printf("  --ematrix|-e The file name that contains the expression matrix.\n");
+  printf("                 The rows must be genes or probe sets and columns are samples\n");
+  printf("  --method|-m  The correlation method used. Supported methods include\n");
+  printf("                 Pearson's correlation and BSpline estimation of Mutual Information.\n");
+  printf("                 Provide either 'pc' or mi' as values respectively.\n");
+  printf("\n");
+  printf("Optional:\n");
+  printf("  --th|-t      A decimal indicating the start threshold. For Pearson's.\n");
+  printf("                 Correlation (--method pc), the default is 0.99. For Mutual\n");
+  printf("                 information (--method mi), the default is the maximum MI value\n");
+  printf("                 in the similarity matrix\n");
+  printf("  --step|-s    The threshold step size, to subtract at each iteration of RMT.\n");
+  printf("                 The default is 0.001\n");
+  printf("  --chi|-c     The Chi-square test value which when encountered, RMT will stop.\n");
+  printf("                 The default is 200 (corresponds to p-value of 0.01)\n");
+  printf("  --perf       Provide this flag to enable performance monitoring.\n");
+  printf("\n");
+}
