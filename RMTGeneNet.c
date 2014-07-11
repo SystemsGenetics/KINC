@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
     print_usage();
     exit(-1);
   }
+  return 0;
 }
 
 /**

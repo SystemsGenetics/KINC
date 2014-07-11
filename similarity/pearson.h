@@ -4,7 +4,7 @@
 #include "../similarity.h"
 
 
-void calculate_pearson(CCMParameters params, double ** data, int * histogram);
+
 
 
 #endif

@@ -15,6 +15,7 @@ int do_threshold(int argc, char *argv[]) {
   params.thresholdStart = 0.99;
   params.thresholdStep  = 0.001;
   params.chiSoughtValue = 200;
+  params.min_size = 100;
   strcpy(params.method, "pc");
 
   // loop through the incoming arguments until the
@@ -114,21 +115,24 @@ int do_threshold(int argc, char *argv[]) {
   }
 
   if (strcmp(params.method, "mi") == 0) {
-    params.inputDir = "MI/";
+    params.inputDir = "MI";
   }
   else if (strcmp(params.method, "pc") == 0) {
-    params.inputDir = "Pearson/";
+    params.inputDir = "Pearson";
   }
 
   // open the file and get the number of genes and the lines per file
   // these data are the first two integers in the file
   char filename[1024];
   FILE* info;
-  sprintf(filename, "%s.%s%d.bin", params.fileprefix, params.method, 0);
+  sprintf(filename, "%s/%s.%s%d.bin", params.inputDir, params.fileprefix, params.method, 0);
+  // TODO: check that file exists before trying to open
   info = fopen(filename, "rb");
   fread(&params.numGenes, sizeof(int), 1, info);
   fread(&params.numLinesPerFile, sizeof(int), 1, info);
   fclose(info);
+
+  printf("  Genes: %d, Num lines per file: %d\n", params.numGenes, params.numLinesPerFile);
 
   //initialize the global RMTParameters struct
   params.nnsdHistogramBin       = 0.05;
@@ -138,18 +142,15 @@ int do_threshold(int argc, char *argv[]) {
   params.mimiModuleSize         = 4;
   params.edHistogramBin         = 0.1;
 
-  // allocate memory for UsedFlags
+  // allocate memory for s and cutM_index arrays
   params.UsedFlag = (int *) malloc(params.numGenes * sizeof(int));
-
-  // allocate memory for index
-  params.index1 = (int *) malloc(params.numGenes * sizeof(int));
+  params.cutM_index = (int *) malloc(params.numGenes * sizeof(int));
 
   find_threshold(params);
 
-  free(params.index1);
+  // free memory
+  free(params.cutM_index);
   free(params.UsedFlag);
-
-  // fclose(runInfo);
 
   // if performance monitoring is enabled then write the timing data
   if(params.perf) {
@@ -176,22 +177,13 @@ char* itoa(int val, char* ptr){
  *
  */
 int find_threshold(RMTParameters params) {
+
   float* newM;
   int size;
   time_t start, end;
   FILE* eigenF, *chiF;
   char chi_filename[1024];  // the output file name
   char eigen_filename[1024];  // the output file name
-
-
-  // open the output files
-  sprintf(chi_filename, "%s.chiVals.txt", params.fileprefix);
-  chiF = fopen(chi_filename, "w");
-  sprintf(eigen_filename, "%s.eigenVals.txt", params.fileprefix);
-  eigenF = fopen(eigen_filename, "w");
-
-
-  fprintf(chiF, "Threshold\tChi-square\tCut Matrix Size\n");  
 
   float th = params.thresholdStart;
   double finalTH  = 0.0;
@@ -202,7 +194,14 @@ int find_threshold(RMTParameters params) {
   double maxChi   = 0.0;
   int i           = 0;
   double chi;
-  float* E;  //array for eigenvalues
+  float * E;  //array for eigenvalues
+
+  // open the output files
+  sprintf(chi_filename, "%s.chiVals.txt", params.fileprefix);
+  chiF = fopen(chi_filename, "w");
+  sprintf(eigen_filename, "%s.eigenVals.txt", params.fileprefix);
+  eigenF = fopen(eigen_filename, "w");
+  fprintf(chiF, "Threshold\tChi-square\tCut Matrix Size\n");
 
   do {
     // decrement the threshold using the step value and then retreive the 
@@ -213,36 +212,41 @@ int find_threshold(RMTParameters params) {
     newM = read_similarity_matrix(th, &size, params);
 
     printf("  found matrix of size n x n, n = %d...\n", size);
-    if (size >= 100) {
+    if (size >= params.min_size) {
       printf("  calculating eigenvalues...\n");
       E = calculateEigen(newM, size);
       free(newM);
 
       // print out eigenvalues to file
       fprintf(eigenF, "%f\t", th);
-      for(i=0 ; i<size ; i++){
+      for (i = 0; i < size ; i++) {
         fprintf(eigenF, "%f\t", E[i]);
       }
       fprintf(eigenF,"\n");
 
       printf("  testing similarity of NNSD with Poisson...\n");
-      chi = chiSquareTestUnfoldingNNSDWithPoisson(E, size, params.nnsdHistogramBin, params.minUnfoldingPace, params.maxUnfoldingPace);
-      fprintf(chiF, "%f\t%f\t%d\n", th, chi, size);
-      fflush(chiF);
+      chi = chiSquareTestUnfoldingNNSDWithPoisson(E, size, params);
       free(E);
 
-      printf("  chi = %f\n", chi);
-      if(chi < minChi){
-        minChi = chi;
-        minTH = th;
-      }
-      if (chi < params.chiSquareTestThreshold){
-        finalTH = th;
-        finalChi = chi;
-      }
-      if (finalChi < params.chiSquareTestThreshold && chi > finalChi && th < finalTH){
-        maxChi = chi;
-        maxTH = th;
+      // if the chi-square test did not fail (== -1) then set the values
+      // for the next iteration
+      if (chi != -1) {
+        fprintf(chiF, "%f\t%f\t%d\n", th, chi, size);
+        fflush(chiF);
+        printf("  chi = %f\n", chi);
+
+        if(chi < minChi){
+          minChi = chi;
+          minTH = th;
+        }
+        if (chi < params.chiSquareTestThreshold){
+          finalTH = th;
+          finalChi = chi;
+        }
+        if (finalChi < params.chiSquareTestThreshold && chi > finalChi && th < finalTH){
+          maxChi = chi;
+          maxTH = th;
+        }
       }
     }
     else{
@@ -270,7 +274,7 @@ int find_threshold(RMTParameters params) {
           fprintf(eigenF, "%f\t", E[i]);
         }
         fprintf(eigenF, "\n");
-        chi = chiSquareTestUnfoldingNNSDWithPoisson(E, size, params.nnsdHistogramBin, params.minUnfoldingPace, params.maxUnfoldingPace);
+        chi = chiSquareTestUnfoldingNNSDWithPoisson(E, size, params);
         fprintf(chiF, "%f\t%f\t%d\n", th, chi, size);
         fflush(chiF);
         free(E);
@@ -329,8 +333,8 @@ int find_threshold(RMTParameters params) {
 
 float * read_similarity_matrix(float th, int * size, RMTParameters params) {
 
-  float * rowj;
-  char num[4];
+  float * cutM;    // the resulting cut similarity matrix
+  float * rowi;    // holds the float value from row i in the bin file
   int len;         // the length of the filename and path to the correlation bin file
   int i, h;        // used to iterate through the bin files
   int j;           // used to iterate through the rows of each bin file
@@ -342,9 +346,9 @@ float * read_similarity_matrix(float th, int * size, RMTParameters params) {
   FILE* in;
   char filename[1024]; // used for storing the bin file name
 
-  memset(params.index1, -1, sizeof(int) * (params.numGenes));
+  memset(params.cutM_index, -1, sizeof(int) * (params.numGenes));
 
-  rowj = (float*) malloc(sizeof(float) * params.numGenes);
+  rowi = (float*) malloc(sizeof(float) * params.numGenes);
 
   // we need to know how many rows and columns we will have in our cut matrix.
   // the cut matrix is the matrix that only contains genes with a threshold
@@ -374,14 +378,14 @@ float * read_similarity_matrix(float th, int * size, RMTParameters params) {
 
     // iterate through the rows and columns of the file and look for 
     // entries greater than the provided threshold.  When found, use
-    // the row and column indexes to set a '1' in the UsedFlag array.
+    // the row and column indexes to set a '1' in the  array.
     // this array indicates which genes have values we want to keep. 
     for (j = i * params.numLinesPerFile; j < limit; j++) {
-      fread(rowj, sizeof(float), j + 1, in);
+      fread(rowi, sizeof(float), j + 1, in);
       for (k = 0; k < j + 1; k++) {
         // if the correlation value is greater than the given threshold then 
         // flag the row/column indexes
-        if (k != j && fabs(rowj[k]) > th) {
+        if (k != j && fabs(rowi[k]) > th) {
           params.UsedFlag[k] = 1;
           params.UsedFlag[j] = 1;
         }
@@ -390,22 +394,21 @@ float * read_similarity_matrix(float th, int * size, RMTParameters params) {
     fclose(in);
   }
 
-  // get the number of genes (or probesets) that have a correlation value
+  // get the number of genes (or probe sets) that have a correlation value
   // greater than the provided threshold value
   used = 0;
   j = 0;
   for (i = 0; i < params.numGenes; i++) {
-    if (params.UsedFlag[i] != 0) {
+    if (params.UsedFlag[i] == 1) {
       used++;
-      params.index1[i] = j;
+      params.cutM_index[i] = j;
       j++;
     }
   }
 
   // now that we know how many genes have a threshold greater than the
   // given we can allocate memory for new cut matrix
-  float * cutM = (float *) calloc(used * used, sizeof(float));
-
+  cutM = (float *) calloc(used * used, sizeof(float));
   // initialize the diagonal to 1
   for (i = 0; i < used; i++) {
     cutM[i + i * used] = 1;
@@ -415,35 +418,43 @@ float * read_similarity_matrix(float th, int * size, RMTParameters params) {
   *size = used;
 
   // ------------------------------
-  // Step #2: Now build the cut matrix by retreiving the correlation values
-  // for each of the genes identified previously
-  for(h = 0; h < z; h++){
-    sprintf(filename, "%s/%s.%s%d.bin", params.inputDir, params.fileprefix, params.method, h);
+  // Step #2: Now build the cut matrix by retrieving the correlation values
+  // for each of the genes identified previously.
+  for (i = 0; i <= z; i++) {
+
+    sprintf(filename, "%s/%s.%s%d.bin", params.inputDir, params.fileprefix, params.method, i);
     in = fopen(filename, "rb");
     fread(&junk, sizeof(int), 1, in); // numGenes
     fread(&junk, sizeof(int), 1, in); // numLinesPerFile
     if (i != z) {
-      limit = (h + 1) * params.numLinesPerFile;
+      limit = (i + 1) * params.numLinesPerFile;
     }
     else{
       limit = params.numGenes;
     }
-
     // iterate through the rows of the bin file
-    for (i = h * params.numLinesPerFile; i < limit; i++) {
-      fread(rowj, sizeof(float), i+1, in);
-      // iterate through the columns of the bin file
-      for (j = 0; j < i + 1; j++){
+    for (j = i * params.numLinesPerFile; j < limit; j++) {
+      fread(rowi, sizeof(float), j + 1, in);
+      // iterate through the columns of row i
+      for (k = 0; k < j + 1; k++){
         // if the correlation value is greater than the given then save the value
-        if (i != j && fabs(rowj[j]) > th){
-          cutM[params.index1[j] + used * params.index1[i]] = rowj[j];
+        if (k != j && fabs(rowi[k]) > th){
+          cutM[params.cutM_index[k] + (used * params.cutM_index[k])] = rowi[k];
         }
       }
     }
     fclose(in);
   }
 
-  free(rowj);
+  // print the cut matrix
+  for (i = 0; i < used; i++) {
+    for (j = 0; j < used; j++) {
+      //printf("%f ", cutM[i * used + j]);
+    }
+    //printf("\n");
+  }
+
+  free(rowi);
   return cutM;
 }
 
@@ -525,20 +536,20 @@ void quickSortF(float* l, int size){
  * Calculates the eigenvalues of the given matrix.  This function is a wrapper
  * for the ssyev_ function of the LAPACK package.
  *
- * @param float *mat
+ * @param float * smatrix
  *   A pointer to an array of floating point numbers representing the
- *   square n x n correlation matrix.
+ *   square n x n similarity matrix.
  * @param int size
- *   The size, n, of the cut n x n matrix.
+ *   The size, n, of the n x n matrix.
  *
  * @return
  *   A pointer to an array of floating point numbers representing the
  *   array of eigenvalues
  */
 
-float* calculateEigen(float* mat, int size){
+float* calculateEigen(float * smatrix, int size){
 
-  char jobz = 'N';      // N means to not don't compute eigenvectors, just eigenvalues
+  char jobz = 'N';      // N means don't compute eigenvectors, just eigenvalues
   char uplo = 'U';      // U means the upper matrix is stored
   float * W;            // the array where eignvalues are stored
   float * work;         // a working array. This will be 5 times the size of the final array
@@ -549,7 +560,7 @@ float* calculateEigen(float* mat, int size){
   W    = (float *) malloc(sizeof(float) * size);
   work = (float *) malloc(sizeof(float) * 5 * size);
 
-  ssyev_(&jobz, &uplo , &size, mat, &size, W, work, &lwork, &rc);
+  ssyev_(&jobz, &uplo , &size, smatrix, &size, W, work, &lwork, &rc);
 
   // report any errors
   if (rc < 0) {
@@ -570,40 +581,48 @@ float* calculateEigen(float* mat, int size){
  * @param int m
  */
 
-double* unfolding(float* e, int size, int m){
-  int count=1, i,j=0;//count equals 1 initially because of 2 lines following loop which propogates the arrays
-  for(i=0; i<size-m; i+=m) count++;
-  double* oX = (double*) malloc(sizeof(double)*count);
-  double* oY = (double*) malloc(sizeof(double)*count);
-  for(i=0; i<size-m; i+=m){
-    oX[j]=e[i];
-    oY[j]= (i+1.0)/(double)size;
+double * unfolding(float * e, int size, int m){
+  int count = 1; // Count equals 1 initially because of 2 lines following loop
+                 // which propagates the arrays.
+  int i, j = 0;
+  double * oX;
+  double * oY;
+  for(i = 0; i < size - m; i += m) {
+    count++;
+  }
+
+  oX = (double*) malloc(sizeof(double) * count);
+  oY = (double*) malloc(sizeof(double) * count);
+
+  for(i = 0; i < size - m; i += m){
+    oX[j] = e[i];
+    oY[j] = (i + 1.0) / (double) size;
     j++;
   }
   oX[count-1] = e[size-1];
   oY[count-1] = 1;
 
-  for(i=1;i<count;i++){
-    if(!(oX[i-1]<oX[i])){
+  for (i = 1; i < count; i++) {
+    if (!(oX[i-1] < oX[i])) {
       printf("\nat postion %d a problem exists\n", i);
-      printf("oX[i-1]=%f whilst oX[i]=%f\n",oX[i-1],oX[i]);
+      printf("oX[i-1] = %f whilst oX[i] = %f\n", oX[i-1], oX[i]);
     }
   }
-  double* yy = (double*) malloc(sizeof(double)*(size));
+  double * yy = (double*) malloc(sizeof(double)*(size));
 
   gsl_interp_accel *acc = gsl_interp_accel_alloc();
-  gsl_spline *spline = gsl_spline_alloc(gsl_interp_cspline, count);//see gsl docs, chapter 27: cspline is a natural spline
+  gsl_spline *spline = gsl_spline_alloc(gsl_interp_cspline, count); //see gsl docs, chapter 27: cspline is a natural spline
   gsl_spline_init(spline, oX, oY, count);
 
-  for(i=0;i<(size-2);i++){
+  for (i = 0; i < (size-2); i++) {
     yy[i+1] = gsl_spline_eval(spline, e[i+1], acc);
   }
   gsl_spline_free(spline);
   gsl_interp_accel_free(acc);
   yy[0] = 0.0;
   yy[size-1] = 1.0;
-  for(i=0;i<size-1;i++){
-    yy[i] = size*(yy[i+1]-yy[i]);
+  for (i = 0;i < size - 1; i++) {
+    yy[i] = size * (yy[i+1] - yy[i]);
   }
   quickSortD(yy, size-1);
   free(oX);
@@ -611,98 +630,155 @@ double* unfolding(float* e, int size, int m){
   return yy;
 }
 
-/*
+/**
+ * Removes duplicate eigenvalues from an array of eigenvalues.
+ *
  * @param float* eigens
+ *   The eigenvalue array
  * @param int size
+ *   The size of the eigenvalue array
  * @param int* newSize
+ *   Upon return, will contain the new size of the updated array
+ *
+ * @return float *
+ *   An array of eigenvalues with duplicates removed.
  */
 
 float* degenerate(float* eigens, int size, int* newSize){
-  int i, j=0, count=1;//because one flag is set before the loop
-  for(i=0;i<size;i++){
-    if(fabs(eigens[i]) < 0.000001){
+  int i, j = 0;   // used to iterate through the eigenvalues
+  int count = 1;  // because one flag is set before the loop
+  int * flags;
+  float * remDups;
+
+  // iterate through the eigenvalues and change those with a value less
+  // that 0.000001 to zero.
+  for (i = 0; i < size; i++) {
+    if (fabs(eigens[i]) < 0.000001) {
       eigens[i] = 0.0;
     }
   }
-  int* flags = (int*) malloc(sizeof(int)*size);
-  memset(flags, 0, size*sizeof(int));
+
+  // iterate through the eigenvalues and flag duplicates
+  flags = (int*) malloc(sizeof(int) * size);
+  memset(flags, 0, size * sizeof(int));
   float temp = eigens[0];
-  flags[0]=1;
-  for(i=1;i<size; i++){
-    if(fabs(eigens[i]-temp) > 0.000001){
+  flags[0] = 1;
+  for(i = 1; i < size; i++){
+    if(fabs(eigens[i] - temp) > 0.000001){
       count++;
       flags[i] = 1;
       temp = eigens[i];
     }
   }
-  float* remDups = (float*) malloc(sizeof(float)*count);//remDups means "removed duplicates"
-  for(i=0;i<size;i++){
-    if(flags[i]==1){
+
+  // create a new vector without duplicates
+  remDups = (float*) malloc(sizeof(float) * count);
+  for(i = 0; i < size; i++){
+    if(flags[i] == 1){
       remDups[j] = eigens[i];
       j++;
     }
   }
   free(flags);
+
+  // set the newSize argument
   *newSize = count;
 
   return remDups;
 }
 
 /*
- * @param float* eigens
- * @param int size
- * @param double bin
- * @param int pace
- */
-
-double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace){
-  int newSize;
-  float* newE;
-  double* edif;
-  newE = degenerate(eigens, size, &newSize);
-  size = newSize;
-
-  edif = unfolding(newE, size, pace);
-  free(newE);
-  size = size-1; //see note above unfolding function, will return an array of size-1
-  int n = (int) (3.0/bin) + 1;
-  double obj, expect, chi = 0;
-  int i, j, count;
-  for(i=0;i<n;i++){
-    count = 0;
-    for(j=0;j<size;j++){
-      if(edif[j]>i*bin && edif[j] < (i+1)*bin) count++;
-    }
-    obj = (double) count;
-    expect = (exp(-1*i*bin)-exp(-1*(i+1)*bin))*size;
-    chi += (obj -expect)*(obj-expect)/expect;
-  }
-  free(edif);
-  return chi;
-}
-
-/*
- * calls same name, 4 args instead of 5
+ * Returns the averaged Chi-square test across a range of unfolding trials.
  *
  * @param float* eigens
+ *   An array of eigenvalues
  * @param int size
- * @param double double bin
- * @param int minPace
- * @param int maxPace
+ *   The size of the eigenvalue array
+ *
+ * @return double
+ *   A Chi-square value or -1 for failure
  */
 
-double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, double bin, int minPace, int maxPace){
-  double chiTest =0;
+double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, RMTParameters params){
+  double chiTest = 0;
   int i = 0;
   int m;
 
-  i=0;
-  for(m = minPace; m < maxPace; m++){
-    chiTest += chiSquareTestUnfoldingNNSDWithPoisson4(eigens, size, bin, m);
+  // We want to generate an average Chi-square value across various levels of
+  // unfolding. Therefore, we iterate through the min and max unfolding pace
+  // and then average the Chi-square values returned
+  for (m = params.minUnfoldingPace; m < params.maxUnfoldingPace; m++) {
+    chiTest += chiSquareTestUnfoldingNNSDWithPoisson4(eigens, size, params.nnsdHistogramBin, m, params);
+
+    // if the test failed then return -1
+    if (chiTest == -1) {
+      return -1;
+    }
     i++;
   }
 
-  return chiTest/i;
+  // return the average Chi-square value
+  return chiTest / i;
+}
+
+/**
+ * Performs a Chi-square test by comparing NNSD of the eigenvalues
+ * to
+ *
+ * @param float* eigens
+ *   The eigenvalue array
+ * @param int size
+ *   The size of the eigenvalue array
+ * @param double bin
+ *   The relative histogram bin size
+ * @param int pace
+ *   The unfolding pace
+ * @param RMTParameters
+ *
+ *
+ * @return double
+ *   A Chi-square value, or -1 on failure
+ */
+
+double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace, RMTParameters params){
+  int newSize;   // the new size of the eigenvalue array after duplicates removed
+  float * newE;  // the new eigenvalue array after duplicates removed
+  double * edif;
+  double obj;
+  double expect;
+  double chi = 0;
+  int i, j, count;
+
+
+  // remove duplicates from the list of eigenvalues
+  newE = degenerate(eigens, size, &newSize);
+  size = newSize;
+
+  // make sure our vector of eigenvalues is still large enough after
+  // duplicates have been removed. If not, return a -1
+  if (size < params.min_size) {
+    printf("    Chi-square test failed: eigenvalue array too small after duplicate removal. See the eigenvector output file.\n");
+    return -1;
+  }
+
+  edif = unfolding(newE, size, pace);
+  free(newE);
+  size = size - 1; // see note above unfolding function, will return an array of size-1
+  int n = (int) (3.0/bin) + 1;
+
+  for (i = 0; i < n; i++) {
+    count = 0;
+    for (j=0; j < size; j++) {
+      if (edif[j] > i * bin && edif[j] < (i + 1) * bin) {
+        count++;
+      }
+    }
+    obj = (double) count;
+    expect = (exp(-1 * i * bin) - exp(-1 * (i + 1) *bin)) * size;
+    chi += (obj - expect) * (obj - expect) / expect;
+  }
+  free(edif);
+  return chi;
 }
 
 /**

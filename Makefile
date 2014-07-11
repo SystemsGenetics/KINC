@@ -4,7 +4,7 @@ EXE_DIR =
 
 CCFLAGS =
 INCLUDES = 
-LDFLAGS = -Wall -lm -lgsl -lgslcblas -fopenmp -llapack -lblas -lpthread
+LDFLAGS = -Wall -lm -lgsl -lgslcblas -llapack -lblas -lpthread
 
 OBJS = similarity/bspline_mi.o similarity/pearson.o similarity.o threshold.o RMTGeneNet.o
 EXE = RMTGeneNet

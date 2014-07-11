@@ -25,7 +25,7 @@ typedef struct{
   char *infilename;   // the input file name
   char method[10];    // specifies the method: cor, mi
 
-  //set some global params for the RMM stepping
+  // Set some global params for the RMM stepping.
   float thresholdStart; // the threshold to start generating cutMatrices with (actually, +thresholdStep)
   float thresholdStep;  // the threshold step for each iteration of generation
   float chiSoughtValue; // the chiValue the while loop will end on
@@ -43,9 +43,15 @@ typedef struct{
   int numGenes;          // the number of genes, n, in the nxn similarity matrix
   int numLinesPerFile;   // the number of lines per bin file
 
-  int* UsedFlag;         // holds an array flagging use of indicies in the matrix
+  // Holds an array flagging which genes meet the given threshold in the matrix.
+  int* UsedFlag;
 
-  int* index1;           // had to rename because index was already taken
+  // An array for indicating the index of the gene in the cut matrix.
+  int * cutM_index;
+
+  // The minimum size of the cut matrix.  If the cut matrix is smaller than
+  // this size, a test will no be performed.
+  int min_size;
 
 } RMTParameters;
 
@@ -67,9 +73,9 @@ void quickSortF(float* l, int size);
 
 float* calculateEigen(float* mat, int size);
 
-double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, double bin, int minPace, int maxPace);
+double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, RMTParameters params);
 
-double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace);
+double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace, RMTParameters params);
 
 void print_threshold_usage();
 #endif
