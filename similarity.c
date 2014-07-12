@@ -103,35 +103,35 @@ int do_similarity(int argc, char *argv[]) {
 
   // make sure the required arguments are set and appropriate
   if (!params.infilename) {
-    printf("Please provide an expression matrix (--ematrix option). Use the -h option for help.\n");
+    fprintf(stderr,"Please provide an expression matrix (--ematrix option).\n");
     exit(-1);
   }
 
   if (!params.method) {
-    printf("Please provide the method (--method option). Use the -h option for help.\n");
+    fprintf(stderr,"Please provide the method (--method option).\n");
     exit(-1);
   }
 
   // make sure we have a positive integer for the rows and columns of the matrix
   if (params.rows < 0 || params.rows == 0) {
-    printf("Please provide a positive integer value for the number of rows in the \n");
-    printf("expression matrix (--rows option). Use the -h option for help.\n");
+    fprintf(stderr,"Please provide a positive integer value for the number of rows in the \n");
+    fprintf(stderr,"expression matrix (--rows option).\n");
     exit(-1);
   }
   if (params.cols < 0 || params.cols == 0) {
-    printf("Please provide a positive integer value for the number of columns in\n");
-    printf("the expression matrix (--cols option). Use the -h option for help.\n");
+    fprintf(stderr,"Please provide a positive integer value for the number of columns in\n");
+    fprintf(stderr,"the expression matrix (--cols option).\n");
     exit(-1);
   }
 
   // make sure the input file exists
   if (access(params.infilename, F_OK) == -1) {
-    printf("Error: The input file does not exists or is not readable.\n");
+    fprintf(stderr,"Error: The input file does not exists or is not readable.\n");
     exit(-1);
   }
 
   if (strcmp(params.method, "pc") != 0 && strcmp(params.method, "mi") != 0) {
-    printf("Error: The method (--method option) must either be 'pc' or 'mi'. Use the -h option for help.\n");
+    fprintf(stderr,"Error: The method (--method option) must either be 'pc' or 'mi'.\n");
     exit(-1);
   }
 
@@ -187,7 +187,7 @@ int do_similarity(int argc, char *argv[]) {
   // if output of the histogram is enabled then print it
   print_histogram(params, histogram);
 
-  printf("Done.\n");
+  printf("\nDone.\n");
   return 1;
 }
 
@@ -206,6 +206,7 @@ double ** load_ematrix(CCMParameters params) {
   char gene_name[255];   // holds the gene or probe set name from the first column
   double ** data;
   int i, j;  // integers for looping
+  char element[1024]; // holds value when reading from file
 
   // allocate the data array for storing the input expression matrix
   data = (double**) malloc(sizeof(double *) * params.rows);
@@ -221,7 +222,7 @@ double ** load_ematrix(CCMParameters params) {
     // skip over the header if one is provided
     if (i == 0 && params.headers) {
       printf("Skipping headers...\n");
-      char element[1024];
+
       for (j = 0; j < params.cols; j++) {
         fscanf(infile, "%s", element);
       }
@@ -299,7 +300,7 @@ int * init_histogram(CCMParameters params) {
  */
 void print_histogram(CCMParameters params, int * histogram) {
   int m; // integer used or looping
-  char outfilename[50];  // the output file name
+  char outfilename[1024];  // the output file name
 
 
   // output the correlation histogram

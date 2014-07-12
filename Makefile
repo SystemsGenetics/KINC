@@ -6,7 +6,7 @@ CCFLAGS =
 INCLUDES = 
 LDFLAGS = -Wall -lm -lgsl -lgslcblas -llapack -lblas -lpthread
 
-OBJS = similarity/bspline_mi.o similarity/pearson.o similarity.o threshold.o RMTGeneNet.o
+OBJS = similarity/bspline_mi.o similarity/pearson.o similarity.o threshold.o extract.o RMTGeneNet.o
 EXE = RMTGeneNet
 
 all: ${OBJS}
@@ -20,9 +20,12 @@ similarity/bspline_mi.o: similarity/bspline_mi.c similarity/bspline_mi.h
 
 similarity.o: similarity.c similarity.h
 	${CC} -c ${CCFLAGS} ${INCLUDES} similarity.c
-	
+
 threshold.o: threshold.c threshold.h
 	${CC} -c ${CCFLAGS} ${INCLUDES} threshold.c
+
+extract.o: extract.c extract.h
+	${CC} -c ${CCFLAGS} ${INCLUDES} extract.c
 
 RMTGeneNet.o: RMTGeneNet.c RMTGeneNet.h
 	${CC} -c ${CCFLAGS} ${INCLUDES} RMTGeneNet.c

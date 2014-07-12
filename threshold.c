@@ -81,23 +81,23 @@ int do_threshold(int argc, char *argv[]) {
 
   // make sure the required arguments are set and appropriate
   if (!params.infilename) {
-    printf("Please provide an expression matrix (--ematrix option). Use the -h option for help.\n");
+    fprintf(stderr,"Please provide an expression matrix (--ematrix option).\n");
     exit(-1);
   }
 
   if (!params.method) {
-    printf("Please provide the method (--method option). Use the -h option for help.\n");
+    fprintf(stderr,"Please provide the method used to construct the similarity matrix (--method option).\n");
     exit(-1);
   }
 
   // make sure the input file exists
   if (access(params.infilename, F_OK) == -1) {
-    printf("Error: The input file does not exists or is not readable.\n");
+    fprintf(stderr,"The input file does not exists or is not readable.\n");
     exit(-1);
   }
 
   if (strcmp(params.method, "pc") != 0 && strcmp(params.method, "mi") != 0) {
-    printf("Error: The method (--method option) must either be 'pc' or 'mi'. Use the -h option for help.\n");
+    fprintf(stderr,"The method (--method option) must either be 'pc' or 'mi'.\n");
     exit(-1);
   }
 

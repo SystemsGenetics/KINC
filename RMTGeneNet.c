@@ -16,10 +16,13 @@ int main(int argc, char *argv[]) {
   if (strcmp(argv[1], "similarity") == 0) {
     return do_similarity(argc, argv);
   }
-
-  // construct the adjacency matrix
+  // identify the threshold for cutting the similarity matrix
   else if (strcmp(argv[1], "threshold") == 0) {
     return do_threshold(argc, argv);
+  }
+  // extract a given element from the matrix or a network
+  else if (strcmp(argv[1], "extract") == 0) {
+    return do_extract(argc, argv);
   }
 
   // print help documentation
@@ -30,6 +33,9 @@ int main(int argc, char *argv[]) {
       }
       if (strcmp(argv[2], "threshold") == 0) {
         print_threshold_usage();
+      }
+      if (strcmp(argv[2], "extract") == 0) {
+        print_extract_usage();
       }
     }
     else {

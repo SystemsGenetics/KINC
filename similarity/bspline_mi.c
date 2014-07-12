@@ -14,8 +14,8 @@
  *
  */
 void calculate_MI(CCMParameters params, double ** data, int * histogram) {
-  int j, k, m;   // integers for looping
-  char outfilename[50];  // the output file name
+  int j, k, m;             // integers for looping
+  char outfilename[1024];  // the output file name
   float max_mi = 0;
 
 

@@ -14,15 +14,18 @@
  *
  */
 void calculate_pearson(CCMParameters params, double ** data, int * histogram) {
-  char outfilename[50];  // the output file name
+  char outfilename[1024];  // the output file name
 
-
-  int i, j, k, m;   // integers for looping
+  int i, j, k;      // integers for looping
   float one = 1.0;  // used for pairwise comparision of the same gene
+  int num_bins;     // the number of binary files needed to store the matrix
+  int curr_bin;     // the current binary file number
+  int bin_rows;     // holds the number of rows in the file
+  int total_comps;  // the total number of pair-wise comparisions to be made
+  int n_comps;      // the number of comparisions completed during looping
 
-  // output a maximum of ROWS_PER_OUTPUT_FILE rows and then start a new file
-  int z = (params.rows - 1) / ROWS_PER_OUTPUT_FILE;
-  int j_limit;
+  // calculate the number of binary files needed to store the similarity matrix
+  num_bins = (params.rows - 1) / ROWS_PER_OUTPUT_FILE;
 
   // make sure the Pearson directory exists
   struct stat st = {0};
@@ -30,36 +33,35 @@ void calculate_pearson(CCMParameters params, double ** data, int * histogram) {
       mkdir("./Pearson", 0700);
   }
 
-  int total_comps = (params.rows * params.rows) / 2;
-  int n_comps = 0;
+  total_comps = (params.rows * params.rows) / 2;
+  n_comps = 0;
 
   // each iteration of m is a new output file
   printf("Calculating correlations...\n");
-  for (m = 0; m <= z; m++) {
-
-    // the output file will be located in the Pearson directory and named based on the input file info
-    sprintf(outfilename, "./Pearson/%s.pc%d.bin", params.fileprefix, m);
-    printf("Writing file %d of %d: %s... \n", m + 1, z + 1, outfilename);
-
-    FILE * outfile = fopen(outfilename, "wb");
+  for (curr_bin = 0; curr_bin <= num_bins; curr_bin++) {
 
     // calculate the limit on the rows to output based on where we are in the calculation
-    if (m < z) {
-      j_limit = (m + 1) * ROWS_PER_OUTPUT_FILE;
+    if (curr_bin < num_bins) {
+      bin_rows = (curr_bin + 1) * ROWS_PER_OUTPUT_FILE;
     }
     else {
-      j_limit = params.rows;
+      bin_rows = params.rows;
     }
+    int num_cols = bin_rows - (curr_bin * ROWS_PER_OUTPUT_FILE);
 
-    // output the size of the overall matrix
+    // the output file will be located in the Pearson directory and named based on the input file info
+    sprintf(outfilename, "./Pearson/%s.pc%d.bin", params.fileprefix, curr_bin);
+    printf("Writing file %d of %d: %s... \n", curr_bin + 1, num_bins + 1, outfilename);
+    FILE * outfile = fopen(outfilename, "wb");
+
+    // write the size of the matrix
     fwrite(&params.rows, sizeof(params.rows), 1, outfile);
+    // write the number of lines in this file
+    fwrite(&num_cols, sizeof(num_cols), 1, outfile);
 
-    // determine and output the number of rows that will be stored in the current file
-    i = j_limit - m * ROWS_PER_OUTPUT_FILE;
-    fwrite(&i, sizeof(i), 1, outfile);
-
-    for (j = m * ROWS_PER_OUTPUT_FILE; j < j_limit; j++) {
-      // lower triangular symmetric matrix (stop when col# > row#)
+    // iterate through the genes that belong in this file
+    for (j = curr_bin * ROWS_PER_OUTPUT_FILE; j < bin_rows; j++) {
+      // iterate through all the genes up to j (only need lower triangle)
       for (k = 0; k <= j; k++) {
         n_comps++;
         if (n_comps % 1000 == 0) {
