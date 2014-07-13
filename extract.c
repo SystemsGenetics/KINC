@@ -27,6 +27,9 @@ int do_extract(int argc, char *argv[]) {
       {"ematrix", required_argument, 0,  'e' },
       {"method",  required_argument, 0,  'm' },
       {"th",      required_argument, 0,  't' },
+      {"genes",   required_argument, 0,  'g' },
+      {"gene1",   required_argument, 0,  '1' },
+      {"gene2",   required_argument, 0,  '2' },
       {0, 0, 0,  0 }  // last element required to be all zeros
     };
 
@@ -46,6 +49,9 @@ int do_extract(int argc, char *argv[]) {
       case 'e':
         params.infilename = optarg;
         break;
+      case 'g':
+        params.genes_file = optarg;
+        break;
       case 'x':
         params.x_coord = atoi(optarg);
         break;
@@ -57,6 +63,12 @@ int do_extract(int argc, char *argv[]) {
         break;
       case 't':
         params.th = atof(optarg);
+        break;
+      case '1':
+        params.gene1 = optarg;
+        break;
+      case '2':
+        params.gene2 = optarg;
         break;
       case '?':
         exit(-1);
@@ -81,6 +93,11 @@ int do_extract(int argc, char *argv[]) {
     exit(-1);
   }
 
+  if (!params.genes_file) {
+    fprintf(stderr,"Please provide the genes file (--genes option).\n");
+    exit(-1);
+  }
+
   // make sure we have a positive integer for the rows and columns of the matrix
   if ((params.x_coord >  0 && params.y_coord == 0) ||
       (params.x_coord == 0 && params.y_coord  > 0)) {
@@ -96,6 +113,12 @@ int do_extract(int argc, char *argv[]) {
   // make sure the input file exists
   if (access(params.infilename, F_OK) == -1) {
     fprintf(stderr,"The input file does not exists or is not readable.\n");
+    exit(-1);
+  }
+
+  // make sure the input file exists
+  if (access(params.genes_file, F_OK) == -1) {
+    fprintf(stderr,"The genes file does not exists or is not readable.\n");
     exit(-1);
   }
 
@@ -126,7 +149,18 @@ int do_extract(int argc, char *argv[]) {
   }
 
   // open all of the bin files for easy access
-  open_bin_files(params);
+  open_bin_files(&params);
+
+  // get the list of gene names
+  get_gene_names(params);
+
+  if (params.th > 0) {
+    get_edges(params);
+  }
+  else {
+    printf("  Finding similarity value at position (%d, %d)\n", params.x_coord, params.y_coord);
+    get_position(params);
+  }
 
   // close all of the bin files
   close_bin_files(params);
@@ -138,7 +172,7 @@ int do_extract(int argc, char *argv[]) {
  * Looks in the directory where the similarity matrix is kept and opens each
  * of the bin files for reading.
  */
-void open_bin_files(NetParameters params) {
+void open_bin_files(NetParameters *params) {
   DIR * FD;                  // a directory handle
   struct dirent* curr_file;  // a file structure for the file while looping
   char * bin_pos;            // the position of the '.bin' extension in the file name
@@ -146,7 +180,7 @@ void open_bin_files(NetParameters params) {
   char bin_num[5];           // the string representation of the number of the bin file
 
   // Scanning for the files of the similarity matrix
-  if (NULL == (FD = opendir(params.inputDir))) {
+  if (NULL == (FD = opendir(params->inputDir))) {
     fprintf(stderr, "Error : Failed to open input directory - %s\n", strerror(errno));
     exit(-1);
   }
@@ -156,26 +190,35 @@ void open_bin_files(NetParameters params) {
       continue;
     }
 
-    // make sure this file has a .bin extension
+    // Make sure this file has a .bin extension.
     bin_pos = strstr(curr_file->d_name, ".bin");
     if(bin_pos) {
-      // make sure the file has the prefix
-      if(strstr(curr_file->d_name, params.fileprefix) != NULL) {
-        // make sure that this file has the method name preceeded by a period
+
+      // Make sure the file has the prefix.
+      if(strstr(curr_file->d_name, params->fileprefix) != NULL) {
+
+        // Make sure that this file has the method name preceeded by a period.
         char method[5];
-        sprintf(method, ".%s", params.method);
+        sprintf(method, ".%s", params->method);
         method_pos = strstr(curr_file->d_name, method);
         if (method_pos) {
-          // get the numerical value of this bin file
+          // Get the numerical value of this bin file.
           int size = (bin_pos - (method_pos + 3)) * sizeof(char);
           memcpy(bin_num, method_pos + (3 * sizeof(char)), size);
           bin_num[size] = 0; // add a terminator to the size
 
-          // open the file and store the file handle for later use and store
+          // Open the file and store the file handle for later use and store
           // it in the files array using the bin_num as an index.
           printf("  Opening file: %s\n", curr_file->d_name);
-          params.files[atoi(bin_num)] = fopen(curr_file->d_name, "w");
-          params.num_files++;
+          params->files[atoi(bin_num)] = fopen(curr_file->d_name, "w");
+          params->num_files++;
+
+          // Read in the number of genes in the similarity matrix and the number
+          // of lines in the file.
+          fread(&params->numGenes, sizeof(int), 1, params->files[atoi(bin_num)]);
+          fread(&params->numLines[atoi(bin_num)], sizeof(int), 1, params->files[atoi(bin_num)]);
+          printf(" NUM GENES: %d\n", params->numGenes);
+          printf(" NUM LINES: %d, %d\n", params->numLines[atoi(bin_num)], atoi(bin_num));
         }
       }
     }
@@ -192,118 +235,156 @@ void close_bin_files(NetParameters params) {
     fclose(params.files[i]);
   }
 }
-//
-///**
-// *
-// */
-//void get_edges (NetParameters params) {
-//   my $t = $_[0];
-//   my $files = $_[1];
-//   my $psets = $_[2];
-//   my ($x,$y,$j,$k,$i,$n,$m) = 0;
-//   my $pos = 0;
-//   my $rows_seen = 0;
-//   my $r_sqr;
-//   my $data;
-//
-//   int bin_i = 0;
-//   int x,y;   // used for iterating through the n x n similarity matrix
-//   int i;     // used for specifying the bin file to read
-//
-//   FILE * edges;
-//   FILE * edgesN;
-//   FILE * edgesP;
-//
-//   char edges_file[1024];
-//   char edgesN_file[1024];
-//   char edgesP_file[1024];
-//
-//   sprintf(edges_file, "%s.coexpnet.edges.txt", params.fileprefix);
-//   sprintf(edgesN_file, "%s.neg.coexpnet.edges.txt", params.fileprefix);
-//   sprintf(edgesP_file, "%s.pos.coexpnet.edges.txt", params.fileprefix);
-//
-//   edges = fopen(edges_file, "w");
-//   edgesN = fopen(edgesN_file, "w");
-//   edgesP = fopen(edgesP_file, "w");
-//
-//   # get the size of the matrix in one dimension (i.e. mxm)
-//   $m = $files->{$bin_i}{cols}; # the matrix is square so the size is same as num of columns
-//   seek($files{$bin_i}{fh},8,0); # set the file position just past the row info
-//   i = 0;
-//   for(x = 0; x < params.numGenes; x++){
-//      if(i >= params.numLinesPerFile){
-//         bin_i++;
-//         $i = 0;
-//         seek($files{$bin_i}{fh},8,0); # set the file position just past the row info
+
+/**
+ * Read in the gene names of the smatrix
+ */
+void get_gene_names(NetParameters params) {
+
+   FILE * genesf = fopen(params.genes_file, "r");
+   char * gene;
+   int i = 0;
+
+   // reserve the memory for the genes array (array of strings)
+   params.genes = (char **) malloc(sizeof(char *) * params.numGenes);
+
+   while (fscanf(genesf, "%s", params.genes[i++])) {
+//      // if $x and $y are not numeric then we assume they are probeset
+//      // names and we need to look them up
+//      if($x and $x eq $_){
+//         $x = $i;
 //      }
-//      for(y = 0; y < params.numGenes; y++){
-//
-//         $n = read($files{$bin_i}{fh},$data,4);
-//         if($n != 4){
-//            print "ERROR: cannot fetch from bin file $bin_i\n";
-//            exit;
-//         }
-//
-//         last if($y >= $x);
-//         $r_sqr = unpack("f",$data);
-//         if(($r_sqr > 0 and  $r_sqr >= $t) or
-//            ($r_sqr < 0 and -$r_sqr >= $t)){
-//            print EDGES $psets->[$x]."\t".$psets->[$y]."\t". sprintf("%0.8f",$r_sqr). "\n";
-//            if($r_sqr >= 0){
-//               print EDGESP $psets->[$x]."\t".$psets->[$y]."\t". sprintf("%0.8f",$r_sqr). "\n";
-//            } else {
-//               print EDGESN $psets->[$x]."\t".$psets->[$y]."\t". sprintf("%0.8f",$r_sqr). "\n";
-//            }
-//         }
+//      if($y and $y eq $_){
+//         $y = $i;
 //      }
-//      $i++;
-//   }
-//   fclose(edges);
-//   fclose(edgesN);
-//   fclose(edgesP);
-//}
-//#------------------------------------------------------------------------------
-//sub get_position {
-//   my $x = $_[0];
-//   my $y = $_[1];
-//   my $files = $_[2];
-//   my $pos = 0;
-//   my $i = 0;
-//   my ($j,$k);
-//   my $bin_i;
-//
-//   $x = $x -1;
-//   $y = $y -1;
-//
-//   # if $y > $x then reverse the two
-//   my $temp;
-//   if($y > $x){
-//      $temp = $x;
-//      $x = $y;
-//      $y = $temp;
-//   }
-//
-//   my $max;
-//   for $bin_i (sort {$a <=> $b} keys %{$files}){
-//      if($x >= $i and $x < $i + $files->{$bin_i}{rows}){
-//         $k = $x - $i;
-//         for($j = 0; $j < $k; $j++){
-//            $pos = $pos + $i + 1 + $j;
-//         }
-//         $pos = ($pos + $y)*4 + 8;
-//         seek($files{$bin_i}{fh},$pos,0); # set the file position just past the row info
-//         $n = read($files{$bin_i}{fh},$data,4);
-//         if($n != 4){
-//            print "ERROR: cannot fetch from bin file $bin_i\n";
-//            exit;
-//         }
-//         $r_sqr = unpack("f",$data);
-//         printf("cor(%i,%i) = %0.8f, bin = $bin_i, pos = %d\n",$x+1,$y+1,$r_sqr,$pos);
-//         last;
-//      }
-//      $i += $files{$bin_i}{rows};
-//   }
-//}
+   }
+   fclose(genesf);
+}
+
+/**
+ *
+ */
+void get_edges(NetParameters params) {
+   int bin_i = 0;
+   int x,y;   // used for iterating through the n x n similarity matrix
+   int i;     // used for specifying the bin file to read
+   float n;   // the cell value in the similarity matrix
+
+   // the three network output files for edges, negative correlated edges
+   // and positive correlated edges
+   FILE * edges;
+   FILE * edgesN;
+   FILE * edgesP;
+
+   // stores the actual name of the output files
+   char edges_file[1024];
+   char edgesN_file[1024];
+   char edgesP_file[1024];
+
+   sprintf(edges_file, "%s.coexpnet.edges.txt", params.fileprefix);
+   sprintf(edgesN_file, "%s.neg.coexpnet.edges.txt", params.fileprefix);
+   sprintf(edgesP_file, "%s.pos.coexpnet.edges.txt", params.fileprefix);
+
+   edges = fopen(edges_file, "w");
+   edgesN = fopen(edgesN_file, "w");
+   edgesP = fopen(edgesP_file, "w");
+
+   // get the size of the matrix in one dimension (i.e. mxm)
+   i = 0;
+   for (x = 0; x < params.numGenes; x++) {
+      if (i >= params.numLines[bin_i]) {
+         bin_i++;
+         i = 0;
+         // set the file position just past the row info
+         fseek(params.files[bin_i], 8, SEEK_SET);
+      }
+      for (y = 0; y < params.numGenes; y++) {
+
+         // get the next float value for coordinate (x,y)
+         size_t num_bytes = fread(&n, 4, 1, params.files[bin_i]);
+         if(num_bytes != 4){
+            fprintf(stderr,"ERROR: cannot fetch from bin file $bin_i\n");
+            exit(-1);
+         }
+
+         // the matrix is symetrical so we don't need to look where y >= x
+         if(y >= x) {
+           break;
+         }
+
+         // write the simiarity value to the appopriate file
+         if((n > 0 &&  n >= params.th) || (n < 0 && -n >= params.th)){
+            fprintf(edges,"%s\t%s\t%0.8f\n", params.genes[x], params.genes[y], n);
+
+            // if the method id 'pc' (Pearson's correlation) then we will have
+            // negative and positive values, and we'll write those to separate files
+            if (strcmp(params.method, "pc")) {
+              if(n >= 0){
+                 fprintf(edgesP, "%s\t%s\t%0.8f\n", params.genes[x], params.genes[y], n);
+              }
+              else {
+                fprintf(edgesN, "%s\t%s\t%0.8f\n", params.genes[x], params.genes[y], n);
+              }
+            }
+         }
+      }
+      i++;
+   }
+   fclose(edges);
+   fclose(edgesN);
+   fclose(edgesP);
+}
+/**
+ *
+ */
+void get_position(NetParameters params) {
+
+  float n;   // the cell value in the similarity matrix
+  int temp;  // a temp value used to flip the x & y coordinates if necessary
+  int x = params.x_coord - 1;  // the x coordinate
+  int y = params.y_coord - 1;  // the y coordinate
+  int i = 0; // holds the number of lines already visited
+  int j;     // iterates through the columns
+  int pos;   // used to store the position in the file for the (x,y) coordinate
+  int bin_i; // indicates the bin file number currently being checked
+
+  // if y > x then reverse the two as the sim matrix is symetrical and only
+  // half is stored.
+
+  if(y > x){
+    temp = x;
+    x = y;
+    y = temp;
+  }
+
+
+  printf(" num_files: %d\n", params.num_files);
+  for (bin_i = 0; bin_i < params.num_files; bin_i++) {
+    // if the x coordinate falls within the rows stored in the bin file, then
+    // find the coordinate value
+    printf("x: %d, i: %d, %d\n", x, i, params.numLines[bin_i]);
+    if (x >= i && x < i + params.numLines[bin_i]) {
+
+
+      // calculate the coordinate value
+      for (j = 0; j < x - i; j++) {
+         pos = pos + i + 1 + j;
+      }
+      pos = (pos + y) * 4 + 8;
+
+      // set the file position to the calculated location of the (x,y) coordinate
+      fseek(params.files[bin_i], pos, SEEK_SET);
+      size_t num_bytes = fread(&n, 4, 1, params.files[bin_i]);
+      if(num_bytes != 4){
+        fprintf(stderr,"ERROR: cannot fetch from bin file $bin_i\n");
+        exit(-1);
+      }
+      printf("cor(%i,%i) = %0.8f, bin = $bin_i, pos = %d\n", x + 1, y + 1, n, pos);
+      break;
+    }
+    i += params.numLines[bin_i];
+  }
+}
 
 /**
  * Prints the command-line usage instructions for the similarity command
@@ -314,11 +395,16 @@ void print_extract_usage() {
   printf("The list of required options:\n");
   printf("  --ematrix|-e The file name that contains the expression matrix.\n");
   printf("                 The rows must be genes or probe sets and columns are samples\n");
-  printf("  -x           When extracting a single value, the x coordinate. Must also use -y\n");
-  printf("  -y           When extracting a single value, the y coordinate. Must also use -x.\n");
-  printf("  --th|t       The threshold to cut the similarity matrix. Network files will be generated.\n");
+  printf("  --th|-t      The threshold to cut the similarity matrix. Network files will be generated.\n");
   printf("  --method|-m  The correlation method to use. Supported methods include\n");
   printf("                 Pearson's correlation and Mutual Information. Provide\n");
   printf("                 either 'pc' or mi' as values respectively.\n");
+  printf("  --genes|-g   The file containing the list of genes, in order, from the similarity matrix\n");
+  printf("  -x           Extract a single similarity value: the x coordinate. Must also use -y\n");
+  printf("  -y           Extract a single similarity value: the y coordinate. Must also use -x.\n");
+  printf("  --gene1|-1   Extract a single similarity value: The name of the first gene in a singe\n");
+  printf("                 pair-wise comparision.  Must be used with --gene2 option.\n");
+  printf("  --gene1|-1   Extract a single similarity value: The name of the second gene in a singe\n");
+  printf("                 pair-wise comparision.  Must be used with --gene1 option.\n");
   printf("\n");
 }
