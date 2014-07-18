@@ -58,11 +58,12 @@ int * init_histogram(CCMParameters params);
 
 void print_histogram(CCMParameters params, int * histogram);
 
-// similarity/pearson.c functions
 void calculate_pearson(CCMParameters params, double ** data, int * histogram);
 
-// similarity/bispline_mi.c functions
 void calculate_MI(CCMParameters params, double ** data, int * histogram);
+
 double calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xmin, double ymin, double xmax, double ymax);
+
+int is_numeric(char * string);
 
 #endif

@@ -27,6 +27,7 @@ int do_threshold(int argc, char *argv[]) {
     // short options which are then handled by the case statement below
     static struct option long_options[] = {
       {"perf",    no_argument,       &params.perf,     1 },
+      {"help",    no_argument,       0,  'h' },
       {"ematrix", required_argument, 0,  'e' },
       {"method",  required_argument, 0,  'm' },
       {"th",      required_argument, 0,  't' },
@@ -36,7 +37,7 @@ int do_threshold(int argc, char *argv[]) {
     };
 
     // get the next option
-    c = getopt_long(argc, argv, "e:m:t:c:s:", long_options, &option_index);
+    c = getopt_long(argc, argv, "e:m:t:c:s:h", long_options, &option_index);
 
     // if the index is -1 then we have reached the end of the options list
     // and we break out of the while loop
@@ -66,6 +67,10 @@ int do_threshold(int argc, char *argv[]) {
       case 's':
         params.thresholdStep = atof(optarg);
         printf("  Step per iteration: %f\n", params.thresholdStep);
+        break;
+      case 'h':
+        print_threshold_usage();
+        exit(-1);
         break;
       case '?':
         exit(-1);
@@ -197,9 +202,9 @@ int find_threshold(RMTParameters params) {
   float * E;  //array for eigenvalues
 
   // open the output files
-  sprintf(chi_filename, "%s.chiVals.txt", params.fileprefix);
+  sprintf(chi_filename, "%s.%s.chiVals.txt", params.fileprefix, params.method);
   chiF = fopen(chi_filename, "w");
-  sprintf(eigen_filename, "%s.eigenVals.txt", params.fileprefix);
+  sprintf(eigen_filename, "%s.%s.eigenVals.txt", params.fileprefix, params.method);
   eigenF = fopen(eigen_filename, "w");
   fprintf(chiF, "Threshold\tChi-square\tCut Matrix Size\n");
 
@@ -303,7 +308,7 @@ int find_threshold(RMTParameters params) {
     finalTH = ceil(finalTH * 10000) / 10000.0;
     FILE* th;
     char filename[1024];
-    sprintf(filename, "%s.th.txt", params.fileprefix);
+    sprintf(filename, "%s.%s.th.txt", params.fileprefix, params.method);
     th = fopen(filename, "w");
     fprintf(th, "%f", finalTH);
     fclose(th);
@@ -804,5 +809,6 @@ void print_threshold_usage() {
   printf("  --chi|-c     The Chi-square test value which when encountered, RMT will stop.\n");
   printf("                 The default is 200 (corresponds to p-value of 0.01)\n");
   printf("  --perf       Provide this flag to enable performance monitoring.\n");
+  printf("  --help|-h     Print these usage instructions\n");
   printf("\n");
 }

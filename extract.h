@@ -45,7 +45,8 @@ void get_edges(NetParameters params);
 void get_position(NetParameters params);
 void open_bin_files(NetParameters *params);
 void close_bin_files(NetParameters params);
-void get_gene_names(NetParameters params);
+void get_gene_names(NetParameters *params);
+void get_gene_coords(NetParameters *params);
 void print_extract_usage();
 
 #endif

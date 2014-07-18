@@ -34,6 +34,7 @@ int do_similarity(int argc, char *argv[]) {
       {"omit_na", no_argument,       &params.omit_na,  1 },
       {"perf",    no_argument,       &params.perf,     1 },
       {"headers", no_argument,       &params.headers,  1 },
+      {"help",    no_argument,       0,  'h' },
       {"ematrix", required_argument, 0,  'e' },
       {"method",  required_argument, 0,  'm' },
       {"rows",    required_argument, 0,  'r' },
@@ -41,11 +42,12 @@ int do_similarity(int argc, char *argv[]) {
       {"min_obs", required_argument, 0,  'o' },
       {"func",    required_argument, 0,  'f' },
       {"na_val",  required_argument, 0,  'n' },
+
       {0, 0, 0,  0 }  // last element required to be all zeros
     };
 
     // get the next option
-    c = getopt_long(argc, argv, "e:r:c:m:o:n:f:", long_options, &option_index);
+    c = getopt_long(argc, argv, "e:r:c:m:o:n:f:h", long_options, &option_index);
 
     // if the index is -1 then we have reached the end of the options list
     // and we break out of the while loop
@@ -68,19 +70,19 @@ int do_similarity(int argc, char *argv[]) {
         break;
       case 'm':
         strcpy(params.method, optarg);
-        printf("  Using method: '%s'\n", params.method);
         break;
       case 'o':
         params.min_obs = atoi(optarg);
-        printf("  Requiring %d observations to perform pairwise calculations\n", params.min_obs);
         break;
       case 'n':
         params.na_val = optarg;
-        printf("  Excluding missing values marked as '%s'\n", params.na_val);
         break;
       case 'f':
         strcpy(params.func, optarg);
-        printf("  Performing %s transformation on expression matrix\n", params.func);
+        break;
+      case 'h':
+        print_similarity_usage();
+        exit(-1);
         break;
       case '?':
         exit(-1);
@@ -92,13 +94,6 @@ int do_similarity(int argc, char *argv[]) {
       default:
         print_similarity_usage();
     }
-  }
-
-  if (params.omit_na) {
-    printf("  Excluding missing values\n");
-  }
-  if (params.headers) {
-    printf("  Skipping header\n");
   }
 
   // make sure the required arguments are set and appropriate
@@ -134,6 +129,21 @@ int do_similarity(int argc, char *argv[]) {
     fprintf(stderr,"Error: The method (--method option) must either be 'pc' or 'mi'.\n");
     exit(-1);
   }
+  if (params.omit_na && !params.na_val) {
+    fprintf(stderr,"Error: The missing value string should be provided (--na_val option).\n");
+    exit(-1);
+  }
+
+  if (params.headers) {
+    printf("  Skipping header lines\n");
+  }
+  printf("  Performing transformation: %s \n", params.func);
+  printf("  Required observations: %d\n", params.min_obs);
+  printf("  Using method: '%s'\n", params.method);
+  if (params.omit_na) {
+    printf("  Missing values are: '%s'\n", params.na_val);
+  }
+
 
   // remove the path and extension from the filename
   char * filename = basename(params.infilename);
@@ -241,6 +251,11 @@ double ** load_ematrix(CCMParameters params) {
           data[i][j] = NAN;
         }
         else {
+          // make sure the element is numeric
+          if (!is_numeric(element)) {
+            fprintf(stderr, "Error: value is not numeric: %s\n", element);
+            exit(-1);
+          }
           if (params.do_log10) {
             data[i][j] = log10(atof(element));
           }
@@ -256,7 +271,7 @@ double ** load_ematrix(CCMParameters params) {
         }
       }
       else {
-        printf("Error: EOF reached early. Exiting.\n");
+        fprintf(stderr, "Error: EOF reached early. Exiting.\n");
         exit(-1);
       }
     }
@@ -264,6 +279,45 @@ double ** load_ematrix(CCMParameters params) {
   return data;
 }
 
+
+/**
+ *
+ */
+int is_numeric(char * string) {
+  // ASCII value of
+  // '-': 45
+  // '.': 46
+  // '0': 48
+  // '9': 57
+  int num_period = 0;
+  int i;
+  int good = 0;
+
+  // all remaining characters can be numeric but with only one period
+  for (i = 0; i < strlen(string); i++) {
+    good = 0;
+    if (string[i] >= 48 && string[i] <= 57) {
+      good = 1;
+    }
+    // periods are acceptable, but only one.
+    if (string[i] == 46) {
+      num_period++;
+      good = 1;
+      // we can only have one period
+      if (num_period > 1) {
+        good = 0;
+      }
+    }
+    // the minus sign is acceptable if it appears first
+    if (string[i] == 45 && i == 0) {
+      good = 1;
+    }
+    if (!good) {
+      return 0;
+    }
+  }
+  return 1;
+}
 /**
  * Creates an integer array, initialized with all values to zero for
  * storing a histogram. The number of bins in the histogram is
@@ -342,6 +396,7 @@ void print_similarity_usage() {
   printf("  --perf        Provide this flag to enable performance monitoring.\n");
   printf("  --headers     Provide this flag if the first line of the matrix contains\n");
   printf("                  headers.\n");
+  printf("  --help|-h     Print these usage instructions\n");
   printf("\n");
   printf("Note: similarity values are set to NaN if there weren't enough observations\n");
   printf("to perform the calculation.\n");
