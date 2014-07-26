@@ -16,6 +16,14 @@ int do_threshold(int argc, char *argv[]) {
   params.thresholdStep  = 0.001;
   params.chiSoughtValue = 200;
   params.min_size = 100;
+
+  params.nnsdHistogramBin       = 0.05;
+  params.chiSquareTestThreshold = 99.607;
+  params.minUnfoldingPace       = 10;
+  params.maxUnfoldingPace       = 41;
+  params.mimiModuleSize         = 4;
+  params.edHistogramBin         = 0.1;
+
   strcpy(params.method, "pc");
 
   // loop through the incoming arguments until the
@@ -54,19 +62,15 @@ int do_threshold(int argc, char *argv[]) {
         break;
       case 'm':
         strcpy(params.method, optarg);
-        printf("  Using method: '%s'\n", params.method);
         break;
       case 't':
         params.thresholdStart = atof(optarg);
-        printf("  Start treshold: %f\n", params.thresholdStart);
         break;
       case 'c':
         params.chiSoughtValue = atof(optarg);
-        printf("  Desired Chi-square %f\n", params.chiSoughtValue);
         break;
       case 's':
         params.thresholdStep = atof(optarg);
-        printf("  Step per iteration: %f\n", params.thresholdStep);
         break;
       case 'h':
         print_threshold_usage();
@@ -126,6 +130,11 @@ int do_threshold(int argc, char *argv[]) {
     params.inputDir = "Pearson";
   }
 
+  printf("  Using method: '%s'\n", params.method);
+  printf("  Start treshold: %f\n", params.thresholdStart);
+  printf("  Desired Chi-square %f\n", params.chiSoughtValue);
+  printf("  Step per iteration: %f\n", params.thresholdStep);
+
   // open the file and get the number of genes and the lines per file
   // these data are the first two integers in the file
   char filename[1024];
@@ -139,19 +148,11 @@ int do_threshold(int argc, char *argv[]) {
 
   printf("  Genes: %d, Num lines per file: %d\n", params.numGenes, params.numLinesPerFile);
 
-  //initialize the global RMTParameters struct
-  params.nnsdHistogramBin       = 0.05;
-  params.chiSquareTestThreshold = 99.607;
-  params.minUnfoldingPace       = 10;
-  params.maxUnfoldingPace       = 41;
-  params.mimiModuleSize         = 4;
-  params.edHistogramBin         = 0.1;
-
   // allocate memory for s and cutM_index arrays
   params.UsedFlag = (int *) malloc(params.numGenes * sizeof(int));
   params.cutM_index = (int *) malloc(params.numGenes * sizeof(int));
 
-  find_threshold(params);
+  find_threshold(&params);
 
   // free memory
   free(params.cutM_index);
@@ -181,7 +182,7 @@ char* itoa(int val, char* ptr){
  *
  *
  */
-int find_threshold(RMTParameters params) {
+int find_threshold(RMTParameters *params) {
 
   float* newM;
   int size;
@@ -190,7 +191,7 @@ int find_threshold(RMTParameters params) {
   char chi_filename[1024];  // the output file name
   char eigen_filename[1024];  // the output file name
 
-  float th = params.thresholdStart;
+  float th = params->thresholdStart;
   double finalTH  = 0.0;
   double finalChi = 10000.0;
   double minTH    = 1.0;
@@ -202,22 +203,23 @@ int find_threshold(RMTParameters params) {
   float * E;  //array for eigenvalues
 
   // open the output files
-  sprintf(chi_filename, "%s.%s.chiVals.txt", params.fileprefix, params.method);
+  sprintf(chi_filename, "%s.%s.chiVals.txt", params->fileprefix, params->method);
   chiF = fopen(chi_filename, "w");
-  sprintf(eigen_filename, "%s.%s.eigenVals.txt", params.fileprefix, params.method);
+  sprintf(eigen_filename, "%s.%s.eigenVals.txt", params->fileprefix, params->method);
   eigenF = fopen(eigen_filename, "w");
   fprintf(chiF, "Threshold\tChi-square\tCut Matrix Size\n");
 
   do {
     // decrement the threshold using the step value and then retreive the 
     // matrix that contains only the threshold and higher
-    th = th - params.thresholdStep;
+    th = th - params->thresholdStep;
+    printf("\n");
     printf("  testing threshold: %f...\n", th);
     printf("  reading bin files...\n");
     newM = read_similarity_matrix(th, &size, params);
 
     printf("  found matrix of size n x n, n = %d...\n", size);
-    if (size >= params.min_size) {
+    if (size >= params->min_size) {
       printf("  calculating eigenvalues...\n");
       E = calculateEigen(newM, size);
       free(newM);
@@ -244,11 +246,11 @@ int find_threshold(RMTParameters params) {
           minChi = chi;
           minTH = th;
         }
-        if (chi < params.chiSquareTestThreshold){
+        if (chi < params->chiSquareTestThreshold){
           finalTH = th;
           finalChi = chi;
         }
-        if (finalChi < params.chiSquareTestThreshold && chi > finalChi && th < finalTH){
+        if (finalChi < params->chiSquareTestThreshold && chi > finalChi && th < finalTH){
           maxChi = chi;
           maxTH = th;
         }
@@ -258,15 +260,15 @@ int find_threshold(RMTParameters params) {
       free(newM);
     }
   }
-  while(maxChi < params.chiSoughtValue || size == params.numGenes);
+  while(maxChi < params->chiSoughtValue || size == params->numGenes);
 
 
   // If finalChi is still greater than threshold, check the small scale
-  if (finalChi > params.chiSquareTestThreshold) {
+  if (finalChi > params->chiSquareTestThreshold) {
     fprintf(chiF, "checking small scale\n");
     th = (float)minTH + 0.2;
     for (i = 0 ; i <= 40 ; i++) {
-      th = th - params.thresholdStep * i;
+      th = th - params->thresholdStep * i;
       newM = read_similarity_matrix(th, &size, params);
 
       if (size >= 100) {
@@ -288,7 +290,7 @@ int find_threshold(RMTParameters params) {
           minChi = chi;
           minTH = th;
         }
-        if (chi < params.chiSquareTestThreshold) {
+        if (chi < params->chiSquareTestThreshold) {
           finalTH = th;
           finalChi = chi;
         }
@@ -304,11 +306,11 @@ int find_threshold(RMTParameters params) {
   fclose(eigenF);
 
   // Set the Properties file according to success or failure
-  if(finalChi < params.chiSquareTestThreshold){
+  if(finalChi < params->chiSquareTestThreshold){
     finalTH = ceil(finalTH * 10000) / 10000.0;
     FILE* th;
     char filename[1024];
-    sprintf(filename, "%s.%s.th.txt", params.fileprefix, params.method);
+    sprintf(filename, "%s.%s.th.txt", params->fileprefix, params->method);
     th = fopen(filename, "w");
     fprintf(th, "%f", finalTH);
     fclose(th);
@@ -336,10 +338,10 @@ int find_threshold(RMTParameters params) {
  *  greater than the given threshold.
  */
 
-float * read_similarity_matrix(float th, int * size, RMTParameters params) {
+float * read_similarity_matrix(float th, int * size, RMTParameters *params) {
 
   float * cutM;    // the resulting cut similarity matrix
-  float * rowi;    // holds the float value from row i in the bin file
+  float * rowj;    // holds the float value from row i in the bin file
   int len;         // the length of the filename and path to the correlation bin file
   int i, h;        // used to iterate through the bin files
   int j;           // used to iterate through the rows of each bin file
@@ -351,9 +353,8 @@ float * read_similarity_matrix(float th, int * size, RMTParameters params) {
   FILE* in;
   char filename[1024]; // used for storing the bin file name
 
-  memset(params.cutM_index, -1, sizeof(int) * (params.numGenes));
-
-  rowi = (float*) malloc(sizeof(float) * params.numGenes);
+  memset(params->cutM_index, -1, sizeof(int) * (params->numGenes));
+  rowj = (float *) malloc(sizeof(float) * params->numGenes);
 
   // we need to know how many rows and columns we will have in our cut matrix.
   // the cut matrix is the matrix that only contains genes with a threshold
@@ -367,32 +368,32 @@ float * read_similarity_matrix(float th, int * size, RMTParameters params) {
   // ------------------------------
   // Step #1: iterate through the binary correlation files to find out how many
   // genes there will be in the cut matrix.
-  z = (params.numGenes - 1) / params.numLinesPerFile;
+  z = (params->numGenes - 1) / params->numLinesPerFile;
   for (i = 0; i <= z; i++) {
 
-    sprintf(filename, "%s/%s.%s%d.bin", params.inputDir, params.fileprefix, params.method, i);
+    sprintf(filename, "%s/%s.%s%d.bin", params->inputDir, params->fileprefix, params->method, i);
     in = fopen(filename, "rb");
     fread(&junk, sizeof(int), 1, in); // numGenes
     fread(&junk, sizeof(int), 1, in); // numLinesPerFile
     if (i != z) {
-      limit = (i + 1) * params.numLinesPerFile;
+      limit = (i + 1) * params->numLinesPerFile;
     }
     else{
-      limit = params.numGenes;
+      limit = params->numGenes;
     }
 
     // iterate through the rows and columns of the file and look for 
     // entries greater than the provided threshold.  When found, use
     // the row and column indexes to set a '1' in the  array.
     // this array indicates which genes have values we want to keep. 
-    for (j = i * params.numLinesPerFile; j < limit; j++) {
-      fread(rowi, sizeof(float), j + 1, in);
+    for (j = i * params->numLinesPerFile; j < limit; j++) {
+      fread(rowj, sizeof(float), j + 1, in);
       for (k = 0; k < j + 1; k++) {
         // if the correlation value is greater than the given threshold then 
         // flag the row/column indexes
-        if (k != j && fabs(rowi[k]) > th) {
-          params.UsedFlag[k] = 1;
-          params.UsedFlag[j] = 1;
+        if (k != j && fabs(rowj[k]) > th) {
+          params->UsedFlag[k] = 1;
+          params->UsedFlag[j] = 1;
         }
       }
     }
@@ -403,10 +404,10 @@ float * read_similarity_matrix(float th, int * size, RMTParameters params) {
   // greater than the provided threshold value
   used = 0;
   j = 0;
-  for (i = 0; i < params.numGenes; i++) {
-    if (params.UsedFlag[i] == 1) {
+  for (i = 0; i < params->numGenes; i++) {
+    if (params->UsedFlag[i] == 1) {
       used++;
-      params.cutM_index[i] = j;
+      params->cutM_index[i] = j;
       j++;
     }
   }
@@ -425,26 +426,26 @@ float * read_similarity_matrix(float th, int * size, RMTParameters params) {
   // ------------------------------
   // Step #2: Now build the cut matrix by retrieving the correlation values
   // for each of the genes identified previously.
-  for (i = 0; i <= z; i++) {
+  for (i = 0; i < z; i++) {
 
-    sprintf(filename, "%s/%s.%s%d.bin", params.inputDir, params.fileprefix, params.method, i);
+    sprintf(filename, "%s/%s.%s%d.bin", params->inputDir, params->fileprefix, params->method, i);
     in = fopen(filename, "rb");
     fread(&junk, sizeof(int), 1, in); // numGenes
     fread(&junk, sizeof(int), 1, in); // numLinesPerFile
     if (i != z) {
-      limit = (i + 1) * params.numLinesPerFile;
+      limit = (i + 1) * params->numLinesPerFile;
     }
     else{
-      limit = params.numGenes;
+      limit = params->numGenes;
     }
     // iterate through the rows of the bin file
-    for (j = i * params.numLinesPerFile; j < limit; j++) {
-      fread(rowi, sizeof(float), j + 1, in);
+    for (j = i * params->numLinesPerFile; j < limit; j++) {
+      fread(rowj, sizeof(float), j + 1, in);
       // iterate through the columns of row i
       for (k = 0; k < j + 1; k++){
         // if the correlation value is greater than the given then save the value
-        if (k != j && fabs(rowi[k]) > th){
-          cutM[params.cutM_index[k] + (used * params.cutM_index[k])] = rowi[k];
+        if (k != j && fabs(rowj[k]) > th){
+          cutM[params->cutM_index[k] + (used * params->cutM_index[j])] = rowj[k];
         }
       }
     }
@@ -459,7 +460,7 @@ float * read_similarity_matrix(float th, int * size, RMTParameters params) {
     //printf("\n");
   }
 
-  free(rowi);
+  free(rowj);
   return cutM;
 }
 
@@ -704,26 +705,28 @@ float* degenerate(float* eigens, int size, int* newSize){
  *   A Chi-square value or -1 for failure
  */
 
-double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, RMTParameters params){
+double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, RMTParameters *params){
   double chiTest = 0;
+  double avg_chiTest;
   int i = 0;
   int m;
 
   // We want to generate an average Chi-square value across various levels of
   // unfolding. Therefore, we iterate through the min and max unfolding pace
   // and then average the Chi-square values returned
-  for (m = params.minUnfoldingPace; m < params.maxUnfoldingPace; m++) {
-    chiTest += chiSquareTestUnfoldingNNSDWithPoisson4(eigens, size, params.nnsdHistogramBin, m, params);
+  for (m = params->minUnfoldingPace; m < params->maxUnfoldingPace; m++) {
+    chiTest = chiSquareTestUnfoldingNNSDWithPoisson4(eigens, size, params->nnsdHistogramBin, m, params);
 
     // if the test failed then return -1
     if (chiTest == -1) {
       return -1;
     }
+    avg_chiTest += chiTest;
     i++;
   }
 
   // return the average Chi-square value
-  return chiTest / i;
+  return avg_chiTest / i;
 }
 
 /**
@@ -745,7 +748,7 @@ double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, RMTParamet
  *   A Chi-square value, or -1 on failure
  */
 
-double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace, RMTParameters params){
+double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace, RMTParameters *params){
   int newSize;   // the new size of the eigenvalue array after duplicates removed
   float * newE;  // the new eigenvalue array after duplicates removed
   double * edif;
@@ -761,7 +764,7 @@ double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bi
 
   // make sure our vector of eigenvalues is still large enough after
   // duplicates have been removed. If not, return a -1
-  if (size < params.min_size) {
+  if (size < params->min_size) {
     printf("    Chi-square test failed: eigenvalue array too small after duplicate removal. See the eigenvector output file.\n");
     return -1;
   }

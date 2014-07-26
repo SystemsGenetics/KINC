@@ -65,17 +65,17 @@ extern void ssyev_( char* jobz, char* uplo, int* n, float* a, int* lda,
  */
 int do_threshold(int argc, char *argv[]);
 
-int find_threshold(RMTParameters params);
+int find_threshold(RMTParameters *params);
 
-float * read_similarity_matrix(float th, int * size, RMTParameters params);
+float * read_similarity_matrix(float th, int * size, RMTParameters *params);
 
 void quickSortF(float* l, int size);
 
 float* calculateEigen(float* mat, int size);
 
-double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, RMTParameters params);
+double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, RMTParameters *params);
 
-double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace, RMTParameters params);
+double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace, RMTParameters *params);
 
 void print_threshold_usage();
 #endif
