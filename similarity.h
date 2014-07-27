@@ -38,6 +38,9 @@ typedef struct{
   int do_log;            // set to 1 to perform log transformation
   char fileprefix[1024]; // the input filename without the prefix
 
+  int mi_bins;        // the number of bins for the B-spline estimate of MI
+  int mi_degree;      // the degree of the B-spline function
+
 } CCMParameters;
 
 // a global variable for the number of rows in each output file

@@ -70,8 +70,8 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
         double y[params.cols + 1];
         double xmin = 9999999;
         double ymin = 9999999;
-        double xmax = 0;
-        double ymax = 0;
+        double xmax = -9999999;
+        double ymax = -9999999;
         int n = 0;
         for (i = 0; i < params.cols; i++) {
           // if either of these elements is missing then don't include the
@@ -109,9 +109,8 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
 
         if (n >= params.min_obs) {
           //printf("%d, %d\n", j, k);
-          //mi = calculateMutualInformation(x, y, n);
-          mi = calculateBSplineMI(x, y, n, 10, 3, xmin, ymin, xmax, ymax);
-          //printf("%d, %d = %f\n", j, k, mi);
+          mi = calculateBSplineMI(x, y, n, params.mi_bins, params.mi_degree, xmin, ymin, xmax, ymax);
+          //printf("(%d, %d) = %f (%d values). xmin = %f, xmax = %f, ymin = %f, ymax = %f\n", j, k, mi, n, xmin, xmax, ymin, ymax);
         }
         float outmi = (float) mi;
         if (outmi > max_mi) {

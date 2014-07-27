@@ -20,6 +20,11 @@ int do_similarity(int argc, char *argv[]) {
   params.do_log2 = 0;
   params.do_log = 0;
   params.min_obs = 30;
+
+  // defaults for mutual informatin B-spline estimtae
+  params.mi_bins = 10;
+  params.mi_degree = 3;
+
   strcpy(params.func, "none");
   strcpy(params.method, "pc");
 
@@ -31,18 +36,19 @@ int do_similarity(int argc, char *argv[]) {
     // specify the long options. The values returned are specified to be the
     // short options which are then handled by the case statement below
     static struct option long_options[] = {
-      {"omit_na", no_argument,       &params.omit_na,  1 },
-      {"perf",    no_argument,       &params.perf,     1 },
-      {"headers", no_argument,       &params.headers,  1 },
-      {"help",    no_argument,       0,  'h' },
-      {"ematrix", required_argument, 0,  'e' },
-      {"method",  required_argument, 0,  'm' },
-      {"rows",    required_argument, 0,  'r' },
-      {"cols",    required_argument, 0,  'c' },
-      {"min_obs", required_argument, 0,  'o' },
-      {"func",    required_argument, 0,  'f' },
-      {"na_val",  required_argument, 0,  'n' },
-
+      {"omit_na",  no_argument,       &params.omit_na,  1 },
+      {"perf",     no_argument,       &params.perf,     1 },
+      {"headers",  no_argument,       &params.headers,  1 },
+      {"help",     no_argument,       0,  'h' },
+      {"ematrix",  required_argument, 0,  'e' },
+      {"method",   required_argument, 0,  'm' },
+      {"rows",     required_argument, 0,  'r' },
+      {"cols",     required_argument, 0,  'c' },
+      {"min_obs",  required_argument, 0,  'o' },
+      {"func",     required_argument, 0,  'f' },
+      {"na_val",   required_argument, 0,  'n' },
+      {"mi_bins",  required_argument, 0,  'b' },
+      {"mi_degree",required_argument, 0,  'd' },
       {0, 0, 0,  0 }  // last element required to be all zeros
     };
 
@@ -79,6 +85,12 @@ int do_similarity(int argc, char *argv[]) {
         break;
       case 'f':
         strcpy(params.func, optarg);
+        break;
+      case 'b':
+        params.mi_bins = atoi(optarg);
+        break;
+      case 'd':
+        params.mi_degree = atoi(optarg);
         break;
       case 'h':
         print_similarity_usage();
@@ -142,6 +154,10 @@ int do_similarity(int argc, char *argv[]) {
   printf("  Using method: '%s'\n", params.method);
   if (params.omit_na) {
     printf("  Missing values are: '%s'\n", params.na_val);
+  }
+  if (strcmp(params.method, "mi") ==0) {
+    printf("  Bins for B-Spline estimate of MI: %d\n", params.mi_bins);
+    printf("  Degree for B-Spline estimate of MI: %d\n", params.mi_degree);
   }
 
 
@@ -396,6 +412,10 @@ void print_similarity_usage() {
   printf("  --perf        Provide this flag to enable performance monitoring.\n");
   printf("  --headers     Provide this flag if the first line of the matrix contains\n");
   printf("                  headers.\n");
+  printf("  --mi_bins|b   Use only if the method is 'mi'. The number of bins for the\n");
+  printf("                  B-spline estimator function for MI. Default is 10.\n");
+  printf("  --mi_degree|d Use only if the method is 'mi'. The degree of the\n");
+  printf("                  B-spline estimator function for MI. Default is 3.\n");
   printf("  --help|-h     Print these usage instructions\n");
   printf("\n");
   printf("Note: similarity values are set to NaN if there weren't enough observations\n");
