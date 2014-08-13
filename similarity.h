@@ -16,7 +16,7 @@
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_bspline.h>
 
-typedef struct{
+typedef struct {
 
   int perf;          // indicates if performance monitoring should be enabled
   int omit_na;       // indicates if missing values should be ignored
@@ -62,6 +62,8 @@ int * init_histogram(CCMParameters params);
 void print_histogram(CCMParameters params, int * histogram);
 
 void calculate_pearson(CCMParameters params, double ** data, int * histogram);
+
+void calculate_spearman(CCMParameters params, double ** data, int * histogram);
 
 void calculate_MI(CCMParameters params, double ** data, int * histogram);
 

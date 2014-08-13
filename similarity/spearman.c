@@ -1,7 +1,7 @@
-#include "pearson.h"
+#include "spearman.h"
 
 /**
- * Calculates the Pearson correlation matrix
+ * Calculates the Spearman correlation matrix
  *
  * @param CCMParameters params
  *   An instance of the CCM parameters struct
@@ -13,24 +13,25 @@
  *   used for building the histogram.
  *
  */
-void calculate_pearson(CCMParameters params, double ** data, int * histogram) {
+void calculate_spearman(CCMParameters params, double ** data, int * histogram) {
   char outfilename[1024];  // the output file name
 
-  int i, j, k;      // integers for looping
-  float one = 1.0;  // used for pairwise comparision of the same gene
-  int num_bins;     // the number of binary files needed to store the matrix
-  int curr_bin;     // the current binary file number
-  int bin_rows;     // holds the number of rows in the file
-  int total_comps;  // the total number of pair-wise comparisions to be made
-  int n_comps;      // the number of comparisions completed during looping
+  int i, j, k;        // integers for looping
+  float one = 1.0;    // used for pairwise comparision of the same gene
+  int num_bins;       // the number of binary files needed to store the matrix
+  int curr_bin;       // the current binary file number
+  int bin_rows;       // holds the number of rows in the file
+  int total_comps;    // the total number of pair-wise comparisions to be made
+  int n_comps;        // the number of comparisions completed during looping
+  double workspace[2 * params.rows]; // the workspace needed for Spearman's calculation
 
   // calculate the number of binary files needed to store the similarity matrix
   num_bins = (params.rows - 1) / ROWS_PER_OUTPUT_FILE;
 
-  // make sure the Pearson directory exists
+  // make sure the Spearman directory exists
   struct stat st = {0};
-  if (stat("./Pearson", &st) == -1) {
-      mkdir("./Pearson", 0700);
+  if (stat("./Spearman", &st) == -1) {
+      mkdir("./Spearman", 0700);
   }
 
   total_comps = (params.rows * params.rows) / 2;
@@ -49,8 +50,8 @@ void calculate_pearson(CCMParameters params, double ** data, int * histogram) {
     }
     int num_cols = bin_rows - (curr_bin * ROWS_PER_OUTPUT_FILE);
 
-    // the output file will be located in the Pearson directory and named based on the input file info
-    sprintf(outfilename, "./Pearson/%s.pc%d.bin", params.fileprefix, curr_bin);
+    // the output file will be located in the Spearman directory and named based on the input file info
+    sprintf(outfilename, "./Spearman/%s.sc%d.bin", params.fileprefix, curr_bin);
     printf("Writing file %d of %d: %s... \n", curr_bin + 1, num_bins + 1, outfilename);
     FILE * outfile = fopen(outfilename, "wb");
 
@@ -72,7 +73,7 @@ void calculate_pearson(CCMParameters params, double ** data, int * histogram) {
           fwrite(&one, sizeof(one), 1, outfile);
         }
         else {
-          // build the vectors for calculating Pearson's
+          // build the vectors for calculating Spearman's rank coorelation coefficient
           double x[params.cols];
           double y[params.cols];
           int n = 0;
@@ -87,25 +88,25 @@ void calculate_pearson(CCMParameters params, double ** data, int * histogram) {
             n++;
           }
 
-          // Calculate Pearson's if we have enough observations.  We default the
-          // Pearson value to NaN if we do not have the minimum number
+          // Calculate Spearman's if we have enough observations.  We default the
+          // rho value to NaN if we do not have the minimum number
           // of observations to do the calculation.  This is better than storing
           // a zero which indicates no correlation.  If we stored zero then
           // we'd be providing a false correlation as no correlation calculation
           // actually occurred.
-          float pearson = NAN;
+          float rho = NAN;
           if (n >= params.min_obs) {
-            pearson = gsl_stats_correlation(x, 1, y, 1, n);
-            //printf("(%d, %d) = %f (%d values).\n", j, k, pearson, n);
+            rho = gsl_stats_spearman(x, 1, y, 1, n, workspace);
+            //printf("(%d, %d) = %f (%d values).\n", j, k, rho, n);
           }
-          fwrite(&pearson, sizeof(float), 1, outfile);
+          fwrite(&rho, sizeof(float), 1, outfile);
 
           // if the historgram is turned on then store the value in the correct bin
-          if (pearson < 1 && pearson > -1) {
-            if (pearson < 0) {
-              pearson = -pearson;
+          if (rho < 1 && rho > -1) {
+            if (rho < 0) {
+              rho = -rho;
             }
-            histogram[(int)(pearson * HIST_BINS)]++;
+            histogram[(int)(rho * HIST_BINS)]++;
           }
         }
       }

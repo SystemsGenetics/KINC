@@ -16,6 +16,7 @@ int do_extract(int argc, char *argv[]) {
   params.y_coord = -1;
   params.th = 0;
   params.num_files = 0;
+  params.quiet = 0;
 
   for(i = 0; i < 50; i++) {
     params.files[i] = NULL;
@@ -29,6 +30,7 @@ int do_extract(int argc, char *argv[]) {
     // specify the long options. The values returned are specified to be the
     // short options which are then handled by the case statement below
     static struct option long_options[] = {
+      {"quiet",   no_argument,       &params.quiet,  1 },
       {"ematrix", required_argument, 0,  'e' },
       {"method",  required_argument, 0,  'm' },
       {"th",      required_argument, 0,  't' },
@@ -119,15 +121,19 @@ int do_extract(int argc, char *argv[]) {
     exit(-1);
   }
 
-  if (strcmp(params.method, "pc") != 0 && strcmp(params.method, "mi") != 0) {
+  if (strcmp(params.method, "pc") != 0 &&
+      strcmp(params.method, "sc") != 0 &&
+      strcmp(params.method, "mi") != 0) {
     fprintf(stderr, "The method (--method option) must either be 'pc' or 'mi'.\n");
     exit(-1);
   }
 
   // print out some setup details
-  printf("  Using method: '%s'\n", params.method);
-  if (params.th > 0) {
-    printf("  Using threshold of %f\n", params.th);
+  if (!params.quiet) {
+    printf("  Using method: '%s'\n", params.method);
+    if (params.th > 0) {
+      printf("  Using threshold of %f\n", params.th);
+    }
   }
 
   // remove the path and extension from the filename
@@ -143,6 +149,9 @@ int do_extract(int argc, char *argv[]) {
   }
   else if (strcmp(params.method, "pc") == 0) {
     params.inputDir = "Pearson";
+  }
+  else if (strcmp(params.method, "sc") == 0) {
+    params.inputDir = "Spearman";
   }
 
   // open all of the bin files for easy access
@@ -175,7 +184,7 @@ int do_extract(int argc, char *argv[]) {
 
   // make sure we have a positive integer for the rows and columns of the matrix
   if ((params.x_coord >= 0 && params.y_coord < 0) ||
-      (params.x_coord < 0 && params.y_coord  >= 0)) {
+      (params.x_coord < 0  && params.y_coord >= 0)) {
     fprintf(stderr, "Please provide a positive integer for both the x and y coordinates (-x and -y options)\n");
     exit(-1);
   }
@@ -184,7 +193,9 @@ int do_extract(int argc, char *argv[]) {
     get_edges(params);
   }
   else {
-    printf("  Finding similarity value at position (%d, %d)\n", params.x_coord, params.y_coord);
+    if (!params.quiet) {
+      printf("  Finding similarity value at position (%d, %d)\n", params.x_coord, params.y_coord);
+    }
     get_position(params);
   }
 
@@ -205,6 +216,7 @@ void open_bin_files(NetParameters *params) {
   char * method_pos;         // the position of the .mi or .pc in the file name
   char bin_num[5];           // the string representation of the number of the bin file
   int bin_i;                 // the numerical bin number
+  int num_files = 0;         // counts the number of files found
 
   // Scanning for the files of the similarity matrix
   if (NULL == (FD = opendir(params->inputDir))) {
@@ -223,12 +235,14 @@ void open_bin_files(NetParameters *params) {
 
       // Make sure the file has the prefix.
       if(strstr(curr_file->d_name, params->fileprefix) != NULL) {
-
         // Make sure that this file has the method name preceeded by a period.
         char method[5];
         sprintf(method, ".%s", params->method);
         method_pos = strstr(curr_file->d_name, method);
+
         if (method_pos) {
+          num_files++;
+
           // Get the numerical value of this bin file.
           int size = (bin_pos - (method_pos + 3)) * sizeof(char);
           memcpy(bin_num, method_pos + (3 * sizeof(char)), size);
@@ -239,7 +253,9 @@ void open_bin_files(NetParameters *params) {
           // it in the files array using the bin_num as an index.
           char filename[1024];
           sprintf(filename, "%s/%s", params->inputDir, curr_file->d_name);
-          printf("  Found file: %s\n", filename);
+          if (!params->quiet) {
+            printf("  Found file: %s\n", filename);
+          }
           FILE * fh = fopen(filename, "rb");
           if (fh == NULL) {
             fprintf(stderr, "ERROR: could not open bin file: '%s':\n", filename);
@@ -250,13 +266,15 @@ void open_bin_files(NetParameters *params) {
 
           // Read in the number of genes in the similarity matrix and the number
           // of lines in the file.
-          int num_genes;
-          int num_lines;
           fread(&params->numGenes, sizeof(int), 1, fh);
           fread(&params->numLines[bin_i], sizeof(int), 1, fh);
         }
       }
     }
+  }
+  if (num_files == 0) {
+    fprintf(stderr, "ERROR: Could not find any matrix .bin files.\n");
+    exit(-1);
   }
 }
 
@@ -283,8 +301,10 @@ void get_gene_names(NetParameters *params) {
   // reserve the memory for the genes array (array of strings)
   params->genes = (char **) malloc(sizeof(char *) * params->numGenes);
 
-  // open the genes fiel
-  printf("  Opening file %s\n", params->genes_file);
+  // open the genes file
+  if (!params->quiet) {
+    printf("  Opening file %s\n", params->genes_file);
+  }
   genesf = fopen(params->genes_file, "r");
   if (genesf == NULL) {
     fprintf(stderr, "ERROR: cannot open file: %s\n", params->genes_file);
@@ -340,8 +360,11 @@ void get_edges(NetParameters params) {
 
 
    sprintf(edges_file, "%s.%s.th%0.6f.coexpnet.edges.txt", params.fileprefix, params.method, params.th);
-   printf("  Creating network files...\n");
-   if (strcmp(params.method, "pc") == 0) {
+   if (!params.quiet) {
+     printf("  Creating network files...\n");
+   }
+   if (strcmp(params.method, "pc") == 0 ||
+       strcmp(params.method, "sc") == 0) {
      sprintf(edgesN_file, "%s.%s.th%0.6f.neg.coexpnet.edges.txt", params.fileprefix, params.method, params.th);
      sprintf(edgesP_file, "%s.%s.th%0.6f.pos.coexpnet.edges.txt", params.fileprefix, params.method, params.th);
    }
@@ -379,7 +402,8 @@ void get_edges(NetParameters params) {
 
             // if the method id 'pc' (Pearson's correlation) then we will have
             // negative and positive values, and we'll write those to separate files
-            if (strcmp(params.method, "pc") == 0) {
+            if (strcmp(params.method, "pc") == 0 ||
+                strcmp(params.method, "sc") == 0) {
               if(n >= 0){
                  fprintf(edgesP, "%s\t%s\t%0.8f\n", params.genes[x], params.genes[y], n);
               }
@@ -438,7 +462,12 @@ void get_position(NetParameters params) {
         fprintf(stderr,"ERROR: cannot fetch from bin file %d\n", bin_i);
         exit(-1);
       }
-      printf("similarity(%i,%i) = %0.8f, bin = %d, pos = %d\n", x + 1, y + 1, n, bin_i, pos);
+      if (!params.quiet) {
+        printf("similarity(%i,%i) = %0.8f, bin = %d, pos = %d\n", x + 1, y + 1, n, bin_i, pos);
+      }
+      else {
+        printf("%0.8f\n", n);
+      }
       break;
     }
     i += params.numLines[bin_i];
@@ -456,8 +485,9 @@ void print_extract_usage() {
   printf("                 The rows must be genes or probe sets and columns are samples\n");
   printf("  --th|-t      The threshold to cut the similarity matrix. Network files will be generated.\n");
   printf("  --method|-m  The correlation method to use. Supported methods include\n");
-  printf("                 Pearson's correlation and Mutual Information. Provide\n");
-  printf("                 either 'pc' or mi' as values respectively.\n");
+  printf("                 Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
+  printf("                 and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
+  printf("                 'mi' as values respectively.\n");
   printf("  --genes|-g   The file containing the list of genes, in order, from the similarity matrix\n");
   printf("  -x           Extract a single similarity value: the x coordinate. Must also use -y\n");
   printf("  -y           Extract a single similarity value: the y coordinate. Must also use -x.\n");

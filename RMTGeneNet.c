@@ -59,7 +59,7 @@ void print_usage() {
   printf("Available commands:\n");
   printf("  similarity       Constructs the similarity matrix from an input expression matrix.\n");
   printf("  threshold        Identifies a threshold using RMT for the similarity matrix\n");
-  printf("  network          Outputs the network file\n");
+  printf("  extract          Outputs the network file\n");
   printf("  help [command]   Prints these instructions. Include the command to print help\n");
   printf("                   for a specific command (e.g. RMTGeneNet help similarity)\n");
   printf("\n");

@@ -4,7 +4,4 @@
 #include "../similarity.h"
 
 
-
-
-
 #endif

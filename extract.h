@@ -16,7 +16,9 @@
 
 typedef struct{
 
-  char * infilename;          // The input expression matrix file name.
+  int quiet;             // set to 1 if nothing but the sim value is shown
+
+  char * infilename;     // The input expression matrix file name.
   char * inputDir;
   char * genes_file;
 

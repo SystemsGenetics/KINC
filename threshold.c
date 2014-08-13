@@ -105,8 +105,10 @@ int do_threshold(int argc, char *argv[]) {
     exit(-1);
   }
 
-  if (strcmp(params.method, "pc") != 0 && strcmp(params.method, "mi") != 0) {
-    fprintf(stderr,"The method (--method option) must either be 'pc' or 'mi'.\n");
+  if (strcmp(params.method, "pc") != 0 &&
+      strcmp(params.method, "sc") != 0 &&
+      strcmp(params.method, "mi") != 0) {
+    fprintf(stderr,"The method (--method option) must either be 'pc', 'sc' or 'mi'.\n");
     exit(-1);
   }
 
@@ -128,6 +130,9 @@ int do_threshold(int argc, char *argv[]) {
   }
   else if (strcmp(params.method, "pc") == 0) {
     params.inputDir = "Pearson";
+  }
+  else if (strcmp(params.method, "sc") == 0) {
+    params.inputDir = "Spearman";
   }
 
   printf("  Using method: '%s'\n", params.method);
@@ -798,9 +803,10 @@ void print_threshold_usage() {
   printf("The list of required options:\n");
   printf("  --ematrix|-e The file name that contains the expression matrix.\n");
   printf("                 The rows must be genes or probe sets and columns are samples\n");
-  printf("  --method|-m  The correlation method used. Supported methods include\n");
-  printf("                 Pearson's correlation and BSpline estimation of Mutual Information.\n");
-  printf("                 Provide either 'pc' or mi' as values respectively.\n");
+  printf("  --method|-m  The correlation method to use. Supported methods include\n");
+  printf("                 Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
+  printf("                 and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
+  printf("                 'mi' as values respectively.\n");
   printf("\n");
   printf("Optional:\n");
   printf("  --th|-t      A decimal indicating the start threshold. For Pearson's.\n");

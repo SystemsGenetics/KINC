@@ -137,8 +137,11 @@ int do_similarity(int argc, char *argv[]) {
     exit(-1);
   }
 
-  if (strcmp(params.method, "pc") != 0 && strcmp(params.method, "mi") != 0) {
-    fprintf(stderr,"Error: The method (--method option) must either be 'pc' or 'mi'.\n");
+  // make sure the method is valid
+  if (strcmp(params.method, "pc") != 0 &&
+      strcmp(params.method, "mi") != 0 &&
+      strcmp(params.method, "sc") != 0 ) {
+    fprintf(stderr,"Error: The method (--method option) must either be 'pc', 'sc' or 'mi'.\n");
     exit(-1);
   }
   if (params.omit_na && !params.na_val) {
@@ -201,6 +204,9 @@ int do_similarity(int argc, char *argv[]) {
   }
   else if(strcmp(params.method, "mi") == 0) {
     calculate_MI(params, data, histogram);
+  }
+  else if(strcmp(params.method, "sc") == 0) {
+    calculate_spearman(params, data, histogram);
   }
 
   // if performance monitoring is enabled then write the timing data
@@ -396,8 +402,9 @@ void print_similarity_usage() {
   printf("  --cols|-c    The number of columns in the input file minus the first\n");
   printf("                 column that contains gene names\n");
   printf("  --method|-m  The correlation method to use. Supported methods include\n");
-  printf("                 Pearson's correlation and Mutual Information. Provide\n");
-  printf("                 either 'pc' or mi' as values respectively.\n");
+  printf("                 Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
+  printf("                 and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
+  printf("                 'mi' as values respectively.\n");
   printf("\n");
   printf("Optional:\n");
   printf("  --omit_na     Provide this flag to ignore missing values. Defaults to 0.\n");

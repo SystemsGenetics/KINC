@@ -6,11 +6,14 @@ CCFLAGS =
 INCLUDES = 
 LDFLAGS = -Wall -lm -lgsl -lgslcblas -llapack -lblas -lpthread
 
-OBJS = similarity/bspline_mi.o similarity/pearson.o similarity.o threshold.o extract.o RMTGeneNet.o
+OBJS = similarity/bspline_mi.o similarity/pearson.o similarity/spearman.o similarity.o threshold.o extract.o RMTGeneNet.o
 EXE = RMTGeneNet
 
 all: ${OBJS}
 	${CC} ${OBJS} ${LDFLAGS} -o RMTGeneNet
+
+similarity/spearman.o: similarity/spearman.c similarity/spearman.h
+	${CC} -c ${CCFLAGS} ${INCLUDES} similarity/spearman.c -o similarity/spearman.o
 
 similarity/pearson.o: similarity/pearson.c similarity/pearson.h
 	${CC} -c ${CCFLAGS} ${INCLUDES} similarity/pearson.c -o similarity/pearson.o
