@@ -13,7 +13,11 @@
  */
 
 /**
+ * @param double *cc
+ * @param int nord
+ * @param double x
  *
+ * @return
  */
 static double poly(const double *cc, int nord, double x) {
   /*
