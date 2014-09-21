@@ -6,7 +6,7 @@ CCFLAGS =
 INCLUDES = 
 LDFLAGS = -Wall -lm -lgsl -lgslcblas -llapack -lblas -lpthread
 
-OBJS = stats/swilk.o \
+OBJS = \
   similarity/bspline_mi.o \
   similarity/pearson.o \
   similarity/spearman.o \
@@ -18,9 +18,6 @@ EXE = KINC
 
 all: ${OBJS}
 	${CC} ${OBJS} ${LDFLAGS} -o kinc
-
-stats/swilk.o: stats/swilk.c stats/stats.h
-	${CC} -c ${CCFLAGS} ${INCLUDES} stats/swilk.c -o stats/swilk.o
 
 similarity/spearman.o: similarity/spearman.c similarity/spearman.h
 	${CC} -c ${CCFLAGS} ${INCLUDES} similarity/spearman.c -o similarity/spearman.o
