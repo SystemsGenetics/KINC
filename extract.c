@@ -479,7 +479,7 @@ void get_position(NetParameters params) {
  */
 void print_extract_usage() {
   printf("\n");
-  printf("Usage: ./RMTGeneNet extract [options]\n");
+  printf("Usage: ./kinc extract [options]\n");
   printf("The list of required options:\n");
   printf("  --ematrix|-e The file name that contains the expression matrix.\n");
   printf("                 The rows must be genes or probe sets and columns are samples\n");

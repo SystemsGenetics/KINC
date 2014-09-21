@@ -6,11 +6,11 @@ CCFLAGS =
 INCLUDES = 
 LDFLAGS = -Wall -lm -lgsl -lgslcblas -llapack -lblas -lpthread
 
-OBJS = similarity/bspline_mi.o similarity/pearson.o similarity/spearman.o similarity.o threshold.o extract.o RMTGeneNet.o
-EXE = RMTGeneNet
+OBJS = similarity/bspline_mi.o similarity/pearson.o similarity/spearman.o similarity.o threshold.o extract.o kinc.o
+EXE = KINC
 
 all: ${OBJS}
-	${CC} ${OBJS} ${LDFLAGS} -o RMTGeneNet
+	${CC} ${OBJS} ${LDFLAGS} -o kinc
 
 similarity/spearman.o: similarity/spearman.c similarity/spearman.h
 	${CC} -c ${CCFLAGS} ${INCLUDES} similarity/spearman.c -o similarity/spearman.o
@@ -30,11 +30,11 @@ threshold.o: threshold.c threshold.h
 extract.o: extract.c extract.h
 	${CC} -c ${CCFLAGS} ${INCLUDES} extract.c
 
-RMTGeneNet.o: RMTGeneNet.c RMTGeneNet.h
-	${CC} -c ${CCFLAGS} ${INCLUDES} RMTGeneNet.c
+kink.o: kink.c kink.h
+	${CC} -c ${CCFLAGS} ${INCLUDES} kink.c
 
 clean:
 	rm -f ${OBJS} ${EXE}
 
 install: all
-	install -m 0755 RMTGeneNet ${EXE_DIR}
+	install -m 0755 kink ${EXE_DIR}

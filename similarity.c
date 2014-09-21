@@ -393,7 +393,7 @@ void print_histogram(CCMParameters params, int * histogram) {
  */
 void print_similarity_usage() {
   printf("\n");
-  printf("Usage: ./RMTGeneNet similarity [options]\n");
+  printf("Usage: ./kinc similarity [options]\n");
   printf("The list of required options:\n");
   printf("  --ematrix|-e The file name that contains the expression matrix.\n");
   printf("                 The rows must be genes or probe sets and columns are samples\n");

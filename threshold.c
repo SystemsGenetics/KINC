@@ -799,7 +799,7 @@ double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bi
  */
 void print_threshold_usage() {
   printf("\n");
-  printf("Usage: ./RMTGeneNet threshold [options]\n");
+  printf("Usage: ./kinc threshold [options]\n");
   printf("The list of required options:\n");
   printf("  --ematrix|-e The file name that contains the expression matrix.\n");
   printf("                 The rows must be genes or probe sets and columns are samples\n");

@@ -1,5 +1,5 @@
-#ifndef _RMTGENENET_
-#define _RMTGENENET_
+#ifndef _KINC_
+#define _KINC_
 
 /**
  * Description:

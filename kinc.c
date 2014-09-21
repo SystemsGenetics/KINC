@@ -1,4 +1,4 @@
-#include "RMTGeneNet.h"
+#include "kinc.h"
 
 /**
  * The main subroutine.  Parses the input parameters and executes the program
@@ -55,12 +55,12 @@ int main(int argc, char *argv[]) {
  */
 void print_usage() {
   printf("\n");
-  printf("Usage: ./RMTGeneNet [command]\n");
+  printf("Usage: ./kinc [command]\n");
   printf("Available commands:\n");
   printf("  similarity       Constructs the similarity matrix from an input expression matrix.\n");
   printf("  threshold        Identifies a threshold using RMT for the similarity matrix\n");
   printf("  extract          Outputs the network file\n");
   printf("  help [command]   Prints these instructions. Include the command to print help\n");
-  printf("                   for a specific command (e.g. RMTGeneNet help similarity)\n");
+  printf("                   for a specific command (e.g. kinc help similarity)\n");
   printf("\n");
 }
