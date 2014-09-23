@@ -6,10 +6,16 @@ CCFLAGS =
 INCLUDES = 
 LDFLAGS = -Wall -lm -lgsl -lgslcblas -llapack -lblas -lpthread
 
-OBJS = stats/swilk.o \
+OBJS = \
+  stats/stats.o \
+  stats/kurtosis.o \
+  stats/sfrancia.o \
+  stats/swilk.o \
+  stats/royston.o \
   similarity/bspline_mi.o \
   similarity/pearson.o \
   similarity/spearman.o \
+  preprocess.o \
   similarity.o \
   threshold.o \
   extract.o \
@@ -19,8 +25,20 @@ EXE = KINC
 all: ${OBJS}
 	${CC} ${OBJS} ${LDFLAGS} -o kinc
 
-stats/swilk.o: stats/swilk.c stats/stats.h
+stats/stats.o: stats/stats.c stats/stats.h
+	${CC} -c ${CCFLAGS} ${INCLUDES} stats/stats.c -o stats/stats.o
+
+stats/kurtosis.o: stats/kurtosis.c stats/kurtosis.h
+	${CC} -c ${CCFLAGS} ${INCLUDES} stats/kurtosis.c -o stats/kurtosis.o
+
+stats/sfrancia.o: stats/sfrancia.c stats/sfrancia.h
+	${CC} -c ${CCFLAGS} ${INCLUDES} stats/sfrancia.c -o stats/sfrancia.o
+
+stats/swilk.o: stats/swilk.c stats/swilk.h
 	${CC} -c ${CCFLAGS} ${INCLUDES} stats/swilk.c -o stats/swilk.o
+
+stats/royston.o: stats/royston.c stats/royston.h
+	${CC} -c ${CCFLAGS} ${INCLUDES} stats/royston.c -o stats/royston.o
 
 similarity/spearman.o: similarity/spearman.c similarity/spearman.h
 	${CC} -c ${CCFLAGS} ${INCLUDES} similarity/spearman.c -o similarity/spearman.o
@@ -31,6 +49,9 @@ similarity/pearson.o: similarity/pearson.c similarity/pearson.h
 similarity/bspline_mi.o: similarity/bspline_mi.c similarity/bspline_mi.h
 	${CC} -c ${CCFLAGS} ${INCLUDES} similarity/bspline_mi.c -o similarity/bspline_mi.o
 
+preprocess.o: preprocess.c preprocess.h
+	${CC} -c ${CCFLAGS} ${INCLUDES} preprocess.c
+	
 similarity.o: similarity.c similarity.h
 	${CC} -c ${CCFLAGS} ${INCLUDES} similarity.c
 

@@ -1,5 +1,5 @@
 #include <math.h>
-#include "stats.h"
+#include "swilk.h"
 
 /**
  * The code contained in this file was obtained from the skilk.c
@@ -19,7 +19,7 @@
  *
  * @return
  */
-static double poly(const double *cc, int nord, double x) {
+double poly(const double *cc, int nord, double x) {
   /*
    *  Algorithm AS 181.2 Appl. Statist.  (1982) Vol. 31, No. 2
    *  Calculates the algebraic polynomial of order nord-1 with
@@ -48,7 +48,7 @@ static double poly(const double *cc, int nord, double x) {
  * @param double *pw
  * @param int *ifault
  */
-static void swilk(double *x, int n, double *w, double *pw, int *ifault) {
+void swilk(double *x, int n, double *w, double *pw, int *ifault) {
 
   int nn2 = n / 2;
   double a[nn2 + 1]; /* 1-based */
