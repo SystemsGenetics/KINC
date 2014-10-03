@@ -31,5 +31,6 @@ double kurtosis(double *x, int n) {
     q += pow(x[i] - mean_x,  2);
   }
 
-  return n * r / pow(q, 2);
+  double k = n *r / pow(q, 2);
+  return k;
 }

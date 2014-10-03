@@ -35,9 +35,11 @@
 #include <string.h>
 #include <setjmp.h>
 
+#include "preprocess.h"
 #include "threshold.h"
 #include "similarity.h"
 #include "extract.h"
+
 
 /**
  * Definitions for mimicing a try, catch block.

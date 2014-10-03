@@ -61,13 +61,13 @@ void swilk(double *x, int n, double *w, double *pw, int *ifault) {
   double small = 1e-19;
 
   // Polynomial coefficients.
-  double g[2]  = { -2.273,.459 };
-  double c1[6] = { 0.,.221157,-.147981,-2.07119, 4.434685, -2.706056 };
-  double c2[6] = { 0.,.042981,-.293762,-1.752461,5.682633, -3.582633 };
-  double c3[4] = { .544,-.39978,.025054,-6.714e-4 };
-  double c4[4] = { 1.3822,-.77857,.062767,-.0020322 };
-  double c5[4] = { -1.5861,-.31082,-.083751,.0038915 };
-  double c6[3] = { -.4803,-.082676,.0030302 };
+  double g[2]  = { -2.273,   0.459 };
+  double c1[6] = {  0.0,     0.221157, -0.147981, -2.07119,  4.434685, -2.706056 };
+  double c2[6] = {  0.0,     0.042981, -0.293762, -1.752461, 5.682633, -3.582633 };
+  double c3[4] = {  0.544,  -0.39978,   0.025054, -6.714e-4 };
+  double c4[4] = {  1.3822, -0.77857,   0.062767, -0.0020322 };
+  double c5[4] = { -1.5861, -0.31082,  -0.083751,  0.0038915 };
+  double c6[3] = { -0.4803, -0.082676,  0.0030302 };
 
   // Local variables.
   int i, j, i1;
@@ -76,7 +76,7 @@ void swilk(double *x, int n, double *w, double *pw, int *ifault) {
   double a1, a2, an, m, s, sa, xi, sx, xx, y, w1;
   double fac, asa, an25, ssa, sax, rsn, ssx, xsx;
 
-  *pw = 1.;
+  *pw = 1.0;
   if (n < 3) {
     *ifault = 1;
     return;
@@ -88,30 +88,29 @@ void swilk(double *x, int n, double *w, double *pw, int *ifault) {
     a[1] = 0.70710678; // = sqrt(1/2)
   }
   else {
-    an25 = an + .25;
-    summ2 = 0.;
+    an25 = an + 0.25;
+    summ2 = 0.0;
     for (i = 1; i <= nn2; i++) {
-      a[i] = qnorm((i - 0.375) / an25, 0., 1., 1, 0);
+      a[i] = qnorm((i - 0.375) / an25, 0.0, 1.0, 1, 0);
       double r__1 = a[i];
       summ2 += r__1 * r__1;
     }
-    summ2 *= 2.;
+    summ2 *= 2.0;
     ssumm2 = sqrt(summ2);
-    rsn = 1. / sqrt(an);
+    rsn = 1.0 / sqrt(an);
     a1 = poly(c1, 6, rsn) - a[1] / ssumm2;
 
     // Normalize a[]
     if (n > 5) {
       i1 = 3;
       a2 = -a[2] / ssumm2 + poly(c2, 6, rsn);
-      fac = sqrt((summ2 - 2. * (a[1] * a[1]) - 2. * (a[2] * a[2]))
-           / (1. - 2. * (a1 * a1) - 2. * (a2 * a2)));
+      fac = sqrt((summ2 - 2.0 * (a[1] * a[1]) - 2.0 * (a[2] * a[2]))
+           / (1.0 - 2.0 * (a1 * a1) - 2.0 * (a2 * a2)));
       a[2] = a2;
     }
     else {
       i1 = 2;
-      fac = sqrt((summ2 - 2. * (a[1] * a[1])) /
-           ( 1.  - 2. * (a1 * a1)));
+      fac = sqrt((summ2 - 2. * (a[1] * a[1])) / ( 1.  - 2. * (a1 * a1)));
     }
     a[1] = a1;
     for (i = i1; i <= nn2; i++) {

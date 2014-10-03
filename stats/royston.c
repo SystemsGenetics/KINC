@@ -10,9 +10,8 @@
  */
 double royston2D(double* a, double * b, int n) {
 
-  // If this were a multivariate test (rather than bivariate) then
-  // the nubmer of cols could be variable. Because this is a bivarate test
-  // the number of cols is 2.  The number of rows is n
+  // The cols variable is the number of genes. Because this is bivariate it
+  // will always be 2.  The rows is the number of sample measurements per gene.
   int cols = 2;
   int rows = n;
 
@@ -34,15 +33,15 @@ double royston2D(double* a, double * b, int n) {
     // stop("n must be less than 2000")
     return NAN;
   }
-  // If we have betwen four and 11 rows
-  else if (rows >= 4 || rows <= 11) {
+  // If we have between four and 11 rows
+  else if (rows >= 4 && rows <= 11) {
     double g = -2.273 + 0.459 * rows;
     double m = 0.5440 - 0.39978 * rows + 0.025054 * rows2 - 0.0006714 * rows3;
     double s = exp(1.3822 - 0.77857 * rows + 0.062767 * rows2 - 0.0020322 * rows3);
 
     // Get the measure of kurtosis.
-    double ak = kurtosis(a);
-    double bk = kurtosis(b);
+    double ak = kurtosis(a, rows);
+    double bk = kurtosis(b, rows);
 
     // Shapiro-Francia test is better for leptokurtic samples.
     if (ak > 3) {
@@ -52,10 +51,12 @@ double royston2D(double* a, double * b, int n) {
     else {
       int ifault = 0;
       double W = 0, pw;
-      swilk(a, cols, &W, &pw, &ifault);
+      swilk(a, rows, &W, &pw, &ifault);
       w[0] = W;
       if (ifault > 0 && ifault != 7) {
-        error("ifault=%d. This should not happen", ifault);
+        // error("ifault=%d. This should not happen", ifault);
+        // TODO: deal with this error
+        return NAN;
       }
     }
     // Shapiro-Francia test is better for leptokurtic samples.
@@ -66,10 +67,12 @@ double royston2D(double* a, double * b, int n) {
     else {
       int ifault = 0;
       double W = 0, pw;
-      swilk(b, cols, &W, &pw, &ifault);
+      swilk(b, rows, &W, &pw, &ifault);
       w[1] = W;
       if (ifault > 0 && ifault != 7) {
-        error("ifault=%d. This should not happen", ifault);
+        // error("ifault=%d. This should not happen", ifault);
+        // TODO: deal with this error
+        return NAN;
       }
     }
 
@@ -77,15 +80,15 @@ double royston2D(double* a, double * b, int n) {
     z[1] = (-log(g - (log(1 - w[1]))) - m) / s;
   }
   // If we have between 12 and 2000 rows
-  else if (rows >= 12 || rows <= 2000) {
+  else if (rows >= 12 && rows <= 2000) {
     double x = log(rows);
     double g = 0;
     double m = -1.5861 - 0.31082 * x - 0.083751 * rows2 + 0.0038915 * rows3;
     double s = exp(-0.4803 -0.082676 * x + 0.0030302 * rows2);
 
     // Get the measure of kurtosis.
-    double ak = kurtosis(a);
-    double bk = kurtosis(b);
+    double ak = kurtosis(a, rows);
+    double bk = kurtosis(b, rows);
 
     // Shapiro-Francia test is better for leptokurtic samples.
     if (ak > 3) {
@@ -95,10 +98,12 @@ double royston2D(double* a, double * b, int n) {
     else {
       int ifault = 0;
       double W = 0, pw;
-      swilk(a, cols, &W, &pw, &ifault);
+      swilk(a, rows, &W, &pw, &ifault);
       w[0] = W;
       if (ifault > 0 && ifault != 7) {
-        error("ifault=%d. This should not happen", ifault);
+        //error("ifault=%d. This should not happen", ifault);
+        // TODO: deal with this error
+        return NAN;
       }
     }
     // Shapiro-Francia test is better for leptokurtic samples.
@@ -112,7 +117,9 @@ double royston2D(double* a, double * b, int n) {
       swilk(b, cols, &W, &pw, &ifault);
       w[1] = W;
       if (ifault > 0 && ifault != 7) {
-        error("ifault=%d. This should not happen", ifault);
+        //error("ifault=%d. This should not happen", ifault);
+        // TODO: deal with this error
+        return NAN;
       }
     }
 
@@ -124,9 +131,9 @@ double royston2D(double* a, double * b, int n) {
     return NAN;
   }
 
-  double u = 0.715;
-  double v = 0.21364 + 0.015124 * pow(log(rows), 2) - 0.0018034 * pow(log(rows), 3);
-  double l = 5;
+//  double u = 0.715;
+//  double v = 0.21364 + 0.015124 * pow(log(rows), 2) - 0.0018034 * pow(log(rows), 3);
+//  double l = 5;
 
   // Get the correlation of a and b
   double pcc = gsl_stats_correlation(a, 1, b, 1, rows);

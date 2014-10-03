@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <libgen.h>
+#include "vector.h"
 
 
 typedef struct{
@@ -68,8 +69,6 @@ int do_threshold(int argc, char *argv[]);
 int find_threshold(RMTParameters *params);
 
 float * read_similarity_matrix(float th, int * size, RMTParameters *params);
-
-void quickSortF(float* l, int size);
 
 float* calculateEigen(float* mat, int size);
 

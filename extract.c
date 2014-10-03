@@ -86,11 +86,11 @@ int do_extract(int argc, char *argv[]) {
         exit(-1);
         break;
       case ':':
-        print_similarity_usage();
+        print_extract_usage();
         exit(-1);
         break;
       default:
-        print_similarity_usage();
+        print_extract_usage();
     }
   }
 

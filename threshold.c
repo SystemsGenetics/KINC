@@ -191,7 +191,7 @@ int find_threshold(RMTParameters *params) {
 
   float* newM;
   int size;
-  time_t start, end;
+//  time_t start, end;
   FILE* eigenF, *chiF;
   char chi_filename[1024];  // the output file name
   char eigen_filename[1024];  // the output file name
@@ -201,7 +201,6 @@ int find_threshold(RMTParameters *params) {
   double finalChi = 10000.0;
   double minTH    = 1.0;
   double minChi   = 10000.0;
-  double maxTH    = 0.0;
   double maxChi   = 0.0;
   int i           = 0;
   double chi;
@@ -257,7 +256,6 @@ int find_threshold(RMTParameters *params) {
         }
         if (finalChi < params->chiSquareTestThreshold && chi > finalChi && th < finalTH){
           maxChi = chi;
-          maxTH = th;
         }
       }
     }
@@ -347,8 +345,7 @@ float * read_similarity_matrix(float th, int * size, RMTParameters *params) {
 
   float * cutM;    // the resulting cut similarity matrix
   float * rowj;    // holds the float value from row i in the bin file
-  int len;         // the length of the filename and path to the correlation bin file
-  int i, h;        // used to iterate through the bin files
+  int i;           // used to iterate through the bin files
   int j;           // used to iterate through the rows of each bin file
   int k;           // used to iterate through the cols of each bine file
   int z;           // the number of binary files
@@ -467,80 +464,6 @@ float * read_similarity_matrix(float th, int * size, RMTParameters *params) {
 
   free(rowj);
   return cutM;
-}
-
-/*
- * @param double* l
- * @param int idx1
- * @param int idx2
- */
-
-void swapD(double* l, int idx1, int idx2){
-  double temp = l[idx1];
-  l[idx1] = l[idx2];
-  l[idx2] = temp;
-  return;
-}
-
-/*
- * @param float* l
- * @param int idx1
- * @param int idx2
- */
-
-void swapF(float* l, int idx1, int idx2){
-  float temp = l[idx1];
-  l[idx1] = l[idx2];
-  l[idx2] = temp;
-  return;
-}
-
-/*
- * @param double* l
- * @param int size
- */
-
-void quickSortD(double* l, int size){
-  if(size<=1) return;
-  int pivIdx = (int) size/1.618;//golden ratio
-  double pivot = l[pivIdx];
-  swapD(l, pivIdx, size-1);
-  int leftPlace = 0;
-  int i;
-  for(i=0;i<size-1;i++){
-    if(l[i]<pivot){
-      swapD(l, i, leftPlace);
-      leftPlace++;
-    }
-  }
-  swapD(l, size-1, leftPlace);
-  quickSortD(l,leftPlace);
-  quickSortD(&l[leftPlace+1], size-leftPlace-1);
-  return;
-}
-
-/*
- * @param float* l
- * @param int size
- */
-
-void quickSortF(float* l, int size){
-  if(size<=1) return;
-  int pivIdx = (int) size/1.618;//golden ratio
-  float pivot = l[pivIdx];
-  swapF(l, pivIdx, size-1);
-  int leftPlace = 0;
-  int i;
-  for(i=0;i<size-1;i++){
-    if(l[i]<pivot){
-      swapF(l, i, leftPlace);
-      leftPlace++;
-    }
-  }
-  swapF(l, size-1, leftPlace);
-  quickSortF(l,leftPlace);
-  quickSortF(&l[leftPlace+1], size-leftPlace-1);
-  return;
 }
 
 /*

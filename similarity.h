@@ -44,10 +44,10 @@ typedef struct {
 } CCMParameters;
 
 // a global variable for the number of rows in each output file
-static int ROWS_PER_OUTPUT_FILE = 10000;
+#define ROWS_PER_OUTPUT_FILE 10000
 
 // the number of bins in the correlation value histogram
-static int HIST_BINS = 100;
+#define HIST_BINS 100
 
 // function prototypes
 
