@@ -42,13 +42,20 @@ double poly(const double *cc, int nord, double x) {
 /**
  * Calculates the Shapiro-Wilk univariate normality test.
  *
- * @param double *x
+ * @param double *vector
  * @param int n
  * @param double *w
  * @param double *pw
  * @param int *ifault
  */
-void swilk(double *x, int n, double *w, double *pw, int *ifault) {
+void swilk(double *vector, int n, double *w, double *pw, int *ifault) {
+
+  // Create a copy of the vecto and sort it.
+  double * x = (double *) malloc(sizeof(double) * n);
+  memcpy(x, vector, sizeof(double) * n);
+
+  // Sort the incoming vector
+  quickSortD(x, n);
 
   int nn2 = n / 2;
   double a[nn2 + 1]; /* 1-based */
@@ -146,7 +153,9 @@ void swilk(double *x, int n, double *w, double *pw, int *ifault) {
     }
     xx = xi;
   }
-  if (n > 5000) *ifault = 2;
+  if (n > 5000) {
+    *ifault = 2;
+  }
 
   // Calculate W statistic as squared correlation between data and coefficients
   sa /= n;

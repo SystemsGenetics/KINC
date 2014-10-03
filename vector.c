@@ -40,15 +40,15 @@ void quickSortD(double* l, int size){
   swapD(l, pivIdx, size-1);
   int leftPlace = 0;
   int i;
-  for(i=0;i<size-1;i++){
-    if(l[i]<pivot){
+  for (i = 0; i < size - 1; i++) {
+    if(l[i] < pivot){
       swapD(l, i, leftPlace);
       leftPlace++;
     }
   }
   swapD(l, size-1, leftPlace);
-  quickSortD(l,leftPlace);
-  quickSortD(&l[leftPlace+1], size-leftPlace-1);
+  quickSortD(l, leftPlace);
+  quickSortD(&l[leftPlace + 1], size - leftPlace - 1);
   return;
 }
 
@@ -66,14 +66,14 @@ void quickSortF(float* l, int size){
   swapF(l, pivIdx, size-1);
   int leftPlace = 0;
   int i;
-  for(i=0;i<size-1;i++){
-    if(l[i]<pivot){
+  for (i = 0; i < size - 1; i++) {
+    if(l[i] < pivot){
       swapF(l, i, leftPlace);
       leftPlace++;
     }
   }
-  swapF(l, size-1, leftPlace);
+  swapF(l, size - 1, leftPlace);
   quickSortF(l,leftPlace);
-  quickSortF(&l[leftPlace+1], size-leftPlace-1);
+  quickSortF(&l[leftPlace + 1], size - leftPlace - 1);
   return;
 }
