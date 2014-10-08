@@ -5,8 +5,8 @@
 void sfrancia(double *vector, int n, double *w, double *pw, int *ifault) {
 
   if ((n < 5 || n > 5000)) {
-    // stop("sample size must be between 5 and 5000")
     *ifault = 1;
+    handle_warning("You must have between 3 and 500 samples for Shapiro Francia normality test.");
     return;
   }
 
@@ -30,6 +30,8 @@ void sfrancia(double *vector, int n, double *w, double *pw, int *ifault) {
   for (i = 0; i < n; i++) {
     y[i] = qnorm(norm_points[i], 0, 1, FALSE, FALSE);
   }
+  free(norm_points);
+
   // double W = cor(x, y)^2;
   double pcc = gsl_stats_correlation(x, 1, y, 1, n);
   double W = pow(pcc, 2);
@@ -43,4 +45,6 @@ void sfrancia(double *vector, int n, double *w, double *pw, int *ifault) {
   // Return the probabiliy
   *w = W;
   *pw = pval;
+
+  free(x);
 }

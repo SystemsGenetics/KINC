@@ -3,6 +3,13 @@
 /**
  * Calculates the Royston H test for bivariate normality.
  *
+ * This function was adapted from the R code royston.test which is
+ * available in the royston package at
+ * http://cran.r-project.org/web/packages/royston/index.html.
+ *
+ * Unlike the R code, this function has been adapted to only deal with
+ * two vectors rather than a matrix.
+ *
  * @param double * a
  * @param double * b
  * @param int n
@@ -16,16 +23,15 @@ double royston2D(double* a, double * b, int n) {
   int rows = n;
 
   // Create a new vector z
-  // z <- matrix(nrow=p, ncol = 1)
   double z[cols];
 
   // We must have at least 3 rows.
   if (rows <= 3) {
-    // TODO: should this raise an error?
+    handle_warning("You must have at least 3 samples for Royston's H test.");
     return NAN;
   }
   if (rows > 2000) {
-    // stop("n must be less than 2000")
+    handle_warning("You must have no more than 2000 samples for Royston's H test.");
     return NAN;
   }
   // If we have between four and 11 rows
@@ -57,8 +63,7 @@ double royston2D(double* a, double * b, int n) {
         swilk(select, rows, &W, &pw, &ifault);
       }
       if (ifault > 0 && ifault != 7) {
-        //error("ifault=%d. This should not happen", ifault);
-        // TODO: deal with this error
+        handle_warning("Normality test failed while calculating Royston's H test.");
         return NAN;
       }
       z[i] = (-log(g - (log(1 - W))) - m)/s;
@@ -93,8 +98,7 @@ double royston2D(double* a, double * b, int n) {
         swilk(select, rows, &W, &pw, &ifault);
       }
       if (ifault > 0 && ifault != 7) {
-        //error("ifault=%d. This should not happen", ifault);
-        // TODO: deal with this error
+        handle_warning("Normality test failed while calculating Royston's H test.");
         return NAN;
       }
       z[i] = ((log(1 - W)) + g - m) / s;
@@ -114,8 +118,15 @@ double royston2D(double* a, double * b, int n) {
 
   // Transformed PCC value
   double NC = pow(pcc, l) * (1.0 - (u * pow(1.0 - pcc, u)) / v);
-  double T = 2 + 2*NC - cols;
+
+  // Calculate the % Total. In the R code this was
+  //   T = sum(sum(NC)) - p
+  // but, because we only have two vectors it was adjusted as belo.
+  double T = 2 + 2 * NC - cols;
+
+  // Calculate the average correlation
   double mC = T / (pow(cols, 2) - cols);
+
   // Equivalent degrees of freedom
   double edf = cols / (1.0 + (cols - 1.0) * mC);
 

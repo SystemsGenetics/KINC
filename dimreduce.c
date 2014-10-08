@@ -1,6 +1,6 @@
-#include "preprocess.h"
+#include "dimreduce.h"
 
-int do_preprocess(int argc, char *argv[]) {
+int do_dimreduce(int argc, char *argv[]) {
 
   //time_t start_time, end_time;  // variables used for timing of the software
   int c;                        // the value returned by getopt_long
@@ -75,18 +75,18 @@ int do_preprocess(int argc, char *argv[]) {
         strcpy(params.func, optarg);
         break;
       case 'h':
-        print_preprocess_usage();
+        print_dimreduce_usage();
         exit(-1);
         break;
       case '?':
         exit(-1);
         break;
       case ':':
-        print_preprocess_usage();
+        print_dimreduce_usage();
         exit(-1);
         break;
       default:
-        print_preprocess_usage();
+        print_dimreduce_usage();
     }
   }
 
@@ -153,18 +153,44 @@ int do_preprocess(int argc, char *argv[]) {
   }
 
   double ** data = load_ematrix(params);
-  double pv = royston2D(data[0], data[1], params.cols);
+  int i, j;
+  for (i = 0; i < params.rows; i++) {
+    for (j = 0; j < params.rows; j++) {
+      // We only need to calculate royson in the lower triangle of the
+      // full pair-wise matrix
+      if (j >= i) {
+        continue;
+      }
+      double *a = data[i];
+      double *b = data[j];
 
-  printf("pv: %e\n", pv);
+      // Intialize the arrays that will be used for containig a and b
+      // but with missing values removed.
+      double * a2 = (double *) malloc(sizeof(double) * params.cols);
+      double * b2 = (double *) malloc(sizeof(double) * params.cols);
+      int n2;
+
+      // Remove any missing values before calculating Royston's H test.
+      remove_missing_paired(a, b, params.cols, a2, b2, &n2);
+
+      // Calculate Roysont's H test for multivariate normality.
+      double pv = royston2D(a2, b2, n2);
+      printf("(%d, %d), pv: %e\n", i + 1, j + 1, pv);
+
+      // Release the memory for a2 and b2.
+      free(a2);
+      free(b2);
+    }
+  }
   return 1;
 }
 
 /**
  * Prints the command-line usage instructions for the similarity command
  */
-void print_preprocess_usage() {
+void print_dimreduce_usage() {
   printf("\n");
-  printf("Usage: ./kinc preprocess [options]\n");
+  printf("Usage: ./kinc dimreduce [options]\n");
   printf("The list of required options:\n");
   printf("  --ematrix|-e The file name that contains the expression matrix.\n");
   printf("                 The rows must be genes or probe sets and columns are samples\n");

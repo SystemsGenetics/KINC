@@ -7,6 +7,7 @@
 #include <string.h>
 #include "stats.h"
 #include "../vector.h"
+#include "../error.h"
 
 double poly(const double *cc, int nord, double x);
 void swilk(double *vector, int n, double *w, double *pw, int *ifault);

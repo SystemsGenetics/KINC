@@ -1,5 +1,5 @@
-#ifndef _PREPROCESS_
-#define _PREPROCESS_
+#ifndef _DIMREDUCE_
+#define _DIMREDUCE_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,8 +9,9 @@
 #include <string.h>
 #include "similarity.h"
 #include "stats/royston.h"
+#include "error.h"
 
-int do_preprocess(int argc, char *argv[]);
-void print_preprocess_usage();
+int do_dimreduce(int argc, char *argv[]);
+void print_dimreduce_usage();
 
 #endif

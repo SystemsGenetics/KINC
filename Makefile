@@ -7,6 +7,8 @@ INCLUDES =
 LDFLAGS = -Wall -lm -lgsl -lgslcblas -llapack -lblas -lpthread
 
 OBJS = \
+  error.o \
+  vector.o \
   stats/stats.o \
   stats/kurtosis.o \
   stats/sfrancia.o \
@@ -15,8 +17,7 @@ OBJS = \
   similarity/bspline_mi.o \
   similarity/pearson.o \
   similarity/spearman.o \
-  vector.o \
-  preprocess.o \
+  dimreduce.o \
   similarity.o \
   threshold.o \
   extract.o \
@@ -25,6 +26,12 @@ EXE = KINC
 
 all: ${OBJS}
 	${CC} ${OBJS} ${LDFLAGS} -o kinc
+
+vector.o: vector.c vector.h
+	${CC} -c ${CFLAGS} ${INCLUDES} vector.c
+
+error.o: error.c error.h
+	${CC} -c ${CFLAGS} ${INCLUDES} error.c
 
 stats/stats.o: stats/stats.c stats/stats.h
 	${CC} -c ${CFLAGS} ${INCLUDES} stats/stats.c -o stats/stats.o
@@ -50,12 +57,9 @@ similarity/pearson.o: similarity/pearson.c similarity/pearson.h
 similarity/bspline_mi.o: similarity/bspline_mi.c similarity/bspline_mi.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/bspline_mi.c -o similarity/bspline_mi.o
 
-vector.o: vector.c vector.h
-	${CC} -c ${CFLAGS} ${INCLUDES} vector.c
+dimreduce.o: dimreduce.c dimreduce.h
+	${CC} -c ${CFLAGS} ${INCLUDES} dimreduce.c
 
-preprocess.o: preprocess.c preprocess.h
-	${CC} -c ${CFLAGS} ${INCLUDES} preprocess.c
-	
 similarity.o: similarity.c similarity.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity.c
 

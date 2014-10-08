@@ -11,8 +11,8 @@ int main(int argc, char *argv[]) {
     print_usage();
     exit(-1);
   }
-  if (strcmp(argv[1], "preprocess") == 0) {
-    return do_preprocess(argc, argv);
+  if (strcmp(argv[1], "dimreduce") == 0) {
+    return do_dimreduce(argc, argv);
   }
   // construct the similarity matrix
   if (strcmp(argv[1], "similarity") == 0) {
