@@ -3,8 +3,11 @@
 
 #include <math.h>
 #include <gsl/gsl_statistics.h>
+#include <stdio.h>
+#include <string.h>
 #include "stats.h"
+#include "../vector.h"
 
-double sfrancia(double *x, int n);
+void sfrancia(double *vector, int n, double *w, double *pw, int *ifault);
 
 #endif

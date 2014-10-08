@@ -155,7 +155,7 @@ int do_preprocess(int argc, char *argv[]) {
   double ** data = load_ematrix(params);
   double pv = royston2D(data[0], data[1], params.cols);
 
-  printf("pv: %f\n", pv);
+  printf("pv: %e\n", pv);
   return 1;
 }
 

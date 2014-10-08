@@ -380,11 +380,11 @@ void pnorm_both(double x, double *cum, double *ccum, int i_tail, int log_p) {
  *   are 3/8 if n < 10 and 1/2 otherwise.
  */
 double * ppoints(int n, float a) {
-  double * points = malloc(sizeof(double) * n);
+  double * points = (double *) malloc(sizeof(double) * n);
 
   if (n > 0) {
     int i;
-    for (i = 0; i < n; n++) {
+    for (i = 0; i < n; i++) {
       points[i] = (i + 1 - a) / (n + 1 - 2 * a);
     }
   }

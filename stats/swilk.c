@@ -178,15 +178,15 @@ void swilk(double *vector, int n, double *w, double *pw, int *ifault) {
   // for W very near 1 (a potential problem in very large samples)
   ssassx = sqrt(ssa * ssx);
   w1 = (ssassx - sax) * (ssassx + sax) / (ssa * ssx);
-  *w = 1. - w1;
+  *w = 1.0 - w1;
 
   // Calculate significance level for W
   if (n == 3) {/* exact P value : */
     double pi6 = 1.90985931710274, /* = 6/pi */
     stqr = 1.04719755119660; /* = asin(sqrt(3/4)) */
     *pw = pi6 * (asin(sqrt(*w)) - stqr);
-    if(*pw < 0.) {
-      *pw = 0.;
+    if(*pw < 0.0) {
+      *pw = 0.0;
     }
     return;
   }

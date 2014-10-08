@@ -2,23 +2,26 @@
 /**
  * Shapiro-Francia normality test
  */
-double sfrancia(double *x, int n) {
+void sfrancia(double *vector, int n, double *w, double *pw, int *ifault) {
 
   if ((n < 5 || n > 5000)) {
     // stop("sample size must be between 5 and 5000")
-    return NAN;
+    *ifault = 1;
+    return;
   }
-
-  // DNAME <- deparse(substitute(x))
 
   // Remove missing values from x
 
-  // Sort X
-  // double x <- sort(x[complete.cases(x)])
+  // Create a copy of the vectot and sort it.
+  double * x = (double *) malloc(sizeof(double) * n);
+  memcpy(x, vector, sizeof(double) * n);
+
+  // Sort the incoming vector
+  quickSortD(x, n);
 
   // Get equally spaced points between 0 and 1 and then determine
   // their probabilities from a normal distribution
-  double a = 3/8;
+  double a = 3.0/8.0;
   double * norm_points = ppoints(n, a);
 
   // Get the value of the probabilities using x
@@ -34,8 +37,10 @@ double sfrancia(double *x, int n) {
   double v = log(u);
   double mu = -1.2725 + 1.0521 * (v - u);
   double sig = 1.0308 - 0.26758 * (v + 2/u);
-  double z = (log(1 - W) - mu) / sig;
+  double z = (log(1.0 - W) - mu) / sig;
+  double pval = pnorm(z, 0, 1, FALSE, FALSE);
 
   // Return the probabiliy
-  return pnorm(z, 0, 1, TRUE, FALSE);
+  *w = W;
+  *pw = pval;
 }

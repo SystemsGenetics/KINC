@@ -9,6 +9,6 @@
 #include "../vector.h"
 
 double poly(const double *cc, int nord, double x);
-void swilk(double *x, int n, double *w, double *pw, int *ifault);
+void swilk(double *vector, int n, double *w, double *pw, int *ifault);
 
 #endif
