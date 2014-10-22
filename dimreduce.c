@@ -153,9 +153,19 @@ int do_dimreduce(int argc, char *argv[]) {
   }
 
   double ** data = load_ematrix(params);
+  int total_comps;  // the total number of pair-wise comparisions to be made
+  int n_comps;      // the number of comparisions completed during looping
   int i, j;
+
+  total_comps = (params.rows * params.rows) / 2;
   for (i = 0; i < params.rows; i++) {
     for (j = 0; j < params.rows; j++) {
+
+      n_comps++;
+      if (n_comps % 1000 == 0) {
+        printf("Percent complete: %.2f%%\r", (n_comps/(float)total_comps)*100);
+      }
+
       // We only need to calculate royson in the lower triangle of the
       // full pair-wise matrix
       if (j >= i) {
@@ -175,7 +185,7 @@ int do_dimreduce(int argc, char *argv[]) {
 
       // Calculate Roysont's H test for multivariate normality.
       double pv = royston2D(a2, b2, n2);
-      printf("(%d, %d), pv: %e\n", i + 1, j + 1, pv);
+      //printf("(%d, %d), pv: %e\n", i + 1, j + 1, pv);
 
       // Release the memory for a2 and b2.
       free(a2);

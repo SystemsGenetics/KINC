@@ -3,7 +3,7 @@
 /**
  * Calculates the Royston H test for bivariate normality.
  *
- * This function was adapted from the R code royston.test which is
+ * This function was adapted from the R function royston.test which is
  * available in the royston package at
  * http://cran.r-project.org/web/packages/royston/index.html.
  *
