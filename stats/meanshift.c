@@ -17,11 +17,13 @@
  * @param h
  *   The bandwidth: the percentage of the range to use for clustering.
  */
-void meanshift2D(double* a, double * b, int n, double h, double thr, int iter) {
+void meanshift2D(double* a, double * b, int n, double h) {
   int d = 2; // the number of columns (i.e. only two vectors).
+  int iter = 200;
+  double thr = 0.0001;
 
   // First calculate the size of the range for each vector
-  int i = 0;
+  int i, j;
   int si[2];
   int a_min = INFINITY;
   int b_min = INFINITY;
@@ -47,21 +49,72 @@ void meanshift2D(double* a, double * b, int n, double h, double thr, int iter) {
   si[0] = a_max - a_min;
   si[1] = b_max - b_min;
 
-  double finals[n][d] = 0;
+  double *finals[n];
   int ncluster = 0;
-  MeanShiftRep temp_msr;
+  double *savecluster[n];
+  int cluster_label[n] = 0;
+  int closest_label[n] = 0;
+  double cluster_dist[n] = 0;
+  MeanShift temp_ms;
+  double min_dist = 0;
+  double which_min = 0;
+  double x[2];
 
-  // Iterate through the vectors
+
+  // Iterate through the elements of a & b (i.e the rows of the 2D matrix)
   for (i = 0; i < n; i++) {
-    temp_msr = meanshift_rep(a, b, n, h, 1e-8, iter);
+
+    // Create the point, x.
+    x[0] = a[i];
+    x[1] = b[i];
+
+    temp_ms = meanshift_rep(a, b, n, &x, h, 1e-8, iter);
+    finals[i] = temp_ms.final;
+    cluster_dist[n] = 0;
+
+    // If we have a cluster then calculate the distance of this point to the
+    // cluter and find the one  with the minimum distance.  This will be the
+    // cluster to which the point, x, belongs
+    if (ncluster >= 1) {
+      min_dist = INFINITY;
+      for (j = 0; j < ncluster; j++) {
+        double t[2];
+        t[0] = savecluster[j][0] - finals[i][0];
+        t[1] = savecluster[j][1] - finals[i][1];
+        cluster_dist[j] = euclidian_norm(&t) / euclidian_norm(savecluster[j]);
+        if (min_dist < cluster_dist[j]) {
+          min_dist = cluster_dist[j];
+          which_min = j;
+        }
+      }
+    }
+    // If we have no clusters or the minimum distance is greater than the
+    // threshold then perform the following.
+    if (ncluster == 0 || min_dist > thr) {
+      ncluster = ncluster + 1;
+      savecluster[ncluster] = finals[i];
+      cluster_label[i] = ncluster;
+    }
+    // If we have a cluster and the minimum distance is less than the threshold
+    // then add a label to the point
+    else {
+      cluster_label[i] = which_min;
+    }
   }
 
+  for (i = 0; i < n; i++){
+    // Create the point, x.
+    x[0] = a[i];
+    x[1] = b[i];
+    double * md = min_dist(savecluster[i], x);
+    closest_label[i] <- mindist(savecluster, X[i,])$closest.item
+  }
 }
 
 /**
  * Mean shift iterative function (until convergence ...)
  */
-MeanShiftRep meanshift_rep(double* a, double * b, int n, double * x, double h, double thresh, int iter) {
+MeanShift meanshift_rep(double* a, double * b, int n, double * x, double h, double thresh, int iter) {
   int d = 2;
   int s = 0;
   int j = 0;
@@ -70,7 +123,7 @@ MeanShiftRep meanshift_rep(double* a, double * b, int n, double * x, double h, d
   double th[iter] = 0;
   double *m;
   double mx[d];
-  MeanShiftRep msr;
+  MeanShift msr;
 
   M = (double **) malloc(sizeof(double *) * iter);
   for (j = 0; j < iter; j++) {
@@ -106,6 +159,78 @@ double euclidian_norm(double *x, int d) {
     sum += pow(x[i], 2);
   }
   return sum;
+}
+
+/**
+ * Computes the minimal distance between a vector and a set of vectors.
+ *
+ * @return double *
+ *   A two dimensional array where the first element is the minimum
+ *   distance and the second is the position in the array where the
+ *   minimum distance is found.
+ */
+double * min_dist(double *a, double *b, n, double *y) {
+  int d = n;
+  int i;
+  double * dv = distance_vector(a, b, n, y);
+  double s[n];
+  double min_s = INFINITY;
+  double min_i = 0;
+
+  for (i = 0; i < n; i++) {
+    s[n] = sqrt(d) * dv[i];
+    if (s[n] < min_s) {
+      min_s = s[n];
+      min_i = i;
+    }
+  }
+  free(dv);
+
+  // Return the minimum distance and the position.
+  double *out = (double *) malloc(sizeof(double) * 2);
+  out[0] = min_s;
+  out[1] = min_i;
+  return out;
+}
+
+/**
+ * Computes all distances between a set of vectors and another vector.
+ * (up to the constant sqrt(d))
+ */
+double * distance_vector(double *a, double *b, n, double *y) {
+  int i, j;
+  int d = 2;
+
+  // The original R code looks like the following.
+  // out <- sqrt(as.vector(rowMeans(X^2) + mean(y^2) - 2 * X %*% y/n)))
+  // the %*% means matrix multiplication
+
+  // Calculate the squared mean of each row in our ab Matrix, and the squared
+  // mean of y.
+  double x2means[n] = 0;
+  double y2mean = 0;
+  for (i = 0; i < n; i++) {
+    x2means[n] = (pow(a[i], 2) + pow(b[i], 2)) / 2;
+  }
+  y2mean = (pow(y[0], 2) + pow(y[1],2)) / d;
+
+  // Get a vector by  performing matrix multiplication between ab and y.
+  // Multiply the value by 2 and divide by n.
+  double Xy[n];
+  for (i = 0; i < n; i++) {
+    Xy[i] = 2 * (a[i] * y[0] + b[i] * y[1]) / n;
+  }
+
+  // Finish up the distance vector.
+  double * out = (double *) malloc(sizeof(double) * n);
+  for (i = 0; i < n; i++) {
+    out[i] = sqrt(x2means[i] + y2mean - Xy[i]);
+    if (isnan(out[i])) {
+      out[i] = 0;
+    }
+  }
+
+  return out;
 }
 
 /**
