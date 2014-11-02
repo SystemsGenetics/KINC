@@ -185,7 +185,11 @@ int do_dimreduce(int argc, char *argv[]) {
 
       // Calculate Roysont's H test for multivariate normality.
       double pv = royston2D(a2, b2, n2);
-      //printf("(%d, %d), pv: %e\n", i + 1, j + 1, pv);
+      printf("(%d, %d), pv: %e\n", i + 1, j + 1, pv);
+
+      if (pv < 0.05) {
+        meanshift2D(a2, b2, n2, 0.075);
+      }
 
       // Release the memory for a2 and b2.
       free(a2);

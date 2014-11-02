@@ -18,32 +18,31 @@
  *   The bandwidth: the percentage of the range to use for clustering.
  */
 void meanshift2D(double* a, double * b, int n, double h) {
-  int d = 2; // the number of columns (i.e. only two vectors).
   int iter = 200;
   double thr = 0.0001;
 
   // First calculate the size of the range for each vector
   int i, j;
-  int si[2];
-  int a_min = INFINITY;
-  int b_min = INFINITY;
-  int a_max = -INFINITY;
-  int b_max = -INFINITY;
+  double si[2];
+  double a_min = INFINITY;
+  double b_min = INFINITY;
+  double a_max = -INFINITY;
+  double b_max = -INFINITY;
 
   for (i = 0; i < n; i++) {
 
-    if (a_min < a[n]) {
-      a_min = a[n];
+    if (a_min > a[i]) {
+      a_min = a[i];
     }
-    if (a_max > a[n]) {
-      a_max = a[n];
+    if (a_max < a[i]) {
+      a_max = a[i];
     }
 
-    if (b_min < b[n]) {
-      b_min = b[n];
+    if (b_min > b[i]) {
+      b_min = b[i];
     }
-    if (b_max > b[n]) {
-      b_max = b[n];
+    if (b_max < b[i]) {
+      b_max = b[i];
     }
   }
   si[0] = a_max - a_min;
@@ -52,9 +51,9 @@ void meanshift2D(double* a, double * b, int n, double h) {
   double *finals[n];
   int ncluster = 0;
   double *savecluster[n];
-  int cluster_label[n] = 0;
-  int closest_label[n] = 0;
-  double cluster_dist[n] = 0;
+  int cluster_label[n];
+  int closest_label[n];
+  double cluster_dist[n];
   MeanShift temp_ms;
   double min_dist = 0;
   double which_min = 0;
@@ -68,7 +67,7 @@ void meanshift2D(double* a, double * b, int n, double h) {
     x[0] = a[i];
     x[1] = b[i];
 
-    temp_ms = meanshift_rep(a, b, n, &x, h, 1e-8, iter);
+    temp_ms = meanshift_rep(a, b, n, x, h, 1e-8, iter);
     finals[i] = temp_ms.final;
     cluster_dist[n] = 0;
 
@@ -81,7 +80,7 @@ void meanshift2D(double* a, double * b, int n, double h) {
         double t[2];
         t[0] = savecluster[j][0] - finals[i][0];
         t[1] = savecluster[j][1] - finals[i][1];
-        cluster_dist[j] = euclidian_norm(&t) / euclidian_norm(savecluster[j]);
+        cluster_dist[j] = euclidian_norm(t, 2) / euclidian_norm(savecluster[j], 2);
         if (min_dist < cluster_dist[j]) {
           min_dist = cluster_dist[j];
           which_min = j;
@@ -106,8 +105,8 @@ void meanshift2D(double* a, double * b, int n, double h) {
     // Create the point, x.
     x[0] = a[i];
     x[1] = b[i];
-    double * md = min_dist(savecluster[i], x);
-    closest_label[i] <- mindist(savecluster, X[i,])$closest.item
+    int md = minimal_dist(savecluster, ncluster, x);
+    closest_label[i] = md;
   }
 }
 
@@ -120,7 +119,7 @@ MeanShift meanshift_rep(double* a, double * b, int n, double * x, double h, doub
   int j = 0;
   double *x0 = x;
   double **M;
-  double th[iter] = 0;
+  double th[iter];
   double *m;
   double mx[d];
   MeanShift msr;
@@ -131,14 +130,13 @@ MeanShift meanshift_rep(double* a, double * b, int n, double * x, double h, doub
     M[j] = m;
     mx[0] = m[0] - x[0];
     mx[1] = m[1] - x[1];
-    th[j] = euclidian_norm(&mx) / euclidian_norm(x);
+    th[j] = euclidian_norm(mx, 2) / euclidian_norm(x, 2);
     if (th[j] < thresh){
       s = j;
       break;
     }
     x = m;
   }
-
 
   msr.points = M;
   msr.iterations = s;
@@ -164,18 +162,24 @@ double euclidian_norm(double *x, int d) {
 /**
  * Computes the minimal distance between a vector and a set of vectors.
  *
+ * @param double **x
+ *   A 2D array of doubles, or a list of points.
+ * @param int n
+ *   The length of x
+ * @param double *y
+ *
  * @return double *
  *   A two dimensional array where the first element is the minimum
  *   distance and the second is the position in the array where the
  *   minimum distance is found.
  */
-double * min_dist(double *a, double *b, n, double *y) {
+int minimal_dist(double **x, int n, double *y) {
   int d = n;
   int i;
-  double * dv = distance_vector(a, b, n, y);
+  double * dv = distance_vector(x, n, y);
   double s[n];
   double min_s = INFINITY;
-  double min_i = 0;
+  int min_i = 0;
 
   for (i = 0; i < n; i++) {
     s[n] = sqrt(d) * dv[i];
@@ -187,19 +191,23 @@ double * min_dist(double *a, double *b, n, double *y) {
   free(dv);
 
   // Return the minimum distance and the position.
-  double *out = (double *) malloc(sizeof(double) * 2);
-  out[0] = min_s;
-  out[1] = min_i;
-  return out;
+//  double *out = (double *) malloc(sizeof(double) * 2);
+//  out[0] = min_s;
+//  out[1] = min_i;
+  return min_i;
 }
 
 /**
  * Computes all distances between a set of vectors and another vector.
  * (up to the constant sqrt(d))
  */
-double * distance_vector(double *a, double *b, n, double *y) {
-  int i, j;
+double * distance_vector(double **x, int n, double *y) {
+  int i;
   int d = 2;
+
+  // Reference the two vectors in x as a and b.
+  double *a = x[0];
+  double *b = x[n];
 
   // The original R code looks like the following.
   // out <- sqrt(as.vector(rowMeans(X^2) + mean(y^2) - 2 * X %*% y/n)))
@@ -207,7 +215,7 @@ double * distance_vector(double *a, double *b, n, double *y) {
 
   // Calculate the squared mean of each row in our ab Matrix, and the squared
   // mean of y.
-  double x2means[n] = 0;
+  double x2means[n];
   double y2mean = 0;
   for (i = 0; i < n; i++) {
     x2means[n] = (pow(a[i], 2) + pow(b[i], 2)) / 2;
@@ -250,7 +258,6 @@ double * distance_vector(double *a, double *b, n, double *y) {
  *   An double array with two elements.
  */
 double * meanshift(double *a, double *b, int n, double *x, double h) {
-  int d = 2;
   int i;
   double * g;
   double * ms =  (double *) malloc(sizeof(double) * 2);
@@ -259,7 +266,7 @@ double * meanshift(double *a, double *b, int n, double *x, double h) {
   double sum_bg = 0;
   memset(ms, 0, n);
 
-  g = gd(a, b, n, x, h);
+  g = profileMd(a, b, n, x, h);
   for (i = 0; i < n; i++) {
     sum_g += g[i];
     sum_ag += a[i] * g[i];
@@ -286,7 +293,7 @@ double * profile1d(double *xi, int n, double x, double h) {
   double *k1 = (double *) malloc(sizeof(double) * n);
   int j;
   for (j = 0; j < n; j++) {
-    k1[j] = 1/2 * exp(-1/2 * ((x-xi[j]) / h)^2);
+    k1[j] = 1/2 * exp(-1/2 * pow((x-xi[j]) / h, 2));
   }
   return k1;
 }
@@ -308,8 +315,7 @@ double * profile1d(double *xi, int n, double x, double h) {
  *    An array of length n containing the multi-dimensional profile
  */
 double * profileMd(double *a, double *b, int n, double *x, double h) {
-  int d = 2; // only 2 dimensions in our matrix (a & b)
-  int i, j;
+  int i;
   double *pa, *pb;
   double *k = (double *) malloc(sizeof(double) * n);
 

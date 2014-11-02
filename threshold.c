@@ -17,6 +17,9 @@ int do_threshold(int argc, char *argv[]) {
   params.chiSoughtValue = 200;
   params.min_size = 100;
 
+  // TODO: perhaps the user should have a bit more control over what these
+  // values should be? 99.607 (Chi-square df = 60 (number of bins in NNSD
+  // histogram), p-value = 0.001). What if user wants a p-value of 0.01?
   params.nnsdHistogramBin       = 0.05;
   params.chiSquareTestThreshold = 99.607;
   params.minUnfoldingPace       = 10;
@@ -507,27 +510,36 @@ float* calculateEigen(float * smatrix, int size){
   return W;
 }
 
-/*
- * returned array will always be sorted and of length size-1
+/**
  *
  * @param float* e
+ *   A sorted eigenvalue array with duplicates removed.
  * @param int size
+ *   The sieze of the eigenvalue array.
  * @param int m
+ *
+ *
+ * @return
+ *  Returned array will always be sorted and of length size-1
  */
 
 double * unfolding(float * e, int size, int m){
-  int count = 1; // Count equals 1 initially because of 2 lines following loop
-                 // which propagates the arrays.
+  // Count equals 1 initially because of 2 lines following loop
+  // which propagates the arrays.
+  int count = 1;
   int i, j = 0;
-  double * oX;
-  double * oY;
+
+  // Figure out how many points we will use from the submitted
+  // eigenvalue array.  If the pace (m) is 10 and the size is 100
+  // then we count will be 10 and we will use 10 points for spline
+  // calculation
   for(i = 0; i < size - m; i += m) {
     count++;
   }
 
-  oX = (double*) malloc(sizeof(double) * count);
-  oY = (double*) malloc(sizeof(double) * count);
-
+  // Retrieve the 'count' number of points from the eigenvalue array.
+  double *oX = (double*) malloc(sizeof(double) * count);
+  double *oY = (double*) malloc(sizeof(double) * count);
   for(i = 0; i < size - m; i += m){
     oX[j] = e[i];
     oY[j] = (i + 1.0) / (double) size;
@@ -536,31 +548,41 @@ double * unfolding(float * e, int size, int m){
   oX[count-1] = e[size-1];
   oY[count-1] = 1;
 
+  // Make sure all points are in increasing order. If not then a problem.
   for (i = 1; i < count; i++) {
     if (!(oX[i-1] < oX[i])) {
       printf("\nat postion %d a problem exists\n", i);
       printf("oX[i-1] = %f whilst oX[i] = %f\n", oX[i-1], oX[i]);
     }
   }
-  double * yy = (double*) malloc(sizeof(double)*(size));
 
+  // Initialize the spline function using a csspline. See gsl docs,
+  // chapter 27: cspline is a natural spline.
   gsl_interp_accel *acc = gsl_interp_accel_alloc();
-  gsl_spline *spline = gsl_spline_alloc(gsl_interp_cspline, count); //see gsl docs, chapter 27: cspline is a natural spline
+  gsl_spline *spline = gsl_spline_alloc(gsl_interp_cspline, count);
   gsl_spline_init(spline, oX, oY, count);
 
-  for (i = 0; i < (size-2); i++) {
+  // Estimate new eigenvalues along the spline curve.
+  double * yy = (double*) malloc(sizeof(double) * size);
+  for (i = 0; i < size - 2; i++) {
     yy[i+1] = gsl_spline_eval(spline, e[i+1], acc);
   }
-  gsl_spline_free(spline);
-  gsl_interp_accel_free(acc);
+
+  // Calculate the nearest neighbor spacing array.
   yy[0] = 0.0;
-  yy[size-1] = 1.0;
-  for (i = 0;i < size - 1; i++) {
+  yy[size - 1] = 1.0;
+  for (i = 0; i < size - 1; i++) {
     yy[i] = size * (yy[i+1] - yy[i]);
   }
   quickSortD(yy, size-1);
+
+  // Free up memory.
+  gsl_spline_free(spline);
+  gsl_interp_accel_free(acc);
   free(oX);
   free(oY);
+
+  // Return the nearest neighbor spacing array.
   return yy;
 }
 
@@ -584,7 +606,7 @@ float* degenerate(float* eigens, int size, int* newSize){
   int * flags;
   float * remDups;
 
-  // iterate through the eigenvalues and change those with a value less
+  // Iterate through the eigenvalues and change those with a value less
   // that 0.000001 to zero.
   for (i = 0; i < size; i++) {
     if (fabs(eigens[i]) < 0.000001) {
@@ -592,7 +614,7 @@ float* degenerate(float* eigens, int size, int* newSize){
     }
   }
 
-  // iterate through the eigenvalues and flag duplicates
+  // Iterate through the eigenvalues and flag duplicates.
   flags = (int*) malloc(sizeof(int) * size);
   memset(flags, 0, size * sizeof(int));
   float temp = eigens[0];
@@ -605,7 +627,7 @@ float* degenerate(float* eigens, int size, int* newSize){
     }
   }
 
-  // create a new vector without duplicates
+  // Create a new vector without duplicates.
   remDups = (float*) malloc(sizeof(float) * count);
   for(i = 0; i < size; i++){
     if(flags[i] == 1){
@@ -615,7 +637,7 @@ float* degenerate(float* eigens, int size, int* newSize){
   }
   free(flags);
 
-  // set the newSize argument
+  // Set the newSize argument.
   *newSize = count;
 
   return remDups;
@@ -659,7 +681,7 @@ double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, RMTParamet
 
 /**
  * Performs a Chi-square test by comparing NNSD of the eigenvalues
- * to
+ * to a Poisson distribution.
  *
  * @param float* eigens
  *   The eigenvalue array
@@ -677,8 +699,11 @@ double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, RMTParamet
  */
 
 double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace, RMTParameters *params){
-  int newSize;   // the new size of the eigenvalue array after duplicates removed
-  float * newE;  // the new eigenvalue array after duplicates removed
+  // The new eigenvalue array after duplicates removed
+  float * newE;
+  // The new size of the eigenvalue array after duplicates removed
+  int newSize;
+  // The nearest neighbor spacing array.
   double * edif;
   double obj;
   double expect;
@@ -686,33 +711,49 @@ double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bi
   int i, j, count;
 
 
-  // remove duplicates from the list of eigenvalues
+  // Remove duplicates from the list of eigenvalues.
   newE = degenerate(eigens, size, &newSize);
   size = newSize;
 
-  // make sure our vector of eigenvalues is still large enough after
-  // duplicates have been removed. If not, return a -1
+  // Make sure our vector of eigenvalues is still large enough after
+  // duplicates have been removed. If not, return a -1.
   if (size < params->min_size) {
     printf("    Chi-square test failed: eigenvalue array too small after duplicate removal. See the eigenvector output file.\n");
     return -1;
   }
 
+  // Unfolding will calculate the nearest neighbor spacing via estimation using
+  // a spline curve. It returns a new array of length size - 1
   edif = unfolding(newE, size, pace);
-  free(newE);
-  size = size - 1; // see note above unfolding function, will return an array of size-1
-  int n = (int) (3.0/bin) + 1;
+  size = size - 1;
 
+  // Construct a histogram of (3.0/bin) + 1 bins.  If bin is 0.05 then the
+  // number of bins is 60.  This corresponds to 60 degrees of freedom in the
+  // Chi-square test. Therefore, if the desired p-value is 0.001 the
+  // desired Chi-square value will be 99.607.  We don't actually save the
+  // histogram, we just calculate the observed frequency and use that for
+  // calculation of the Chi-square value.
+  int n = (int) (3.0 / bin) + 1;
   for (i = 0; i < n; i++) {
     count = 0;
-    for (j=0; j < size; j++) {
+    // Count the number of occurrences in the nearest neighbor spacing array
+    // that should fall within the given bin.
+    for (j = 0; j < size; j++) {
       if (edif[j] > i * bin && edif[j] < (i + 1) * bin) {
         count++;
       }
     }
-    obj = (double) count;
+
+    // Calculate the expected value of a Poisson distribution for the bin.
     expect = (exp(-1 * i * bin) - exp(-1 * (i + 1) *bin)) * size;
+
+    // Perform the summation used for calculating the Chi-square value.
+    // When the looping completes we will have the final Chi-square value.
+    obj = (double) count;
     chi += (obj - expect) * (obj - expect) / expect;
   }
+
+  free(newE);
   free(edif);
   return chi;
 }
@@ -738,8 +779,9 @@ void print_threshold_usage() {
   printf("                 in the similarity matrix\n");
   printf("  --step|-s    The threshold step size, to subtract at each iteration of RMT.\n");
   printf("                 The default is 0.001\n");
-  printf("  --chi|-c     The Chi-square test value which when encountered, RMT will stop.\n");
-  printf("                 The default is 200 (corresponds to p-value of 0.01)\n");
+  printf("  --chi|-c     The Chi-square test value which when encountered RMT will stop.\n");
+  printf("                 The algorithm will only stop if it first encounters a Chi-square\n");
+  printf("                 value of 99.607 (df = 60, p-value = 0.001).\n");
   printf("  --perf       Provide this flag to enable performance monitoring.\n");
   printf("  --help|-h     Print these usage instructions\n");
   printf("\n");
