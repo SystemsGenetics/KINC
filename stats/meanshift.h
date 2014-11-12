@@ -16,11 +16,11 @@ typedef struct {
 
 } MeanShift;
 
-void meanshift2D(double* a, double * b, int n, double h);
+int * meanshift2D(double* x, double * y, int n, double h);
 
 double * profileMd(double *a, double *b, int n, double *x, double h);
 double * profile1d(double *xi, int n, double x, double h);
-double * meanshift(double *a, double *b, int n, double *x, double h);
+double * meanshift_base(double *a, double *b, int n, double *x, double h);
 
 double euclidian_norm(double *x, int d);
 MeanShift meanshift_rep(double* a, double * b, int n, double * x, double h, double thresh, int iter);

@@ -174,7 +174,7 @@ int do_dimreduce(int argc, char *argv[]) {
       double *a = data[i];
       double *b = data[j];
 
-      // Intialize the arrays that will be used for containig a and b
+      // Initialize the arrays that will be used for containing a and b
       // but with missing values removed.
       double * a2 = (double *) malloc(sizeof(double) * params.cols);
       double * b2 = (double *) malloc(sizeof(double) * params.cols);
@@ -183,12 +183,18 @@ int do_dimreduce(int argc, char *argv[]) {
       // Remove any missing values before calculating Royston's H test.
       remove_missing_paired(a, b, params.cols, a2, b2, &n2);
 
-      // Calculate Roysont's H test for multivariate normality.
+      // Calculate Royston's H test for multivariate normality.
       double pv = royston2D(a2, b2, n2);
       printf("(%d, %d), pv: %e\n", i + 1, j + 1, pv);
 
+      // If the Royston's H test has p-value < 0.05 which means
+      // it appears multivariate normal, then do mean shift clustering
+      // to cluster the measured points.
+      int * clusters;
       if (pv < 0.05) {
-        meanshift2D(a2, b2, n2, 0.075);
+        // Calculate the clusters.
+        clusters = meanshift2D(a2, b2, n2, 0.075);
+        free(clusters);
       }
 
       // Release the memory for a2 and b2.

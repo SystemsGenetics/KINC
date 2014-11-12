@@ -17,7 +17,7 @@
  * @param h
  *   The bandwidth: the percentage of the range to use for clustering.
  */
-void meanshift2D(double* x, double * y, int n, double h) {
+int * meanshift2D(double* x, double * y, int n, double h) {
   int iter = 200;
   double thr = 0.0001;
 
@@ -60,8 +60,8 @@ void meanshift2D(double* x, double * y, int n, double h) {
   }
 
   double **finals = (double **) malloc (sizeof(double*) * n);
-  int ncluster = 0;
   double **savecluster = (double **) malloc (sizeof(double*) * n);
+  int ncluster = 0;
   int cluster_label[n];
   int closest_label[n];
   double cluster_dist[n];
@@ -114,15 +114,35 @@ void meanshift2D(double* x, double * y, int n, double h) {
     else {
       cluster_label[i] = which_min + 1;
     }
+    free(temp_ms.start);
+    free(temp_ms.thresh);
+    for (j = 0; j < temp_ms.iterations; j++) {
+      free(temp_ms.points[j]);
+    }
+    free(temp_ms.points);
   }
 
+  // Find the nearest cluster center in euclidean distance
+  /*
   for (i = 0; i < n; i++){
     // Create the point, x.
     x[0] = a[i];
     x[1] = b[i];
     int md = minimal_dist(savecluster, ncluster, x);
     closest_label[i] = md;
+  }*/
+
+  // Free allocated memory
+  for (i = 0; i < n; i++) {
+    free(finals[i]);
   }
+  free(finals);
+  free(savecluster);
+  free(a);
+  free(b);
+
+  // return the list of
+  return cluster_label;
 }
 
 /**
@@ -135,7 +155,7 @@ MeanShift meanshift_rep(double* a, double * b, int n, double * x, double h, doub
   double *x0 = malloc(sizeof(double) * 2);
   double *xt = malloc(sizeof(double) * 2);
   double **M;
-  double th[iter];
+  double *th = malloc(sizeof(double) * iter);
   double *m;
   double mx[d];
   MeanShift msr;
@@ -150,7 +170,7 @@ MeanShift meanshift_rep(double* a, double * b, int n, double * x, double h, doub
 
   M = (double **) malloc(sizeof(double *) * iter);
   for (j = 0; j < iter; j++) {
-    m = meanshift(a, b, n, xt, h);
+    m = meanshift_base(a, b, n, xt, h);
     M[j] = m;
     mx[0] = m[0] - xt[0];
     mx[1] = m[1] - xt[1];
@@ -287,7 +307,7 @@ double * distance_vector(double **x, int n, double *y) {
  * @return double *
  *   An double array with two elements.
  */
-double * meanshift(double *a, double *b, int n, double *x, double h) {
+double * meanshift_base(double *a, double *b, int n, double *x, double h) {
   int i;
   double * g;
   double * ms =  (double *) malloc(sizeof(double) * 2);
