@@ -9,6 +9,7 @@
 #include <string.h>
 #include "similarity.h"
 #include "stats/royston.h"
+#include "stats/meanshift.h"
 #include "error.h"
 
 int do_dimreduce(int argc, char *argv[]);

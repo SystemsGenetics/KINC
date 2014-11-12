@@ -2,6 +2,7 @@
 #define _MEANSHIFT_
 
 #include <math.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "stats.h"
@@ -15,9 +16,12 @@ typedef struct {
 
 } MeanShift;
 
+void meanshift2D(double* a, double * b, int n, double h);
+
 double * profileMd(double *a, double *b, int n, double *x, double h);
 double * profile1d(double *xi, int n, double x, double h);
 double * meanshift(double *a, double *b, int n, double *x, double h);
+
 double euclidian_norm(double *x, int d);
 MeanShift meanshift_rep(double* a, double * b, int n, double * x, double h, double thresh, int iter);
 

@@ -17,9 +17,12 @@
  * @param h
  *   The bandwidth: the percentage of the range to use for clustering.
  */
-void meanshift2D(double* a, double * b, int n, double h) {
+void meanshift2D(double* x, double * y, int n, double h) {
   int iter = 200;
   double thr = 0.0001;
+
+  double *a = (double *) malloc(sizeof(double) * n);
+  double *b = (double *) malloc(sizeof(double) * n);
 
   // First calculate the size of the range for each vector
   int i, j;
@@ -31,34 +34,40 @@ void meanshift2D(double* a, double * b, int n, double h) {
 
   for (i = 0; i < n; i++) {
 
-    if (a_min > a[i]) {
-      a_min = a[i];
+    if (a_min > x[i]) {
+      a_min = x[i];
     }
-    if (a_max < a[i]) {
-      a_max = a[i];
+    if (a_max < x[i]) {
+      a_max = x[i];
     }
 
-    if (b_min > b[i]) {
-      b_min = b[i];
+    if (b_min > y[i]) {
+      b_min = y[i];
     }
-    if (b_max < b[i]) {
-      b_max = b[i];
+    if (b_max < y[i]) {
+      b_max = y[i];
     }
   }
   si[0] = a_max - a_min;
   si[1] = b_max - b_min;
 
-  double *finals[n];
+  // Scale x and y by si. They become a and b. In the original R code,
+  // the option to scale was provided in the function arguments. Here it is
+  // applied automatically.
+  for (i = 0; i < n; i++) {
+    a[i] = x[i] / si[0];
+    b[i] = y[i] / si[1];
+  }
+
+  double **finals = (double **) malloc (sizeof(double*) * n);
   int ncluster = 0;
-  double *savecluster[n];
+  double **savecluster = (double **) malloc (sizeof(double*) * n);
   int cluster_label[n];
   int closest_label[n];
   double cluster_dist[n];
   MeanShift temp_ms;
   double min_dist = 0;
   double which_min = 0;
-  double x[2];
-
 
   // Iterate through the elements of a & b (i.e the rows of the 2D matrix)
   for (i = 0; i < n; i++) {
@@ -69,7 +78,13 @@ void meanshift2D(double* a, double * b, int n, double h) {
 
     temp_ms = meanshift_rep(a, b, n, x, h, 1e-8, iter);
     finals[i] = temp_ms.final;
-    cluster_dist[n] = 0;
+
+    // Initialize the cluster_dist with zeros but only for the number of
+    // clusters that we have. The number of clusters is determined by the code
+    // further down, so the value of ncluster can change on each iteration if i.
+    for (j = 0; j < ncluster; j++) {
+      cluster_dist[j] = 0;
+    }
 
     // If we have a cluster then calculate the distance of this point to the
     // cluter and find the one  with the minimum distance.  This will be the
@@ -81,7 +96,7 @@ void meanshift2D(double* a, double * b, int n, double h) {
         t[0] = savecluster[j][0] - finals[i][0];
         t[1] = savecluster[j][1] - finals[i][1];
         cluster_dist[j] = euclidian_norm(t, 2) / euclidian_norm(savecluster[j], 2);
-        if (min_dist < cluster_dist[j]) {
+        if (min_dist > cluster_dist[j]) {
           min_dist = cluster_dist[j];
           which_min = j;
         }
@@ -90,14 +105,14 @@ void meanshift2D(double* a, double * b, int n, double h) {
     // If we have no clusters or the minimum distance is greater than the
     // threshold then perform the following.
     if (ncluster == 0 || min_dist > thr) {
-      ncluster = ncluster + 1;
       savecluster[ncluster] = finals[i];
+      ncluster = ncluster + 1;
       cluster_label[i] = ncluster;
     }
     // If we have a cluster and the minimum distance is less than the threshold
     // then add a label to the point
     else {
-      cluster_label[i] = which_min;
+      cluster_label[i] = which_min + 1;
     }
   }
 
@@ -117,25 +132,40 @@ MeanShift meanshift_rep(double* a, double * b, int n, double * x, double h, doub
   int d = 2;
   int s = 0;
   int j = 0;
-  double *x0 = x;
+  double *x0 = malloc(sizeof(double) * 2);
+  double *xt = malloc(sizeof(double) * 2);
   double **M;
   double th[iter];
   double *m;
   double mx[d];
   MeanShift msr;
 
+  // Copy the original x into x0 which keeps the start point
+  x0[0] = x[0];
+  x0[1] = x[1];
+
+  // Copy the point into the xt for iteration.
+  xt[0] = x[0];
+  xt[1] = x[1];
+
   M = (double **) malloc(sizeof(double *) * iter);
   for (j = 0; j < iter; j++) {
-    m = meanshift(a, b, n, x, h);
+    m = meanshift(a, b, n, xt, h);
     M[j] = m;
-    mx[0] = m[0] - x[0];
-    mx[1] = m[1] - x[1];
-    th[j] = euclidian_norm(mx, 2) / euclidian_norm(x, 2);
+    mx[0] = m[0] - xt[0];
+    mx[1] = m[1] - xt[1];
+    th[j] = euclidian_norm(mx, 2) / euclidian_norm(xt, 2);
     if (th[j] < thresh){
       s = j;
       break;
     }
-    x = m;
+
+    // on the first iteratoin we free the xt variable
+    if (j == 0) {
+      free(xt);
+    }
+    // the m becomes the new x
+    xt = m;
   }
 
   msr.points = M;
@@ -264,7 +294,7 @@ double * meanshift(double *a, double *b, int n, double *x, double h) {
   double sum_g = 0;
   double sum_ag = 0;
   double sum_bg = 0;
-  memset(ms, 0, n);
+  memset(ms, 0, 2);
 
   g = profileMd(a, b, n, x, h);
   for (i = 0; i < n; i++) {
@@ -293,7 +323,9 @@ double * profile1d(double *xi, int n, double x, double h) {
   double *k1 = (double *) malloc(sizeof(double) * n);
   int j;
   for (j = 0; j < n; j++) {
-    k1[j] = 1/2 * exp(-1/2 * pow((x-xi[j]) / h, 2));
+    double p = pow((x-xi[j]) / h, 2);
+    double e = exp(-0.5 * p);
+    k1[j] = 0.5 * e;
   }
   return k1;
 }
@@ -319,9 +351,6 @@ double * profileMd(double *a, double *b, int n, double *x, double h) {
   double *pa, *pb;
   double *k = (double *) malloc(sizeof(double) * n);
 
-  // Intialize the k array to contain all 1's
-  memset(k, '1', n);
-
   // Get the 1D profiles for both a and b. We use the corresponding value
   // of x to pass in to the profile1d function (a first, b second).
   pa = profile1d(a, n, x[0], h);
@@ -329,8 +358,7 @@ double * profileMd(double *a, double *b, int n, double *x, double h) {
 
   // Calculate the multidimensional profile
   for (i = 0; i < n; i++) {
-    k[i] = k[i] * pa[i];
-    k[i] = k[i] * pb[i];
+    k[i] = pa[i] * pb[i];
   }
 
   free(pa);
