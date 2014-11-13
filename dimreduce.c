@@ -156,7 +156,11 @@ int do_dimreduce(int argc, char *argv[]) {
   double ** data = ematrix.data;
   int total_comps;  // the total number of pair-wise comparisons to be made
   int n_comps;      // the number of comparisons completed during looping
-  int i, j, k, l;
+  int i, j;
+
+  // Open the clustering file for writing.
+  sprintf(filename, "%s.clusters.txt", params.fileprefix);
+  FILE * cf = fopen(filename, "w");
 
   total_comps = (params.rows * params.rows) / 2;
   for (i = 0; i < params.rows; i++) {
@@ -167,7 +171,7 @@ int do_dimreduce(int argc, char *argv[]) {
         printf("Percent complete: %.2f%%\r", (n_comps / (float) total_comps) * 100);
       }
 
-      // We only need to calculate royson in the lower triangle of the
+      // We only need to calculate royston in the lower triangle of the
       // full pair-wise matrix
       if (j >= i) {
         continue;
@@ -179,32 +183,40 @@ int do_dimreduce(int argc, char *argv[]) {
       // but with missing values removed.
       double * a2 = (double *) malloc(sizeof(double) * params.cols);
       double * b2 = (double *) malloc(sizeof(double) * params.cols);
+      int * kept = (int *) malloc(sizeof(int) * params.cols);
       int n2;
 
       // Remove any missing values before calculating Royston's H test.
-      remove_missing_paired(a, b, params.cols, a2, b2, &n2);
+      remove_missing_paired(a, b, params.cols, a2, b2, &n2, kept);
 
       // Look for valid pair-wise comparison sets between these two genes.
-      find_valid_comps(a2, i, b2, j, n2, ematrix, params);
+      if (n2 > params.min_obs) {
+        pairwise_reduce(a2, i, b2, j, n2, ematrix, params, kept, cf);
+      }
 
       // Release the memory for a2 and b2.
       free(a2);
       free(b2);
+      free(kept);
     }
   }
+
+  // Close the clustering file.
+  fclose(cf);
   return 1;
 }
 
 /**
  *
  */
-void find_valid_comps(double *a2, int x, double *b2, int y, int n2, EMatrix ematrix, CCMParameters params) {
+void pairwise_reduce(double *a2, int x, double *b2, int y, int n2,
+    EMatrix ematrix, CCMParameters params, int * kept, FILE * cf) {
   // Variables used for looping.
-  int i, j, k, l;
+  int k, l;
 
   // Calculate Royston's H test for multivariate normality.
   double pv = royston2D(a2, b2, n2);
-  printf("(%d, %d), pv: %e\n", i + 1, j + 1, pv);
+  //printf("(%d, %d), pv: %e\n", x + 1, y + 1, pv);
 
   // If the Royston's H test has p-value < 0.05 which means
   // it does not appear to be multivariate normal, then do mean shift
@@ -215,11 +227,31 @@ void find_valid_comps(double *a2, int x, double *b2, int y, int n2, EMatrix emat
     // Calculate the clusters.
     clusters = meanshift2D(a2, b2, n2, 0.075);
 
-    // Is there a cluster with the minimum observations?  If so,
-    // then remove outliers.
+    // Is there a cluster with the minimum observations?
     for(k = 0; k < clusters.num_clusters; k++) {
       if (clusters.sizes[k] >= params.min_obs) {
 
+        // create an array of the kept samples for this cluster
+        int * ckept = (int *) malloc(sizeof(int) * ematrix.num_samples);
+        for (l = 0; l < ematrix.num_samples; l++) {
+          if (clusters.cluster_label[l] == k + 1) {
+            ckept[l] = 1;
+          }
+          else {
+            ckept[l] = 0;
+          }
+        }
+
+        // Write the clusters of proper size after outlier removal
+        // to the clustering file.
+        PairWiseSet pws;
+        pws.gene1 = x;
+        pws.gene2 = y;
+        pws.num_samples = ematrix.num_samples;
+        pws.samples = ckept;
+        pws.cluster_label = k + 1;  // 0 indicates no clustering was performed.
+        write_reduced_ematrix_line(pws, cf);
+        free(ckept);
       }
     }
 
@@ -234,20 +266,43 @@ void find_valid_comps(double *a2, int x, double *b2, int y, int n2, EMatrix emat
     free(clusters.sizes);
     free(clusters.clusters);
   }
+  // If the data appears multivariate normal, then write to the clustering
+  // file. We don't need to do any clustering to reduce the dataset.
   else {
     PairWiseSet pws;
-    pws.gene1 = ematrix.samples[i];
-    pws.gene2 = ematrix.samples[j];
-    // we must know the sample names passed in for a2 and b2!!!!!
-    write_clustering_file_line(pws)
+    pws.gene1 = x;
+    pws.gene2 = y;
+    pws.num_samples = ematrix.num_samples;
+    pws.samples = kept;
+    pws.cluster_label = 0;  // 0 indicates no clustering was performed.
+    write_reduced_ematrix_line(pws, cf);
   }
 }
 
 /**
+ * Adds a line to the clustering file.
  *
+ * The clustering file is used by KINC during pair-wise correlation analysis
+ * to restrict which samples are used.  The file is tab delimited.
+ *
+ * @param PairWiseSet pws
+ *   The details for this line
+ * @param FILE *cf
+ *   The file pointer of the clustering file.
  */
-void write_clustering_file_line(PairWiseSet pws) {
-
+void write_reduced_ematrix_line(PairWiseSet pws, FILE * cf) {
+  // The format of the file is tab delimited with the following columns:
+  //   1)  gene 1 name
+  //   2)  gene 2 name
+  //   3)  cluster name.  A 0 indicates no clustering was performed.
+  //   4)  a string of 0 and 1s indicating which samples to include when
+  //       performing pair-wise comparisons.
+  fprintf(cf, "%i\t%i\t%i\t", pws.gene1, pws.gene2, pws.cluster_label);
+  int i;
+  for (i = 0; i < pws.num_samples; i++) {
+    fprintf(cf, "%i", pws.samples[i]);
+  }
+  fprintf(cf, "\n");
 }
 
 /**

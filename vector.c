@@ -79,7 +79,7 @@ void quickSortF(float* l, int size){
 }
 
 /**
- * Removes values from two doulbe arrays when at least one is missing.
+ * Removes values from two arrays when at least one is missing.
  *
  * @param double *a
  *   Vector 1
@@ -88,25 +88,30 @@ void quickSortF(float* l, int size){
  * @param int n
  *   The size of vectors a and b.
  * @param double *a2
- *   Vector 1 but with missing values removed. Must be initailzed to
+ *   Vector 1 but with missing values removed. Must be initialized to
  *   at least the size of n.
  * @param double *b2
- *   Vector 2 but with missing values removed. Must be initailzed to
+ *   Vector 2 but with missing values removed. Must be initialized to
  *   at least the size of n.
  * @param n2
  *   The new size of the vectors a2 band b2
+ * @param int * kept
+ *   An array of ones and zeros indicating if the element in a or b were
+ *   included in a2 and b2.
  */
-void remove_missing_paired(double *a, double *b, int n, double *a2, double *b2, int *n2) {
+void remove_missing_paired(double *a, double *b, int n, double *a2, double *b2, int *n2, int *kept) {
   int i;
   *n2 = 0;
   for (i = 0; i < n; i++) {
     // if either of these elements is missing then don't include the
     // elements from this sample
     if (isnan(a[i]) || isnan(b[i]) || isinf(a[i]) || isinf(b[i])) {
+      kept[i] = 0;
       continue;
     }
     a2[*n2] = a[i];
     b2[*n2] = b[i];
     *n2 = *n2 + 1;
+    kept[i] = 1;
   }
 }

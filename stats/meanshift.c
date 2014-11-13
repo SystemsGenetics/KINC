@@ -135,6 +135,9 @@ MeanShiftClusters meanshift2D(double* s, double * t, int n, double h) {
     closest_label[i] = md;
   }*/
 
+  // TODO: remove outliers
+
+
   // Free allocated memory
   for (i = 0; i < n; i++) {
     free(finals[i]);
@@ -211,7 +214,7 @@ MeanShiftRep meanshift_rep(double* a, double * b, int n, double * x, double h, d
       break;
     }
 
-    // on the first iteratoin we free the xt variable
+    // on the first iteration we free the xt variable
     if (j == 0) {
       free(xt);
     }

@@ -11,5 +11,6 @@ void swapD(double* l, int idx1, int idx2);
 void swapF(float* l, int idx1, int idx2);
 
 
-void remove_missing_paired(double *a, double *b, int n, double *a2, double *b2, int *n2);
+void remove_missing_paired(double *a, double *b, int n, double *a2, double *b2, int *n2, int *kept);
+
 #endif
