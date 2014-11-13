@@ -197,7 +197,8 @@ int do_similarity(int argc, char *argv[]) {
     time(&start_time);
   }
 
-  double ** data = load_ematrix(params);
+  EMatrix ematrix = load_ematrix(params);
+  double ** data = ematrix.data;
 
   if (strcmp(params.method, "pc") == 0) {
     calculate_pearson(params, data, histogram);
@@ -232,18 +233,27 @@ int do_similarity(int argc, char *argv[]) {
  * @return
  *   A pointer to a two-dimensional array of doubles
  */
-double ** load_ematrix(CCMParameters params) {
+EMatrix load_ematrix(CCMParameters params) {
 
-  FILE *infile; // pointers to the input
-  char gene_name[255];   // holds the gene or probe set name from the first column
-  double ** data;
-  int i, j;  // integers for looping
-  char element[1024]; // holds value when reading from file
+  EMatrix ematrix;
+  // Pointer to the input file.
+  FILE *infile;
+  // Integers for looping.
+  int i, j;
 
-  // allocate the data array for storing the input expression matrix
-  data = (double**) malloc(sizeof(double *) * params.rows);
+  // Initialize the EMatrix struct
+  ematrix.num_genes = params.rows;
+  ematrix.num_samples = params.cols;
+  if (params.headers) {
+    ematrix.num_genes--;
+    ematrix.samples = (char **) malloc(sizeof(char *) * ematrix.num_samples);
+  }
+  ematrix.genes = (char **) malloc(sizeof(char *) * ematrix.num_genes);
+
+  // Allocate the data array for storing the input expression matrix.
+  ematrix.data = (double**) malloc(sizeof(double *) * params.rows);
   for (i = 0; i < params.rows; i++) {
-    data[i] = malloc(sizeof(double) * params.cols);
+    ematrix.data[i] = malloc(sizeof(double) * params.cols);
   }
 
   // iterate through the lines of the expression matrix
@@ -256,12 +266,14 @@ double ** load_ematrix(CCMParameters params) {
       printf("Skipping headers...\n");
 
       for (j = 0; j < params.cols; j++) {
-        fscanf(infile, "%s", element);
+        ematrix.samples[j] = (char *) malloc(sizeof(char) * 255);
+        fscanf(infile, "%s", ematrix.samples[j]);
       }
     }
 
     // the first entry on every line is a label string - read that in before the numerical data
-    fscanf(infile, "%s", gene_name);
+    ematrix.genes[i] = (char *) malloc(sizeof(char) * 255);
+    fscanf(infile, "%s", ematrix.genes[i]);
 
     // iterate over the columns of each row
     for (j = 0; j < params.cols; j++) {
@@ -270,7 +282,7 @@ double ** load_ematrix(CCMParameters params) {
         // if this is a missing value and omission of missing values is enabled then
         // rewrite this value as MISSING_VALUE
         if (params.omit_na && strcmp(element, params.na_val) == 0) {
-          data[i][j] = NAN;
+          ematrix.data[i][j] = NAN;
         }
         else {
           // make sure the element is numeric
@@ -279,16 +291,16 @@ double ** load_ematrix(CCMParameters params) {
             exit(-1);
           }
           if (params.do_log10) {
-            data[i][j] = log10(atof(element));
+            ematrix.data[i][j] = log10(atof(element));
           }
           else if (params.do_log2) {
-            data[i][j] = log2(atof(element));
+            ematrix.data[i][j] = log2(atof(element));
           }
           else if (params.do_log) {
-            data[i][j] = log(atof(element));
+            ematrix.data[i][j] = log(atof(element));
           }
           else {
-            data[i][j] = atof(element);
+            ematrix.data[i][j] = atof(element);
           }
         }
       }
@@ -298,7 +310,7 @@ double ** load_ematrix(CCMParameters params) {
       }
     }
   }
-  return data;
+  return ematrix;
 }
 
 

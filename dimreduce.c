@@ -152,10 +152,11 @@ int do_dimreduce(int argc, char *argv[]) {
     params.rows--;
   }
 
-  double ** data = load_ematrix(params);
-  int total_comps;  // the total number of pair-wise comparisions to be made
-  int n_comps;      // the number of comparisions completed during looping
-  int i, j;
+  EMatrix ematrix = load_ematrix(params);
+  double ** data = ematrix.data;
+  int total_comps;  // the total number of pair-wise comparisons to be made
+  int n_comps;      // the number of comparisons completed during looping
+  int i, j, k, l;
 
   total_comps = (params.rows * params.rows) / 2;
   for (i = 0; i < params.rows; i++) {
@@ -163,7 +164,7 @@ int do_dimreduce(int argc, char *argv[]) {
 
       n_comps++;
       if (n_comps % 1000 == 0) {
-        printf("Percent complete: %.2f%%\r", (n_comps/(float)total_comps)*100);
+        printf("Percent complete: %.2f%%\r", (n_comps / (float) total_comps) * 100);
       }
 
       // We only need to calculate royson in the lower triangle of the
@@ -183,19 +184,8 @@ int do_dimreduce(int argc, char *argv[]) {
       // Remove any missing values before calculating Royston's H test.
       remove_missing_paired(a, b, params.cols, a2, b2, &n2);
 
-      // Calculate Royston's H test for multivariate normality.
-      double pv = royston2D(a2, b2, n2);
-      printf("(%d, %d), pv: %e\n", i + 1, j + 1, pv);
-
-      // If the Royston's H test has p-value < 0.05 which means
-      // it appears multivariate normal, then do mean shift clustering
-      // to cluster the measured points.
-      int * clusters;
-      if (pv < 0.05) {
-        // Calculate the clusters.
-        clusters = meanshift2D(a2, b2, n2, 0.075);
-        free(clusters);
-      }
+      // Look for valid pair-wise comparison sets between these two genes.
+      find_valid_comps(a2, i, b2, j, n2, ematrix, params);
 
       // Release the memory for a2 and b2.
       free(a2);
@@ -203,6 +193,61 @@ int do_dimreduce(int argc, char *argv[]) {
     }
   }
   return 1;
+}
+
+/**
+ *
+ */
+void find_valid_comps(double *a2, int x, double *b2, int y, int n2, EMatrix ematrix, CCMParameters params) {
+  // Variables used for looping.
+  int i, j, k, l;
+
+  // Calculate Royston's H test for multivariate normality.
+  double pv = royston2D(a2, b2, n2);
+  printf("(%d, %d), pv: %e\n", i + 1, j + 1, pv);
+
+  // If the Royston's H test has p-value < 0.05 which means
+  // it does not appear to be multivariate normal, then do mean shift
+  // clustering to cluster the measured points.
+  if (pv < 0.05) {
+    MeanShiftClusters clusters;
+
+    // Calculate the clusters.
+    clusters = meanshift2D(a2, b2, n2, 0.075);
+
+    // Is there a cluster with the minimum observations?  If so,
+    // then remove outliers.
+    for(k = 0; k < clusters.num_clusters; k++) {
+      if (clusters.sizes[k] >= params.min_obs) {
+
+      }
+    }
+
+    // free the memory
+    free(clusters.cluster_label);
+    for(k = 0; k < clusters.num_clusters; k++) {
+      for (l = 0; l < clusters.sizes[k]; l++) {
+        free(clusters.clusters[k][l]);
+      }
+      free(clusters.clusters[k]);
+    }
+    free(clusters.sizes);
+    free(clusters.clusters);
+  }
+  else {
+    PairWiseSet pws;
+    pws.gene1 = ematrix.samples[i];
+    pws.gene2 = ematrix.samples[j];
+    // we must know the sample names passed in for a2 and b2!!!!!
+    write_clustering_file_line(pws)
+  }
+}
+
+/**
+ *
+ */
+void write_clustering_file_line(PairWiseSet pws) {
+
 }
 
 /**

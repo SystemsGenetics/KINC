@@ -43,6 +43,14 @@ typedef struct {
 
 } CCMParameters;
 
+typedef struct {
+  double ** data;
+  char ** genes;
+  char ** samples;
+  int num_genes;
+  int num_samples;
+} EMatrix;
+
 // a global variable for the number of rows in each output file
 #define ROWS_PER_OUTPUT_FILE 10000
 
@@ -53,7 +61,7 @@ typedef struct {
 
 int do_similarity(int argc, char *argv[]);
 
-double ** load_ematrix(CCMParameters params);
+EMatrix load_ematrix(CCMParameters params);
 
 void print_similarity_usage();
 

@@ -10,14 +10,16 @@
  * Unlike the R code, this function has been adapted to only deal with
  * two vectors rather than a matrix, and has fewer arguments.
  *
- * @param double * a
- * @param double * b
+ * @param double * s
+ * @param double * t
  * @param int n
  *   The size of a and b.
  * @param h
  *   The bandwidth: the percentage of the range to use for clustering.
  */
-int * meanshift2D(double* x, double * y, int n, double h) {
+MeanShiftClusters meanshift2D(double* s, double * t, int n, double h) {
+  MeanShiftClusters msc;
+
   int iter = 200;
   double thr = 0.0001;
 
@@ -34,42 +36,42 @@ int * meanshift2D(double* x, double * y, int n, double h) {
 
   for (i = 0; i < n; i++) {
 
-    if (a_min > x[i]) {
-      a_min = x[i];
+    if (a_min > s[i]) {
+      a_min = s[i];
     }
-    if (a_max < x[i]) {
-      a_max = x[i];
+    if (a_max < s[i]) {
+      a_max = s[i];
     }
 
-    if (b_min > y[i]) {
-      b_min = y[i];
+    if (b_min > t[i]) {
+      b_min = t[i];
     }
-    if (b_max < y[i]) {
-      b_max = y[i];
+    if (b_max < t[i]) {
+      b_max = t[i];
     }
   }
   si[0] = a_max - a_min;
   si[1] = b_max - b_min;
 
-  // Scale x and y by si. They become a and b. In the original R code,
+  // Scale s and t by si. They become a and b. In the original R code,
   // the option to scale was provided in the function arguments. Here it is
   // applied automatically.
   for (i = 0; i < n; i++) {
-    a[i] = x[i] / si[0];
-    b[i] = y[i] / si[1];
+    a[i] = s[i] / si[0];
+    b[i] = t[i] / si[1];
   }
 
   double **finals = (double **) malloc (sizeof(double*) * n);
   double **savecluster = (double **) malloc (sizeof(double*) * n);
   int ncluster = 0;
-  int cluster_label[n];
-  int closest_label[n];
+  int * cluster_label = (int *) malloc (sizeof (int) * n);
   double cluster_dist[n];
-  MeanShift temp_ms;
+  MeanShiftRep temp_ms;
   double min_dist = 0;
   double which_min = 0;
 
   // Iterate through the elements of a & b (i.e the rows of the 2D matrix)
+  double x[2];
   for (i = 0; i < n; i++) {
 
     // Create the point, x.
@@ -87,7 +89,7 @@ int * meanshift2D(double* x, double * y, int n, double h) {
     }
 
     // If we have a cluster then calculate the distance of this point to the
-    // cluter and find the one  with the minimum distance.  This will be the
+    // cluster and find the one  with the minimum distance.  This will be the
     // cluster to which the point, x, belongs
     if (ncluster >= 1) {
       min_dist = INFINITY;
@@ -124,6 +126,7 @@ int * meanshift2D(double* x, double * y, int n, double h) {
 
   // Find the nearest cluster center in euclidean distance
   /*
+  int closest_label[n];
   for (i = 0; i < n; i++){
     // Create the point, x.
     x[0] = a[i];
@@ -141,14 +144,42 @@ int * meanshift2D(double* x, double * y, int n, double h) {
   free(a);
   free(b);
 
-  // return the list of
-  return cluster_label;
+  // Count the number of elements in each cluster
+  msc.sizes = (int *) malloc(sizeof (int) * ncluster);
+  for (i = 0; i < ncluster; i++) {
+    msc.sizes[i] = 0;
+  }
+  for (i = 0; i < n; i++) {
+    int cluster = cluster_label[i] - 1;
+    msc.sizes[cluster]++;
+  }
+
+  // Organize the points into their corresponding clusters
+  int counts[ncluster];
+  msc.clusters = (double ***) malloc(sizeof (double **) * ncluster);
+  for (i = 0; i < ncluster; i++) {
+    msc.clusters[i] = (double **) malloc(sizeof(double *) * msc.sizes[i]);
+    counts[i] = 0;
+  }
+  for (i = 0; i < n; i++) {
+    int cluster = cluster_label[i] - 1;
+    int index = counts[cluster];
+    msc.clusters[cluster][index] = (double *) malloc(sizeof(double) * 2);
+    msc.clusters[cluster][index][0] = s[i];
+    msc.clusters[cluster][index][1] = t[i];
+    counts[cluster]++;
+  }
+
+  // return the clusters
+  msc.num_clusters = ncluster;
+  msc.cluster_label = cluster_label;
+  return msc;
 }
 
 /**
  * Mean shift iterative function (until convergence ...)
  */
-MeanShift meanshift_rep(double* a, double * b, int n, double * x, double h, double thresh, int iter) {
+MeanShiftRep meanshift_rep(double* a, double * b, int n, double * x, double h, double thresh, int iter) {
   int d = 2;
   int s = 0;
   int j = 0;
@@ -158,7 +189,7 @@ MeanShift meanshift_rep(double* a, double * b, int n, double * x, double h, doub
   double *th = malloc(sizeof(double) * iter);
   double *m;
   double mx[d];
-  MeanShift msr;
+  MeanShiftRep msr;
 
   // Copy the original x into x0 which keeps the start point
   x0[0] = x[0];
