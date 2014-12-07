@@ -49,7 +49,6 @@ void quickSortD(double* l, int size){
   swapD(l, size-1, leftPlace);
   quickSortD(l, leftPlace);
   quickSortD(&l[leftPlace + 1], size - leftPlace - 1);
-  return;
 }
 
 /*

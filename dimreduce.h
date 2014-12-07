@@ -10,9 +10,15 @@
 #include "similarity.h"
 #include "stats/royston.h"
 #include "stats/meanshift.h"
+#include "stats/outlier.h"
 #include "error.h"
 
-typedef struct {
+/**
+ * The PairWiseClusters struct contains the information about a cluster. It is
+ * also a list node (has a *next element) to allow these objects to be
+ * strung together in a list.
+ */
+ typedef struct {
   // An array of zeros and ones indicating which samples from the input file
   // are to be used for the comparison.
   int * samples;
@@ -24,12 +30,24 @@ typedef struct {
   int gene2;
   // The cluster label.  Set to 0 if no clustering was performed.
   int cluster_label;
-} PairWiseSet;
 
+  struct PairWiseClusters * next;
+} PairWiseClusters;
+
+
+// Primary function for this file
 int do_dimreduce(int argc, char *argv[]);
-void pairwise_reduce(double *a2, int x, double *b2, int y, int n2,
-    EMatrix ematrix, CCMParameters params, int * kept, FILE * cf);
-void write_reduced_ematrix_line(PairWiseSet pws, FILE * cf);
 void print_dimreduce_usage();
+
+// Functions for working with the PairWiseClusters list
+PairWiseClusters * new_pairiwse_cluster_list();
+void add_pairiwse_cluster_list(PairWiseClusters *head, PairWiseClusters *new);
+void update_pairwise_cluster_samples(int * ckept, int nkept, PairWiseClusters *new);
+void write_pairwise_cluster_samples(PairWiseClusters *pws, FILE * cf);
+
+// Function to peform the clustering
+PairWiseClusters clustering(double *a2, int x, double *b2, int y, int n2,
+    EMatrix ematrix, CCMParameters params);
+
 
 #endif

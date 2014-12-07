@@ -14,6 +14,7 @@ OBJS = \
   stats/sfrancia.o \
   stats/swilk.o \
   stats/royston.o \
+  stats/outlier.o \
   stats/meanshift.o \
   similarity/bspline_mi.o \
   similarity/pearson.o \
@@ -48,6 +49,9 @@ stats/swilk.o: stats/swilk.c stats/swilk.h
 
 stats/royston.o: stats/royston.c stats/royston.h
 	${CC} -c ${CFLAGS} ${INCLUDES} stats/royston.c -o stats/royston.o
+
+stats/outlier.o: stats/outlier.c stats/outlier.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/outlier.c -o stats/outlier.o
 
 stats/meanshift.o: stats/meanshift.c stats/meanshift.h
 	${CC} -c ${CFLAGS} ${INCLUDES} stats/meanshift.c -o stats/meanshift.o
