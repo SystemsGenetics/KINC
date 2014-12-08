@@ -12,6 +12,7 @@
 #include "stats/meanshift.h"
 #include "stats/outlier.h"
 #include "error.h"
+#include "misc.h"
 
 /**
  * The PairWiseClusters struct contains the information about a cluster. It is
@@ -28,8 +29,10 @@
   int gene1;
   // The index of the second gene used in the comparison.
   int gene2;
-  // The cluster label.  Set to 0 if no clustering was performed.
-  int cluster_label;
+  // The number of samples in the cluster
+  int cluster_size;
+  // The Pearsons Correlation Coeeficient for the cluster
+  double pcc;
 
   struct PairWiseClusters * next;
 } PairWiseClusters;
@@ -41,13 +44,14 @@ void print_dimreduce_usage();
 
 // Functions for working with the PairWiseClusters list
 PairWiseClusters * new_pairiwse_cluster_list();
+void free_pairwise_cluster_list(PairWiseClusters * head);
 void add_pairiwse_cluster_list(PairWiseClusters *head, PairWiseClusters *new);
 void update_pairwise_cluster_samples(int * ckept, int nkept, PairWiseClusters *new);
 void write_pairwise_cluster_samples(PairWiseClusters *pws, FILE * cf);
 
 // Function to peform the clustering
-PairWiseClusters clustering(double *a2, int x, double *b2, int y, int n2,
-    EMatrix ematrix, CCMParameters params);
+PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
+    EMatrix ematrix, CCMParameters params, int level);
 
 
 #endif

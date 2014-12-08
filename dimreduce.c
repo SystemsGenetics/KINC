@@ -2,9 +2,14 @@
 
 int do_dimreduce(int argc, char *argv[]) {
 
-  //time_t start_time, end_time;  // variables used for timing of the software
-  int c;                        // the value returned by getopt_long
+  // variables used for timing of the software
+  time_t start_time = time(0);
+  time_t now;
 
+  // the value returned by getopt_long
+  int c;
+
+  // The struct containing the input parameters
   static CCMParameters params;
 
   // initialize some of the program parameters
@@ -164,19 +169,37 @@ int do_dimreduce(int argc, char *argv[]) {
 
   // Perform the pair-wise royston test and clustering
   total_comps = (params.rows * params.rows) / 2;
+  n_comps = 0;
   for (i = 0; i < params.rows; i++) {
     for (j = 0; j < params.rows; j++) {
-
-      n_comps++;
-      if (n_comps % 1000 == 0) {
-        printf("Percent complete: %.2f%%\r", (n_comps / (float) total_comps) * 100);
-      }
 
       // We only need to calculate royston in the lower triangle of the
       // full pair-wise matrix
       if (j >= i) {
         continue;
       }
+
+      if (n_comps % 100 == 0) {
+        // Get the amount of memory used.
+        statm_t * memory = memory_get_usage();
+
+        // Calculate the number of days left.
+        now = time(0);
+        float seconds_passed = now - start_time;
+        float minutes_passed = (seconds_passed) / 60.0;
+        float percent_complete = (n_comps / (float) total_comps) * 100;
+        float comps_per_minute = n_comps / minutes_passed;
+        float total_time = total_comps / comps_per_minute;
+        float minutes_left = total_time - minutes_passed;
+        float hours_left = minutes_left / 60;
+        float days_left = hours_left / 24;
+
+        // Write progress report.
+        printf("Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd. Coords: %d, %d.        \r", percent_complete, memory->size, hours_left, days_left, i, j);
+        free(memory);
+      }
+      n_comps++;
+
       double *a = data[i];
       double *b = data[j];
 
@@ -198,17 +221,26 @@ int do_dimreduce(int argc, char *argv[]) {
 
       // Perform the clustering if we have enough samples.
       if (n2 > params.min_obs) {
+
         // Perform the clustering
-        PairWiseClusters * pws = clustering(a2, i, b2, j, n2, ematrix, params);
+        PairWiseClusters * pws = clustering(a2, i, b2, j, n2, ematrix, params, 0);
 
-        // So, we have a good cluster. But, the samples in the pws object
-        // only represent data from the subset of samples that formed the
-        // cx and cy vectors. We need to adjust the samples array accordingly
-        // so that it excludes anthing but the samples in the returned cluster.
-        update_pairwise_cluster_samples(kept, params.cols, pws);
+        // If we have a cluster (i.e. the gene1 is not -1) then write it to the
+        // output file.
+        if (pws->gene1 != -1) {
 
-        // Now write out any clusters
-        write_pairwise_cluster_samples(pws, cf);
+          // So, we have a good cluster. But, the samples in the pws object
+          // only represent data from the subset of samples that formed the
+          // a2 and b2 vectors. We need to adjust the samples array accordingly
+          // so that it excludes anthing but the samples in the returned cluster.
+          update_pairwise_cluster_samples(kept, params.cols, pws);
+
+          // Now write out any clusters
+          write_pairwise_cluster_samples(pws, cf);
+        }
+
+        // clean up the memory
+        free_pairwise_cluster_list(pws);
       }
 
       // Release the memory for a2 and b2.
@@ -238,9 +270,12 @@ int do_dimreduce(int argc, char *argv[]) {
  *   The two-dimensional ematrix where rows are genes and columns are samples.
  * @param CCMParameters params
  *   The parameters provided to the program
+ * @param int level
+ *   An integer indicating the recursion level. It should always be set to
+ *   zero by the calee of this function.
  */
 PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
-    EMatrix ematrix, CCMParameters params) {
+    EMatrix ematrix, CCMParameters params, int level) {
 
   // Initialize the PWC struct to be empty (has -1 for genes and NULL for next)
   PairWiseClusters * result = new_pairiwse_cluster_list();
@@ -248,10 +283,11 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
   // Variables used for looping.
   int k, l, j;
   int nkept;
-  int * ckept = (int *) malloc(sizeof(int) * ematrix.num_samples);
+  double pcc;
+  int * ckept = (int *) malloc(sizeof(int) * n2);
 
   // Calculate Royston's H test for multivariate normality.
-  double pv = royston2D(a2, b2, n2);
+  double pv = royston2D(a2, b2, n2, &pcc);
   //printf("(%d, %d), pv: %e\n", x + 1, y + 1, pv);
 
   // If the Royston's H test has p-value <= 0.05 it means
@@ -260,17 +296,18 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
   if (pv > 0.05) {
     // Since this dataset is multivariate normal, return all samples
     // as being kept (set all elements of ckept to 1).
-    for (l = 0; l < ematrix.num_samples; l++) {
+    for (l = 0; l < n2; l++) {
       ckept[l] = 1;
     }
 
     // Return the entire sample set as a good cluster.
-    result.gene1 = x;
-    result.gene2 = y;
-    result.num_samples = ematrix.num_samples;
-    result.samples = ckept;
-    result.cluster_label = 0;  // 0 indicates no clustering was performed.
-    result.next = NULL;
+    result->gene1 = x;
+    result->gene2 = y;
+    result->num_samples = n2;
+    result->samples = ckept;
+    result->next = NULL;
+    result->cluster_size = n2;
+    result->pcc = pcc;
 
     return result;
     //write_reduced_ematrix_line(pws, cf);
@@ -286,6 +323,11 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
     // Skip clusters that are too small.
     if (clusters.sizes[k] < params.min_obs) {
       continue;
+    }
+
+    // Intialize the ckept array to assume all samples are kept.
+    for (l = 0; l < n2; l++) {
+      ckept[l] = 1;
     }
 
     // For easier access create variables for the current cluster.
@@ -313,7 +355,7 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
     }
 
     // Initialize the ckept array.
-    for (l = 0; l < ematrix.num_samples; l++) {
+    for (l = 0; l < n2; l++) {
       ckept[l] = 0;
     }
 
@@ -321,7 +363,7 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
     // any samples whose coordinates are considered outliers or who are not
     // in the cluster.
     nkept = 0;
-    for (l = 0; l < ematrix.num_samples; l++) {
+    for (l = 0; l < n2; l++) {
       // Is this sample is in the cluster, if so then also make sure it's
       // not an outlier.
       if (clusters.cluster_label[l] == k + 1) {
@@ -359,31 +401,40 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
     // Now after we have removed outliers and non-cluster samples,
     // makes sure add_pairwise_cluster_to_listwe still have the minimum observations
     if (nkept >= params.min_obs) {
-      PairWiseClusters pws;
+      PairWiseClusters * pws;
 
       // Before we write out this cluster to the cluster file, check to make
       // sure that this cluster is multivariate normal. To do this, recursively
       // call this function.  This cluster will be cotinually clustered itself
       // until it is either multivariate normal or too small to cluster further.
       // if no valid cluster is found then the genes are set at -1.
-      pws = clustering(cx, x, cy, y, nkept, ematrix, params);
-      if (pws.gene1 > -1) {
+      pws = clustering(cx, x, cy, y, nkept, ematrix, params, level + 1);
+      if (pws->gene1 > -1) {
         // So, we have a good cluster. But, the samples in the pws object
         // only represent data from the subset of samples that formed the
         // cx and cy vectors. We need to adjust the samples array accordingly
         // so that it excludes anthing but the samples in the returned cluster.
-        update_pairwise_cluster_samples(ckept, nkept, pws);
+        update_pairwise_cluster_samples(ckept, n2, pws);
 
-        // Add the resulting cluster to the list
-        add_pairiwse_cluster_list(&result, &pws);
+        // If this is the first time we've added to the list then set this new
+        // object to be the head.
+        if (result->gene1 == -1) {
+          free(result);
+          result = pws;
+        }
+        // Otherwise, add the resulting cluster to the list
+        else {
+          add_pairiwse_cluster_list(result, pws);
+        }
       }
     }
-    free(ckept);
     free(cx);
     free(cy);
   }
 
+
   // free the memory
+  free(ckept);
   free(clusters.cluster_label);
   for(k = 0; k < clusters.num_clusters; k++) {
     for (l = 0; l < clusters.sizes[k]; l++) {
@@ -406,8 +457,32 @@ PairWiseClusters * new_pairiwse_cluster_list() {
   pws->gene1 = -1;
   pws->gene2 = -1;
   pws->next = NULL;
+  pws->num_samples = 0;
+  pws->cluster_size = 0;
+  pws->pcc = 0;
 
   return pws;
+}
+
+/**
+ * Frees up all the memory in a PairWiseClusters object list.
+ */
+void free_pairwise_cluster_list(PairWiseClusters * head) {
+
+  PairWiseClusters * curr = (PairWiseClusters *) head;
+  PairWiseClusters * next = (PairWiseClusters *) head->next;
+  if (curr->num_samples > 0) {
+    free(curr->samples);
+  }
+  free(curr);
+  while (next != NULL) {
+    curr = next;
+    next = (PairWiseClusters *) next->next;
+    if (curr->num_samples > 0) {
+      free(curr->samples);
+    }
+    free(curr);
+  }
 }
 /**
  * Adds a new PairWiseClusters object to the list
@@ -418,20 +493,14 @@ PairWiseClusters * new_pairiwse_cluster_list() {
  *   The new object to add to the end of the list
  */
 void add_pairiwse_cluster_list(PairWiseClusters *head, PairWiseClusters *new) {
-  // If this is the first time we've added to the list then set this new
-  // object to be the head.
-  if (head->gene1 == -1) {
-    head = new;
-    return;
-  }
 
   // Traverse the list to the end and then add the new item
   PairWiseClusters * temp;
   temp = head;
   while (temp->next != NULL) {
-    temp = temp->next;
+    temp = (PairWiseClusters * )temp->next;
   }
-  temp->next = new;
+  temp->next = (struct PairWiseClusters *) new;
 }
 /**
  * Updates the samples vector of a PairWiseClusters object.
@@ -454,20 +523,39 @@ void add_pairiwse_cluster_list(PairWiseClusters *head, PairWiseClusters *new) {
  * @param new
  *   The new PWC object.
  */
-void update_pairwise_cluster_samples(int * ckept, int nkept, PairWiseClusters * new) {
+void update_pairwise_cluster_samples(int * kept, int nkept, PairWiseClusters * pwc) {
   int z;
   int w = 0;
+
+  // Create a new kept array that will update the pwc object.
+  int * new_kept = (int *) malloc(sizeof(int) * nkept);
+
+  // Iterate through all of the elements of the kept array.
   for (z = 0; z < nkept; z++) {
-    if (ckept[z] == 1) {
-      if (new->samples[w] == 0) {
-        ckept[z] = 0;
+    // If the element is 1, meaning the sample is kept, then check
+    // the pwc object to see if it is still kept.  For every element
+    // with a 1, we increment the variable w.  w is the index into the
+    // pwc->samples array.
+    if (kept[z] == 1) {
+      // The selement is not kept in the pwc so don't include it in the new array.
+      if (pwc->samples[w] == 0) {
+        new_kept[z] = 0;
+      }
+      // The element is kept in the pwc so preserve the 1 it in the new array.
+      else {
+        new_kept[z] = 1;
       }
       w++;
     }
+    // The element is not kept originally so preserve the 0 in the new array.
+    else {
+      new_kept[z] = 0;
+    }
   }
-  free(new->samples);
-  new->samples = ckept;
-  new->num_samples = nkept;
+  // Free up the old samples array and replace it with a new one.
+  free(pwc->samples);
+  pwc->samples = new_kept;
+  pwc->num_samples = nkept;
 }
 
 /**
@@ -491,20 +579,22 @@ void update_pairwise_cluster_samples(int * ckept, int nkept, PairWiseClusters * 
 void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE * cf) {
 
   // Do nothing if the object is empty.
-  if (pwc.gene1 == -1) {
+  if (pwc->gene1 == -1) {
     return;
   }
 
   // Iterate through the list of clusters and print each one.
-  PairWiseClusters * temp = pwc;
-  while (temp->next != NULL) {
-    fprintf(cf, "%i\t%i\t%i\t", pwc->gene1, pwc->gene2, pwc->cluster_label);
+  PairWiseClusters * curr = pwc;
+  int cluster_id = 0;
+  while (curr != NULL) {
+    fprintf(cf, "%i\t%i\t%i\t%i\t%f\t", curr->gene1, curr->gene2, curr->cluster_size, cluster_id, curr->pcc);
     int i;
-    for (i = 0; i < pwc.num_samples; i++) {
-      fprintf(cf, "%i", pwc.samples[i]);
+    for (i = 0; i < curr->num_samples; i++) {
+      fprintf(cf, "%i", curr->samples[i]);
     }
     fprintf(cf, "\n");
-    temp = temp->next;
+    curr = (PairWiseClusters *) curr->next;
+    cluster_id++;
   }
 }
 

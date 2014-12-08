@@ -14,8 +14,10 @@
  * @param double * b
  * @param int n
  *   The size of a and b.
+ * @param double * pcc
+ *   The pearson's correlation value. It is set during function run
  */
-double royston2D(double* a, double * b, int n) {
+double royston2D(double* a, double * b, int n, double *pcc) {
 
   // The cols variable is the number of genes. Because this is bivariate it
   // will always be 2.  The rows is the number of sample measurements per gene.
@@ -24,6 +26,9 @@ double royston2D(double* a, double * b, int n) {
 
   // Create a new vector z
   double z[cols];
+
+  // Initialize the pcc value
+  *pcc = NAN;
 
   // We must have at least 3 rows.
   if (rows <= 3) {
@@ -114,10 +119,10 @@ double royston2D(double* a, double * b, int n) {
   double l = 5;
 
   // Get the correlation of a and b
-  double pcc = gsl_stats_correlation(a, 1, b, 1, rows);
+  *pcc = gsl_stats_correlation(a, 1, b, 1, rows);
 
   // Transformed PCC value
-  double NC = pow(pcc, l) * (1.0 - (u * pow(1.0 - pcc, u)) / v);
+  double NC = pow(*pcc, l) * (1.0 - (u * pow(1.0 - *pcc, u)) / v);
 
   // Calculate the % Total. In the R code this was
   //   T = sum(sum(NC)) - p

@@ -8,6 +8,7 @@ LDFLAGS = -Wall -lm -lgsl -lgslcblas -llapack -lblas -lpthread
 
 OBJS = \
   error.o \
+  misc.o \
   vector.o \
   stats/stats.o \
   stats/kurtosis.o \
@@ -28,6 +29,9 @@ EXE = KINC
 
 all: ${OBJS}
 	${CC} ${OBJS} ${LDFLAGS} -o kinc
+
+misc.o: misc.c misc.h
+	${CC} -c ${CFLAGS} ${INCLUDES} misc.c
 
 vector.o: vector.c vector.h
 	${CC} -c ${CFLAGS} ${INCLUDES} vector.c
