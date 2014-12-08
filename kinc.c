@@ -5,28 +5,43 @@
  * accordingly.
  */
 int main(int argc, char *argv[]) {
+
+  // The return value
+  int retval = 0;
+
+  // MPI variables
+  int mpi_err, mpi_num_procs, mpi_id;
+
+  // Initialize MPI.
+  mpi_err = MPI_Init(&argc, &argv);
+
+  // Find out my process ID, and how many processes were started.
+  mpi_err = MPI_Comm_rank(MPI_COMM_WORLD, &mpi_id);
+  mpi_err = MPI_Comm_size(MPI_COMM_WORLD, &mpi_num_procs);
+
+  printf("Using %i out of %i processes.\n", mpi_id + 1, mpi_num_procs);
+
   // make sure we have at least one input argument for the command
   if (argc == 1) {
     printf("ERROR: Please provide the command to execute.\n\n");
     print_usage();
-    exit(-1);
+    retval = -1;
   }
-  if (strcmp(argv[1], "dimreduce") == 0) {
-    return do_dimreduce(argc, argv);
+  else if (strcmp(argv[1], "dimreduce") == 0) {
+    retval =  do_dimreduce(argc, argv, mpi_id, mpi_num_procs);
   }
   // construct the similarity matrix
-  if (strcmp(argv[1], "similarity") == 0) {
-    return do_similarity(argc, argv);
+  else if (strcmp(argv[1], "similarity") == 0) {
+    retval =  do_similarity(argc, argv);
   }
   // identify the threshold for cutting the similarity matrix
   else if (strcmp(argv[1], "threshold") == 0) {
-    return do_threshold(argc, argv);
+    retval =  do_threshold(argc, argv);
   }
   // extract a given element from the matrix or a network
   else if (strcmp(argv[1], "extract") == 0) {
-    return do_extract(argc, argv);
+    retval =  do_extract(argc, argv);
   }
-
   // print help documentation
   else if (strcmp(argv[1], "help") == 0) {
     if (argc == 3) {
@@ -47,9 +62,13 @@ int main(int argc, char *argv[]) {
   else {
     printf("ERROR: Unknown command.\n\n");
     print_usage();
-    exit(-1);
+    retval = -1;
   }
-  return 0;
+
+  // Terminate MPI.
+  mpi_err = MPI_Finalize();
+
+  return retval;
 }
 
 /**

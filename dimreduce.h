@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <string.h>
+#include <mpi.h>
 #include "similarity.h"
 #include "stats/royston.h"
 #include "stats/meanshift.h"
@@ -39,7 +40,7 @@
 
 
 // Primary function for this file
-int do_dimreduce(int argc, char *argv[]);
+int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs);
 void print_dimreduce_usage();
 
 // Functions for working with the PairWiseClusters list

@@ -1,10 +1,13 @@
 MKLROOT = 
-CC = gcc -m64
+CC = mpicc -m64
 EXE_DIR = 
+
+MPI_INCLUDES =  $(shell mpicc --showme:compile)
+MPI_LDLINK = $(shell mpicc --showme:link)
 
 CFLAGS = -g -Wall
 INCLUDES = 
-LDFLAGS = -Wall -lm -lgsl -lgslcblas -llapack -lblas -lpthread
+LDFLAGS = -Wall -lm -lgsl -lgslcblas -llapack -lblas -lpthread 
 
 OBJS = \
   error.o \
@@ -25,10 +28,10 @@ OBJS = \
   threshold.o \
   extract.o \
   kinc.o
-EXE = KINC
+EXE = kinc
 
 all: ${OBJS}
-	${CC} ${OBJS} ${LDFLAGS} -o kinc
+	${CC} ${OBJS} ${LDFLAGS} ${MPI_LDLINK} -o ${EXE}
 
 misc.o: misc.c misc.h
 	${CC} -c ${CFLAGS} ${INCLUDES} misc.c
@@ -70,7 +73,7 @@ similarity/bspline_mi.o: similarity/bspline_mi.c similarity/bspline_mi.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/bspline_mi.c -o similarity/bspline_mi.o
 
 dimreduce.o: dimreduce.c dimreduce.h
-	${CC} -c ${CFLAGS} ${INCLUDES} dimreduce.c
+	${CC} -c ${CFLAGS} ${INCLUDES} ${MPI_INCLUDES} dimreduce.c
 
 similarity.o: similarity.c similarity.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity.c
@@ -81,8 +84,8 @@ threshold.o: threshold.c threshold.h
 extract.o: extract.c extract.h
 	${CC} -c ${CFLAGS} ${INCLUDES} extract.c
 
-kink.o: kink.c kink.h
-	${CC} -c ${CFLAGS} ${INCLUDES} kink.c
+kinc.o: kinc.c kinc.h
+	${CC} -c ${CFLAGS} ${INCLUDES} ${MPI_INCLUDES} kinc.c
 
 clean:
 	rm -f ${OBJS} ${EXE}

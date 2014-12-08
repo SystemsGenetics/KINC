@@ -1,6 +1,6 @@
 #include "dimreduce.h"
 
-int do_dimreduce(int argc, char *argv[]) {
+int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
 
   // variables used for timing of the software
   time_t start_time = time(0);
@@ -97,29 +97,29 @@ int do_dimreduce(int argc, char *argv[]) {
 
   // make sure the required arguments are set and appropriate
   if (!params.infilename) {
-    fprintf(stderr,"Please provide an expression matrix (--ematrix option).\n");
+    fprintf(stderr, "Please provide an expression matrix (--ematrix option).\n");
     exit(-1);
   }
   // make sure we have a positive integer for the rows and columns of the matrix
   if (params.rows < 0 || params.rows == 0) {
-    fprintf(stderr,"Please provide a positive integer value for the number of rows in the \n");
-    fprintf(stderr,"expression matrix (--rows option).\n");
+    fprintf(stderr, "Please provide a positive integer value for the number of rows in the \n");
+    fprintf(stderr, "expression matrix (--rows option).\n");
     exit(-1);
   }
   if (params.cols < 0 || params.cols == 0) {
-    fprintf(stderr,"Please provide a positive integer value for the number of columns in\n");
-    fprintf(stderr,"the expression matrix (--cols option).\n");
+    fprintf(stderr, "Please provide a positive integer value for the number of columns in\n");
+    fprintf(stderr, "the expression matrix (--cols option).\n");
     exit(-1);
   }
 
   // make sure the input file exists
   if (access(params.infilename, F_OK) == -1) {
-    fprintf(stderr,"Error: The input file does not exists or is not readable.\n");
+    fprintf(stderr, "Error: The input file does not exists or is not readable.\n");
     exit(-1);
   }
 
   if (params.omit_na && !params.na_val) {
-    fprintf(stderr,"Error: The missing value string should be provided (--na_val option).\n");
+    fprintf(stderr, "Error: The missing value string should be provided (--na_val option).\n");
     exit(-1);
   }
 
@@ -159,23 +159,45 @@ int do_dimreduce(int argc, char *argv[]) {
 
   EMatrix ematrix = load_ematrix(params);
   double ** data = ematrix.data;
-  int total_comps;  // the total number of pair-wise comparisons to be made
-  int n_comps;      // the number of comparisons completed during looping
   int i, j;
 
-  // Open the clustering file for writing.
-  sprintf(filename, "%s.clusters.txt", params.fileprefix);
+  // Open the clustering file for writing. Use the MPI ID in the filename.
+  sprintf(filename, "%s.clusters.%03d.txt", params.fileprefix, mpi_id+1);
   FILE * cf = fopen(filename, "w");
 
+  // Calculate the total number of comparisions and how many will be
+  // performed by this process. We subtract 1 from the first params.rows
+  // because we do not calculate the diagnoal.
+  int num_rows = params.rows - 1;
+  int total_comps  = num_rows * (num_rows + 1) / 2;
+  int comps_per_process = total_comps / mpi_num_procs;
+  int comp_start = mpi_id * comps_per_process;
+  int comp_stop = mpi_id * comps_per_process + comps_per_process;
+
+  // If this is the last process and there are some remainder comparisions
+  // then we need to add them to the stop
+  if (mpi_id + 1 == mpi_num_procs) {
+    comp_stop = total_comps;
+  }
+
+  if (mpi_id + 1 != 2) {
+    return 1;
+  }
+
   // Perform the pair-wise royston test and clustering
-  total_comps = (params.rows * params.rows) / 2;
-  n_comps = 0;
+  int n_comps = 0;
   for (i = 0; i < params.rows; i++) {
     for (j = 0; j < params.rows; j++) {
 
       // We only need to calculate royston in the lower triangle of the
       // full pair-wise matrix
       if (j >= i) {
+        continue;
+      }
+
+      // If this computation is not meant for this process, then skip it.
+      if (n_comps < comp_start || n_comps >= comp_stop) {
+        n_comps++;
         continue;
       }
 
@@ -187,15 +209,23 @@ int do_dimreduce(int argc, char *argv[]) {
         now = time(0);
         float seconds_passed = now - start_time;
         float minutes_passed = (seconds_passed) / 60.0;
-        float percent_complete = (n_comps / (float) total_comps) * 100;
+        float percent_complete = (n_comps / (float) (comp_stop - comp_start)) * 100;
         float comps_per_minute = n_comps / minutes_passed;
-        float total_time = total_comps / comps_per_minute;
+        float total_time = (comp_stop - comp_start) / comps_per_minute;
         float minutes_left = total_time - minutes_passed;
         float hours_left = minutes_left / 60;
         float days_left = hours_left / 24;
 
         // Write progress report.
-        printf("Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd. Coords: %d, %d.        \r", percent_complete, memory->size, hours_left, days_left, i, j);
+        printf("%d. Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd. Coords: %d, %d.        \r",
+              mpi_id + 1,
+              percent_complete,
+              memory->size,
+              hours_left,
+              days_left,
+              i,
+              j
+            );
         free(memory);
       }
       n_comps++;
@@ -252,6 +282,7 @@ int do_dimreduce(int argc, char *argv[]) {
 
   // Close the clustering file.
   fclose(cf);
+
   return 1;
 }
 
