@@ -179,13 +179,10 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
   if (mpi_id + 1 == mpi_num_procs) {
     comp_stop = total_comps;
   }
-
-  if (mpi_id + 1 != 2) {
-    return 1;
-  }
-
+  printf("%d. Performing %d comparisions\n", mpi_id + 1, comp_stop - comp_start);
   // Perform the pair-wise royston test and clustering
   int n_comps = 0;
+  int my_comps = 0;
   for (i = 0; i < params.rows; i++) {
     for (j = 0; j < params.rows; j++) {
 
@@ -209,8 +206,8 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
         now = time(0);
         float seconds_passed = now - start_time;
         float minutes_passed = (seconds_passed) / 60.0;
-        float percent_complete = (n_comps / (float) (comp_stop - comp_start)) * 100;
-        float comps_per_minute = n_comps / minutes_passed;
+        float percent_complete = (my_comps / (float) (comp_stop - comp_start)) * 100;
+        float comps_per_minute = my_comps / minutes_passed;
         float total_time = (comp_stop - comp_start) / comps_per_minute;
         float minutes_left = total_time - minutes_passed;
         float hours_left = minutes_left / 60;
@@ -229,6 +226,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
         free(memory);
       }
       n_comps++;
+      my_comps++;
 
       double *a = data[i];
       double *b = data[j];

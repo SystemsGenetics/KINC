@@ -19,6 +19,12 @@ int main(int argc, char *argv[]) {
   mpi_err = MPI_Comm_rank(MPI_COMM_WORLD, &mpi_id);
   mpi_err = MPI_Comm_size(MPI_COMM_WORLD, &mpi_num_procs);
 
+  // For testing a single process... should comment out when not testing.
+  if (mpi_id + 1 != 5) {
+    mpi_err = MPI_Finalize();
+    return 1;
+  }
+
   printf("Using %i out of %i processes.\n", mpi_id + 1, mpi_num_procs);
 
   // make sure we have at least one input argument for the command
