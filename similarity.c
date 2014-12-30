@@ -392,7 +392,7 @@ void print_histogram(CCMParameters params, int * histogram) {
 
 
   // output the correlation histogram
-  sprintf(outfilename, "%s.mi.corrhist.txt", params.fileprefix);
+  sprintf(outfilename, "%s.%s.corrhist.txt", params.fileprefix, params.method);
   FILE * outfile = fopen(outfilename, "w");
   for (m = 0; m < HIST_BINS; m++) {
     fprintf(outfile, "%lf\t%d\n", 1.0 * m / (HIST_BINS), histogram[m]);

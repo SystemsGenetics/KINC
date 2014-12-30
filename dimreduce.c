@@ -180,6 +180,10 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
     comp_stop = total_comps;
   }
   printf("%d. Performing %d comparisions\n", mpi_id + 1, comp_stop - comp_start);
+  fprintf(cf, "#%d - %d\n", comp_start, comp_stop);
+  fflush(cf);
+  fflush(stdout);
+
   // Perform the pair-wise royston test and clustering
   int n_comps = 0;
   int my_comps = 0;
@@ -266,9 +270,17 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
           // Now write out any clusters
           write_pairwise_cluster_samples(pws, cf);
         }
+        else {
+          fprintf(cf, "%i\t%i\t\t\t\t\t\n", i, j);
+          fflush(cf);
+        }
 
         // clean up the memory
         free_pairwise_cluster_list(pws);
+      }
+      else {
+        fprintf(cf, "%i\t%i\t\t\t\t\t\n", i, j);
+        fflush(cf);
       }
 
       // Release the memory for a2 and b2.
@@ -277,6 +289,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       free(kept);
     }
   }
+  fprintf(cf, "#Done\n");
 
   // Close the clustering file.
   fclose(cf);
@@ -624,6 +637,7 @@ void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE * cf) {
     fprintf(cf, "\n");
     curr = (PairWiseClusters *) curr->next;
     cluster_id++;
+    fflush(cf);
   }
 }
 

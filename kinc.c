@@ -20,10 +20,10 @@ int main(int argc, char *argv[]) {
   mpi_err = MPI_Comm_size(MPI_COMM_WORLD, &mpi_num_procs);
 
   // For testing a single process... should comment out when not testing.
-  if (mpi_id + 1 != 5) {
-    mpi_err = MPI_Finalize();
-    return 1;
-  }
+//  if (mpi_id + 1 != 5) {
+//    mpi_err = MPI_Finalize();
+//    return 1;
+//  }
 
   printf("Using %i out of %i processes.\n", mpi_id + 1, mpi_num_procs);
 
@@ -69,6 +69,23 @@ int main(int argc, char *argv[]) {
     printf("ERROR: Unknown command.\n\n");
     print_usage();
     retval = -1;
+  }
+
+  // Wait until all other processes are completed before closing the manager 
+  MPI_Status stat;
+  char message[10];
+  if (mpi_id > 0 ) {
+    // All non master processes should report done when completed.
+    sprintf(message, "Done"); 
+    MPI_Send(message, strlen(message)+1, MPI_BYTE, 0,1,MPI_COMM_WORLD);
+  }
+  else {
+    // The master process should wait to get 'Done' from each process 
+    // before terminating
+    int proc;
+    for (proc = 1; proc < mpi_num_procs; proc++) {
+      MPI_Recv(message, sizeof(message), MPI_BYTE, proc, 1, MPI_COMM_WORLD, &stat);
+    }
   }
 
   // Terminate MPI.
