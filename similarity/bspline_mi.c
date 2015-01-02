@@ -60,6 +60,7 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
     for (j = m * ROWS_PER_OUTPUT_FILE; j < j_limit; j++) {
       // lower triangular symmetric matrix (stop when col# > row#)
       for (k = 0; k <= j; k++) {
+
         n_comps++;
         if (n_comps % 100 == 0) {
           printf("Percent complete: %.2f%%\r", (n_comps/(float)total_comps)*100);
@@ -107,7 +108,9 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
         // actually occurred.
         double mi = NAN;
 
-        if (n >= params.min_obs) {
+        // Make sure we have the right number of observations and that the
+        // min and max are not the same.
+        if (n >= params.min_obs && xmin < xmax && ymin < ymax) {
           //printf("%d, %d\n", j, k);
           mi = calculateBSplineMI(x, y, n, params.mi_bins, params.mi_degree, xmin, ymin, xmax, ymax);
           //printf("(%d, %d) = %f (%d values). xmin = %f, xmax = %f, ymin = %f, ymax = %f\n", j, k, mi, n, xmin, xmax, ymin, ymax);
