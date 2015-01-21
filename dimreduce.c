@@ -219,14 +219,14 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
 
         // Write progress report.
         printf("%d. Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd. Coords: %d, %d.        \r",
-              mpi_id + 1,
-              percent_complete,
-              memory->size,
-              hours_left,
-              days_left,
-              i,
-              j
-            );
+          mpi_id + 1,
+          percent_complete,
+          memory->size,
+          hours_left,
+          days_left,
+          i,
+          j
+        );
         free(memory);
       }
       n_comps++;
@@ -255,28 +255,11 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       if (n2 > params.min_obs) {
 
         // Perform the clustering
-        PairWiseClusters * pws = clustering(a2, i, b2, j, n2, ematrix, params, 0);
-
-        // If we have a cluster (i.e. the gene1 is not -1) then write it to the
-        // output file.
-        if (pws->gene1 != -1) {
-
-          // So, we have a good cluster. But, the samples in the pws object
-          // only represent data from the subset of samples that formed the
-          // a2 and b2 vectors. We need to adjust the samples array accordingly
-          // so that it excludes anthing but the samples in the returned cluster.
-          update_pairwise_cluster_samples(kept, params.cols, pws);
-
-          // Now write out any clusters
-          write_pairwise_cluster_samples(pws, cf);
-        }
-        else {
-          fprintf(cf, "%i\t%i\t\t\t\t\t\n", i, j);
-          fflush(cf);
-        }
+        PairWiseClusters * clusters = clustering(a2, i, b2, j, n2, ematrix, params, 0.075, 0);
 
         // clean up the memory
-        free_pairwise_cluster_list(pws);
+        free_pairwise_cluster_list(clusters);
+        write_pairwise_cluster_samples(clusters, cf);
       }
       else {
         fprintf(cf, "%i\t%i\t\t\t\t\t\n", i, j);
@@ -312,85 +295,43 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
  *   The two-dimensional ematrix where rows are genes and columns are samples.
  * @param CCMParameters params
  *   The parameters provided to the program
+ * @param float bw
+ *   The bandwith argument for mean shift clustering.  Default should be 0.075.
  * @param int level
  *   An integer indicating the recursion level. It should always be set to
- *   zero by the calee of this function.
+ *   zero by the caller of this function.
  */
 PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
-    EMatrix ematrix, CCMParameters params, int level) {
-
-  // Initialize the PWC struct to be empty (has -1 for genes and NULL for next)
-  PairWiseClusters * result = new_pairiwse_cluster_list();
+    EMatrix ematrix, CCMParameters params, float bw, int level) {
 
   // Variables used for looping.
   int k, l, j;
   int nkept;
-  double pcc;
   int * ckept = (int *) malloc(sizeof(int) * n2);
 
-  // Calculate Royston's H test for multivariate normality.
-  double pv = royston2D(a2, b2, n2, &pcc);
-  //printf("(%d, %d), pv: %e\n", x + 1, y + 1, pv);
+  PairWiseClusters * result = new_pairiwse_cluster_list();
 
-  // If the Royston's H test has p-value <= 0.05 it means
-  // it does not appear to be multivariate normal, then do mean shift
-  // clustering to cluster the measured points.
-  if (pv > 0.05) {
-    // Since this dataset is multivariate normal, return all samples
-    // as being kept (set all elements of ckept to 1).
-    for (l = 0; l < n2; l++) {
-      ckept[l] = 1;
+  // Perform mean shift clustering (MSC)
+  MeanShiftClusters clusters;
+  clusters = meanshift2D(a2, b2, n2, bw);
+
+  // Count the number of clusters that are larger than min_obs
+  int num_large = 0;
+  for(k = 0; k < clusters.num_clusters; k++) {
+    if (clusters.sizes[k] >= params.min_obs) {
+      num_large++;
     }
-
-    // Return the entire sample set as a good cluster.
-    result->gene1 = x;
-    result->gene2 = y;
-    result->num_samples = n2;
-    result->samples = ckept;
-    result->next = NULL;
-    result->cluster_size = n2;
-    result->pcc = pcc;
-
-    return result;
-    //write_reduced_ematrix_line(pws, cf);
   }
 
-  // Calculate the clusters.
-  MeanShiftClusters clusters;
-  clusters = meanshift2D(a2, b2, n2, 0.075);
-
-  // Is there a cluster with the minimum observations?
+  // Iterate through all of the clusters.
   for(k = 0; k < clusters.num_clusters; k++) {
 
-    // Skip clusters that are too small.
-    if (clusters.sizes[k] < params.min_obs) {
-      continue;
-    }
-
-    // Intialize the ckept array to assume all samples are kept.
-    for (l = 0; l < n2; l++) {
-      ckept[l] = 1;
-    }
-
-    // For easier access create variables for the current cluster.
-    double ** cluster = clusters.clusters[k];
+    // For easier access create variables for the current cluster size.
     int size = clusters.sizes[k];
 
-    // Create seperate vectors for the x and y coordinates. We
-    // will look for outliers in both vectors
+    // Create separate vectors for the x and y coordinates.
     double *cx = (double *) malloc(sizeof(double) * size);
     double *cy = (double *) malloc(sizeof(double) * size);
-    for(j = 0; j < size; j++) {
-      cx[j] = cluster[j][0];
-      cy[j] = cluster[j][1];
-    }
-
-    // Discover any outliers in this cluster.
-    Outliers outliersCx = outliers_iqr(cx, size, 1.5);
-    Outliers outliersCy = outliers_iqr(cy, size, 1.5);
-
-    // Re-initailize the cx and cy vectors to hold the new cluster (with
-    // outliers removed)
     for(j = 0; j < size; j++) {
       cx[j] = 0;
       cy[j] = 0;
@@ -401,12 +342,24 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
       ckept[l] = 0;
     }
 
+    // Discover any outliers for clusters with size >= min_obs
+    Outliers outliersCx;
+    Outliers outliersCy;
+    if (clusters.sizes[k] >= params.min_obs) {
+      outliersCx = outliers_iqr(cx, size, 1.5);
+      outliersCy = outliers_iqr(cy, size, 1.5);
+    }
+    else {
+      outliersCx.n = 0;
+      outliersCy.n = 0;
+    }
+
     // Create an array of the kept samples for this cluster. Don't include
     // any samples whose coordinates are considered outliers or who are not
     // in the cluster.
     nkept = 0;
     for (l = 0; l < n2; l++) {
-      // Is this sample is in the cluster, if so then also make sure it's
+      // Is this sample is in the cluster? if so then also make sure it's
       // not an outlier.
       if (clusters.cluster_label[l] == k + 1) {
         // Iterate through the outlier points and compare to this
@@ -436,39 +389,55 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
         }
       }
     }
-
     free(outliersCx.outliers);
     free(outliersCy.outliers);
 
     // Now after we have removed outliers and non-cluster samples,
-    // makes sure add_pairwise_cluster_to_listwe still have the minimum observations
+    // makes sure we still have the minimum observations.
     if (nkept >= params.min_obs) {
-      PairWiseClusters * pws;
 
-      // Before we write out this cluster to the cluster file, check to make
-      // sure that this cluster is multivariate normal. To do this, recursively
-      // call this function.  This cluster will be cotinually clustered itself
-      // until it is either multivariate normal or too small to cluster further.
-      // if no valid cluster is found then the genes are set at -1.
-      pws = clustering(cx, x, cy, y, nkept, ematrix, params, level + 1);
-      if (pws->gene1 > -1) {
-        // So, we have a good cluster. But, the samples in the pws object
-        // only represent data from the subset of samples that formed the
-        // cx and cy vectors. We need to adjust the samples array accordingly
-        // so that it excludes anthing but the samples in the returned cluster.
-        update_pairwise_cluster_samples(ckept, n2, pws);
-
-        // If this is the first time we've added to the list then set this new
-        // object to be the head.
-        if (result->gene1 == -1) {
-          free(result);
-          result = pws;
-        }
-        // Otherwise, add the resulting cluster to the list
-        else {
-          add_pairiwse_cluster_list(result, pws);
-        }
+      // If the recursion level is greater than zero the we've already clustered
+      // at least once.  When we reach this point we've clustered again. If
+      // we only have a single cluster at this point then we can't cluster
+      // anymore and we can perform Spearman.
+      if (level > 0 && num_large == 1) {
+        // Initialize the workspace needed for Spearman's calculation.
+        double workspace[2 * params.rows];
+        float rho = NAN;
+        rho = gsl_stats_spearman(cx, 1, cy, 1, nkept, workspace);
+        PairWiseClusters * new = new_pairiwse_cluster_list();
+        new->gene1 = x;
+        new->gene2 = y;
+        new->num_samples = n2;
+        new->samples = ckept;
+        new->next = NULL;
+        new->cluster_size = nkept;
+        new->pcc = rho;
+        add_pairwise_cluster_list(result, new);
       }
+
+      // If this is the first level of clsutering then we want to cluster
+      // again. We also want to cluster again if there is more than one large
+      // cluster. We do this because we haven't yet settled on to an distinct
+      // "expression mode".
+      else {
+        PairWiseClusters * children = clustering(cx, x, cy, y, nkept, ematrix, params, 0.09, level + 1);
+        update_pairwise_cluster_samples(ckept, nkept, children);
+        add_pairwise_cluster_list(result, children);
+      }
+    }
+    // If the cluster is too small then just add it without
+    // correlation analysis or further sub clustering.
+    else {
+      PairWiseClusters * new = new_pairiwse_cluster_list();
+      new->gene1 = x;
+      new->gene2 = y;
+      new->num_samples = n2;
+      new->samples = ckept;
+      new->next = NULL;
+      new->cluster_size = nkept;
+      new->pcc = NAN;
+      add_pairwise_cluster_list(result, new);
     }
     free(cx);
     free(cy);
@@ -487,9 +456,9 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
   free(clusters.sizes);
   free(clusters.clusters);
 
-  // Return the final list
   return result;
 }
+
 
 /**
  * Intializes the head PairWiseCluster object.
@@ -534,13 +503,25 @@ void free_pairwise_cluster_list(PairWiseClusters * head) {
  * @param PairWiseClusters new
  *   The new object to add to the end of the list
  */
-void add_pairiwse_cluster_list(PairWiseClusters *head, PairWiseClusters *new) {
+void add_pairwise_cluster_list(PairWiseClusters *head, PairWiseClusters *new) {
+
+  // Check the list to see if it is empty. If so, then make this item the
+  // new head.
+  if (head->gene1 == -1) {
+    head->gene1 = new->gene1;
+    head->gene2 = new->gene1;
+    head->next = new->next;
+    head->num_samples = new->num_samples;
+    head->cluster_size = new->cluster_size;
+    head->pcc = new->pcc;
+    return;
+  }
 
   // Traverse the list to the end and then add the new item
   PairWiseClusters * temp;
   temp = head;
   while (temp->next != NULL) {
-    temp = (PairWiseClusters * )temp->next;
+    temp = (PairWiseClusters * ) temp->next;
   }
   temp->next = (struct PairWiseClusters *) new;
 }
@@ -556,48 +537,55 @@ void add_pairiwse_cluster_list(PairWiseClusters *head, PairWiseClusters *new) {
  * clustering() function. Therefore, the results need to be merged back into
  * the larger samples array.  This function does that.
  *
- * @param int *ckept
- *   The larger samples array. It contains a list of 0's and 1's indicating
+ * @param int *parent_samples
+ *   The list of parent samples. It contains a list of 0's and 1's indicating
  *   which samples are to be kept.  Any samples not also found in the
  *   'new.samples' argument are set to 0.
- * @param int nkept
- *   The size of the ckept array.
+ * @param int n
+ *   The size of the parent_samples array.
  * @param new
  *   The new PWC object.
  */
-void update_pairwise_cluster_samples(int * kept, int nkept, PairWiseClusters * pwc) {
-  int z;
-  int w = 0;
+void update_pairwise_cluster_samples(int * parent_samples, int n, PairWiseClusters * head) {
 
-  // Create a new kept array that will update the pwc object.
-  int * new_kept = (int *) malloc(sizeof(int) * nkept);
+  PairWiseClusters * curr = (PairWiseClusters *) head;
+  PairWiseClusters * next = (PairWiseClusters *) head->next;
 
-  // Iterate through all of the elements of the kept array.
-  for (z = 0; z < nkept; z++) {
-    // If the element is 1, meaning the sample is kept, then check
-    // the pwc object to see if it is still kept.  For every element
-    // with a 1, we increment the variable w.  w is the index into the
-    // pwc->samples array.
-    if (kept[z] == 1) {
-      // The selement is not kept in the pwc so don't include it in the new array.
-      if (pwc->samples[w] == 0) {
-        new_kept[z] = 0;
+  while (curr != NULL) {
+    int z;
+    int w = 0;
+
+    // Create a new kept array that will update the current samples array.
+    int * new_samples = (int *) malloc(sizeof(int) * n);
+
+    // Iterate through all of the elements of the parent samples list.
+    for (z = 0; z < n; z++) {
+      // If the element is 1, meaning the sample is present int he parent
+      // cluster, then check the current sample to see if was preserved during
+      // sub clustering.
+      if (parent_samples[z] == 1) {
+        if (curr->samples[w] == 0) {
+          new_samples[z] = 0;
+        }
+        // The element is kept in the pwc so preserve the 1 it in the new array.
+        else {
+          new_samples[z] = 1;
+        }
+        w++;
       }
-      // The element is kept in the pwc so preserve the 1 it in the new array.
+      // The element is not kept originally so preserve the 0 in the new array.
       else {
-        new_kept[z] = 1;
+        new_samples[z] = 0;
       }
-      w++;
     }
-    // The element is not kept originally so preserve the 0 in the new array.
-    else {
-      new_kept[z] = 0;
-    }
+    // Free up the old samples array and replace it with a new one.
+    free(curr->samples);
+    curr->samples = new_samples;
+    curr->num_samples = n;
+
+    curr = next;
+    next = (PairWiseClusters *) next->next;
   }
-  // Free up the old samples array and replace it with a new one.
-  free(pwc->samples);
-  pwc->samples = new_kept;
-  pwc->num_samples = nkept;
 }
 
 /**
@@ -629,14 +617,16 @@ void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE * cf) {
   PairWiseClusters * curr = pwc;
   int cluster_id = 0;
   while (curr != NULL) {
-    fprintf(cf, "%i\t%i\t%i\t%i\t%f\t", curr->gene1, curr->gene2, curr->cluster_size, cluster_id, curr->pcc);
-    int i;
-    for (i = 0; i < curr->num_samples; i++) {
-      fprintf(cf, "%i", curr->samples[i]);
+    if (curr->gene1 != -1) {
+      fprintf(cf, "%i\t%i\t%i\t%i\t%f\t", curr->gene1, curr->gene2, curr->cluster_size, cluster_id, curr->pcc);
+      int i;
+      for (i = 0; i < curr->num_samples; i++) {
+        fprintf(cf, "%i", curr->samples[i]);
+      }
+      fprintf(cf, "\n");
+      cluster_id++;
     }
-    fprintf(cf, "\n");
     curr = (PairWiseClusters *) curr->next;
-    cluster_id++;
     fflush(cf);
   }
 }

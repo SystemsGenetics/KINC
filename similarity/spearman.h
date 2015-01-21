@@ -4,4 +4,6 @@
 #include "../similarity.h"
 
 
+void calculate_spearman(CCMParameters params, double ** data, int * histogram);
+
 #endif
