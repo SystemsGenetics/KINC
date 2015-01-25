@@ -162,8 +162,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
   int i, j;
 
   // Open the clustering file for writing. Use the MPI ID in the filename.
-  sprintf(filename, "%s.clusters.%03d.txt", params.fileprefix, mpi_id+1);
-  FILE * cf = fopen(filename, "w");
+  FILE ** fps = open_output_files(params, mpi_id);
 
   // Calculate the total number of comparisions and how many will be
   // performed by this process. We subtract 1 from the first params.rows
@@ -180,8 +179,6 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
     comp_stop = total_comps;
   }
   printf("%d. Performing %d comparisions\n", mpi_id + 1, comp_stop - comp_start);
-  fprintf(cf, "#%d - %d\n", comp_start, comp_stop);
-  fflush(cf);
   fflush(stdout);
 
   // Perform the pair-wise royston test and clustering
@@ -252,18 +249,19 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       remove_missing_paired(a, b, params.cols, a2, b2, &n2, kept);
 
       // Perform the clustering if we have enough samples.
-      if (n2 > params.min_obs) {
+      if (n2 > 0) {
 
-        // Perform the clustering
+        // Perform the clustering.
         PairWiseClusters * clusters = clustering(a2, i, b2, j, n2, ematrix, params, 0.075, 0);
 
-        // clean up the memory
+        // update the clusters to include zeros for any samples with a missing value.
+        update_pairwise_cluster_samples(kept, params.cols, clusters);
+
+        // Write the clusters to the file.
+        write_pairwise_cluster_samples(clusters, fps);
+
+        // clean up the memory.
         free_pairwise_cluster_list(clusters);
-        write_pairwise_cluster_samples(clusters, cf);
-      }
-      else {
-        fprintf(cf, "%i\t%i\t\t\t\t\t\n", i, j);
-        fflush(cf);
       }
 
       // Release the memory for a2 and b2.
@@ -272,10 +270,8 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       free(kept);
     }
   }
-  fprintf(cf, "#Done\n");
 
-  // Close the clustering file.
-  fclose(cf);
+  close_output_files(fps);
 
   return 1;
 }
@@ -307,7 +303,7 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
   // Variables used for looping.
   int k, l, j;
   int nkept;
-  int * ckept = (int *) malloc(sizeof(int) * n2);
+  int * ckept;
 
   PairWiseClusters * result = new_pairiwse_cluster_list();
 
@@ -332,14 +328,18 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
     // Create separate vectors for the x and y coordinates.
     double *cx = (double *) malloc(sizeof(double) * size);
     double *cy = (double *) malloc(sizeof(double) * size);
-    for(j = 0; j < size; j++) {
+    for (j = 0; j < size; j++) {
       cx[j] = 0;
       cy[j] = 0;
     }
-
-    // Initialize the ckept array.
-    for (l = 0; l < n2; l++) {
-      ckept[l] = 0;
+    // Add the values to the cx & cy arrays
+    int l = 0;
+    for (j = 0; j < n2; j++) {
+      if (clusters.cluster_label[j] == k + 1) {
+        cx[l] = a2[j];
+        cy[l] = b2[j];
+        l++;
+      }
     }
 
     // Discover any outliers for clusters with size >= min_obs
@@ -357,6 +357,10 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
     // Create an array of the kept samples for this cluster. Don't include
     // any samples whose coordinates are considered outliers or who are not
     // in the cluster.
+    ckept = (int *) malloc(sizeof(int) * n2);
+    for (l = 0; l < n2; l++) {
+      ckept[l] = 0;
+    }
     nkept = 0;
     for (l = 0; l < n2; l++) {
       // Is this sample is in the cluster? if so then also make sure it's
@@ -389,8 +393,12 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
         }
       }
     }
-    free(outliersCx.outliers);
-    free(outliersCy.outliers);
+    if (outliersCx.n > 0) {
+      free(outliersCx.outliers);
+    }
+    if (outliersCy.n > 0) {
+      free(outliersCy.outliers);
+    }
 
     // Now after we have removed outliers and non-cluster samples,
     // makes sure we still have the minimum observations.
@@ -417,12 +425,12 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
       }
 
       // If this is the first level of clsutering then we want to cluster
-      // again. We also want to cluster again if there is more than one large
-      // cluster. We do this because we haven't yet settled on to an distinct
+      // again, but only if there is one or more large cluster.
+      // We do this because we haven't yet settled on a distinct
       // "expression mode".
       else {
         PairWiseClusters * children = clustering(cx, x, cy, y, nkept, ematrix, params, 0.09, level + 1);
-        update_pairwise_cluster_samples(ckept, nkept, children);
+        update_pairwise_cluster_samples(ckept, n2, children);
         add_pairwise_cluster_list(result, children);
       }
     }
@@ -445,7 +453,6 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
 
 
   // free the memory
-  free(ckept);
   free(clusters.cluster_label);
   for(k = 0; k < clusters.num_clusters; k++) {
     for (l = 0; l < clusters.sizes[k]; l++) {
@@ -509,8 +516,9 @@ void add_pairwise_cluster_list(PairWiseClusters *head, PairWiseClusters *new) {
   // new head.
   if (head->gene1 == -1) {
     head->gene1 = new->gene1;
-    head->gene2 = new->gene1;
+    head->gene2 = new->gene2;
     head->next = new->next;
+    head->samples = new->samples;
     head->num_samples = new->num_samples;
     head->cluster_size = new->cluster_size;
     head->pcc = new->pcc;
@@ -518,12 +526,12 @@ void add_pairwise_cluster_list(PairWiseClusters *head, PairWiseClusters *new) {
   }
 
   // Traverse the list to the end and then add the new item
-  PairWiseClusters * temp;
-  temp = head;
-  while (temp->next != NULL) {
-    temp = (PairWiseClusters * ) temp->next;
+  PairWiseClusters * curr;
+  curr = head;
+  while (curr->next != NULL) {
+    curr = (PairWiseClusters * ) curr->next;
   }
-  temp->next = (struct PairWiseClusters *) new;
+  curr->next = (struct PairWiseClusters *) new;
 }
 /**
  * Updates the samples vector of a PairWiseClusters object.
@@ -584,7 +592,9 @@ void update_pairwise_cluster_samples(int * parent_samples, int n, PairWiseCluste
     curr->num_samples = n;
 
     curr = next;
-    next = (PairWiseClusters *) next->next;
+    if (next != NULL) {
+      next = (PairWiseClusters *) next->next;
+    }
   }
 }
 
@@ -606,7 +616,10 @@ void update_pairwise_cluster_samples(int * parent_samples, int n, PairWiseCluste
  * @param FILE *cf
  *   The file pointer of the clustering file.
  */
-void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE * cf) {
+void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE ** fps) {
+
+  // The file pointer of the file to write to.
+  FILE *fp;
 
   // Do nothing if the object is empty.
   if (pwc->gene1 == -1) {
@@ -617,17 +630,68 @@ void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE * cf) {
   PairWiseClusters * curr = pwc;
   int cluster_id = 0;
   while (curr != NULL) {
-    if (curr->gene1 != -1) {
-      fprintf(cf, "%i\t%i\t%i\t%i\t%f\t", curr->gene1, curr->gene2, curr->cluster_size, cluster_id, curr->pcc);
+    // Determine which file to write the output into
+    if (isnan(curr->pcc)) {
+      fp = fps[101];
+    }
+    else {
+      float i1 = curr->pcc * 100.0;
+      float i2 = fabs(i1);
+      int i3 = (int) i2;
+      fp = fps[i3];
+    }
+    if (curr->gene1 != -1 && curr->cluster_size > 1) {
+      fprintf(fp, "%i\t%i\t%i\t%i\t", curr->gene1, curr->gene2, curr->cluster_size, cluster_id + 1);
       int i;
       for (i = 0; i < curr->num_samples; i++) {
-        fprintf(cf, "%i", curr->samples[i]);
+        fprintf(fp, "%i", curr->samples[i]);
       }
-      fprintf(cf, "\n");
+      fprintf(fp, "\t%f", curr->pcc);
+      fprintf(fp, "\n");
       cluster_id++;
     }
     curr = (PairWiseClusters *) curr->next;
-    fflush(cf);
+    fflush(fp);
+  }
+}
+
+/**
+ * Opens and creates 102 files for storing the clusters with correlation values.
+ * Each file stores a range of 1/100 Spearman correlation values.
+ */
+FILE ** open_output_files(CCMParameters params, int mpi_id) {
+
+  // make sure the output directory exists
+  struct stat st = {0};
+  if (stat("./clusters", &st) == -1) {
+      mkdir("./clusters", 0700);
+  }
+
+  // Open up 102 files, one for a range of spearman correlation values
+  FILE ** fps = malloc(sizeof(FILE *) * 102);
+
+  int i =  0;
+  char filename[1025];
+  for (i = 0; i <= 100; i++) {
+    sprintf(filename, "./clusters/%s.clusters.%03d.%03d.txt", params.fileprefix, mpi_id + 1, i);
+    fps[i] = fopen(filename, "w");
+  }
+
+  sprintf(filename, "./clusters/%s.clusters.%03d.nan.txt", params.fileprefix, mpi_id + 1);
+  fps[i] = fopen(filename, "w");
+
+  return fps;
+}
+
+/**
+ * Closes the 102 files that were opened.
+ */
+void close_output_files(FILE** fps) {
+  int i =  0;
+  for (i = 0; i <= 101; i++) {
+    FILE * fp = fps[i];
+    fprintf(fp, "#Done\n");
+    fclose(fp);
   }
 }
 

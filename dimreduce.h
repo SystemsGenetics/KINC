@@ -47,8 +47,10 @@ void print_dimreduce_usage();
 PairWiseClusters * new_pairiwse_cluster_list();
 void free_pairwise_cluster_list(PairWiseClusters * head);
 void add_pairwise_cluster_list(PairWiseClusters *head, PairWiseClusters *new);
-void write_pairwise_cluster_samples(PairWiseClusters *pws, FILE * cf);
+void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE ** fps);
 void update_pairwise_cluster_samples(int * parent_samples, int n, PairWiseClusters * head);
+FILE ** open_output_files(CCMParameters params, int mpi_id);
+void close_output_files(FILE** fps);
 
 // Function to peform the clustering
 PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
