@@ -673,11 +673,11 @@ FILE ** open_output_files(CCMParameters params, int mpi_id) {
   int i =  0;
   char filename[1025];
   for (i = 0; i <= 100; i++) {
-    sprintf(filename, "./clusters/%s.clusters.%03d.%03d.txt", params.fileprefix, mpi_id + 1, i);
+    sprintf(filename, "./clusters/%s.clusters.%03d.%03d.txt", params.fileprefix, i, mpi_id + 1);
     fps[i] = fopen(filename, "w");
   }
 
-  sprintf(filename, "./clusters/%s.clusters.%03d.nan.txt", params.fileprefix, mpi_id + 1);
+  sprintf(filename, "./clusters/%s.clusters.nan.%03d.txt", params.fileprefix, mpi_id + 1);
   fps[i] = fopen(filename, "w");
 
   return fps;
