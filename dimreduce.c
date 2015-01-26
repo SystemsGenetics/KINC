@@ -263,6 +263,21 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
         // clean up the memory.
         free_pairwise_cluster_list(clusters);
       }
+      // One of these genes has no observations so, just write out an
+      // empty cluster.
+      else {
+        // Create an empty clusters set
+        PairWiseClusters * new = new_pairwise_cluster_list();
+        new->gene1 = i;
+        new->gene2 = j;
+        new->num_samples = params.cols;
+        new->samples = kept;
+        new->next = NULL;
+        new->cluster_size = 0;
+        new->pcc = NAN;
+        write_pairwise_cluster_samples(new, fps);
+        free(new);
+      }
 
       // Release the memory for a2 and b2.
       free(a2);
@@ -305,7 +320,7 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
   int nkept;
   int * ckept;
 
-  PairWiseClusters * result = new_pairiwse_cluster_list();
+  PairWiseClusters * result = new_pairwise_cluster_list();
 
   // Perform mean shift clustering (MSC)
   MeanShiftClusters clusters;
@@ -413,7 +428,7 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
         double workspace[2 * params.rows];
         float rho = NAN;
         rho = gsl_stats_spearman(cx, 1, cy, 1, nkept, workspace);
-        PairWiseClusters * new = new_pairiwse_cluster_list();
+        PairWiseClusters * new = new_pairwise_cluster_list();
         new->gene1 = x;
         new->gene2 = y;
         new->num_samples = n2;
@@ -437,7 +452,7 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
     // If the cluster is too small then just add it without
     // correlation analysis or further sub clustering.
     else {
-      PairWiseClusters * new = new_pairiwse_cluster_list();
+      PairWiseClusters * new = new_pairwise_cluster_list();
       new->gene1 = x;
       new->gene2 = y;
       new->num_samples = n2;
@@ -470,7 +485,7 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
 /**
  * Intializes the head PairWiseCluster object.
  */
-PairWiseClusters * new_pairiwse_cluster_list() {
+PairWiseClusters * new_pairwise_cluster_list() {
   PairWiseClusters * pws = (PairWiseClusters *) malloc(sizeof(PairWiseClusters));
   pws->gene1 = -1;
   pws->gene2 = -1;
@@ -640,7 +655,7 @@ void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE ** fps) {
       int i3 = (int) i2;
       fp = fps[i3];
     }
-    if (curr->gene1 != -1 && curr->cluster_size > 1) {
+    if (curr->gene1 != -1) {
       fprintf(fp, "%i\t%i\t%i\t%i\t", curr->gene1, curr->gene2, curr->cluster_size, cluster_id + 1);
       int i;
       for (i = 0; i < curr->num_samples; i++) {

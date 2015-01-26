@@ -44,8 +44,8 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs);
 void print_dimreduce_usage();
 
 // Functions for working with the PairWiseClusters list
-PairWiseClusters * new_pairiwse_cluster_list();
 void free_pairwise_cluster_list(PairWiseClusters * head);
+PairWiseClusters * new_pairwise_cluster_list();
 void add_pairwise_cluster_list(PairWiseClusters *head, PairWiseClusters *new);
 void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE ** fps);
 void update_pairwise_cluster_samples(int * parent_samples, int n, PairWiseClusters * head);
