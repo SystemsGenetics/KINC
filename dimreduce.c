@@ -190,7 +190,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
     }*/
     for (j = 0; j < params.rows; j++) {
 
-      // We only need to calculate royston in the lower triangle of the
+      // We only need to calculate clusters in the lower triangle of the
       // full pair-wise matrix
       if (j >= i) {
         continue;
@@ -202,7 +202,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
         continue;
       }
 
-      //if (n_comps % 100 == 0) {
+      if (n_comps % 100 == 0) {
         // Get the amount of memory used.
         statm_t * memory = memory_get_usage();
 
@@ -228,7 +228,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
           j
         );
         free(memory);
-      //}
+      }
       n_comps++;
       my_comps++;
 
