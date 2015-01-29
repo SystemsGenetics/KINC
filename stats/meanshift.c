@@ -17,8 +17,8 @@
  * @param h
  *   The bandwidth: the percentage of the range to use for clustering.
  */
-MeanShiftClusters meanshift2D(double* s, double * t, int n, double h) {
-  MeanShiftClusters msc;
+MeanShiftClusters * meanshift2D(double* s, double * t, int n, double h) {
+  MeanShiftClusters * msc = malloc(sizeof(MeanShiftClusters));
 
   int iter = 200;
   double thr = 0.0001;
@@ -66,7 +66,7 @@ MeanShiftClusters meanshift2D(double* s, double * t, int n, double h) {
   int ncluster = 0;
   int * cluster_label = (int *) malloc (sizeof (int) * n);
   double cluster_dist[n];
-  MeanShiftRep temp_ms;
+  MeanShiftRep * msr;
   double min_dist = 0;
   double which_min = 0;
 
@@ -78,8 +78,10 @@ MeanShiftClusters meanshift2D(double* s, double * t, int n, double h) {
     x[0] = a[i];
     x[1] = b[i];
 
-    temp_ms = meanshift_rep(a, b, n, x, h, 1e-8, iter);
-    finals[i] = temp_ms.final;
+    msr = meanshift_rep(a, b, n, x, h, 1e-8, iter);
+    finals[i] = (double *) malloc(sizeof(double) * 2);
+    finals[i][0] = msr->final[0];
+    finals[i][1] = msr->final[1];
 
     // Initialize the cluster_dist with zeros but only for the number of
     // clusters that we have. The number of clusters is determined by the code
@@ -116,13 +118,14 @@ MeanShiftClusters meanshift2D(double* s, double * t, int n, double h) {
     else {
       cluster_label[i] = which_min + 1;
     }
-    free(temp_ms.start);
-    free(temp_ms.thresh);
-    for (j = 0; j < temp_ms.iterations; j++) {
-      free(temp_ms.points[j]);
-    }
-    free(temp_ms.points);
+    free_msr(msr);
   }
+  // Free allocated memory
+  for (i = 0; i < n; i++) {
+    free(finals[i]);
+  }
+  free(finals);
+  free(savecluster);
 
   // Find the nearest cluster center in euclidean distance
   /*
@@ -135,56 +138,86 @@ MeanShiftClusters meanshift2D(double* s, double * t, int n, double h) {
     closest_label[i] = md;
   }*/
 
-  // TODO: remove outliers
-
-
-  // Free allocated memory
-  for (i = 0; i < n; i++) {
-    free(finals[i]);
-  }
-  free(finals);
-  free(savecluster);
   free(a);
   free(b);
 
   // Count the number of elements in each cluster
-  msc.sizes = (int *) malloc(sizeof (int) * ncluster);
+  msc->sizes = (int *) malloc(sizeof (int) * ncluster);
   for (i = 0; i < ncluster; i++) {
-    msc.sizes[i] = 0;
+    msc->sizes[i] = 0;
   }
   for (i = 0; i < n; i++) {
     int cluster = cluster_label[i] - 1;
-    msc.sizes[cluster]++;
+    msc->sizes[cluster]++;
   }
 
   // Organize the points into their corresponding clusters
   int counts[ncluster];
-  msc.clusters = (double ***) malloc(sizeof (double **) * ncluster);
+  msc->clusters = (double ***) malloc(sizeof (double **) * ncluster);
   for (i = 0; i < ncluster; i++) {
-    msc.clusters[i] = (double **) malloc(sizeof(double *) * msc.sizes[i]);
+    msc->clusters[i] = (double **) malloc(sizeof(double *) * msc->sizes[i]);
     counts[i] = 0;
   }
   for (i = 0; i < n; i++) {
     int cluster = cluster_label[i] - 1;
     int index = counts[cluster];
-    msc.clusters[cluster][index] = (double *) malloc(sizeof(double) * 2);
-    msc.clusters[cluster][index][0] = s[i];
-    msc.clusters[cluster][index][1] = t[i];
+    msc->clusters[cluster][index] = (double *) malloc(sizeof(double) * 2);
+    msc->clusters[cluster][index][0] = s[i];
+    msc->clusters[cluster][index][1] = t[i];
     counts[cluster]++;
   }
 
   // return the clusters
-  msc.num_clusters = ncluster;
-  msc.cluster_label = cluster_label;
+  msc->num_clusters = ncluster;
+  msc->cluster_label = cluster_label;
   return msc;
 }
 
 /**
+ * Frees the memory from a MeanShiftClusters object.
+ *
+ * @param MeanShiftClusters * msc
+ *   An instantiated MeanShiftClusters
+ */
+void free_msc(MeanShiftClusters * msc) {
+
+  int k, l;
+
+  for(k = 0; k < msc->num_clusters; k++) {
+    for (l = 0; l < msc->sizes[k]; l++) {
+      free(msc->clusters[k][l]);
+    }
+    free(msc->clusters[k]);
+  }
+  free(msc->sizes);
+  free(msc->clusters);
+  free(msc->cluster_label);
+  free(msc);
+}
+/**
+ * Frees the memory from a MeanShiftRep object.
+ *
+ * @param MeanShiftRep * msr
+ *   An instantiated MeanShiftRep
+ */
+void free_msr(MeanShiftRep * msr) {
+  int j;
+  free(msr->start);
+  free(msr->thresh);
+
+  for (j = 0; j < msr->iterations; j++) {
+    free(msr->points[j]);
+  }
+  free(msr->points);
+  free(msr->final);
+  free(msr);
+}
+/**
  * Mean shift iterative function (until convergence ...)
  */
-MeanShiftRep meanshift_rep(double* a, double * b, int n, double * x, double h, double thresh, int iter) {
+MeanShiftRep * meanshift_rep(double* a, double * b, int n, double * x, double h, double thresh, int iter) {
   int d = 2;
-  int s = 0;
+  int s = -1;
   int j = 0;
   double *x0 = malloc(sizeof(double) * 2);
   double *xt = malloc(sizeof(double) * 2);
@@ -192,7 +225,7 @@ MeanShiftRep meanshift_rep(double* a, double * b, int n, double * x, double h, d
   double *th = malloc(sizeof(double) * iter);
   double *m;
   double mx[d];
-  MeanShiftRep msr;
+  MeanShiftRep * msr = malloc(sizeof(MeanShiftRep));
 
   // Copy the original x into x0 which keeps the start point
   x0[0] = x[0];
@@ -209,24 +242,31 @@ MeanShiftRep meanshift_rep(double* a, double * b, int n, double * x, double h, d
     mx[0] = m[0] - xt[0];
     mx[1] = m[1] - xt[1];
     th[j] = euclidian_norm(mx, 2) / euclidian_norm(xt, 2);
-    if (th[j] < thresh){
-      s = j;
-      break;
-    }
 
     // on the first iteration we free the xt variable
     if (j == 0) {
       free(xt);
     }
+
+    if (th[j] < thresh){
+      s = j;
+      break;
+    }
+
     // the m becomes the new x
     xt = m;
   }
+  if (s == -1) {
+    s = iter - 1;
+  }
 
-  msr.points = M;
-  msr.iterations = s;
-  msr.start = x0;
-  msr.final = m;
-  msr.thresh = th;
+  msr->points = M;
+  msr->iterations = s + 1;
+  msr->start = x0;
+  msr->thresh = th;
+  msr->final = malloc(sizeof(double) * 2);
+  msr->final[0] = m[0];
+  msr->final[1] = m[1];
 
   return msr;
 }
@@ -344,7 +384,7 @@ double * distance_vector(double **x, int n, double *y) {
 double * meanshift_base(double *a, double *b, int n, double *x, double h) {
   int i;
   double * g;
-  double * ms =  (double *) malloc(sizeof(double) * 2);
+  double * ms = (double *) malloc(sizeof(double) * 2);
   double sum_g = 0;
   double sum_ag = 0;
   double sum_bg = 0;
@@ -359,6 +399,7 @@ double * meanshift_base(double *a, double *b, int n, double *x, double h) {
   ms[0] = sum_ag / sum_g;
   ms[1] = sum_bg / sum_g;
   free(g);
+
   return ms;
 }
 

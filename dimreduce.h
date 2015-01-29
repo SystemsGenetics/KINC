@@ -54,7 +54,7 @@ void close_output_files(FILE** fps);
 
 // Function to peform the clustering
 PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
-    EMatrix ematrix, CCMParameters params, float bw, int level);
+    EMatrix * ematrix, CCMParameters params, float bw, int level);
 
 
 #endif

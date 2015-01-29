@@ -13,6 +13,6 @@ typedef struct {
 } Outliers;
 
 
-Outliers outliers_iqr(double * x, int n, double coef);
+Outliers * outliers_iqr(double * x, int n, double coef);
 
 #endif

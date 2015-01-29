@@ -34,8 +34,11 @@ typedef struct {
 
 } MeanShiftRep;
 
-MeanShiftClusters meanshift2D(double* x, double * y, int n, double h);
-MeanShiftRep meanshift_rep(double* a, double * b, int n, double * x, double h, double thresh, int iter);
+MeanShiftClusters * meanshift2D(double* x, double * y, int n, double h);
+MeanShiftRep * meanshift_rep(double* a, double * b, int n, double * x, double h, double thresh, int iter);
+
+void free_msr(MeanShiftRep * msr);
+void free_msc(MeanShiftClusters * msc);
 
 // Helper functions
 double * profileMd(double *a, double *b, int n, double *x, double h);

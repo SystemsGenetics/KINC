@@ -7,7 +7,7 @@ MPI_LDLINK = $(shell mpicc --showme:link)
 
 CFLAGS = -g -Wall
 INCLUDES = 
-LDFLAGS = -Wall -lm -lgsl -lgslcblas -llapack -lblas -lpthread 
+LDFLAGS = -Wall -lm -lgsl -lgslcblas -llapack -lblas -lpthread -g
 
 OBJS = \
   error.o \

@@ -61,7 +61,9 @@ typedef struct {
 
 int do_similarity(int argc, char *argv[]);
 
-EMatrix load_ematrix(CCMParameters params);
+EMatrix * load_ematrix(CCMParameters params);
+
+void free_ematrix(EMatrix * ematrix);
 
 void print_similarity_usage();
 

@@ -14,10 +14,10 @@
  * @param double coef
  *   A coefficient to multiply by the IQR. Default should be 1.5.
  */
-Outliers outliers_iqr(double * x, int n, double coef) {
+Outliers * outliers_iqr(double * x, int n, double coef) {
 
   int i;
-  Outliers outliers;
+  Outliers * outliers = malloc(sizeof(Outliers));
 
   // Sort x
   double * sx = (double *) malloc(sizeof(double) * n);
@@ -31,8 +31,8 @@ Outliers outliers_iqr(double * x, int n, double coef) {
   }
 
   // Initalize the outliers struct
-  outliers.outliers = (double *) malloc(sizeof(double) * n);
-  outliers.n = 0;
+  outliers->outliers = (double *) malloc(sizeof(double) * n);
+  outliers->n = 0;
 
   // Calculate the Interquantile range of the values provided.
   double n4 = ((int)((n + 3)/2.0)) / 2.0;
@@ -57,8 +57,8 @@ Outliers outliers_iqr(double * x, int n, double coef) {
   double delta = coef * iqr;
   for (i = 0; i < n; i++) {
     if (sx[i] < stats[1] - delta || sx[i] > stats[3] + delta) {
-      outliers.outliers[outliers.n] = sx[i];
-      outliers.n++;
+      outliers->outliers[outliers->n] = sx[i];
+      outliers->n++;
     }
   }
 

@@ -197,8 +197,8 @@ int do_similarity(int argc, char *argv[]) {
     time(&start_time);
   }
 
-  EMatrix ematrix = load_ematrix(params);
-  double ** data = ematrix.data;
+  EMatrix * ematrix = load_ematrix(params);
+  double ** data = ematrix->data;
 
   if (strcmp(params.method, "pc") == 0) {
     calculate_pearson(params, data, histogram);
@@ -217,11 +217,34 @@ int do_similarity(int argc, char *argv[]) {
     fprintf(timingfile, "CCM Runtime with %d x %d %s input dataset: %.2lf min\n", params.rows, params.cols, params.infilename, difftime(end_time, start_time)/60.0);
   }
 
+  free_ematrix(ematrix);
+
   // if output of the histogram is enabled then print it
   print_histogram(params, histogram);
 
   printf("\nDone.\n");
   return 1;
+}
+
+/**
+ * Frees the memory associated with an EMatrix object.
+ *
+ * @param EMatrix ematrix
+ *   An instance of the EMatrix struct.
+ */
+void free_ematrix(EMatrix * ematrix) {
+  int i;
+  for (i = 0; i < ematrix->num_samples; i++) {
+    free(ematrix->samples[i]);
+  }
+  free(ematrix->samples);
+  for (i = 0; i < ematrix->num_genes; i++) {
+    free(ematrix->data[i]);
+    free(ematrix->genes[i]);
+  }
+  free(ematrix->data);
+  free(ematrix->genes);
+  free(ematrix);
 }
 
 /**
@@ -233,27 +256,27 @@ int do_similarity(int argc, char *argv[]) {
  * @return
  *   A pointer to a two-dimensional array of doubles
  */
-EMatrix load_ematrix(CCMParameters params) {
+EMatrix * load_ematrix(CCMParameters params) {
 
-  EMatrix ematrix;
+  EMatrix * ematrix = malloc(sizeof(EMatrix));
   // Pointer to the input file.
   FILE *infile;
   // Integers for looping.
   int i, j;
 
   // Initialize the EMatrix struct
-  ematrix.num_genes = params.rows;
-  ematrix.num_samples = params.cols;
+  ematrix->num_genes = params.rows;
+  ematrix->num_samples = params.cols;
   if (params.headers) {
-    ematrix.num_genes--;
-    ematrix.samples = (char **) malloc(sizeof(char *) * ematrix.num_samples);
+    ematrix->num_genes--;
+    ematrix->samples = (char **) malloc(sizeof(char *) * ematrix->num_samples);
   }
-  ematrix.genes = (char **) malloc(sizeof(char *) * ematrix.num_genes);
+  ematrix->genes = (char **) malloc(sizeof(char *) * ematrix->num_genes);
 
   // Allocate the data array for storing the input expression matrix.
-  ematrix.data = (double**) malloc(sizeof(double *) * params.rows);
+  ematrix->data = (double**) malloc(sizeof(double *) * params.rows);
   for (i = 0; i < params.rows; i++) {
-    ematrix.data[i] = malloc(sizeof(double) * params.cols);
+    ematrix->data[i] = malloc(sizeof(double) * params.cols);
   }
 
   // iterate through the lines of the expression matrix
@@ -266,14 +289,14 @@ EMatrix load_ematrix(CCMParameters params) {
       printf("Skipping headers...\n");
 
       for (j = 0; j < params.cols; j++) {
-        ematrix.samples[j] = (char *) malloc(sizeof(char) * 255);
-        fscanf(infile, "%s", ematrix.samples[j]);
+        ematrix->samples[j] = (char *) malloc(sizeof(char) * 255);
+        fscanf(infile, "%s", ematrix->samples[j]);
       }
     }
 
     // the first entry on every line is a label string - read that in before the numerical data
-    ematrix.genes[i] = (char *) malloc(sizeof(char) * 255);
-    fscanf(infile, "%s", ematrix.genes[i]);
+    ematrix->genes[i] = (char *) malloc(sizeof(char) * 255);
+    fscanf(infile, "%s", ematrix->genes[i]);
 
     // iterate over the columns of each row
     for (j = 0; j < params.cols; j++) {
@@ -282,7 +305,7 @@ EMatrix load_ematrix(CCMParameters params) {
         // if this is a missing value and omission of missing values is enabled then
         // rewrite this value as MISSING_VALUE
         if (params.omit_na && strcmp(element, params.na_val) == 0) {
-          ematrix.data[i][j] = NAN;
+          ematrix->data[i][j] = NAN;
         }
         else {
           // make sure the element is numeric
@@ -291,16 +314,16 @@ EMatrix load_ematrix(CCMParameters params) {
             exit(-1);
           }
           if (params.do_log10) {
-            ematrix.data[i][j] = log10(atof(element));
+            ematrix->data[i][j] = log10(atof(element));
           }
           else if (params.do_log2) {
-            ematrix.data[i][j] = log2(atof(element));
+            ematrix->data[i][j] = log2(atof(element));
           }
           else if (params.do_log) {
-            ematrix.data[i][j] = log(atof(element));
+            ematrix->data[i][j] = log(atof(element));
           }
           else {
-            ematrix.data[i][j] = atof(element);
+            ematrix->data[i][j] = atof(element);
           }
         }
       }
