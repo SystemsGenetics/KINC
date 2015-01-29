@@ -242,8 +242,8 @@ void free_ematrix(EMatrix * ematrix) {
     free(ematrix->data[i]);
     free(ematrix->genes[i]);
   }
-  free(ematrix->data);
-  free(ematrix->genes);
+//  free(ematrix->data);
+//  free(ematrix->genes);
   free(ematrix);
 }
 
@@ -276,7 +276,7 @@ EMatrix * load_ematrix(CCMParameters params) {
   // Allocate the data array for storing the input expression matrix.
   ematrix->data = (double**) malloc(sizeof(double *) * params.rows);
   for (i = 0; i < params.rows; i++) {
-    ematrix->data[i] = malloc(sizeof(double) * params.cols);
+    ematrix->data[i] = (double *) malloc(sizeof(double) * params.cols);
   }
 
   // iterate through the lines of the expression matrix

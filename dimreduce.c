@@ -1,10 +1,7 @@
 #include "dimreduce.h"
-#include <mcheck.h>
-
 
 int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
-  // Enable mtrace memory leak checking
-         mtrace();
+
   // variables used for timing of the software
   time_t start_time = time(0);
   time_t now;
@@ -188,6 +185,9 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
   int n_comps = 0;
   int my_comps = 0;
   for (i = 0; i < params.rows; i++) {
+    /*if (i == 50) {
+      break;
+    }*/
     for (j = 0; j < params.rows; j++) {
 
       // We only need to calculate royston in the lower triangle of the
@@ -289,10 +289,11 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
 
     }
   }
-  free_ematrix(ematrix);
   close_output_files(fps);
 
-  muntrace();
+  free_ematrix(ematrix);
+  free(fps);
+
   return 1;
 }
 
@@ -412,7 +413,9 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
           nkept++;
         }
       }
-    }
+    } // end for (l = 0; l < n2; l++) ...
+
+    // Free the outlier objects.
     if (outliersCx) {
       free(outliersCx->outliers);
       free(outliersCx);
@@ -443,17 +446,20 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
         new->next = NULL;
         new->cluster_size = nkept;
         new->pcc = rho;
-        add_pairwise_cluster_list(result, new);
+        add_pairwise_cluster_list(&result, new);
       }
 
-      // If this is the first level of clsutering then we want to cluster
+      // If this is the first level of clustering then we want to cluster
       // again, but only if there is one or more large cluster.
       // We do this because we haven't yet settled on a distinct
       // "expression mode".
       else {
         PairWiseClusters * children = clustering(cx, x, cy, y, nkept, ematrix, params, 0.09, level + 1);
         update_pairwise_cluster_samples(ckept, n2, children);
-        add_pairwise_cluster_list(result, children);
+        add_pairwise_cluster_list(&result, children);
+        // here we need to free ckept because it never got used in a
+        // PairWiseClusters instance
+        free(ckept);
       }
     }
     // If the cluster is too small then just add it without
@@ -467,7 +473,7 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
       new->next = NULL;
       new->cluster_size = nkept;
       new->pcc = NAN;
-      add_pairwise_cluster_list(result, new);
+      add_pairwise_cluster_list(&result, new);
     }
     free(cx);
     free(cy);
@@ -489,6 +495,7 @@ PairWiseClusters * new_pairwise_cluster_list() {
   pws->gene1 = -1;
   pws->gene2 = -1;
   pws->next = NULL;
+  pws->samples = NULL;
   pws->num_samples = 0;
   pws->cluster_size = 0;
   pws->pcc = 0;
@@ -502,46 +509,40 @@ PairWiseClusters * new_pairwise_cluster_list() {
 void free_pairwise_cluster_list(PairWiseClusters * head) {
 
   PairWiseClusters * curr = (PairWiseClusters *) head;
-  PairWiseClusters * next = (PairWiseClusters *) head->next;
-  if (curr->num_samples > 0) {
-    free(curr->samples);
-  }
-  free(curr);
-  while (next != NULL) {
-    curr = next;
-    next = (PairWiseClusters *) next->next;
-    if (curr->num_samples > 0) {
+  PairWiseClusters * next = (PairWiseClusters *) curr->next;
+
+  while (curr != NULL) {
+    if (curr->samples != NULL) {
       free(curr->samples);
     }
     free(curr);
+    curr = next;
+    if (next != NULL) {
+      next = (PairWiseClusters *) next->next;
+    }
   }
 }
 /**
  * Adds a new PairWiseClusters object to the list
  *
- * @param PairWiseClusters head
- *   The head object in the list
- * @param PairWiseClusters new
- *   The new object to add to the end of the list
+ * @param PairWiseClusters ** head
+ *   A pointer to the pointer of the head object in the list
+ * @param PairWiseClusters * new
+ *   The pointer to the new object to add to the end of the list
  */
-void add_pairwise_cluster_list(PairWiseClusters *head, PairWiseClusters *new) {
+void add_pairwise_cluster_list(PairWiseClusters **head, PairWiseClusters *new) {
+
+  PairWiseClusters * curr = *head;
 
   // Check the list to see if it is empty. If so, then make this item the
   // new head.
-  if (head->gene1 == -1) {
-    head->gene1 = new->gene1;
-    head->gene2 = new->gene2;
-    head->next = new->next;
-    head->samples = new->samples;
-    head->num_samples = new->num_samples;
-    head->cluster_size = new->cluster_size;
-    head->pcc = new->pcc;
+  if (curr->gene1 == -1) {
+    free_pairwise_cluster_list(*head);
+    *head = new;
     return;
   }
 
   // Traverse the list to the end and then add the new item
-  PairWiseClusters * curr;
-  curr = head;
   while (curr->next != NULL) {
     curr = (PairWiseClusters * ) curr->next;
   }
