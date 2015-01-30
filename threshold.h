@@ -17,14 +17,19 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <libgen.h>
+#include <dirent.h>
 #include "vector.h"
+#include "similarity.h"
 
 
 typedef struct{
 
   int perf;           // indicates if performance monitoring should be enabled
+  int rows;           // the number of rows in the expression matrix
+  int cols;           // the number of columns in the expression matrix
   char *infilename;   // the input file name
   char method[10];    // specifies the method: cor, mi
+  int headers;
 
   // Set some global params for the RMM stepping.
   float thresholdStart; // the threshold to start generating cutMatrices with (actually, +thresholdStep)
@@ -68,7 +73,8 @@ int do_threshold(int argc, char *argv[]);
 
 int find_threshold(RMTParameters *params);
 
-float * read_similarity_matrix(float th, int * size, RMTParameters *params);
+float * read_similarity_matrix_bin_file(float th, int * size, RMTParameters *params);
+float * read_similarity_matrix_cluster_file(float th, int * size, RMTParameters *params);
 
 float* calculateEigen(float* mat, int size);
 

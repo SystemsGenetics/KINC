@@ -157,7 +157,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
     params.rows--;
   }
 
-  EMatrix * ematrix = load_ematrix(params);
+  EMatrix * ematrix = load_ematrix(&params);
   double ** data = ematrix->data;
   int i, j;
 
