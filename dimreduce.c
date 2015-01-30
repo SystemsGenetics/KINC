@@ -168,17 +168,17 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
   // performed by this process. We subtract 1 from the first params.rows
   // because we do not calculate the diagnoal.
   int num_rows = params.rows - 1;
-  int total_comps  = num_rows * (num_rows + 1) / 2;
-  int comps_per_process = total_comps / mpi_num_procs;
-  int comp_start = mpi_id * comps_per_process;
-  int comp_stop = mpi_id * comps_per_process + comps_per_process;
+  long int total_comps  = num_rows * (num_rows + 1) / 2;
+  long int comps_per_process = total_comps / mpi_num_procs;
+  long int comp_start = mpi_id * comps_per_process;
+  long int comp_stop = mpi_id * comps_per_process + comps_per_process;
 
   // If this is the last process and there are some remainder comparisions
   // then we need to add them to the stop
   if (mpi_id + 1 == mpi_num_procs) {
     comp_stop = total_comps;
   }
-  printf("%d. Performing %d comparisions\n", mpi_id + 1, comp_stop - comp_start);
+  printf("%d. Performing %ld comparisions\n", mpi_id + 1, comp_stop - comp_start);
   fflush(stdout);
 
   // Perform the pair-wise royston test and clustering
@@ -208,22 +208,22 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
 
         // Calculate the number of days left.
         now = time(0);
-        float seconds_passed = now - start_time;
-        float minutes_passed = (seconds_passed) / 60.0;
-        float percent_complete = (my_comps / (float) (comp_stop - comp_start)) * 100;
-        float comps_per_minute = my_comps / minutes_passed;
-        float total_time = (comp_stop - comp_start) / comps_per_minute;
-        float minutes_left = total_time - minutes_passed;
-        float hours_left = minutes_left / 60;
-        float days_left = hours_left / 24;
+        double seconds_passed = now - start_time;
+        double minutes_passed = (seconds_passed) / 60.0;
+        double percent_complete = (my_comps / (float) (comp_stop - comp_start)) * 100;
+        double comps_per_minute = my_comps / minutes_passed;
+        double total_time = (comp_stop - comp_start) / comps_per_minute;
+        double minutes_left = total_time - minutes_passed;
+        double hours_left = minutes_left / 60;
+        double days_left = hours_left / 24;
 
         // Write progress report.
         printf("%d. Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd. Coords: %d, %d.        \n",
           mpi_id + 1,
-          percent_complete,
+          (float) percent_complete,
           memory->size,
-          hours_left,
-          days_left,
+          (float) hours_left,
+          (float) days_left,
           i,
           j
         );
