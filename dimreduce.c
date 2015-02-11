@@ -22,6 +22,8 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
   params.do_log2 = 0;
   params.do_log = 0;
   params.min_obs = 30;
+  params.msc_bw1 = 0.75;
+  params.msc_bw2 = 0.9;
 
   strcpy(params.func, "none");
 
@@ -70,6 +72,9 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       case 'c':
         params.cols = atoi(optarg);
         break;
+      case 'm':
+        strcpy(params.method, optarg);
+        break;
       case 'o':
         params.min_obs = atoi(optarg);
         break;
@@ -100,6 +105,12 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
     fprintf(stderr, "Please provide an expression matrix (--ematrix option).\n");
     exit(-1);
   }
+
+  if (!params.method) {
+    fprintf(stderr,"Please provide the method (--method option).\n");
+    exit(-1);
+  }
+
   // make sure we have a positive integer for the rows and columns of the matrix
   if (params.rows < 0 || params.rows == 0) {
     fprintf(stderr, "Please provide a positive integer value for the number of rows in the \n");
@@ -118,16 +129,27 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
     exit(-1);
   }
 
+  // make sure the method is valid
+  if (strcmp(params.method, "pc") != 0 &&
+      strcmp(params.method, "mi") != 0 &&
+      strcmp(params.method, "sc") != 0 ) {
+    fprintf(stderr,"Error: The method (--method option) must either be 'pc', 'sc' or 'mi'.\n");
+    exit(-1);
+  }
+
   if (params.omit_na && !params.na_val) {
     fprintf(stderr, "Error: The missing value string should be provided (--na_val option).\n");
     exit(-1);
   }
+
+  // TODO: make sure means shift bandwidth arguments are numeric between 1 and 0
 
   if (params.headers) {
     printf("  Skipping header lines\n");
   }
   printf("  Performing transformation: %s \n", params.func);
   printf("  Required observations: %d\n", params.min_obs);
+  printf("  Using method: '%s'\n", params.method);
   if (params.omit_na) {
     printf("  Missing values are: '%s'\n", params.na_val);
   }
@@ -432,12 +454,17 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
       // If the recursion level is greater than zero the we've already clustered
       // at least once.  When we reach this point we've clustered again. If
       // we only have a single cluster at this point then we can't cluster
-      // anymore and we can perform Spearman.
+      // anymore and we can perform correlation.
       if (level > 0 && num_large == 1) {
-        // Initialize the workspace needed for Spearman's calculation.
-        double workspace[2 * params.rows];
-        float rho = NAN;
-        rho = gsl_stats_spearman(cx, 1, cy, 1, nkept, workspace);
+        float corr = NAN;
+        if (strcmp(params.method, "sc") == 0) {
+          // Initialize the workspace needed for Spearman's calculation.
+          double workspace[2 * params.rows];
+          corr = gsl_stats_spearman(cx, 1, cy, 1, nkept, workspace);
+        }
+        if (strcmp(params.method, "pc") == 0) {
+          corr = gsl_stats_correlation(cx, 1, cy, 1, nkept);
+        }
         PairWiseClusters * new = new_pairwise_cluster_list();
         new->gene1 = x;
         new->gene2 = y;
@@ -445,7 +472,7 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
         new->samples = ckept;
         new->next = NULL;
         new->cluster_size = nkept;
-        new->pcc = rho;
+        new->pcc = corr;
         add_pairwise_cluster_list(&result, new);
       }
 
@@ -676,10 +703,16 @@ void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE ** fps) {
  */
 FILE ** open_output_files(CCMParameters params, int mpi_id) {
 
+  char clusters_dir[50];
+  char nan_dir[50];
+
+  sprintf(clusters_dir, "./clusters-%s", params.method);
+  sprintf(nan_dir, "%s/nan", clusters_dir);
+
   // make sure the output directory exists
   struct stat st = {0};
-  if (stat("./clusters", &st) == -1) {
-      mkdir("./clusters", 0700);
+  if (stat(clusters_dir, &st) == -1) {
+      mkdir(clusters_dir, 0700);
   }
 
   // Open up 102 files, one each for 100 Spearman correlation value ranges.
@@ -690,17 +723,18 @@ FILE ** open_output_files(CCMParameters params, int mpi_id) {
   char filename[1025];
   char dirname[1025];
   for (i = 0; i <= 100; i++) {
-    sprintf(dirname, "./clusters/%03d", i);
+    sprintf(dirname, "%s/%03d", clusters_dir, i);
     if (stat(dirname, &st) == -1) {
       mkdir(dirname, 0700);
     }
-    sprintf(filename, "./clusters/%03d/%s.clusters.%03d.%03d.txt", i, params.fileprefix, i, mpi_id + 1);
+    sprintf(filename, "%s/%03d/%s.clusters.%03d.%03d.txt", clusters_dir, i, params.fileprefix, i, mpi_id + 1);
     fps[i] = fopen(filename, "w");
   }
-  if (stat("./clusters/nan", &st) == -1) {
-    mkdir("./clusters/nan", 0700);
+
+  if (stat(nan_dir, &st) == -1) {
+    mkdir(nan_dir, 0700);
   }
-  sprintf(filename, "./clusters/nan/%s.clusters.nan.%03d.txt", params.fileprefix, mpi_id + 1);
+  sprintf(filename, "%s/%s.clusters.nan.%03d.txt", nan_dir, params.fileprefix, mpi_id + 1);
   fps[i] = fopen(filename, "w");
 
   return fps;
@@ -731,6 +765,10 @@ void print_dimreduce_usage() {
   printf("                 column if it exists\n");
   printf("  --cols|-c    The number of columns in the input file minus the first\n");
   printf("                 column that contains gene names\n");
+  printf("  --method|-m  The correlation method to use. Supported methods include\n");
+  printf("                 Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
+  printf("                 and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
+  printf("                 'mi' as values respectively.\n");
   printf("\n");
   printf("Optional:\n");
   printf("  --omit_na     Provide this flag to ignore missing values. Defaults to 0.\n");

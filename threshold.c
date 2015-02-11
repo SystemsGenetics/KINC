@@ -579,6 +579,7 @@ float * read_similarity_matrix_cluster_file(float th, int * size, RMTParameters 
             }
             usedFlag[j * max_clusters + (cluster_num - 1)] = 1;
             usedFlag[k * max_clusters + (cluster_num - 1)] = 1;
+            //printf("%f\n", cv);
           }
           matches = fscanf(fp, "%d\t%d\t%d\%d\t%s\t%f\n", &j, &k, &size, &cluster_num, (char *)&samples, &cv);
         }
@@ -671,13 +672,15 @@ float * read_similarity_matrix_cluster_file(float th, int * size, RMTParameters 
   }
 
   // print the cut matrix
-/*  for (i = 0; i < used; i++) {
+/*
+  for (i = 0; i < used; i++) {
     for (j = 0; j < used; j++) {
       printf("%f ", cutM[i * used + j]);
     }
     printf("\n");
   }
-  printf("\n");*/
+  printf("\n");
+*/
 
   // free memory
   free(cutM_index);

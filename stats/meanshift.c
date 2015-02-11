@@ -109,7 +109,9 @@ MeanShiftClusters * meanshift2D(double* s, double * t, int n, double h) {
     // If we have no clusters or the minimum distance is greater than the
     // threshold then perform the following.
     if (ncluster == 0 || min_dist > thr) {
-      savecluster[ncluster] = finals[i];
+      savecluster[ncluster] = (double *) malloc(sizeof(double) * 2);
+      savecluster[ncluster][0] = finals[i][0];
+      savecluster[ncluster][1] = finals[i][1];
       ncluster = ncluster + 1;
       cluster_label[i] = ncluster;
     }
@@ -125,7 +127,6 @@ MeanShiftClusters * meanshift2D(double* s, double * t, int n, double h) {
     free(finals[i]);
   }
   free(finals);
-  free(savecluster);
 
   // Find the nearest cluster center in euclidean distance
   /*
@@ -170,6 +171,7 @@ MeanShiftClusters * meanshift2D(double* s, double * t, int n, double h) {
   // return the clusters
   msc->num_clusters = ncluster;
   msc->cluster_label = cluster_label;
+  msc->centers = savecluster;
   return msc;
 }
 
@@ -188,10 +190,12 @@ void free_msc(MeanShiftClusters * msc) {
       free(msc->clusters[k][l]);
     }
     free(msc->clusters[k]);
+    free(msc->centers[k]);
   }
   free(msc->sizes);
   free(msc->clusters);
   free(msc->cluster_label);
+  free(msc->centers);
   free(msc);
 }
 /**
@@ -460,4 +464,182 @@ double * profileMd(double *a, double *b, int n, double *x, double h) {
   free(pb);
 
   return k;
+}
+
+/**
+ * Mean shift clustering bandwidth selection.
+ *
+ * @param double *s
+ * @param double *t
+ * @param int n
+ *   The size of the s and t arrays.
+ * @param float taumin
+ * @param fload taumax
+ * @param int gridsize
+ */
+void meanshift_coverage2D(double *s, double *t, int n) {
+  int i, j;
+
+  // Set some default parameters. Perhaps these should be passed in?
+  float taumin = 0.02;
+  float taumax = 0.5;
+  int gridsize = 25;
+
+  float Pm = NULL;
+  float h0 = taumin;
+  float h1 = taumax;
+
+  // Create a sequence between the taumin and taumax that are equally spaced.
+  float * h = (float *) malloc(sizeof(float) * gridsize);
+  int step = (h1 - h0) / (gridsize - 2);
+
+  h[i] = h0;
+  for (i = 1; i < gridsize - 1; i++) {
+    h[i] = h[i-1] + step;
+  }
+  h[i] = h1;
+
+  // Initialize the cover matrix
+  float cover[2][gridsize];
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < gridsize; j++) {
+      cover[i][j] = 0;
+    }
+  }
+
+  for (i = 0; i < gridsize; i++) {
+    double new_h0 = h[i];
+    // fit <- ms(X, new.h0,  thr = thr, scaled = scaled, plotms = 0,  or.labels=or.labels)
+    MeanShiftClusters * msc = meanshift2D(s, t, n, new_h0);
+
+    // Find all clusters with more than 2 members
+    // find <- as.numeric(which(table(fit$cluster.label)>2))  # changed 23/05/11
+    int find[msc->num_clusters];
+    for (j = 0; j < msc->num_clusters; j++) {
+      if (msc->sizes[j] > 2) {
+        find[j] = 1;
+      }
+      else {
+        find[j] = 0;
+      }
+    }
+
+    Pm[[i]] <- fit$cluster.center[find,]
+    if (!is.matrix(Pm[[i]])){
+      Pm[[i]]<- matrix(Pm[[i]],nrow=1, dimnames=list(dimnames(fit$cluster.center)[[1]][find] ,NULL))
+    }
+    if (!cluster) {
+        cover[i, ] <- as.numeric(coverage.raw(fit$data, Pm[[i]],  new.h0, plot.type = 0, print=print)[1:2])
+    } else {
+        cover[i, ] <- as.numeric(coverage.raw(fit$data, Pm[[i]], new.h0, plot.type = 0, label = fit$cluster.label, print=print)[1:2])
+    }
+
+  }
+  select <- select.self.coverage(self = cover,
+      smin = 1/3, plot.type = plot.type)
+  result <- list(self.coverage.curve = cover, select = select,
+      type = "ms")
+  class(result) <- "self"
+  result
+}
+
+coverage.raw <-function(X, vec, tau, weights=1, plot.type="p", print=FALSE, label=NULL,...){
+     X<- as.matrix(X)
+     p <- dim(vec)[1]
+     n <- dim(X)[1]
+     d <- dim(X)[2]
+
+     if (n %% length(weights) !=0){
+         stop("The length of the vector of weights is not a multiple of the sample size.")
+     } else {
+      weights <-rep(weights, n %/%   length(weights))
+     }
+
+     min.distance  <- rep(0,n)
+     ins.distance <- rep(1,n)
+
+     for (i in 1: n){
+        #if (i %%10==0){ print(i)}
+        if (is.null(label)){
+             min.distance[i] <- mindist(vec, X[i,])$mindist
+        } else {
+            if (!is.matrix(vec)){vec<-matrix(vec, nrow=1)}
+            if (as.character(label[i]) %in%  dimnames(vec)[[1]]){
+                  min.distance[i] <- mindist(matrix(vec[as.character(label[i]),],nrow=1), X[i,])$mindist   # 11/10/10 experimental, for clustering
+            } else {
+                min.distance[i]<- tau+1   #01/11/10 if data point not allocatable to any centre.
+            }
+        }
+        ins.distance[i] <- (min.distance[i] <= tau) #indicator for being inside/outside the tube
+           }
+     ci<- weighted.mean(min.distance <= tau, w=weights)
+     if (plot.type %in% c("p","l")) {
+        plot(X, col=ins.distance+1,...)
+        if (plot.type=="p"){points(vec, col=3,lwd=2 )} else if (plot.type=="l"){lines(vec, col=3,lwd=2 )}
+        }
+     if (print){print(c(tau,ci))}
+     return(list(tau=tau, coverage= ci, min=min.distance, inside= ins.distance))
+ }
+
+select.self.coverage <-
+function (self,  smin, plot.type = "o", plot.segments=NULL)
+{
+    if (class(self) == "self") {
+        cover <- self$self.coverage.curve
+    }
+    else {
+        cover <- self
+    }
+    if (missing(smin)) {
+        if (class(self) == "self") {
+            smin <- switch(self$type, lpc = 2/3, ms = 1/3)
+        }
+        else stop("Please specify `smin' argument.")
+    }
+    n <- dim(cover)[1]
+    diff1 <- diff2 <- rep(0, n)
+    diff1[2:n] <- cover[2:n, 2] - cover[1:(n - 1), 2]
+    diff2[2:(n - 1)] <- diff1[3:n] - diff1[2:(n - 1)]
+    select <- select.coverage <- select.2diff <- NULL
+
+    if (plot.type != 0) {
+        plot(cover, type = plot.type, xlab = "h", ylab = "S(h)",
+            ylim = c(0, 1))
+    }
+    for (i in (3:(n - 1))) {
+        if (diff2[i] < 0 && cover[i, 2] > max(smin, cover[1:(i -
+            1), 2])) {
+            select <- c(select, cover[i, 1])
+            select.coverage <- c(select.coverage, cover[i,2])
+            select.2diff <- c(select.2diff, diff2[i])
+            #if (plot.type != 0) {
+            #    segments(cover[i, 1], 0, cover[i, 1], cover[i,
+            #      2], col = scol[i], lty = slty[i], lwd=slwd[i])
+            #}
+        }
+    }
+
+    selected <-select[order(select.2diff)]
+    covered<- select.coverage[order(select.2diff)]
+
+    if (plot.type != 0) {
+      d<-length(selected)
+      slty <- slwd <-scol<-rep(0,d)
+      if (is.null(plot.segments)){
+         slty[1:3]<- c(1,2,3)
+         slwd[1:3] <-c(2,1,1)
+         scol[1:3] <- c(3,3,3)
+      } else {
+          r<-max(length(plot.segments$lty), length(plot.segments$lwd), length(plot.segments$col))
+            slty[1:r] <- slwd[1:r] <-scol[1:r]<-1
+            if (length(plot.segments$lty)>0){ slty[1:length(plot.segments$lty)]<- plot.segments$lty}
+             if (length(plot.segments$lwd)>0){slwd[1:length(plot.segments$lwd)]<- plot.segments$lwd}
+            if (length(plot.segments$col)>0){ scol[1:length(plot.segments$col)]<- plot.segments$col}
+       }
+      for (j in 1:d){
+           segments(selected[j], 0, selected[j], covered[j], col = scol[j], lty = slty[j], lwd=slwd[j])
+         }
+      }
+
+    return(list("select"=selected, "select.coverage"=covered, "select.2diff"=select.2diff[order(select.2diff)]))
 }

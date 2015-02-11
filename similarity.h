@@ -38,8 +38,13 @@ typedef struct {
   int do_log;            // set to 1 to perform log transformation
   char fileprefix[1024]; // the input filename without the prefix
 
+  // variables for mutual information
   int mi_bins;        // the number of bins for the B-spline estimate of MI
   int mi_degree;      // the degree of the B-spline function
+
+  // variables for mean shift clustering
+  double msc_bw1;
+  double msc_bw2;
 
 } CCMParameters;
 

@@ -1,6 +1,12 @@
 #ifndef _MEANSHIFT_
 #define _MEANSHIFT_
 
+/**
+ * The code for Mean Shift Clustering and bandwidth selection was adapted
+ * from the LPCM R page found here:
+ * http://artax.karlin.mff.cuni.cz/r-help/library/LPCM/html/ms.html
+ */
+
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,6 +28,8 @@ typedef struct {
   // the cluster labeled 1, the second to the cluster labeled 2, etc.  Each
   // element is itself an array of points from the 2D vector.
   double *** clusters;
+  // The center points of each cluster.
+  double ** centers;
 
 } MeanShiftClusters;
 
@@ -31,11 +39,11 @@ typedef struct {
   int iterations;
   double * start;
   double * final;
-
 } MeanShiftRep;
 
 MeanShiftClusters * meanshift2D(double* x, double * y, int n, double h);
-MeanShiftRep * meanshift_rep(double* a, double * b, int n, double * x, double h, double thresh, int iter);
+MeanShiftRep * meanshift_rep(double* a, double * b, int n, double * x, double h,
+    double thresh, int iter);
 
 void free_msr(MeanShiftRep * msr);
 void free_msc(MeanShiftClusters * msc);
