@@ -31,6 +31,10 @@ typedef struct {
   // The center points of each cluster.
   double ** centers;
 
+  // The scaled input data vectors
+  double * a;
+  double * b;
+
 } MeanShiftClusters;
 
 typedef struct {
@@ -55,5 +59,7 @@ double * meanshift_base(double *a, double *b, int n, double *x, double h);
 double euclidian_norm(double *x, int d);
 int minimal_dist(double **x, int n, double *y);
 double * distance_vector(double **x, int n, double *y);
+void meanshift_coverage2D(double *s, double *t, int n);
+double coverage_raw(double * a, double *b, int n, double ** centers, double tau);
 
 #endif
