@@ -254,8 +254,8 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       n_comps++;
       my_comps++;
 
-      double *a = data[i];
-      double *b = data[j];
+      double *a = data[j];
+      double *b = data[i];
 
       // Initialize the arrays that will be used for containing a and b
       // but with missing values removed.
@@ -350,9 +350,12 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
 
   PairWiseClusters * result = new_pairwise_cluster_list();
 
+  // Perform bandwidth selection
+  double * selected = meanshift_coverage2D(a2, b2, n2);
+
   // Perform mean shift clustering (MSC)
   MeanShiftClusters * clusters;
-  clusters = meanshift2D(a2, b2, n2, bw);
+  clusters = meanshift2D(a2, b2, n2, selected[0]);
 
   // Count the number of clusters that are larger than min_obs
   int num_large = 0;

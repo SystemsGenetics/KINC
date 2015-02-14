@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "stats.h"
+#include "../vector.h"
 
 typedef struct {
   // Maps the points in the 2D vector with the cluster number they belong to.
@@ -35,6 +36,8 @@ typedef struct {
   double * a;
   double * b;
 
+  double scaled_by[2];
+
 } MeanShiftClusters;
 
 typedef struct {
@@ -57,9 +60,10 @@ double * profileMd(double *a, double *b, int n, double *x, double h);
 double * profile1d(double *xi, int n, double x, double h);
 double * meanshift_base(double *a, double *b, int n, double *x, double h);
 double euclidian_norm(double *x, int d);
-int minimal_dist(double **x, int n, double *y);
+double minimal_dist(double **x, int n, double *y);
 double * distance_vector(double **x, int n, double *y);
-void meanshift_coverage2D(double *s, double *t, int n);
-double coverage_raw(double * a, double *b, int n, double ** centers, double tau);
+double * meanshift_coverage2D(double *s, double *t, int n);
+double coverage_raw(double * a, double *b, int n, double ** centers, int nc, double tau);
+double * select_coverage(double ** cover, int n, double smin);
 
 #endif

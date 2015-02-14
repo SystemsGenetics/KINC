@@ -171,6 +171,8 @@ MeanShiftClusters * meanshift2D(double* s, double * t, int n, double h) {
   msc->centers = savecluster;
   msc->a = a;
   msc->b = b;
+  msc->scaled_by[0] = si[0];
+  msc->scaled_by[1] = si[1];
   return msc;
 }
 
@@ -302,19 +304,20 @@ double euclidian_norm(double *x, int d) {
  *   distance and the second is the position in the array where the
  *   minimum distance is found.
  */
-int minimal_dist(double **x, int n, double *y) {
-  int d = n;
+double minimal_dist(double **x, int n, double *y) {
+  int d = 2;
   int i;
   double * dv = distance_vector(x, n, y);
   double s[n];
   double min_s = INFINITY;
-  int min_i = 0;
+
+  //int min_i = 0;
 
   for (i = 0; i < n; i++) {
-    s[n] = sqrt(d) * dv[i];
-    if (s[n] < min_s) {
-      min_s = s[n];
-      min_i = i;
+    s[i] = sqrt(d) * dv[i];
+    if (s[i] < min_s) {
+      min_s = s[i];
+      //min_i = i;
     }
   }
   free(dv);
@@ -334,34 +337,30 @@ double * distance_vector(double **x, int n, double *y) {
   int i;
   int d = 2;
 
-  // Reference the two vectors in x as a and b.
-  double *a = x[0];
-  double *b = x[n];
-
   // The original R code looks like the following.
   // out <- sqrt(as.vector(rowMeans(X^2) + mean(y^2) - 2 * X %*% y/n)))
   // the %*% means matrix multiplication
 
   // Calculate the squared mean of each row in our ab Matrix, and the squared
   // mean of y.
-  double x2means[n];
-  double y2mean = 0;
+  double row_means[n];
+  double y_mean = 0;
   for (i = 0; i < n; i++) {
-    x2means[n] = (pow(a[i], 2) + pow(b[i], 2)) / 2;
+    row_means[i] = (pow(x[i][0], 2) + pow(x[i][1], 2)) / 2.0;
   }
-  y2mean = (pow(y[0], 2) + pow(y[1],2)) / d;
+  y_mean = (pow(y[0], 2) + pow(y[1],2)) / d;
 
   // Get a vector by  performing matrix multiplication between ab and y.
   // Multiply the value by 2 and divide by n.
   double Xy[n];
   for (i = 0; i < n; i++) {
-    Xy[i] = 2 * (a[i] * y[0] + b[i] * y[1]) / n;
+    Xy[i] = (x[i][0] * y[0] + x[i][1] * y[1]);
   }
 
   // Finish up the distance vector.
   double * out = (double *) malloc(sizeof(double) * n);
   for (i = 0; i < n; i++) {
-    out[i] = sqrt(x2means[i] + y2mean - Xy[i]);
+    out[i] = sqrt(row_means[i] + y_mean - 2 * Xy[i] / d);
     if (isnan(out[i])) {
       out[i] = 0;
     }
@@ -478,7 +477,7 @@ double * profileMd(double *a, double *b, int n, double *x, double h) {
  * @param fload taumax
  * @param int gridsize
  */
-void meanshift_coverage2D(double *s, double *t, int n) {
+double * meanshift_coverage2D(double *s, double *t, int n) {
   int i, j;
 
   // Set some default parameters. Perhaps these should be passed in?
@@ -491,9 +490,9 @@ void meanshift_coverage2D(double *s, double *t, int n) {
 
   // Create a sequence between the taumin and taumax that are equally spaced.
   double * h = (double *) malloc(sizeof(double) * gridsize);
-  int step = (h1 - h0) / (gridsize - 2);
+  double step = (h1 - h0) / (gridsize - 1);
 
-  h[i] = h0;
+  h[0] = h0;
   for (i = 1; i < gridsize - 1; i++) {
     h[i] = h[i-1] + step;
   }
@@ -538,17 +537,17 @@ void meanshift_coverage2D(double *s, double *t, int n) {
       }
     }
 
-    cover[i][0] = new_h0;
-    cover[i][1] = coverage_raw(fit->a, fit->b, n, Pm, new_h0);
+    cover[0][i] = new_h0;
+    cover[1][i] = coverage_raw(fit->a, fit->b, n, Pm, k, new_h0);
+    for (j = 0; j < k; j++) {
+      free(Pm[j]);
+    }
     free(Pm);
+    free_msc(fit);
   }
 
-  select <- select.self.coverage(self = cover,
-      smin = 1/3, plot.type = plot.type)
-  result <- list(self.coverage.curve = cover, select = select,
-      type = "ms")
-  class(result) <- "self"
-  result
+  free(h);
+  return select_coverage((double **) &cover, gridsize, 1.0/3.0);
 }
 
 /**
@@ -558,10 +557,8 @@ void meanshift_coverage2D(double *s, double *t, int n) {
  * @param int n
  *   The size of the cover array.
  */
-select_coverage(double ** cover, int n, int smin) {
-//select.self.coverage <-
-//function (self,  smin, plot.type = "o", plot.segments=NULL)
-//{
+double * select_coverage(double ** cover, int n, double smin) {
+
   int diff1[n], diff2[n];
   int i;
 
@@ -594,32 +591,24 @@ select_coverage(double ** cover, int n, int smin) {
       select[k] = cover[i][0];
       select_coverage[k] = cover[i][1];
       select_2diff[k] = diff2[i];
+      k++;
     }
   }
 
-    selected <-select[order(select.2diff)]
-    covered<- select.coverage[order(select.2diff)]
+  // reorder the select and select_coverage arraays based on the re-ordering
+  // of the select_2diff array
+  double * selected = (double *) malloc(sizeof(double) * k);
+  double * covered = (double *) malloc(sizeof(double) * k);
+  int * order = quickSortOrder((double *)&select_2diff, k);
+  for (i = 0; i < k; i++) {
+    selected[i] = select[order[k]];
+    covered[i] = select_coverage[order[k]];
+  }
 
-    if (plot.type != 0) {
-      d<-length(selected)
-      slty <- slwd <-scol<-rep(0,d)
-      if (is.null(plot.segments)){
-         slty[1:3]<- c(1,2,3)
-         slwd[1:3] <-c(2,1,1)
-         scol[1:3] <- c(3,3,3)
-      } else {
-          r<-max(length(plot.segments$lty), length(plot.segments$lwd), length(plot.segments$col))
-            slty[1:r] <- slwd[1:r] <-scol[1:r]<-1
-            if (length(plot.segments$lty)>0){ slty[1:length(plot.segments$lty)]<- plot.segments$lty}
-             if (length(plot.segments$lwd)>0){slwd[1:length(plot.segments$lwd)]<- plot.segments$lwd}
-            if (length(plot.segments$col)>0){ scol[1:length(plot.segments$col)]<- plot.segments$col}
-       }
-      for (j in 1:d){
-           segments(selected[j], 0, selected[j], covered[j], col = scol[j], lty = slty[j], lwd=slwd[j])
-         }
-      }
-
-    return(list("select"=selected, "select.coverage"=covered, "select.2diff"=select.2diff[order(select.2diff)]))
+  // The R code returned covered as part of the select.self.coverage
+  // function, but we don't need it just for bandwidth selection.
+  free(covered);
+  return selected;
 }
 
 /**
@@ -630,38 +619,28 @@ select_coverage(double ** cover, int n, int smin) {
  * @param int n
  *   The size of vectors a and b.
  */
-double coverage_raw(double * a, double *b, int n, double ** centers, double tau) {
+double coverage_raw(double * a, double *b, int n, double ** centers, int nc, double tau) {
    double min_distance[n];
-   int ins_distance[n];
    int i;
    for (i = 0; i < n; i++) {
      min_distance[i] = 0;
-     ins_distance[i] = 1;
    }
 
    for (i = 0; i < n; i++) {
      double * point = (double *) malloc(sizeof(double) * 2);
      point[0] = a[i];
      point[1] = b[i];
-     min_distance[i] = minimal_dist(centers, point)
-     if (min_distance[i] <= tau) {
-       // indicator for being inside/outside the tube
-       ins_distance[i] = 1;
-     }
-     else {
-       ins_distance[i] = 0;
-     }
+     min_distance[i] = minimal_dist(centers, nc, point);
    }
    // Calculate the mean. R code does a weighted mean but we don't need
    // to use a weight.
-   double ci;
+   double ci = 0;
    int num_less = 0;
    for (i = 0; i < n; i++) {
      if (min_distance[i] <= tau) {
-       ci += min_distance[i];
-       num_less++;
+       ci += 1;
      }
    }
-   ci = ci / num_less;
+   ci = ci / n;
    return ci;
  }
