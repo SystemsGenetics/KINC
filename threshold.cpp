@@ -140,7 +140,7 @@ int do_threshold(int argc, char *argv[]) {
     printf("  Skipping header lines\n");
   }
   // remove the path and extension from the filename
-  char * temp = basename(params.infilename);
+  char const * temp = basename((char *) params.infilename);
   strcpy(params.fileprefix, temp);
   char * p = rindex(params.fileprefix, '.');
   if (p) {

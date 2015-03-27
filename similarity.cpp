@@ -258,7 +258,7 @@ void free_ematrix(EMatrix * ematrix) {
  */
 EMatrix * load_ematrix(CCMParameters * params) {
 
-  EMatrix * ematrix = malloc(sizeof(EMatrix));
+  EMatrix * ematrix = (EMatrix *) malloc(sizeof(EMatrix));
   // Pointer to the input file.
   FILE *infile;
   // Integers for looping.
@@ -347,7 +347,7 @@ int is_numeric(char * string) {
   // '0': 48
   // '9': 57
   int num_period = 0;
-  int i;
+  unsigned int i;
   int good = 0;
 
   // all remaining characters can be numeric but with only one period

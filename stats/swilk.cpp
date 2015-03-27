@@ -86,7 +86,8 @@ void swilk(double *vector, int n, double *w, double *pw, int *ifault) {
   *pw = 1.0;
   if (n < 3) {
     free(x);
-    handle_warning("You must have at least 3 samples for Shapiro Wilk's normality test.");
+    char message[100] = "You must have at least 3 samples for Shapiro Wilk's normality test.";
+    handle_warning(message);
     *ifault = 1;
     return;
   }
@@ -131,7 +132,8 @@ void swilk(double *vector, int n, double *w, double *pw, int *ifault) {
   range = x[n - 1] - x[0];
   if (range < small) {
     free(x);
-    handle_warning("Range of values is too small for Shapiro Wilk's normality test.");
+    char message[100] = "Range of values is too small for Shapiro Wilk's normality test.";
+    handle_warning(message);
     *ifault = 6;
     return;
   }
@@ -149,7 +151,8 @@ void swilk(double *vector, int n, double *w, double *pw, int *ifault) {
        * but do NOT; it *does* happen with sorted x (on Intel GNU/linux 32bit):
        *  shapiro.test(c(-1.7, -1,-1,-.73,-.61,-.5,-.24, .45,.62,.81,1))
        */
-      handle_warning("Incorrect sort order on range for Shapiro Wilk's normality test.");
+      char message[100] = "Incorrect sort order on range for Shapiro Wilk's normality test.";
+      handle_warning(message);
       *ifault = 7;
     }
     sx += xi;
@@ -160,7 +163,8 @@ void swilk(double *vector, int n, double *w, double *pw, int *ifault) {
     xx = xi;
   }
   if (n > 5000) {
-    handle_warning("You must have no more than 5000 samples for Shapiro Wilk's normality test.");
+    char message[100] = "You must have no more than 5000 samples for Shapiro Wilk's normality test.";
+    handle_warning(message);
     *ifault = 2;
   }
 

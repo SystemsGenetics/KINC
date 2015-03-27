@@ -32,11 +32,13 @@ double royston2D(double* a, double * b, int n, double *pcc) {
 
   // We must have at least 3 rows.
   if (rows <= 3) {
-    handle_warning("You must have at least 3 samples for Royston's H test.");
+    char message[100] = "You must have at least 3 samples for Royston's H test.";
+    handle_warning(message);
     return NAN;
   }
   if (rows > 2000) {
-    handle_warning("You must have no more than 2000 samples for Royston's H test.");
+    char message[100] = "You must have no more than 2000 samples for Royston's H test.";
+    handle_warning(message);
     return NAN;
   }
   // If we have between four and 11 rows
@@ -68,7 +70,8 @@ double royston2D(double* a, double * b, int n, double *pcc) {
         swilk(select, rows, &W, &pw, &ifault);
       }
       if (ifault > 0 && ifault != 7) {
-        handle_warning("Normality test failed while calculating Royston's H test.");
+        char message[100] = "Normality test failed while calculating Royston's H test.";
+        handle_warning(message);
         return NAN;
       }
       z[i] = (-log(g - (log(1 - W))) - m)/s;
@@ -103,7 +106,8 @@ double royston2D(double* a, double * b, int n, double *pcc) {
         swilk(select, rows, &W, &pw, &ifault);
       }
       if (ifault > 0 && ifault != 7) {
-        handle_warning("Normality test failed while calculating Royston's H test.");
+        char message[100] = "Normality test failed while calculating Royston's H test.";
+        handle_warning(message);
         return NAN;
       }
       z[i] = ((log(1 - W)) + g - m) / s;

@@ -64,6 +64,5 @@ double minimal_dist(double **x, int n, double *y);
 double * distance_vector(double **x, int n, double *y);
 double * meanshift_coverage2D(double *s, double *t, int n);
 double coverage_raw(double * a, double *b, int n, double ** centers, int nc, double tau);
-double * select_coverage(double ** cover, int n, double smin);
 
 #endif

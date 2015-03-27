@@ -6,7 +6,8 @@ void sfrancia(double *vector, int n, double *w, double *pw, int *ifault) {
 
   if ((n < 5 || n > 5000)) {
     *ifault = 1;
-    handle_warning("You must have between 3 and 500 samples for Shapiro Francia normality test.");
+    char message[100] = "You must have between 3 and 500 samples for Shapiro Francia normality test.";
+    handle_warning(message);
     return;
   }
 

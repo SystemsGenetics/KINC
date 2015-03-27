@@ -1,5 +1,39 @@
 #include "vector.h"
 
+
+/**
+ * Returns an array indicating the order that the elements should be sorted.
+ *
+ * @param double *z
+ * @param int n
+ */
+int * orderArray(double *z, int n) {
+  int i, j, num_less;
+
+  int * order = (int *) malloc(sizeof(int) * n);
+  int used[n];
+
+  for (i = 0; i < n; i++) {
+    used[i] = 0;
+  }
+  for (i = 0; i < n; i++) {
+    num_less = 0;
+    for (j = 0; j < n; j++) {
+      if (i == j) {
+        continue;
+      }
+      if (z[i] > z[j]) {
+        num_less++;
+      }
+    }
+    while (used[num_less] == 1) {
+      num_less++;
+    }
+    order[i] = num_less;
+    used[num_less] = 1;
+  }
+  return order;
+}
 /*
  * @param double* l
  * @param int idx1
@@ -26,49 +60,6 @@ void swapF(float* l, int idx1, int idx2) {
   return;
 }
 
-/**
- * Should not be called directly. Call order() instead.
- *
- * The array
- */
-void quickSortOrderR(double * l, int size, int * order) {
-
-  if (size <= 1) {
-    return;
-  }
-
-  int pivIdx = (int) size / 1.618; // golden ratio
-  double pivot = l[pivIdx];
-  swapD(l, pivIdx, size-1);
-  int leftPlace = 0;
-  int i;
-  for (i = 0; i < size - 1; i++) {
-    if(l[i] < pivot){
-      swapD(l, i, leftPlace);
-      order[leftPlace] = order[i];
-      order[i] = order[leftPlace];
-      leftPlace++;
-    }
-  }
-  swapD(l, size-1, leftPlace);
-  quickSortD(l, leftPlace);
-  quickSortD(&l[leftPlace + 1], size - leftPlace - 1);
-
-}
-/**
- * Returns an array containing the order that elements in l should be sorted.
- */
-int * quickSortOrder(double *l, int size) {
-  // Initialize and prepare the order vector.
-  int * order = (int *) malloc(sizeof(int) * size);
-  int i;
-  for (i = 0; i < size - 1; i++) {
-    order[i] = i;
-  }
-  quickSortOrderR(l, size, order);
-
-  return order;
-}
 
 /*
  * @param double* l

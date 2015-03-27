@@ -293,16 +293,16 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       // empty cluster.
       else {
         // Create an empty clusters set
-        PairWiseClusters * new = new_pairwise_cluster_list();
-        new->gene1 = i;
-        new->gene2 = j;
-        new->num_samples = params.cols;
-        new->samples = kept;
-        new->next = NULL;
-        new->cluster_size = 0;
-        new->pcc = NAN;
-        write_pairwise_cluster_samples(new, fps);
-        free_pairwise_cluster_list(new);
+        PairWiseClusters * newc = new_pairwise_cluster_list();
+        newc->gene1 = i;
+        newc->gene2 = j;
+        newc->num_samples = params.cols;
+        newc->samples = kept;
+        newc->next = NULL;
+        newc->cluster_size = 0;
+        newc->pcc = NAN;
+        write_pairwise_cluster_samples(newc, fps);
+        free_pairwise_cluster_list(newc);
       }
 
       // Release the memory for a2 and b2.
@@ -468,15 +468,15 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
         if (strcmp(params.method, "pc") == 0) {
           corr = gsl_stats_correlation(cx, 1, cy, 1, nkept);
         }
-        PairWiseClusters * new = new_pairwise_cluster_list();
-        new->gene1 = x;
-        new->gene2 = y;
-        new->num_samples = n2;
-        new->samples = ckept;
-        new->next = NULL;
-        new->cluster_size = nkept;
-        new->pcc = corr;
-        add_pairwise_cluster_list(&result, new);
+        PairWiseClusters * newc = new_pairwise_cluster_list();
+        newc->gene1 = x;
+        newc->gene2 = y;
+        newc->num_samples = n2;
+        newc->samples = ckept;
+        newc->next = NULL;
+        newc->cluster_size = nkept;
+        newc->pcc = corr;
+        add_pairwise_cluster_list(&result, newc);
       }
 
       // If this is the first level of clustering then we want to cluster
@@ -495,15 +495,15 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
     // If the cluster is too small then just add it without
     // correlation analysis or further sub clustering.
     else {
-      PairWiseClusters * new = new_pairwise_cluster_list();
-      new->gene1 = x;
-      new->gene2 = y;
-      new->num_samples = n2;
-      new->samples = ckept;
-      new->next = NULL;
-      new->cluster_size = nkept;
-      new->pcc = NAN;
-      add_pairwise_cluster_list(&result, new);
+      PairWiseClusters * newc = new_pairwise_cluster_list();
+      newc->gene1 = x;
+      newc->gene2 = y;
+      newc->num_samples = n2;
+      newc->samples = ckept;
+      newc->next = NULL;
+      newc->cluster_size = nkept;
+      newc->pcc = NAN;
+      add_pairwise_cluster_list(&result, newc);
     }
     free(cx);
     free(cy);
@@ -560,7 +560,7 @@ void free_pairwise_cluster_list(PairWiseClusters * head) {
  * @param PairWiseClusters * new
  *   The pointer to the new object to add to the end of the list
  */
-void add_pairwise_cluster_list(PairWiseClusters **head, PairWiseClusters *new) {
+void add_pairwise_cluster_list(PairWiseClusters **head, PairWiseClusters *newc) {
 
   PairWiseClusters * curr = *head;
 
@@ -568,7 +568,7 @@ void add_pairwise_cluster_list(PairWiseClusters **head, PairWiseClusters *new) {
   // new head.
   if (curr->gene1 == -1) {
     free_pairwise_cluster_list(*head);
-    *head = new;
+    *head = newc;
     return;
   }
 
@@ -576,7 +576,7 @@ void add_pairwise_cluster_list(PairWiseClusters **head, PairWiseClusters *new) {
   while (curr->next != NULL) {
     curr = (PairWiseClusters * ) curr->next;
   }
-  curr->next = (struct PairWiseClusters *) new;
+  curr->next = (struct PairWiseClusters *) newc;
 }
 /**
  * Updates the samples vector of a PairWiseClusters object.
@@ -720,7 +720,7 @@ FILE ** open_output_files(CCMParameters params, int mpi_id) {
 
   // Open up 102 files, one each for 100 Spearman correlation value ranges.
   // and another for those without (e.g. 'nan')
-  FILE ** fps = malloc(sizeof(FILE *) * 102);
+  FILE ** fps = (FILE **) malloc(sizeof(FILE *) * 102);
 
   int i =  0;
   char filename[1025];

@@ -20,7 +20,7 @@
  * also a list node (has a *next element) to allow these objects to be
  * strung together in a list.
  */
- typedef struct {
+ typedef struct PairWiseClusters {
   // An array of zeros and ones indicating which samples from the input file
   // are to be used for the comparison.
   int * samples;
@@ -46,7 +46,7 @@ void print_dimreduce_usage();
 // Functions for working with the PairWiseClusters list
 void free_pairwise_cluster_list(PairWiseClusters * head);
 PairWiseClusters * new_pairwise_cluster_list();
-void add_pairwise_cluster_list(PairWiseClusters **head, PairWiseClusters *new);
+void add_pairwise_cluster_list(PairWiseClusters **head, PairWiseClusters *newc);
 void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE ** fps);
 void update_pairwise_cluster_samples(int * parent_samples, int n, PairWiseClusters * head);
 FILE ** open_output_files(CCMParameters params, int mpi_id);

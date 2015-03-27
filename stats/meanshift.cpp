@@ -18,7 +18,7 @@
  *   The bandwidth: the percentage of the range to use for clustering.
  */
 MeanShiftClusters * meanshift2D(double* s, double * t, int n, double h) {
-  MeanShiftClusters * msc = malloc(sizeof(MeanShiftClusters));
+  MeanShiftClusters * msc = (MeanShiftClusters *) malloc(sizeof(MeanShiftClusters));
 
   int iter = 200;
   double thr = 0.0001;
@@ -226,13 +226,13 @@ MeanShiftRep * meanshift_rep(double* a, double * b, int n, double * x, double h,
   int d = 2;
   int s = -1;
   int j = 0;
-  double *x0 = malloc(sizeof(double) * 2);
-  double *xt = malloc(sizeof(double) * 2);
+  double *x0 = (double *) malloc(sizeof(double) * 2);
+  double *xt = (double *) malloc(sizeof(double) * 2);
   double **M;
-  double *th = malloc(sizeof(double) * iter);
+  double *th = (double *) malloc(sizeof(double) * iter);
   double *m;
   double mx[d];
-  MeanShiftRep * msr = malloc(sizeof(MeanShiftRep));
+  MeanShiftRep * msr = (MeanShiftRep *) malloc(sizeof(MeanShiftRep));
 
   // Copy the original x into x0 which keeps the start point
   x0[0] = x[0];
@@ -271,7 +271,7 @@ MeanShiftRep * meanshift_rep(double* a, double * b, int n, double * x, double h,
   msr->iterations = s + 1;
   msr->start = x0;
   msr->thresh = th;
-  msr->final = malloc(sizeof(double) * 2);
+  msr->final = (double *) malloc(sizeof(double) * 2);
   msr->final[0] = m[0];
   msr->final[1] = m[1];
 
@@ -547,49 +547,39 @@ double * meanshift_coverage2D(double *s, double *t, int n) {
   }
 
   free(h);
-  return select_coverage((double **) &cover, gridsize, 1.0/3.0);
-}
 
-/**
- * @param double ** cover
- *   A 2 dimensional vector of doubles. With the first column being a
- *   bandwidth and the second being the coverage.
- * @param int n
- *   The size of the cover array.
- */
-double * select_coverage(double ** cover, int n, double smin) {
-
-  int diff1[n], diff2[n];
-  int i;
+  // the following code is derived from the select.self.coverage() function.
+  double smin = 1.0/3.0;
+  double diff1[gridsize], diff2[gridsize];
 
   // Initialize the diff1 and diff2 arrays.
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < gridsize; i++) {
     diff1[i] = 0;
     diff2[i] = 0;
   }
 
-  for (i = 1; i < n; i++) {
-    diff1[i] = cover[i][1] - cover[i-1][1];
+  for (i = 1; i < gridsize; i++) {
+    diff1[i] = cover[1][i] - cover[1][i-1];
   }
-  for (i = 1; i < n - 1; i++) {
+  for (i = 1; i < gridsize - 1; i++) {
     diff2[i] = diff1[i + 1] - diff1[i];
   }
 
   // select <- select.coverage <- select.2diff <- NULL
-  double select[n], select_coverage[n], select_2diff[n];
+  double select[gridsize], select_coverage[gridsize], select_2diff[gridsize];
   int k = 0;
-  for (i = 2; i < n - 1; i++) {
+  for (i = 2; i < gridsize - 1; i++) {
     // find the maximum coverage between 0 and i - 1;
     double max = smin;
     int j;
-    for (j = 0; j < i - 1; j++) {
-      if (max < cover[j][1]) {
-        max = cover[j][1];
+    for (j = 0; j < i; j++) {
+      if (max < cover[1][j]) {
+        max = cover[1][j];
       }
     }
-    if (diff2[i] < 0 && cover[i][1] > max) {
-      select[k] = cover[i][0];
-      select_coverage[k] = cover[i][1];
+    if (diff2[i] < 0 && cover[1][i] > max) {
+      select[k] = cover[0][i];
+      select_coverage[k] = cover[1][i];
       select_2diff[k] = diff2[i];
       k++;
     }
@@ -599,15 +589,17 @@ double * select_coverage(double ** cover, int n, double smin) {
   // of the select_2diff array
   double * selected = (double *) malloc(sizeof(double) * k);
   double * covered = (double *) malloc(sizeof(double) * k);
-  int * order = quickSortOrder((double *)&select_2diff, k);
+  int * order = orderArray((double *) &select_2diff, k);
+
   for (i = 0; i < k; i++) {
-    selected[i] = select[order[k]];
-    covered[i] = select_coverage[order[k]];
+    selected[i] = select[order[i]];
+    covered[i] = select_coverage[order[i]];
   }
 
   // The R code returned covered as part of the select.self.coverage
   // function, but we don't need it just for bandwidth selection.
   free(covered);
+  free(order);
   return selected;
 }
 
@@ -635,7 +627,7 @@ double coverage_raw(double * a, double *b, int n, double ** centers, int nc, dou
    // Calculate the mean. R code does a weighted mean but we don't need
    // to use a weight.
    double ci = 0;
-   int num_less = 0;
+   //int num_less = 0;
    for (i = 0; i < n; i++) {
      if (min_distance[i] <= tau) {
        ci += 1;

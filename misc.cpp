@@ -18,7 +18,7 @@ statm_t * memory_get_usage() {
 
   FILE *f = fopen(statm_path,"r");
   if(f){
-    fscanf(f,"%ld %ld %ld %ld %ld %ld %ld",
+    int status = fscanf(f,"%ld %ld %ld %ld %ld %ld %ld",
       &result->size,
       &result->resident,
       &result->share,

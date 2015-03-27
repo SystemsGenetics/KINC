@@ -17,7 +17,7 @@
 Outliers * outliers_iqr(double * x, int n, double coef) {
 
   int i;
-  Outliers * outliers = malloc(sizeof(Outliers));
+  Outliers * outliers = (Outliers *) malloc(sizeof(Outliers));
 
   // Sort x
   double * sx = (double *) malloc(sizeof(double) * n);
@@ -27,7 +27,8 @@ Outliers * outliers_iqr(double * x, int n, double coef) {
   quickSortD(sx, n);
 
   if (coef < 0) {
-    handle_error("'coef' must not be negative");
+    char message[100] = "'coef' must not be negative";
+    handle_error(message);
   }
 
   // Initalize the outliers struct

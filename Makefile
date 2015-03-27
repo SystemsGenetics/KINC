@@ -1,9 +1,9 @@
 MKLROOT = 
-CC = mpicc -m64
+CC = mpic++ -m64
 EXE_DIR = 
 
-MPI_INCLUDES =  $(shell mpicc --showme:compile)
-MPI_LDLINK = $(shell mpicc --showme:link)
+MPI_INCLUDES =  $(shell mpi++ --showme:compile)
+MPI_LDLINK = $(shell mpi++ --showme:link)
 
 CFLAGS = -g -Wall
 INCLUDES = 
@@ -33,59 +33,59 @@ EXE = kinc
 all: ${OBJS}
 	${CC} ${OBJS} ${LDFLAGS} ${MPI_LDLINK} -o ${EXE}
 
-misc.o: misc.c misc.h
-	${CC} -c ${CFLAGS} ${INCLUDES} misc.c
+misc.o: misc.cpp misc.h
+	${CC} -c ${CFLAGS} ${INCLUDES} misc.cpp
 
-vector.o: vector.c vector.h
-	${CC} -c ${CFLAGS} ${INCLUDES} vector.c
+vector.o: vector.cpp vector.h
+	${CC} -c ${CFLAGS} ${INCLUDES} vector.cpp
 
-error.o: error.c error.h
-	${CC} -c ${CFLAGS} ${INCLUDES} error.c
+error.o: error.cpp error.h
+	${CC} -c ${CFLAGS} ${INCLUDES} error.cpp
 
-stats/stats.o: stats/stats.c stats/stats.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/stats.c -o stats/stats.o
+stats/stats.o: stats/stats.cpp stats/stats.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/stats.cpp -o stats/stats.o
 
-stats/kurtosis.o: stats/kurtosis.c stats/kurtosis.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/kurtosis.c -o stats/kurtosis.o
+stats/kurtosis.o: stats/kurtosis.cpp stats/kurtosis.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/kurtosis.cpp -o stats/kurtosis.o
 
-stats/sfrancia.o: stats/sfrancia.c stats/sfrancia.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/sfrancia.c -o stats/sfrancia.o
+stats/sfrancia.o: stats/sfrancia.cpp stats/sfrancia.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/sfrancia.cpp -o stats/sfrancia.o
 
-stats/swilk.o: stats/swilk.c stats/swilk.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/swilk.c -o stats/swilk.o
+stats/swilk.o: stats/swilk.cpp stats/swilk.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/swilk.cpp -o stats/swilk.o
 
-stats/royston.o: stats/royston.c stats/royston.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/royston.c -o stats/royston.o
+stats/royston.o: stats/royston.cpp stats/royston.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/royston.cpp -o stats/royston.o
 
-stats/outlier.o: stats/outlier.c stats/outlier.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/outlier.c -o stats/outlier.o
+stats/outlier.o: stats/outlier.cpp stats/outlier.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/outlier.cpp -o stats/outlier.o
 
-stats/meanshift.o: stats/meanshift.c stats/meanshift.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/meanshift.c -o stats/meanshift.o
+stats/meanshift.o: stats/meanshift.cpp stats/meanshift.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/meanshift.cpp -o stats/meanshift.o
 
-similarity/spearman.o: similarity/spearman.c similarity/spearman.h
-	${CC} -c ${CFLAGS} ${INCLUDES} similarity/spearman.c -o similarity/spearman.o
+similarity/spearman.o: similarity/spearman.cpp similarity/spearman.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/spearman.cpp -o similarity/spearman.o
 
-similarity/pearson.o: similarity/pearson.c similarity/pearson.h
-	${CC} -c ${CFLAGS} ${INCLUDES} similarity/pearson.c -o similarity/pearson.o
+similarity/pearson.o: similarity/pearson.cpp similarity/pearson.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/pearson.cpp -o similarity/pearson.o
 
-similarity/bspline_mi.o: similarity/bspline_mi.c similarity/bspline_mi.h
-	${CC} -c ${CFLAGS} ${INCLUDES} similarity/bspline_mi.c -o similarity/bspline_mi.o
+similarity/bspline_mi.o: similarity/bspline_mi.cpp similarity/bspline_mi.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/bspline_mi.cpp -o similarity/bspline_mi.o
 
-dimreduce.o: dimreduce.c dimreduce.h
-	${CC} -c ${CFLAGS} ${INCLUDES} ${MPI_INCLUDES} dimreduce.c
+dimreduce.o: dimreduce.cpp dimreduce.h
+	${CC} -c ${CFLAGS} ${INCLUDES} ${MPI_INCLUDES} dimreduce.cpp
 
-similarity.o: similarity.c similarity.h
-	${CC} -c ${CFLAGS} ${INCLUDES} similarity.c
+similarity.o: similarity.cpp similarity.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity.cpp
 
-threshold.o: threshold.c threshold.h
-	${CC} -c ${CFLAGS} ${INCLUDES} threshold.c
+threshold.o: threshold.cpp threshold.h
+	${CC} -c ${CFLAGS} ${INCLUDES} threshold.cpp
 
-extract.o: extract.c extract.h
-	${CC} -c ${CFLAGS} ${INCLUDES} extract.c
+extract.o: extract.cpp extract.h
+	${CC} -c ${CFLAGS} ${INCLUDES} extract.cpp
 
-kinc.o: kinc.c kinc.h
-	${CC} -c ${CFLAGS} ${INCLUDES} ${MPI_INCLUDES} kinc.c
+kinc.o: kinc.cpp kinc.h
+	${CC} -c ${CFLAGS} ${INCLUDES} ${MPI_INCLUDES} kinc.cpp
 
 clean:
 	rm -f ${OBJS} ${EXE}

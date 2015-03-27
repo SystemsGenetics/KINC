@@ -27,7 +27,7 @@ typedef struct{
   int perf;           // indicates if performance monitoring should be enabled
   int rows;           // the number of rows in the expression matrix
   int cols;           // the number of columns in the expression matrix
-  char *infilename;   // the input file name
+  char const * infilename;   // the input file name
   char method[10];    // specifies the method: cor, mi
   int headers;
 
@@ -44,13 +44,13 @@ typedef struct{
   double edHistogramBin; // Eigenvalue Histogram Bin size
 
   char fileprefix[1024]; // the input filename without the prefix
-  char* inputDir;
+  char const * inputDir;
 
   int numGenes;          // the number of genes, n, in the nxn similarity matrix
   int numLinesPerFile;   // the number of lines per bin file
 
   // Holds an array flagging which genes meet the given threshold in the matrix.
-  int* UsedFlag;
+  int * UsedFlag;
 
   // An array for indicating the index of the gene in the cut matrix.
   int * cutM_index;
