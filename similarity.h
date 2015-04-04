@@ -16,6 +16,8 @@
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_bspline.h>
 
+#include "ematrix.h"
+
 typedef struct {
 
   int perf;          // indicates if performance monitoring should be enabled
@@ -48,14 +50,6 @@ typedef struct {
 
 } CCMParameters;
 
-typedef struct {
-  double ** data;
-  char ** genes;
-  char ** samples;
-  int num_genes;
-  int num_samples;
-} EMatrix;
-
 // a global variable for the number of rows in each output file
 #define ROWS_PER_OUTPUT_FILE 10000
 
@@ -65,10 +59,6 @@ typedef struct {
 // function prototypes
 
 int do_similarity(int argc, char *argv[]);
-
-EMatrix * load_ematrix(CCMParameters * params);
-
-void free_ematrix(EMatrix * ematrix);
 
 void print_similarity_usage();
 
@@ -84,6 +74,5 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram);
 
 double calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xmin, double ymin, double xmax, double ymax);
 
-int is_numeric(char * string);
 
 #endif

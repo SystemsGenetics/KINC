@@ -197,8 +197,8 @@ int do_similarity(int argc, char *argv[]) {
     time(&start_time);
   }
 
-  EMatrix * ematrix = load_ematrix(&params);
-  double ** data = ematrix->data;
+  EMatrix * ematrix = new EMatrix(params.infilename, params.rows, params.cols, params.headers, params.omit_na, params.na_val);
+  double ** data = ematrix->getMatrix();
 
   if (strcmp(params.method, "pc") == 0) {
     calculate_pearson(params, data, histogram);
@@ -217,7 +217,7 @@ int do_similarity(int argc, char *argv[]) {
     fprintf(timingfile, "CCM Runtime with %d x %d %s input dataset: %.2lf min\n", params.rows, params.cols, params.infilename, difftime(end_time, start_time)/60.0);
   }
 
-  free_ematrix(ematrix);
+  free(ematrix);
 
   // if output of the histogram is enabled then print it
   print_histogram(params, histogram);
@@ -226,155 +226,7 @@ int do_similarity(int argc, char *argv[]) {
   return 1;
 }
 
-/**
- * Frees the memory associated with an EMatrix object.
- *
- * @param EMatrix ematrix
- *   An instance of the EMatrix struct.
- */
-void free_ematrix(EMatrix * ematrix) {
-  int i;
-  for (i = 0; i < ematrix->num_samples; i++) {
-    free(ematrix->samples[i]);
-  }
-  free(ematrix->samples);
-  for (i = 0; i < ematrix->num_genes; i++) {
-    free(ematrix->data[i]);
-    free(ematrix->genes[i]);
-  }
-//  free(ematrix->data);
-//  free(ematrix->genes);
-  free(ematrix);
-}
 
-/**
- * Reads in the expression matrix
- *
- * @param CCMParameters params
- *   An instance of the CCM parameters struct
- *
- * @return
- *   A pointer to a two-dimensional array of doubles
- */
-EMatrix * load_ematrix(CCMParameters * params) {
-
-  EMatrix * ematrix = (EMatrix *) malloc(sizeof(EMatrix));
-  // Pointer to the input file.
-  FILE *infile;
-  // Integers for looping.
-  int i, j;
-
-  // Initialize the EMatrix struct
-  ematrix->num_genes = params->rows;
-  ematrix->num_samples = params->cols;
-  if (params->headers) {
-    ematrix->num_genes--;
-    ematrix->samples = (char **) malloc(sizeof(char *) * ematrix->num_samples);
-  }
-  ematrix->genes = (char **) malloc(sizeof(char *) * ematrix->num_genes);
-
-  // Allocate the data array for storing the input expression matrix.
-  ematrix->data = (double**) malloc(sizeof(double *) * params->rows);
-  for (i = 0; i < params->rows; i++) {
-    ematrix->data[i] = (double *) malloc(sizeof(double) * params->cols);
-  }
-
-  // iterate through the lines of the expression matrix
-  printf("Reading input file '%s'...\n", params->infilename);
-  infile = fopen(params->infilename, "r");
-  for (i = 0; i < params->rows; i++) {
-
-    // skip over the header if one is provided
-    if (i == 0 && params->headers) {
-      printf("Skipping headers...\n");
-
-      for (j = 0; j < params->cols; j++) {
-        ematrix->samples[j] = (char *) malloc(sizeof(char) * 255);
-        fscanf(infile, "%s", ematrix->samples[j]);
-      }
-    }
-
-    // the first entry on every line is a label string - read that in before the numerical data
-    ematrix->genes[i] = (char *) malloc(sizeof(char) * 255);
-    fscanf(infile, "%s", ematrix->genes[i]);
-
-    // iterate over the columns of each row
-    for (j = 0; j < params->cols; j++) {
-      char element[50]; // used for reading in each element of the expression matrix
-      if (fscanf(infile, "%s", element) != EOF) {
-        // if this is a missing value and omission of missing values is enabled then
-        // rewrite this value as MISSING_VALUE
-        if (params->omit_na && strcmp(element, params->na_val) == 0) {
-          ematrix->data[i][j] = NAN;
-        }
-        else {
-          // make sure the element is numeric
-          if (!is_numeric(element)) {
-            fprintf(stderr, "Error: value is not numeric: %s\n", element);
-            exit(-1);
-          }
-          if (params->do_log10) {
-            ematrix->data[i][j] = log10(atof(element));
-          }
-          else if (params->do_log2) {
-            ematrix->data[i][j] = log2(atof(element));
-          }
-          else if (params->do_log) {
-            ematrix->data[i][j] = log(atof(element));
-          }
-          else {
-            ematrix->data[i][j] = atof(element);
-          }
-        }
-      }
-      else {
-        fprintf(stderr, "Error: EOF reached early. Exiting.\n");
-        exit(-1);
-      }
-    }
-  }
-  return ematrix;
-}
-
-
-/**
- *
- */
-int is_numeric(char * string) {
-  // ASCII value of
-  // '-': 45
-  // '.': 46
-  // '0': 48
-  // '9': 57
-  int num_period = 0;
-  unsigned int i;
-  int good = 0;
-
-  // all remaining characters can be numeric but with only one period
-  for (i = 0; i < strlen(string); i++) {
-    good = 0;
-    if (string[i] >= 48 && string[i] <= 57) {
-      good = 1;
-    }
-    // periods are acceptable, but only one.
-    if (string[i] == 46) {
-      num_period++;
-      good = 1;
-      // we can only have one period
-      if (num_period > 1) {
-        good = 0;
-      }
-    }
-    // the minus sign is acceptable if it appears first
-    if (string[i] == 45 && i == 0) {
-      good = 1;
-    }
-    if (!good) {
-      return 0;
-    }
-  }
-  return 1;
-}
 /**
  * Creates an integer array, initialized with all values to zero for
  * storing a histogram. The number of bins in the histogram is

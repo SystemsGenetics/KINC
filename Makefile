@@ -2,17 +2,18 @@ MKLROOT =
 CC = mpic++ -m64
 EXE_DIR = 
 
-MPI_INCLUDES =  $(shell mpi++ --showme:compile)
-MPI_LDLINK = $(shell mpi++ --showme:link)
+MPI_INCLUDES =  $(shell mpic++ --showme:compile)
+MPI_LDLINK = $(shell mpic++ --showme:link)
 
 CFLAGS = -g -Wall
 INCLUDES = 
-LDFLAGS = -Wall -lm -lgsl -lgslcblas -llapack -lblas -lpthread -g
+LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -g
 
 OBJS = \
   error.o \
   misc.o \
   vector.o \
+  ematrix.o \
   stats/stats.o \
   stats/kurtosis.o \
   stats/sfrancia.o \
@@ -41,6 +42,9 @@ vector.o: vector.cpp vector.h
 
 error.o: error.cpp error.h
 	${CC} -c ${CFLAGS} ${INCLUDES} error.cpp
+	
+ematrix.o: ematrix.cpp ematrix.h
+	${CC} -c ${CFLAGS} ${INCLUDES} ematrix.cpp
 
 stats/stats.o: stats/stats.cpp stats/stats.h
 	${CC} -c ${CFLAGS} ${INCLUDES} stats/stats.cpp -o stats/stats.o

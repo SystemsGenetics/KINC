@@ -145,13 +145,16 @@ int do_extract(int argc, char *argv[]) {
   }
 
   if (strcmp(params.method, "mi") == 0) {
-    params.inputDir = "MI";
+    params.inputDir = (char *) malloc(sizeof(char) * 3);
+    strcpy(params.inputDir, "MI");
   }
   else if (strcmp(params.method, "pc") == 0) {
-    params.inputDir = "Pearson";
+    params.inputDir = (char *) malloc(sizeof(char) * 8);
+    strcpy(params.inputDir, "Pearson");
   }
   else if (strcmp(params.method, "sc") == 0) {
-    params.inputDir = "Spearman";
+    params.inputDir = (char *) malloc(sizeof(char) * 9);
+    strcpy(params.inputDir, "Spearman");
   }
 
   // open all of the bin files for easy access

@@ -5,11 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <gsl/gsl_interp.h>
-#include <gsl/gsl_spline.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_eigen.h>
-#include <gsl/gsl_matrix.h>
 #include <math.h>
 #include <getopt.h>
 #include <unistd.h>
@@ -18,9 +13,17 @@
 #include <unistd.h>
 #include <libgen.h>
 #include <dirent.h>
+
+// GNU Scientific Library headers.
+#include <gsl/gsl_interp.h>
+#include <gsl/gsl_spline.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_eigen.h>
+#include <gsl/gsl_matrix.h>
+
+// KINC headers.
 #include "vector.h"
 #include "similarity.h"
-
 
 typedef struct{
 
@@ -63,8 +66,8 @@ typedef struct{
 
 
 // SSYEV prototype
-extern void ssyev_( char* jobz, char* uplo, int* n, float* a, int* lda,
-                    float* w, float* work, int* lwork, int* info );
+extern "C" void ssyev_(char* jobz, char* uplo, int* n, float* a, int* lda,
+                    float* w, float* work, int* lwork, int* info);
 
 /**
  * Function Prototypes

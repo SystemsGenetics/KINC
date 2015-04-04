@@ -1,43 +1,43 @@
 #include "dimreduce.h"
 
-int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
+#define no_argument 0
+#define required_argument 1
+#define optional_argument 2
 
-  // variables used for timing of the software
-  time_t start_time = time(0);
-  time_t now;
+/**
+ * DRArgs constructor.
+ */
+DRArgs::DRArgs(int argc, char *argv[]) {
+  // Set defaults for all the private members.
+  omit_na = 0;
+  headers = 0;
+  rows = 0;
+  cols = 0;
+  do_log10 = 0;
+  do_log2 = 0;
+  do_log = 0;
+  min_obs = 30;
+  msc_bw1 = 0.75;
+  msc_bw2 = 0.9;
+  infilename = NULL;
+  na_val = NULL;
 
-  // the value returned by getopt_long
+  // Initialize the 'func' parameter.
+  strcpy(func, "none");
+
+  // The value returned by getopt_long.
   int c;
 
-  // The struct containing the input parameters
-  static CCMParameters params;
-
-  // initialize some of the program parameters
-  params.perf = 1;
-  params.omit_na = 0;
-  params.headers = 0;
-  params.rows = 0;
-  params.cols = 0;
-  params.do_log10 = 0;
-  params.do_log2 = 0;
-  params.do_log = 0;
-  params.min_obs = 30;
-  params.msc_bw1 = 0.75;
-  params.msc_bw2 = 0.9;
-
-  strcpy(params.func, "none");
-
-  // loop through the incoming arguments until the
-  // getopt_long function returns -1. Then we break out of the loop
+  // Loop through the incoming arguments until the
+  // getopt_long function returns -1. Then we break out of the loop.
   while(1) {
     int option_index = 0;
 
-    // specify the long options. The values returned are specified to be the
-    // short options which are then handled by the case statement below
-    static struct option long_options[] = {
-      {"omit_na",  no_argument,       &params.omit_na,  1 },
-      {"perf",     no_argument,       &params.perf,     1 },
-      {"headers",  no_argument,       &params.headers,  1 },
+    // Specify the long options. The values returned are specified to be the
+    // short options which are then handled by the case statement below.
+    const struct option long_options[] = {
+      {"omit_na",  no_argument,       &omit_na,  1 },
+      {"headers",  no_argument,       &headers,  1 },
       {"help",     no_argument,       0,  'h' },
       {"ematrix",  required_argument, 0,  'e' },
       {"method",   required_argument, 0,  'm' },
@@ -64,25 +64,25 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       case 0:
         break;
       case 'e':
-        params.infilename = optarg;
+        infilename = optarg;
         break;
       case 'r':
-        params.rows = atoi(optarg);
+        rows = atoi(optarg);
         break;
       case 'c':
-        params.cols = atoi(optarg);
+        cols = atoi(optarg);
         break;
       case 'm':
-        strcpy(params.method, optarg);
+        strcpy(method, optarg);
         break;
       case 'o':
-        params.min_obs = atoi(optarg);
+        min_obs = atoi(optarg);
         break;
       case 'n':
-        params.na_val = optarg;
+        na_val = optarg;
         break;
       case 'f':
-        strcpy(params.func, optarg);
+        strcpy(func, optarg);
         break;
       case 'h':
         print_dimreduce_usage();
@@ -101,116 +101,137 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
   }
 
   // make sure the required arguments are set and appropriate
-  if (!params.infilename) {
+  if (!infilename) {
     fprintf(stderr, "Please provide an expression matrix (--ematrix option).\n");
     exit(-1);
   }
 
-  if (!params.method) {
+  if (!method) {
     fprintf(stderr,"Please provide the method (--method option).\n");
     exit(-1);
   }
 
   // make sure we have a positive integer for the rows and columns of the matrix
-  if (params.rows < 0 || params.rows == 0) {
+  if (rows < 0 || rows == 0) {
     fprintf(stderr, "Please provide a positive integer value for the number of rows in the \n");
     fprintf(stderr, "expression matrix (--rows option).\n");
     exit(-1);
   }
-  if (params.cols < 0 || params.cols == 0) {
+  if (cols < 0 || cols == 0) {
     fprintf(stderr, "Please provide a positive integer value for the number of columns in\n");
     fprintf(stderr, "the expression matrix (--cols option).\n");
     exit(-1);
   }
 
   // make sure the input file exists
-  if (access(params.infilename, F_OK) == -1) {
+  if (access(infilename, F_OK) == -1) {
     fprintf(stderr, "Error: The input file does not exists or is not readable.\n");
     exit(-1);
   }
 
   // make sure the method is valid
-  if (strcmp(params.method, "pc") != 0 &&
-      strcmp(params.method, "mi") != 0 &&
-      strcmp(params.method, "sc") != 0 ) {
+  if (strcmp(method, "pc") != 0 &&
+      strcmp(method, "mi") != 0 &&
+      strcmp(method, "sc") != 0 ) {
     fprintf(stderr,"Error: The method (--method option) must either be 'pc', 'sc' or 'mi'.\n");
     exit(-1);
   }
 
-  if (params.omit_na && !params.na_val) {
+  if (omit_na && !na_val) {
     fprintf(stderr, "Error: The missing value string should be provided (--na_val option).\n");
     exit(-1);
   }
 
   // TODO: make sure means shift bandwidth arguments are numeric between 1 and 0
 
-  if (params.headers) {
+  if (headers) {
     printf("  Skipping header lines\n");
   }
-  printf("  Performing transformation: %s \n", params.func);
-  printf("  Required observations: %d\n", params.min_obs);
-  printf("  Using method: '%s'\n", params.method);
-  if (params.omit_na) {
-    printf("  Missing values are: '%s'\n", params.na_val);
+  printf("  Performing transformation: %s \n", func);
+  printf("  Required observations: %d\n", min_obs);
+  printf("  Using method: '%s'\n", method);
+  if (omit_na) {
+    printf("  Missing values are: '%s'\n", na_val);
   }
 
   // remove the path and extension from the filename
-  char * filename = basename(params.infilename);
-  strcpy(params.fileprefix, filename);
-  char * p = rindex(params.fileprefix, '.');
+  char * filename = basename(infilename);
+  strcpy(fileprefix, filename);
+  char * p = rindex(fileprefix, '.');
   if (p) {
     p[0] = 0;
   }
 
   // if the function is log2 then set the do_log2 flag
-  if (strcmp(params.func, "log10") == 0) {
-    params.do_log10 = 1;
+  if (strcmp(func, "log10") == 0) {
+    do_log10 = 1;
   }
-  if (strcmp(params.func, "log2") == 0) {
-    params.do_log2 = 1;
+  if (strcmp(func, "log2") == 0) {
+    do_log2 = 1;
   }
-  if (strcmp(params.func, "log") == 0) {
-    params.do_log = 1;
+  if (strcmp(func, "log") == 0) {
+    do_log = 1;
   }
 
   // if we have a header line in the input file then
   // subtract one from the number of rows
-  if (params.headers) {
-    params.rows--;
+  if (headers) {
+    rows--;
   }
 
-  EMatrix * ematrix = load_ematrix(&params);
-  double ** data = ematrix->data;
+}
+
+/**
+ * DRArgs destructor.
+ */
+DRArgs::~DRArgs() {
+
+}
+/**
+ *
+ */
+int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
+
+  // variables used for timing of the software
+  time_t start_time = time(0);
+  time_t now;
+
+  DRArgs * params = new DRArgs(argc, argv);
+
+  // Load the input expression matrix.
+  EMatrix * ematrix = new EMatrix(params->getInfileName(), params->getNumRows(),
+      params->getNumCols(), params->getHasHeaders(), params->getOmitNA(),
+      params->getNAval());
   int i, j;
 
   // Open the clustering file for writing. Use the MPI ID in the filename.
-  FILE ** fps = open_output_files(params, mpi_id);
+//  FILE ** fps = open_output_files(params, mpi_id);
 
-  // Calculate the total number of comparisions and how many will be
-  // performed by this process. We subtract 1 from the first params.rows
-  // because we do not calculate the diagnoal.
-  long long int num_rows = params.rows - 1;
+  // Calculate the total number of comparisons and how many will be
+  // performed by this process. We subtract 1 from the first params->rows
+  // because we do not calculate the diagonal.
+  long long int num_rows = params->getNumRows() - 1;
   long long int total_comps  = num_rows * (num_rows + 1) / 2;
   long long int comps_per_process = total_comps / mpi_num_procs;
   long long int comp_start = mpi_id * comps_per_process;
   long long int comp_stop = mpi_id * comps_per_process + comps_per_process;
 
-  // If this is the last process and there are some remainder comparisions
+  // If this is the last process and there are some remainder comparisons
   // then we need to add them to the stop
   if (mpi_id + 1 == mpi_num_procs) {
     comp_stop = total_comps;
   }
-  printf("%d. Performing %lld comparisions\n", mpi_id + 1, comp_stop - comp_start);
+  printf("%d. Performing %lld comparisons\n", mpi_id + 1, comp_stop - comp_start);
   fflush(stdout);
 
-  // Perform the pair-wise royston test and clustering
+  // Perform the pair-wise clustering.
   int n_comps = 0;
   int my_comps = 0;
-  for (i = 0; i < params.rows; i++) {
+  for (i = 0; i < num_rows; i++) {
     /*if (i == 50) {
       break;
     }*/
-    for (j = 0; j < params.rows; j++) {
+    for (j = 0; j < num_rows; j++) {
 
       // We only need to calculate clusters in the lower triangle of the
       // full pair-wise matrix
@@ -254,33 +275,34 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       n_comps++;
       my_comps++;
 
-      double *a = data[j];
-      double *b = data[i];
+      double *a = ematrix->getRow(j);
+      double *b = ematrix->getRow(i);
 
       // Initialize the arrays that will be used for containing a and b
       // but with missing values removed.
-      double * a2 = (double *) malloc(sizeof(double) * params.cols);
-      double * b2 = (double *) malloc(sizeof(double) * params.cols);
+      int cols = params->getNumCols();
+      double * a2 = (double *) malloc(sizeof(double) * cols);
+      double * b2 = (double *) malloc(sizeof(double) * cols);
 
       // The kept variable is an array of zeros and ones and is the size of the
       // number of samples.  A zero indicates the sample is not included in
-      // the pair-wise comparision and a one indicates it is.
-      int * kept = (int *) malloc(sizeof(int) * params.cols);
+      // the pair-wise comparison and a one indicates it is.
+      int * kept = (int *) malloc(sizeof(int) * cols);
       int n2;
 
       // Remove any missing values before calculating Royston's H test.
       // This call will return a2 and b2 which are the same as a and b but
       // with missing values removed. n2 gets set to the size of a2 and b2.
-      remove_missing_paired(a, b, params.cols, a2, b2, &n2, kept);
+      remove_missing_paired(a, b, cols, a2, b2, &n2, kept);
 
-      // Perform the clustering if we have enough samples.
+      /*// Perform the clustering if we have enough samples.
       if (n2 > 0) {
 
         // Perform the clustering.
         PairWiseClusters * clusters = clustering(a2, i, b2, j, n2, ematrix, params, 0.075, 0);
 
         // update the clusters to include zeros for any samples with a missing value.
-        update_pairwise_cluster_samples(kept, params.cols, clusters);
+        update_pairwise_cluster_samples(kept, params->cols, clusters);
 
         // Write the clusters to the file.
         write_pairwise_cluster_samples(clusters, fps);
@@ -296,14 +318,14 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
         PairWiseClusters * newc = new_pairwise_cluster_list();
         newc->gene1 = i;
         newc->gene2 = j;
-        newc->num_samples = params.cols;
+        newc->num_samples = params->cols;
         newc->samples = kept;
         newc->next = NULL;
         newc->cluster_size = 0;
         newc->pcc = NAN;
         write_pairwise_cluster_samples(newc, fps);
         free_pairwise_cluster_list(newc);
-      }
+      }*/
 
       // Release the memory for a2 and b2.
       free(a2);
@@ -311,449 +333,13 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
 
     }
   }
-  close_output_files(fps);
-
-  free_ematrix(ematrix);
-  free(fps);
-
+  free(ematrix);
+  free(params);
   return 1;
 }
 
-/**
- * @param double * a2
- *   A row from the ematrix with missing values removed
- * @param int x
- *   The index of a2 in the ematrix
- * @param double * b2
- *   A row from the ematrix with missing values removed.
- * @param in y
- *   The index of b2 in the ematrix
- * @param int n2
- *   The size of both a2 and b2.
- * @param Ematrix ematrix
- *   The two-dimensional ematrix where rows are genes and columns are samples.
- * @param CCMParameters params
- *   The parameters provided to the program
- * @param float bw
- *   The bandwith argument for mean shift clustering.  Default should be 0.075.
- * @param int level
- *   An integer indicating the recursion level. It should always be set to
- *   zero by the caller of this function.
- */
-PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
-    EMatrix * ematrix, CCMParameters params, float bw, int level) {
-
-  // Variables used for looping.
-  int k, j;
-  int nkept;
-  int * ckept;
-
-  PairWiseClusters * result = new_pairwise_cluster_list();
-
-  // Perform bandwidth selection
-  double * selected = meanshift_coverage2D(a2, b2, n2);
-
-  // Perform mean shift clustering (MSC)
-  MeanShiftClusters * clusters;
-  clusters = meanshift2D(a2, b2, n2, selected[0]);
-
-  // Count the number of clusters that are larger than min_obs
-  int num_large = 0;
-  for(k = 0; k < clusters->num_clusters; k++) {
-    if (clusters->sizes[k] >= params.min_obs) {
-      num_large++;
-    }
-  }
-
-  // Iterate through all of the clusters.
-  for(k = 0; k < clusters->num_clusters; k++) {
-
-    // For easier access create variables for the current cluster size.
-    int size = clusters->sizes[k];
-
-    // Create separate vectors for the x and y coordinates.
-    double *cx = (double *) malloc(sizeof(double) * size);
-    double *cy = (double *) malloc(sizeof(double) * size);
-    for (j = 0; j < size; j++) {
-      cx[j] = 0;
-      cy[j] = 0;
-    }
-    // Add the values to the cx & cy arrays
-    int l = 0;
-    for (j = 0; j < n2; j++) {
-      if (clusters->cluster_label[j] == k + 1) {
-        cx[l] = a2[j];
-        cy[l] = b2[j];
-        l++;
-      }
-    }
-
-    // Discover any outliers for clusters with size >= min_obs
-    Outliers * outliersCx = NULL;
-    Outliers * outliersCy = NULL;
-    if (clusters->sizes[k] >= params.min_obs) {
-      outliersCx = outliers_iqr(cx, size, 1.5);
-      outliersCy = outliers_iqr(cy, size, 1.5);
-    }
-
-    // Create an array of the kept samples for this cluster. Don't include
-    // any samples whose coordinates are considered outliers or who are not
-    // in the cluster.
-    ckept = (int *) malloc(sizeof(int) * n2);
-    for (l = 0; l < n2; l++) {
-      ckept[l] = 0;
-    }
-    nkept = 0;
-    for (l = 0; l < n2; l++) {
-      // Is this sample is in the cluster? if so then also make sure it's
-      // not an outlier.
-      if (clusters->cluster_label[l] == k + 1) {
-        // Iterate through the outlier points and compare to this
-        // sapmle's points.  If there is a match then mark as an outlier
-        // and exclude it from the samples that are kept.  First check the
-        // x coordinate
-        int is_outlier = 0;
-        if (outliersCx) {
-          for (j = 0; j < outliersCx->n; j++) {
-            if (a2[l] == outliersCx->outliers[j]) {
-              is_outlier = 1;
-              break;
-            }
-          }
-        }
-        // Second check the y coordinate.
-        if (outliersCy) {
-          for (j = 0; j < outliersCy->n; j++) {
-            if (b2[l] == outliersCy->outliers[j]) {
-              is_outlier = 1;
-              break;
-            }
-          }
-        }
-        // if it's not an outlier then keep it.
-        if (!is_outlier) {
-          ckept[l] = 1;
-          cx[nkept] = a2[l];
-          cy[nkept] = b2[l];
-          nkept++;
-        }
-      }
-    } // end for (l = 0; l < n2; l++) ...
-
-    // Free the outlier objects.
-    if (outliersCx) {
-      free(outliersCx->outliers);
-      free(outliersCx);
-    }
-    if (outliersCy) {
-      free(outliersCy->outliers);
-      free(outliersCy);
-    }
-
-    // Now after we have removed outliers and non-cluster samples,
-    // makes sure we still have the minimum observations.
-    if (nkept >= params.min_obs) {
-
-      // If the recursion level is greater than zero the we've already clustered
-      // at least once.  When we reach this point we've clustered again. If
-      // we only have a single cluster at this point then we can't cluster
-      // anymore and we can perform correlation.
-      if (level > 0 && num_large == 1) {
-        float corr = NAN;
-        if (strcmp(params.method, "sc") == 0) {
-          // Initialize the workspace needed for Spearman's calculation.
-          double workspace[2 * params.rows];
-          corr = gsl_stats_spearman(cx, 1, cy, 1, nkept, workspace);
-        }
-        if (strcmp(params.method, "pc") == 0) {
-          corr = gsl_stats_correlation(cx, 1, cy, 1, nkept);
-        }
-        PairWiseClusters * newc = new_pairwise_cluster_list();
-        newc->gene1 = x;
-        newc->gene2 = y;
-        newc->num_samples = n2;
-        newc->samples = ckept;
-        newc->next = NULL;
-        newc->cluster_size = nkept;
-        newc->pcc = corr;
-        add_pairwise_cluster_list(&result, newc);
-      }
-
-      // If this is the first level of clustering then we want to cluster
-      // again, but only if there is one or more large cluster.
-      // We do this because we haven't yet settled on a distinct
-      // "expression mode".
-      else {
-        PairWiseClusters * children = clustering(cx, x, cy, y, nkept, ematrix, params, 0.09, level + 1);
-        update_pairwise_cluster_samples(ckept, n2, children);
-        add_pairwise_cluster_list(&result, children);
-        // here we need to free ckept because it never got used in a
-        // PairWiseClusters instance
-        free(ckept);
-      }
-    }
-    // If the cluster is too small then just add it without
-    // correlation analysis or further sub clustering.
-    else {
-      PairWiseClusters * newc = new_pairwise_cluster_list();
-      newc->gene1 = x;
-      newc->gene2 = y;
-      newc->num_samples = n2;
-      newc->samples = ckept;
-      newc->next = NULL;
-      newc->cluster_size = nkept;
-      newc->pcc = NAN;
-      add_pairwise_cluster_list(&result, newc);
-    }
-    free(cx);
-    free(cy);
-  }
-
-  // free the memory
-  free_msc(clusters);
 
 
-  return result;
-}
-
-
-/**
- * Intializes the head PairWiseCluster object.
- */
-PairWiseClusters * new_pairwise_cluster_list() {
-  PairWiseClusters * pws = (PairWiseClusters *) malloc(sizeof(PairWiseClusters));
-  pws->gene1 = -1;
-  pws->gene2 = -1;
-  pws->next = NULL;
-  pws->samples = NULL;
-  pws->num_samples = 0;
-  pws->cluster_size = 0;
-  pws->pcc = 0;
-
-  return pws;
-}
-
-/**
- * Frees up all the memory in a PairWiseClusters object list.
- */
-void free_pairwise_cluster_list(PairWiseClusters * head) {
-
-  PairWiseClusters * curr = (PairWiseClusters *) head;
-  PairWiseClusters * next = (PairWiseClusters *) curr->next;
-
-  while (curr != NULL) {
-    if (curr->samples != NULL) {
-      free(curr->samples);
-    }
-    free(curr);
-    curr = next;
-    if (next != NULL) {
-      next = (PairWiseClusters *) next->next;
-    }
-  }
-}
-/**
- * Adds a new PairWiseClusters object to the list
- *
- * @param PairWiseClusters ** head
- *   A pointer to the pointer of the head object in the list
- * @param PairWiseClusters * new
- *   The pointer to the new object to add to the end of the list
- */
-void add_pairwise_cluster_list(PairWiseClusters **head, PairWiseClusters *newc) {
-
-  PairWiseClusters * curr = *head;
-
-  // Check the list to see if it is empty. If so, then make this item the
-  // new head.
-  if (curr->gene1 == -1) {
-    free_pairwise_cluster_list(*head);
-    *head = newc;
-    return;
-  }
-
-  // Traverse the list to the end and then add the new item
-  while (curr->next != NULL) {
-    curr = (PairWiseClusters * ) curr->next;
-  }
-  curr->next = (struct PairWiseClusters *) newc;
-}
-/**
- * Updates the samples vector of a PairWiseClusters object.
- *
- * Because the clustering() function is recursive it is successivly called
- * with smaller and smaller sample sets.  When it returns it provdes  PWC
- * object with a samples array.  In the samples array, samples that are present
- * in the cluster are marked with a 1 and those not in the cluster are
- * set to 0.  The order of values correspondes to the sample order. The samples
- * array, however, only contains 1's and 0's for the samples provided to the
- * clustering() function. Therefore, the results need to be merged back into
- * the larger samples array.  This function does that.
- *
- * @param int *parent_samples
- *   The list of parent samples. It contains a list of 0's and 1's indicating
- *   which samples are to be kept.  Any samples not also found in the
- *   'new.samples' argument are set to 0.
- * @param int n
- *   The size of the parent_samples array.
- * @param new
- *   The new PWC object.
- */
-void update_pairwise_cluster_samples(int * parent_samples, int n, PairWiseClusters * head) {
-
-  PairWiseClusters * curr = (PairWiseClusters *) head;
-  PairWiseClusters * next = (PairWiseClusters *) head->next;
-
-  while (curr != NULL) {
-    int z;
-    int w = 0;
-
-    // Create a new kept array that will update the current samples array.
-    int * new_samples = (int *) malloc(sizeof(int) * n);
-
-    // Iterate through all of the elements of the parent samples list.
-    for (z = 0; z < n; z++) {
-      // If the element is 1, meaning the sample is present int he parent
-      // cluster, then check the current sample to see if was preserved during
-      // sub clustering.
-      if (parent_samples[z] == 1) {
-        if (curr->samples[w] == 0) {
-          new_samples[z] = 0;
-        }
-        // The element is kept in the pwc so preserve the 1 it in the new array.
-        else {
-          new_samples[z] = 1;
-        }
-        w++;
-      }
-      // The element is not kept originally so preserve the 0 in the new array.
-      else {
-        new_samples[z] = 0;
-      }
-    }
-    // Free up the old samples array and replace it with a new one.
-    free(curr->samples);
-    curr->samples = new_samples;
-    curr->num_samples = n;
-
-    curr = next;
-    if (next != NULL) {
-      next = (PairWiseClusters *) next->next;
-    }
-  }
-}
-
-/**
- * Adds a line to the clustering file.
- *
- * The clustering file is used by KINC during pair-wise correlation analysis
- * to restrict which samples are used.  The file is tab delimited.
- * The format of the file is tab delimited with the following columns:
- *
- *   1)  gene 1 name
- *   2)  gene 2 name
- *   3)  cluster name.  A 0 indicates no clustering was performed.
- *   4)  a string of 0 and 1s indicating which samples to include when
- *       performing pair-wise comparisons.
- *
- * @param PairWiseSets pws
- *   The details for this line
- * @param FILE *cf
- *   The file pointer of the clustering file.
- */
-void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE ** fps) {
-
-  // The file pointer of the file to write to.
-  FILE *fp;
-
-  // Do nothing if the object is empty.
-  if (pwc->gene1 == -1) {
-    return;
-  }
-
-  // Iterate through the list of clusters and print each one.
-  PairWiseClusters * curr = pwc;
-  int cluster_id = 0;
-  while (curr != NULL) {
-    // Determine which file to write the output into
-    if (isnan(curr->pcc)) {
-      fp = fps[101];
-    }
-    else {
-      float i1 = curr->pcc * 100.0;
-      float i2 = fabs(i1);
-      int i3 = (int) i2;
-      fp = fps[i3];
-    }
-    if (curr->gene1 != -1) {
-      fprintf(fp, "%i\t%i\t%i\t%i\t", curr->gene1, curr->gene2, curr->cluster_size, cluster_id + 1);
-      int i;
-      for (i = 0; i < curr->num_samples; i++) {
-        fprintf(fp, "%i", curr->samples[i]);
-      }
-      fprintf(fp, "\t%f", curr->pcc);
-      fprintf(fp, "\n");
-      cluster_id++;
-    }
-    curr = (PairWiseClusters *) curr->next;
-    fflush(fp);
-  }
-}
-
-/**
- * Opens and creates 102 files for storing the clusters with correlation values.
- * Each file stores a range of 1/100 Spearman correlation values.
- */
-FILE ** open_output_files(CCMParameters params, int mpi_id) {
-
-  char clusters_dir[50];
-  char nan_dir[50];
-
-  sprintf(clusters_dir, "./clusters-%s", params.method);
-  sprintf(nan_dir, "%s/nan", clusters_dir);
-
-  // make sure the output directory exists
-  struct stat st = {0};
-  if (stat(clusters_dir, &st) == -1) {
-      mkdir(clusters_dir, 0700);
-  }
-
-  // Open up 102 files, one each for 100 Spearman correlation value ranges.
-  // and another for those without (e.g. 'nan')
-  FILE ** fps = (FILE **) malloc(sizeof(FILE *) * 102);
-
-  int i =  0;
-  char filename[1025];
-  char dirname[1025];
-  for (i = 0; i <= 100; i++) {
-    sprintf(dirname, "%s/%03d", clusters_dir, i);
-    if (stat(dirname, &st) == -1) {
-      mkdir(dirname, 0700);
-    }
-    sprintf(filename, "%s/%03d/%s.clusters.%03d.%03d.txt", clusters_dir, i, params.fileprefix, i, mpi_id + 1);
-    fps[i] = fopen(filename, "w");
-  }
-
-  if (stat(nan_dir, &st) == -1) {
-    mkdir(nan_dir, 0700);
-  }
-  sprintf(filename, "%s/%s.clusters.nan.%03d.txt", nan_dir, params.fileprefix, mpi_id + 1);
-  fps[i] = fopen(filename, "w");
-
-  return fps;
-}
-
-/**
- * Closes the 102 files that were opened.
- */
-void close_output_files(FILE** fps) {
-  int i =  0;
-  for (i = 0; i <= 101; i++) {
-    FILE * fp = fps[i];
-    fprintf(fp, "#Done\n");
-    fclose(fp);
-  }
-}
 
 /**
  * Prints the command-line usage instructions for the similarity command

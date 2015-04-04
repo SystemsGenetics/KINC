@@ -40,7 +40,6 @@
 #include "similarity.h"
 #include "extract.h"
 
-
 /**
  * Function prototypes
  */
