@@ -6,7 +6,7 @@ MPI_INCLUDES =  $(shell mpic++ --showme:compile)
 MPI_LDLINK = $(shell mpic++ --showme:link)
 
 CFLAGS = -g -Wall
-INCLUDES = 
+INCLUDES = -I/usr/local/include
 LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -g
 
 OBJS = \
@@ -24,6 +24,7 @@ OBJS = \
   similarity/bspline_mi.o \
   similarity/pearson.o \
   similarity/spearman.o \
+  clustering/mixmod.o \
   dimreduce.o \
   similarity.o \
   threshold.o \
@@ -75,6 +76,9 @@ similarity/pearson.o: similarity/pearson.cpp similarity/pearson.h
 
 similarity/bspline_mi.o: similarity/bspline_mi.cpp similarity/bspline_mi.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/bspline_mi.cpp -o similarity/bspline_mi.o
+
+clustering/mixmod.o: clustering/mixmod.cpp clustering/mixmod.h
+	${CC} -c ${CFLAGS} ${INCLUDES} clustering/mixmod.cpp -o clustering/mixmod.o
 
 dimreduce.o: dimreduce.cpp dimreduce.h
 	${CC} -c ${CFLAGS} ${INCLUDES} ${MPI_INCLUDES} dimreduce.cpp

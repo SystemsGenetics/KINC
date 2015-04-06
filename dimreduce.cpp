@@ -202,6 +202,18 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
   EMatrix * ematrix = new EMatrix(params->getInfileName(), params->getNumRows(),
       params->getNumCols(), params->getHasHeaders(), params->getOmitNA(),
       params->getNAval());
+
+  // Perform any transformations to the data requested by the user.
+  if (params->getDoLog()) {
+    ematrix->logTransform();
+  }
+  if (params->getDoLog2()) {
+      ematrix->log2Transform();
+  }
+  if (params->getDoLog10()) {
+      ematrix->log10Transform();
+  }
+
   int i, j;
 
   // Open the clustering file for writing. Use the MPI ID in the filename.

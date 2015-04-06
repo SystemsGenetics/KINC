@@ -2,7 +2,7 @@
 
 
 /**
- * Intializes the head PairWiseCluster object.
+ * Initializes the head PairWiseCluster object.
  */
 SampleCluster::SampleCluster() {
 
@@ -15,7 +15,7 @@ SampleCluster::SampleCluster() {
   pcc = 0;
 }
 
-SampleCluster::~SampleCluster(SampleCluster * head) {
+SampleCluster::~SampleCluster() {
   SampleCluster * curr = (SampleCluster *) head;
   SampleCluster * next = (SampleCluster *) curr->next;
 

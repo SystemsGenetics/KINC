@@ -197,7 +197,21 @@ int do_similarity(int argc, char *argv[]) {
     time(&start_time);
   }
 
+  // Retrieve the data from the EMatrix file.
   EMatrix * ematrix = new EMatrix(params.infilename, params.rows, params.cols, params.headers, params.omit_na, params.na_val);
+
+  // Perform any transformations to the data requested by the user.
+  if (params.do_log) {
+    ematrix->logTransform();
+  }
+  if (params.do_log2) {
+      ematrix->log2Transform();
+  }
+  if (params.do_log10) {
+      ematrix->log10Transform();
+  }
+
+  // Get the dat array so we can iterate through it.
   double ** data = ematrix->getMatrix();
 
   if (strcmp(params.method, "pc") == 0) {

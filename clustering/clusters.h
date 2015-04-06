@@ -49,14 +49,14 @@ class SampleClusterWriter {
 };
 
 
-FILE ** open_output_files(CCMParameters params, int mpi_id);
-void close_output_files(FILE** fps);
-void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE ** fps);
-// Functions for working with the PairWiseClusters list
-void free_pairwise_cluster_list(PairWiseClusters * head);
-PairWiseClusters * new_pairwise_cluster_list();
-void add_pairwise_cluster_list(PairWiseClusters **head, PairWiseClusters *newc);
-void update_pairwise_cluster_samples(int * parent_samples, int n, PairWiseClusters * head);
+//FILE ** open_output_files(CCMParameters params, int mpi_id);
+//void close_output_files(FILE** fps);
+//void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE ** fps);
+//// Functions for working with the PairWiseClusters list
+//void free_pairwise_cluster_list(PairWiseClusters * head);
+//PairWiseClusters * new_pairwise_cluster_list();
+//void add_pairwise_cluster_list(PairWiseClusters **head, PairWiseClusters *newc);
+//void update_pairwise_cluster_samples(int * parent_samples, int n, PairWiseClusters * head);
 
 
 #endif

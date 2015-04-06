@@ -16,6 +16,7 @@
 //#include "stats/outlier.h"
 #include "error.h"
 #include "misc.h"
+#include "mixmod.h"
 
 
 /**
@@ -70,6 +71,7 @@ class DRArgs {
     char * getCorMethod() { return method; }
     int getMinObs() { return min_obs; }
     int getDoLog10() { return do_log10; }
+    int getDoLog2() { return do_log2; }
     int getDoLog() { return do_log; }
     char getFilePrefix() {return fileprefix[1024]; }
 

@@ -22,6 +22,8 @@ class EMatrix {
     double ** getMatrix() { return data; }
     double * getRow(int i) { return data[i]; }
     double getCell(int i, int j) { return data[i][j]; }
+    int getNumSamples() { return num_samples; }
+    int getNumGenes() { return num_genes; }
 
     void logTransform();
     void log2Transform();
