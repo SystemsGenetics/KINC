@@ -63,9 +63,9 @@
 #define R_DT_0  (lower_tail ? R_D__0 : R_D__1)    /* 0 */
 #define R_DT_1  (lower_tail ? R_D__1 : R_D__0)    /* 1 */
 
-#ifndef min
-# define min(a, b) ((a) > (b) ? (b) : (a))
-#endif
+//#ifndef min
+//# define min(a, b) ((a) > (b) ? (b) : (a))
+//#endif
 
 #define M_SQRT_32 5.656854249492380195206754896838  /* sqrt(32) */
 #define M_1_SQRT_2PI  0.398942280401432677939946059934  /* 1/sqrt(2pi) */

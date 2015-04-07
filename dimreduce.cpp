@@ -307,37 +307,40 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       // with missing values removed. n2 gets set to the size of a2 and b2.
       remove_missing_paired(a, b, cols, a2, b2, &n2, kept);
 
-      /*// Perform the clustering if we have enough samples.
+      // Perform the clustering if we have enough samples.
       if (n2 > 0) {
+        // Perform pairwise clustering using mixture models
+        MixMod * mixmod = new MixMod(a2, b2, n2);
+        mixmod->run();
 
-        // Perform the clustering.
-        PairWiseClusters * clusters = clustering(a2, i, b2, j, n2, ematrix, params, 0.075, 0);
-
-        // update the clusters to include zeros for any samples with a missing value.
-        update_pairwise_cluster_samples(kept, params->cols, clusters);
-
-        // Write the clusters to the file.
-        write_pairwise_cluster_samples(clusters, fps);
-
-        // clean up the memory.
-        free_pairwise_cluster_list(clusters);
-        free(kept);
+//        // Perform the clustering.
+//        PairWiseClusters * clusters = clustering(a2, i, b2, j, n2, ematrix, params, 0.075, 0);
+//
+//        // update the clusters to include zeros for any samples with a missing value.
+//        update_pairwise_cluster_samples(kept, params->cols, clusters);
+//
+//        // Write the clusters to the file.
+//        write_pairwise_cluster_samples(clusters, fps);
+//
+//        // clean up the memory.
+//        free_pairwise_cluster_list(clusters);
+//        free(kept);
       }
       // One of these genes has no observations so, just write out an
       // empty cluster.
       else {
-        // Create an empty clusters set
-        PairWiseClusters * newc = new_pairwise_cluster_list();
-        newc->gene1 = i;
-        newc->gene2 = j;
-        newc->num_samples = params->cols;
-        newc->samples = kept;
-        newc->next = NULL;
-        newc->cluster_size = 0;
-        newc->pcc = NAN;
-        write_pairwise_cluster_samples(newc, fps);
-        free_pairwise_cluster_list(newc);
-      }*/
+//        // Create an empty clusters set
+//        PairWiseClusters * newc = new_pairwise_cluster_list();
+//        newc->gene1 = i;
+//        newc->gene2 = j;
+//        newc->num_samples = params->cols;
+//        newc->samples = kept;
+//        newc->next = NULL;
+//        newc->cluster_size = 0;
+//        newc->pcc = NAN;
+//        write_pairwise_cluster_samples(newc, fps);
+//        free_pairwise_cluster_list(newc);
+      }
 
       // Release the memory for a2 and b2.
       free(a2);

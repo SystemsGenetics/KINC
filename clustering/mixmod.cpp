@@ -6,12 +6,21 @@
  *
  * @param EMatrix *ematrix;
  */
-MixMod::MixMod(EMatrix * ematrix) {
+MixMod::MixMod(double *a, double *b, int n) {
+  size = n;
+
   // The data we are using is qualitative, so set the data type.
   dataType = XEM::QuantitativeData;
 
   // Create the Gaussian Data object and set the dataDescription object.
-  gdata = new XEM::GaussianData(ematrix->getNumGenes(), ematrix->getNumSamples(), ematrix->getMatrix());
+  data = (double **) malloc(sizeof(double *) * n);
+  for (int i = 0; i < n ; i++) {
+    data[i] = (double *) malloc(sizeof(double) * 2);
+    data[i][0] = a[i];
+    data[i][1] = b[i];
+  }
+
+  gdata = new XEM::GaussianData(n, 2, data);
   dataDescription = new XEM::DataDescription(gdata);
 
   // Set the number of clusters to be tested to 9.
@@ -42,6 +51,11 @@ MixMod::~MixMod() {
   if (cOutput) {
     delete cOutput;
   }
+  // Free the data array.
+  for (int i = 0; i < size ; i++) {
+    free(data[i]);
+  }
+  free(data);
 }
 
 /**
@@ -57,10 +71,28 @@ void MixMod::run() {
    // Create a new XEM::ClusteringOutput object
    cOutput = cMain.getOutput();
 
+   //
+   cOutput->sort (XEM::BIC);
+
    if (cOutput->atLeastOneEstimationNoError()) {
-     vector<XEM::ClusteringModelOutput*> cMOutput = cOutput->getClusteringModelOutput();
-     for (int i=0; i<3; i++) {
-      cout << "MODEL " << i << " " << cMOutput[i]->getNbCluster() << " " << cMOutput[i]->getLikelihood() << " " << cMOutput[i]->getCriterionOutput(0).getValue() << endl;
-     }
-   }
+   // get the best XEM::ClusteringModelOutput
+     XEM::ClusteringModelOutput* cMOutput = cOutput->getClusteringModelOutput().front();
+     XEM::ParameterDescription* paramDescription = cMOutput->getParameterDescription();
+
+     cout << "-----------------------------------------------------------------------" << endl;
+     cout << "Best model is " << endl;
+     cout << " - nbCluster : " << paramDescription->getNbCluster() << endl;
+     cout << "-----------------------------------------------------------------------" << endl << endl;
+
+     cout << "-----------------------------------------------------------------------" << endl;
+     cout << "Parameters display" << endl;
+
+     XEM::Parameter* param = paramDescription->getParameter();
+     // print out parameters
+     param->edit();
+     // print out criterion values
+     for (int64_t iCriterion = 0; iCriterion < cInput->getCriterionName().size(); iCriterion++)
+      cMOutput->getCriterionOutput (cInput->getCriterionName (iCriterion)).editTypeAndValue (std::cout);
+    }
+    cout << "-----------------------------------------------------------------------" << endl;
 }

@@ -16,7 +16,7 @@
 //#include "stats/outlier.h"
 #include "error.h"
 #include "misc.h"
-#include "mixmod.h"
+#include "clustering/mixmod.h"
 
 
 /**

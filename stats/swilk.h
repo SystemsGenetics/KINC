@@ -5,6 +5,7 @@
 #include <gsl/gsl_statistics.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "stats.h"
 #include "../vector.h"
 #include "../error.h"

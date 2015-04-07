@@ -7,7 +7,7 @@ MPI_LDLINK = $(shell mpic++ --showme:link)
 
 CFLAGS = -g -Wall
 INCLUDES = -I/usr/local/include
-LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -g
+LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -g
 
 OBJS = \
   error.o \
@@ -17,8 +17,6 @@ OBJS = \
   stats/stats.o \
   stats/kurtosis.o \
   stats/sfrancia.o \
-  stats/swilk.o \
-  stats/royston.o \
   stats/outlier.o \
   stats/meanshift.o \
   similarity/bspline_mi.o \
@@ -56,11 +54,11 @@ stats/kurtosis.o: stats/kurtosis.cpp stats/kurtosis.h
 stats/sfrancia.o: stats/sfrancia.cpp stats/sfrancia.h
 	${CC} -c ${CFLAGS} ${INCLUDES} stats/sfrancia.cpp -o stats/sfrancia.o
 
-stats/swilk.o: stats/swilk.cpp stats/swilk.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/swilk.cpp -o stats/swilk.o
+#stats/swilk.o: stats/swilk.cpp stats/swilk.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} stats/swilk.cpp -o stats/swilk.o
 
-stats/royston.o: stats/royston.cpp stats/royston.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/royston.cpp -o stats/royston.o
+#stats/royston.o: stats/royston.cpp stats/royston.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} stats/royston.cpp -o stats/royston.o
 
 stats/outlier.o: stats/outlier.cpp stats/outlier.h
 	${CC} -c ${CFLAGS} ${INCLUDES} stats/outlier.cpp -o stats/outlier.o
