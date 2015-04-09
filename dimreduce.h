@@ -39,7 +39,7 @@ class DRArgs {
     char *na_val;
     // Specifies the transformation function: log2, none.
     char func[10];
-    // Specifies the correlation method: cor, mi, sc
+    // Specifies the correlation method: pc, mi, sc
     char method[10];
     // The minimum number of observations to calculate correlation.
     int min_obs;

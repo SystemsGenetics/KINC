@@ -6,57 +6,75 @@
 #include <sys/stat.h>
 
 /**
- * The PairWiseClusters struct contains the information about a cluster. It is
- * also a list node (has a *next element) to allow these objects to be
- * strung together in a list.
+ * The PairWiseCluster struct contains the information about a cluster.
+ *
  */
-class SampleCluster {
+class PairWiseCluster {
   public:
-    // An array of zeros and ones indicating which samples from the input file
-    // are to be used for the comparison.
+
+    // An array of zeros and ones indicating which samples comprise the cluster
     int * samples;
     // The number of samples in the samples array.
     int num_samples;
-    // The index of the first gene used in the comparison.
-    int gene1;
-    // The index of the second gene used in the comparison.
-    int gene2;
     // The number of samples in the cluster
     int cluster_size;
-    // The Pearson's Correlation Coefficient for the cluster
-    double pcc;
+    // The similarity score. Can be a Pearson's Correlation coefficient, or
+    // a Spearman's coefficent, MI score, etc.
+    double score;
+    // The next cluster in the linked list.
+    PairWiseCluster * neighbor;
 
-    SampleCluster * next;
-
-    SampleCluster();
-    ~SampleCluster();
-
-    void addSampleCluster(SampleCluster * newc);
-
+    PairWiseCluster();
+    ~PairWiseCluster() {};
 };
 
-class SampleClusterWriter {
+/**
+ * A set of clusters that belong to the same two genes.
+ */
+class PairWiseClusterSet {
+  public:
+    // The indecies of the genes in the input Expression matrix
+    int gene1;
+    int gene2;
+    // The method used to perform the pair-wise comparision.
+    char * method;
+    // The number of clusters in the set.
+    int num_clusters;
+
+    // The head for the linked list of PairWiseClusters.
+    PairWiseCluster * head;
+
+    PairWiseClusterSet(int gene1, int gene2, const char * method);
+    ~PairWiseClusterSet();
+
+    void addCluster(PairWiseCluster * pwc);
+};
+
+/**
+ *
+ */
+class PairWiseClusterWriter {
   private:
     // An array of file pointers.
     FILE ** fps;
+    // Specifies the correlation method: pc, mi, sc
+    char * method;
+    // The prefix for the filename.
+    char * fileprefix;
+    // A unique id to differentiate between parallel executions.
+    int id;
 
-    void openOutFiles(char * method, char * fileprefix, int mpi_id);
+    // Opens and creates file pointers for all of the
+    void openOutFiles();
     void closeOutFiles();
   public:
-    SampleClusterWriter();
-    ~SampleClusterWriter();
-    void writeSampleCluster(SampleCluster pwc);
+    // Constructor.
+    PairWiseClusterWriter(const char * method, const char * fileprefix, int id);
+    // Destructor.
+    ~PairWiseClusterWriter();
+    // Writes a PairWiseCluster to the proper file.
+    void writeClusters(PairWiseClusterSet * pwcs);
 };
-
-
-//FILE ** open_output_files(CCMParameters params, int mpi_id);
-//void close_output_files(FILE** fps);
-//void write_pairwise_cluster_samples(PairWiseClusters * pwc, FILE ** fps);
-//// Functions for working with the PairWiseClusters list
-//void free_pairwise_cluster_list(PairWiseClusters * head);
-//PairWiseClusters * new_pairwise_cluster_list();
-//void add_pairwise_cluster_list(PairWiseClusters **head, PairWiseClusters *newc);
-//void update_pairwise_cluster_samples(int * parent_samples, int n, PairWiseClusters * head);
 
 
 #endif

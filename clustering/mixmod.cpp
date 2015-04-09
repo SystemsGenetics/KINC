@@ -6,8 +6,11 @@
  *
  * @param EMatrix *ematrix;
  */
-MixMod::MixMod(double *a, double *b, int n) {
-  size = n;
+MixModClusters::MixModClusters(double *a, double *b, int n) {
+
+  num_samples = n;
+  labels = NULL;
+  pwcl = NULL;
 
   // The data we are using is qualitative, so set the data type.
   dataType = XEM::QuantitativeData;
@@ -44,7 +47,7 @@ MixMod::MixMod(double *a, double *b, int n) {
 /**
  * Destructor for the MixMod class.
  */
-MixMod::~MixMod() {
+MixModClusters::~MixModClusters() {
   delete gdata;
   delete dataDescription;
   delete cInput;
@@ -52,7 +55,7 @@ MixMod::~MixMod() {
     delete cOutput;
   }
   // Free the data array.
-  for (int i = 0; i < size ; i++) {
+  for (int i = 0; i < num_samples ; i++) {
     free(data[i]);
   }
   free(data);
@@ -61,7 +64,7 @@ MixMod::~MixMod() {
 /**
  * Executes mixture model clustering.
  */
-void MixMod::run() {
+void MixModClusters::run() {
    // Create XEM::ClusteringMain
    XEM::ClusteringMain cMain(cInput);
 
@@ -72,10 +75,10 @@ void MixMod::run() {
    cOutput = cMain.getOutput();
 
    //
-   cOutput->sort (XEM::BIC);
+   cOutput->sort(XEM::BIC);
 
    if (cOutput->atLeastOneEstimationNoError()) {
-   // get the best XEM::ClusteringModelOutput
+     // Get the best XEM::ClusteringModelOutput
      XEM::ClusteringModelOutput* cMOutput = cOutput->getClusteringModelOutput().front();
      XEM::ParameterDescription* paramDescription = cMOutput->getParameterDescription();
 
@@ -91,8 +94,14 @@ void MixMod::run() {
      // print out parameters
      param->edit();
      // print out criterion values
-     for (int64_t iCriterion = 0; iCriterion < cInput->getCriterionName().size(); iCriterion++)
+     for (int64_t iCriterion = 0; iCriterion < cInput->getCriterionName().size(); iCriterion++) {
       cMOutput->getCriterionOutput (cInput->getCriterionName (iCriterion)).editTypeAndValue (std::cout);
+     }
+
+     XEM::LabelDescription * ldescription = cMOutput->getLabelDescription();
+     XEM::Label * label = ldescription->getLabel();
+     int64_t * tabLabel = label->getTabLabel();
+     cout << tabLabel << endl;
     }
     cout << "-----------------------------------------------------------------------" << endl;
 }

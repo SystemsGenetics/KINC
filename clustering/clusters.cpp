@@ -4,44 +4,66 @@
 /**
  * Initializes the head PairWiseCluster object.
  */
-SampleCluster::SampleCluster() {
+PairWiseCluster::PairWiseCluster() {
 
-  gene1 = -1;
-  gene2 = -1;
-  next = NULL;
+  // Initialize the class members.
   samples = NULL;
   num_samples = 0;
   cluster_size = 0;
-  pcc = 0;
+  score = 0;
+  neighbor = NULL;
 }
 
-SampleCluster::~SampleCluster() {
-  SampleCluster * curr = (SampleCluster *) head;
-  SampleCluster * next = (SampleCluster *) curr->next;
+PairWiseClusterSet::PairWiseClusterSet(int g1, int g2, const char * m) {
+  gene1 = g1;
+  gene2 = g2;
+  num_clusters = 0;
+  method = (char *) malloc(sizeof(char) * strlen(m) + 1);
+  strcpy(method, m);
+  head = NULL;
+}
 
-  while (curr != NULL) {
-    if (curr->samples != NULL) {
-      free(curr->samples);
-    }
-    free(curr);
-    curr = next;
-    if (next != NULL) {
-      next = (PairWiseClusters *) next->next;
-    }
+void PairWiseClusterSet::addCluster(PairWiseCluster * pwc) {
+
+  // Check the list to see if it is empty. If so, then make this item the
+  // new head.
+  if (head == NULL) {
+    head = pwc;
+    return;
   }
+
+  // Traverse the list to the end and then add the new item
+  PairWiseCluster * curr = head;
+  while (curr->neighbor != NULL) {
+    curr = curr->neighbor;
+  }
+  curr->neighbor = pwc;
 }
 
-SampleClusterWriter::SampleClusterWriter() {
+/**
+ * Constructor
+ */
+PairWiseClusterWriter::PairWiseClusterWriter(const char * m, const char * fp, int i) {
+  id = i;
+  method = (char *) malloc(sizeof(char) * strlen(m) + 1);
+  strcpy(method, m);
+
+  fileprefix = (char *) malloc(sizeof(char) * strlen(fp) + 1);
+  strcpy(fileprefix, fp);
   fps = (FILE **) malloc(sizeof(FILE *) * 102);
 }
-SampleClusterWriter::~SampleClusterWriter() {
+/**
+ * Destructor
+ */
+PairWiseClusterWriter::~PairWiseClusterWriter() {
   free(fps);
+  free(fileprefix);
 }
 /**
  * Opens and creates 102 files for storing the clusters with correlation values.
  * Each file stores a range of 1/100 Spearman correlation values.
  */
-void SampleClusterWriter::openOutFiles(char * method, char * fileprefix, int mpi_id) {
+void PairWiseClusterWriter::openOutFiles() {
 
   char clusters_dir[50];
   char nan_dir[50];
@@ -65,21 +87,21 @@ void SampleClusterWriter::openOutFiles(char * method, char * fileprefix, int mpi
     if (stat(dirname, &st) == -1) {
       mkdir(dirname, 0700);
     }
-    sprintf(filename, "%s/%03d/%s.clusters.%03d.%03d.txt", clusters_dir, i, fileprefix, i, mpi_id + 1);
+    sprintf(filename, "%s/%03d/%s.clusters.%03d.%03d.txt", clusters_dir, i, fileprefix, i, id + 1);
     fps[i] = fopen(filename, "w");
   }
 
   if (stat(nan_dir, &st) == -1) {
     mkdir(nan_dir, 0700);
   }
-  sprintf(filename, "%s/%s.clusters.nan.%03d.txt", nan_dir, fileprefix, mpi_id + 1);
+  sprintf(filename, "%s/%s.clusters.nan.%03d.txt", nan_dir, fileprefix, id + 1);
   fps[i] = fopen(filename, "w");
 }
 
 /**
  * Closes the 102 files that were opened.
  */
-void SampleClusterWriter::closeOutFiles() {
+void PairWiseClusterWriter::closeOutFiles() {
   int i =  0;
   for (i = 0; i <= 101; i++) {
     FILE * fp = fps[i];
@@ -104,71 +126,36 @@ void SampleClusterWriter::closeOutFiles() {
  *
  * @param SampleCluster pws
  */
-void SampleClusterWriter::writeSampleCluster(SampleCluster pwc) {
+void PairWiseClusterWriter::writeClusters(PairWiseClusterSet *pwcs) {
 
   // The file pointer of the file to write to.
   FILE *fp;
-
-  // Do nothing if the object is empty.
-  if (pwc->gene1 == -1) {
-    return;
-  }
-
-  // Iterate through the list of clusters and print each one.
-  SampleCluster * curr = pwc;
   int cluster_id = 0;
+
+  PairWiseCluster * curr = pwcs->head;
   while (curr != NULL) {
     // Determine which file to write the output into
-    if (isnan(curr->pcc)) {
+    if (isnan(curr->score)) {
       fp = fps[101];
     }
     else {
-      float i1 = curr->pcc * 100.0;
+      float i1 = curr->score * 100.0;
       float i2 = fabs(i1);
       int i3 = (int) i2;
       fp = fps[i3];
     }
-    if (curr->gene1 != -1) {
-      fprintf(fp, "%i\t%i\t%i\t%i\t", curr->gene1, curr->gene2, curr->cluster_size, cluster_id + 1);
-      int i;
-      for (i = 0; i < curr->num_samples; i++) {
-        fprintf(fp, "%i", curr->samples[i]);
-      }
-      fprintf(fp, "\t%f", curr->pcc);
-      fprintf(fp, "\n");
-      cluster_id++;
+    fprintf(fp, "%i\t%i\t%i\t%i\t", pwcs->gene1, pwcs->gene2, curr->cluster_size, cluster_id);
+    for (int i = 0; i < curr->num_samples; i++) {
+      fprintf(fp, "%i", curr->samples[i]);
     }
-    curr = (SampleCluster *) curr->next;
-    fflush(fp);
+    fprintf(fp, "\t%f", curr->score);
+    fprintf(fp, "\n");
+    curr = curr->neighbor;
+    cluster_id++;
   }
+  fflush(fp);
 }
 
-/**
- * Adds a new PairWiseClusters object to the list
- *
- * @param PairWiseClusters ** head
- *   A pointer to the pointer of the head object in the list
- * @param PairWiseClusters * new
- *   The pointer to the new object to add to the end of the list
- */
-void SampleCluster::addSampleCluster(SampleCluster * newc) {
-
-  SampleCluster * curr = *this;
-
-  // Check the list to see if it is empty. If so, then make this item the
-  // new head.
-//  if (curr->gene1 == -1) {
-//    free_pairwise_cluster_list(*head);
-//    *head = newc;
-//    return;
-//  }
-
-  // Traverse the list to the end and then add the new item
-  while (curr->next != NULL) {
-    curr = (SampleCluster * ) curr->next;
-  }
-  curr->next = newc;
-}
 
 /**
  * Updates the samples vector of a PairWiseClusters object.

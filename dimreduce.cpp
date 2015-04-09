@@ -310,7 +310,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       // Perform the clustering if we have enough samples.
       if (n2 > 0) {
         // Perform pairwise clustering using mixture models
-        MixMod * mixmod = new MixMod(a2, b2, n2);
+        MixModClusters * mixmod = new MixModClusters(a2, b2, n2);
         mixmod->run();
 
 //        // Perform the clustering.
