@@ -1,6 +1,56 @@
 #include "bspline_mi.h"
 
 /**
+ * Constructor.
+ */
+MISimilarty::MISimilarty(PairWiseSet * pws, int min_obs, double mi_bins, double mi_degree)
+  :PairWiseSimilarity("mi", pws, min_obs) {
+
+  this->mi_bins = mi_bins;
+  this->mi_degree = mi_degree;
+}
+/**
+ * Performs Mutual Information analysis on two arrays.
+ *
+ * @param double *a
+ * @param double *b
+ * @param int n
+ */
+void MISimilarty::run() {
+  // Make sure we have the correct number of observations before performing
+  // the comparision.
+  if (this->pws->n_clean >= this->min_obs) {
+    // Calculate the min and max
+    double xmin = 9999999;
+    double ymin = 9999999;
+    double xmax = -9999999;
+    double ymax = -9999999;
+    int k = 0;
+    for (int i = 0; i < this->pws->n_clean; i++) {
+      // calculate the x and y minimum
+      if (this->pws->x_clean[k] < xmin) {
+        xmin = this->pws->x_clean[k];
+      }
+      if (this->pws->x_clean[k] > xmax) {
+        xmax = this->pws->x_clean[k];
+      }
+      if (this->pws->y_clean[k] < ymin) {
+        ymin = this->pws->y_clean[k];
+      }
+      if (this->pws->y_clean[k] > ymax) {
+        ymax = this->pws->y_clean[k];
+      }
+    }
+
+    // Make sure that the min and max are not the same.
+    if(xmin < xmax && ymin < ymax) {
+      score = calculateBSplineMI(this->pws->x_clean, this->pws->y_clean, this->pws->n_clean,
+          this->mi_bins, this->mi_degree, xmin, ymin, xmax, ymax);
+    }
+  }
+}
+
+/**
  * Calculates the Mutual Information matrix
  *
  * @param CCMParameters params

@@ -239,6 +239,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
   // Perform the pair-wise clustering.
   int n_comps = 0;
   int my_comps = 0;
+  int min_obs = params->getMinObs();
   for (i = 0; i < num_rows; i++) {
     /*if (i == 50) {
       break;
@@ -257,6 +258,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
         continue;
       }
 
+      // Print run stats.
       if (n_comps % 100 == 0) {
         // Get the amount of memory used.
         statm_t * memory = memory_get_usage();
@@ -274,80 +276,19 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
 
         // Write progress report.
         printf("%d. Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd. Coords: %d, %d.        \n",
-          mpi_id + 1,
-          (float) percent_complete,
-          memory->size,
-          (float) hours_left,
-          (float) days_left,
-          i,
-          j
-        );
+          mpi_id + 1, (float) percent_complete, memory->size, (float) hours_left, (float) days_left, i, j);
         free(memory);
       }
       n_comps++;
       my_comps++;
 
-      double *a = ematrix->getRow(j);
-      double *b = ematrix->getRow(i);
-
-      // Initialize the arrays that will be used for containing a and b
-      // but with missing values removed.
-      int cols = params->getNumCols();
-      double * a2 = (double *) malloc(sizeof(double) * cols);
-      double * b2 = (double *) malloc(sizeof(double) * cols);
-
-      // The kept variable is an array of zeros and ones and is the size of the
-      // number of samples.  A zero indicates the sample is not included in
-      // the pair-wise comparison and a one indicates it is.
-      int * kept = (int *) malloc(sizeof(int) * cols);
-      int n2;
-
-      // Remove any missing values before calculating Royston's H test.
-      // This call will return a2 and b2 which are the same as a and b but
-      // with missing values removed. n2 gets set to the size of a2 and b2.
-      remove_missing_paired(a, b, cols, a2, b2, &n2, kept);
-
-      // Perform the clustering if we have enough samples.
-      if (n2 > 0) {
-        // Perform pairwise clustering using mixture models
-        MixModClusters * mixmod = new MixModClusters(a2, b2, n2);
-        mixmod->run();
-
-//        // Perform the clustering.
-//        PairWiseClusters * clusters = clustering(a2, i, b2, j, n2, ematrix, params, 0.075, 0);
-//
-//        // update the clusters to include zeros for any samples with a missing value.
-//        update_pairwise_cluster_samples(kept, params->cols, clusters);
-//
-//        // Write the clusters to the file.
-//        write_pairwise_cluster_samples(clusters, fps);
-//
-//        // clean up the memory.
-//        free_pairwise_cluster_list(clusters);
-//        free(kept);
-      }
-      // One of these genes has no observations so, just write out an
-      // empty cluster.
-      else {
-//        // Create an empty clusters set
-//        PairWiseClusters * newc = new_pairwise_cluster_list();
-//        newc->gene1 = i;
-//        newc->gene2 = j;
-//        newc->num_samples = params->cols;
-//        newc->samples = kept;
-//        newc->next = NULL;
-//        newc->cluster_size = 0;
-//        newc->pcc = NAN;
-//        write_pairwise_cluster_samples(newc, fps);
-//        free_pairwise_cluster_list(newc);
-      }
-
-      // Release the memory for a2 and b2.
-      free(a2);
-      free(b2);
-
+      // Perform pairwise clustering using mixture models
+      PairWiseSet * pwset = new PairWiseSet(ematrix->getRow(j), ematrix->getRow(i), ematrix->getNumSamples());
+      MixModClusters * mixmod = new MixModClusters(pwset, min_obs);
+      mixmod->run();
     }
   }
+
   free(ematrix);
   free(params);
   return 1;

@@ -1,5 +1,25 @@
 #include "pearson.h"
 
+
+PearsonSimilarty::PearsonSimilarty(PairWiseSet * pws, int min_obs)
+  :PairWiseSimilarity("pc", pws, min_obs) {
+}
+
+/**
+ * Performs Pearson correlation on two arrays.
+ *
+ * @param double *a
+ * @param double *b
+ * @param int n
+ */
+void PearsonSimilarty::run() {
+  // Make sure we have the correct number of observations before performing
+  // the comparision.
+  if (this->pws->n_clean >= this->min_obs) {
+    score = gsl_stats_correlation(this->pws->x_clean, 1, this->pws->y_clean, 1, this->pws->n_clean);
+  }
+}
+
 /**
  * Calculates the Pearson correlation matrix
  *

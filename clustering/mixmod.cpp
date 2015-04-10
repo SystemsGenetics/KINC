@@ -6,25 +6,36 @@
  *
  * @param EMatrix *ematrix;
  */
-MixModClusters::MixModClusters(double *a, double *b, int n) {
+MixModClusters::MixModClusters(PairWiseSet *pwset, int min_obs) {
+  this->pwset = pwset;
+  this->min_obs = min_obs;
+  this->labels = NULL;
+  this->pwcl = NULL;
+  this->gdata = NULL;
+  this->dataDescription = NULL;
+  this->cInput = NULL;
+  this->cOutput = NULL;
+  this->data = NULL;
 
-  num_samples = n;
-  labels = NULL;
-  pwcl = NULL;
-
-  // The data we are using is qualitative, so set the data type.
-  dataType = XEM::QuantitativeData;
-
-  // Create the Gaussian Data object and set the dataDescription object.
-  data = (double **) malloc(sizeof(double *) * n);
-  for (int i = 0; i < n ; i++) {
-    data[i] = (double *) malloc(sizeof(double) * 2);
-    data[i][0] = a[i];
-    data[i][1] = b[i];
+  // Make sure we have the correct number of observations before preparing
+  // for the comparision.
+  if (this->pwset->n_clean < this->min_obs) {
+    return;
   }
 
-  gdata = new XEM::GaussianData(n, 2, data);
-  dataDescription = new XEM::DataDescription(gdata);
+  // The data we are using is qualitative, so set the data type.
+  this->dataType = XEM::QuantitativeData;
+
+  // Create the Gaussian Data object and set the dataDescription object.
+  this->data = (double **) malloc(sizeof(double *) * pwset->n_clean);
+  for (int i = 0; i < pwset->n_clean ; i++) {
+    this->data[i] = (double *) malloc(sizeof(double) * 2);
+    this->data[i][0] = pwset->x_clean[i];
+    this->data[i][1] = pwset->y_clean[i];
+  }
+
+  this->gdata = new XEM::GaussianData(pwset->n_clean, 2, data);
+  this->dataDescription = new XEM::DataDescription(gdata);
 
   // Set the number of clusters to be tested to 9.
   nbCluster.push_back(2);
@@ -37,8 +48,8 @@ MixModClusters::MixModClusters(double *a, double *b, int n) {
   nbCluster.push_back(9);
 
   // Create the ClusteringInput object.
-  cInput = new XEM::ClusteringInput(nbCluster, *dataDescription);
-  cOutput = NULL;
+  this->cInput = new XEM::ClusteringInput(nbCluster, *dataDescription);
+  this->cOutput = NULL;
 
   // Finalize input: run a series of sanity checks on it
   cInput->finalize();
@@ -48,60 +59,80 @@ MixModClusters::MixModClusters(double *a, double *b, int n) {
  * Destructor for the MixMod class.
  */
 MixModClusters::~MixModClusters() {
-  delete gdata;
-  delete dataDescription;
-  delete cInput;
+  if (gdata) {
+    delete gdata;
+  }
+  if (dataDescription) {
+    delete dataDescription;
+  }
+  if (cInput) {
+    delete cInput;
+  }
   if (cOutput) {
     delete cOutput;
   }
   // Free the data array.
-  for (int i = 0; i < num_samples ; i++) {
-    free(data[i]);
+  if (data) {
+    for (int i = 0; i < pwset->n_clean ; i++) {
+      free(data[i]);
+    }
+    free(data);
   }
-  free(data);
+  if (labels) {
+    delete labels;
+  }
 }
 
 /**
  * Executes mixture model clustering.
  */
 void MixModClusters::run() {
-   // Create XEM::ClusteringMain
-   XEM::ClusteringMain cMain(cInput);
+  // Make sure we have the correct number of observations before performing
+  // the comparision.
+  if (this->pwset->n_clean < this->min_obs) {
+    return;
+  }
 
-   // Run XEM::ClusteringMain
-   cMain.run();
+  // Create XEM::ClusteringMain
+  XEM::ClusteringMain cMain(cInput);
 
-   // Create a new XEM::ClusteringOutput object
-   cOutput = cMain.getOutput();
+  // Run XEM::ClusteringMain
+  cMain.run();
 
-   //
-   cOutput->sort(XEM::BIC);
+  // Create a new XEM::ClusteringOutput object
+  cOutput = cMain.getOutput();
 
-   if (cOutput->atLeastOneEstimationNoError()) {
-     // Get the best XEM::ClusteringModelOutput
-     XEM::ClusteringModelOutput* cMOutput = cOutput->getClusteringModelOutput().front();
-     XEM::ParameterDescription* paramDescription = cMOutput->getParameterDescription();
+  //
+  cOutput->sort(XEM::BIC);
 
-     cout << "-----------------------------------------------------------------------" << endl;
-     cout << "Best model is " << endl;
-     cout << " - nbCluster : " << paramDescription->getNbCluster() << endl;
-     cout << "-----------------------------------------------------------------------" << endl << endl;
+  if (cOutput->atLeastOneEstimationNoError()) {
+    // Get the best XEM::ClusteringModelOutput
+    XEM::ClusteringModelOutput* cMOutput = cOutput->getClusteringModelOutput().front();
+    XEM::ParameterDescription* paramDescription = cMOutput->getParameterDescription();
 
-     cout << "-----------------------------------------------------------------------" << endl;
-     cout << "Parameters display" << endl;
-
-     XEM::Parameter* param = paramDescription->getParameter();
-     // print out parameters
-     param->edit();
-     // print out criterion values
-     for (int64_t iCriterion = 0; iCriterion < cInput->getCriterionName().size(); iCriterion++) {
-      cMOutput->getCriterionOutput (cInput->getCriterionName (iCriterion)).editTypeAndValue (std::cout);
-     }
-
-     XEM::LabelDescription * ldescription = cMOutput->getLabelDescription();
-     XEM::Label * label = ldescription->getLabel();
-     int64_t * tabLabel = label->getTabLabel();
-     cout << tabLabel << endl;
-    }
     cout << "-----------------------------------------------------------------------" << endl;
+    cout << "Best model is " << endl;
+    cout << " - nbCluster : " << paramDescription->getNbCluster() << endl;
+    cout << "-----------------------------------------------------------------------" << endl << endl;
+
+    cout << "-----------------------------------------------------------------------" << endl;
+    cout << "Parameters display" << endl;
+
+    XEM::Parameter* param = paramDescription->getParameter();
+    // print out parameters
+    param->edit();
+    // print out criterion values
+    for (int64_t iCriterion = 0; iCriterion < cInput->getCriterionName().size(); iCriterion++) {
+    cMOutput->getCriterionOutput (cInput->getCriterionName (iCriterion)).editTypeAndValue (std::cout);
+    }
+
+    XEM::LabelDescription * ldescription = cMOutput->getLabelDescription();
+    XEM::Label * label = ldescription->getLabel();
+    int64_t * tabLabel = label->getTabLabel();
+    for (int i = 0; i < this->pwset->n_clean; i++) {
+     cout << tabLabel[i];
+    }
+    cout << endl;
+  }
+  cout << "-----------------------------------------------------------------------" << endl;
 }

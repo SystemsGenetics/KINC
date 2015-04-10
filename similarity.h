@@ -18,6 +18,68 @@
 
 #include "ematrix.h"
 
+/**
+ * A class that holds expression data for two genes/probesets.
+ *
+ */
+class PairWiseSet {
+  // The PairWiseSimilarity class should have access to the protected
+  // members of this class.
+  friend class PairWiseSimilarity;
+  friend class MISimilarity;
+  friend class PearsonSimilarity;
+  friend class SpearmanSimilarity;
+  friend class PairWiseClusterWriter;
+
+  private:
+    void clean();
+
+  public:
+    // The original x and y data arrays and their size.
+    double *x_orig;
+    double *y_orig;
+    int n_orig;
+    // The x and y data arrays after NAs have been removed and their size.
+    double *x_clean;
+    double *y_clean;
+    int n_clean;
+    // The samples array of zeros and ones. Where zero indicates the sample
+    // was removed and not included in the comparision and one indicates it
+    // was preserved and used in the comparision.
+    int * samples;
+
+  public:
+    PairWiseSet(double * a, double *b, int n);
+    ~PairWiseSet();
+};
+
+/**
+ * A base class for similiarity functions.
+ *
+ * The pair-wise comparision is performed on a single PairWiseSet.
+ */
+class PairWiseSimilarity {
+  friend class PairWiseClusterWriter;
+  protected:
+    // The PairWiseSet containing the two samples for comparision.
+    PairWiseSet *pws;
+    // The method name (e.g. pc, mi, sc).
+    char * method;
+    // The final similarity score.
+    double score;
+    // The minimum number of observations required to perform the comparision.
+    int min_obs;
+
+  public:
+    PairWiseSimilarity(const char * method, PairWiseSet *pws, int min_obs);
+    ~PairWiseSimilarity();
+
+    // Executes the pair-wise similiarity function. This should
+    // be implemented by the descendent class.
+    void run() {}
+};
+
+
 typedef struct {
 
   int perf;          // indicates if performance monitoring should be enabled

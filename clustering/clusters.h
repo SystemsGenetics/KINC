@@ -3,49 +3,69 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <time.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <libgen.h>
+#include <string.h>
+#include <math.h>
+#include "../similarity.h"
+#include "../similarity/spearman.h"
+
 
 /**
- * The PairWiseCluster struct contains the information about a cluster.
+ * The PairWiseCluster class contains the information about a cluster.
  *
  */
 class PairWiseCluster {
-  public:
+  friend class PairWiseClusterList;
+  friend class PairWiseClusterWriter;
 
-    // An array of zeros and ones indicating which samples comprise the cluster
-    int * samples;
-    // The number of samples in the samples array.
-    int num_samples;
+  private:
+    // An array of zeros and ones indicating which samples comprise the cluster.
+    int * cluster_samples;
     // The number of samples in the cluster
     int cluster_size;
-    // The similarity score. Can be a Pearson's Correlation coefficient, or
-    // a Spearman's coefficent, MI score, etc.
-    double score;
     // The next cluster in the linked list.
     PairWiseCluster * neighbor;
+    // The object containing the pair of genes/probesets to perform clustering.
+    PairWiseSet * pwset;
+    // A similarity function object.
+    PairWiseSimilarity * pwsim;
 
-    PairWiseCluster();
+  public:
+
+    PairWiseCluster(PairWiseSet * pwset);
     ~PairWiseCluster() {};
+    void setPWSimilarity(PairWiseSimilarity * pwsim);
 };
 
 /**
  * A set of clusters that belong to the same two genes.
  */
-class PairWiseClusterSet {
+class PairWiseClusterList {
+  friend class PairWiseClusterWriter;
+  private:
+    // The object containing the pair of genes/probesets to perform clustering.
+    PairWiseSet * pwset;
+    // When new clusters are added to the set, their samples may or may not
+    // be the same size as the samples in this cluster set.  This is
+    // because clustering may occur on subsets of samples as is the case when
+    // samples are removed because of missing values. This function will
+    // expand the samples array of the PairWiseCluster object to be the
+    // same size as the set.
+    void updateClusterSamples(PairWiseCluster * pwc);
   public:
-    // The indecies of the genes in the input Expression matrix
-    int gene1;
-    int gene2;
-    // The method used to perform the pair-wise comparision.
-    char * method;
     // The number of clusters in the set.
     int num_clusters;
 
     // The head for the linked list of PairWiseClusters.
     PairWiseCluster * head;
 
-    PairWiseClusterSet(int gene1, int gene2, const char * method);
-    ~PairWiseClusterSet();
+    PairWiseClusterList(PairWiseSet * pwset);
+    ~PairWiseClusterList() {};
 
     void addCluster(PairWiseCluster * pwc);
 };
@@ -73,7 +93,7 @@ class PairWiseClusterWriter {
     // Destructor.
     ~PairWiseClusterWriter();
     // Writes a PairWiseCluster to the proper file.
-    void writeClusters(PairWiseClusterSet * pwcs);
+    void writeClusters(PairWiseClusterList *pwcl, int gene1, int gene2);
 };
 
 

@@ -1,5 +1,29 @@
 #include "spearman.h"
 
+
+SpearmanSimilarty::SpearmanSimilarty(PairWiseSet * pws, int min_obs)
+  :PairWiseSimilarity("sc", pws, min_obs) {
+
+}
+
+/**
+ * Performs Spearman correlation on two arrays.
+ *
+ * @param double *a
+ * @param double *b
+ * @param int n
+ */
+void SpearmanSimilarty::run() {
+
+  // Make sure we have the correct number of observations before performing
+  // the comparision.
+  if (this->pws->n_clean >= this->min_obs) {
+    // Create the workspace needed for Spearman's calculation.
+    double workspace[2 * this->pws->n_clean];
+    score = gsl_stats_spearman(this->pws->x_clean, 1, this->pws->y_clean, 1, this->pws->n_clean, workspace);
+  }
+}
+
 /**
  * Calculates the Spearman correlation matrix
  *

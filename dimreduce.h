@@ -17,6 +17,7 @@
 #include "error.h"
 #include "misc.h"
 #include "clustering/mixmod.h"
+#include "similarity.h"
 
 
 /**
