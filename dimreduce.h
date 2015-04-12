@@ -18,6 +18,7 @@
 #include "misc.h"
 #include "clustering/mixmod.h"
 #include "similarity.h"
+#include "clustering/clusters.h"
 
 
 /**
@@ -51,7 +52,7 @@ class DRArgs {
     // Set to 1 to perform log transformation.
     int do_log;
     // The input filename without the prefix.
-    char fileprefix[1024];
+    char * fileprefix;
 
     // Variables for mean shift clustering
     double msc_bw1;
@@ -74,7 +75,7 @@ class DRArgs {
     int getDoLog10() { return do_log10; }
     int getDoLog2() { return do_log2; }
     int getDoLog() { return do_log; }
-    char getFilePrefix() {return fileprefix[1024]; }
+    char * getFilePrefix() { return fileprefix; }
 
     void setArguments(int argc, char *argv[]);
 };

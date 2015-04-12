@@ -6,10 +6,10 @@
 /**
  *
  */
-class PearsonSimilarty: public PairWiseSimilarity {
+class PearsonSimilarity: public PairWiseSimilarity {
   public:
-    PearsonSimilarty(PairWiseSet * pws, int min_obs);
-    ~PearsonSimilarty();
+    PearsonSimilarity(PairWiseSet * pws, int * samples, int min_obs);
+    ~PearsonSimilarity();
 
     void run();
 };

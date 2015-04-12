@@ -3,8 +3,8 @@
 /**
  * Constructor.
  */
-MISimilarty::MISimilarty(PairWiseSet * pws, int min_obs, double mi_bins, double mi_degree)
-  :PairWiseSimilarity("mi", pws, min_obs) {
+MISimilarity::MISimilarity(PairWiseSet * pws, int * samples, int min_obs, double mi_bins, double mi_degree)
+  :PairWiseSimilarity("mi", pws, samples, min_obs) {
 
   this->mi_bins = mi_bins;
   this->mi_degree = mi_degree;
@@ -16,37 +16,40 @@ MISimilarty::MISimilarty(PairWiseSet * pws, int min_obs, double mi_bins, double 
  * @param double *b
  * @param int n
  */
-void MISimilarty::run() {
+void MISimilarity::run() {
   // Make sure we have the correct number of observations before performing
   // the comparision.
-  if (this->pws->n_clean >= this->min_obs) {
+  if (this->n >= this->min_obs) {
     // Calculate the min and max
     double xmin = 9999999;
     double ymin = 9999999;
     double xmax = -9999999;
     double ymax = -9999999;
     int k = 0;
-    for (int i = 0; i < this->pws->n_clean; i++) {
+    for (int i = 0; i < this->n; i++) {
       // calculate the x and y minimum
-      if (this->pws->x_clean[k] < xmin) {
-        xmin = this->pws->x_clean[k];
+      if (this->a[k] < xmin) {
+        xmin = this->a[k];
       }
-      if (this->pws->x_clean[k] > xmax) {
-        xmax = this->pws->x_clean[k];
+      if (this->a[k] > xmax) {
+        xmax = this->a[k];
       }
-      if (this->pws->y_clean[k] < ymin) {
-        ymin = this->pws->y_clean[k];
+      if (this->b[k] < ymin) {
+        ymin = this->b[k];
       }
-      if (this->pws->y_clean[k] > ymax) {
-        ymax = this->pws->y_clean[k];
+      if (this->b[k] > ymax) {
+        ymax = this->b[k];
       }
     }
 
     // Make sure that the min and max are not the same.
     if(xmin < xmax && ymin < ymax) {
-      score = calculateBSplineMI(this->pws->x_clean, this->pws->y_clean, this->pws->n_clean,
+      score = calculateBSplineMI(this->a, this->b, this->n,
           this->mi_bins, this->mi_degree, xmin, ymin, xmax, ymax);
     }
+  }
+  else {
+    score = NAN;
   }
 }
 

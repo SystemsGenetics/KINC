@@ -1,6 +1,8 @@
 #include "similarity.h"
 
-
+/**
+ *
+ */
 PairWiseSet::PairWiseSet(EMatrix * ematrix, int i, int j) {
   this->gene1 = i;
   this->gene2 = j;
@@ -17,6 +19,28 @@ PairWiseSet::PairWiseSet(EMatrix * ematrix, int i, int j) {
   // Create the clean arrays.
   this->clean();
 }
+/**
+ *
+ */
+PairWiseSet::PairWiseSet(double *a, double *b, int n, int i, int j) {
+  this->gene1 = i;
+  this->gene2 = j;
+
+  this->n_orig = n;
+  this->x_orig = a;
+  this->y_orig = b;
+
+  this->x_clean = NULL;
+  this->y_clean = NULL;
+  this->n_clean = NAN;
+  this->samples = NULL;
+
+  // Create the clean arrays.
+  this->clean();
+}
+/**
+ *
+ */
 PairWiseSet::~PairWiseSet(){
   if (this->samples) {
     free(this->samples);
@@ -58,12 +82,24 @@ void PairWiseSet::clean() {
 /**
  * Constructor
  */
-PairWiseSimilarity::PairWiseSimilarity(const char * method, PairWiseSet *pws, int min_obs) {
+PairWiseSimilarity::PairWiseSimilarity(const char * method, PairWiseSet *pws, int * samples, int min_obs) {
   this->pws = pws;
   this->score = NAN;
   this->method = (char *) malloc(sizeof(char) * strlen(method) + 1);
-  this->min_obs = min_obs;
   strcpy(this->method, method);
+  this->samples = samples;
+  this->min_obs = min_obs;
+
+  this->a = (double *) malloc(sizeof(double) * pws->n_clean);
+  this->b = (double *) malloc(sizeof(double) * pws->n_clean);
+  this->n = 0;
+  for (int i = 0; i < pws->n_clean; i++) {
+    if (samples[i] == 1) {
+      a[this->n] = pws->x_clean[i];
+      b[this->n] = pws->y_clean[i];
+      this->n++;
+    }
+  }
 }
 
 /**
@@ -71,6 +107,8 @@ PairWiseSimilarity::PairWiseSimilarity(const char * method, PairWiseSet *pws, in
  */
 PairWiseSimilarity::~PairWiseSimilarity() {
   free(method);
+  free(a);
+  free(b);
 }
 
 /**

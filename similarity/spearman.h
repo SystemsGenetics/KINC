@@ -7,10 +7,10 @@
 /**
  * Class for Spearman Correlation similarity.
  */
-class SpearmanSimilarty: public PairWiseSimilarity {
+class SpearmanSimilarity: public PairWiseSimilarity {
   public:
-    SpearmanSimilarty(PairWiseSet * pws, int min_obs);
-    ~SpearmanSimilarty();
+    SpearmanSimilarity(PairWiseSet * pws, int * samples, int min_obs);
+    ~SpearmanSimilarity();
 
     void run();
 };

@@ -13,6 +13,8 @@
 #include <math.h>
 #include "../similarity.h"
 #include "../similarity/spearman.h"
+#include "../similarity/pearson.h"
+#include "../similarity/bspline_mi.h"
 
 
 /**
@@ -41,7 +43,7 @@ class PairWiseCluster {
     ~PairWiseCluster();
     void setPWSimilarity(PairWiseSimilarity * pwsim);
     void setClusterSamples(int * samples, bool from_clean);
-    void performSimilarity(const char * method, int min_obs);
+    void doSimilarity(const char * method, int min_obs);
     void printCluster();
 };
 
@@ -92,7 +94,7 @@ class PairWiseClusterWriter {
     void closeOutFiles();
   public:
     // Constructor.
-    PairWiseClusterWriter(const char * method, const char * fileprefix, int id);
+    PairWiseClusterWriter(char * method, char * fileprefix, int id);
     // Destructor.
     ~PairWiseClusterWriter();
     // Writes a PairWiseCluster to the proper file.

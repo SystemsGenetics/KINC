@@ -21,6 +21,7 @@ DRArgs::DRArgs(int argc, char *argv[]) {
   msc_bw2 = 0.9;
   infilename = NULL;
   na_val = NULL;
+  fileprefix = NULL;
 
   // Initialize the 'func' parameter.
   strcpy(func, "none");
@@ -156,6 +157,7 @@ DRArgs::DRArgs(int argc, char *argv[]) {
 
   // remove the path and extension from the filename
   char * filename = basename(infilename);
+  fileprefix = (char *) malloc(sizeof(char) * strlen(filename));
   strcpy(fileprefix, filename);
   char * p = rindex(fileprefix, '.');
   if (p) {
@@ -185,7 +187,7 @@ DRArgs::DRArgs(int argc, char *argv[]) {
  * DRArgs destructor.
  */
 DRArgs::~DRArgs() {
-
+  free(fileprefix);
 }
 /**
  *
@@ -231,15 +233,20 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
   printf("%d. Performing %lld comparisons\n", mpi_id + 1, comp_stop - comp_start);
   fflush(stdout);
 
+  // Creat the writer object to write out the cluters.
+  PairWiseClusterWriter * pwcw = new PairWiseClusterWriter(params->getCorMethod(), params->getFilePrefix(), mpi_id);
+
   // Perform the pair-wise clustering.
   int n_comps = 0;
   int my_comps = 0;
   int min_obs = params->getMinObs();
-  for (int i = 19163; i < num_rows; i++) {
+  for (int i = 2; i < num_rows; i++) {
+//for (int i = 0; i < num_rows; i++) {
     /*if (i == 50) {
       break;
     }*/
-    for (int j = 11443; j < num_rows; j++) {
+//    for (int j = 0; j < num_rows; j++) {
+    for (int j = 1; j < num_rows; j++) {
 
       // We only need to calculate clusters in the lower triangle of the
       // full pair-wise matrix
@@ -255,8 +262,9 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
 
       // Perform pairwise clustering using mixture models
       PairWiseSet * pwset = new PairWiseSet(ematrix, i, j);
-      MixModClusters * mixmod = new MixModClusters(pwset, min_obs);
+      MixModClusters * mixmod = new MixModClusters(pwset, min_obs, params->getCorMethod());
       mixmod->run();
+      pwcw->writeClusters(mixmod->pwcl, i, j);
 
       // Print run stats.
       if (n_comps % 100 == 0) {
@@ -290,6 +298,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
 
   delete ematrix;
   delete params;
+  delete pwcw;
 
   return 1;
 }

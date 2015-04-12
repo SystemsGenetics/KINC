@@ -23,16 +23,22 @@ PairWiseCluster::~PairWiseCluster() {
   }
 }
 
-void PairWiseCluster::performSimilarity(const char * method, int min_obs) {
+void PairWiseCluster::doSimilarity(const char * method, int min_obs) {
+  // Create a new PairWiseSet for this cluster
   if (strcmp(method, "sc") == 0) {
-    this->pwsim = (PairWiseSimilarity *) new SpearmanSimilarty(this->pwset, min_obs);
-    this->pwsim->run();
+    SpearmanSimilarity * ssim = new SpearmanSimilarity(this->pwset, this->cluster_samples, min_obs);
+    ssim->run();
+    this->pwsim = (PairWiseSimilarity *) ssim;
   }
   else if (strcmp(method, "pc") == 0) {
-
+    PearsonSimilarity * psim = new PearsonSimilarity(this->pwset, this->cluster_samples, min_obs);
+    psim->run();
+    this->pwsim = (PairWiseSimilarity *) psim;
   }
   else if (strcmp(method, "mi") == 0) {
-
+//    MISimilarity * msim = new MISimilarity(this->pwset, this->cluster_samples, min_obs);
+//    msim->run();
+//    this->pwsim = (PairWiseSimilarity *) msim;
   }
 }
 /**
@@ -102,7 +108,7 @@ void PairWiseClusterList::addCluster(PairWiseCluster * pwc) {
 /**
  * Constructor
  */
-PairWiseClusterWriter::PairWiseClusterWriter(const char * m, const char * fp, int i) {
+PairWiseClusterWriter::PairWiseClusterWriter(char * m, char * fp, int i) {
   id = i;
   method = (char *) malloc(sizeof(char) * strlen(m) + 1);
   strcpy(method, m);
@@ -110,11 +116,14 @@ PairWiseClusterWriter::PairWiseClusterWriter(const char * m, const char * fp, in
   fileprefix = (char *) malloc(sizeof(char) * strlen(fp) + 1);
   strcpy(fileprefix, fp);
   fps = (FILE **) malloc(sizeof(FILE *) * 102);
+
+  this->openOutFiles();
 }
 /**
  * Destructor
  */
 PairWiseClusterWriter::~PairWiseClusterWriter() {
+  this->closeOutFiles();
   free(fps);
   free(fileprefix);
 }
@@ -203,11 +212,16 @@ void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, 
       int i3 = (int) i2;
       fp = fps[i3];
     }
-    fprintf(fp, "%i\t%i\t%i\t%i\t", gene1, gene2, curr->cluster_size, cluster_id);
+    fprintf(fp, "%i\t%i\t%i\t%i\t", gene1 + 1, gene2 + 1, curr->cluster_size, cluster_id);
     for (int i = 0; i < curr->pwset->n_orig; i++) {
       fprintf(fp, "%i", curr->cluster_samples[i]);
     }
-    fprintf(fp, "\t%f", curr->pwsim->score);
+    if (curr->pwsim) {
+      fprintf(fp, "\t%f", curr->pwsim->score);
+    }
+    else {
+      fprintf(fp, "\t%f", NAN);
+    }
     fprintf(fp, "\n");
     curr = curr->neighbor;
     cluster_id++;

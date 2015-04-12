@@ -1,8 +1,8 @@
 #include "pearson.h"
 
 
-PearsonSimilarty::PearsonSimilarty(PairWiseSet * pws, int min_obs)
-  :PairWiseSimilarity("pc", pws, min_obs) {
+PearsonSimilarity::PearsonSimilarity(PairWiseSet * pws, int * samples, int min_obs)
+  :PairWiseSimilarity("pc", pws, samples, min_obs) {
 }
 
 /**
@@ -12,11 +12,14 @@ PearsonSimilarty::PearsonSimilarty(PairWiseSet * pws, int min_obs)
  * @param double *b
  * @param int n
  */
-void PearsonSimilarty::run() {
+void PearsonSimilarity::run() {
   // Make sure we have the correct number of observations before performing
   // the comparision.
-  if (this->pws->n_clean >= this->min_obs) {
-    score = gsl_stats_correlation(this->pws->x_clean, 1, this->pws->y_clean, 1, this->pws->n_clean);
+  if (this->n >= this->min_obs) {
+    score = gsl_stats_correlation(this->a, 1, this->b, 1, this->n);
+  }
+  else {
+    score = NAN;
   }
 }
 

@@ -1,8 +1,8 @@
 #include "spearman.h"
 
 
-SpearmanSimilarty::SpearmanSimilarty(PairWiseSet * pws, int min_obs)
-  :PairWiseSimilarity("sc", pws, min_obs) {
+SpearmanSimilarity::SpearmanSimilarity(PairWiseSet * pws, int * samples, int min_obs)
+  :PairWiseSimilarity("sc", pws, samples, min_obs) {
 
 }
 
@@ -13,14 +13,17 @@ SpearmanSimilarty::SpearmanSimilarty(PairWiseSet * pws, int min_obs)
  * @param double *b
  * @param int n
  */
-void SpearmanSimilarty::run() {
+void SpearmanSimilarity::run() {
 
   // Make sure we have the correct number of observations before performing
   // the comparision.
-  if (this->pws->n_clean >= this->min_obs) {
+  if (this->n >= this->min_obs) {
     // Create the workspace needed for Spearman's calculation.
-    double workspace[2 * this->pws->n_clean];
-    score = gsl_stats_spearman(this->pws->x_clean, 1, this->pws->y_clean, 1, this->pws->n_clean, workspace);
+    double workspace[2 * this->n];
+    score = gsl_stats_spearman(this->a, 1, this->b, 1, this->n, workspace);
+  }
+  else {
+    score = NAN;
   }
 }
 

@@ -53,6 +53,7 @@ class PairWiseSet {
 
   public:
     PairWiseSet(EMatrix * ematrix, int i, int j);
+    PairWiseSet(double *a, double *b, int n, int i, int j);
     ~PairWiseSet();
 };
 
@@ -70,11 +71,19 @@ class PairWiseSimilarity {
     char * method;
     // The final similarity score.
     double score;
-    // The minimum number of observations required to perform the comparision.
+    // An array of 1's and zeros indicating which samples should be
+    // included in the pair-wise comparision.
+    int * samples;
+    // The minimum number of observations required.
     int min_obs;
 
+    // The expression arrays with non included samples removed and the
+    // size of these arrays.
+    double *a, *b;
+    int n;
+
   public:
-    PairWiseSimilarity(const char * method, PairWiseSet *pws, int min_obs);
+    PairWiseSimilarity(const char * method, PairWiseSet *pws, int * samples, int min_obs);
     ~PairWiseSimilarity();
 
     // Executes the pair-wise similiarity function. This should

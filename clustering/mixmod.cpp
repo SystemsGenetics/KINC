@@ -6,9 +6,13 @@
  *
  * @param EMatrix *ematrix;
  */
-MixModClusters::MixModClusters(PairWiseSet *pwset, int min_obs) {
+MixModClusters::MixModClusters(PairWiseSet *pwset, int min_obs, char * method) {
+  // Set the private members using incoming arguments.
   this->pwset = pwset;
   this->min_obs = min_obs;
+  this->method = method;
+
+  //  Set all other private members to NULL.
   this->labels = NULL;
   this->pwcl = NULL;
   this->gdata = NULL;
@@ -155,7 +159,8 @@ void MixModClusters::run() {
       if (!done) {
         PairWiseCluster * cluster = new PairWiseCluster(this->pwset);
         cluster->setClusterSamples(cluster_samples, true);
-        cluster->performSimilarity("sc", this->min_obs);
+        // Calculate the Spearman correlation for this cluster.
+        //cluster->doSimilarity(this->method, this->min_obs);
         //cluster->printCluster();
         this->pwcl->addCluster(cluster);
       }
