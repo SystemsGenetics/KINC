@@ -1,10 +1,14 @@
 #include "similarity.h"
 
 
-PairWiseSet::PairWiseSet(double * a, double *b, int n) {
-  this->x_orig = a;
-  this->y_orig = b;
-  this->n_orig = n;
+PairWiseSet::PairWiseSet(EMatrix * ematrix, int i, int j) {
+  this->gene1 = i;
+  this->gene2 = j;
+
+  this->n_orig = ematrix->getNumSamples();
+  this->x_orig = ematrix->getRow(this->gene1);
+  this->y_orig = ematrix->getRow(this->gene2);
+
   this->x_clean = NULL;
   this->y_clean = NULL;
   this->n_clean = NAN;

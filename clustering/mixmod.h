@@ -13,10 +13,13 @@
 
 #include "clusters.h"
 #include "../ematrix.h"
+#include "../similarity.h"
+#include "../similarity/spearman.h"
 
 class MixModClusters {
   private:
 
+    // The pair of genes on which the clustering will occur.
     PairWiseSet * pwset;
 
     // The MixMod Lib wants the data as an n x 2 array of doubles.  So

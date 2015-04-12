@@ -23,8 +23,9 @@ class PairWiseCluster {
   friend class PairWiseClusterList;
   friend class PairWiseClusterWriter;
 
-  private:
+  public:
     // An array of zeros and ones indicating which samples comprise the cluster.
+    // this array will be the same size as the n_orig of the PairWiseSet.
     int * cluster_samples;
     // The number of samples in the cluster
     int cluster_size;
@@ -36,10 +37,12 @@ class PairWiseCluster {
     PairWiseSimilarity * pwsim;
 
   public:
-
     PairWiseCluster(PairWiseSet * pwset);
-    ~PairWiseCluster() {};
+    ~PairWiseCluster();
     void setPWSimilarity(PairWiseSimilarity * pwsim);
+    void setClusterSamples(int * samples, bool from_clean);
+    void performSimilarity(const char * method, int min_obs);
+    void printCluster();
 };
 
 /**

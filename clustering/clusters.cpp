@@ -17,15 +17,64 @@ PairWiseCluster::PairWiseCluster(PairWiseSet * pwset) {
  * Desctructor.
  */
 PairWiseCluster::~PairWiseCluster() {
+  free(this->cluster_samples);
+  if (this->pwsim) {
+    delete this->pwsim;
+  }
 }
 
+void PairWiseCluster::performSimilarity(const char * method, int min_obs) {
+  if (strcmp(method, "sc") == 0) {
+    this->pwsim = (PairWiseSimilarity *) new SpearmanSimilarty(this->pwset, min_obs);
+    this->pwsim->run();
+  }
+  else if (strcmp(method, "pc") == 0) {
+
+  }
+  else if (strcmp(method, "mi") == 0) {
+
+  }
+}
 /**
- * Sets the PairWiseSimilarity object for this cluster.
+ * Sets the PairWiseCluster samples.
  */
-void PairWiseCluster::setPWSimilarity(PairWiseSimilarity * pwsim){
-  this->pwsim = pwsim;
-}
+void PairWiseCluster::setClusterSamples(int * samples, bool from_clean) {
+  this->cluster_samples = (int *) malloc(sizeof(int) * this->pwset->n_orig);
 
+  // If the samples list is derive from the clean samples set then the size
+  // of the samples is pwset->n_clean.
+  int k = 0;
+  if (from_clean) {
+    for (int i = 0; i < this->pwset->n_orig; i++) {
+      if (this->pwset->samples[i] == 1) {
+        this->cluster_samples[i] = samples[k];
+        k++;
+      }
+      else {
+        //this->cluster_samples[i] = 0;
+        this->cluster_samples[i] = 2;
+      }
+    }
+  }
+  // The provided samples are not derived from the clean set so just copy them
+  else {
+    for (int i = 0; i < this->pwset->n_orig; i++) {
+      this->cluster_samples[i] = samples[i];
+    }
+  }
+}
+/**
+ *
+ */
+void PairWiseCluster::printCluster() {
+  printf("%i\t%i\t", this->pwset->gene1, this->pwset->gene2);
+  if (this->cluster_samples) {
+    for (int i = 0; i < this->pwset->n_orig; i++) {
+      printf("%i", this->cluster_samples[i]);
+    }
+  }
+  printf("\n");
+}
 
 PairWiseClusterList::PairWiseClusterList(PairWiseSet * pwset) {
   this->pwset = pwset;
@@ -49,56 +98,7 @@ void PairWiseClusterList::addCluster(PairWiseCluster * pwc) {
   }
   curr->neighbor = pwc;
 }
-/**
- * Updates the samples vector of a PairWiseClusters object.
- *
- * Because the clustering() function is recursive it is successively called
- * with smaller and smaller sample sets.  When it returns it provides  PWC
- * object with a samples array.  In the samples array, samples that are present
- * in the cluster are marked with a 1 and those not in the cluster are
- * set to 0.  The order of values corresponds to the sample order. The samples
- * array, however, only contains 1's and 0's for the samples provided to the
- * clustering() function. Therefore, the results need to be merged back into
- * the larger samples array.  This function does that.
- *
- */
 
-/*
-void PairWiseClusterList::updateClusterSamples(PairWiseCluster * pwc) {
-
-    int z;
-    int w = 0;
-
-    // Create a new kept array that will update the current samples array.
-    int * new_samples = (int *) malloc(sizeof(int) * num_samples);
-
-    // Iterate through all of the elements of the parent samples list.
-    for (z = 0; z < n; z++) {
-      // If the element is 1, meaning the sample is present int he parent
-      // cluster, then check the current sample to see if was preserved during
-      // sub clustering.
-      if (parent_samples[z] == 1) {
-        if (curr->samples[w] == 0) {
-          new_samples[z] = 0;
-        }
-        // The element is kept in the pwc so preserve the 1 it in the new array.
-        else {
-          new_samples[z] = 1;
-        }
-        w++;
-      }
-      // The element is not kept originally so preserve the 0 in the new array.
-      else {
-        new_samples[z] = 0;
-      }
-    }
-    // Free up the old samples array and replace it with a new one.
-    free(curr->samples);
-    curr->samples = new_samples;
-    curr->num_samples = n;
-
-    curr = curr->neighbor;
-}*/
 /**
  * Constructor
  */

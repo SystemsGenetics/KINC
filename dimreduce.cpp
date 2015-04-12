@@ -214,11 +214,6 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       ematrix->log10Transform();
   }
 
-  int i, j;
-
-  // Open the clustering file for writing. Use the MPI ID in the filename.
-//  FILE ** fps = open_output_files(params, mpi_id);
-
   // Calculate the total number of comparisons and how many will be
   // performed by this process. We subtract 1 from the first params->rows
   // because we do not calculate the diagonal.
@@ -240,11 +235,11 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
   int n_comps = 0;
   int my_comps = 0;
   int min_obs = params->getMinObs();
-  for (i = 0; i < num_rows; i++) {
+  for (int i = 19163; i < num_rows; i++) {
     /*if (i == 50) {
       break;
     }*/
-    for (j = 0; j < num_rows; j++) {
+    for (int j = 11443; j < num_rows; j++) {
 
       // We only need to calculate clusters in the lower triangle of the
       // full pair-wise matrix
@@ -258,39 +253,44 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
         continue;
       }
 
+      // Perform pairwise clustering using mixture models
+      PairWiseSet * pwset = new PairWiseSet(ematrix, i, j);
+      MixModClusters * mixmod = new MixModClusters(pwset, min_obs);
+      mixmod->run();
+
       // Print run stats.
       if (n_comps % 100 == 0) {
         // Get the amount of memory used.
         statm_t * memory = memory_get_usage();
 
-        // Calculate the number of days left.
+        // Get the percent completed.
+        double percent_complete = (my_comps / (float) (comp_stop - comp_start)) * 100;
+
+        // Calculate the time left to complete
         now = time(0);
         double seconds_passed = now - start_time;
-        double minutes_passed = (seconds_passed) / 60.0;
-        double percent_complete = (my_comps / (float) (comp_stop - comp_start)) * 100;
-        double comps_per_minute = my_comps / minutes_passed;
-        double total_time = (comp_stop - comp_start) / comps_per_minute;
-        double minutes_left = total_time - minutes_passed;
+        double seconds_per_comp = seconds_passed / n_comps;
+        double total_seconds = seconds_per_comp * (comp_stop - comp_start);
+
+        double minutes_left = (total_seconds - seconds_passed) / 60;
         double hours_left = minutes_left / 60;
         double days_left = hours_left / 24;
+        double years_left = days_left / 365;
 
         // Write progress report.
-        printf("%d. Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd. Coords: %d, %d.        \n",
-          mpi_id + 1, (float) percent_complete, memory->size, (float) hours_left, (float) days_left, i, j);
+        printf("%d. Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd; %.2fy. Coords: %d, %d.        \n",
+          mpi_id + 1, (float) percent_complete, memory->size, (float) hours_left, (float) days_left, (float) years_left, i, j);
         free(memory);
       }
       n_comps++;
       my_comps++;
-
-      // Perform pairwise clustering using mixture models
-      PairWiseSet * pwset = new PairWiseSet(ematrix->getRow(j), ematrix->getRow(i), ematrix->getNumSamples());
-      MixModClusters * mixmod = new MixModClusters(pwset, min_obs);
-      mixmod->run();
+      exit(1);
     }
   }
 
-  free(ematrix);
-  free(params);
+  delete ematrix;
+  delete params;
+
   return 1;
 }
 

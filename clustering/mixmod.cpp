@@ -17,6 +17,9 @@ MixModClusters::MixModClusters(PairWiseSet *pwset, int min_obs) {
   this->cOutput = NULL;
   this->data = NULL;
 
+  // Create the PairWiseClusterList object
+  this->pwcl = new PairWiseClusterList(pwset);
+
   // Make sure we have the correct number of observations before preparing
   // for the comparision.
   if (this->pwset->n_clean < this->min_obs) {
@@ -81,6 +84,7 @@ MixModClusters::~MixModClusters() {
   if (labels) {
     delete labels;
   }
+  delete pwcl;
 }
 
 /**
@@ -108,31 +112,58 @@ void MixModClusters::run() {
   if (cOutput->atLeastOneEstimationNoError()) {
     // Get the best XEM::ClusteringModelOutput
     XEM::ClusteringModelOutput* cMOutput = cOutput->getClusteringModelOutput().front();
-    XEM::ParameterDescription* paramDescription = cMOutput->getParameterDescription();
+//    XEM::ParameterDescription* paramDescription = cMOutput->getParameterDescription();
+//
+//    cout << "-----------------------------------------------------------------------" << endl;
+//    cout << "Best model is " << endl;
+//    cout << " - nbCluster : " << paramDescription->getNbCluster() << endl;
+//    cout << "-----------------------------------------------------------------------" << endl << endl;
+//
+//    cout << "-----------------------------------------------------------------------" << endl;
+//    cout << "Parameters display" << endl;
+//
+//    XEM::Parameter* param = paramDescription->getParameter();
+//    // print out parameters
+//    param->edit();
+//    // print out criterion values
+//    for (int64_t iCriterion = 0; iCriterion < cInput->getCriterionName().size(); iCriterion++) {
+//      cMOutput->getCriterionOutput (cInput->getCriterionName (iCriterion)).editTypeAndValue (std::cout);
+//    }
 
-    cout << "-----------------------------------------------------------------------" << endl;
-    cout << "Best model is " << endl;
-    cout << " - nbCluster : " << paramDescription->getNbCluster() << endl;
-    cout << "-----------------------------------------------------------------------" << endl << endl;
-
-    cout << "-----------------------------------------------------------------------" << endl;
-    cout << "Parameters display" << endl;
-
-    XEM::Parameter* param = paramDescription->getParameter();
-    // print out parameters
-    param->edit();
-    // print out criterion values
-    for (int64_t iCriterion = 0; iCriterion < cInput->getCriterionName().size(); iCriterion++) {
-    cMOutput->getCriterionOutput (cInput->getCriterionName (iCriterion)).editTypeAndValue (std::cout);
-    }
-
+    // Get the classification (cluster) labels for the samples.
     XEM::LabelDescription * ldescription = cMOutput->getLabelDescription();
     XEM::Label * label = ldescription->getLabel();
-    int64_t * tabLabel = label->getTabLabel();
-    for (int i = 0; i < this->pwset->n_clean; i++) {
-     cout << tabLabel[i];
+    this->labels = label->getTabLabel();
+
+    // Create the cluster objects.
+    int cluster_num = 1;
+    int cluster_samples[this->pwset->n_clean];
+    bool done = false;
+    while (!done) {
+      done = true;
+      for (int i = 0; i < this->pwset->n_clean; i++) {
+        if (this->labels[i] == cluster_num) {
+          done = false;
+          cluster_samples[i] = 1;
+        }
+        else {
+          cluster_samples[i] = 0;
+        }
+      }
+      // if we found samples with the current cluster_num then create a
+      // cluster and add it to the list
+      if (!done) {
+        PairWiseCluster * cluster = new PairWiseCluster(this->pwset);
+        cluster->setClusterSamples(cluster_samples, true);
+        cluster->performSimilarity("sc", this->min_obs);
+        //cluster->printCluster();
+        this->pwcl->addCluster(cluster);
+      }
+      cluster_num++;
     }
-    cout << endl;
+
+    // Second,
+    //cout << endl;
   }
-  cout << "-----------------------------------------------------------------------" << endl;
+  //cout << "-----------------------------------------------------------------------" << endl;
 }

@@ -15,13 +15,12 @@ OBJS = \
   vector.o \
   ematrix.o \
   stats/stats.o \
-  stats/kurtosis.o \
-  stats/sfrancia.o \
   stats/outlier.o \
   stats/meanshift.o \
   similarity/bspline_mi.o \
   similarity/pearson.o \
   similarity/spearman.o \
+  clustering/clusters.o \
   clustering/mixmod.o \
   dimreduce.o \
   similarity.o \
@@ -54,11 +53,11 @@ stats/kurtosis.o: stats/kurtosis.cpp stats/kurtosis.h
 stats/sfrancia.o: stats/sfrancia.cpp stats/sfrancia.h
 	${CC} -c ${CFLAGS} ${INCLUDES} stats/sfrancia.cpp -o stats/sfrancia.o
 
-#stats/swilk.o: stats/swilk.cpp stats/swilk.h
-#	${CC} -c ${CFLAGS} ${INCLUDES} stats/swilk.cpp -o stats/swilk.o
+stats/swilk.o: stats/swilk.cpp stats/swilk.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/swilk.cpp -o stats/swilk.o
 
-#stats/royston.o: stats/royston.cpp stats/royston.h
-#	${CC} -c ${CFLAGS} ${INCLUDES} stats/royston.cpp -o stats/royston.o
+stats/royston.o: stats/royston.cpp stats/royston.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/royston.cpp -o stats/royston.o
 
 stats/outlier.o: stats/outlier.cpp stats/outlier.h
 	${CC} -c ${CFLAGS} ${INCLUDES} stats/outlier.cpp -o stats/outlier.o
@@ -74,6 +73,9 @@ similarity/pearson.o: similarity/pearson.cpp similarity/pearson.h
 
 similarity/bspline_mi.o: similarity/bspline_mi.cpp similarity/bspline_mi.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/bspline_mi.cpp -o similarity/bspline_mi.o
+
+clustering/clusters.o: clustering/clusters.cpp clustering/clusters.h
+	${CC} -c ${CFLAGS} ${INCLUDES} clustering/clusters.cpp -o clustering/clusters.o
 
 clustering/mixmod.o: clustering/mixmod.cpp clustering/mixmod.h
 	${CC} -c ${CFLAGS} ${INCLUDES} clustering/mixmod.cpp -o clustering/mixmod.o

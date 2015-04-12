@@ -35,6 +35,9 @@ class PairWiseSet {
     void clean();
 
   public:
+    // The indexes into the EMatrix for the two genes being compared.
+    int gene1;
+    int gene2;
     // The original x and y data arrays and their size.
     double *x_orig;
     double *y_orig;
@@ -49,7 +52,7 @@ class PairWiseSet {
     int * samples;
 
   public:
-    PairWiseSet(double * a, double *b, int n);
+    PairWiseSet(EMatrix * ematrix, int i, int j);
     ~PairWiseSet();
 };
 
