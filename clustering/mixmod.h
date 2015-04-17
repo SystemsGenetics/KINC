@@ -10,6 +10,7 @@
 #include <mixmod/Clustering/ClusteringOutput.h>
 #include <mixmod/Clustering/ClusteringModelOutput.h>
 #include <mixmod/Clustering/ClusteringMain.h>
+#include <mixmod/Clustering/ClusteringStrategy.h>
 
 #include "clusters.h"
 #include "../ematrix.h"
@@ -26,16 +27,6 @@ class MixModClusters {
     // the construct will extract the data from the pwset object and
     // convert it into this data array.
     double ** data;
-
-    // The type of data used for this mixture model.
-    XEM::DataType dataType;
-    XEM::GaussianData * gdata;
-    XEM::DataDescription * dataDescription;
-    XEM::ClusteringInput * cInput;
-    XEM::ClusteringOutput * cOutput;
-
-    // nbCluster contains the numbers of clusters to be tested.
-    vector<int64_t> nbCluster;
 
     // The vector containing the cluster membership.
     int64_t * labels;

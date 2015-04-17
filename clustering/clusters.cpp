@@ -225,6 +225,6 @@ void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, 
     fprintf(fp, "\n");
     curr = curr->neighbor;
     cluster_id++;
+    fflush(fp);
   }
-  fflush(fp);
 }

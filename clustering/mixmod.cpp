@@ -15,10 +15,6 @@ MixModClusters::MixModClusters(PairWiseSet *pwset, int min_obs, char * method) {
   //  Set all other private members to NULL.
   this->labels = NULL;
   this->pwcl = NULL;
-  this->gdata = NULL;
-  this->dataDescription = NULL;
-  this->cInput = NULL;
-  this->cOutput = NULL;
   this->data = NULL;
 
   // Create the PairWiseClusterList object
@@ -30,9 +26,6 @@ MixModClusters::MixModClusters(PairWiseSet *pwset, int min_obs, char * method) {
     return;
   }
 
-  // The data we are using is qualitative, so set the data type.
-  this->dataType = XEM::QuantitativeData;
-
   // Create the Gaussian Data object and set the dataDescription object.
   this->data = (double **) malloc(sizeof(double *) * pwset->n_clean);
   for (int i = 0; i < pwset->n_clean ; i++) {
@@ -41,52 +34,21 @@ MixModClusters::MixModClusters(PairWiseSet *pwset, int min_obs, char * method) {
     this->data[i][1] = pwset->y_clean[i];
   }
 
-  this->gdata = new XEM::GaussianData(pwset->n_clean, 2, data);
-  this->dataDescription = new XEM::DataDescription(gdata);
-
-  // Set the number of clusters to be tested to 9.
-  nbCluster.push_back(2);
-  nbCluster.push_back(3);
-  nbCluster.push_back(4);
-  nbCluster.push_back(5);
-  nbCluster.push_back(6);
-  nbCluster.push_back(7);
-  nbCluster.push_back(8);
-  nbCluster.push_back(9);
-
-  // Create the ClusteringInput object.
-  this->cInput = new XEM::ClusteringInput(nbCluster, *dataDescription);
-  this->cOutput = NULL;
-
-  // Finalize input: run a series of sanity checks on it
-  cInput->finalize();
 }
 
 /**
  * Destructor for the MixMod class.
  */
 MixModClusters::~MixModClusters() {
-  if (gdata) {
-    delete gdata;
-  }
-  if (dataDescription) {
-    delete dataDescription;
-  }
-  if (cInput) {
-    delete cInput;
-  }
-  if (cOutput) {
-    delete cOutput;
-  }
   // Free the data array.
   if (data) {
-    for (int i = 0; i < pwset->n_clean ; i++) {
+    for (int i = 0; i < pwset->n_clean; i++) {
       free(data[i]);
     }
     free(data);
   }
   if (labels) {
-    delete labels;
+    free(labels);
   }
   delete pwcl;
 }
@@ -95,51 +57,85 @@ MixModClusters::~MixModClusters() {
  * Executes mixture model clustering.
  */
 void MixModClusters::run() {
+  int64_t lowest_cluster_num = 9;
+  int found = 0;
+
   // Make sure we have the correct number of observations before performing
   // the comparision.
   if (this->pwset->n_clean < this->min_obs) {
     return;
   }
 
-  // Create XEM::ClusteringMain
-  XEM::ClusteringMain cMain(cInput);
+  // The data we are using is qualitative, so set the data type.
+  XEM::GaussianData * gdata = new XEM::GaussianData(pwset->n_clean, 2, data);
+  XEM::DataDescription dataDescription(gdata);
 
-  // Run XEM::ClusteringMain
-  cMain.run();
+  // Set the number of clusters to be tested to 9.
+  vector<int64_t> nbCluster;
+  nbCluster.push_back(1);
+  nbCluster.push_back(2);
+  nbCluster.push_back(3);
+  nbCluster.push_back(4);
+  nbCluster.push_back(5);
 
-  // Create a new XEM::ClusteringOutput object
-  cOutput = cMain.getOutput();
+  // Create the ClusteringInput object.
+  XEM::ClusteringInput cInput(nbCluster, dataDescription);
 
-  //
-  cOutput->sort(XEM::BIC);
+  // Finalize input: run a series of sanity checks on it
+  cInput.finalize();
 
-  if (cOutput->atLeastOneEstimationNoError()) {
-    // Get the best XEM::ClusteringModelOutput
-    XEM::ClusteringModelOutput* cMOutput = cOutput->getClusteringModelOutput().front();
-//    XEM::ParameterDescription* paramDescription = cMOutput->getParameterDescription();
-//
-//    cout << "-----------------------------------------------------------------------" << endl;
-//    cout << "Best model is " << endl;
-//    cout << " - nbCluster : " << paramDescription->getNbCluster() << endl;
-//    cout << "-----------------------------------------------------------------------" << endl << endl;
-//
-//    cout << "-----------------------------------------------------------------------" << endl;
-//    cout << "Parameters display" << endl;
-//
-//    XEM::Parameter* param = paramDescription->getParameter();
-//    // print out parameters
-//    param->edit();
-//    // print out criterion values
-//    for (int64_t iCriterion = 0; iCriterion < cInput->getCriterionName().size(); iCriterion++) {
-//      cMOutput->getCriterionOutput (cInput->getCriterionName (iCriterion)).editTypeAndValue (std::cout);
-//    }
+  // Run XEM::ClusteringMain 5 times to find the iteration with the
+  // lowest number of clusters.  We do this because the MixModLib can
+  // detect different numbers of clusters depending on the random starting
+  // point in the algorithm.
+  for (int i = 0; i < 5; i++) {
 
-    // Get the classification (cluster) labels for the samples.
-    XEM::LabelDescription * ldescription = cMOutput->getLabelDescription();
-    XEM::Label * label = ldescription->getLabel();
-    this->labels = label->getTabLabel();
+    // Find clusters.
+    XEM::ClusteringMain cMain(&cInput);
+    cMain.run();
 
-    // Create the cluster objects.
+    // Create a new XEM::ClusteringOutput object
+    XEM::ClusteringOutput * cOutput = cMain.getOutput();
+
+    // Order the clusters using BIC.
+    cOutput->sort(XEM::BIC);
+
+    if (cOutput->atLeastOneEstimationNoError()) {
+      found = 1;
+
+      // Get the best XEM::ClusteringModelOutput
+      XEM::ClusteringModelOutput* cMOutput = cOutput->getClusteringModelOutput().front();
+      XEM::LabelDescription * ldescription = cMOutput->getLabelDescription();
+      XEM::Label * label = ldescription->getLabel();
+      int64_t * cLabels = label->getTabLabel();
+
+      // Find the number of clusters
+      int64_t num_clusters = 0;
+      for (int i = 0; i < this->pwset->n_clean; i++) {
+        if (cLabels[i] > num_clusters) {
+          num_clusters = cLabels[i];
+        }
+      }
+
+      // If this is the fewest number of clusters we've seen then copy
+      // the labels over.
+      if (num_clusters < lowest_cluster_num) {
+        lowest_cluster_num = num_clusters;
+        if (this->labels == NULL) {
+          this->labels = (int64_t *) malloc(sizeof(int64_t) * this->pwset->n_clean);
+        }
+        for (int i = 0; i < this->pwset->n_clean; i++) {
+          this->labels[i] = cLabels[i];
+        }
+      }
+      free(cLabels);
+    }
+  }
+  delete gdata;
+
+  if (found) {
+//    printf("Lowest: %d\n", lowest_cluster_num);
+    // Create the cluster objects using the iteration with the fewest clusters.
     int cluster_num = 1;
     int cluster_samples[this->pwset->n_clean];
     bool done = false;
@@ -160,15 +156,11 @@ void MixModClusters::run() {
         PairWiseCluster * cluster = new PairWiseCluster(this->pwset);
         cluster->setClusterSamples(cluster_samples, true);
         // Calculate the Spearman correlation for this cluster.
-        //cluster->doSimilarity(this->method, this->min_obs);
-        //cluster->printCluster();
+        cluster->doSimilarity(this->method, this->min_obs);
+//        cluster->printCluster();
         this->pwcl->addCluster(cluster);
       }
       cluster_num++;
     }
-
-    // Second,
-    //cout << endl;
   }
-  //cout << "-----------------------------------------------------------------------" << endl;
 }
