@@ -9,9 +9,10 @@ PairWiseCluster::PairWiseCluster(PairWiseSet * pwset) {
   // Initialize the class members.
   this->cluster_samples = NULL;
   this->cluster_size = 0;
-  this->pwset = pwset;
   this->neighbor = NULL;
   this->pwsim = NULL;
+
+  this->pwset = pwset;
 }
 /**
  * Desctructor.
@@ -81,13 +82,34 @@ void PairWiseCluster::printCluster() {
   }
   printf("\n");
 }
-
+/**
+ *
+ */
 PairWiseClusterList::PairWiseClusterList(PairWiseSet * pwset) {
   this->pwset = pwset;
   this->num_clusters = 0;
   this->head = NULL;
 }
+/**
+ *
+ */
+PairWiseClusterList::~PairWiseClusterList() {
+  PairWiseCluster * next;
 
+  PairWiseCluster * curr = head;
+  while (curr) {
+    next = curr->neighbor;
+    delete curr;
+    curr = next;
+  }
+}
+
+/**
+ * Adds a cluster to the cluster list.
+ *
+ * Upon deletion of the list the memory assocaited with the cluster will
+ * be removed as well.
+ */
 void PairWiseClusterList::addCluster(PairWiseCluster * pwc) {
 
   // Check the list to see if it is empty. If so, then make this item the
@@ -115,7 +137,7 @@ PairWiseClusterWriter::PairWiseClusterWriter(char * m, char * fp, int i) {
 
   fileprefix = (char *) malloc(sizeof(char) * strlen(fp) + 1);
   strcpy(fileprefix, fp);
-  fps = (FILE **) malloc(sizeof(FILE *) * 102);
+  fps = (ofstream **) malloc(sizeof(ofstream *) * 102);
 
   this->openOutFiles();
 }
@@ -126,6 +148,7 @@ PairWiseClusterWriter::~PairWiseClusterWriter() {
   this->closeOutFiles();
   free(fps);
   free(fileprefix);
+  free(method);
 }
 /**
  * Opens and creates 102 files for storing the clusters with correlation values.
@@ -156,14 +179,16 @@ void PairWiseClusterWriter::openOutFiles() {
       mkdir(dirname, 0700);
     }
     sprintf(filename, "%s/%03d/%s.clusters.%03d.%03d.txt", clusters_dir, i, fileprefix, i, id + 1);
-    fps[i] = fopen(filename, "w");
+    fps[i] = new ofstream;
+    fps[i]->open(filename, ios::out);
   }
 
   if (stat(nan_dir, &st) == -1) {
     mkdir(nan_dir, 0700);
   }
   sprintf(filename, "%s/%s.clusters.nan.%03d.txt", nan_dir, fileprefix, id + 1);
-  fps[i] = fopen(filename, "w");
+  fps[i] = new ofstream;
+  fps[i]->open(filename, ios::out);
 }
 
 /**
@@ -171,11 +196,12 @@ void PairWiseClusterWriter::openOutFiles() {
  */
 void PairWiseClusterWriter::closeOutFiles() {
   int i =  0;
+
   for (i = 0; i <= 101; i++) {
-    FILE * fp = fps[i];
-    fprintf(fp, "#Done\n");
-    fclose(fp);
+    (*fps[i]) << "#Done" << "\n";
+    fps[i]->close();
   }
+  free(fps);
 }
 
 
@@ -197,13 +223,13 @@ void PairWiseClusterWriter::closeOutFiles() {
 void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, int gene2) {
 
   // The file pointer of the file to write to.
-  FILE *fp;
+  ofstream *fp;
   int cluster_id = 0;
 
   PairWiseCluster * curr = pwcl->head;
   while (curr != NULL) {
     // Determine which file to write the output into
-    if (isnan(curr->pwsim->score)) {
+    if (!curr->pwsim || isnan(curr->pwsim->score)) {
       fp = fps[101];
     }
     else {
@@ -212,19 +238,20 @@ void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, 
       int i3 = (int) i2;
       fp = fps[i3];
     }
-    fprintf(fp, "%i\t%i\t%i\t%i\t", gene1 + 1, gene2 + 1, curr->cluster_size, cluster_id);
+    (*fp) << gene1 + 1 << "\t" << gene2 + 1 << "\t" << curr->cluster_size << "\t" << cluster_id << "\t";
     for (int i = 0; i < curr->pwset->n_orig; i++) {
-      fprintf(fp, "%i", curr->cluster_samples[i]);
+      (*fp) << curr->cluster_samples[i];
     }
+    (*fp) << "\t";
     if (curr->pwsim) {
-      fprintf(fp, "\t%f", curr->pwsim->score);
+      (*fp) << curr->pwsim->score << "\t";
     }
     else {
-      fprintf(fp, "\t%f", NAN);
+      (*fp) << NAN << "\t";
     }
-    fprintf(fp, "\n");
+    (*fp) << endl;
     curr = curr->neighbor;
     cluster_id++;
-    fflush(fp);
+    fp->flush();
   }
 }

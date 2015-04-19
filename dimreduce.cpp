@@ -4,6 +4,18 @@
 #define required_argument 1
 #define optional_argument 2
 
+
+// Set to 1 if Ctrl-C is pressed. Will allow for graceful termination
+int Close_Now = 0;
+
+// Define the function to be called when ctrl-c (SIGINT) signal is sent to process
+void signal_callback_handler(int signum) {
+   printf("Caught signal %d. Terminating program...\n",signum);
+   // Cleanup and close up stuff here
+   Close_Now = 1;
+
+}
+
 /**
  * DRArgs constructor.
  */
@@ -194,6 +206,9 @@ DRArgs::~DRArgs() {
  */
 int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
 
+  // Register signal and signal handler
+  signal(SIGINT, signal_callback_handler);
+
   // variables used for timing of the software
   time_t start_time = time(0);
   time_t now;
@@ -295,6 +310,11 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       delete mixmod;
       delete pwset;
 
+      // If the user cancelled the program then finish up.
+      if (Close_Now == 1) {
+        i = num_rows;
+        j = num_rows;
+      }
     }
   }
 

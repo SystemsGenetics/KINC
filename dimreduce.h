@@ -9,6 +9,7 @@
 #include <string.h>
 #include <mpi.h>
 #include <libgen.h>
+#include <signal.h>
 
 #include "ematrix.h"
 //#include "stats/royston.h"
@@ -19,7 +20,6 @@
 #include "clustering/mixmod.h"
 #include "similarity.h"
 #include "clustering/clusters.h"
-
 
 /**
  * This class holds the arguments used as input to the dimreduce program.

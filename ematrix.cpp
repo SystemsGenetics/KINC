@@ -17,7 +17,7 @@ EMatrix::EMatrix(char * infilename, int rows, int cols, int headers,
   // Integers for looping.
   int i, j;
 
-  // Initialize the EMatrix struct
+  // Initialize the genes and samples arrays.
   num_genes = rows;
   num_samples = cols;
   if (headers) {
@@ -27,38 +27,40 @@ EMatrix::EMatrix(char * infilename, int rows, int cols, int headers,
   genes = (char **) malloc(sizeof(char *) * num_genes);
 
   // Allocate the data array for storing the input expression matrix.
-  data = (double**) malloc(sizeof(double *) * rows);
-  for (i = 0; i < rows; i++) {
-    data[i] = (double *) malloc(sizeof(double) * cols);
+  data = (double**) malloc(sizeof(double *) * num_genes);
+  for (i = 0; i < num_genes; i++) {
+    data[i] = (double *) malloc(sizeof(double) * num_samples);
   }
 
   // iterate through the lines of the expression matrix
-  printf("Reading input file '%s'...\n", infilename);
+  printf("Reading input file '%s' with %d rows and %d columns...\n", infilename, rows, cols);
   infile = fopen(infilename, "r");
+  int k = 0;
   for (i = 0; i < rows; i++) {
 
-    // skip over the header if one is provided
+    // If a header is provided then get the sample names.
     if (i == 0 && headers) {
-      printf("Skipping headers...\n");
+      printf("Reading sample names...\n");
 
-      for (j = 0; j < cols; j++) {
+      for (j = 0; j < num_samples; j++) {
         samples[j] = (char *) malloc(sizeof(char) * 255);
         fscanf(infile, "%s", samples[j]);
       }
+      continue;
     }
 
-    // the first entry on every line is a label string - read that in before the numerical data
-    genes[i] = (char *) malloc(sizeof(char) * 255);
-    fscanf(infile, "%s", genes[i]);
+    // The first entry on every line is a label string - read that in before the numerical data
+    genes[k] = (char *) malloc(sizeof(char) * 255);
+    fscanf(infile, "%s", genes[k]);
 
     // iterate over the columns of each row
-    for (j = 0; j < cols; j++) {
+    for (j = 0; j < num_samples; j++) {
       char element[50]; // used for reading in each element of the expression matrix
       if (fscanf(infile, "%s", element) != EOF) {
         // if this is a missing value and omission of missing values is enabled then
         // rewrite this value as MISSING_VALUE
         if (omit_na && strcmp(element, na_val) == 0) {
-          data[i][j] = NAN;
+          data[k][j] = NAN;
         }
         else {
           // make sure the element is numeric
@@ -66,7 +68,7 @@ EMatrix::EMatrix(char * infilename, int rows, int cols, int headers,
             fprintf(stderr, "Error: value is not numeric: %s\n", element);
             exit(-1);
           }
-          data[i][j] = atof(element);
+          data[k][j] = atof(element);
         }
       }
       else {
@@ -74,7 +76,9 @@ EMatrix::EMatrix(char * infilename, int rows, int cols, int headers,
         exit(-1);
       }
     }
+    k++;
   }
+  printf("Done loading expression file\n");
 }
 /**
  * Frees the memory associated with an EMatrix object.

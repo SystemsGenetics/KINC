@@ -128,11 +128,10 @@ void MixModClusters::run() {
           this->labels[i] = cLabels[i];
         }
       }
-      free(cLabels);
+      delete cLabels;
     }
   }
   delete gdata;
-
   if (found) {
 //    printf("Lowest: %d\n", lowest_cluster_num);
     // Create the cluster objects using the iteration with the fewest clusters.

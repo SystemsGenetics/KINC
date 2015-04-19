@@ -1,21 +1,14 @@
 #ifndef _CLUSTERS_
 #define _CLUSTERS_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <libgen.h>
-#include <string.h>
-#include <math.h>
+#include <iostream>
+#include <fstream>
 #include "../similarity.h"
 #include "../similarity/spearman.h"
 #include "../similarity/pearson.h"
 #include "../similarity/bspline_mi.h"
 
+using namespace std;
 
 /**
  * The PairWiseCluster class contains the information about a cluster.
@@ -70,7 +63,7 @@ class PairWiseClusterList {
     PairWiseCluster * head;
 
     PairWiseClusterList(PairWiseSet * pwset);
-    ~PairWiseClusterList() {};
+    ~PairWiseClusterList();
 
     void addCluster(PairWiseCluster * pwc);
 };
@@ -81,7 +74,8 @@ class PairWiseClusterList {
 class PairWiseClusterWriter {
   private:
     // An array of file pointers.
-    FILE ** fps;
+    //FILE ** fps;
+    ofstream ** fps;
     // Specifies the correlation method: pc, mi, sc
     char * method;
     // The prefix for the filename.
