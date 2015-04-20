@@ -48,7 +48,7 @@ void PairWiseCluster::doSimilarity(const char * method, int min_obs) {
 void PairWiseCluster::setClusterSamples(int * samples, bool from_clean) {
   this->cluster_samples = (int *) malloc(sizeof(int) * this->pwset->n_orig);
 
-  // If the samples list is derive from the clean samples set then the size
+  // If the samples list is derived from the clean samples set then the size
   // of the samples is pwset->n_clean.
   int k = 0;
   if (from_clean) {
@@ -59,7 +59,9 @@ void PairWiseCluster::setClusterSamples(int * samples, bool from_clean) {
       }
       else {
         //this->cluster_samples[i] = 0;
-        this->cluster_samples[i] = 2;
+        // Using a 9 here is temporary.  Just for debugging to make
+        // it easier to identify missing values.
+        this->cluster_samples[i] = 9;
       }
     }
   }

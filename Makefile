@@ -6,9 +6,9 @@ MPI_INCLUDES =  $(shell mpic++ --showme:compile)
 MPI_LDLINK = $(shell mpic++ --showme:link)
 
 # Debugging CFLAGS
-#CFLAGS = -g -Wall -fno-inline
+CFLAGS = -g -Wall -fno-inline
 # Non-debugging CFLAGS
-CFLAGS = -Wall 
+#CFLAGS = -Wall 
 INCLUDES = -I/usr/local/include
 LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -g
 
