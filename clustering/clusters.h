@@ -24,12 +24,17 @@ class PairWiseCluster {
     int * cluster_samples;
     // The number of samples in the cluster
     int cluster_size;
-    // The next cluster in the linked list.
-    PairWiseCluster * neighbor;
     // The object containing the pair of genes/probesets to perform clustering.
     PairWiseSet * pwset;
     // A similarity function object.
     PairWiseSimilarity * pwsim;
+    // The number of samples that are missing from the cluster.
+    int num_missing;
+
+    // The next cluster in the linked list.
+    PairWiseCluster * neighbor;
+    // The index of this cluster in a PairWiseList
+    int index;
 
   public:
     PairWiseCluster(PairWiseSet * pwset);

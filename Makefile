@@ -10,7 +10,7 @@ CFLAGS = -g -Wall -fno-inline
 # Non-debugging CFLAGS
 #CFLAGS = -Wall 
 INCLUDES = -I/usr/local/include
-LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -g
+LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -lmixmod_newmat -g
 
 OBJS = \
   error.o \

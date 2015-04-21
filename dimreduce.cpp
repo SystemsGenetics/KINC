@@ -207,7 +207,7 @@ DRArgs::~DRArgs() {
 int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
 
   // Register signal and signal handler
-  signal(SIGINT, signal_callback_handler);
+//  signal(SIGINT, signal_callback_handler);
 
   // variables used for timing of the software
   time_t start_time = time(0);
@@ -255,13 +255,13 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
   int n_comps = 0;
   int my_comps = 0;
   int min_obs = params->getMinObs();
-//  for (int i = 131; i < num_rows; i++) {
+//  for (int i = 122 - 1; i < num_rows; i++) {
   for (int i = 0; i < num_rows; i++) {
     /*if (i == 50) {
       break;
     }*/
     for (int j = 0; j < num_rows; j++) {
-//    for (int j = 44; j < num_rows; j++) {
+//    for (int j = 77 - 1; j < num_rows; j++) {
 
       // We only need to calculate clusters in the lower triangle of the
       // full pair-wise matrix

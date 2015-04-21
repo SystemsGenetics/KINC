@@ -81,6 +81,10 @@ void MixModClusters::run() {
   // Create the ClusteringInput object.
   XEM::ClusteringInput cInput(nbCluster, dataDescription);
 
+  // Set the criterion to ICL
+  cInput.removeCriterion(0);
+  cInput.addCriterion(XEM::ICL);
+
   // Finalize input: run a series of sanity checks on it
   cInput.finalize();
 
@@ -88,7 +92,7 @@ void MixModClusters::run() {
   // lowest number of clusters.  We do this because the MixModLib can
   // detect different numbers of clusters depending on the random starting
   // point in the algorithm.
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 1; i++) {
 
     // Find clusters.
     XEM::ClusteringMain cMain(&cInput);
@@ -98,7 +102,7 @@ void MixModClusters::run() {
     XEM::ClusteringOutput * cOutput = cMain.getOutput();
 
     // Order the clusters using BIC.
-    cOutput->sort(XEM::BIC);
+    cOutput->sort(XEM::ICL);
 
     if (cOutput->atLeastOneEstimationNoError()) {
       found = 1;

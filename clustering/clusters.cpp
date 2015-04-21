@@ -9,9 +9,10 @@ PairWiseCluster::PairWiseCluster(PairWiseSet * pwset) {
   // Initialize the class members.
   this->cluster_samples = NULL;
   this->cluster_size = 0;
+  this->num_missing = 0;
   this->neighbor = NULL;
   this->pwsim = NULL;
-
+  this->index = 0;
   this->pwset = pwset;
 }
 /**
@@ -48,13 +49,17 @@ void PairWiseCluster::doSimilarity(const char * method, int min_obs) {
 void PairWiseCluster::setClusterSamples(int * samples, bool from_clean) {
   this->cluster_samples = (int *) malloc(sizeof(int) * this->pwset->n_orig);
 
-  // If the samples list is derived from the clean samples set then the size
-  // of the samples is pwset->n_clean.
+  // If the samples list was derived using the  clean samples of the PWSet
+  // then we need strech back out the samples to their original size
+  // and marking missing samples with a 9.
   int k = 0;
   if (from_clean) {
     for (int i = 0; i < this->pwset->n_orig; i++) {
       if (this->pwset->samples[i] == 1) {
         this->cluster_samples[i] = samples[k];
+        if (samples[k] == 1) {
+          this->cluster_size++;
+        }
         k++;
       }
       else {
@@ -62,6 +67,7 @@ void PairWiseCluster::setClusterSamples(int * samples, bool from_clean) {
         // Using a 9 here is temporary.  Just for debugging to make
         // it easier to identify missing values.
         this->cluster_samples[i] = 9;
+        this->num_missing++;
       }
     }
   }
@@ -69,6 +75,9 @@ void PairWiseCluster::setClusterSamples(int * samples, bool from_clean) {
   else {
     for (int i = 0; i < this->pwset->n_orig; i++) {
       this->cluster_samples[i] = samples[i];
+      if (samples[i] == 1) {
+        this->cluster_size++;
+      }
     }
   }
 }
@@ -113,6 +122,9 @@ PairWiseClusterList::~PairWiseClusterList() {
  * be removed as well.
  */
 void PairWiseClusterList::addCluster(PairWiseCluster * pwc) {
+
+  this->num_clusters++;
+  pwc->index = this->num_clusters;
 
   // Check the list to see if it is empty. If so, then make this item the
   // new head.
@@ -226,7 +238,6 @@ void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, 
 
   // The file pointer of the file to write to.
   ofstream *fp;
-  int cluster_id = 0;
 
   PairWiseCluster * curr = pwcl->head;
   while (curr != NULL) {
@@ -240,20 +251,18 @@ void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, 
       int i3 = (int) i2;
       fp = fps[i3];
     }
-    (*fp) << gene1 + 1 << "\t" << gene2 + 1 << "\t" << curr->cluster_size << "\t" << cluster_id << "\t";
-    for (int i = 0; i < curr->pwset->n_orig; i++) {
-      (*fp) << curr->cluster_samples[i];
-    }
-    (*fp) << "\t";
+    (*fp) << gene1 + 1 << "\t" << gene2 + 1 << "\t" << curr->index << "\t" << pwcl->num_clusters << "\t" << curr->cluster_size << "\t" << curr->num_missing  << "\t";
     if (curr->pwsim) {
       (*fp) << curr->pwsim->score << "\t";
     }
     else {
       (*fp) << NAN << "\t";
     }
+    for (int i = 0; i < curr->pwset->n_orig; i++) {
+      (*fp) << curr->cluster_samples[i];
+    }
     (*fp) << endl;
     curr = curr->neighbor;
-    cluster_id++;
     fp->flush();
   }
 }
