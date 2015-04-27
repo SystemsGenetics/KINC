@@ -53,6 +53,11 @@ class DRArgs {
     int do_log;
     // The input filename without the prefix.
     char * fileprefix;
+    // The total number of jobs that will be run at once.
+    int num_jobs;
+    // The index of this job within the total jobs.  Must be
+    // between 1 and num_jobs (no zero index)
+    int job_index;
 
     // Variables for mean shift clustering
     double msc_bw1;
@@ -75,6 +80,8 @@ class DRArgs {
     int getDoLog10() { return do_log10; }
     int getDoLog2() { return do_log2; }
     int getDoLog() { return do_log; }
+    int getNumJobs() { return num_jobs; }
+    int getJobIndex() { return job_index; }
     char * getFilePrefix() { return fileprefix; }
 
     void setArguments(int argc, char *argv[]);

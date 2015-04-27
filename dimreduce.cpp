@@ -34,6 +34,8 @@ DRArgs::DRArgs(int argc, char *argv[]) {
   infilename = NULL;
   na_val = NULL;
   fileprefix = NULL;
+  num_jobs = 1;
+  job_index = 1;
 
   // Initialize the 'func' parameter.
   strcpy(func, "none");
@@ -61,6 +63,8 @@ DRArgs::DRArgs(int argc, char *argv[]) {
       {"na_val",   required_argument, 0,  'n' },
       {"mi_bins",  required_argument, 0,  'b' },
       {"mi_degree",required_argument, 0,  'd' },
+      {"num_jobs", required_argument, 0,  'j' },
+      {"job_index",required_argument, 0,  'i' },
       {0, 0, 0,  0 }  // last element required to be all zeros
     };
     // get the next option
@@ -93,6 +97,12 @@ DRArgs::DRArgs(int argc, char *argv[]) {
         break;
       case 'n':
         na_val = optarg;
+        break;
+      case 'j':
+        num_jobs = atoi(optarg);
+        break;
+      case 'i':
+        job_index = atoi(optarg);
         break;
       case 'f':
         strcpy(func, optarg);
@@ -160,6 +170,7 @@ DRArgs::DRArgs(int argc, char *argv[]) {
   if (headers) {
     printf("  Skipping header lines\n");
   }
+
   printf("  Performing transformation: %s \n", func);
   printf("  Required observations: %d\n", min_obs);
   printf("  Using method: '%s'\n", method);
@@ -231,25 +242,34 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       ematrix->log10Transform();
   }
 
+  // If KINC is being rung using MPI then those values take precedence.
+  int num_jobs = params->getNumJobs();
+  int job_index = params->getJobIndex() - 1;
+  if (mpi_num_procs > 1) {
+    num_jobs = mpi_num_procs;
+    job_index = mpi_id;
+  }
+
   // Calculate the total number of comparisons and how many will be
   // performed by this process. We subtract 1 from the first params->rows
   // because we do not calculate the diagonal.
   long long int num_rows = params->getNumRows() - 1;
   long long int total_comps  = num_rows * (num_rows + 1) / 2;
-  long long int comps_per_process = total_comps / mpi_num_procs;
-  long long int comp_start = mpi_id * comps_per_process;
-  long long int comp_stop = mpi_id * comps_per_process + comps_per_process;
+  long long int comps_per_process = total_comps / num_jobs;
+  long long int comp_start = job_index * comps_per_process;
+  long long int comp_stop = job_index * comps_per_process + comps_per_process;
 
   // If this is the last process and there are some remainder comparisons
   // then we need to add them to the stop
-  if (mpi_id + 1 == mpi_num_procs) {
+  if (job_index + 1 == num_jobs) {
     comp_stop = total_comps;
   }
-  printf("%d. Performing %lld comparisons\n", mpi_id + 1, comp_stop - comp_start);
+  printf("  Job %d of %d. \n", job_index + 1, num_jobs);
+  printf("  Performing comparisions %lld to %lld. Total: %lld\n", comp_start, comp_stop, comp_stop - comp_start);
   fflush(stdout);
 
   // Creat the writer object to write out the cluters.
-  PairWiseClusterWriter * pwcw = new PairWiseClusterWriter(params->getCorMethod(), params->getFilePrefix(), mpi_id);
+  PairWiseClusterWriter * pwcw = new PairWiseClusterWriter(params->getCorMethod(), params->getFilePrefix(), job_index);
 
   // Perform the pair-wise clustering.
   int n_comps = 0;
@@ -282,7 +302,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
       pwcw->writeClusters(mixmod->pwcl, i, j);
 
       // Print run stats.
-      if (n_comps % 100 == 0) {
+      if (my_comps % 100 == 0) {
         // Get the amount of memory used.
         statm_t * memory = memory_get_usage();
 
@@ -292,7 +312,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
         // Calculate the time left to complete
         now = time(0);
         double seconds_passed = now - start_time;
-        double seconds_per_comp = seconds_passed / n_comps;
+        double seconds_per_comp = seconds_passed / my_comps;
         double total_seconds = seconds_per_comp * (comp_stop - comp_start);
 
         double minutes_left = (total_seconds - seconds_passed) / 60;
@@ -302,7 +322,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
 
         // Write progress report.
         printf("%d. Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd; %.2fy. Coords: %d, %d.        \n",
-          mpi_id + 1, (float) percent_complete, memory->size, (float) hours_left, (float) days_left, (float) years_left, i, j);
+          job_index + 1, (float) percent_complete, memory->size, (float) hours_left, (float) days_left, (float) years_left, i, j);
         free(memory);
       }
       n_comps++;
@@ -348,6 +368,16 @@ void print_dimreduce_usage() {
   printf("                 'mi' as values respectively.\n");
   printf("\n");
   printf("Optional:\n");
+  printf("  --num_jobs    Dimensionality reduction using clustering is highly parallel,\n");
+  printf("                  thus the task can be split into multiple separate jobs. KINC \n");
+  printf("                  can be run multiple times each working on a different portion \n");
+  printf("                  of the total comparisions.  Use this argument to specify the \n");
+  printf("                  total number of separate jobs that will be executed in parallel.\n");
+  printf("                  KINC will not launch these. They must be launched manually, each\n");
+  printf("                  with a different job_index. Defaults to 1\n");
+  printf("  --job_index   When the argument num_jobs is provided, this argument indicates which\n");
+  printf("                  job is being run. For example, if num_jobs is set to 10, then this\n");
+  printf("                  argument should be any number between 1 and 10. Defaults to 1.\n");
   printf("  --omit_na     Provide this flag to ignore missing values. Defaults to 0.\n");
   printf("  --na_val|-n   A string representing the missing values in the input file\n");
   printf("                  (e.g. NA or 0.000)\n");
