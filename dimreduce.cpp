@@ -215,7 +215,8 @@ DRArgs::~DRArgs() {
 /**
  *
  */
-int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
+//int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
+int do_dimreduce(int argc, char *argv[]) {
 
   // Register signal and signal handler
 //  signal(SIGINT, signal_callback_handler);
@@ -245,10 +246,10 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
   // If KINC is being rung using MPI then those values take precedence.
   int num_jobs = params->getNumJobs();
   int job_index = params->getJobIndex() - 1;
-  if (mpi_num_procs > 1) {
-    num_jobs = mpi_num_procs;
-    job_index = mpi_id;
-  }
+//  if (mpi_num_procs > 1) {
+//    num_jobs = mpi_num_procs;
+//    job_index = mpi_id;
+//  }
 
   // Calculate the total number of comparisons and how many will be
   // performed by this process. We subtract 1 from the first params->rows
@@ -265,7 +266,7 @@ int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
     comp_stop = total_comps;
   }
   printf("  Job %d of %d. \n", job_index + 1, num_jobs);
-  printf("  Performing comparisions %lld to %lld. Total: %lld\n", comp_start, comp_stop, comp_stop - comp_start);
+  printf("  Performing comparisions %lld to %lld (%lld) of %lld\n", comp_start, comp_stop, comp_stop - comp_start, total_comps);
   fflush(stdout);
 
   // Creat the writer object to write out the cluters.

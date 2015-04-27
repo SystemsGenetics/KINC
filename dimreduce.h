@@ -88,7 +88,8 @@ class DRArgs {
 };
 
 // Primary function for this file
-int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs);
+//int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs);
+int do_dimreduce(int argc, char *argv[]);
 void print_dimreduce_usage();
 
 
