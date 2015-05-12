@@ -213,6 +213,7 @@ void PairWiseClusterWriter::closeOutFiles() {
 
   for (i = 0; i <= 101; i++) {
     (*fps[i]) << "#Done" << "\n";
+    fps[i]->flush();
     fps[i]->close();
   }
   free(fps);

@@ -36,6 +36,10 @@ DRArgs::DRArgs(int argc, char *argv[]) {
   fileprefix = NULL;
   num_jobs = 1;
   job_index = 1;
+  max_clusters = 5;
+
+  // Initialize the criterion parameters.
+  strcpy(criterion, "BIC");
 
   // Initialize the 'func' parameter.
   strcpy(func, "none");
@@ -51,20 +55,22 @@ DRArgs::DRArgs(int argc, char *argv[]) {
     // Specify the long options. The values returned are specified to be the
     // short options which are then handled by the case statement below.
     const struct option long_options[] = {
-      {"omit_na",  no_argument,       &omit_na,  1 },
-      {"headers",  no_argument,       &headers,  1 },
-      {"help",     no_argument,       0,  'h' },
-      {"ematrix",  required_argument, 0,  'e' },
-      {"method",   required_argument, 0,  'm' },
-      {"rows",     required_argument, 0,  'r' },
-      {"cols",     required_argument, 0,  'c' },
-      {"min_obs",  required_argument, 0,  'o' },
-      {"func",     required_argument, 0,  'f' },
-      {"na_val",   required_argument, 0,  'n' },
-      {"mi_bins",  required_argument, 0,  'b' },
-      {"mi_degree",required_argument, 0,  'd' },
-      {"num_jobs", required_argument, 0,  'j' },
-      {"job_index",required_argument, 0,  'i' },
+      {"omit_na",      no_argument,       &omit_na,  1 },
+      {"headers",      no_argument,       &headers,  1 },
+      {"help",         no_argument,       0,  'h' },
+      {"ematrix",      required_argument, 0,  'e' },
+      {"method",       required_argument, 0,  'm' },
+	  {"criterion",    required_argument, 0,  't' },
+	  {"max_clusters", required_argument, 0,  'l' },
+      {"rows",         required_argument, 0,  'r' },
+      {"cols",         required_argument, 0,  'c' },
+      {"min_obs",      required_argument, 0,  'o' },
+      {"func",         required_argument, 0,  'f' },
+      {"na_val",       required_argument, 0,  'n' },
+      {"mi_bins",      required_argument, 0,  'b' },
+      {"mi_degree",    required_argument, 0,  'd' },
+      {"num_jobs",     required_argument, 0,  'j' },
+      {"job_index",    required_argument, 0,  'i' },
       {0, 0, 0,  0 }  // last element required to be all zeros
     };
     // get the next option
@@ -91,6 +97,12 @@ DRArgs::DRArgs(int argc, char *argv[]) {
         break;
       case 'm':
         strcpy(method, optarg);
+        break;
+      case 't':
+        strcpy(criterion, optarg);
+        break;
+      case 'l':
+        max_clusters = atoi(optarg);
         break;
       case 'o':
         min_obs = atoi(optarg);
@@ -165,6 +177,32 @@ DRArgs::DRArgs(int argc, char *argv[]) {
     exit(-1);
   }
 
+  // Make sure the mixture module criterion are good
+  bool $mmc_is_good = false;
+  if (strcmp(criterion, "BIC") == 0) {
+    $mmc_is_good = true;
+  }
+  else if (strcmp(criterion, "ICL") == 0) {
+    $mmc_is_good = true;
+  }
+  else if (strcmp(criterion, "NEC") == 0) {
+    $mmc_is_good = true;
+  }
+  else if (strcmp(criterion, "CV") == 0) {
+    $mmc_is_good = true;
+  }
+  else if (strcmp(criterion, "DCV") == 0) {
+    $mmc_is_good = true;
+  }
+  if (!$mmc_is_good) {
+    fprintf(stderr, "Error: The mixture model criterion must be one of: BIC, ICL, NEC, CV, DCV (--criterion option).\n");
+    exit(-1);
+  }
+  if (max_clusters < 2 || max_clusters > 10 ){
+    fprintf(stderr, "Error: Please select a maximum cluters between 2 and 10. (--max_clusters option).\n");
+    exit(-1);
+  }
+
   // TODO: make sure means shift bandwidth arguments are numeric between 1 and 0
 
   if (headers) {
@@ -177,6 +215,8 @@ DRArgs::DRArgs(int argc, char *argv[]) {
   if (omit_na) {
     printf("  Missing values are: '%s'\n", na_val);
   }
+  printf("  Mixuter model criterion: %s\n", criterion);
+  printf("  Max cluters: %d\n", max_clusters);
 
   // remove the path and extension from the filename
   char * filename = basename(infilename);
@@ -276,6 +316,8 @@ int do_dimreduce(int argc, char *argv[]) {
   int n_comps = 0;
   int my_comps = 0;
   int min_obs = params->getMinObs();
+  char * criterion = params->getCriterion();
+  int max_clusters = params->getMaxClusters();
 //  for (int i = 122 - 1; i < num_rows; i++) {
   for (int i = 0; i < num_rows; i++) {
     /*if (i == 50) {
@@ -299,7 +341,7 @@ int do_dimreduce(int argc, char *argv[]) {
       // Perform pairwise clustering using mixture models
       PairWiseSet * pwset = new PairWiseSet(ematrix, i, j);
       MixModClusters * mixmod = new MixModClusters(pwset, min_obs, params->getCorMethod());
-      mixmod->run();
+      mixmod->run(criterion, max_clusters);
       pwcw->writeClusters(mixmod->pwcl, i, j);
 
       // Print run stats.
@@ -367,6 +409,10 @@ void print_dimreduce_usage() {
   printf("                 Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
   printf("                 and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
   printf("                 'mi' as values respectively.\n");
+  printf("\n");
+  printf("Mixture Models Options:\n");
+  printf("  --criterion|-t     The criterion model to use: BIC, ICL, NEC, CV, DCV.\n");
+  printf("  --max_clusters|-l  The maximum number of clusters to look for.\n");
   printf("\n");
   printf("Optional:\n");
   printf("  --num_jobs    Dimensionality reduction using clustering is highly parallel,\n");

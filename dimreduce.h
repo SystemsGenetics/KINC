@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <time.h>
 #include <string.h>
-#include <mpi.h>
 #include <libgen.h>
 #include <signal.h>
 
@@ -63,6 +62,12 @@ class DRArgs {
     double msc_bw1;
     double msc_bw2;
 
+    // Variables for mixture models
+    // The criterion model. E.g.  BIC, ICL, NEC, CV, DCV
+    char criterion[4];
+    // Max clusters
+    int max_clusters;
+
   public:
     DRArgs(int argc, char *argv[]);
     ~DRArgs();
@@ -84,7 +89,8 @@ class DRArgs {
     int getJobIndex() { return job_index; }
     char * getFilePrefix() { return fileprefix; }
 
-    void setArguments(int argc, char *argv[]);
+    char * getCriterion() { return criterion; }
+    int getMaxClusters() { return max_clusters; }
 };
 
 // Primary function for this file

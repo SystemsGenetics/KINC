@@ -56,7 +56,7 @@ MixModClusters::~MixModClusters() {
 /**
  * Executes mixture model clustering.
  */
-void MixModClusters::run() {
+void MixModClusters::run(char * criterion, int max_clusters) {
   int64_t lowest_cluster_num = 9;
   int found = 0;
 
@@ -72,18 +72,30 @@ void MixModClusters::run() {
 
   // Set the number of clusters to be tested to 9.
   vector<int64_t> nbCluster;
-  nbCluster.push_back(1);
-  nbCluster.push_back(2);
-  nbCluster.push_back(3);
-  nbCluster.push_back(4);
-  nbCluster.push_back(5);
+  for (int i = 1; i <= max_clusters; i++) {
+    nbCluster.push_back(i);
+  }
 
   // Create the ClusteringInput object.
   XEM::ClusteringInput cInput(nbCluster, dataDescription);
 
   // Set the criterion to ICL
   cInput.removeCriterion(0);
-  cInput.addCriterion(XEM::ICL);
+  if (strcmp(criterion, "BIC") == 0) {
+    cInput.addCriterion(XEM::BIC);
+  }
+  else if (strcmp(criterion, "ICL") == 0) {
+    cInput.addCriterion(XEM::ICL);
+  }
+  else if (strcmp(criterion, "NEC") == 0) {
+    cInput.addCriterion(XEM::NEC);
+  }
+  else if (strcmp(criterion, "CV") == 0) {
+    cInput.addCriterion(XEM::CV);
+  }
+  else if (strcmp(criterion, "DCV") == 0) {
+    cInput.addCriterion(XEM::DCV);
+  }
 
   // Finalize input: run a series of sanity checks on it
   cInput.finalize();
@@ -102,7 +114,22 @@ void MixModClusters::run() {
     XEM::ClusteringOutput * cOutput = cMain.getOutput();
 
     // Order the clusters using BIC.
-    cOutput->sort(XEM::ICL);
+    if (strcmp(criterion, "BIC") == 0) {
+      cOutput->sort(XEM::BIC);
+    }
+    else if (strcmp(criterion, "ICL") == 0) {
+      cOutput->sort(XEM::ICL);
+    }
+    else if (strcmp(criterion, "NEC") == 0) {
+      cOutput->sort(XEM::NEC);
+    }
+    else if (strcmp(criterion, "CV") == 0) {
+      cOutput->sort(XEM::CV);
+    }
+    else if (strcmp(criterion, "DCV") == 0) {
+      cOutput->sort(XEM::DCV);
+    }
+
 
     if (cOutput->atLeastOneEstimationNoError()) {
       found = 1;

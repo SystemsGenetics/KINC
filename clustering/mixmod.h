@@ -46,7 +46,7 @@ public:
     MixModClusters(PairWiseSet *pwset, int min_obs, char * method);
     ~MixModClusters();
 
-    void run();
+    void run(char * criterion, int max_clusters);
     int64_t * getLabels() { return labels; }
 };
 

@@ -1,9 +1,12 @@
 MKLROOT = 
-CC = mpic++ -m64
+#CC = mpic++ -m64
+CC = g++ -m64
 EXE_DIR = 
 
-MPI_INCLUDES =  $(shell mpic++ --showme:compile)
-MPI_LDLINK = $(shell mpic++ --showme:link)
+#MPI_INCLUDES =  $(shell mpic++ --showme:compile)
+#MPI_LDLINK = $(shell mpic++ --showme:link)
+MPI_INCLUDES =  
+MPI_LDLINK = 
 
 # Debugging CFLAGS
 CFLAGS = -g -Wall -fno-inline
