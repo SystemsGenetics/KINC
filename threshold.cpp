@@ -142,13 +142,15 @@ RMTArgs::RMTArgs(int argc, char *argv[]) {
     printf("  Skipping header lines\n");
   }
   // remove the path and extension from the filename
-  char const * temp = basename((char *) infilename);
+  fileprefix = (char *) malloc(sizeof(char) * strlen(infilename));
+  char * temp = basename((char *) infilename);
   strcpy(fileprefix, temp);
   char * p = rindex(fileprefix, '.');
   if (p) {
     p[0] = 0;
   }
 
+  inputDir = (char *) malloc(sizeof(char) * strlen(infilename));
   if (strcmp(method, "mi") == 0) {
     strcpy(inputDir, "MI");
   }
@@ -176,6 +178,7 @@ RMTArgs::RMTArgs(int argc, char *argv[]) {
  */
 RMTArgs::~RMTArgs() {
   free(fileprefix);
+  free(inputDir);
 }
 /**
  * The function to call when running the 'similarity' command.
@@ -540,6 +543,7 @@ float * read_similarity_matrix_cluster_file(float th, int * size, RMTArgs *param
     fprintf(stderr, "The clusters directory is missing. Cannot continue.\n");
     exit(-1);
   }
+  printf("    clusters directory: %s\n", clusterdir);
 
   // ------------------------------
   // Step #1: iterate through the cluster files to find out how many
@@ -624,7 +628,7 @@ float * read_similarity_matrix_cluster_file(float th, int * size, RMTArgs *param
   // for each of the genes identified previously.
   for (i = 100; i >= limit; i--) {
     char dirname[1024];
-    sprintf(dirname, "./clusters/%03d", i);
+    sprintf(dirname, "./%s/%03d", clusterdir, i);
 
     DIR * dir;
     dir = opendir(dirname);
