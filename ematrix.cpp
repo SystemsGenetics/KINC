@@ -3,8 +3,6 @@
 /**
  * Reads in the expression matrix
  *
- * @param CCMParameters params
- *   An instance of the CCM parameters struct
  *
  * @return
  *   A pointer to a two-dimensional array of doubles
@@ -78,7 +76,16 @@ EMatrix::EMatrix(char * infilename, int rows, int cols, int headers,
     }
     k++;
   }
-  printf("Done loading expression file\n");
+
+  // Remove the path and extension from the filename.
+  file_prefix = (char *) malloc(sizeof(char) * strlen(infilename));
+  char * temp = basename((char *) infilename);
+  strcpy(file_prefix, temp);
+  char * p = rindex(file_prefix, '.');
+  if (p) {
+    p[0] = 0;
+  }
+
 }
 /**
  * Frees the memory associated with an EMatrix object.

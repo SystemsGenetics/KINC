@@ -52,11 +52,15 @@ class RMTArgs {
     // between 1 and num_jobs (no zero index)
     int job_index;
 
+    // Filters
+    int max_missing;
+    int min_cluster_size;
+
     // Variables for RMT
     double thresholdStart;
     double thresholdStep;
     double chiSoughtValue;
-    int min_size;
+    int minEigenVectorSize;
     double finalTH;
     double finalChi;
     double minTH;
@@ -86,7 +90,7 @@ class RMTArgs {
     double getThresholdStart() { return thresholdStart; };
     double getThresholdStep() { return thresholdStep; };
     double getChiSoughtValue() { return chiSoughtValue; };
-    int getMinSize() { return min_size; };
+    int getMinEigenVectorSize() { return minEigenVectorSize; };
     double getFinalTH() { return finalTH; };
     double getFinalChi() { return finalChi; };
     double getMinTH() { return minTH; };
@@ -96,6 +100,8 @@ class RMTArgs {
     double getChiSquareTestThreshold() { return chiSquareTestThreshold; }
     int getMinUnfoldingPace() { return minUnfoldingPace; }
     int getMaxUnfoldingPace() { return maxUnfoldingPace; }
+    int getMaxMissing() { return max_missing; }
+    int getMinClusterSize() { return min_cluster_size; }
 
     int getMimiModuleSize() { return mimiModuleSize; }
     double getEdHistogramBin() { return edHistogramBin; }

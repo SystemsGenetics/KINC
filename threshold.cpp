@@ -12,7 +12,10 @@ RMTArgs::RMTArgs(int argc, char *argv[]) {
   thresholdStart = 0.99;
   thresholdStep  = 0.001;
   chiSoughtValue = 200;
-  min_size = 100;
+  minEigenVectorSize = 100;
+
+  max_missing = INFINITY;
+  min_cluster_size = 30;
 
   // TODO: perhaps the user should have a bit more control over what these
   // values should be? 99.607 (Chi-square df = 60 (number of bins in NNSD
@@ -30,7 +33,7 @@ RMTArgs::RMTArgs(int argc, char *argv[]) {
   minChi   = 10000.0;
   maxChi   = 0.0;
 
-  strcpy(method, "pc");
+  strcpy(method, "sc");
 
   // The value returned by getopt_long.
   int c;
@@ -52,6 +55,8 @@ RMTArgs::RMTArgs(int argc, char *argv[]) {
       {"th",      required_argument, 0,  't' },
       {"chi",     required_argument, 0,  'i' },
       {"step",    required_argument, 0,  's' },
+      {"missing", required_argument, 0,  'g' },
+      {"size",    required_argument, 0,  'z' },
       {0, 0, 0,  0 }  // last element required to be all zeros
     };
 
@@ -89,6 +94,12 @@ RMTArgs::RMTArgs(int argc, char *argv[]) {
       case 's':
         thresholdStep = atof(optarg);
         break;
+      case 'z':
+        min_cluster_size = atoi(optarg);
+        break;
+      case 'g':
+        max_missing = atoi(optarg);
+        break;
       case 'h':
         print_threshold_usage();
         exit(-1);
@@ -121,6 +132,18 @@ RMTArgs::RMTArgs(int argc, char *argv[]) {
     fprintf(stderr, "the expression matrix (--cols option).\n");
     exit(-1);
   }
+
+  if (max_missing < -1) {
+    fprintf(stderr, "Please provide a positive integer value for maximum missing values\n");
+    fprintf(stderr, "the expression matrix (--max_missing option).\n");
+    exit(-1);
+  }
+  if (min_cluster_size < 0 || min_cluster_size == 0) {
+    fprintf(stderr, "Please provide a positive integer value for the minimum cluster size in\n");
+    fprintf(stderr, "the expression matrix (--min_cluster_size option).\n");
+    exit(-1);
+  }
+
 
   // make sure the input file exists
   if (access(infilename, F_OK) == -1) {
@@ -226,9 +249,6 @@ int find_threshold(RMTArgs *params) {
   fprintf(chiF, "Threshold\tChi-square\tCut Matrix Size\n");
 
   do {
-    // decrement the threshold using the step value and then retrieve the
-    // matrix that contains only the threshold and higher
-    th = th - params->getThresholdStep();
     printf("\n");
     printf("  testing threshold: %f...\n", th);
 
@@ -236,7 +256,7 @@ int find_threshold(RMTArgs *params) {
     newM = read_similarity_matrix_cluster_file(th, &size, params);
 
     printf("  found matrix of size n x n, n = %d...\n", size);
-    if (size >= params->getMinSize()) {
+    if (size >= params->getMinEigenVectorSize()) {
       printf("  calculating eigenvalues...\n");
       E = calculateEigen(newM, size);
       free(newM);
@@ -275,6 +295,10 @@ int find_threshold(RMTArgs *params) {
     else{
       free(newM);
     }
+
+    // decrement the threshold using the step value and then retrieve the
+    // matrix that contains only the threshold and higher
+    th = th - params->getThresholdStep();
   }
   while(maxChi < params->getChiSoughtValue() || size == params->getNumRows());
 
@@ -527,6 +551,9 @@ float * read_similarity_matrix_cluster_file(float th, int * size, RMTArgs *param
   // The maximum number of clusters that any gene pair is allowed to have.
   int max_clusters = 100;
 
+  int max_missing = params->getMaxMissing();
+  int min_cluster_size = params->getMinClusterSize();
+
   // Initialize vector for holding which gene clusters will be used. This will
   // tell us how big the cut matrix needs to be.
   int * usedFlag = (int *) malloc(params->getNumRows() * max_clusters * sizeof(int));
@@ -543,7 +570,6 @@ float * read_similarity_matrix_cluster_file(float th, int * size, RMTArgs *param
     fprintf(stderr, "The clusters directory is missing. Cannot continue.\n");
     exit(-1);
   }
-  printf("    clusters directory: %s\n", clusterdir);
 
   // ------------------------------
   // Step #1: iterate through the cluster files to find out how many
@@ -579,7 +605,7 @@ float * read_similarity_matrix_cluster_file(float th, int * size, RMTArgs *param
         float cv;
         int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &num_samples, &num_missing, &cv, (char *)&samples);
         while (matches == 8) {
-          if (cv >= th) {
+          if (fabs(cv) >= th && num_samples >= min_cluster_size  && num_missing <= max_missing) {
             if (cluster_num > max_clusters) {
               fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
               exit(-1);
@@ -650,12 +676,12 @@ float * read_similarity_matrix_cluster_file(float th, int * size, RMTArgs *param
           fprintf(stderr, "Can't open file, %s. Cannot continue.\n", path);
           exit(-1);
         }
-        int j, k, cluster_num, size;
+        int j, k, cluster_num, num_clusters, num_samples, num_missing;
         char samples[params->getNumCols()];
         float cv;
-        int matches = fscanf(fp, "%d\t%d\t%d\%d\t%s\t%f\n", &j, &k, &size, &cluster_num, (char *)&samples, &cv);
-        while (matches == 6) {
-          if (cv >= th) {
+        int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &num_samples, &num_missing, &cv, (char *)&samples);
+        while (matches == 8) {
+          if (fabs(cv) >= th && num_samples >= min_cluster_size  && num_missing <= max_missing) {
             if (cluster_num > max_clusters) {
               fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
               exit(-1);
@@ -665,7 +691,7 @@ float * read_similarity_matrix_cluster_file(float th, int * size, RMTArgs *param
             int ci = index_k + (used * index_j);
             cutM[ci] = cv;
           }
-          matches = fscanf(fp, "%d\t%d\t%d\%d\t%s\t%f\n", &j, &k, &size, &cluster_num, (char *)&samples, &cv);
+          matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &num_samples, &num_missing, &cv, (char *)&samples);
         }
         fclose(fp);
       }
@@ -931,7 +957,7 @@ double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bi
 
   // Make sure our vector of eigenvalues is still large enough after
   // duplicates have been removed. If not, return a -1.
-  if (size < params->getMinSize()) {
+  if (size < params->getMinEigenVectorSize()) {
     printf("    Chi-square test failed: eigenvalue array too small after duplicate removal. See the eigenvector output file.\n");
     return -1;
   }
@@ -979,30 +1005,36 @@ void print_threshold_usage() {
   printf("\n");
   printf("Usage: ./kinc threshold [options]\n");
   printf("The list of required options:\n");
-  printf("  --ematrix|-e The file name that contains the expression matrix.\n");
-  printf("                 The rows must be genes or probe sets and columns are samples\n");
-  printf("  --method|-m  The correlation method to use. Supported methods include\n");
-  printf("                 Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
-  printf("                 and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
-  printf("                 'mi' as values respectively.\n");
-  printf("  --rows|-r    The number of lines in the input file including the header\n");
-  printf("                 column if it exists\n");
-  printf("  --cols|-c    The number of columns in the input file minus the first\n");
-  printf("                 column that contains gene names\n");
+  printf("  --ematrix|-e  The file name that contains the expression matrix.\n");
+  printf("                The rows must be genes or probe sets and columns are samples\n");
+  printf("  --method|-m   The correlation method to use. Supported methods include\n");
+  printf("                Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
+  printf("                and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
+  printf("                'mi' as values respectively.\n");
+  printf("  --rows|-r     The number of lines in the input file including the header\n");
+  printf("                column if it exists\n");
+  printf("  --cols|-c     The number of columns in the input file minus the first\n");
+  printf("                column that contains gene names\n");
   printf("\n");
   printf("Optional:\n");
-  printf("  --th|-t      A decimal indicating the start threshold. For Pearson's.\n");
-  printf("                 Correlation (--method pc), the default is 0.99. For Mutual\n");
-  printf("                 information (--method mi), the default is the maximum MI value\n");
-  printf("                 in the similarity matrix\n");
-  printf("  --step|-s    The threshold step size, to subtract at each iteration of RMT.\n");
-  printf("                 The default is 0.001\n");
-  printf("  --chi|-i     The Chi-square test value which when encountered RMT will stop.\n");
-  printf("                 The algorithm will only stop if it first encounters a Chi-square\n");
-  printf("                 value of 99.607 (df = 60, p-value = 0.001).\n");
-  printf("  --perf       Provide this flag to enable performance monitoring.\n");
+  printf("  --th|-t       A decimal indicating the start threshold. For Pearson's.\n");
+  printf("                Correlation (--method pc), the default is 0.99. For Mutual\n");
+  printf("                information (--method mi), the default is the maximum MI value\n");
+  printf("                in the similarity matrix\n");
+  printf("  --step|-s     The threshold step size, to subtract at each iteration of RMT.\n");
+  printf("                The default is 0.001\n");
+  printf("  --chi|-i      The Chi-square test value which when encountered RMT will stop.\n");
+  printf("                The algorithm will only stop if it first encounters a Chi-square\n");
+  printf("                value of 99.607 (df = 60, p-value = 0.001).\n");
+  printf("  --missing|-g  The total number of allowed missing values.  Each gene\n");
+  printf("                comparision can potentially have a missing value in any\n");
+  printf("                sample.  When the maximum number of missing values exceeds\n");
+  printf("                this value the clusters are ignored.\n");
+  printf("                If not provided, no limit is set.\n");
+  printf("  --size|-z     The minimum cluster size (number of samples per cluster).\n");
+  printf("                Default is 30\n");
   printf("  --headers     Provide this flag if the first line of the matrix contains\n");
-  printf("                  headers.\n");
+  printf("                headers.\n");
   printf("  --help|-h     Print these usage instructions\n");
   printf("\n");
 }
