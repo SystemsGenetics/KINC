@@ -24,12 +24,26 @@
 #include "vector.h"
 #include "similarity.h"
 
-/**
- * This class holds the arguments used as input to the threshold program.
- */
-class RMTArgs {
+// SSYEV prototype
+extern "C" void ssyev_(char* jobz, char* uplo, int* n, float* a, int* lda,
+                       float* w, float* work, int* lwork, int* info);
 
-  private:
+
+int do_threshold(int argc, char *argv[]);
+
+void print_threshold_usage();
+
+
+/**
+ *
+ */
+class ThresholdMethod {
+
+  protected:
+    // The expression matrix object.
+    EMatrix * ematrix;
+    // The directory where the expression matrix is found
+    char * input_dir;
     // Indicates if headers are present in the input EMatrix file.
     int headers;
     // The number of rows in the expression matrix.
@@ -40,22 +54,43 @@ class RMTArgs {
     char *infilename;
     // Specifies the correlation method: pc, mi, sc
     char method[10];
-    // The minimum number of observations to calculate correlation.
-    int min_obs;
-    // The input filename without the prefix.
-    char * fileprefix;
-    // The input directory where ematrix file is stored.
-    char * inputDir;
-    // The total number of jobs that will be run at once.
-    int num_jobs;
-    // The index of this job within the total jobs.  Must be
-    // between 1 and num_jobs (no zero index)
-    int job_index;
 
-    // Filters
+
+    // DATA FILTERS
+    // ------------
+    // The maximum number of missing values in the comparision.
     int max_missing;
+    // The minimum number of samples in a cluster.
     int min_cluster_size;
 
+
+  public:
+    ThresholdMethod(int argc, char *argv[]);
+    ~ThresholdMethod();
+
+    // GETTERS
+    // -------
+    int getHasHeaders() { return headers; }
+    int getNumRows() { return rows; }
+    int getNumCols() { return cols; }
+    char * getInfileName() { return infilename; }
+    char * getCorMethod() { return method; }
+
+    int getMaxMissing() { return max_missing; }
+    int getMinClusterSize() { return min_cluster_size; }
+
+    // TO BE IMPLEMENTED BY THE CHILD CLASS
+    // ------------------------------------
+    double findThreshold();
+};
+
+/**
+ * Implements Random Matrix Theory (RMT) Thresholding
+ */
+
+class RMTThreshold : public ThresholdMethod {
+
+  private:
     // Variables for RMT
     double thresholdStart;
     double thresholdStep;
@@ -71,63 +106,26 @@ class RMTArgs {
     double chiSquareTestThreshold;
     int minUnfoldingPace;
     int maxUnfoldingPace;
-    int mimiModuleSize;
-    double edHistogramBin; // Eigenvalue Histogram Bin size
+
+    double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size);
+    double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace);
+    // Calculates the eigenvalues of the given matrix.
+    float * calculateEigen(float * smatrix, int size);
+    //
+    double * unfolding(float * e, int size, int m);
+    // Removes duplicate eigenvalues from an array of eigenvalues.
+    float * degenerate(float* eigens, int size, int* newSize);
+
+    float * read_similarity_matrix_bin_file(float th, int * size);
+    float * read_similarity_matrix_cluster_file(float th, int * size);
 
   public:
-    RMTArgs(int argc, char *argv[]);
-    ~RMTArgs();
+    RMTThreshold(int argc, char *argv[]);
+    ~RMTThreshold();
 
-    // Getters
-    int getHasHeaders() { return headers; }
-    int getNumRows() { return rows; }
-    int getNumCols() { return cols; }
-    char * getInfileName() { return infilename; }
-    char * getCorMethod() { return method; }
-    char * getFilePrefix() { return fileprefix; }
-    char * getInputDir() { return inputDir; }
+    double findThreshold();
 
-    double getThresholdStart() { return thresholdStart; };
-    double getThresholdStep() { return thresholdStep; };
-    double getChiSoughtValue() { return chiSoughtValue; };
-    int getMinEigenVectorSize() { return minEigenVectorSize; };
-    double getFinalTH() { return finalTH; };
-    double getFinalChi() { return finalChi; };
-    double getMinTH() { return minTH; };
-    double getMinChi() { return minChi; };
-    double getMaxChi() { return maxChi; };
-    double getNNSDHistogramBin() { return nnsdHistogramBin; }
-    double getChiSquareTestThreshold() { return chiSquareTestThreshold; }
-    int getMinUnfoldingPace() { return minUnfoldingPace; }
-    int getMaxUnfoldingPace() { return maxUnfoldingPace; }
-    int getMaxMissing() { return max_missing; }
-    int getMinClusterSize() { return min_cluster_size; }
-
-    int getMimiModuleSize() { return mimiModuleSize; }
-    double getEdHistogramBin() { return edHistogramBin; }
 };
 
-
-// SSYEV prototype
-extern "C" void ssyev_(char* jobz, char* uplo, int* n, float* a, int* lda,
-                       float* w, float* work, int* lwork, int* info);
-
-/**
- * Function Prototypes
- */
-int do_threshold(int argc, char *argv[]);
-
-int find_threshold(RMTArgs *params);
-
-float * read_similarity_matrix_bin_file(float th, int * size, RMTArgs *params);
-float * read_similarity_matrix_cluster_file(float th, int * size, RMTArgs *params);
-
-float* calculateEigen(float* mat, int size);
-
-double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size, RMTArgs *params);
-
-double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace, RMTArgs *params);
-
-void print_threshold_usage();
 #endif
 
