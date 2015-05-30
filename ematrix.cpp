@@ -72,19 +72,6 @@ EMatrix::EMatrix(int argc, char *argv[]) {
       case 'f':
         strcpy(func, optarg);
         break;
-      case 'h':
-        print_threshold_usage();
-        exit(-1);
-        break;
-      case '?':
-        exit(-1);
-        break;
-      case ':':
-        print_threshold_usage();
-        exit(-1);
-        break;
-      default:
-        print_threshold_usage();
     }
   }
 

@@ -74,6 +74,7 @@ class EMatrix {
     // Indicates if missing values are omitted.
     int isMissingOmitted() { return omit_na; }
 
+    char * getUsage();
 
     // Log transforms the values in the expression matrix.
     void logTransform();

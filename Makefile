@@ -27,8 +27,8 @@ OBJS = \
   similarity/pearson.o \
   similarity/spearman.o \
   clustering/clusters.o \
+  clustering/clustering.o \
   clustering/mixmod.o \
-  dimreduce.o \
   similarity.o \
   threshold.o \
   extract.o \
@@ -83,6 +83,9 @@ similarity/bspline_mi.o: similarity/bspline_mi.cpp similarity/bspline_mi.h
 clustering/clusters.o: clustering/clusters.cpp clustering/clusters.h
 	${CC} -c ${CFLAGS} ${INCLUDES} clustering/clusters.cpp -o clustering/clusters.o
 
+clustering/clustering.o: clustering/clustering.cpp clustering/clustering.h
+	${CC} -c ${CFLAGS} ${INCLUDES} clustering/clustering.cpp -o clustering/clustering.o
+	
 clustering/mixmod.o: clustering/mixmod.cpp clustering/mixmod.h
 	${CC} -c ${CFLAGS} ${INCLUDES} clustering/mixmod.cpp -o clustering/mixmod.o
 
