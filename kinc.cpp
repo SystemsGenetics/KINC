@@ -2,6 +2,21 @@
 #include <mcheck.h>
 
 /**
+ * Prints the command-line usage instructions for the similarity command
+ */
+void print_usage() {
+  printf("\n");
+  printf("Usage: ./kinc [command]\n");
+  printf("Available commands:\n");
+  printf("  similarity       Performs pair-wise similarity calculations using an input expression matrix.\n");
+  printf("  threshold        Identifies a threshold for cutting the similarity matrix\n");
+  printf("  extract          Outputs the network edges file\n");
+  printf("  help [command]   Prints these instructions. Include the command to print help\n");
+  printf("                   for a specific command (e.g. kinc help similarity)\n");
+  printf("\n");
+}
+
+/**
  * The main subroutine.  Parses the input parameters and executes the program
  * accordingly.
  */
@@ -101,19 +116,4 @@ int main(int argc, char *argv[]) {
 //  mpi_err = MPI_Finalize();
 
   return retval;
-}
-
-/**
- * Prints the command-line usage instructions for the similarity command
- */
-void print_usage() {
-  printf("\n");
-  printf("Usage: ./kinc [command]\n");
-  printf("Available commands:\n");
-  printf("  similarity       Constructs the similarity matrix from an input expression matrix.\n");
-  printf("  threshold        Identifies a threshold using RMT for the similarity matrix\n");
-  printf("  extract          Outputs the network file\n");
-  printf("  help [command]   Prints these instructions. Include the command to print help\n");
-  printf("                   for a specific command (e.g. kinc help similarity)\n");
-  printf("\n");
 }

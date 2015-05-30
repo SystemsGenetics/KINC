@@ -35,7 +35,10 @@ void print_threshold_usage();
 
 
 /**
+ * A base class for thresholding methods to inherit from.
  *
+ * This class constructor will read arguments from the command-line, and
+ * provides the getters and setters for commonly needed class members.
  */
 class ThresholdMethod {
 
@@ -44,20 +47,12 @@ class ThresholdMethod {
     EMatrix * ematrix;
     // The directory where the expression matrix is found
     char * input_dir;
-    // Indicates if headers are present in the input EMatrix file.
-    int headers;
-    // The number of rows in the expression matrix.
-    int rows;
-    // The number of columns in the expression matrix.
-    int cols;
-    // The input file name
-    char *infilename;
-    // Specifies the correlation method: pc, mi, sc
+    // Specifies the correlation method that was used: pc, mi, sc
     char method[10];
 
 
-    // DATA FILTERS
-    // ------------
+    // DATA FILTERS FOR CLUSTERED SIMILARITY DATA
+    // ------------------------------------------
     // The maximum number of missing values in the comparision.
     int max_missing;
     // The minimum number of samples in a cluster.
@@ -70,12 +65,7 @@ class ThresholdMethod {
 
     // GETTERS
     // -------
-    int getHasHeaders() { return headers; }
-    int getNumRows() { return rows; }
-    int getNumCols() { return cols; }
-    char * getInfileName() { return infilename; }
     char * getCorMethod() { return method; }
-
     int getMaxMissing() { return max_missing; }
     int getMinClusterSize() { return min_cluster_size; }
 

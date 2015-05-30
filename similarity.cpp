@@ -1,151 +1,54 @@
 #include "similarity.h"
 
 /**
- *
+ * Prints the command-line usage instructions for the similarity command
  */
-PairWiseSet::PairWiseSet(EMatrix * ematrix, int i, int j) {
-  this->gene1 = i;
-  this->gene2 = j;
-
-  this->n_orig = ematrix->getNumSamples();
-  this->x_orig = ematrix->getRow(this->gene1);
-  this->y_orig = ematrix->getRow(this->gene2);
-
-  this->x_clean = NULL;
-  this->y_clean = NULL;
-  this->n_clean = NAN;
-  this->samples = NULL;
-
-  // Create the clean arrays.
-  this->clean();
+void print_similarity_usage() {
+  printf("\n");
+  printf("Usage: ./kinc similarity [options]\n");
+  printf("The list of required options:\n");
+  printf("  --ematrix|-e    The file name that contains the expression matrix.\n");
+  printf("                  The rows must be genes or probe sets and columns are samples\n");
+  printf("  --rows|-r       The number of lines in the input file including the header\n");
+  printf("                  column if it exists\n");
+  printf("  --cols|-c       The number of columns in the input file minus the first\n");
+  printf("                  column that contains gene names\n");
+  printf("  --method|-m     The correlation method to use. Supported methods include\n");
+  printf("                  Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
+  printf("                  and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
+  printf("                  'mi' as values respectively.\n");
+  printf("\n");
+  printf("Optional:\n");
+  printf("  --omit_na       Provide this flag to ignore missing values.\n");
+  printf("  --na_val|-n     A string representing the missing values in the input file\n");
+  printf("                  (e.g. NA or 0.000)\n");
+  printf("  --min_obs|-o    The minimum number of observations (after missing values\n");
+  printf("                  removed) that must be present to perform correlation.\n");
+  printf("                  Default is 30.\n");
+  printf("  --func|-f       A transformation function to apply to elements of the ematrix.\n");
+  printf("                  Values include: log, log2 or log10. Default is to not perform\n");
+  printf("                  any transformation.\n");
+  printf("  --perf          Provide this flag to enable performance monitoring.\n");
+  printf("  --headers       Provide this flag if the first line of the matrix contains\n");
+  printf("                  headers.\n");
+  printf("  --clustering|l  Perform pre-clustering of pair-wise samples prior to performing\n");
+  printf("                  the similarity calculations. The similarity calculations will be\n");
+  printf("                  performed on clusters greater than or equal to the min_obs\n");
+  printf("                  argument. The value provided is the clustering method. The\n");
+  printf("                  only method currently supported is mixture models \n");
+  printf("                  (e.g. --clustering mixmod). Note: clustering singificantly\n");
+  printf("                  increases execution time and generates a different output format\n");
+  printf("                  that can be hundres of gigabytes in size\n");
+  printf("                  method to use. Currently only mixture models are supported.")
+  printf("  --mi_bins|b     Use only if the method is 'mi'. The number of bins for the\n");
+  printf("                  B-spline estimator function for MI. Default is 10.\n");
+  printf("  --mi_degree|d   Use only if the method is 'mi'. The degree of the\n");
+  printf("                  B-spline estimator function for MI. Default is 3.\n");
+  printf("  --help|-h       Print these usage instructions\n");
+  printf("\n");
+  printf("Note: similarity values are set to NaN if there weren't enough observations\n");
+  printf("to perform the calculation.\n");
 }
-/**
- *
- */
-PairWiseSet::PairWiseSet(double *a, double *b, int n, int i, int j) {
-  this->gene1 = i;
-  this->gene2 = j;
-
-  this->n_orig = n;
-  this->x_orig = a;
-  this->y_orig = b;
-
-  this->x_clean = NULL;
-  this->y_clean = NULL;
-  this->n_clean = NAN;
-  this->samples = NULL;
-
-  // Create the clean arrays.
-  this->clean();
-}
-/**
- *
- */
-PairWiseSet::~PairWiseSet(){
-  if (this->samples) {
-    free(this->samples);
-  }
-  free(x_clean);
-  free(y_clean);
-}
-
-/**
- * Removes the NA's from the sample and set the samples array.
- */
-void PairWiseSet::clean() {
-  // Create the vectors that will contain the sample measurements that are
-  // not empty (e.g. NAN or INF).
-  this->x_clean = (double *) malloc(sizeof(double) * this->n_orig);
-  this->y_clean = (double *) malloc(sizeof(double) * this->n_orig);
-
-  // Create the samples array.
-  this->samples = (int *) malloc(sizeof(int) * this->n_orig);
-
-  // Iterate through both data arrays. If either of them have an NAN or INF
-  // then remove that sample from both array.
-  int n = 0;
-  for (int i = 0; i < this->n_orig; i++) {
-    if (isnan(this->x_orig[i]) || isnan(this->y_orig[i]) || isinf(this->x_orig[i]) || isinf(this->y_orig[i])) {
-      // This sample cannot be used, so set the sample to 0 and skip.
-      this->samples[i] = 0;
-      continue;
-    }
-    // This sample can be used so set the sample to one and keep the values.
-    this->x_clean[n] = this->x_orig[i];
-    this->y_clean[n] = this->y_orig[i];
-    this->samples[i] = 1;
-    n++;
-  }
-  // Set the final size of the cleaned arrays.
-  this->n_clean = n;
-}
-
-/**
- * Constructor
- *
- * @param const char * method
- *   The type of similarity test to perform. Valid values include 'pc' for
- *   Pearson's correlation, 'sc' for Spearman's correlation and 'mi' for
- *   Mutual Information.
- * @param PairWiseSet *pws
- *   The PairWiseSet which provides information about the two genes being
- *   compared.
- * @param int * samples
- *   Optional. The set of samples to use when performing the pair-wise
- *   comparision.  This is an array of zero's and ones that indicates if the
- *   samples should be included in the test.  It must be the same size as the
- *   n_orig value of the pws argument. If this argument is not provided then
- *   the samples array that is part of the pws argument is used.
- * @parma int min_obs
- *   Optional.  The number of observations required to perform the
- *   similarity test. If the number of samples is less than this value the
- *   test will not be performed.  The default is 30 samples.
- */
-PairWiseSimilarity::PairWiseSimilarity(const char * method, PairWiseSet *pws, int * samples = NULL, int min_obs = 30) {
-  this->pws = pws;
-  this->score = NAN;
-  this->method = (char *) malloc(sizeof(char) * strlen(method) + 1);
-  strcpy(this->method, method);
-  this->samples = samples;
-  this->min_obs = min_obs;
-
-  this->a = (double *) malloc(sizeof(double) * pws->n_orig);
-  this->b = (double *) malloc(sizeof(double) * pws->n_orig);
-  this->n = 0;
-
-  // If a samples list is provided then use that list.
-  if (samples) {
-    for (int i = 0; i < pws->n_orig; i++) {
-      // If the sample is a 1 then include it in the a & b arrays that will be
-      // used for testing. Also, make sure the pws sample is not missing.
-      // We don't want the caller to accidentally include a missing value.
-      if (samples[i] == 1 && pws->samples[i] == 1) {
-        a[this->n] = pws->x_orig[i];
-        b[this->n] = pws->y_orig[i];
-        this->n++;
-      }
-    }
-  }
-  // If a samples list is not provided then use the clean list that
-  // comes with the pws.
-  else {
-    for (int i = 0; i < pws->n_clean; i++) {
-      a[this->n] = pws->x_clean[i];
-      b[this->n] = pws->y_clean[i];
-    }
-    this->n = pws->n_clean;
-  }
-}
-
-/**
- * Desctructor
- */
-PairWiseSimilarity::~PairWiseSimilarity() {
-  free(method);
-  free(a);
-  free(b);
-}
-
 /**
  * The function to call when running the 'similarity' command.
  */
@@ -385,6 +288,152 @@ int do_similarity(int argc, char *argv[]) {
   printf("\nDone.\n");
   return 1;
 }
+/**
+ *
+ */
+PairWiseSet::PairWiseSet(EMatrix * ematrix, int i, int j) {
+  this->gene1 = i;
+  this->gene2 = j;
+
+  this->n_orig = ematrix->getNumSamples();
+  this->x_orig = ematrix->getRow(this->gene1);
+  this->y_orig = ematrix->getRow(this->gene2);
+
+  this->x_clean = NULL;
+  this->y_clean = NULL;
+  this->n_clean = NAN;
+  this->samples = NULL;
+
+  // Create the clean arrays.
+  this->clean();
+}
+/**
+ *
+ */
+PairWiseSet::PairWiseSet(double *a, double *b, int n, int i, int j) {
+  this->gene1 = i;
+  this->gene2 = j;
+
+  this->n_orig = n;
+  this->x_orig = a;
+  this->y_orig = b;
+
+  this->x_clean = NULL;
+  this->y_clean = NULL;
+  this->n_clean = NAN;
+  this->samples = NULL;
+
+  // Create the clean arrays.
+  this->clean();
+}
+/**
+ *
+ */
+PairWiseSet::~PairWiseSet(){
+  if (this->samples) {
+    free(this->samples);
+  }
+  free(x_clean);
+  free(y_clean);
+}
+
+/**
+ * Removes the NA's from the sample and set the samples array.
+ */
+void PairWiseSet::clean() {
+  // Create the vectors that will contain the sample measurements that are
+  // not empty (e.g. NAN or INF).
+  this->x_clean = (double *) malloc(sizeof(double) * this->n_orig);
+  this->y_clean = (double *) malloc(sizeof(double) * this->n_orig);
+
+  // Create the samples array.
+  this->samples = (int *) malloc(sizeof(int) * this->n_orig);
+
+  // Iterate through both data arrays. If either of them have an NAN or INF
+  // then remove that sample from both array.
+  int n = 0;
+  for (int i = 0; i < this->n_orig; i++) {
+    if (isnan(this->x_orig[i]) || isnan(this->y_orig[i]) || isinf(this->x_orig[i]) || isinf(this->y_orig[i])) {
+      // This sample cannot be used, so set the sample to 0 and skip.
+      this->samples[i] = 0;
+      continue;
+    }
+    // This sample can be used so set the sample to one and keep the values.
+    this->x_clean[n] = this->x_orig[i];
+    this->y_clean[n] = this->y_orig[i];
+    this->samples[i] = 1;
+    n++;
+  }
+  // Set the final size of the cleaned arrays.
+  this->n_clean = n;
+}
+
+/**
+ * Constructor
+ *
+ * @param const char * method
+ *   The type of similarity test to perform. Valid values include 'pc' for
+ *   Pearson's correlation, 'sc' for Spearman's correlation and 'mi' for
+ *   Mutual Information.
+ * @param PairWiseSet *pws
+ *   The PairWiseSet which provides information about the two genes being
+ *   compared.
+ * @param int * samples
+ *   Optional. The set of samples to use when performing the pair-wise
+ *   comparision.  This is an array of zero's and ones that indicates if the
+ *   samples should be included in the test.  It must be the same size as the
+ *   n_orig value of the pws argument. If this argument is not provided then
+ *   the samples array that is part of the pws argument is used.
+ * @parma int min_obs
+ *   Optional.  The number of observations required to perform the
+ *   similarity test. If the number of samples is less than this value the
+ *   test will not be performed.  The default is 30 samples.
+ */
+PairWiseSimilarity::PairWiseSimilarity(const char * method, PairWiseSet *pws, int * samples = NULL, int min_obs = 30) {
+  this->pws = pws;
+  this->score = NAN;
+  this->method = (char *) malloc(sizeof(char) * strlen(method) + 1);
+  strcpy(this->method, method);
+  this->samples = samples;
+  this->min_obs = min_obs;
+
+  this->a = (double *) malloc(sizeof(double) * pws->n_orig);
+  this->b = (double *) malloc(sizeof(double) * pws->n_orig);
+  this->n = 0;
+
+  // If a samples list is provided then use that list.
+  if (samples) {
+    for (int i = 0; i < pws->n_orig; i++) {
+      // If the sample is a 1 then include it in the a & b arrays that will be
+      // used for testing. Also, make sure the pws sample is not missing.
+      // We don't want the caller to accidentally include a missing value.
+      if (samples[i] == 1 && pws->samples[i] == 1) {
+        a[this->n] = pws->x_orig[i];
+        b[this->n] = pws->y_orig[i];
+        this->n++;
+      }
+    }
+  }
+  // If a samples list is not provided then use the clean list that
+  // comes with the pws.
+  else {
+    for (int i = 0; i < pws->n_clean; i++) {
+      a[this->n] = pws->x_clean[i];
+      b[this->n] = pws->y_clean[i];
+    }
+    this->n = pws->n_clean;
+  }
+}
+
+/**
+ * Desctructor
+ */
+PairWiseSimilarity::~PairWiseSimilarity() {
+  free(method);
+  free(a);
+  free(b);
+}
+
 
 
 /**
@@ -433,46 +482,5 @@ void print_histogram(CCMParameters params, int * histogram) {
     fprintf(outfile, "%lf\t%d\n", 1.0 * m / (HIST_BINS), histogram[m]);
   }
   fclose(outfile);
-}
-
-/**
- * Prints the command-line usage instructions for the similarity command
- */
-void print_similarity_usage() {
-  printf("\n");
-  printf("Usage: ./kinc similarity [options]\n");
-  printf("The list of required options:\n");
-  printf("  --ematrix|-e The file name that contains the expression matrix.\n");
-  printf("                 The rows must be genes or probe sets and columns are samples\n");
-  printf("  --rows|-r    The number of lines in the input file including the header\n");
-  printf("                 column if it exists\n");
-  printf("  --cols|-c    The number of columns in the input file minus the first\n");
-  printf("                 column that contains gene names\n");
-  printf("  --method|-m  The correlation method to use. Supported methods include\n");
-  printf("                 Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
-  printf("                 and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
-  printf("                 'mi' as values respectively.\n");
-  printf("\n");
-  printf("Optional:\n");
-  printf("  --omit_na     Provide this flag to ignore missing values. Defaults to 0.\n");
-  printf("  --na_val|-n   A string representing the missing values in the input file\n");
-  printf("                  (e.g. NA or 0.000)\n");
-  printf("  --min_obs|-o  The minimum number of observations (after missing values\n");
-  printf("                  removed) that must be present to perform correlation.\n");
-  printf("                  Default is 30.\n");
-  printf("  --func|-f     A transformation function to apply to elements of the ematrix.\n");
-  printf("                  Values include: log, log2 or log10. Default is to not perform\n");
-  printf("                  any transformation.\n");
-  printf("  --perf        Provide this flag to enable performance monitoring.\n");
-  printf("  --headers     Provide this flag if the first line of the matrix contains\n");
-  printf("                  headers.\n");
-  printf("  --mi_bins|b   Use only if the method is 'mi'. The number of bins for the\n");
-  printf("                  B-spline estimator function for MI. Default is 10.\n");
-  printf("  --mi_degree|d Use only if the method is 'mi'. The degree of the\n");
-  printf("                  B-spline estimator function for MI. Default is 3.\n");
-  printf("  --help|-h     Print these usage instructions\n");
-  printf("\n");
-  printf("Note: similarity values are set to NaN if there weren't enough observations\n");
-  printf("to perform the calculation.\n");
 }
 

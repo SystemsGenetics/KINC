@@ -7,13 +7,148 @@
  * @return
  *   A pointer to a two-dimensional array of doubles
  */
-EMatrix::EMatrix(char * infilename, int rows, int cols, int headers,
-    int omit_na, char * na_val) {
+EMatrix::EMatrix(int argc, char *argv[]) {
+
+  // initialize some of the program parameters
+  rows = 0;
+  cols = 0;
+  headers = 0;
+  omit_na = 0;
+  na_val = NULL;
+  do_log10 = 0;
+  do_log2 = 0;
+  do_log = 0;
+
+  // Initialize the 'func' parameter.
+  strcpy(func, "none");
+
+  // The value returned by getopt_long.
+  int c;
+
+  // loop through the incoming arguments until the
+  // getopt_long function returns -1. Then we break out of the loop
+  while(1) {
+    int option_index = 0;
+
+    // specify the long options. The values returned are specified to be the
+    // short options which are then handled by the case statement below
+    static struct option long_options[] = {
+      {"rows",    required_argument, 0,  'r' },
+      {"cols",    required_argument, 0,  'c' },
+      {"help",    no_argument,       0,  'h' },
+      {"headers", no_argument,       &headers,  1 },
+      {"omit_na", no_argument,       &omit_na,  1 },
+      {"func",    required_argument, 0,  'f' },
+      {"na_val",  required_argument, 0,  'n' },
+      {"ematrix", required_argument, 0,  'e' },
+      {0, 0, 0,  0 }  // last element required to be all zeros
+    };
+
+    // get the next option
+    c = getopt_long(argc, argv, "e:m:t:c:s:h", long_options, &option_index);
+
+    // if the index is -1 then we have reached the end of the options list
+    // and we break out of the while loop
+    if (c == -1) {
+      break;
+    }
+
+    // handle the options
+    switch (c) {
+      case 0:
+        break;
+      case 'e':
+        infilename = optarg;
+        break;
+      case 'r':
+        rows = atoi(optarg);
+        break;
+      case 'c':
+        cols = atoi(optarg);
+        break;
+      case 'n':
+        na_val = optarg;
+        break;
+      case 'f':
+        strcpy(func, optarg);
+        break;
+      case 'h':
+        print_threshold_usage();
+        exit(-1);
+        break;
+      case '?':
+        exit(-1);
+        break;
+      case ':':
+        print_threshold_usage();
+        exit(-1);
+        break;
+      default:
+        print_threshold_usage();
+    }
+  }
+
+  // make sure the required arguments are set and appropriate
+  if (!infilename) {
+    fprintf(stderr,"Please provide an expression matrix (--ematrix option).\n");
+    exit(-1);
+  }
+  // make sure we have a positive integer for the rows and columns of the matrix
+  if (rows < 0 || rows == 0) {
+    fprintf(stderr, "Please provide a positive integer value for the number of rows in the \n");
+    fprintf(stderr, "expression matrix (--rows option).\n");
+    exit(-1);
+  }
+  if (cols < 0 || cols == 0) {
+    fprintf(stderr, "Please provide a positive integer value for the number of columns in\n");
+    fprintf(stderr, "the expression matrix (--cols option).\n");
+    exit(-1);
+  }
+
+  if (omit_na && !na_val) {
+    fprintf(stderr, "Error: The missing value string should be provided (--na_val option).\n");
+    exit(-1);
+  }
+  // make sure the input file exists
+  if (access(infilename, F_OK) == -1) {
+    fprintf(stderr,"The input file does not exists or is not readable.\n");
+    exit(-1);
+  }
+
+  // if the function is log2 then set the do_log2 flag
+  if (strcmp(func, "log10") == 0) {
+    do_log10 = 1;
+  }
+  if (strcmp(func, "log2") == 0) {
+    do_log2 = 1;
+  }
+  if (strcmp(func, "log") == 0) {
+    do_log = 1;
+  }
+
+  // Remove the path and extension from the filename.
+  file_prefix = (char *) malloc(sizeof(char) * strlen(infilename));
+  char * temp = basename((char *) infilename);
+  strcpy(file_prefix, temp);
+  char * p = rindex(file_prefix, '.');
+  if (p) {
+    p[0] = 0;
+  }
 
   // Pointer to the input file.
   FILE *infile;
   // Integers for looping.
   int i, j;
+
+  // TODO: make sure means shift bandwidth arguments are numeric between 1 and 0
+  if (headers) {
+    printf("  Skipping header lines\n");
+  }
+
+  printf("  Performing transformation: %s \n", func);
+  if (omit_na) {
+    printf("  Missing values are: '%s'\n", na_val);
+  }
 
   // Initialize the genes and samples arrays.
   num_genes = rows;
@@ -30,7 +165,7 @@ EMatrix::EMatrix(char * infilename, int rows, int cols, int headers,
     data[i] = (double *) malloc(sizeof(double) * num_samples);
   }
 
-  // iterate through the lines of the expression matrix
+  // Iterate through the lines of the expression matrix
   printf("Reading input file '%s' with %d rows and %d columns...\n", infilename, rows, cols);
   infile = fopen(infilename, "r");
   int k = 0;
@@ -77,13 +212,15 @@ EMatrix::EMatrix(char * infilename, int rows, int cols, int headers,
     k++;
   }
 
-  // Remove the path and extension from the filename.
-  file_prefix = (char *) malloc(sizeof(char) * strlen(infilename));
-  char * temp = basename((char *) infilename);
-  strcpy(file_prefix, temp);
-  char * p = rindex(file_prefix, '.');
-  if (p) {
-    p[0] = 0;
+  // Perform any transformations to the data requested by the user.
+  if (do_log) {
+    logTransform();
+  }
+  if (do_log2) {
+    log2Transform();
+  }
+  if (do_log10) {
+    log10Transform();
   }
 
 }

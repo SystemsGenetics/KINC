@@ -33,9 +33,10 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include "clustering.h"
 //#include <mpi.h>
 
-#include "dimreduce.h"
 #include "threshold.h"
 #include "similarity.h"
 #include "extract.h"
