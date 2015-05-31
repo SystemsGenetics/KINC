@@ -1,7 +1,6 @@
 #ifndef _MIXMODPWCLUSTERING_
 #define _MIXMODPWCLUSTERING_
 
-#include "../../ematrix.h"
 #include "../SpearmanSimilarity.h"
 #include "PairWiseCluster.h"
 #include "PairWiseClusterList.h"

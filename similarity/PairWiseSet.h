@@ -1,7 +1,7 @@
 #ifndef _PAIRWISESET_
 #define _PAIRWISESET_
 
-#include "../ematrix.h"
+#include "../ematrix/EMatrix.h"
 
 /**
  * A class that holds expression data for two genes/probesets.

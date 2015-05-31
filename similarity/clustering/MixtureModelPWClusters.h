@@ -12,7 +12,6 @@
 #include <mixmod/Clustering/ClusteringMain.h>
 #include <mixmod/Clustering/ClusteringStrategy.h>
 
-#include "../../ematrix.h"
 #include "PairWiseCluster.h"
 #include "PairWiseClustering.h"
 #include "PairWiseClusterList.h"

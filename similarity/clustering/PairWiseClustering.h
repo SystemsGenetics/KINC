@@ -10,9 +10,9 @@
 #include <libgen.h>
 #include <signal.h>
 
-#include "../../ematrix.h"
-#include "../../error.h"
-#include "../../misc.h"
+#include "../../ematrix/EMatrix.h"
+#include "../../general/error.h"
+#include "../../general/misc.h"
 #include "PairWiseCluster.h"
 
 

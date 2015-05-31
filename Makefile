@@ -16,10 +16,10 @@ INCLUDES = -I/usr/local/include
 LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -lmixmod_newmat -g
 
 OBJS = \
-  error.o \
-  misc.o \
-  vector.o \
-  ematrix.o \
+  general/error.o \
+  general/misc.o \
+  general/vector.o \
+  ematrix/EMatrix.o \
   similarity/PairWiseSet.o \
   similarity/PairWiseSimilarity.o \
   similarity/MISimilarity.o \
@@ -43,17 +43,17 @@ EXE = kinc
 all: ${OBJS}
 	${CC} ${OBJS} ${LDFLAGS} ${MPI_LDLINK} -o ${EXE}
 
-misc.o: misc.cpp misc.h
-	${CC} -c ${CFLAGS} ${INCLUDES} misc.cpp
+general/misc.o: general/misc.cpp general/misc.h
+	${CC} -c ${CFLAGS} ${INCLUDES} general/misc.cpp -o general/misc.o
 
-vector.o: vector.cpp vector.h
-	${CC} -c ${CFLAGS} ${INCLUDES} vector.cpp
+general/vector.o: general/vector.cpp general/vector.h
+	${CC} -c ${CFLAGS} ${INCLUDES} general/vector.cpp -o general/vector.o
 
-error.o: error.cpp error.h
-	${CC} -c ${CFLAGS} ${INCLUDES} error.cpp
+general/error.o: general/error.cpp general/error.h
+	${CC} -c ${CFLAGS} ${INCLUDES} general/error.cpp -o general/error.o
 	
-ematrix.o: ematrix.cpp ematrix.h
-	${CC} -c ${CFLAGS} ${INCLUDES} ematrix.cpp
+ematrix/EMatrix.o: ematrix/EMatrix.cpp ematrix/EMatrix.h
+	${CC} -c ${CFLAGS} ${INCLUDES} ematrix/EMatrix.cpp -o ematrix/EMatrix.o
 
 #stats/stats.o: stats/stats.cpp stats/stats.h
 #	${CC} -c ${CFLAGS} ${INCLUDES} stats/stats.cpp -o stats/stats.o
@@ -128,7 +128,7 @@ extract/SimMatrixTabCluster.o: extract/SimMatrixTabCluster.cpp extract/SimMatrix
 	${CC} -c ${CFLAGS} ${INCLUDES} extract/SimMatrixTabCluster.cpp -o extract/SimMatrixTabCluster.o
 
 kinc.o: kinc.cpp kinc.h
-	${CC} -c ${CFLAGS} ${INCLUDES} ${MPI_INCLUDES} kinc.cpp
+	${CC} -c ${CFLAGS} ${INCLUDES} ${MPI_INCLUDES} kinc.cpp -o kinc.o
 
 clean:
 	rm -f ${OBJS} ${EXE}

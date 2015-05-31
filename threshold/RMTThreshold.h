@@ -10,7 +10,7 @@
 #include <gsl/gsl_matrix.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include "../vector.h"
+#include "../general/vector.h"
 
 
 #include "ThresholdMethod.h"

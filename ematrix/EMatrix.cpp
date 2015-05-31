@@ -1,4 +1,4 @@
-#include "ematrix.h"
+#include "EMatrix.h"
 
 /**
  * Reads in the expression matrix

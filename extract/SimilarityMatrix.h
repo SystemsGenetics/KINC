@@ -3,7 +3,7 @@
 
 #include <getopt.h>
 #include <dirent.h>
-#include "../ematrix.h"
+#include "../ematrix/EMatrix.h"
 
 // Prints the usage instructions for the 'extract' program.
 void print_extract_usage();

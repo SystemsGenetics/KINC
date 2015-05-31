@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 
-#include "misc.h"
+#include "../general/misc.h"
 
 class EMatrix {
   private:
