@@ -34,16 +34,20 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "clustering.h"
 //#include <mpi.h>
 
-#include "threshold.h"
-#include "similarity.h"
-#include "extract.h"
+#include "threshold/RMTThreshold.h"
+#include "similarity/Similarity.h"
+#include "extract/SimMatrixBinary.h"
+#include "extract/SimMatrixTabCluster.h"
 
 /**
  * Function prototypes
  */
 void print_usage();
 
+// Executes the 'extract' program of KINC.
+int do_extract(int argc, char *argv[]);
+
 #endif
+

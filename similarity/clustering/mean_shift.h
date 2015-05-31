@@ -2,7 +2,7 @@
 #define _MEAN_SHIFT_
 
 
-#include "clusters.h"
+#include "PairWiseCluster.h"
 
 // Function to peform the clustering
 PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,

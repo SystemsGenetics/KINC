@@ -56,21 +56,21 @@ int main(int argc, char *argv[]) {
     print_usage();
     retval = -1;
   }
-  else if (strcmp(argv[1], "dimreduce") == 0) {
-//    retval =  do_dimreduce(argc, argv, mpi_id, mpi_num_procs);
-    retval =  do_dimreduce(argc, argv);
-  }
+//  else if (strcmp(argv[1], "dimreduce") == 0) {
+////    retval =  do_dimreduce(argc, argv, mpi_id, mpi_num_procs);
+//    retval =  do_dimreduce(argc, argv);
+//  }
   // construct the similarity matrix
   else if (strcmp(argv[1], "similarity") == 0) {
-    retval =  do_similarity(argc, argv);
+//    retval =  do_similarity(argc, argv);
   }
   // identify the threshold for cutting the similarity matrix
   else if (strcmp(argv[1], "threshold") == 0) {
-    retval =  do_threshold(argc, argv);
+//    retval =  do_threshold(argc, argv);
   }
   // extract a given element from the matrix or a network
   else if (strcmp(argv[1], "extract") == 0) {
-    retval =  do_extract(argc, argv);
+//    retval =  do_extract(argc, argv);
   }
   // print help documentation
   else if (strcmp(argv[1], "help") == 0) {
@@ -117,3 +117,26 @@ int main(int argc, char *argv[]) {
 
   return retval;
 }
+
+/**
+ * The function for extracting results from the similarity matrix
+ */
+int do_extract(int argc, char *argv[]) {
+
+  // Get the similarity matrix.
+//  SimMatrixBinary * smatrix = new SimMatrixBinary(argc, argv);
+  SimMatrixTabCluster * smatrix = new SimMatrixTabCluster(argc, argv);
+
+  // If we have a threshold then we want to get the edges of the network.
+  // Otherwise the user has asked to print out the similarty value for
+  // two genes.
+  if (smatrix->getThreshold() > 0) {
+    smatrix->writeNetwork();
+  }
+  else {
+    smatrix->getSimilarity();
+  }
+
+  return 1;
+}
+

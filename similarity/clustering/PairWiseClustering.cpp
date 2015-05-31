@@ -1,4 +1,4 @@
-#include "clustering.h"
+#include "PairWiseClustering.h"
 
 #define no_argument 0
 #define required_argument 1
@@ -68,13 +68,13 @@ void print_clustering_usage() {
 /**
  *
  */
-//int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
-void do_pairwise_Clustering(int argc, char *argv[], EMatrix *ematrix) {
-
-  MixtureModelPWClustering mixmodc = new MixtureModelPWClustering(argc, argv, ematrix);
-
-  mixmodc->run();
-}
+////int do_dimreduce(int argc, char *argv[], int mpi_id, int mpi_num_procs) {
+//void do_pairwise_Clustering(int argc, char *argv[], EMatrix *ematrix) {
+//
+//  MixtureModelPWClustering mixmodc = new MixtureModelPWClustering(argc, argv, ematrix);
+//
+//  mixmodc->run();
+//}
 /**
  * DRArgs constructor.
  */
@@ -157,9 +157,6 @@ PairWiseClustering::PairWiseClustering(int argc, char *argv[], EMatrix *ematrix)
   }
 
   // TODO: make sure means shift bandwidth arguments are numeric between 1 and 0
-
-  // Load the input expression matrix.
-  EMatrix * ematrix = new EMatrix(argc, argv);
 
   printf("  Required observations: %d\n", min_obs);
   printf("  Using method: '%s'\n", method);

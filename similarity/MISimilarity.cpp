@@ -1,10 +1,17 @@
-#include "bspline_mi.h"
+#include "MISimilarity.h"
+
+MISimilarity::MISimilarity(PairWiseSet * pws, int min_obs, double mi_bins, double mi_degree)
+  :PairWiseSimilarity(pws, min_obs) {
+
+  this->mi_bins = mi_bins;
+  this->mi_degree = mi_degree;
+}
 
 /**
  * Constructor.
  */
-MISimilarity::MISimilarity(PairWiseSet * pws, int * samples, int min_obs, double mi_bins, double mi_degree)
-  :PairWiseSimilarity("mi", pws, samples, min_obs) {
+MISimilarity::MISimilarity(PairWiseSet * pws, int min_obs, int * samples, double mi_bins, double mi_degree)
+  :PairWiseSimilarity(pws, min_obs, samples) {
 
   this->mi_bins = mi_bins;
   this->mi_degree = mi_degree;
@@ -66,7 +73,7 @@ void MISimilarity::run() {
  *   used for building the histogram.
  *
  */
-void calculate_MI(CCMParameters params, double ** data, int * histogram) {
+/*void MISimilarity::calculate_MI(CCMParameters params, double ** data, int * histogram) {
   int j, k, m;             // integers for looping
   char outfilename[1024];  // the output file name
   float max_mi = 0;
@@ -187,7 +194,7 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
     fclose(outfile);
   }
   printf("\nmax mi: %f\n", max_mi);
-}
+}*/
 
 /**
  * @param double *x
@@ -206,7 +213,7 @@ void calculate_MI(CCMParameters params, double ** data, int * histogram) {
  * @param int ymax
  *
  */
-double calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xmin, double ymin, double xmax, double ymax) {
+double MISimilarity::calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xmin, double ymin, double xmax, double ymax) {
 
   // used for iterating through loops
   int i, j, q;
@@ -227,8 +234,7 @@ double calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xm
   // the B-spline workspace structure
   gsl_bspline_workspace * bw;
 
-
-  // copy the values into a gsl_vector
+  // Copy the values into a gsl_vector
   x = gsl_vector_alloc(n);
   y = gsl_vector_alloc(n);
   for (i = 0; i < n; i++) {
@@ -236,7 +242,7 @@ double calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xm
     gsl_vector_set(y, i, v2[i]);
   }
 
-  // allocate a bspline workspace and add the knots.
+  // Allocate a bspline workspace and add the knots.
   bw = gsl_bspline_alloc(k, m);
   // a uniform distribution of knots between zero and 1.  For example,
   // where k = 3 and m =5 the knots will be: 0, 0, 0, 0.25, 0.5, 0.75, 1, 1, 1

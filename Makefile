@@ -20,18 +20,23 @@ OBJS = \
   misc.o \
   vector.o \
   ematrix.o \
-  stats/stats.o \
-  stats/outlier.o \
-  stats/meanshift.o \
-  similarity/bspline_mi.o \
-  similarity/pearson.o \
-  similarity/spearman.o \
-  clustering/clusters.o \
-  clustering/clustering.o \
-  clustering/mixmod.o \
-  similarity.o \
-  threshold.o \
-  extract.o \
+  similarity/PairWiseSet.o \
+  similarity/PairWiseSimilarity.o \
+  similarity/MISimilarity.o \
+  similarity/PearsonSimilarity.o \
+  similarity/SpearmanSimilarity.o \
+  similarity/clustering/PairWiseCluster.o \
+  similarity/clustering/PairWiseClusterList.o \
+  similarity/clustering/PairWiseClusterWriter.o \
+  similarity/clustering/PairWiseClustering.o \
+  similarity/clustering/MixtureModelPWClusters.o \
+  similarity/clustering/MixtureModelClustering.o \
+  similarity/Similarity.o \
+  threshold/ThresholdMethod.o \
+  threshold/RMTThreshold.o \
+  extract/SimilarityMatrix.o \
+  extract/SimMatrixBinary.o \
+  extract/SimMatrixTabCluster.o \
   kinc.o
 EXE = kinc
 
@@ -50,56 +55,77 @@ error.o: error.cpp error.h
 ematrix.o: ematrix.cpp ematrix.h
 	${CC} -c ${CFLAGS} ${INCLUDES} ematrix.cpp
 
-stats/stats.o: stats/stats.cpp stats/stats.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/stats.cpp -o stats/stats.o
+#stats/stats.o: stats/stats.cpp stats/stats.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} stats/stats.cpp -o stats/stats.o
+#
+#stats/kurtosis.o: stats/kurtosis.cpp stats/kurtosis.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} stats/kurtosis.cpp -o stats/kurtosis.o
+#
+#stats/sfrancia.o: stats/sfrancia.cpp stats/sfrancia.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} stats/sfrancia.cpp -o stats/sfrancia.o
+#
+#stats/swilk.o: stats/swilk.cpp stats/swilk.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} stats/swilk.cpp -o stats/swilk.o
+#
+#stats/royston.o: stats/royston.cpp stats/royston.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} stats/royston.cpp -o stats/royston.o
+#
+#stats/outlier.o: stats/outlier.cpp stats/outlier.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} stats/outlier.cpp -o stats/outlier.o
 
-stats/kurtosis.o: stats/kurtosis.cpp stats/kurtosis.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/kurtosis.cpp -o stats/kurtosis.o
+similarity/PairWiseSet.o: similarity/PairWiseSet.cpp similarity/PairWiseSet.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/PairWiseSet.cpp -o similarity/PairWiseSet.o
 
-stats/sfrancia.o: stats/sfrancia.cpp stats/sfrancia.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/sfrancia.cpp -o stats/sfrancia.o
+similarity/PairWiseSimilarity.o: similarity/PairWiseSimilarity.cpp similarity/PairWiseSimilarity.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/PairWiseSimilarity.cpp -o similarity/PairWiseSimilarity.o
 
-stats/swilk.o: stats/swilk.cpp stats/swilk.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/swilk.cpp -o stats/swilk.o
+similarity/SpearmanSimilarity.o: similarity/SpearmanSimilarity.cpp similarity/SpearmanSimilarity.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/SpearmanSimilarity.cpp -o similarity/SpearmanSimilarity.o
 
-stats/royston.o: stats/royston.cpp stats/royston.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/royston.cpp -o stats/royston.o
+similarity/PearsonSimilarity.o: similarity/PearsonSimilarity.cpp similarity/PearsonSimilarity.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/PearsonSimilarity.cpp -o similarity/PearsonSimilarity.o
 
-stats/outlier.o: stats/outlier.cpp stats/outlier.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/outlier.cpp -o stats/outlier.o
+similarity/MISimilarity.o: similarity/MISimilarity.cpp similarity/MISimilarity.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/MISimilarity.cpp -o similarity/MISimilarity.o
 
-stats/meanshift.o: stats/meanshift.cpp stats/meanshift.h
-	${CC} -c ${CFLAGS} ${INCLUDES} stats/meanshift.cpp -o stats/meanshift.o
+#clustering/meanshift.o: clustering/meanshift.cpp clustering/meanshift.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} clustering/meanshift.cpp -o clustering/meanshift.o
 
-similarity/spearman.o: similarity/spearman.cpp similarity/spearman.h
-	${CC} -c ${CFLAGS} ${INCLUDES} similarity/spearman.cpp -o similarity/spearman.o
+similarity/clustering/PairWiseCluster.o: similarity/clustering/PairWiseCluster.cpp similarity/clustering/PairWiseCluster.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/clustering/PairWiseCluster.cpp -o similarity/clustering/PairWiseCluster.o
 
-similarity/pearson.o: similarity/pearson.cpp similarity/pearson.h
-	${CC} -c ${CFLAGS} ${INCLUDES} similarity/pearson.cpp -o similarity/pearson.o
+similarity/clustering/PairWiseClusterList.o: similarity/clustering/PairWiseCluster.cpp similarity/clustering/PairWiseClusterList.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/clustering/PairWiseClusterList.cpp -o similarity/clustering/PairWiseClusterList.o
 
-similarity/bspline_mi.o: similarity/bspline_mi.cpp similarity/bspline_mi.h
-	${CC} -c ${CFLAGS} ${INCLUDES} similarity/bspline_mi.cpp -o similarity/bspline_mi.o
+similarity/clustering/PairWiseClusterWriter.o: similarity/clustering/PairWiseCluster.cpp similarity/clustering/PairWiseClusterWriter.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/clustering/PairWiseClusterWriter.cpp -o similarity/clustering/PairWiseClusterWriter.o
 
-clustering/clusters.o: clustering/clusters.cpp clustering/clusters.h
-	${CC} -c ${CFLAGS} ${INCLUDES} clustering/clusters.cpp -o clustering/clusters.o
+similarity/clustering/PairWiseClustering.o: similarity/clustering/PairWiseClustering.cpp similarity/clustering/PairWiseClustering.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/clustering/PairWiseClustering.cpp -o similarity/clustering/PairWiseClustering.o
 
-clustering/clustering.o: clustering/clustering.cpp clustering/clustering.h
-	${CC} -c ${CFLAGS} ${INCLUDES} clustering/clustering.cpp -o clustering/clustering.o
-	
-clustering/mixmod.o: clustering/mixmod.cpp clustering/mixmod.h
-	${CC} -c ${CFLAGS} ${INCLUDES} clustering/mixmod.cpp -o clustering/mixmod.o
+similarity/clustering/MixtureModelPWClusters.o: similarity/clustering/MixtureModelPWClusters.cpp similarity/clustering/MixtureModelPWClusters.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/clustering/MixtureModelPWClusters.cpp -o similarity/clustering/MixtureModelPWClusters.o
 
-dimreduce.o: dimreduce.cpp dimreduce.h
-	${CC} -c ${CFLAGS} ${INCLUDES} ${MPI_INCLUDES} dimreduce.cpp
+similarity/clustering/MixtureModelClustering.o: similarity/clustering/MixtureModelClustering.cpp similarity/clustering/MixtureModelClustering.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/clustering/MixtureModelClustering.cpp -o similarity/clustering/MixtureModelClustering.o
 
-similarity.o: similarity.cpp similarity.h
-	${CC} -c ${CFLAGS} ${INCLUDES} similarity.cpp
+similarity/Similarity.o: similarity/Similarity.cpp similarity/Similarity.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/Similarity.cpp -o similarity/Similarity.o
 
-threshold.o: threshold.cpp threshold.h
-	${CC} -c ${CFLAGS} ${INCLUDES} threshold.cpp
+threshold/ThresholdMethod.o: threshold/ThresholdMethod.cpp threshold/ThresholdMethod.h
+	${CC} -c ${CFLAGS} ${INCLUDES} threshold/ThresholdMethod.cpp -o threshold/ThresholdMethod.o
 
-extract.o: extract.cpp extract.h
-	${CC} -c ${CFLAGS} ${INCLUDES} extract.cpp
+threshold/RMTThreshold.o: threshold/RMTThreshold.cpp threshold/RMTThreshold.h
+	${CC} -c ${CFLAGS} ${INCLUDES} threshold/RMTThreshold.cpp -o threshold/RMTThreshold.o
+
+extract/SimilarityMatrix.o: extract/SimilarityMatrix.cpp extract/SimilarityMatrix.h
+	${CC} -c ${CFLAGS} ${INCLUDES} extract/SimilarityMatrix.cpp -o extract/SimilarityMatrix.o
+
+extract/SimMatrixBinary.o: extract/SimMatrixBinary.cpp extract/SimMatrixBinary.h
+	${CC} -c ${CFLAGS} ${INCLUDES} extract/SimMatrixBinary.cpp -o extract/SimMatrixBinary.o
+
+extract/SimMatrixTabCluster.o: extract/SimMatrixTabCluster.cpp extract/SimMatrixTabCluster.h
+	${CC} -c ${CFLAGS} ${INCLUDES} extract/SimMatrixTabCluster.cpp -o extract/SimMatrixTabCluster.o
 
 kinc.o: kinc.cpp kinc.h
 	${CC} -c ${CFLAGS} ${INCLUDES} ${MPI_INCLUDES} kinc.cpp

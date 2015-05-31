@@ -1,17 +1,6 @@
-#ifndef _THRESHOLD_
-#define _THRESHOLD_
+#ifndef _RMTTHRESHOLD_
+#define _RMTTHRESHOLD_
 
-#include <time.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <getopt.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <libgen.h>
-#include <dirent.h>
 
 // GNU Scientific Library headers.
 #include <gsl/gsl_interp.h>
@@ -19,60 +8,16 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_matrix.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include "../vector.h"
 
-// KINC headers.
-#include "vector.h"
-#include "similarity.h"
+
+#include "ThresholdMethod.h"
 
 // SSYEV prototype
 extern "C" void ssyev_(char* jobz, char* uplo, int* n, float* a, int* lda,
                        float* w, float* work, int* lwork, int* info);
-
-
-int do_threshold(int argc, char *argv[]);
-
-void print_threshold_usage();
-
-
-/**
- * A base class for thresholding methods to inherit from.
- *
- * This class constructor will read arguments from the command-line, and
- * provides the getters and setters for commonly needed class members.
- */
-class ThresholdMethod {
-
-  protected:
-    // The expression matrix object.
-    EMatrix * ematrix;
-    // The directory where the expression matrix is found
-    char * input_dir;
-    // Specifies the correlation method that was used: pc, mi, sc
-    char method[10];
-
-
-    // DATA FILTERS FOR CLUSTERED SIMILARITY DATA
-    // ------------------------------------------
-    // The maximum number of missing values in the comparision.
-    int max_missing;
-    // The minimum number of samples in a cluster.
-    int min_cluster_size;
-
-
-  public:
-    ThresholdMethod(int argc, char *argv[]);
-    ~ThresholdMethod();
-
-    // GETTERS
-    // -------
-    char * getCorMethod() { return method; }
-    int getMaxMissing() { return max_missing; }
-    int getMinClusterSize() { return min_cluster_size; }
-
-    // TO BE IMPLEMENTED BY THE CHILD CLASS
-    // ------------------------------------
-    double findThreshold();
-};
 
 /**
  * Implements Random Matrix Theory (RMT) Thresholding
@@ -118,4 +63,3 @@ class RMTThreshold : public ThresholdMethod {
 };
 
 #endif
-

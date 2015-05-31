@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "stats.h"
+#include "../stats/stats.h"
 #include "../vector.h"
 
 typedef struct {

@@ -10,19 +10,11 @@
 #include <libgen.h>
 #include <signal.h>
 
-#include "../ematrix.h"
-//#include "../stats/royston.h"
-#include "../stats/meanshift.h"
-//#include "../stats/outlier.h"
-#include "../error.h"
-#include "../misc.h"
-#include "../similarity.h"
-#include "clusters.h"
-#include "mixmod.h"
+#include "../../ematrix.h"
+#include "../../error.h"
+#include "../../misc.h"
+#include "PairWiseCluster.h"
 
-
-// Primary function for this file
-void do_pairwise_clustering(int argc, char *argv[], EMatrix *ematrix);
 
 void print_clustering_usage();
 
