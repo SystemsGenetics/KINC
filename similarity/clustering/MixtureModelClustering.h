@@ -10,17 +10,20 @@
 /**
  * A class for performing mixuture models for an entire ematrix.
  */
-class MixtureModelPWClustering : public PairWiseClustering {
+class MixtureModelClustering : public PairWiseClustering {
   private:
     // The criterion model. E.g.  BIC, ICL, NEC, CV, DCV.
-    char criterion[4];
+    char * criterion;
     // The maximum number of clusters to allow per comparision.
     int max_clusters;
+    // The similarity method
+    char * method;
 
   public:
 
-    MixtureModelPWClustering(int argc, char *argv[], EMatrix * ematrix);
-    ~MixtureModelPWClustering();
+    MixtureModelClustering(EMatrix *ematrix, int min_obs, int num_jobs,
+        int job_index, char * method, char * criterion, int max_clusters);
+    ~MixtureModelClustering();
 
     // Returns usage help instructions.
     void getUsage();

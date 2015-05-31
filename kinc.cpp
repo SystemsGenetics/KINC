@@ -56,13 +56,10 @@ int main(int argc, char *argv[]) {
     print_usage();
     retval = -1;
   }
-//  else if (strcmp(argv[1], "dimreduce") == 0) {
-////    retval =  do_dimreduce(argc, argv, mpi_id, mpi_num_procs);
-//    retval =  do_dimreduce(argc, argv);
-//  }
   // construct the similarity matrix
   else if (strcmp(argv[1], "similarity") == 0) {
-//    retval =  do_similarity(argc, argv);
+    RunSimilarity * similarity = new RunSimilarity(argc, argv);
+    similarity->execute();
   }
   // identify the threshold for cutting the similarity matrix
   else if (strcmp(argv[1], "threshold") == 0) {
@@ -76,7 +73,7 @@ int main(int argc, char *argv[]) {
   else if (strcmp(argv[1], "help") == 0) {
     if (argc == 3) {
       if (strcmp(argv[2], "similarity") == 0) {
-        print_similarity_usage();
+        RunSimilarity::printUsage();
       }
       if (strcmp(argv[2], "threshold") == 0) {
         print_threshold_usage();

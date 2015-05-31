@@ -1,52 +1,14 @@
 #include "MixtureModelClustering.h"
 
-MixtureModelPWClustering::MixtureModelPWClustering(int argc, char *argv[], EMatrix * ematrix)
-  : PairWiseClustering(argc, argv, ematrix) {
+MixtureModelClustering::MixtureModelClustering(EMatrix *ematrix, int min_obs, int num_jobs, int job_index, char *method, char * criterion, int max_clusters)
+  : PairWiseClustering(ematrix, min_obs, num_jobs, job_index) {
 
   // Initialize some values.
-  max_clusters = 5;
-  strcpy(criterion, "BIC");
-
-  // The value returned by getopt_long.
-  int c;
-
-  // Loop through the incoming arguments until the
-  // getopt_long function returns -1. Then we break out of the loop.
-  while(1) {
-    int option_index = 0;
-
-    // Specify the long options. The values returned are specified to be the
-    // short options which are then handled by the case statement below.
-    const struct option long_options[] = {
-      {"help",         no_argument,       0,  'h' },
-      {"criterion",    required_argument, 0,  't' },
-      {"max_clusters", required_argument, 0,  'l' },
-      {0, 0, 0,  0 }  // last element required to be all zeros
-    };
-    // get the next option
-    c = getopt_long(argc, argv, "e:r:c:m:o:n:f:h", long_options, &option_index);
-
-    // if the index is -1 then we have reached the end of the options list
-    // and we break out of the while loop
-    if (c == -1) {
-      break;
-    }
-
-    // handle the options
-    switch (c) {
-      case 0:
-        break;
-      case 't':
-        strcpy(criterion, optarg);
-        break;
-      case 'l':
-        max_clusters = atoi(optarg);
-        break;
-    }
-  }
-
-  // TODO: make sure means shift bandwidth arguments are numeric between 1 and 0
-
+//  max_clusters = 5;
+//  strcpy(criterion, "BIC");
+  this->max_clusters = max_clusters;
+  this->criterion = criterion;
+  this->method = method;
 
   // Make sure the mixture module criterion are good
   bool $mmc_is_good = false;
@@ -82,7 +44,7 @@ MixtureModelPWClustering::MixtureModelPWClustering(int argc, char *argv[], EMatr
 /**
  *
  */
-MixtureModelPWClustering::~MixtureModelPWClustering() {
+MixtureModelClustering::~MixtureModelClustering() {
 
 }
 
@@ -90,7 +52,7 @@ MixtureModelPWClustering::~MixtureModelPWClustering() {
 /**
  *
  */
-void MixtureModelPWClustering::run() {
+void MixtureModelClustering::run() {
   // Register signal and signal handler
   // signal(SIGINT, signal_callback_handler);
 

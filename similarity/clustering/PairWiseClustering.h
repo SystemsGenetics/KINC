@@ -15,9 +15,6 @@
 #include "../../general/misc.h"
 #include "PairWiseCluster.h"
 
-
-void print_clustering_usage();
-
 /**
  * A base class for pair-wise clustering of samples.
  */
@@ -26,8 +23,6 @@ class PairWiseClustering {
   protected:
     // The expression matrix object.
     EMatrix * ematrix;
-    // Specifies the correlation method: pc, mi, sc.
-    char method[10];
     // The minimum number of observations to calculate correlation.
     int min_obs;
     // The total number of jobs that will be run at once.
@@ -37,11 +32,9 @@ class PairWiseClustering {
     int job_index;
 
   public:
-    PairWiseClustering(int argc, char *argv[], EMatrix * ematrix);
+    PairWiseClustering(EMatrix *ematrix, int min_obs, int num_jobs, int job_index);
     ~PairWiseClustering();
 
-    // Retruns the correlation method: mi, pc, sc.
-    char * getCorMethod() { return method; }
     // Returns the minimum number of observations required to form a cluster.
     int getMinObs() { return min_obs; }
     // Returns the number of clustering jobs being run.

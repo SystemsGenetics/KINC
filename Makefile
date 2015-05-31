@@ -31,7 +31,7 @@ OBJS = \
   similarity/clustering/PairWiseClustering.o \
   similarity/clustering/MixtureModelPWClusters.o \
   similarity/clustering/MixtureModelClustering.o \
-  similarity/Similarity.o \
+  similarity/RunSimilarity.o \
   threshold/ThresholdMethod.o \
   threshold/RMTThreshold.o \
   extract/SimilarityMatrix.o \
@@ -109,8 +109,8 @@ similarity/clustering/MixtureModelPWClusters.o: similarity/clustering/MixtureMod
 similarity/clustering/MixtureModelClustering.o: similarity/clustering/MixtureModelClustering.cpp similarity/clustering/MixtureModelClustering.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/clustering/MixtureModelClustering.cpp -o similarity/clustering/MixtureModelClustering.o
 
-similarity/Similarity.o: similarity/Similarity.cpp similarity/Similarity.h
-	${CC} -c ${CFLAGS} ${INCLUDES} similarity/Similarity.cpp -o similarity/Similarity.o
+similarity/RunSimilarity.o: similarity/RunSimilarity.cpp similarity/RunSimilarity.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/RunSimilarity.cpp -o similarity/RunSimilarity.o
 
 threshold/ThresholdMethod.o: threshold/ThresholdMethod.cpp threshold/ThresholdMethod.h
 	${CC} -c ${CFLAGS} ${INCLUDES} threshold/ThresholdMethod.cpp -o threshold/ThresholdMethod.o

@@ -6,26 +6,34 @@
 #include "SpearmanSimilarity.h"
 #include "PearsonSimilarity.h"
 #include "MISimilarity.h"
+#include "./clustering/MixtureModelClustering.h"
 
 // a global variable for the number of rows in each output file
 #define ROWS_PER_OUTPUT_FILE 10000
 // the number of bins in the correlation value histogram
 #define HIST_BINS 100
 
-void print_similarity_usage();
-
-class Similarity {
+class RunSimilarity {
 
   private:
     // The expression matrix object.
     EMatrix * ematrix;
     // Specifies the method: sc, pc, mi.
-    char method[10];
+    char * method;
     // The minimum number of observations to calculate correlation.
     int min_obs;
     // An array holding the histogram of similarity scores.
     int * histogram;
 
+    // Variables for clustering
+    // ------------------------
+    // Indicates the clustering method to use.
+    char * clustering;
+    // The total number of jobs that will be run at once.
+    int num_jobs;
+    // The index of this job within the total jobs.  Must be
+    // between 1 and num_jobs (no zero index).
+    int job_index;
 
     // Variables for mutual information
     // --------------------------------
@@ -34,17 +42,27 @@ class Similarity {
     // The degree of the B-spline function.
     int mi_degree;
 
+    // Variables for Mixture Models
+    // -----------------------------
+    // The criterion model. E.g.  BIC, ICL, NEC, CV, DCV.
+    char criterion[4];
+    // The maximum number of clusters to allow per comparision.
+    int max_clusters;
+
     // Variables for mean shift clustering.
     // --------------------------------
-//    double msc_bw1;
-//    double msc_bw2;
+    double msc_bw1;
+    double msc_bw2;
 
     void writeHistogram();
+    // Calcualtes pair-wise similarity score the traditional way.
+    void executeTraditional();
 
   public:
-    Similarity(int argc, char *argv[]);
-    ~Similarity();
-    void run();
+    RunSimilarity(int argc, char *argv[]);
+    ~RunSimilarity();
+    void execute();
+    static void printUsage();
 
 };
 
