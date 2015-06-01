@@ -1,4 +1,39 @@
-#include "spearman.h"
+#include "SpearmanSimilarity.h"
+
+
+SpearmanSimilarity::SpearmanSimilarity(PairWiseSet * pws, int min_obs)
+  :PairWiseSimilarity(pws, min_obs) {
+
+}
+SpearmanSimilarity::SpearmanSimilarity(PairWiseSet * pws, int min_obs, int * samples)
+  :PairWiseSimilarity(pws, min_obs, samples) {
+
+}
+
+SpearmanSimilarity::~SpearmanSimilarity() {
+
+}
+
+/**
+ * Performs Spearman correlation on two arrays.
+ *
+ * @param double *a
+ * @param double *b
+ * @param int n
+ */
+void SpearmanSimilarity::run() {
+
+  // Make sure we have the correct number of observations before performing
+  // the comparision.
+  if (this->n >= this->min_obs) {
+    // Create the workspace needed for Spearman's calculation.
+    double workspace[2 * this->n];
+    score = gsl_stats_spearman(this->a, 1, this->b, 1, this->n, workspace);
+  }
+  else {
+    score = NAN;
+  }
+}
 
 /**
  * Calculates the Spearman correlation matrix
@@ -13,7 +48,7 @@
  *   used for building the histogram.
  *
  */
-void calculate_spearman(CCMParameters params, double ** data, int * histogram) {
+/*void SpearmanSimilarity::run() {
   char outfilename[1024];  // the output file name
 
   int i, j, k;        // integers for looping
@@ -23,7 +58,6 @@ void calculate_spearman(CCMParameters params, double ** data, int * histogram) {
   int bin_rows;       // holds the number of rows in the file
   int total_comps;    // the total number of pair-wise comparisions to be made
   int n_comps;        // the number of comparisions completed during looping
-  double workspace[2 * params.rows]; // the workspace needed for Spearman's calculation
 
   // calculate the number of binary files needed to store the similarity matrix
   num_bins = (params.rows - 1) / ROWS_PER_OUTPUT_FILE;
@@ -113,4 +147,4 @@ void calculate_spearman(CCMParameters params, double ** data, int * histogram) {
     }
     fclose(outfile);
   }
-}
+}*/

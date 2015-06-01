@@ -1,4 +1,41 @@
-#include "pearson.h"
+#include "PearsonSimilarity.h"
+
+
+
+/**
+ *
+ */
+PearsonSimilarity::PearsonSimilarity(PairWiseSet * pws, int min_obs)
+  :PairWiseSimilarity(pws, min_obs) {
+}
+/**
+ *
+ */
+PearsonSimilarity::PearsonSimilarity(PairWiseSet * pws, int min_obs, int * samples)
+  :PairWiseSimilarity(pws, min_obs, samples) {
+}
+
+PearsonSimilarity::~PearsonSimilarity() {
+
+}
+
+/**
+ * Performs Pearson correlation on two arrays.
+ *
+ * @param double *a
+ * @param double *b
+ * @param int n
+ */
+void PearsonSimilarity::run() {
+  // Make sure we have the correct number of observations before performing
+  // the comparision.
+  if (this->n >= this->min_obs) {
+    score = gsl_stats_correlation(this->a, 1, this->b, 1, this->n);
+  }
+  else {
+    score = NAN;
+  }
+}
 
 /**
  * Calculates the Pearson correlation matrix
@@ -13,7 +50,7 @@
  *   used for building the histogram.
  *
  */
-void calculate_pearson(CCMParameters params, double ** data, int * histogram) {
+/*void calculatePearson(CCMParameters params, double ** data, int * histogram) {
   char outfilename[1024];  // the output file name
 
   int i, j, k;      // integers for looping
@@ -112,4 +149,4 @@ void calculate_pearson(CCMParameters params, double ** data, int * histogram) {
     }
     fclose(outfile);
   }
-}
+}*/
