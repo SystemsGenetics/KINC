@@ -79,6 +79,8 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
       {"func",         required_argument, 0,  'f' },
       {"na_val",       required_argument, 0,  'n' },
       {"ematrix",      required_argument, 0,  'e' },
+      // Clustering options.
+      {"clustering",   required_argument, 0,  'l' },
       // RMT Threshold options.
       {"chi",          required_argument, 0,  'i' },
       {"th",           required_argument, 0,  't' },
@@ -89,7 +91,7 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
     };
 
     // get the next option
-    c = getopt_long(argc, argv, "m:g:z:r:c:f:n:e:h", long_options, &option_index);
+    c = getopt_long(argc, argv, "m:g:z:r:c:f:n:e:l:h", long_options, &option_index);
 
     // if the index is -1 then we have reached the end of the options list
     // and we break out of the while loop
@@ -109,6 +111,10 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
         break;
       case 'g':
         max_missing = atoi(optarg);
+        break;
+      // Clustering options.
+      case 'l':
+        clustering = optarg;
         break;
       // RMT threshold options.
       case 't':

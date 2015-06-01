@@ -30,6 +30,11 @@ class RunThreshold {
     // Specifies the transformation function: log2, none.
     char func[10];
 
+    // Variables for clustering
+    // ------------------------
+    // Indicates the clustering method to use.
+    char * clustering;
+
     // RMT Threshold options
     // ---------------------
     // The starting threshold value.

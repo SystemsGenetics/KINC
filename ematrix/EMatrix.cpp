@@ -62,14 +62,14 @@ EMatrix::EMatrix(char * infilename, int rows, int cols, int headers, int omit_na
   }
 
   // Iterate through the lines of the expression matrix
-  printf("Reading input file '%s' with %d rows and %d columns...\n", infilename, rows, cols);
+  // printf("Reading input file '%s' with %d rows and %d columns...\n", infilename, rows, cols);
   infile = fopen(infilename, "r");
   int k = 0;
   for (i = 0; i < rows; i++) {
 
     // If a header is provided then get the sample names.
     if (i == 0 && headers) {
-      printf("Reading sample names...\n");
+      // printf("Reading sample names...\n");
 
       for (j = 0; j < num_samples; j++) {
         samples[j] = (char *) malloc(sizeof(char) * 255);

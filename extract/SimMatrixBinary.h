@@ -15,6 +15,9 @@ class SimMatrixBinary : public SimilarityMatrix {
     int num_lines[50];
     // Indicates the number of files in the files array.
     int num_files;
+    // The directory where the expression matrix is found
+    char * bin_dir;
+
 
     // Opens file handles to all of the binary files.
     void openBinFiles();

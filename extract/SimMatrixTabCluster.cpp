@@ -40,7 +40,6 @@ void SimMatrixTabCluster::getNumJobs() {
   // Iterate through the files in the 'nan' directory to count the number of
   // jobs used to generate the clusters, we will then intitialize that many
   // file pointers for each of the 102 file arrays.
-//  sprintf(dirname, "./%s/%s", clusterdir, "nan");
   sprintf(dirname, "./%s/%d", clusterdir, 100);
   DIR * dir;
   dir = opendir(dirname);
@@ -159,4 +158,11 @@ void SimMatrixTabCluster::writeNetwork() {
    fclose(edges);
    fclose(edgesN);
    fclose(edgesP);
+}
+
+/**
+ *
+ */
+void SimMatrixTabCluster::getPosition() {
+
 }

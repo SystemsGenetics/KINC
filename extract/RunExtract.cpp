@@ -41,9 +41,11 @@ RunExtract::RunExtract(int argc, char *argv[]) {
    cols = 0;
    max_missing = INFINITY;
    min_cluster_size = 30;
-   strcpy(method, "pc");
+   method = NULL;
    x_coord = -1;
    y_coord = -1;
+   gene1 = NULL;
+   gene2 = NULL;
    th = 0;
    quiet = 0;
 
@@ -69,12 +71,14 @@ RunExtract::RunExtract(int argc, char *argv[]) {
       {"func",         required_argument, 0,  'f' },
       {"na_val",       required_argument, 0,  'n' },
       {"ematrix",      required_argument, 0,  'e' },
+      // Clustering options.
+      {"clustering",   required_argument, 0,  'l' },
       // Common fitering options
       {"th",           required_argument, 0,  't' },
       {"gene1",        required_argument, 0,  '1' },
       {"gene2",        required_argument, 0,  '2' },
-      {"xcoord",       required_argument, 0,  'x' },
-      {"ycoord",       required_argument, 0,  'y' },
+      {"x",            required_argument, 0,  'x' },
+      {"y",            required_argument, 0,  'y' },
       // Clustered data filters.
       {"max_missing",  required_argument, 0,  'g' },
       {"min_csize",    required_argument, 0,  'z' },
@@ -84,7 +88,7 @@ RunExtract::RunExtract(int argc, char *argv[]) {
     delete ematrix;
 
     // get the next option
-    c = getopt_long(argc, argv, "m:r:c:f:n:e:t:1:2:x:y:g:z:h", long_options, &option_index);
+    c = getopt_long(argc, argv, "m:r:c:f:n:e:t:1:2:x:y:g:z:l:h", long_options, &option_index);
 
     // if the index is -1 then we have reached the end of the options list
     // and we break out of the while loop
@@ -98,6 +102,10 @@ RunExtract::RunExtract(int argc, char *argv[]) {
         break;
       case 'm':
         method = optarg;
+        break;
+      // Clustering options.
+      case 'l':
+        clustering = optarg;
         break;
       // Common fitering options
       case 't':
@@ -156,6 +164,13 @@ RunExtract::RunExtract(int argc, char *argv[]) {
 
    if (!method) {
      fprintf(stderr, "Please provide the method (--method option) used to construct the similarity matrix.\n");
+     exit(-1);
+   }
+   // make sure the method is valid
+   if (strcmp(method, "pc") != 0 &&
+       strcmp(method, "mi") != 0 &&
+       strcmp(method, "sc") != 0 ) {
+     fprintf(stderr,"Error: The method (--method option) must either be 'pc', 'sc' or 'mi'.\n");
      exit(-1);
    }
 
@@ -219,18 +234,33 @@ RunExtract::~RunExtract() {
 }
 
 void RunExtract::execute() {
-  // Get the similarity matrix.
-  //  SimMatrixBinary * smatrix = new SimMatrixBinary(ematrix, quiet, method, x_coord, y_coord, gene1, gene2, th);
-  SimMatrixTabCluster * smatrix = new SimMatrixTabCluster(ematrix, quiet,
-      method, x_coord, y_coord, gene1, gene2, th, max_missing, min_cluster_size);
 
-  // If we have a threshold then we want to get the edges of the network.
-  // Otherwise the user has asked to print out the similarty value for
-  // two genes.
-  if (smatrix->getThreshold() > 0) {
-    smatrix->writeNetwork();
+  // Get the similarity matrix.
+  if (clustering) {
+    SimMatrixTabCluster * smatrix = new SimMatrixTabCluster(ematrix, quiet,
+      method, x_coord, y_coord, gene1, gene2, th, max_missing, min_cluster_size);
+    // If we have a threshold then we want to get the edges of the network.
+    // Otherwise the user has asked to print out the similarity value for
+    // two genes.
+    if (smatrix->getThreshold() > 0) {
+      smatrix->writeNetwork();
+    }
+    else {
+      smatrix->getPosition();
+    }
   }
   else {
-    smatrix->getSimilarity();
+    SimMatrixBinary * smatrix = new SimMatrixBinary(ematrix, quiet, method,
+      x_coord, y_coord, gene1, gene2, th);
+    // If we have a threshold then we want to get the edges of the network.
+    // Otherwise the user has asked to print out the similarity value for
+    // two genes.
+    if (smatrix->getThreshold() > 0) {
+      smatrix->writeNetwork();
+    }
+    else {
+      smatrix->getPosition();
+    }
   }
+
 }

@@ -4,7 +4,7 @@
  * Constructor.
  */
 SimilarityMatrix::SimilarityMatrix(EMatrix *ematrix, int quiet, char * method,
-    int x_coord, int y_cood, char * gene1, char * gene2, float th) {
+    int x_coord, int y_coord, char * gene1, char * gene2, float th) {
 
   // Set some default values;
   this->ematrix = ematrix;
@@ -15,28 +15,6 @@ SimilarityMatrix::SimilarityMatrix(EMatrix *ematrix, int quiet, char * method,
   this->gene1 = gene1;
   this->gene2 = gene2;
   this->th = th;
-
-
-  // print out some setup details
-  if (!quiet) {
-    printf("  Using method: '%s'\n", method);
-    if (th > 0) {
-      printf("  Using threshold of %f\n", th);
-    }
-  }
-
-  if (strcmp(method, "mi") == 0) {
-    bin_dir = (char *) malloc(sizeof(char) * 3);
-    strcpy(bin_dir, "MI");
-  }
-  else if (strcmp(method, "pc") == 0) {
-    bin_dir = (char *) malloc(sizeof(char) * 8);
-    strcpy(bin_dir, "Pearson");
-  }
-  else if (strcmp(method, "sc") == 0) {
-    bin_dir = (char *) malloc(sizeof(char) * 9);
-    strcpy(bin_dir, "Spearman");
-  }
 
   if ((gene1 && !gene2) || (!gene1 && gene2)) {
     fprintf(stderr, "You must provide both gene1 and gene2 options.\n");

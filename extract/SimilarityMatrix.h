@@ -21,8 +21,6 @@ class SimilarityMatrix {
     EMatrix * ematrix;
     // Set to 1 if nothing but the sim value is shown
     int quiet;
-    // The directory where the expression matrix is found
-    char * bin_dir;
     // Specifies the method: cor, mi.
     char * method;
     // The user-specified x coordinate to retrieve
@@ -54,6 +52,6 @@ class SimilarityMatrix {
     void writeNetwork() {};
     // Retrieves the similarity value for the given filtering paramters.
     // The user must have provided an x and y coordiante.
-    void getSimilarity() {};
+    void getPosition() {};
 };
 #endif

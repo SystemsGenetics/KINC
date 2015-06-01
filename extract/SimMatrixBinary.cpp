@@ -7,12 +7,29 @@ SimMatrixBinary::SimMatrixBinary(EMatrix *ematrix, int quiet, char * method, int
     int y_cood, char * gene1, char * gene2, float th)
   : SimilarityMatrix(ematrix, quiet, method, x_coord, y_cood, gene1, gene2, th){
 
-  // Intialize some variables.
+  // Initialize some variables.
   num_files = 0;
 
-  // Intiialize the file pointer array.
+  // Initialize the file pointer array.
   for(int i = 0; i < 50; i++) {
     files[i] = NULL;
+  }
+
+  if (strcmp(method, "mi") == 0) {
+    bin_dir = (char *) malloc(sizeof(char) * 5);
+    strcpy(bin_dir, "./MI");
+  }
+  else if (strcmp(method, "pc") == 0) {
+    bin_dir = (char *) malloc(sizeof(char) * 10);
+    strcpy(bin_dir, "./Pearson");
+  }
+  else if (strcmp(method, "sc") == 0) {
+    bin_dir = (char *) malloc(sizeof(char) * 11);
+    strcpy(bin_dir, "./Spearman");
+  }
+  else {
+    fprintf(stderr, "Unrecognized method: %s. Cannot find binary directory\n", method);
+    exit(-1);
   }
 
   // Open file handles to all of the binary files.
@@ -26,6 +43,7 @@ SimMatrixBinary::~SimMatrixBinary(){
 
   // Close all of the binary files.
   closeBinFiles();
+  free(bin_dir);
 }
 
 /**
@@ -45,12 +63,13 @@ void SimMatrixBinary::openBinFiles() {
   char bin_num[5];
   // The numerical bin number.
   int bin_i;
-  // Counts the number of files found.
-  int num_files = 0;
   // The number of genes in the file.
   int num_genes;
 
   // Scanning for the files of the similarity matrix
+  if (!quiet) {
+    printf("  Scanning %s directory for matrix .bin files...\n", bin_dir);
+  }
   if (NULL == (FD = opendir(bin_dir))) {
     fprintf(stderr, "Error : Failed to open input directory: '%s'\n", bin_dir);
     exit(-1);
@@ -60,17 +79,16 @@ void SimMatrixBinary::openBinFiles() {
     if (strcmp(curr_file->d_name, ".") == 0 || strcmp(curr_file->d_name, "..") == 0) {
       continue;
     }
-
     // Make sure this file has a .bin extension.
     bin_pos = strstr(curr_file->d_name, ".bin");
     if(bin_pos) {
-
       // Make sure the file has the prefix.
       if(strstr(curr_file->d_name, ematrix->getFilePrefix()) != NULL) {
-        // Make sure that this file has the method name preceeded by a period.
-        char method[5];
-        sprintf(method, ".%s", method);
-        method_pos = strstr(curr_file->d_name, method);
+
+        // Make sure that this file has the method name proceeded by a period.
+        char m[5];
+        sprintf(m, ".%s", method);
+        method_pos = strstr(curr_file->d_name, m);
 
         if (method_pos) {
           num_files++;
@@ -219,18 +237,25 @@ void SimMatrixBinary::writeNetwork() {
  */
 void SimMatrixBinary::getPosition() {
 
-  float n;   // the cell value in the similarity matrix
-  int temp;  // a temp value used to flip the x & y coordinates if necessary
-  int x = x_coord - 1;  // the x coordinate
-  int y = y_coord - 1;  // the y coordinate
-  int i = 0; // holds the number of lines already visited
-  int j;     // iterates through the columns
-  int pos;   // used to store the position in the file for the (x,y) coordinate
-  int bin_i; // indicates the bin file number currently being checked
+  // The cell value in the similarity matrix.
+  float n;
+  // A temporary value used to flip the x & y coordinates if necessary.
+  int temp;
+  // The x coordinate.
+  int x = x_coord - 1;
+  // The y coordinate.
+  int y = y_coord - 1;
+  // Holds the number of lines already visited.
+  int i = 0;
+  // Iterates through the columns.
+  int j;
+  // Used to store the position in the file for the (x,y) coordinate.
+  int pos;
+  // Indicates the bin file number currently being checked.
+  int bin_i;
 
   // if y > x then reverse the two as the sim matrix is symetrical and only
   // half is stored.
-
   if(y > x){
     temp = x;
     x = y;

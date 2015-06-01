@@ -106,11 +106,12 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
       {"mi_bins",      required_argument, 0,  'b' },
       {"mi_degree",    required_argument, 0,  'd' },
       // Clustering options.
+      {"clustering",   required_argument, 0,  'l' },
       {"num_jobs",     required_argument, 0,  'j' },
       {"job_index",    required_argument, 0,  'i' },
+      // Mixture module options.
       {"criterion",    required_argument, 0,  't' },
       {"max_clusters", required_argument, 0,  'a' },
-      {"clustering",   required_argument, 0,  'l' },
       // Expression matrix options.
       {"rows",         required_argument, 0,  'r' },
       {"cols",         required_argument, 0,  'c' },
@@ -139,9 +140,6 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
       case 'm':
         method = optarg;
         break;
-      case 'l':
-        clustering = optarg;
-        break;
       case 'o':
         min_obs = atoi(optarg);
         break;
@@ -153,6 +151,9 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
         mi_degree = atoi(optarg);
         break;
       // Clustering options.
+      case 'l':
+        clustering = optarg;
+        break;
       case 'j':
         num_jobs = atoi(optarg);
         break;

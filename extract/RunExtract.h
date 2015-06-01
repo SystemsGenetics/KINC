@@ -28,6 +28,10 @@ class RunExtract {
     // the user-specified name of gene2
     char * gene2;
 
+    // Variables for clustering
+    // ------------------------
+    // Indicates the clustering method to use.
+    char * clustering;
 
     // Variables for the expression matrix
     // -----------------------------------
