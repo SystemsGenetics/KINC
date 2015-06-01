@@ -6,13 +6,17 @@
  *
  */
 PearsonSimilarity::PearsonSimilarity(PairWiseSet * pws, int min_obs)
-  :PairWiseSimilarity(pws, min_obs){
+  :PairWiseSimilarity(pws, min_obs) {
 }
 /**
  *
  */
 PearsonSimilarity::PearsonSimilarity(PairWiseSet * pws, int min_obs, int * samples)
   :PairWiseSimilarity(pws, min_obs, samples) {
+}
+
+PearsonSimilarity::~PearsonSimilarity() {
+
 }
 
 /**

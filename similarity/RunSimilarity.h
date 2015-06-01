@@ -7,6 +7,7 @@
 #include "PearsonSimilarity.h"
 #include "MISimilarity.h"
 #include "./clustering/MixtureModelClustering.h"
+#include "../general/misc.h"
 
 // a global variable for the number of rows in each output file
 #define ROWS_PER_OUTPUT_FILE 10000

@@ -29,8 +29,6 @@ statm_t * memory_get_usage() {
     );
     fclose(f);
   }
-
-
   return result;
 }
 

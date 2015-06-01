@@ -386,7 +386,9 @@ void RunSimilarity::executeTraditional() {
       for (int k = 0; k <= j; k++) {
         n_comps++;
         if (n_comps % 1000 == 0) {
-          printf("Percent complete: %.2f%%\r", (n_comps/(float)total_comps)*100);
+          statm_t * memory = memory_get_usage();
+          printf("Percent complete: %.2f%%. Mem: %ldb. \r", (n_comps / (float) total_comps) * 100, memory->size);
+          free(memory);
         }
         if (j == k) {
           // correlation of an element with itself is 1
@@ -396,23 +398,28 @@ void RunSimilarity::executeTraditional() {
 
         float score;
         PairWiseSet * pwset = new PairWiseSet(ematrix, j, k);
-        PairWiseSimilarity * pws;
 
         // Perform the appropriate calculation based on the method
         if (strcmp(method, "pc") == 0) {
-          pws = new PearsonSimilarity(pwset, min_obs);
+          PearsonSimilarity * pws = new PearsonSimilarity(pwset, min_obs);
           pws->run();
+          score = (float) pws->getScore();
+          delete pws;
         }
         else if(strcmp(method, "mi") == 0) {
-          pws = new MISimilarity(pwset, min_obs, mi_bins, mi_degree);
+          MISimilarity * pws = new MISimilarity(pwset, min_obs, mi_bins, mi_degree);
           pws->run();
+          score = (float) pws->getScore();
+          delete pws;
         }
         else if(strcmp(method, "sc") == 0) {
-          pws = new SpearmanSimilarity(pwset, min_obs);
+          SpearmanSimilarity * pws = new SpearmanSimilarity(pwset, min_obs);
           pws->run();
+          score = (float) pws->getScore();
+          delete pws;
         }
-        score = (float) pws->getScore();
-        delete pws;
+
+        delete pwset;
         fwrite(&score, sizeof(float), 1, outfile);
 
         // if the historgram is turned on then store the value in the correct bin

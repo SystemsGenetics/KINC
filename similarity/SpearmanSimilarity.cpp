@@ -10,6 +10,10 @@ SpearmanSimilarity::SpearmanSimilarity(PairWiseSet * pws, int min_obs, int * sam
 
 }
 
+SpearmanSimilarity::~SpearmanSimilarity() {
+
+}
+
 /**
  * Performs Spearman correlation on two arrays.
  *

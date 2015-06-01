@@ -183,9 +183,6 @@ void SimMatrixBinary::writeNetwork() {
      fprintf(edgesP, "gene1\tgene2\tsimilarity\tinteraction\n");
    }
 
-
-
-
    // get the size of the matrix in one dimension (i.e. mxm)
    i = 0;
    for (x = 0; x < num_genes; x++) {

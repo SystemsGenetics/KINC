@@ -16,6 +16,10 @@ MISimilarity::MISimilarity(PairWiseSet * pws, int min_obs, int * samples, double
   this->mi_bins = mi_bins;
   this->mi_degree = mi_degree;
 }
+
+MISimilarity::~MISimilarity() {
+
+}
 /**
  * Performs Mutual Information analysis on two arrays.
  *
