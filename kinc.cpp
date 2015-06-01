@@ -27,29 +27,6 @@ int main(int argc, char *argv[]) {
   // The return value
   int retval = 0;
 
-//  // MPI variables
-//  int mpi_err, mpi_num_procs, mpi_id;
-//
-//  // Initialize MPI.
-//  mpi_err = MPI_Init(&argc, &argv);
-//
-//  // Find out my process ID, and how many processes were started.
-//  mpi_err |= MPI_Comm_rank(MPI_COMM_WORLD, &mpi_id);
-//  mpi_err |= MPI_Comm_size(MPI_COMM_WORLD, &mpi_num_procs);
-//
-//  if (mpi_err != 0) {
-//    printf("MPI initialization failed\n");
-//    exit(1);
-//  }
-
-  // For testing a single process... should comment out when not testing.
-//  if (mpi_id + 1 != 5) {
-//    mpi_err = MPI_Finalize();
-//    return 1;
-//  }
-
-//  printf("Using %i out of %i processes.\n", mpi_id + 1, mpi_num_procs);
-
   // make sure we have at least one input argument for the command
   if (argc == 1) {
     printf("ERROR: Please provide the command to execute.\n\n");
@@ -60,14 +37,19 @@ int main(int argc, char *argv[]) {
   else if (strcmp(argv[1], "similarity") == 0) {
     RunSimilarity * similarity = new RunSimilarity(argc, argv);
     similarity->execute();
+    delete similarity;
   }
   // identify the threshold for cutting the similarity matrix
   else if (strcmp(argv[1], "threshold") == 0) {
-//    retval =  do_threshold(argc, argv);
+    RunThreshold * threshold = new RunThreshold(argc, argv);
+    threshold->execute();
+    delete threshold;
   }
   // extract a given element from the matrix or a network
   else if (strcmp(argv[1], "extract") == 0) {
-//    retval =  do_extract(argc, argv);
+    RunExtract * extract = new RunExtract(argc, argv);
+    extract->execute();
+    delete extract;
   }
   // print help documentation
   else if (strcmp(argv[1], "help") == 0) {
@@ -76,10 +58,10 @@ int main(int argc, char *argv[]) {
         RunSimilarity::printUsage();
       }
       if (strcmp(argv[2], "threshold") == 0) {
-        print_threshold_usage();
+        RunThreshold::printUsage();
       }
       if (strcmp(argv[2], "extract") == 0) {
-        print_extract_usage();
+        RunExtract::printUsage();
       }
     }
     else {
@@ -92,6 +74,42 @@ int main(int argc, char *argv[]) {
     retval = -1;
   }
 
+  return retval;
+}
+
+/**
+ *
+ */
+void start_mpi() {
+
+  //  // MPI variables
+  //  int mpi_err, mpi_num_procs, mpi_id;
+  //
+  //  // Initialize MPI.
+  //  mpi_err = MPI_Init(&argc, &argv);
+  //
+  //  // Find out my process ID, and how many processes were started.
+  //  mpi_err |= MPI_Comm_rank(MPI_COMM_WORLD, &mpi_id);
+  //  mpi_err |= MPI_Comm_size(MPI_COMM_WORLD, &mpi_num_procs);
+  //
+  //  if (mpi_err != 0) {
+  //    printf("MPI initialization failed\n");
+  //    exit(1);
+  //  }
+
+    // For testing a single process... should comment out when not testing.
+  //  if (mpi_id + 1 != 5) {
+  //    mpi_err = MPI_Finalize();
+  //    return 1;
+  //  }
+
+  //  printf("Using %i out of %i processes.\n", mpi_id + 1, mpi_num_procs);
+}
+
+/**
+ *
+ */
+void end_mpi() {
   // Wait until all other processes are completed before closing the manager 
 //  MPI_Status stat;
 //  char message[10];
@@ -111,29 +129,6 @@ int main(int argc, char *argv[]) {
 //
 //  // Terminate MPI.
 //  mpi_err = MPI_Finalize();
-
-  return retval;
 }
 
-/**
- * The function for extracting results from the similarity matrix
- */
-int do_extract(int argc, char *argv[]) {
-
-  // Get the similarity matrix.
-//  SimMatrixBinary * smatrix = new SimMatrixBinary(argc, argv);
-  SimMatrixTabCluster * smatrix = new SimMatrixTabCluster(argc, argv);
-
-  // If we have a threshold then we want to get the edges of the network.
-  // Otherwise the user has asked to print out the similarty value for
-  // two genes.
-  if (smatrix->getThreshold() > 0) {
-    smatrix->writeNetwork();
-  }
-  else {
-    smatrix->getSimilarity();
-  }
-
-  return 1;
-}
 

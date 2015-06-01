@@ -1,11 +1,11 @@
 #include "RMTThreshold.h"
 
-RMTThreshold::RMTThreshold(int argc, char *argv[])
-  : ThresholdMethod(argc, argv) {
+RMTThreshold::RMTThreshold(EMatrix * ematrix, char * method, double thresholdStart, double thresholdStep, double chiSoughtValue)
+  : ThresholdMethod(ematrix, method) {
 
-  thresholdStart = 0.99;
-  thresholdStep  = 0.001;
-  chiSoughtValue = 200;
+  this->thresholdStart = thresholdStart;
+  this->thresholdStep  = thresholdStep;
+  this->chiSoughtValue = chiSoughtValue;
   minEigenVectorSize = 100;
 
   // TODO: perhaps the user should have a bit more control over what these
@@ -21,57 +21,6 @@ RMTThreshold::RMTThreshold(int argc, char *argv[])
   minTH    = 1.0;
   minChi   = 10000.0;
   maxChi   = 0.0;
-
-  // The value returned by getopt_long.
-  int c;
-
-  // loop through the incoming arguments until the
-  // getopt_long function returns -1. Then we break out of the loop
-  while(1) {
-    int option_index = 0;
-
-    // specify the long options. The values returned are specified to be the
-    // short options which are then handled by the case statement below
-    static struct option long_options[] = {
-      {"chi",     required_argument, 0,  'i' },
-      {"th",      required_argument, 0,  't' },
-      {"step",    required_argument, 0,  's' },
-      {0, 0, 0,  0 }  // last element required to be all zeros
-    };
-
-    // get the next option
-    c = getopt_long(argc, argv, "e:m:t:c:s:h", long_options, &option_index);
-
-    // if the index is -1 then we have reached the end of the options list
-    // and we break out of the while loop
-    if (c == -1) {
-      break;
-    }
-
-    // handle the options
-    switch (c) {
-      case 0:
-        break;
-      case 't':
-        thresholdStart = atof(optarg);
-        break;
-      case 'i':
-        chiSoughtValue = atof(optarg);
-        break;
-      case 's':
-        thresholdStep = atof(optarg);
-        break;
-      default:
-        print_threshold_usage();
-    }
-  }
-
-  // TOOD: make sure the incoming args are good.
-
-  printf("  Using method: '%s'\n", method);
-  printf("  Start threshold: %f\n", thresholdStart);
-  printf("  Desired Chi-square %f\n", chiSoughtValue);
-  printf("  Step per iteration: %f\n", thresholdStep);
 }
 
 /**
@@ -265,7 +214,7 @@ float * RMTThreshold::read_similarity_matrix_bin_file(float th, int * size) {
   // open the file and get the number of genes and the lines per file
   // these data are the first two integers in the file
   FILE* info;
-  sprintf(filename, "%s/%s.%s%d.bin", input_dir, ematrix->getFilePrefix(), method, 0);
+  sprintf(filename, "%s/%s.%s%d.bin", bin_dir, ematrix->getFilePrefix(), method, 0);
   // TODO: check that file exists before trying to open
   info = fopen(filename, "rb");
   fread(&file_num_genes, sizeof(int), 1, info);
@@ -301,7 +250,7 @@ float * RMTThreshold::read_similarity_matrix_bin_file(float th, int * size) {
   z = (file_num_genes - 1) / file_num_lines;
   for (i = 0; i <= z; i++) {
 
-    sprintf(filename, "%s/%s.%s%d.bin", input_dir, ematrix->getFilePrefix(), method, i);
+    sprintf(filename, "%s/%s.%s%d.bin", bin_dir, ematrix->getFilePrefix(), method, i);
     in = fopen(filename, "rb");
     fread(&junk, sizeof(int), 1, in); // file_num_genes
     fread(&junk, sizeof(int), 1, in); // file_num_lines
@@ -358,7 +307,7 @@ float * RMTThreshold::read_similarity_matrix_bin_file(float th, int * size) {
   // for each of the genes identified previously.
   for (i = 0; i < z; i++) {
 
-    sprintf(filename, "%s/%s.%s%d.bin", input_dir, ematrix->getFilePrefix(), method, i);
+    sprintf(filename, "%s/%s.%s%d.bin", bin_dir, ematrix->getFilePrefix(), method, i);
     in = fopen(filename, "rb");
     fread(&junk, sizeof(int), 1, in); // file_num_genes
     fread(&junk, sizeof(int), 1, in); // file_num_lines

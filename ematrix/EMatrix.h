@@ -37,7 +37,7 @@ class EMatrix {
     // Specifies the value that represents a missing value.
     char *na_val;
     // Specifies the transformation function: log2, none.
-    char func[10];
+    char *func;
     // Set to 1 to perform log10 transformation.
     int do_log10;
     // Set to 1 to perform log2 transformation.
@@ -48,7 +48,7 @@ class EMatrix {
   public:
 
     // Constructor
-    EMatrix(int argc, char *argv[]);
+    EMatrix(char * infilename, int rows, int cols, int headers, int omit_na, char *na_val, char * func);
     // Destructor
     ~EMatrix();
 

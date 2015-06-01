@@ -19,20 +19,12 @@ class SimilarityMatrix {
   protected:
     // The expression matrix object.
     EMatrix * ematrix;
-    // Indicates if headers are present in the input EMatrix file.
-    int headers;
-    // The number of rows in the expression matrix.
-    int rows;
-    // The number of columns in the expression matrix.
-    int cols;
     // Set to 1 if nothing but the sim value is shown
     int quiet;
-    // The input expression matrix file name.
-    char * infilename;
     // The directory where the expression matrix is found
-    char * input_dir;
+    char * bin_dir;
     // Specifies the method: cor, mi.
-    char method[10];
+    char * method;
     // The user-specified x coordinate to retrieve
     int x_coord;
     // The user-specified y coordinate to retrieve
@@ -43,12 +35,10 @@ class SimilarityMatrix {
     char * gene2;
     // The threshold for creating the network.
     float th;
-    // Filters
-    int max_missing;
-    int min_cluster_size;
   public:
     // Constructor.
-    SimilarityMatrix(int argc, char *argv[]);
+    SimilarityMatrix(EMatrix *ematrix, int quiet, char * method, int x_coord,
+        int y_cood, char * gene1, char * gene2, float th);
     // Desctructor.
     ~SimilarityMatrix();
 
@@ -66,5 +56,4 @@ class SimilarityMatrix {
     // The user must have provided an x and y coordiante.
     void getSimilarity() {};
 };
-
 #endif

@@ -34,9 +34,11 @@ OBJS = \
   similarity/RunSimilarity.o \
   threshold/ThresholdMethod.o \
   threshold/RMTThreshold.o \
+  threshold/RunThreshold.o \
   extract/SimilarityMatrix.o \
   extract/SimMatrixBinary.o \
   extract/SimMatrixTabCluster.o \
+  extract/RunExtract.o \
   kinc.o
 EXE = kinc
 
@@ -118,6 +120,9 @@ threshold/ThresholdMethod.o: threshold/ThresholdMethod.cpp threshold/ThresholdMe
 threshold/RMTThreshold.o: threshold/RMTThreshold.cpp threshold/RMTThreshold.h
 	${CC} -c ${CFLAGS} ${INCLUDES} threshold/RMTThreshold.cpp -o threshold/RMTThreshold.o
 
+threshold/RunThreshold.o: threshold/RunThreshold.cpp threshold/RunThreshold.h
+	${CC} -c ${CFLAGS} ${INCLUDES} threshold/RunThreshold.cpp -o threshold/RunThreshold.o
+
 extract/SimilarityMatrix.o: extract/SimilarityMatrix.cpp extract/SimilarityMatrix.h
 	${CC} -c ${CFLAGS} ${INCLUDES} extract/SimilarityMatrix.cpp -o extract/SimilarityMatrix.o
 
@@ -126,6 +131,9 @@ extract/SimMatrixBinary.o: extract/SimMatrixBinary.cpp extract/SimMatrixBinary.h
 
 extract/SimMatrixTabCluster.o: extract/SimMatrixTabCluster.cpp extract/SimMatrixTabCluster.h
 	${CC} -c ${CFLAGS} ${INCLUDES} extract/SimMatrixTabCluster.cpp -o extract/SimMatrixTabCluster.o
+
+extract/RunExtract.o: extract/RunExtract.cpp extract/RunExtract.h
+	${CC} -c ${CFLAGS} ${INCLUDES} extract/RunExtract.cpp -o extract/RunExtract.o
 
 kinc.o: kinc.cpp kinc.h
 	${CC} -c ${CFLAGS} ${INCLUDES} ${MPI_INCLUDES} kinc.cpp -o kinc.o

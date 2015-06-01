@@ -3,11 +3,15 @@
 /**
  * Constructor
  */
-SimMatrixTabCluster::SimMatrixTabCluster(int argc, char *argv[])
-  : SimilarityMatrix(argc, argv) {
+SimMatrixTabCluster::SimMatrixTabCluster(EMatrix *ematrix, int quiet, char * method, int x_coord,
+    int y_coord, char * gene1, char * gene2, float th, int max_missing,
+    int min_cluster_size)
+  : SimilarityMatrix(ematrix, quiet, method, x_coord, y_coord, gene1, gene2, th) {
 
   // Initialize the class members.
-  num_jobs = 0;
+  this->num_jobs = 0;
+  this->max_missing = max_missing;
+  this->min_cluster_size = min_cluster_size;
 
   getNumJobs();
 }

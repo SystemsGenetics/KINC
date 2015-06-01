@@ -23,7 +23,8 @@ class SimMatrixBinary : public SimilarityMatrix {
 
   public:
     // Constructur.
-    SimMatrixBinary(int argc, char *argv[]);
+    SimMatrixBinary(EMatrix *ematrix, int quiet, char * method, int x_coord,
+        int y_cood, char * gene1, char * gene2, float th);
     // Destructor.
     ~SimMatrixBinary();
     // Retrieves the set of edges that match the given filtering parameters.

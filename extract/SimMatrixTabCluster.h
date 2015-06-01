@@ -12,13 +12,20 @@ class SimMatrixTabCluster : public SimilarityMatrix {
   private:
     // The number of jobs that were used to construct the files.
     int num_jobs;
+    // The maxiumum number of missing values allowed in a pair-wise comparision.
+    int max_missing;
+    // The minimum cluster size.
+    int min_cluster_size;
 
 
     // Discovers the number of jobs used to generate the clustering files.
     void getNumJobs();
   public:
     // Constructur.
-    SimMatrixTabCluster(int argc, char *argv[]);
+    SimMatrixTabCluster(EMatrix *ematrix, int quiet, char * method, int x_coord,
+        int y_cood, char * gene1, char * gene2, float th, int max_missing,
+        int min_cluster_size);
+
     // Destructor.
     ~SimMatrixTabCluster();
     // Retrieves the set of edges that match the given filtering parameters.

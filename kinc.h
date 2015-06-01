@@ -36,10 +36,9 @@
 
 //#include <mpi.h>
 
-#include "threshold/RMTThreshold.h"
-#include "extract/SimMatrixBinary.h"
-#include "extract/SimMatrixTabCluster.h"
 #include "similarity/RunSimilarity.h"
+#include "threshold/RunThreshold.h"
+#include "extract/RunExtract.h"
 
 /**
  * Function prototypes

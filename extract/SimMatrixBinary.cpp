@@ -3,8 +3,9 @@
 /**
  * Constructor
  */
-SimMatrixBinary::SimMatrixBinary(int argc, char *argv[])
-  : SimilarityMatrix(argc, argv){
+SimMatrixBinary::SimMatrixBinary(EMatrix *ematrix, int quiet, char * method, int x_coord,
+    int y_cood, char * gene1, char * gene2, float th)
+  : SimilarityMatrix(ematrix, quiet, method, x_coord, y_cood, gene1, gene2, th){
 
   // Intialize some variables.
   num_files = 0;
@@ -50,8 +51,8 @@ void SimMatrixBinary::openBinFiles() {
   int num_genes;
 
   // Scanning for the files of the similarity matrix
-  if (NULL == (FD = opendir(input_dir))) {
-    fprintf(stderr, "Error : Failed to open input directory: '%s'\n", input_dir);
+  if (NULL == (FD = opendir(bin_dir))) {
+    fprintf(stderr, "Error : Failed to open input directory: '%s'\n", bin_dir);
     exit(-1);
   }
   while ((curr_file = readdir(FD))) {
@@ -83,7 +84,7 @@ void SimMatrixBinary::openBinFiles() {
           // Open the file and store the file handle for later use and store
           // it in the files array using the bin_num as an index.
           char filename[1024];
-          sprintf(filename, "%s/%s", input_dir, curr_file->d_name);
+          sprintf(filename, "%s/%s", bin_dir, curr_file->d_name);
           if (!quiet) {
             printf("  Found file: %s\n", filename);
           }

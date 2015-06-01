@@ -102,18 +102,29 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
       {"help",         no_argument,       0,  'h' },
       {"method",       required_argument, 0,  'm' },
       {"min_obs",      required_argument, 0,  'o' },
+      // Mutual information options.
       {"mi_bins",      required_argument, 0,  'b' },
       {"mi_degree",    required_argument, 0,  'd' },
+      // Clustering options.
       {"num_jobs",     required_argument, 0,  'j' },
       {"job_index",    required_argument, 0,  'i' },
-      {"criterion",    required_argument, 0,  'r' },
+      {"criterion",    required_argument, 0,  't' },
       {"max_clusters", required_argument, 0,  'a' },
       {"clustering",   required_argument, 0,  'l' },
-      {0, 0, 0,  0 }  // last element required to be all zeros
+      // Expression matrix options.
+      {"rows",         required_argument, 0,  'r' },
+      {"cols",         required_argument, 0,  'c' },
+      {"headers",      no_argument,       &headers,  1 },
+      {"omit_na",      no_argument,       &omit_na,  1 },
+      {"func",         required_argument, 0,  'f' },
+      {"na_val",       required_argument, 0,  'n' },
+      {"ematrix",      required_argument, 0,  'e' },
+      // Last element required to be all zeros.
+      {0, 0, 0,  0 }
     };
 
     // get the next option
-    c = getopt_long(argc, argv, "m:o:b:d:j:i:r:a:l:h", long_options, &option_index);
+    c = getopt_long(argc, argv, "m:o:b:d:j:i:t:a:l:r:c:f:n:e:h", long_options, &option_index);
 
     // if the index is -1 then we have reached the end of the options list
     // and we break out of the while loop
@@ -134,24 +145,43 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
       case 'o':
         min_obs = atoi(optarg);
         break;
+      // Mutual information options.
       case 'b':
         mi_bins = atoi(optarg);
         break;
       case 'd':
         mi_degree = atoi(optarg);
         break;
+      // Clustering options.
       case 'j':
         num_jobs = atoi(optarg);
         break;
       case 'i':
         job_index = atoi(optarg);
         break;
-      case 'r':
+      case 't':
         strcpy(criterion, optarg);
         break;
       case 'a':
         max_clusters = atoi(optarg);
         break;
+      // Expression matrix options.
+      case 'e':
+        infilename = optarg;
+        break;
+      case 'r':
+        rows = atoi(optarg);
+        break;
+      case 'c':
+        cols = atoi(optarg);
+        break;
+      case 'n':
+        na_val = optarg;
+        break;
+      case 'f':
+        strcpy(func, optarg);
+        break;
+      // Help and catch-all options.
       case 'h':
         printUsage();
         exit(-1);
@@ -181,31 +211,59 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
     exit(-1);
   }
 
+  // make sure the required arguments are set and appropriate
+  if (!infilename) {
+    fprintf(stderr,"Please provide an expression matrix (--ematrix option).\n");
+    exit(-1);
+  }
+  // make sure we have a positive integer for the rows and columns of the matrix
+  if (rows < 0 || rows == 0) {
+    fprintf(stderr, "Please provide a positive integer value for the number of rows in the \n");
+    fprintf(stderr, "expression matrix (--rows option).\n");
+    exit(-1);
+  }
+  if (cols < 0 || cols == 0) {
+    fprintf(stderr, "Please provide a positive integer value for the number of columns in\n");
+    fprintf(stderr, "the expression matrix (--cols option).\n");
+    exit(-1);
+  }
+
+  if (omit_na && !na_val) {
+    fprintf(stderr, "Error: The missing value string should be provided (--na_val option).\n");
+    exit(-1);
+  }
+  // make sure the input file exists
+  if (access(infilename, F_OK) == -1) {
+    fprintf(stderr,"The input file does not exists or is not readable.\n");
+    exit(-1);
+  }
 
   // Validate the Mixutre Model parameters.
-  bool $mmc_is_good = false;
-  if (strcmp(criterion, "BIC") == 0) {
-    $mmc_is_good = true;
-  }
-  else if (strcmp(criterion, "ICL") == 0) {
-    $mmc_is_good = true;
-  }
-  else if (strcmp(criterion, "NEC") == 0) {
-    $mmc_is_good = true;
-  }
-  else if (strcmp(criterion, "CV") == 0) {
-    $mmc_is_good = true;
-  }
-  else if (strcmp(criterion, "DCV") == 0) {
-    $mmc_is_good = true;
-  }
-  if (!$mmc_is_good) {
-    fprintf(stderr, "Error: The mixture model criterion must be one of: BIC, ICL, NEC, CV, DCV (--criterion option).\n");
-    exit(-1);
-  }
-  if (max_clusters < 2 || max_clusters > 10 ){
-    fprintf(stderr, "Error: Please select a maximum cluters between 2 and 10. (--max_clusters option).\n");
-    exit(-1);
+  if (clustering) {
+    bool $mmc_is_good = false;
+    if (strcmp(criterion, "BIC") == 0) {
+      $mmc_is_good = true;
+    }
+    else if (strcmp(criterion, "ICL") == 0) {
+      $mmc_is_good = true;
+    }
+    else if (strcmp(criterion, "NEC") == 0) {
+      $mmc_is_good = true;
+    }
+    else if (strcmp(criterion, "CV") == 0) {
+      $mmc_is_good = true;
+    }
+    else if (strcmp(criterion, "DCV") == 0) {
+      $mmc_is_good = true;
+    }
+    if (!$mmc_is_good) {
+      fprintf(stderr, "Error: The mixture model criterion must be one of: BIC, ICL, NEC, CV, DCV (--criterion option).\n");
+      exit(-1);
+    }
+    if (max_clusters < 2 || max_clusters > 10 ){
+      fprintf(stderr, "Error: Please select a maximum cluters between 2 and 10. (--max_clusters option).\n");
+      exit(-1);
+    }
   }
 
   // Create and initialize the histogram for the distribution of coefficients.
@@ -215,8 +273,15 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
   }
 
   // Retrieve the data from the EMatrix file.
-  ematrix = new EMatrix(argc, argv);
+  ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
 
+  if (headers) {
+    printf("  Skipping header lines\n");
+  }
+  printf("  Performing transformation: %s \n", func);
+  if (omit_na) {
+    printf("  Missing values are: '%s'\n", na_val);
+  }
   printf("  Required observations: %d\n", min_obs);
   printf("  Using method: '%s'\n", method);
   if (strcmp(method, "mi") ==0) {

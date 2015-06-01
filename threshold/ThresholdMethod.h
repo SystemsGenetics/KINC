@@ -19,9 +19,9 @@ class ThresholdMethod {
     // The expression matrix object.
     EMatrix * ematrix;
     // The directory where the expression matrix is found
-    char * input_dir;
+    char * bin_dir;
     // Specifies the correlation method that was used: pc, mi, sc
-    char method[10];
+    char * method;
 
 
     // DATA FILTERS FOR CLUSTERED SIMILARITY DATA
@@ -33,7 +33,7 @@ class ThresholdMethod {
 
 
   public:
-    ThresholdMethod(int argc, char *argv[]);
+    ThresholdMethod(EMatrix *ematrix, char * method);
     ~ThresholdMethod();
 
     // GETTERS

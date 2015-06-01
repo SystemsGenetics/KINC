@@ -55,7 +55,7 @@ class RMTThreshold : public ThresholdMethod {
     float * read_similarity_matrix_cluster_file(float th, int * size);
 
   public:
-    RMTThreshold(int argc, char *argv[]);
+    RMTThreshold(EMatrix * ematrix, char * method, double thresholdStart, double thresholdStep, double chiSoughtValue);
     ~RMTThreshold();
 
     double findThreshold();
