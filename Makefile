@@ -1,4 +1,3 @@
-MKLROOT = 
 #CC = mpic++ -m64
 CC = g++ -m64
 EXE_DIR = 
