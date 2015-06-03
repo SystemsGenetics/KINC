@@ -230,7 +230,8 @@ RunThreshold::~RunThreshold() {
 void RunThreshold::execute() {
 
   // Find the RMT threshold.
-  RMTThreshold * rmt = new RMTThreshold(ematrix, method, thresholdStart, thresholdStep, chiSoughtValue, clustering);
+  RMTThreshold * rmt = new RMTThreshold(ematrix, method, thresholdStart,
+      thresholdStep, chiSoughtValue, clustering, min_cluster_size, max_missing);
   rmt->findThreshold();
   printf("Done.\n");
 }

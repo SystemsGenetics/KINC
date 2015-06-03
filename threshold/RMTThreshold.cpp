@@ -1,12 +1,15 @@
 #include "RMTThreshold.h"
 
-RMTThreshold::RMTThreshold(EMatrix * ematrix, char * method, double thresholdStart, double thresholdStep, double chiSoughtValue, char * clustering)
-  : ThresholdMethod(ematrix, method) {
+RMTThreshold::RMTThreshold(EMatrix * ematrix, char * method, double thresholdStart,
+    double thresholdStep, double chiSoughtValue, char * clustering, int min_cluster_size,
+    int max_missing)
+  : ThresholdMethod(ematrix, method, clustering, min_cluster_size, max_missing) {
 
   this->thresholdStart = thresholdStart;
   this->thresholdStep  = thresholdStep;
   this->chiSoughtValue = chiSoughtValue;
   this->clustering = clustering;
+
   minEigenVectorSize = 100;
 
   // TODO: perhaps the user should have a bit more control over what these

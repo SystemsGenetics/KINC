@@ -16,6 +16,8 @@ void print_threshold_usage();
 class ThresholdMethod {
 
   protected:
+    // The clustering method used.
+    char * clustering;
     // The expression matrix object.
     EMatrix * ematrix;
     // The directory where the expression matrix is found
@@ -33,7 +35,8 @@ class ThresholdMethod {
 
 
   public:
-    ThresholdMethod(EMatrix *ematrix, char * method);
+    ThresholdMethod(EMatrix *ematrix, char * method, char * clustering,
+        int min_cluster_size, int max_missing);
     ~ThresholdMethod();
 
     // GETTERS
