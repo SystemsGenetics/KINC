@@ -1,11 +1,12 @@
 #include "RMTThreshold.h"
 
-RMTThreshold::RMTThreshold(EMatrix * ematrix, char * method, double thresholdStart, double thresholdStep, double chiSoughtValue)
+RMTThreshold::RMTThreshold(EMatrix * ematrix, char * method, double thresholdStart, double thresholdStep, double chiSoughtValue, char * clustering)
   : ThresholdMethod(ematrix, method) {
 
   this->thresholdStart = thresholdStart;
   this->thresholdStep  = thresholdStep;
   this->chiSoughtValue = chiSoughtValue;
+  this->clustering = clustering;
   minEigenVectorSize = 100;
 
   // TODO: perhaps the user should have a bit more control over what these
@@ -69,8 +70,12 @@ double RMTThreshold::findThreshold() {
     printf("\n");
     printf("  testing threshold: %f...\n", th);
 
-    //newM = read_similarity_matrix_bin_file(th, &size, params);
-    newM = read_similarity_matrix_cluster_file(th, &size);
+    if (!clustering) {
+      newM = read_similarity_matrix_bin_file(th, &size);
+    }
+    else {
+      newM = read_similarity_matrix_cluster_file(th, &size);
+    }
 
     printf("  found matrix of size n x n, n = %d...\n", size);
     if (size >= minEigenVectorSize) {

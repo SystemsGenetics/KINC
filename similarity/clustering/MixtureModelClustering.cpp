@@ -4,8 +4,6 @@ MixtureModelClustering::MixtureModelClustering(EMatrix *ematrix, int min_obs, in
   : PairWiseClustering(ematrix, min_obs, num_jobs, job_index) {
 
   // Initialize some values.
-//  max_clusters = 5;
-//  strcpy(criterion, "BIC");
   this->max_clusters = max_clusters;
   this->criterion = criterion;
   this->method = method;
@@ -35,10 +33,6 @@ MixtureModelClustering::MixtureModelClustering(EMatrix *ematrix, int min_obs, in
     fprintf(stderr, "Error: Please select a maximum cluters between 2 and 10. (--max_clusters option).\n");
     exit(-1);
   }
-
-  printf("  Mixture model criterion: %s\n", criterion);
-  printf("  Max clusters: %d\n", max_clusters);
-
 }
 
 /**
@@ -72,15 +66,15 @@ void MixtureModelClustering::run() {
   long long int num_rows = ematrix->getNumGenes() - 1;
   long long int total_comps  = num_rows * (num_rows + 1) / 2;
   long long int comps_per_process = total_comps / num_jobs;
-  long long int comp_start = job_index * comps_per_process;
-  long long int comp_stop = job_index * comps_per_process + comps_per_process;
+  long long int comp_start = (job_index - 1) * comps_per_process;
+  long long int comp_stop = (job_index - 1) * comps_per_process + comps_per_process;
 
   // If this is the last process and there are some remainder comparisons
   // then we need to add them to the stop
-  if (job_index + 1 == num_jobs) {
+  if (job_index == num_jobs) {
     comp_stop = total_comps;
   }
-  printf("  Job %d of %d. \n", job_index + 1, num_jobs);
+  printf("  Job %d of %d. \n", job_index, num_jobs);
   printf("  Performing comparisions %lld to %lld (%lld) of %lld\n", comp_start, comp_stop, comp_stop - comp_start, total_comps);
   fflush(stdout);
 
@@ -138,8 +132,10 @@ void MixtureModelClustering::run() {
         double years_left = days_left / 365;
 
         // Write progress report.
-        printf("%d. Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd; %.2fy. Coords: %d, %d.        \n",
-          job_index + 1, (float) percent_complete, memory->size, (float) hours_left, (float) days_left, (float) years_left, i, j);
+        //if (!isnan(seconds_passed)) {
+          printf("%d. Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd; %.2fy. Coords: %d, %d.        \r",
+            job_index, (float) percent_complete, memory->size, (float) hours_left, (float) days_left, (float) years_left, i, j);
+        //}
         free(memory);
       }
       n_comps++;

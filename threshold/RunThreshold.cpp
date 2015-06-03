@@ -53,9 +53,6 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
   thresholdStep  = 0.001;
   chiSoughtValue = 200;
 
-
-  strcpy(method, "sc");
-
   // The value returned by getopt_long.
   int c;
 
@@ -159,17 +156,6 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
     }
   }
 
-  if (max_missing < -1) {
-    fprintf(stderr, "Please provide a positive integer value for maximum missing values\n");
-    fprintf(stderr, "the expression matrix (--max_missing option).\n");
-    exit(-1);
-  }
-  if (min_cluster_size < 0 || min_cluster_size == 0) {
-    fprintf(stderr, "Please provide a positive integer value for the minimum cluster size in\n");
-    fprintf(stderr, "the expression matrix (--min_cluster_size option).\n");
-    exit(-1);
-  }
-
   if (!method) {
     fprintf(stderr,"Please provide the method used to construct the similarity matrix (--method option).\n");
     exit(-1);
@@ -179,6 +165,25 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
       strcmp(method, "mi") != 0) {
     fprintf(stderr,"The method (--method option) must either be 'pc', 'sc' or 'mi'.\n");
     exit(-1);
+  }
+
+  if (clustering) {
+    // Make sure the clustering method is valid.
+    if (strcmp(clustering, "mixmod") != 0) {
+      fprintf(stderr,"Error: The clustering type (--clustering option) must be 'mixmod'. It is currently the only clustering method supported.\n");
+          exit(-1);
+    }
+
+    if (max_missing < -1) {
+      fprintf(stderr, "Please provide a positive integer value for maximum missing values\n");
+      fprintf(stderr, "the expression matrix (--max_missing option).\n");
+      exit(-1);
+    }
+    if (min_cluster_size < 0 || min_cluster_size == 0) {
+      fprintf(stderr, "Please provide a positive integer value for the minimum cluster size in\n");
+      fprintf(stderr, "the expression matrix (--min_cluster_size option).\n");
+      exit(-1);
+    }
   }
 
   // Load the input expression matrix.
@@ -193,7 +198,7 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
   }
   printf("  Using method: '%s'\n", method);
   printf("  Start threshold: %f\n", thresholdStart);
-  printf("  Desired Chi-square %f\n", chiSoughtValue);
+  printf("  Stopping Chi-square %f\n", chiSoughtValue);
   printf("  Step per iteration: %f\n", thresholdStep);
 }
 /**
@@ -209,7 +214,7 @@ RunThreshold::~RunThreshold() {
 void RunThreshold::execute() {
 
   // Find the RMT threshold.
-  RMTThreshold * rmt = new RMTThreshold(ematrix, method, thresholdStart, thresholdStep, chiSoughtValue);
+  RMTThreshold * rmt = new RMTThreshold(ematrix, method, thresholdStart, thresholdStep, chiSoughtValue, clustering);
   rmt->findThreshold();
   printf("Done.\n");
 }

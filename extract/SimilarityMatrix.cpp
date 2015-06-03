@@ -24,11 +24,11 @@ SimilarityMatrix::SimilarityMatrix(EMatrix *ematrix, int quiet, char * method,
   // if the user supplied gene
   if (gene1 && gene2) {
     // Make sure the coordinates are positive integers
-    if (x_coord < 0) {
+    if (x_coord < 1) {
       fprintf(stderr, "Could not find gene %s in the genes list file\n", gene1);
       exit(-1);
     }
-    if (y_coord < 0) {
+    if (y_coord < 1) {
       fprintf(stderr, "Could not find gene %s in the genes list file\n", gene2);
       exit(-1);
     }
@@ -48,8 +48,8 @@ SimilarityMatrix::SimilarityMatrix(EMatrix *ematrix, int quiet, char * method,
   }
 
   // Make sure we have a positive integer for the x and y coordinates.
-  if ((x_coord >= 0 &&  y_coord < 0) ||
-      (x_coord < 0  &&  y_coord >= 0)) {
+  if ((x_coord >= 1 &&  y_coord < 1) ||
+      (x_coord < 1  &&  y_coord >= 1)) {
     fprintf(stderr, "Please provide a positive integer for both the x and y coordinates (-x and -y options)\n");
     exit(-1);
   }

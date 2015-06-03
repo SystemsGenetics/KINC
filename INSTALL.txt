@@ -1,5 +1,5 @@
 KINC
-==========
+====
 To Install KINC the following dependencies must first be met:
 
 * GNU Scientific Library (http://www.gnu.org/software/gsl/)

@@ -26,6 +26,7 @@ extern "C" void ssyev_(char* jobz, char* uplo, int* n, float* a, int* lda,
 class RMTThreshold : public ThresholdMethod {
 
   private:
+    char * clustering;
     // Variables for RMT
     double thresholdStart;
     double thresholdStep;
@@ -55,7 +56,7 @@ class RMTThreshold : public ThresholdMethod {
     float * read_similarity_matrix_cluster_file(float th, int * size);
 
   public:
-    RMTThreshold(EMatrix * ematrix, char * method, double thresholdStart, double thresholdStep, double chiSoughtValue);
+    RMTThreshold(EMatrix * ematrix, char * method, double thresholdStart, double thresholdStep, double chiSoughtValue, char * clustering);
     ~RMTThreshold();
 
     double findThreshold();

@@ -85,6 +85,12 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
   clustering = NULL;
   min_obs = 30;
 
+  // Initialize the clustering arguments.
+  strcpy(criterion, "BIC");
+  max_clusters = 5;
+  num_jobs = 1;
+  job_index = 0;
+
   // Defaults for mutual informatin B-spline estimate.
   mi_bins = 10;
   mi_degree = 3;
@@ -200,11 +206,11 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
     }
   }
 
+  // Nake sure the similarity method is valid.
   if (!method) {
     fprintf(stderr,"Please provide the method (--method option).\n");
     exit(-1);
   }
-  // make sure the method is valid
   if (strcmp(method, "pc") != 0 &&
       strcmp(method, "mi") != 0 &&
       strcmp(method, "sc") != 0 ) {
@@ -239,31 +245,51 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
     exit(-1);
   }
 
-  // Validate the Mixutre Model parameters.
+  // Validate teh clustering options.
   if (clustering) {
-    bool $mmc_is_good = false;
-    if (strcmp(criterion, "BIC") == 0) {
-      $mmc_is_good = true;
+    // Make sure the clustering method is valid.
+    if (strcmp(clustering, "mixmod") != 0) {
+      fprintf(stderr,"Error: The clustering type (--clustering option) must be 'mixmod'. It is currently the only clustering method supported.\n");
+          exit(-1);
     }
-    else if (strcmp(criterion, "ICL") == 0) {
-      $mmc_is_good = true;
-    }
-    else if (strcmp(criterion, "NEC") == 0) {
-      $mmc_is_good = true;
-    }
-    else if (strcmp(criterion, "CV") == 0) {
-      $mmc_is_good = true;
-    }
-    else if (strcmp(criterion, "DCV") == 0) {
-      $mmc_is_good = true;
-    }
-    if (!$mmc_is_good) {
-      fprintf(stderr, "Error: The mixture model criterion must be one of: BIC, ICL, NEC, CV, DCV (--criterion option).\n");
-      exit(-1);
-    }
-    if (max_clusters < 2 || max_clusters > 10 ){
-      fprintf(stderr, "Error: Please select a maximum cluters between 2 and 10. (--max_clusters option).\n");
-      exit(-1);
+
+    // If this is mixture model clustering the validate those options.
+    if (strcmp(clustering, "mixmod") == 0) {
+      // Make sure the MixMod criteria is correct.
+      bool $mmc_is_good = false;
+      if (strcmp(criterion, "BIC") == 0) {
+        $mmc_is_good = true;
+      }
+      else if (strcmp(criterion, "ICL") == 0) {
+        $mmc_is_good = true;
+      }
+      else if (strcmp(criterion, "NEC") == 0) {
+        $mmc_is_good = true;
+      }
+      else if (strcmp(criterion, "CV") == 0) {
+        $mmc_is_good = true;
+      }
+      else if (strcmp(criterion, "DCV") == 0) {
+        $mmc_is_good = true;
+      }
+      if (!$mmc_is_good) {
+        fprintf(stderr, "Error: The mixture model criterion must be one of: BIC, ICL, NEC, CV, DCV (--criterion option).\n");
+        exit(-1);
+      }
+      // Make sure there is a valid max clusters value.
+      if (max_clusters < 2 || max_clusters > 10 ){
+        fprintf(stderr, "Error: Please select a maximum cluters between 2 and 10. (--max_clusters option).\n");
+        exit(-1);
+      }
+      // Make sure the number of jobs is set
+      if (num_jobs < 1) {
+        fprintf(stderr, "Error: Please provide a positive integer for the number of jobs to run. (--num_jobs option).\n");
+        exit(-1);
+      }
+      if (job_index < 1 || job_index > num_jobs) {
+        fprintf(stderr, "Error: The job index must be between 1 and %d. (--job_index option).\n", num_jobs);
+        exit(-1);
+      }
     }
   }
 
@@ -284,13 +310,20 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
     printf("  Missing values are: '%s'\n", na_val);
   }
   printf("  Required observations: %d\n", min_obs);
-  printf("  Using method: '%s'\n", method);
+  printf("  Using similarity method: '%s'\n", method);
   if (strcmp(method, "mi") ==0) {
     printf("  Bins for B-Spline estimate of MI: %d\n", mi_bins);
     printf("  Degree for B-Spline estimate of MI: %d\n", mi_degree);
   }
-  printf("  Mixture model criterion: %s\n", criterion);
-  printf("  Max clusters: %d\n", max_clusters);
+  if (clustering) {
+    if (strcmp(clustering, "mixmod") == 0) {
+      printf("\n  Mixture Model Settings:\n");
+      printf("    Mixture model criterion: %s\n", criterion);
+      printf("    Max clusters: %d\n", max_clusters);
+      printf("    Number of jobs: %d\n", num_jobs);
+      printf("    Job index: %d\n", job_index);
+    }
+  }
 }
 
 /**
@@ -306,7 +339,7 @@ RunSimilarity::~RunSimilarity() {
  */
 void RunSimilarity::execute() {
   if (clustering) {
-    if (strcmp(clustering, "mixmod")) {
+    if (strcmp(clustering, "mixmod") == 0) {
       // TODO: the clustering and traditional looping should be more
       // integrated. It should be possible for MPI to support multiple
       // jobs for either method.
@@ -340,8 +373,6 @@ void RunSimilarity::executeTraditional() {
   int n_comps;
   // The number of genes.
   int num_genes = ematrix->getNumGenes();
-  // The number of samples.
-  int num_samples = ematrix->getNumSamples();
   // The binary output file prefix
   char * fileprefix = ematrix->getFilePrefix();
 
@@ -368,7 +399,6 @@ void RunSimilarity::executeTraditional() {
     else {
       bin_rows = num_genes;
     }
-//    int num_cols = bin_rows - (curr_bin * ROWS_PER_OUTPUT_FILE);
 
     // the output file will be located in the Spearman directory and named based on the input file info
     sprintf(outfilename, "./Spearman/%s.sc%d.bin", fileprefix, curr_bin);
@@ -378,7 +408,8 @@ void RunSimilarity::executeTraditional() {
     // write the size of the matrix
     fwrite(&num_genes, sizeof(num_genes), 1, outfile);
     // write the number of lines in this file
-    fwrite(&num_samples, sizeof(num_samples), 1, outfile);
+    int num_lines = bin_rows - (curr_bin * ROWS_PER_OUTPUT_FILE);
+    fwrite(&num_lines, sizeof(num_lines), 1, outfile);
 
     // iterate through the genes that belong in this file
     for (int j = curr_bin * ROWS_PER_OUTPUT_FILE; j < bin_rows; j++) {

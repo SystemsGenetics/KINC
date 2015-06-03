@@ -78,8 +78,8 @@ void PairWiseSimilarity::init() {
   // comes with the pws.
   else {
     for (int i = 0; i < pws->n_clean; i++) {
-      a[this->n] = pws->x_clean[i];
-      b[this->n] = pws->y_clean[i];
+      a[i] = pws->x_clean[i];
+      b[i] = pws->y_clean[i];
     }
     this->n = pws->n_clean;
   }

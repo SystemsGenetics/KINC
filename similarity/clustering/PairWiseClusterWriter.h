@@ -23,7 +23,7 @@ class PairWiseClusterWriter {
     // The prefix for the filename.
     char * fileprefix;
     // A unique id to differentiate between parallel executions.
-    int id;
+    int job_index;
 
     // Opens and creates file pointers for all of the
     void openOutFiles();

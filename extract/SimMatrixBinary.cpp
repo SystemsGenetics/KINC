@@ -91,7 +91,6 @@ void SimMatrixBinary::openBinFiles() {
         method_pos = strstr(curr_file->d_name, m);
 
         if (method_pos) {
-          num_files++;
 
           // Get the numerical value of this bin file.
           int size = (bin_pos - (method_pos + 3)) * sizeof(char);

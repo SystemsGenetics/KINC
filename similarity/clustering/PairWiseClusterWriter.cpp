@@ -4,7 +4,7 @@
  * Constructor
  */
 PairWiseClusterWriter::PairWiseClusterWriter(char * m, char * fp, int i) {
-  id = i;
+  job_index = i;
   method = (char *) malloc(sizeof(char) * strlen(m) + 1);
   strcpy(method, m);
 
@@ -51,7 +51,7 @@ void PairWiseClusterWriter::openOutFiles() {
     if (stat(dirname, &st) == -1) {
       mkdir(dirname, 0700);
     }
-    sprintf(filename, "%s/%03d/%s.clusters.%03d.%03d.txt", clusters_dir, i, fileprefix, i, id + 1);
+    sprintf(filename, "%s/%03d/%s.clusters.%03d.%03d.txt", clusters_dir, i, fileprefix, i, job_index);
     fps[i] = new ofstream;
     fps[i]->open(filename, ios::out);
   }
@@ -59,7 +59,7 @@ void PairWiseClusterWriter::openOutFiles() {
   if (stat(nan_dir, &st) == -1) {
     mkdir(nan_dir, 0700);
   }
-  sprintf(filename, "%s/%s.clusters.nan.%03d.txt", nan_dir, fileprefix, id + 1);
+  sprintf(filename, "%s/%s.clusters.nan.%03d.txt", nan_dir, fileprefix, job_index);
   fps[i] = new ofstream;
   fps[i]->open(filename, ios::out);
 }
