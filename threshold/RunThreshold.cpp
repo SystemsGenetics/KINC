@@ -7,36 +7,50 @@ void RunThreshold::printUsage() {
   printf("\n");
   printf("Usage: ./kinc threshold [options]\n");
   printf("The list of required options:\n");
-  printf("  --ematrix|-e  The file name that contains the expression matrix.\n");
-  printf("                The rows must be genes or probe sets and columns are samples\n");
-  printf("  --method|-m   The correlation method to use. Supported methods include\n");
-  printf("                Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
-  printf("                and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
-  printf("                'mi' as values respectively.\n");
-  printf("  --rows|-r     The number of lines in the input file including the header\n");
-  printf("                column if it exists\n");
-  printf("  --cols|-c     The number of columns in the input file minus the first\n");
-  printf("                column that contains gene names\n");
+  printf("  --ematrix|-e     The file name that contains the expression matrix.\n");
+  printf("                   The rows must be genes or probe sets and columns are samples\n");
+  printf("  --method|-m      The correlation method to use. Supported methods include\n");
+  printf("                   Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
+  printf("                   and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
+  printf("                   'mi' as values respectively.\n");
+  printf("  --rows|-r        The number of lines in the input file including the header\n");
+  printf("                   column if it exists\n");
+  printf("  --cols|-c        The number of columns in the input file minus the first\n");
+  printf("                   column that contains gene names\n");
   printf("\n");
-  printf("Optional:\n");
-  printf("  --th|-t       A decimal indicating the start threshold. For Pearson's.\n");
-  printf("                Correlation (--method pc), the default is 0.99. For Mutual\n");
-  printf("                information (--method mi), the default is the maximum MI value\n");
-  printf("                in the similarity matrix\n");
-  printf("  --step|-s     The threshold step size, to subtract at each iteration of RMT.\n");
-  printf("                The default is 0.001\n");
-  printf("  --chi|-i      The Chi-square test value which when encountered RMT will stop.\n");
-  printf("                The algorithm will only stop if it first encounters a Chi-square\n");
-  printf("                value of 99.607 (df = 60, p-value = 0.001).\n");
-  printf("  --missing|-g  The total number of allowed missing values.  Each gene\n");
-  printf("                comparision can potentially have a missing value in any\n");
-  printf("                sample.  When the maximum number of missing values exceeds\n");
-  printf("                this value the clusters are ignored.\n");
-  printf("                If not provided, no limit is set.\n");
-  printf("  --size|-z     The minimum cluster size (number of samples per cluster).\n");
-  printf("                Default is 30\n");
-  printf("  --headers     Provide this flag if the first line of the matrix contains\n");
-  printf("                headers.\n");
+  printf("Optional expression matrix arguments:\n");
+  printf("  --omit_na        Provide this flag to ignore missing values.\n");
+  printf("  --na_val|-n      A string representing the missing values in the input file\n");
+  printf("                   (e.g. NA or 0.000)\n");
+  printf("  --func|-f        A transformation function to apply to elements of the ematrix.\n");
+  printf("                   Values include: log, log2 or log10. Default is to not perform\n");
+  printf("                   any transformation.\n");
+  printf("  --headers        Provide this flag if the first line of the matrix contains\n");
+  printf("                   headers.\n");
+  printf("\n");
+  printf("Optional RMT arguments:\n");
+  printf("  --th|-t          A decimal indicating the start threshold. For Pearson's.\n");
+  printf("                   and Spearman's, the default is 0.99. For Mutual\n");
+  printf("                   information (--method mi), the default is the maximum MI value\n");
+  printf("                   in the similarity matrix\n");
+  printf("  --step|-s        The threshold step size, to subtract at each iteration of RMT.\n");
+  printf("                   The default is 0.001\n");
+  printf("  --chi|-i         The Chi-square test value which when encountered RMT will stop.\n");
+  printf("                   The algorithm will only stop if it first encounters a Chi-square\n");
+  printf("                   value of 99.607 (df = 60, p-value = 0.001).\n");
+  printf("\n");
+  printf("Optional clustered data arguments:\n");
+  printf("  --clustering|-l  The type of clustering that was performed during construction\n");
+  printf("                   of the similarity matrix (e.g. 'mixmod').\n");
+  printf("  --missing|-g     The total number of allowed missing values.  Each gene\n");
+  printf("                   comparision can potentially have a missing value in any\n");
+  printf("                   sample.  When the maximum number of missing values exceeds\n");
+  printf("                   this value the clusters are ignored.\n");
+  printf("                   If not provided, no limit is set.\n");
+  printf("  --min_csize|-z   The minimum cluster size (number of samples per cluster).\n");
+  printf("                   Default is 30\n");
+  printf("\n");
+  printf("For Help:\n");
   printf("  --help|-h     Print these usage instructions\n");
   printf("\n");
 }
@@ -76,8 +90,10 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
       {"func",         required_argument, 0,  'f' },
       {"na_val",       required_argument, 0,  'n' },
       {"ematrix",      required_argument, 0,  'e' },
-      // Clustering options.
+      // Clustered options
       {"clustering",   required_argument, 0,  'l' },
+      {"max_missing",  required_argument, 0,  'g' },
+      {"min_csize",    required_argument, 0,  'z' },
       // RMT Threshold options.
       {"chi",          required_argument, 0,  'i' },
       {"th",           required_argument, 0,  't' },
@@ -103,15 +119,15 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
       case 'm':
         method = optarg;
         break;
+      // Clustering options.
+      case 'l':
+        clustering = optarg;
+        break;
       case 'z':
         min_cluster_size = atoi(optarg);
         break;
       case 'g':
         max_missing = atoi(optarg);
-        break;
-      // Clustering options.
-      case 'l':
-        clustering = optarg;
         break;
       // RMT threshold options.
       case 't':

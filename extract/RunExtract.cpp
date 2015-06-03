@@ -17,6 +17,7 @@ void RunExtract::printUsage() {
   printf("                   Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
   printf("                   and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
   printf("                   'mi' as values respectively.\n");
+  printf("\n");
   printf("Optional expression matrix arguments:\n");
   printf("  --omit_na        Provide this flag to ignore missing values.\n");
   printf("  --na_val|-n      A string representing the missing values in the input file\n");
@@ -36,6 +37,8 @@ void RunExtract::printUsage() {
   printf("                   pair-wise comparision.  Must be used with --gene1 option.\n");
   printf("\n");
   printf("Optional arguments for clustered data:\n");
+  printf("  --clustering|-l  The type of clustering that was performed during construction\n");
+  printf("                   of the similarity matrix (e.g. 'mixmod').\n");
   printf("  --max_missing|-g The total number of allowed missing values.  Each gene\n");
   printf("                   comparision can potentially have a missing value in any\n");
   printf("                   sample.  When the maximum number of missing values exceeds\n");
@@ -86,15 +89,14 @@ RunExtract::RunExtract(int argc, char *argv[]) {
       {"func",         required_argument, 0,  'f' },
       {"na_val",       required_argument, 0,  'n' },
       {"ematrix",      required_argument, 0,  'e' },
-      // Clustering options.
-      {"clustering",   required_argument, 0,  'l' },
       // Common fitering options
       {"th",           required_argument, 0,  't' },
       {"gene1",        required_argument, 0,  '1' },
       {"gene2",        required_argument, 0,  '2' },
       {"x",            required_argument, 0,  'x' },
       {"y",            required_argument, 0,  'y' },
-      // Clustered data filters.
+      // Clustered options
+      {"clustering",   required_argument, 0,  'l' },
       {"max_missing",  required_argument, 0,  'g' },
       {"min_csize",    required_argument, 0,  'z' },
       // Last element required to be all zeros.
