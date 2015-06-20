@@ -98,7 +98,7 @@ similarity/clustering/PairWiseCluster.o: similarity/clustering/PairWiseCluster.c
 similarity/clustering/PairWiseClusterList.o: similarity/clustering/PairWiseCluster.cpp similarity/clustering/PairWiseClusterList.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/clustering/PairWiseClusterList.cpp -o similarity/clustering/PairWiseClusterList.o
 
-similarity/clustering/PairWiseClusterWriter.o: similarity/clustering/PairWiseCluster.cpp similarity/clustering/PairWiseClusterWriter.h
+similarity/clustering/PairWiseClusterWriter.o: similarity/clustering/PairWiseClusterWriter.cpp similarity/clustering/PairWiseClusterWriter.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/clustering/PairWiseClusterWriter.cpp -o similarity/clustering/PairWiseClusterWriter.o
 
 similarity/clustering/PairWiseClustering.o: similarity/clustering/PairWiseClustering.cpp similarity/clustering/PairWiseClustering.h

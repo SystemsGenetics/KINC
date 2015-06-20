@@ -1,6 +1,8 @@
 #include "MixtureModelClustering.h"
 
-MixtureModelClustering::MixtureModelClustering(EMatrix *ematrix, int min_obs, int num_jobs, int job_index, char *method, char * criterion, int max_clusters)
+MixtureModelClustering::MixtureModelClustering(EMatrix *ematrix, int min_obs,
+    int num_jobs, int job_index, char *method, char * criterion,
+    int max_clusters)
   : PairWiseClustering(ematrix, min_obs, num_jobs, job_index) {
 
   // Initialize some values.
@@ -78,8 +80,8 @@ void MixtureModelClustering::run() {
   printf("  Performing comparisions %lld to %lld (%lld) of %lld\n", comp_start, comp_stop, comp_stop - comp_start, total_comps);
   fflush(stdout);
 
-  // Creat the writer object to write out the cluters.
-  PairWiseClusterWriter * pwcw = new PairWiseClusterWriter(method, ematrix->getFilePrefix(), job_index);
+  // Create the writer object to write out the cluters.
+  PairWiseClusterWriter * pwcw = new PairWiseClusterWriter(method, ematrix->getFilePrefix(), job_index, ematrix->getNumSamples());
 
   // Perform the pair-wise clustering.
   int n_comps = 0;
