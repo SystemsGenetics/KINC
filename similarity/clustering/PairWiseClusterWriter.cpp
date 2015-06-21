@@ -40,6 +40,8 @@ PairWiseClusterWriter::~PairWiseClusterWriter() {
   free(fileprefix);
   free(method);
 }
+// TODO: need a function to make sure the result directory is empty or that
+// the same number of job files are present.
 /**
  * Opens and creates 102 files for storing the clusters with correlation values.
  * Each file stores a range of 1/100 Spearman correlation values.
@@ -58,8 +60,8 @@ void PairWiseClusterWriter::openOutFiles() {
       mkdir(clusters_dir, 0700);
   }
 
-  // Open up 102 files, one each for 100 Spearman correlation value ranges.
-  // and another for those without (e.g. 'nan').
+  // Open up 102 files, one each for 100 Spearman/Pearson correlation value
+  // ranges, and another for those without (e.g. 'nan').
   int i =  0;
   char filename[1025];
   char dirname[1025];
@@ -70,7 +72,6 @@ void PairWiseClusterWriter::openOutFiles() {
     }
     sprintf(filename, "%s/%03d/%s.clusters.%03d.%03d.txt", clusters_dir, i, fileprefix, i, job_index);
     fps[i] = new fstream;
-//    fps[i]->open(filename, ios::out);
     fps[i]->open(filename, ios::in|ios::out|ios::ate);
   }
 
@@ -103,9 +104,6 @@ void PairWiseClusterWriter::findLastPositions() {
   unsigned int max_buffer = (num_samples + 100) * 10;
 
   for (int i = 0; i < 102; i++) {
-    if (i == 96) {
-      int j = 1;
-    }
     int done = 0;
     unsigned int buffer_size = 0;
     char * buffer;
@@ -237,7 +235,7 @@ void PairWiseClusterWriter::findLastPositions() {
     // If we're here it's because the last_x and last_y are the same as the
     // recovery_x and recovery_y.  We want to backup the file pointer if there
     // are more than one cluster for these coordinates. This way the
-    // pair-wise comparision can be re-run without having duplicates in the
+    // pair-wise comparison can be re-run without having duplicates in the
     // file.
     int done = 0;
     unsigned int buffer_size = 0;
