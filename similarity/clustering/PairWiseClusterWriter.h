@@ -28,12 +28,8 @@ class PairWiseClusterWriter {
     // A unique id to differentiate between parallel executions.
     int job_index;
 
-    // Holds the last x and y values that exist in each file before
-    // the job terminated without completion.
-    int * last_x;
-    int * last_y;
-    // The position in the file where the last_x and last_y are found.
-    int * last_seek;
+    int recovery_x;
+    int recovery_y;
 
     // Opens and creates file pointers for all of the
     void openOutFiles();
@@ -45,8 +41,12 @@ class PairWiseClusterWriter {
     PairWiseClusterWriter(char * method, char * fileprefix, int id, int num_samples);
     // Destructor.
     ~PairWiseClusterWriter();
+    // Getters.
+    int getRecoveryX() {return recovery_x;}
+    int getRecoveryY() {return recovery_y;}
     // Writes a PairWiseCluster to the proper file.
     void writeClusters(PairWiseClusterList *pwcl, int gene1, int gene2);
+
 };
 
 #endif

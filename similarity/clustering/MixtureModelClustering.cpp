@@ -81,18 +81,19 @@ void MixtureModelClustering::run() {
   fflush(stdout);
 
   // Create the writer object to write out the cluters.
-  PairWiseClusterWriter * pwcw = new PairWiseClusterWriter(method, ematrix->getFilePrefix(), job_index, ematrix->getNumSamples());
+  PairWiseClusterWriter * pwcw = new PairWiseClusterWriter(method,
+      ematrix->getFilePrefix(), job_index, ematrix->getNumSamples());
 
   // Perform the pair-wise clustering.
   int n_comps = 0;
   int my_comps = 0;
 
 //  for (int i = 122 - 1; i < num_rows; i++) {
-  for (int i = 0; i < num_rows; i++) {
+  for (int i = pwcw->getRecoveryX() - 1; i < num_rows; i++) {
     /*if (i == 50) {
       break;
     }*/
-    for (int j = 0; j < num_rows; j++) {
+    for (int j = pwcw->getRecoveryY() - 1; j < num_rows; j++) {
 //    for (int j = 77 - 1; j < num_rows; j++) {
 
       // We only need to calculate clusters in the lower triangle of the
