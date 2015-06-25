@@ -51,13 +51,12 @@ void PairWiseClusterWriter::openOutFiles() {
   char clusters_dir[50];
   char nan_dir[50];
 
-  sprintf(clusters_dir, "./clusters-%s", method);
-  sprintf(nan_dir, "%s/nan", clusters_dir);
 
   // Make sure the output directory exists.
+  sprintf(clusters_dir, "./clusters-%s", method);
   struct stat st = {0};
   if (stat(clusters_dir, &st) == -1) {
-      mkdir(clusters_dir, 0700);
+    mkdir(clusters_dir, 0700);
   }
 
   // Open up 102 files, one each for 100 Spearman/Pearson correlation value
@@ -70,17 +69,29 @@ void PairWiseClusterWriter::openOutFiles() {
     if (stat(dirname, &st) == -1) {
       mkdir(dirname, 0700);
     }
+
+    // Check to make sure the file exits. If not, then create it . Otherwise,
+    // open for input/output so we can check where we may have left off.
     sprintf(filename, "%s/%03d/%s.clusters.%03d.%03d.txt", clusters_dir, i, fileprefix, i, job_index);
     fps[i] = new fstream;
-    fps[i]->open(filename, ios::in|ios::out|ios::ate);
+    if (stat(filename, &st) == -1) {
+      fps[i]->open(filename, fstream::out);
+      fps[i]->close();
+    }
+    fps[i]->open(filename, fstream::in|fstream::out|fstream::ate);
   }
 
+  sprintf(nan_dir, "%s/nan", clusters_dir);
   if (stat(nan_dir, &st) == -1) {
     mkdir(nan_dir, 0700);
   }
   sprintf(filename, "%s/%s.clusters.nan.%03d.txt", nan_dir, fileprefix, job_index);
-  fps[i] = new fstream;
-  fps[i]->open(filename, ios::in|ios::out|ios::ate);
+  fps[101] = new fstream;
+  if (stat(filename, &st) == -1) {
+    fps[101]->open(filename, fstream::out);
+    fps[101]->close();
+  }
+  fps[101]->open(filename, fstream::in|fstream::out|fstream::ate);
 }
 
 /**
@@ -109,12 +120,14 @@ void PairWiseClusterWriter::findLastPositions() {
     char * buffer;
     unsigned int file_size = fps[i]->tellg();
 
+    // initialize the last_x and last_y
+    last_x[i] = 0;
+    last_y[i] = 0;
+
     // If we have no data in this file then there's nothing to check, just
     // set the position to 0.
     if (file_size == 0) {
       done = 1;
-      last_x[i] = 0;
-      last_y[i] = 0;
       last_seek[i] = 0;
     }
 
@@ -156,6 +169,7 @@ void PairWiseClusterWriter::findLastPositions() {
         // If we are at the beginning of the file then process this line.
         if (buffer_size == file_size) {
           fps[i]->seekg(file_size - buffer_size);
+          done = 1;
         }
         // If we are at the end of the next line then process the previous line.
         else {
@@ -246,6 +260,12 @@ void PairWiseClusterWriter::findLastPositions() {
     fps[i]->seekg(0, ios_base::end);
     file_size = fps[i]->tellg();
 
+    // If the file size is zero then this is a new file and we can skip
+    // the following code
+    if (file_size == 0) {
+      continue;
+    }
+
     // Set the file pointer to that of the last good read line.  This should
     // be the recovery_x and recovery_y coordinate result line.
     buffer_size = file_size - last_seek[i];
@@ -310,7 +330,13 @@ void PairWiseClusterWriter::findLastPositions() {
 
   // Add a comment to each file to indicate where we restarted
   for (int i = 0; i < 102; i++) {
-    (*fps[i]) << "#Restarted" << endl;
+
+    // If the file size is zero then we are not restarting, otherwise, add
+    // a comment to indicate where the job restarted.
+    int file_size = fps[i]->tellg();
+    if (file_size > 0) {
+      (*fps[i]) << "#Restarted" << endl;
+    }
   }
 }
 /**
