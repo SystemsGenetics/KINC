@@ -36,37 +36,50 @@ statm_t * memory_get_usage() {
  *
  */
 int is_numeric(char * string) {
-  // ASCII value of
-  // '-': 45
-  // '.': 46
-  // '0': 48
-  // '9': 57
-  int num_period = 0;
-  unsigned int i;
-  int good = 0;
+   // ASCII value of
+   // '-': 45
+   // '.': 46
+   // '0': 48
+   // '9': 57
+   // 'e': 101
+   int num_period = 0;
+   unsigned int i;
+   int good = 0;
+   // the position of the e in scientific notation
+   unsigned int epos = 0;
 
-  // all remaining characters can be numeric but with only one period
-  for (i = 0; i < strlen(string); i++) {
-    good = 0;
-    if (string[i] >= 48 && string[i] <= 57) {
-      good = 1;
-    }
-    // periods are acceptable, but only one.
-    if (string[i] == 46) {
-      num_period++;
-      good = 1;
-      // we can only have one period
-      if (num_period > 1) {
-        good = 0;
-      }
-    }
-    // the minus sign is acceptable if it appears first
-    if (string[i] == 45 && i == 0) {
-      good = 1;
-    }
-    if (!good) {
-      return 0;
-    }
-  }
-  return 1;
+   // all remaining characters can be numeric but with only one period
+   for (i = 0; i < strlen(string); i++) {
+     good = 0;
+     if (string[i] >= 48 && string[i] <= 57) {
+       good = 1;
+     }
+     // periods are acceptable, but only one.
+     if (string[i] == 46) {
+       num_period++;
+       good = 1;
+       // we can only have one period
+       if (num_period > 1) {
+         good = 0;
+       }
+     }
+     // the minus sign is acceptable if it appears first in the string or
+     // after an e in scientific notation
+     if (string[i] == 45) {
+       if (i == 0) {
+         good = 1;
+       }
+       if (i == epos + 1) {
+         good = 1;
+       }
+     }
+     if (string[i] == 101) {
+       good = 1;
+       epos = i;
+     }
+     if (!good) {
+       return 0;
+     }
+   }
+   return 1;
 }
