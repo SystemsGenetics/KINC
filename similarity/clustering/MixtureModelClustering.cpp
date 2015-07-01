@@ -1,6 +1,8 @@
 #include "MixtureModelClustering.h"
 
-MixtureModelClustering::MixtureModelClustering(EMatrix *ematrix, int min_obs, int num_jobs, int job_index, char *method, char * criterion, int max_clusters)
+MixtureModelClustering::MixtureModelClustering(EMatrix *ematrix, int min_obs,
+    int num_jobs, int job_index, char *method, char * criterion,
+    int max_clusters)
   : PairWiseClustering(ematrix, min_obs, num_jobs, job_index) {
 
   // Initialize some values.
@@ -75,11 +77,17 @@ void MixtureModelClustering::run() {
     comp_stop = total_comps;
   }
   printf("  Job %d of %d. \n", job_index, num_jobs);
-  printf("  Performing comparisions %lld to %lld (%lld) of %lld\n", comp_start, comp_stop, comp_stop - comp_start, total_comps);
+  printf("  Performing comparisons %lld to %lld (%lld) of %lld\n", comp_start, comp_stop, comp_stop - comp_start, total_comps);
   fflush(stdout);
 
-  // Creat the writer object to write out the cluters.
-  PairWiseClusterWriter * pwcw = new PairWiseClusterWriter(method, ematrix->getFilePrefix(), job_index);
+  // Create the writer object to write out the clusters.
+  PairWiseClusterWriter * pwcw = new PairWiseClusterWriter(method,
+      ematrix->getFilePrefix(), job_index, ematrix->getNumSamples());
+
+  if (pwcw->getRecoveryX() > 0 || pwcw->getRecoveryY() > 0) {
+    printf("  Restarting from x: %d, y: %d\n", pwcw->getRecoveryX(), pwcw->getRecoveryY());
+      fflush(stdout);
+  }
 
   // Perform the pair-wise clustering.
   int n_comps = 0;
@@ -101,6 +109,15 @@ void MixtureModelClustering::run() {
 
       // If this computation is not meant for this process, then skip it.
       if (n_comps < comp_start || n_comps >= comp_stop) {
+        n_comps++;
+        continue;
+      }
+
+      if (i < pwcw->getRecoveryX() - 1) {
+        n_comps++;
+        continue;
+      }
+      if (j < pwcw->getRecoveryY() - 1) {
         n_comps++;
         continue;
       }
