@@ -84,22 +84,28 @@ void MixtureModelClustering::run() {
   PairWiseClusterWriter * pwcw = new PairWiseClusterWriter(method,
       ematrix->getFilePrefix(), job_index, ematrix->getNumSamples());
 
+  // Provide a message to the user indicating where the calculations will start.
   if (pwcw->getRecoveryX() > 0 || pwcw->getRecoveryY() > 0) {
-    printf("  Restarting from x: %d, y: %d\n", pwcw->getRecoveryX(), pwcw->getRecoveryY());
-      fflush(stdout);
+    printf("  Job %d: restarting from x: %d, y: %d\n", job_index, pwcw->getRecoveryX(), pwcw->getRecoveryY());
+    fflush(stdout);
+  }
+  // If the restart position is -1 then that means the job completed
+  // successfully already and we don't need to continue.
+  if (pwcw->getRecoveryX() == -1 || pwcw->getRecoveryY() == -1) {
+    printf("  Job %d: already completed. Not restarting.\n", job_index);
+    delete pwcw;
+    return;
   }
 
   // Perform the pair-wise clustering.
   int n_comps = 0;
   int my_comps = 0;
 
-//  for (int i = 122 - 1; i < num_rows; i++) {
+  // Iterate through the rows of the expression matrix to perform
+  // pair-wise similarity comparisions.  We only need to process a
+  // triangle of the resulting similarity matrix.
   for (int i = 0; i < num_rows; i++) {
-    /*if (i == 50) {
-      break;
-    }*/
     for (int j = 0; j < num_rows; j++) {
-//    for (int j = 77 - 1; j < num_rows; j++) {
 
       // We only need to calculate clusters in the lower triangle of the
       // full pair-wise matrix
@@ -113,6 +119,7 @@ void MixtureModelClustering::run() {
         continue;
       }
 
+      // Skip comparisions before where we left off form a previous run.
       if (i < pwcw->getRecoveryX() - 1) {
         n_comps++;
         continue;
@@ -159,8 +166,6 @@ void MixtureModelClustering::run() {
       my_comps++;
       delete mixmod;
       delete pwset;
-
-//      exit(1);
     }
   }
   delete pwcw;

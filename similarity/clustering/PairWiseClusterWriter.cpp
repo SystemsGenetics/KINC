@@ -15,8 +15,11 @@
 PairWiseClusterWriter::PairWiseClusterWriter(char * method, char * fileprefix, int id, int num_samples) {
   this->job_index = id;
   this->num_samples = num_samples;
-  this->recovery_x = 0;
-  this->recovery_y = 0;
+  // Set the recovery x and y coordinates to -1 to indicate that the
+  // jobs are completed.  If the jobs are not completed then these will
+  // be changed to the starting coordinate.
+  this->recovery_x = -1;
+  this->recovery_y = -1;
 
   this->method = (char *) malloc(sizeof(char) * strlen(method) + 1);
   strcpy(this->method, method);
@@ -35,8 +38,9 @@ PairWiseClusterWriter::PairWiseClusterWriter(char * method, char * fileprefix, i
  * Destructor
  */
 PairWiseClusterWriter::~PairWiseClusterWriter() {
+  // Close and free memory for files.
   this->closeOutFiles();
-  free(fps);
+  // Free strings created in constructor.
   free(fileprefix);
   free(method);
 }
@@ -158,6 +162,7 @@ void PairWiseClusterWriter::findLastPositions() {
           // Set last_x and last_y to -1 to indicate the file is completed
           last_x[i] = -1;
           last_y[i] = -1;
+          last_seek[i] = file_size;
           break;
         }
       }
@@ -209,8 +214,9 @@ void PairWiseClusterWriter::findLastPositions() {
 
       // Increment the buffer size.
       buffer_size++;
-    }
-  }
+
+    } // end while(!done) ...
+  } // end for (int i = 0; i < 102; i++) ...
 
   // Find the largest completed x and y coordinates. The x-coordinate takes
   // precedence, or in other words, we only consider larger values of y if
@@ -222,6 +228,11 @@ void PairWiseClusterWriter::findLastPositions() {
         recovery_y = last_y[i];
       }
     }
+  }
+
+  // If all the files are done then we just need to return.
+  if (recovery_x == -1 || recovery_y == -1) {
+    return;
   }
 
   // Now iterate through the files one more time and move the file pointer
@@ -327,6 +338,7 @@ void PairWiseClusterWriter::findLastPositions() {
     }
     fps[i]->seekp(last_seek[i]);
   }
+
 
   // Add a comment to each file to indicate where we restarted
   for (int i = 0; i < 102; i++) {
