@@ -427,13 +427,8 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
         int j, k, cluster_num, num_clusters, cluster_num_samples, num_missing;
         char samples[num_samples];
         float cv;
-        int done = 0;
-        while (!done) {
-          // If we've reached the end of the file then quit.
-          if (feof(fp)) {
-            done = 1;
-            continue;
-          }
+        while (!feof(fp)) {
+
           // Read in the fields for this line. We must read in 8 fields or
           // we will skip the line.
           int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
