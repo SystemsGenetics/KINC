@@ -11,8 +11,8 @@ MPI_LDLINK =
 CFLAGS = -g -Wall -fno-inline
 # Non-debugging CFLAGS
 #CFLAGS = -Wall 
-INCLUDES = -I/usr/local/include
-LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -lmixmod_newmat -g
+INCLUDES = -I/usr/local/include 
+LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -lmixmod_newmat -lclucene-core -g
 
 OBJS = \
   general/error.o \
@@ -31,6 +31,8 @@ OBJS = \
   similarity/clustering/MixtureModelPWClusters.o \
   similarity/clustering/MixtureModelClustering.o \
   similarity/RunSimilarity.o \
+  index/RunIndex.o \
+  query/RunQuery.o \
   threshold/ThresholdMethod.o \
   threshold/RMTThreshold.o \
   threshold/RunThreshold.o \
@@ -112,6 +114,12 @@ similarity/clustering/MixtureModelClustering.o: similarity/clustering/MixtureMod
 
 similarity/RunSimilarity.o: similarity/RunSimilarity.cpp similarity/RunSimilarity.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/RunSimilarity.cpp -o similarity/RunSimilarity.o
+
+index/RunIndex.o: index/RunIndex.cpp index/RunIndex.h
+	${CC} -c ${CFLAGS} ${INCLUDES} index/RunIndex.cpp -o index/RunIndex.o
+
+query/RunQuery.o: query/RunQuery.cpp query/RunQuery.h
+	${CC} -c ${CFLAGS} ${INCLUDES} query/RunQuery.cpp -o query/RunQuery.o
 
 threshold/ThresholdMethod.o: threshold/ThresholdMethod.cpp threshold/ThresholdMethod.h
 	${CC} -c ${CFLAGS} ${INCLUDES} threshold/ThresholdMethod.cpp -o threshold/ThresholdMethod.o

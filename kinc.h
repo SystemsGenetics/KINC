@@ -39,6 +39,8 @@
 #include "similarity/RunSimilarity.h"
 #include "threshold/RunThreshold.h"
 #include "extract/RunExtract.h"
+#include "index/RunIndex.h"
+#include "query/RunQuery.h"
 
 /**
  * Function prototypes

@@ -242,7 +242,7 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
     exit(-1);
   }
 
-  // Validate teh clustering options.
+  // Validate the clustering options.
   if (clustering) {
     // Make sure the clustering method is valid.
     if (strcmp(clustering, "mixmod") != 0) {
