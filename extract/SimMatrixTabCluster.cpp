@@ -131,9 +131,15 @@ void SimMatrixTabCluster::writeNetwork() {
          exit(-1);
        }
 
-       // Get the values from the line in the file.
-       int matches = fscanf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%f\t%s\n", &x, &y, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &cv, samples);
-       while (matches == 8) {
+       while (!feof(fp)) {
+         // Read in the fields for this line. We must read in 8 fields or
+         // we will skip the line.
+         int matches = fscanf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%f\t%s\n", &x, &y, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &cv, samples);
+         if (matches < 8) {
+           continue;
+         }
+
+         // Filter the records
          if (fabs(cv) >= th && cluster_samples >= min_cluster_size  && num_missing <= max_missing) {
            fprintf(edges, "%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", genes[x-1], genes[y-1], cv, cluster_num, num_clusters, cluster_samples, num_missing, samples);
 
@@ -148,7 +154,7 @@ void SimMatrixTabCluster::writeNetwork() {
              }
            }
          }
-         matches = fscanf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%f\t%s\n", &x, &y, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &cv, samples);
+
        }
        fclose(fp);
      }
