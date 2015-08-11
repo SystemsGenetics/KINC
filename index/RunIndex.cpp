@@ -201,13 +201,13 @@ void RunIndex::indexFile(IndexWriter * writer, char * filepath) {
   try {
     Document doc;
 
-    char j[128], k[128], cluster_num[128], num_clusters[128], cluster_num_samples[128], num_missing[128];
-    char samples[nsamples];
-    char cv[128];
+    wchar_t j[128], k[128], cluster_num[128], num_clusters[128], cluster_num_samples[128], num_missing[128];
+    wchar_t samples[nsamples + 1];
+    wchar_t cv[128];
     while (!feof(fp)) {
 
       // Read in the fields for this line.
-      int matches = fscanf(fp, "%s\t%s\%s\t%s\%s\t%s\t%s\t%s\n", (char *)&j, (char *)&k, (char *)&cluster_num, (char *)&num_clusters, (char *)&cluster_num_samples, (char *)&num_missing, (char *)&cv, (char *)&samples);
+      int matches = fwscanf(fp, L"%s\t%s\%s\t%s\%s\t%s\t%s\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, &samples);
 
       // Skip lines that don't have the proper number of columns
       if (matches < 8) {
@@ -216,32 +216,14 @@ void RunIndex::indexFile(IndexWriter * writer, char * filepath) {
 
       // Add each field as an indexable entry for lucene.
       doc.clear();
-      int max_size = max(nsamples, 128);
-      TCHAR tmp[max_size];
-      mbstowcs(tmp, j, max_size);
-      doc.add(*_CLNEW Field(_T("gene1"), tmp, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
-
-      mbstowcs(tmp, k, max_size);
-      doc.add(*_CLNEW Field(_T("gene2"), tmp, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
-
-      mbstowcs(tmp, cluster_num, max_size);
-      doc.add(*_CLNEW Field(_T("cluster_num"), tmp, Field::STORE_YES | Field::INDEX_NO));
-
-      mbstowcs(tmp, num_clusters, max_size);
-      doc.add(*_CLNEW Field(_T("num_clusters"), tmp, Field::STORE_YES | Field::INDEX_NO));
-
-      mbstowcs(tmp, cluster_num_samples, max_size);
-      doc.add(*_CLNEW Field(_T("cluster_samples"), tmp, Field::STORE_YES | Field::INDEX_NO));
-
-      mbstowcs(tmp, num_missing, max_size);
-      doc.add(*_CLNEW Field(_T("num_missing"), tmp, Field::STORE_YES | Field::INDEX_NO));
-
-      mbstowcs(tmp, cv, max_size);
-      doc.add(*_CLNEW Field(_T("similarity"), tmp, Field::STORE_YES | Field::INDEX_NO));
-
-      mbstowcs(tmp, samples, max_size);
-      doc.add(*_CLNEW Field(_T("samples"), tmp, Field::STORE_YES | Field::INDEX_NO));
-
+      doc.add(*_CLNEW Field(_T("gene1"), j, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
+      doc.add(*_CLNEW Field(_T("gene2"), k, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
+      doc.add(*_CLNEW Field(_T("cluster_num"), cluster_num, Field::STORE_YES | Field::INDEX_NO));
+      doc.add(*_CLNEW Field(_T("num_clusters"), num_clusters, Field::STORE_YES | Field::INDEX_NO));
+      doc.add(*_CLNEW Field(_T("cluster_samples"), cluster_num_samples, Field::STORE_YES | Field::INDEX_NO));
+      doc.add(*_CLNEW Field(_T("num_missing"), num_missing, Field::STORE_YES | Field::INDEX_NO));
+      doc.add(*_CLNEW Field(_T("similarity"), cv, Field::STORE_YES | Field::INDEX_NO));
+      doc.add(*_CLNEW Field(_T("samples"), samples, Field::STORE_YES | Field::INDEX_NO));
       writer->addDocument(&doc);
     }
     fclose(fp);
