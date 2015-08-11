@@ -98,8 +98,8 @@ void MixtureModelClustering::run() {
   }
 
   // Perform the pair-wise clustering.
-  int n_comps = 0;
-  int my_comps = 0;
+  long long int n_comps = 0;
+  long long int my_comps = 0;
 
   // Iterate through the rows of the expression matrix to perform
   // pair-wise similarity comparisions.  We only need to process a
