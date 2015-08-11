@@ -173,7 +173,7 @@ void RunQuery::execute() {
       if (y_coord) {
         TCHAR temp[64];
         mbstowcs(temp, y_coord, 64);
-        bq.add(QueryParser::parse(temp, _T("gene1"), &analyzer), true, false);
+        bq.add(QueryParser::parse(temp, _T("gene1"), &analyzer), false, false);
         bq.add(QueryParser::parse(temp, _T("gene2"), &analyzer), false, false);
       }
 
