@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h>
+#include <wchar.h>
+
 
 #include <CLucene.h>
 #include <CLucene/StdHeader.h>
@@ -26,6 +28,8 @@ class RunQuery {
   private:
     // The directory where indexes are housed.
     char * indexes;
+    // The full path to the result file.
+    char * outfile;
 
     // The gene indicies.
     char * x_coord;

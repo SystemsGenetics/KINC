@@ -8,6 +8,7 @@ void RunQuery::printUsage() {
   printf("Usage: ./kinc query [options]\n");
   printf("The list of required options:\n");
   printf("  --indexes|-i     The KINC directory where the indexed files are housed.\n");
+  printf("  --outfile|-o     The file where results should be written.\n");
   printf("  -x               Retrieve results for gene x.\n");
   printf("  -y               Retrieve results for gene y.\n");
   printf("\n");
@@ -35,6 +36,7 @@ RunQuery::RunQuery(int argc, char *argv[]) {
     static struct option long_options[] = {
       {"help",         no_argument,       0,  'h' },
       {"indexes",      required_argument, 0,  'i' },
+      {"outfile",      required_argument, 0,  'o' },
       {"x",            required_argument, 0,  'x' },
       {"y",            required_argument, 0,  'y' },
       // Last element required to be all zeros.
@@ -56,6 +58,9 @@ RunQuery::RunQuery(int argc, char *argv[]) {
          break;
        case 'i':
          indexes = optarg;
+         break;
+       case 'o':
+         outfile = optarg;
          break;
        case 'x':
          x_coord = optarg;
@@ -81,9 +86,14 @@ RunQuery::RunQuery(int argc, char *argv[]) {
      }
    }
 
-  // Nake sure an outfile directory is provided
+  // Make sure an indexes directory is provided
   if (!indexes) {
-    fprintf(stderr, "Please provide the KINC output directory from a previous run (--outdir option).\n");
+    fprintf(stderr, "Please provide the KINC indexes directory (--indexes option).\n");
+    exit(-1);
+  }
+
+  if (!outfile) {
+    fprintf(stderr, "Please provide the output file name (--outfile option).\n");
     exit(-1);
   }
 
@@ -119,6 +129,13 @@ void RunQuery::execute() {
   int i;
   standard::StandardAnalyzer analyzer;
 
+  // Open the output file.
+  FILE * fp = fopen(outfile ,"w");
+  if (!fp) {
+    fprintf(stderr, "The output file cannot be opened for writing. Quiting.\n");
+    exit(-1);
+  }
+
   // Iterate through the directories.
   for (i = 100; i >= -1; i--) {
     char dirname[1024];
@@ -133,25 +150,27 @@ void RunQuery::execute() {
     DIR * dir;
     dir = opendir(dirname);
     if (!dir) {
-      fprintf(stderr, "The output sub directory, %s, is missing. Cannot continue.\n", dirname);
-      exit(-1);
+      fprintf(stderr, "WARNING: The indexes directory, %s, is missing. skipping.\n", dirname);
+      continue;
     }
 
     try {
       printf("Reading index in %s...\n", dirname);
-      IndexReader* reader = IndexReader::open(dirname);
-      IndexSearcher s(reader);
+      IndexReader * reader = IndexReader::open(dirname);
+      IndexSearcher searcher(reader);
 
+      // Convert the x_coord to a wide character.
       TCHAR tmp[128];
       mbstowcs(tmp, x_coord, 128);
-      Query* q = QueryParser::parse(tmp,_T("gene1"), &analyzer);
+
+      Query * q = QueryParser::parse(tmp, _T("gene1"), &analyzer);
       // Perform the search.
-      Hits* h = s.search(q);
+      Hits * h = searcher.search(q);
       // Iterate through the hits.
-      for (size_t i = 0; i < h->length(); i++) {
-        Document* doc = &h->doc(i);
-        printf("%d. %s - %f\n", i, doc->get(_T("gene1")), h->score(i));
-        printf("%s\t%s\%s\t%s\%s\t%s\t%s\t%s\n",
+      unsigned int num_hits = h->length();
+      for (unsigned int i = 0; i < num_hits; i++) {
+        Document * doc = &h->doc(i);
+        fwprintf(fp, L"%ls\t%ls\t%ls\t%ls\t%ls\t%ls\t%ls\t%ls\n",
             doc->get(_T("gene1")),
             doc->get(_T("gene2")),
             doc->get(_T("cluster_num")),
@@ -161,6 +180,7 @@ void RunQuery::execute() {
             doc->get(_T("similarity")),
             doc->get(_T("samples")));
       }
+      _CLLDELETE(reader);
     }
     catch(CLuceneError& err){
       printf("Error: %s\n", err.what());
@@ -170,6 +190,6 @@ void RunQuery::execute() {
       printf("Unknown error\n");
       exit(-1);
     }
-    exit(0);
   }
+  fclose(fp);
 }

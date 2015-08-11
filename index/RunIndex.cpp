@@ -77,7 +77,7 @@ RunIndex::RunIndex(int argc, char *argv[]) {
      }
    }
 
-  // Nake sure an outfile directory is provided
+  // Make sure an out file directory is provided
   if (!outdir) {
     fprintf(stderr, "Please provide the KINC output directory from a previous run (--outdir option).\n");
     exit(-1);
@@ -103,84 +103,6 @@ RunIndex::~RunIndex() {
 
 }
 
-void RunIndex::indexFile(IndexWriter * writer, char * filepath) {
-  // Open the file for indexing.
-  FILE * fp = fopen(filepath, "r");
-  if (!fp) {
-    fprintf(stderr, "Can't open file, %s. Cannot continue.\n", filepath);
-    exit(-1);
-  }
-
-  try {
-    Document doc;
-
-    char j[128], k[128], cluster_num[128], num_clusters[128], cluster_num_samples[128], num_missing[128];
-    char samples[nsamples];
-    char cv[128];
-    int done = 0;
-    while (!done) {
-      // If we've reached the end of the file then quit.
-      if (feof(fp)) {
-        done = 1;
-        continue;
-      }
-
-      // Read in the fields for this line.
-      int matches = fscanf(fp, "%s\t%s\%s\t%s\%s\t%s\t%s\t%s\n", (char *)&j, (char *)&k, (char *)&cluster_num, (char *)&num_clusters, (char *)&cluster_num_samples, (char *)&num_missing, (char *)&cv, (char *)&samples);
-
-      // Skip lines that don't have the proper number of columns
-      if (matches < 8) {
-        continue;
-      }
-
-      // Add each field as an indexable entry for lucene.
-      doc.clear();
-      int max_size = max(nsamples, 128);
-      TCHAR tmp[max_size];
-      mbstowcs(tmp, j, max_size);
-      doc.add(*_CLNEW Field(_T("gene1"), tmp, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
-
-      mbstowcs(tmp, k, max_size);
-      doc.add(*_CLNEW Field(_T("gene2"), tmp, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
-
-      mbstowcs(tmp, cluster_num, max_size);
-      doc.add(*_CLNEW Field(_T("cluster_num"), tmp, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
-
-      mbstowcs(tmp, num_clusters, max_size);
-      doc.add(*_CLNEW Field(_T("num_clusters"), tmp, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
-
-      mbstowcs(tmp, cluster_num_samples, max_size);
-      doc.add(*_CLNEW Field(_T("cluster_samples"), tmp, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
-
-      mbstowcs(tmp, num_missing, max_size);
-      doc.add(*_CLNEW Field(_T("num_missing"), tmp, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
-
-      mbstowcs(tmp, cv, max_size);
-      doc.add(*_CLNEW Field(_T("similarity"), tmp, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
-
-      mbstowcs(tmp, samples, max_size);
-      doc.add(*_CLNEW Field(_T("samples"), tmp, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
-
-      writer->addDocument(&doc);
-    }
-    fclose(fp);
-
-    writer->addDocument( &doc );
-
-  }
-  catch(CLuceneError& err){
-    printf("Error: %s\n", err.what());
-    exit(-1);
-  }
-  catch(...){
-    printf("Unknown error\n");
-    exit(-1);
-  }
-
-  //clears all static memory
-  //_lucene_shutdown();
-}
-
 /**
  * Performs the indexing.
  */
@@ -201,8 +123,8 @@ void RunIndex::execute() {
      DIR * dir;
      dir = opendir(dirname);
      if (!dir) {
-       fprintf(stderr, "The output sub directory, %s, is missing. Cannot continue.\n", dirname);
-       exit(-1);
+       fprintf(stderr, "WARNING: The output directory, %s, is missing. skipping.\n", dirname);
+       continue;
      }
 
      // Create a new file for each directory.
@@ -218,6 +140,7 @@ void RunIndex::execute() {
      else{
        writer = _CLNEW IndexWriter(dirname ,&an, true);
      }
+
      // LUCENE_INT32_MAX_SHOULDBE
      writer->setMaxFieldLength(0x7FFFFFFFL);
      // Turn this off to make indexing faster; we'll turn it on later before optimizing
@@ -252,7 +175,7 @@ void RunIndex::execute() {
        // Construct the full path to the file.
        char filepath[1024];
        sprintf(filepath, "%s/%s", dirname, filename);
-       printf("Indexing file %s...\r", filename);
+       printf("Indexing file %s...\n", filename);
        indexFile(writer, filepath);
      }
      writer->setUseCompoundFile(true);
@@ -262,4 +185,73 @@ void RunIndex::execute() {
      writer->close();
      _CLLDELETE(writer);
    }
+}
+
+void RunIndex::indexFile(IndexWriter * writer, char * filepath) {
+  // Open the file for indexing.
+  FILE * fp = fopen(filepath, "r");
+  if (!fp) {
+    fprintf(stderr, "Can't open file, %s. Cannot continue.\n", filepath);
+    exit(-1);
+  }
+
+  try {
+    Document doc;
+
+    char j[128], k[128], cluster_num[128], num_clusters[128], cluster_num_samples[128], num_missing[128];
+    char samples[nsamples];
+    char cv[128];
+    while (!feof(fp)) {
+
+      // Read in the fields for this line.
+      int matches = fscanf(fp, "%s\t%s\%s\t%s\%s\t%s\t%s\t%s\n", (char *)&j, (char *)&k, (char *)&cluster_num, (char *)&num_clusters, (char *)&cluster_num_samples, (char *)&num_missing, (char *)&cv, (char *)&samples);
+
+      // Skip lines that don't have the proper number of columns
+      if (matches < 8) {
+        continue;
+      }
+
+      // Add each field as an indexable entry for lucene.
+      doc.clear();
+      int max_size = max(nsamples, 128);
+      TCHAR tmp[max_size];
+      mbstowcs(tmp, j, max_size);
+      doc.add(*_CLNEW Field(_T("gene1"), tmp, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
+
+      mbstowcs(tmp, k, max_size);
+      doc.add(*_CLNEW Field(_T("gene2"), tmp, Field::STORE_YES | Field::INDEX_UNTOKENIZED));
+
+      mbstowcs(tmp, cluster_num, max_size);
+      doc.add(*_CLNEW Field(_T("cluster_num"), tmp, Field::STORE_YES | Field::INDEX_NO));
+
+      mbstowcs(tmp, num_clusters, max_size);
+      doc.add(*_CLNEW Field(_T("num_clusters"), tmp, Field::STORE_YES | Field::INDEX_NO));
+
+      mbstowcs(tmp, cluster_num_samples, max_size);
+      doc.add(*_CLNEW Field(_T("cluster_samples"), tmp, Field::STORE_YES | Field::INDEX_NO));
+
+      mbstowcs(tmp, num_missing, max_size);
+      doc.add(*_CLNEW Field(_T("num_missing"), tmp, Field::STORE_YES | Field::INDEX_NO));
+
+      mbstowcs(tmp, cv, max_size);
+      doc.add(*_CLNEW Field(_T("similarity"), tmp, Field::STORE_YES | Field::INDEX_NO));
+
+      mbstowcs(tmp, samples, max_size);
+      doc.add(*_CLNEW Field(_T("samples"), tmp, Field::STORE_YES | Field::INDEX_NO));
+
+      writer->addDocument(&doc);
+    }
+    fclose(fp);
+  }
+  catch(CLuceneError& err){
+    printf("Error: %s\n", err.what());
+    exit(-1);
+  }
+  catch(...){
+    printf("Unknown error\n");
+    exit(-1);
+  }
+
+  //clears all static memory
+  //_lucene_shutdown();
 }

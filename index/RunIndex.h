@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <regex.h>
+#include <wchar.h>
 
 #include <CLucene.h>
 #include <CLucene/StdHeader.h>
