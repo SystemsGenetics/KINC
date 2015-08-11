@@ -21,8 +21,8 @@ void RunQuery::printUsage() {
  * The function to call when running the 'index' command.
  */
 RunQuery::RunQuery(int argc, char *argv[]) {
-  //x_coord = 0;
-  //y_coord = 0;
+  x_coord = NULL;
+  y_coord = NULL;
 
   // loop through the incoming arguments until the
   // getopt_long function returns -1. Then we break out of the loop
@@ -97,15 +97,15 @@ RunQuery::RunQuery(int argc, char *argv[]) {
     exit(-1);
   }
 
-  if (atoi(x_coord) < 0) {
+  if (x_coord && atoi(x_coord) < 0) {
     fprintf(stderr, "Please provide a positive integer for the x genes (--x option).\n");
     exit(-1);
   }
 
-/*  if (atoi(y_coord) < 0) {
+  if (y_coord && atoi(y_coord) < 0) {
     fprintf(stderr, "Please provide a positive integer for the x genes (--x option).\n");
     exit(-1);
-  }*/
+  }
 
   // Make sure the output directory exists.
   struct stat st = {0};
@@ -159,13 +159,26 @@ void RunQuery::execute() {
       IndexReader * reader = IndexReader::open(dirname);
       IndexSearcher searcher(reader);
 
-      // Convert the x_coord to a wide character.
-      TCHAR tmp[128];
-      mbstowcs(tmp, x_coord, 128);
+      // Convert the x & y coordinates to a wide character.
+      BooleanQuery bq;
 
-      Query * q = QueryParser::parse(tmp, _T("gene1"), &analyzer);
+      if (x_coord) {
+        Query * xq = NULL;
+        TCHAR temp[64];
+        mbstowcs(temp, x_coord, 64);
+        xq = QueryParser::parse(temp, _T("gene1"), &analyzer);
+        bq.add(xq, true, false); // true, false == MUST OCCUR
+      }
+      if (y_coord) {
+        Query * yq = NULL;
+        TCHAR temp[64];
+        mbstowcs(temp, y_coord, 64);
+        yq = QueryParser::parse(temp, _T("gene2"), &analyzer);
+        bq.add(yq, true, false); // true, false == MUST OCCUR
+      }
+
       // Perform the search.
-      Hits * h = searcher.search(q);
+      Hits * h = searcher.search(&bq);
       // Iterate through the hits.
       unsigned int num_hits = h->length();
       for (unsigned int i = 0; i < num_hits; i++) {

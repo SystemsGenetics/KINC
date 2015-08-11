@@ -187,6 +187,9 @@ void RunIndex::execute() {
    }
 }
 
+/**
+ * Adds an individual file to the Lucene index.
+ */
 void RunIndex::indexFile(IndexWriter * writer, char * filepath) {
   // Open the file for indexing.
   FILE * fp = fopen(filepath, "r");
