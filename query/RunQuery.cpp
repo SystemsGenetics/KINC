@@ -163,18 +163,18 @@ void RunQuery::execute() {
       BooleanQuery bq;
 
       if (x_coord) {
-        Query * xq = NULL;
         TCHAR temp[64];
         mbstowcs(temp, x_coord, 64);
-        xq = QueryParser::parse(temp, _T("gene1"), &analyzer);
-        bq.add(xq, true, false); // true, false == MUST OCCUR
+        // true, false == MUST OCCUR
+        // false, false == SHOULD OCCUR
+        bq.add(QueryParser::parse(temp, _T("gene1"), &analyzer), false, false);
+        bq.add(QueryParser::parse(temp, _T("gene2"), &analyzer), false, false);
       }
       if (y_coord) {
-        Query * yq = NULL;
         TCHAR temp[64];
         mbstowcs(temp, y_coord, 64);
-        yq = QueryParser::parse(temp, _T("gene2"), &analyzer);
-        bq.add(yq, true, false); // true, false == MUST OCCUR
+        bq.add(QueryParser::parse(temp, _T("gene1"), &analyzer), true, false);
+        bq.add(QueryParser::parse(temp, _T("gene2"), &analyzer), false, false);
       }
 
       // Perform the search.
