@@ -137,7 +137,7 @@ void RunQuery::execute() {
   }
 
   // Iterate through the directories.
-  for (i = 100; i >= -1; i--) {
+  for (i = 100; i >= 0; i--) {
     char dirname[1024];
     if (i > 0) {
       sprintf(dirname, "./%s/%03d", indexes, i);
