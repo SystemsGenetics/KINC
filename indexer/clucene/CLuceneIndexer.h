@@ -1,5 +1,5 @@
-#ifndef _INDEX_
-#define _INDEX_
+#ifndef _LUCENEINDEXER_
+#define _LUCENEINDEXER_
 
 #include <stdio.h>
 #include <getopt.h>
@@ -10,10 +10,14 @@
 #include <regex.h>
 #include <wchar.h>
 
+#include "../Indexer.h"
+
 #include <CLucene.h>
 #include <CLucene/StdHeader.h>
 #include <CLucene/util/CLStreams.h>
 #include <CLucene/index/IndexWriter.h>
+
+int regcomp(regex_t *, const char *, int);
 
 using namespace std;
 using namespace lucene::index;
@@ -21,22 +25,16 @@ using namespace lucene::analysis;
 using namespace lucene::util;
 using namespace lucene::store;
 using namespace lucene::document;
+using namespace lucene::search;
 
-int regcomp(regex_t *, const char *, int);
-
-class RunIndex {
+class CLuceneIndexer : public Indexer {
   private:
-    char * outdir;
-    // The number of samples
-    int nsamples;
-
-    void indexFile(IndexWriter * writer, char * filepath);
+    void indexFile(IndexWriter * writer, char * filepath, int nsamples);
 
   public:
-    RunIndex(int argc, char *argv[]);
-    ~RunIndex();
-    void execute();
-    static void printUsage();
-};
+    CLuceneIndexer(char * indexdir);
+    ~CLuceneIndexer();
 
+    void run(int nsamples);
+};
 #endif

@@ -31,8 +31,12 @@ OBJS = \
   similarity/clustering/MixtureModelPWClusters.o \
   similarity/clustering/MixtureModelClustering.o \
   similarity/RunSimilarity.o \
-  index/RunIndex.o \
-  query/RunQuery.o \
+  indexer/Indexer.o \
+  indexer/IndexQuery.o \
+  indexer/clucene/CLuceneIndexer.o \
+  indexer/clucene/CLuceneQuery.o \
+  indexer/RunIndex.o \
+  indexer/RunQuery.o \
   threshold/ThresholdMethod.o \
   threshold/RMTThreshold.o \
   threshold/RunThreshold.o \
@@ -115,11 +119,23 @@ similarity/clustering/MixtureModelClustering.o: similarity/clustering/MixtureMod
 similarity/RunSimilarity.o: similarity/RunSimilarity.cpp similarity/RunSimilarity.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/RunSimilarity.cpp -o similarity/RunSimilarity.o
 
-index/RunIndex.o: index/RunIndex.cpp index/RunIndex.h
-	${CC} -c ${CFLAGS} ${INCLUDES} index/RunIndex.cpp -o index/RunIndex.o
+indexer/Indexer.o: indexer/Indexer.cpp indexer/Indexer.h
+	${CC} -c ${CFLAGS} ${INCLUDES} indexer/Indexer.cpp -o indexer/Indexer.o
 
-query/RunQuery.o: query/RunQuery.cpp query/RunQuery.h
-	${CC} -c ${CFLAGS} ${INCLUDES} query/RunQuery.cpp -o query/RunQuery.o
+indexer/IndexQuery.o: indexer/IndexQuery.cpp indexer/IndexQuery.h
+	${CC} -c ${CFLAGS} ${INCLUDES} indexer/IndexQuery.cpp -o indexer/IndexQuery.o
+
+indexer/clucene/CLuceneIndexer.o: indexer/clucene/CLuceneIndexer.cpp indexer/clucene/CLuceneIndexer.h
+	${CC} -c ${CFLAGS} ${INCLUDES} indexer/clucene/CLuceneIndexer.cpp -o indexer/clucene/CLuceneIndexer.o
+
+indexer/clucene/CLuceneQuery.o: indexer/clucene/CLuceneQuery.cpp indexer/clucene/CLuceneQuery.h
+	${CC} -c ${CFLAGS} ${INCLUDES} indexer/clucene/CLuceneQuery.cpp -o indexer/clucene/CLuceneQuery.o
+
+indexer/RunIndex.o: indexer/RunIndex.cpp indexer/RunIndex.h
+	${CC} -c ${CFLAGS} ${INCLUDES} indexer/RunIndex.cpp -o indexer/RunIndex.o
+
+indexer/RunQuery.o: indexer/RunQuery.cpp indexer/RunQuery.h
+	${CC} -c ${CFLAGS} ${INCLUDES} indexer/RunQuery.cpp -o indexer/RunQuery.o
 
 threshold/ThresholdMethod.o: threshold/ThresholdMethod.cpp threshold/ThresholdMethod.h
 	${CC} -c ${CFLAGS} ${INCLUDES} threshold/ThresholdMethod.cpp -o threshold/ThresholdMethod.o
