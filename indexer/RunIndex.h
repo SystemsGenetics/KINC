@@ -3,6 +3,7 @@
 
 
 #include "clucene/CLuceneIndexer.h"
+#include "sqlite/SQLiteIndexer.h"
 
 
 class RunIndex {

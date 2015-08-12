@@ -100,7 +100,8 @@ RunIndex::RunIndex(int argc, char *argv[]) {
  * Destructor
  */
 RunIndex::~RunIndex() {
-  CLuceneIndexer indexer(outdir);
+  //CLuceneIndexer indexer(outdir);
+  SQLiteIndexer indexer(outdir);
   indexer.run(nsamples);
 }
 

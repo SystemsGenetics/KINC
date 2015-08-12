@@ -12,7 +12,7 @@ CFLAGS = -g -Wall -fno-inline
 # Non-debugging CFLAGS
 #CFLAGS = -Wall 
 INCLUDES = -I/usr/local/include 
-LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -lmixmod_newmat -lclucene-core -g
+LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -lmixmod_newmat -lclucene-core -lsqlite3 -g
 
 OBJS = \
   general/error.o \
@@ -35,6 +35,7 @@ OBJS = \
   indexer/IndexQuery.o \
   indexer/clucene/CLuceneIndexer.o \
   indexer/clucene/CLuceneQuery.o \
+  indexer/sqlite/SQLiteIndexer.o \
   indexer/RunIndex.o \
   indexer/RunQuery.o \
   threshold/ThresholdMethod.o \
@@ -130,6 +131,9 @@ indexer/clucene/CLuceneIndexer.o: indexer/clucene/CLuceneIndexer.cpp indexer/clu
 
 indexer/clucene/CLuceneQuery.o: indexer/clucene/CLuceneQuery.cpp indexer/clucene/CLuceneQuery.h
 	${CC} -c ${CFLAGS} ${INCLUDES} indexer/clucene/CLuceneQuery.cpp -o indexer/clucene/CLuceneQuery.o
+
+indexer/sqlite/SQLiteIndexer.o: indexer/sqlite/SQLiteIndexer.cpp indexer/sqlite/SQLiteIndexer.h
+	${CC} -c ${CFLAGS} ${INCLUDES} indexer/sqlite/SQLiteIndexer.cpp -o indexer/sqlite/SQLiteIndexer.o
 
 indexer/RunIndex.o: indexer/RunIndex.cpp indexer/RunIndex.h
 	${CC} -c ${CFLAGS} ${INCLUDES} indexer/RunIndex.cpp -o indexer/RunIndex.o
