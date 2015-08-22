@@ -10,14 +10,19 @@
 #include <regex.h>
 
 #include "../Indexer.h"
+#include "../../ematrix/EMatrix.h"
 
 #include <sqlite3.h>
 
 class SQLiteIndexer : public Indexer {
   private:
-    void createTables(sqlite3 * db);
+    EMatrix * ematrix;
+
+    void createDBTables(sqlite3 * db, char * dbname);
+    void IndexFile(sqlite3 *db, char * filepath, int nsamples);
+
   public:
-    SQLiteIndexer(char * indexdir);
+    SQLiteIndexer(EMatrix * ematrix, char * indexdir);
     ~SQLiteIndexer();
 
     void run(int nsamples);

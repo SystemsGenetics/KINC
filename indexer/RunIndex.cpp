@@ -7,6 +7,13 @@ void RunIndex::printUsage() {
   printf("\n");
   printf("Usage: ./kinc index [options]\n");
   printf("The list of required options:\n");
+  printf("  --ematrix|-e     The file name that contains the expression matrix.\n");
+  printf("                   The rows must be genes or probe sets and columns are samples\n");
+  printf("  --rows|-r        The number of lines in the ematrix file including the header\n");
+  printf("                   row if it exists\n");
+  printf("  --cols|-c        The number of columns in the input file\n");
+  printf("\n");
+  printf("The list of required options:\n");
   printf("  --outdir|-o     The KINC output directory from a prevous run.\n");
   printf("  --samples|-g    The number of samples in the original ematrix.\n");
   printf("                  This corresponds to the --cols argument of the\n");
@@ -35,7 +42,15 @@ RunIndex::RunIndex(int argc, char *argv[]) {
     static struct option long_options[] = {
       {"help",         no_argument,       0,  'h' },
       {"outdir",       required_argument, 0,  'o' },
-      {"nsamples",     required_argument, 0,  's' },
+      // Expression matrix options.
+      {"rows",         required_argument, 0,  'r' },
+      {"cols",         required_argument, 0,  'c' },
+      {"headers",      no_argument,       &headers,  1 },
+      {"omit_na",      no_argument,       &omit_na,  1 },
+      {"func",         required_argument, 0,  'f' },
+      {"na_val",       required_argument, 0,  'n' },
+      {"ematrix",      required_argument, 0,  'e' },
+
       // Last element required to be all zeros.
       {0, 0, 0,  0 }
      };
@@ -56,8 +71,21 @@ RunIndex::RunIndex(int argc, char *argv[]) {
        case 'o':
          outdir = optarg;
          break;
-       case 's':
-         nsamples = atoi(optarg);
+       // Expression matrix options.
+       case 'e':
+         infilename = optarg;
+         break;
+       case 'r':
+         rows = atoi(optarg);
+         break;
+       case 'c':
+         cols = atoi(optarg);
+         break;
+       case 'n':
+         na_val = optarg;
+         break;
+       case 'f':
+         strcpy(func, optarg);
          break;
        // Help and catch-all options.
        case 'h':
@@ -90,10 +118,37 @@ RunIndex::RunIndex(int argc, char *argv[]) {
     exit(-1);
   }
 
-  if (nsamples < 1) {
-    fprintf(stderr, "Please provide a positive integer for the number of genes (--nsamples option).\n");
+  // make sure the required arguments are set and appropriate
+  if (!infilename) {
+    fprintf(stderr,"Please provide an expression matrix (--ematrix option).\n");
     exit(-1);
   }
+  // make sure we have a positive integer for the rows and columns of the matrix
+  if (rows < 0 || rows == 0) {
+    fprintf(stderr, "Please provide a positive integer value for the number of rows in the \n");
+    fprintf(stderr, "expression matrix (--rows option).\n");
+    exit(-1);
+  }
+  if (cols < 0 || cols == 0) {
+    fprintf(stderr, "Please provide a positive integer value for the number of columns in\n");
+    fprintf(stderr, "the expression matrix (--cols option).\n");
+    exit(-1);
+  }
+
+  if (omit_na && !na_val) {
+    fprintf(stderr, "Error: The missing value string should be provided (--na_val option).\n");
+    exit(-1);
+  }
+  // make sure the input file exists
+  if (access(infilename, F_OK) == -1) {
+    fprintf(stderr,"The input file does not exists or is not readable.\n");
+    exit(-1);
+  }
+
+  // Retrieve the data from the EMatrix file.
+  ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
+
+  nsamples = ematrix->getNumSamples();
 
 }
 /**
@@ -101,7 +156,7 @@ RunIndex::RunIndex(int argc, char *argv[]) {
  */
 RunIndex::~RunIndex() {
   //CLuceneIndexer indexer(outdir);
-  SQLiteIndexer indexer(outdir);
+  SQLiteIndexer indexer(ematrix, outdir);
   indexer.run(nsamples);
 }
 

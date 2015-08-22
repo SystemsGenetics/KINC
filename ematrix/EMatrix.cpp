@@ -9,6 +9,10 @@
  */
 EMatrix::EMatrix(char * infilename, int rows, int cols, int headers, int omit_na, char *na_val, char * func) {
 
+  // Set the char* lengths for samples and strings.
+  this->max_sample_len  = 255;
+  this->max_gene_len  = 255;
+
   // initialize some of the program parameters
   this->rows = 0;
   this->cols = 0;
@@ -72,14 +76,14 @@ EMatrix::EMatrix(char * infilename, int rows, int cols, int headers, int omit_na
       // printf("Reading sample names...\n");
 
       for (j = 0; j < num_samples; j++) {
-        samples[j] = (char *) malloc(sizeof(char) * 255);
+        samples[j] = (char *) malloc(sizeof(char) * max_sample_len);
         fscanf(infile, "%s", samples[j]);
       }
       continue;
     }
 
     // The first entry on every line is a label string - read that in before the numerical data
-    genes[k] = (char *) malloc(sizeof(char) * 255);
+    genes[k] = (char *) malloc(sizeof(char) * max_gene_len);
     fscanf(infile, "%s", genes[k]);
 
     // iterate over the columns of each row

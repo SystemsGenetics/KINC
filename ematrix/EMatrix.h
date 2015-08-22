@@ -12,6 +12,10 @@
 
 class EMatrix {
   private:
+    // The maximum length of the sample and gene name strings.
+    int max_sample_len;
+    int max_gene_len;
+
     // The expression matrix rows and columns.
     double ** data;
     // An array of gene names.
@@ -73,6 +77,10 @@ class EMatrix {
     char * getInfileName() { return infilename; }
     // Indicates if missing values are omitted.
     int isMissingOmitted() { return omit_na; }
+
+    // Return the max length of the genes and samples
+    int getMaxGeneLen() { return max_gene_len; }
+    int getMaxSampleLen() { return max_sample_len; }
 
     char * getUsage();
 
