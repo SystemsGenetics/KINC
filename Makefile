@@ -33,8 +33,6 @@ OBJS = \
   similarity/RunSimilarity.o \
   indexer/Indexer.o \
   indexer/IndexQuery.o \
-  indexer/clucene/CLuceneIndexer.o \
-  indexer/clucene/CLuceneQuery.o \
   indexer/sqlite/SQLiteIndexer.o \
   indexer/sqlite/SQLiteQuery.o \
   indexer/RunIndex.o \
@@ -127,11 +125,11 @@ indexer/Indexer.o: indexer/Indexer.cpp indexer/Indexer.h
 indexer/IndexQuery.o: indexer/IndexQuery.cpp indexer/IndexQuery.h
 	${CC} -c ${CFLAGS} ${INCLUDES} indexer/IndexQuery.cpp -o indexer/IndexQuery.o
 
-indexer/clucene/CLuceneIndexer.o: indexer/clucene/CLuceneIndexer.cpp indexer/clucene/CLuceneIndexer.h
-	${CC} -c ${CFLAGS} ${INCLUDES} indexer/clucene/CLuceneIndexer.cpp -o indexer/clucene/CLuceneIndexer.o
+#indexer/clucene/CLuceneIndexer.o: indexer/clucene/CLuceneIndexer.cpp indexer/clucene/CLuceneIndexer.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} indexer/clucene/CLuceneIndexer.cpp -o indexer/clucene/CLuceneIndexer.o
 
-indexer/clucene/CLuceneQuery.o: indexer/clucene/CLuceneQuery.cpp indexer/clucene/CLuceneQuery.h
-	${CC} -c ${CFLAGS} ${INCLUDES} indexer/clucene/CLuceneQuery.cpp -o indexer/clucene/CLuceneQuery.o
+#indexer/clucene/CLuceneQuery.o: indexer/clucene/CLuceneQuery.cpp indexer/clucene/CLuceneQuery.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} indexer/clucene/CLuceneQuery.cpp -o indexer/clucene/CLuceneQuery.o
 
 indexer/sqlite/SQLiteIndexer.o: indexer/sqlite/SQLiteIndexer.cpp indexer/sqlite/SQLiteIndexer.h
 	${CC} -c ${CFLAGS} ${INCLUDES} indexer/sqlite/SQLiteIndexer.cpp -o indexer/sqlite/SQLiteIndexer.o

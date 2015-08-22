@@ -3,7 +3,7 @@
 
 #include <sys/stat.h>
 
-#include "clucene/CLuceneIndexer.h"
+//#include "clucene/CLuceneIndexer.h"
 #include "sqlite/SQLiteIndexer.h"
 #include "../ematrix/EMatrix.h"
 

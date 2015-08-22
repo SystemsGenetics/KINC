@@ -2,7 +2,7 @@
 #define _QUERY_
 
 
-#include "clucene/CLuceneQuery.h"
+//#include "clucene/CLuceneQuery.h"
 #include "sqlite/SQLiteQuery.h"
 
 class RunQuery {
