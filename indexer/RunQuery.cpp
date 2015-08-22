@@ -11,6 +11,8 @@ void RunQuery::printUsage() {
   printf("  --outfile|-o     The file where results should be written.\n");
   printf("  -x               Retrieve results for gene x.\n");
   printf("  -y               Retrieve results for gene y.\n");
+  printf("  --score|-s       Retrieve results with a similarity score >= the\n");
+  printf("                   absolute value of this argument.\n");
   printf("\n");
   printf("For Help:\n");
   printf("  --help|-h       Print these usage instructions\n");
@@ -23,6 +25,7 @@ void RunQuery::printUsage() {
 RunQuery::RunQuery(int argc, char *argv[]) {
   x_coord = 0;
   y_coord = 0;
+  score = 0.92;
 
   // loop through the incoming arguments until the
   // getopt_long function returns -1. Then we break out of the loop
@@ -37,6 +40,7 @@ RunQuery::RunQuery(int argc, char *argv[]) {
       {"help",         no_argument,       0,  'h' },
       {"indexdir",     required_argument, 0,  'i' },
       {"outfile",      required_argument, 0,  'o' },
+      {"score",        required_argument, 0,  's' },
       {"x",            required_argument, 0,  'x' },
       {"y",            required_argument, 0,  'y' },
       // Last element required to be all zeros.
@@ -44,7 +48,7 @@ RunQuery::RunQuery(int argc, char *argv[]) {
      };
 
      // get the next option
-     c = getopt_long(argc, argv, "i:x:y:h", long_options, &option_index);
+     c = getopt_long(argc, argv, "i:x:y:s:h", long_options, &option_index);
 
      // if the index is -1 then we have reached the end of the options list
      // and we break out of the while loop
@@ -67,6 +71,9 @@ RunQuery::RunQuery(int argc, char *argv[]) {
          break;
        case 'y':
          y_coord = atoi(optarg);
+         break;
+       case 's':
+         score = atof(optarg);
          break;
        // Help and catch-all options.
        case 'h':
@@ -113,6 +120,11 @@ RunQuery::RunQuery(int argc, char *argv[]) {
     exit(-1);
   }
 
+  if (score < 0 || score > 1) {
+    fprintf(stderr, "Please provide a score between 0 and 1 (--s option).\n");
+    exit(-1);
+  }
+
 
 }
 /**
@@ -126,6 +138,7 @@ RunQuery::~RunQuery() {
  * Performs the indexing.
  */
 void RunQuery::execute() {
-  CLuceneQuery query(indexdir);
-  query.run(outfile, x_coord, y_coord);
+//  CLuceneQuery query(indexdir);
+  SQLiteQuery query(indexdir);
+  query.run(outfile, x_coord, y_coord, score);
 }

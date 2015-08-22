@@ -3,6 +3,7 @@
 
 
 #include "clucene/CLuceneQuery.h"
+#include "sqlite/SQLiteQuery.h"
 
 class RunQuery {
   private:
@@ -14,6 +15,8 @@ class RunQuery {
     // The gene indices.
     int x_coord;
     int y_coord;
+
+    double score;
 
   public:
     RunQuery(int argc, char *argv[]);

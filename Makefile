@@ -36,6 +36,7 @@ OBJS = \
   indexer/clucene/CLuceneIndexer.o \
   indexer/clucene/CLuceneQuery.o \
   indexer/sqlite/SQLiteIndexer.o \
+  indexer/sqlite/SQLiteQuery.o \
   indexer/RunIndex.o \
   indexer/RunQuery.o \
   threshold/ThresholdMethod.o \
@@ -134,6 +135,9 @@ indexer/clucene/CLuceneQuery.o: indexer/clucene/CLuceneQuery.cpp indexer/clucene
 
 indexer/sqlite/SQLiteIndexer.o: indexer/sqlite/SQLiteIndexer.cpp indexer/sqlite/SQLiteIndexer.h
 	${CC} -c ${CFLAGS} ${INCLUDES} indexer/sqlite/SQLiteIndexer.cpp -o indexer/sqlite/SQLiteIndexer.o
+
+indexer/sqlite/SQLiteQuery.o: indexer/sqlite/SQLiteQuery.cpp indexer/sqlite/SQLiteQuery.h
+	${CC} -c ${CFLAGS} ${INCLUDES} indexer/sqlite/SQLiteQuery.cpp -o indexer/sqlite/SQLiteQuery.o
 
 indexer/RunIndex.o: indexer/RunIndex.cpp indexer/RunIndex.h
 	${CC} -c ${CFLAGS} ${INCLUDES} indexer/RunIndex.cpp -o indexer/RunIndex.o

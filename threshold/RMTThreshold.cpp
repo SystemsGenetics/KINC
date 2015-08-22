@@ -433,6 +433,8 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
           // we will skip the line.
           int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
           if (matches < 8) {
+            char tmp[num_samples*2];
+            matches = fscanf(fp, "%s\n", (char *)&tmp);
             continue;
           }
 

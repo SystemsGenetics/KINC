@@ -121,6 +121,8 @@ void CLuceneIndexer::indexFile(IndexWriter * writer, char * filepath, int nsampl
 
       // Skip lines that don't have the proper number of columns
       if (matches < 8) {
+        char tmp[nsamples*2];
+        matches = fscanf(fp, "%s\n", (char *)&tmp);
         continue;
       }
 
@@ -139,10 +141,12 @@ void CLuceneIndexer::indexFile(IndexWriter * writer, char * filepath, int nsampl
     fclose(fp);
   }
   catch(CLuceneError& err){
+    fclose(fp);
     printf("Error: %s\n", err.what());
     exit(-1);
   }
   catch(...){
+    fclose(fp);
     printf("Unknown error\n");
     exit(-1);
   }

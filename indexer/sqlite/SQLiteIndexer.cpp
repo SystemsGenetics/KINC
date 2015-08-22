@@ -1,4 +1,4 @@
-#include "../sqlite/SQLiteIndexer.h"
+#include "SQLiteIndexer.h"
 
 /**
  * The function to call when running the 'index' command.
@@ -18,6 +18,8 @@ SQLiteIndexer::~SQLiteIndexer() {
  */
 void SQLiteIndexer::run(int nsamples) {
   int i;
+  char* errorMessage;
+
 
    // Iterate through the directories.
    for (i = 100; i >= 0; i--) {
@@ -43,61 +45,49 @@ void SQLiteIndexer::run(int nsamples) {
      // Each directory has it's own SQLite database.
      sqlite3 * db;
      if (sqlite3_open(dbname, &db)){
-       fprintf(stderr, "ERROR: Can't open sqlite database: %s\n", sqlite3_errmsg(db));
-       sqlite3_close(db);
+       fprintf(stderr, "ERROR: Can't open SQLite database: %s\n", sqlite3_errmsg(db));
        exit(-1);
      }
+
+     printf("Preparing database file %s...\n", dbname);
      createDBTables(db, dbname);
+     insertGenes(db);
+     insertSamples(db);
 
-     // Add the genes to the genes table.
+     // Start a transaction to make inserts go faster.
+     sqlite3_exec(db, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
+
+     // Clean up the summary and mode_hist tables
      char q[2048];
-     sqlite3_stmt *gene_insert_stmt;
-     sqlite3_stmt *gene_select_stmt;
-     int rc;
-
-     // Prepare the SQL statements for selecting data from the SQLite database.
-     sprintf(q, "%s", "SELECT * FROM genes WHERE gene_id = ?;");
-     rc = sqlite3_prepare_v2(db, q, 2048, &gene_select_stmt, NULL);
-     if (rc != SQLITE_OK) {
-       fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+     char* errorMessage;
+     sprintf(q, "%s", "DELETE FROM comps;");
+     if(sqlite3_exec(db, q, NULL, NULL, &errorMessage) != SQLITE_OK) {
+       fprintf(stderr, "Failed to clear comps table: %s\n", sqlite3_errmsg(db));
+       exit(-1);
+     }
+     sprintf(q, "%s", "DELETE FROM clusters;");
+     if(sqlite3_exec(db, q, NULL, NULL, &errorMessage) != SQLITE_OK) {
+       fprintf(stderr, "Failed to clear clusters table: %s\n", sqlite3_errmsg(db));
+       exit(-1);
+     }
+     sprintf(q, "%s", "DELETE FROM summary;");
+     if(sqlite3_exec(db, q, NULL, NULL, &errorMessage) != SQLITE_OK) {
+       fprintf(stderr, "Failed to clear summary table: %s\n", sqlite3_errmsg(db));
+       exit(-1);
+     }
+     sprintf(q, "%s", "DELETE FROM mode_hist;");
+     if(sqlite3_exec(db, q, NULL, NULL, &errorMessage) != SQLITE_OK) {
+       fprintf(stderr, "Failed to clear mode_hist table: %s\n", sqlite3_errmsg(db));
        exit(-1);
      }
 
-     // Prepare the SQL statements for inserting data into the SQLite database.
-     sprintf(q, "%s", "\
-       INSERT INTO genes \
-         (gene_id, name) VALUES (?, ?);");
-     rc = sqlite3_prepare_v2(db, q, 2048, &gene_insert_stmt, NULL);
-     if (rc != SQLITE_OK) {
-       fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
-       exit(-1);
+     // Initialize the histogram
+     int max_modes = 15;
+     int * mode_hist = (int *) malloc(sizeof(int) * max_modes);
+     for (int i = 0; i < max_modes; i++) {
+       mode_hist[i] = 0;
      }
-
-     // Iterate through the genes in the Expression matrix and add them to
-     // the table.
-     char ** genes = ematrix->getGenes();
-     int num_genes = ematrix->getNumGenes();
-     for (int i = 0; i < num_genes; i++) {
-       // First, make sure the gene does not already exist. If it doesn't then
-       // add it.
-       sqlite3_bind_int(gene_select_stmt, 1, i + 1);
-       if (sqlite3_step(gene_select_stmt) == SQLITE_ROW) {
-         sqlite3_finalize(gene_select_stmt);
-         continue;
-       }
-       char * gene = genes[i];
-       sqlite3_bind_int(gene_insert_stmt, 1, i + 1);
-       sqlite3_bind_text(gene_insert_stmt, 2, gene, strlen(gene), SQLITE_STATIC);
-       printf("Inserting: %s\n", genes[i]);
-       if(sqlite3_step(gene_insert_stmt) != SQLITE_ROW) {
-         fprintf(stderr, "Failed to insert gene: %s\n", sqlite3_errmsg(db));
-         exit(-1);
-       }
-       sqlite3_finalize(gene_insert_stmt);
-       sqlite3_finalize(gene_select_stmt);
-     }
-     // Close the prepared SQL statement
-     sqlite3_finalize(gene_insert_stmt);
+     int total_comps;
 
      // Iterate through each of the files in the directory.
      struct dirent * entry;
@@ -129,42 +119,271 @@ void SQLiteIndexer::run(int nsamples) {
        char filepath[1024];
        sprintf(filepath, "%s/%s", dirname, filename);
        printf("Indexing file %s...\n", filename);
+
+       // Index the file.
+       IndexFile(db, filepath, mode_hist, &total_comps);
+
      }
+
+     // Now add in the stats:
+     for (int i = 0; i < max_modes; i++) {
+       sprintf(q, "INSERT INTO mode_hist (mode, num_comps) VALUES (%d, %d);", i, mode_hist[i]);
+       if(sqlite3_exec(db, q, NULL, NULL, &errorMessage) != SQLITE_OK) {
+         fprintf(stderr, "Failed to insert mode_hist record: %s\n", sqlite3_errmsg(db));
+         exit(-1);
+       }
+     }
+     sprintf(q, "INSERT INTO summary (num_comps) VALUES (%d);", total_comps);
+     if(sqlite3_exec(db, q, NULL, NULL, &errorMessage) != SQLITE_OK) {
+       fprintf(stderr, "Failed to insert mode_hist record: %s\n", sqlite3_errmsg(db));
+       exit(-1);
+     }
+     free(mode_hist);
+
+     // Terminate the transaction
+     sqlite3_exec(db, "COMMIT TRANSACTION", NULL, NULL, &errorMessage);
+
+     // Close the database.
      sqlite3_close(db);
    }
 }
-
 /**
  *
  */
-void SQLiteIndexer::IndexFile(sqlite3 *db, char * filepath, int nsamples) {
-  // The 8 fields of the clusters tab file.
-  int x, y, cluster_num, num_clusters, cluster_samples, num_missing;
-  char * samples = (char *) malloc(sizeof(char) * nsamples);
-  float cv;
-
+void SQLiteIndexer::IndexFile(sqlite3 *db, char * filepath, int *mode_hist, int * total_comps) {
+  char q[24800];
+  sqlite3_stmt *comp_select_stmt;
+  sqlite3_stmt *comp_insert_stmt;
+  sqlite3_stmt *cluster_select_stmt;
+  sqlite3_stmt *cluster_insert_stmt;
+  int rc;
 
   // Open the file for indexing.
   FILE * fp = fopen(filepath, "r");
   if (!fp) {
-    fprintf(stderr, "Can not open file, %s. Cannot continue.\n", filepath);
+    fprintf(stderr, "Can't open file, %s. Cannot continue.\n", filepath);
     exit(-1);
   }
 
+  // Prepare the SQL statements for selecting a pair-wise comp.
+  sprintf(q, "%s", "SELECT * FROM comps WHERE gene1 = ? and gene2 = ?;");
+  rc = sqlite3_prepare_v2(db, q, 2048, &comp_select_stmt, NULL);
+  if (rc != SQLITE_OK) {
+    fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
+    exit(-1);
+  }
+  // Prepare the SQL statements for inserting a pair-wise comp.
+  sprintf(q, "%s", "\
+    INSERT INTO comps \
+      (gene1, gene2, num_clusters) VALUES (?, ?, ?);");
+  rc = sqlite3_prepare_v2(db, q, 2048, &comp_insert_stmt, NULL);
+  if (rc != SQLITE_OK) {
+    fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+    exit(-1);
+  }
+  // Prepare the SQL statements for selecting a cluster.
+  sprintf(q, "%s", "SELECT * FROM clusters WHERE gene1 = ? and gene2 = ? and cluster_num = ?;");
+  rc = sqlite3_prepare_v2(db, q, 2048, &cluster_select_stmt, NULL);
+  if (rc != SQLITE_OK) {
+    fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
+    exit(-1);
+  }
+  // Prepare the SQL statements for inserting a cluster.
+  sprintf(q, "%s", "\
+    INSERT INTO clusters \
+      (gene1, gene2, num_clusters, cluster_num, num_missing, num_samples, score, samples) \
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
+  rc = sqlite3_prepare_v2(db, q, 2048, &cluster_insert_stmt, NULL);
+  if (rc != SQLITE_OK) {
+    fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+    exit(-1);
+  }
+
+  int nsamples = ematrix->getNumSamples();
+  int j, k, cluster_num, num_clusters, cluster_num_samples, num_missing;
+  char samples[nsamples];
+  float cv;
   while (!feof(fp)) {
 
     // Read in the fields for this line.
-    int matches = fscanf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%f\t%s\n", &x, &y, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &cv, samples);
+    int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
+
     // Skip lines that don't have the proper number of columns
     if (matches < 8) {
+      char tmp[nsamples*2];
+      matches = fscanf(fp, "%s\n", (char *)&tmp);
       continue;
     }
 
+    // Update the histogram counts
+    mode_hist[num_clusters]++;
+
+    // See if this comparision already exists.  If it doesn't then add it.
+    sqlite3_bind_int(comp_select_stmt, 1, j);
+    sqlite3_bind_int(comp_select_stmt, 2, k);
+    if (sqlite3_step(comp_select_stmt) != SQLITE_ROW) {
+      sqlite3_bind_int(comp_insert_stmt, 1, j);
+      sqlite3_bind_int(comp_insert_stmt, 2, k);
+      sqlite3_bind_int(comp_insert_stmt, 3, num_clusters);
+      if(sqlite3_step(comp_insert_stmt) != SQLITE_DONE) {
+        fprintf(stderr, "Failed to insert comparision: %s\n", sqlite3_errmsg(db));
+        exit(-1);
+      }
+    }
+    sqlite3_reset(comp_select_stmt);
+    sqlite3_reset(comp_insert_stmt);
+
+    // See if this cluster already exists. If it doesn't then add it.
+    sqlite3_bind_int(cluster_select_stmt, 1, j);
+    sqlite3_bind_int(cluster_select_stmt, 2, k);
+    sqlite3_bind_int(cluster_select_stmt, 3, cluster_num);
+    if (sqlite3_step(cluster_select_stmt) != SQLITE_ROW) {
+      int sample_len = strlen(samples);
+      sqlite3_bind_int(cluster_insert_stmt, 1, j);
+      sqlite3_bind_int(cluster_insert_stmt, 2, k);
+      sqlite3_bind_int(cluster_insert_stmt, 3, num_clusters);
+      sqlite3_bind_int(cluster_insert_stmt, 4, cluster_num);
+      sqlite3_bind_int(cluster_insert_stmt, 5, num_missing);
+      sqlite3_bind_int(cluster_insert_stmt, 6, cluster_num_samples);
+      sqlite3_bind_double(cluster_insert_stmt, 7, cv);
+      sqlite3_bind_text(cluster_insert_stmt, 8, samples, sample_len, SQLITE_STATIC);
+      if(sqlite3_step(cluster_insert_stmt) != SQLITE_DONE) {
+        fprintf(stderr, "Failed to insert cluster: %s\n", sqlite3_errmsg(db));
+        exit(-1);
+      }
+    }
+    sqlite3_reset(cluster_select_stmt);
+    sqlite3_reset(cluster_insert_stmt);
 
 
   }
-  fclose(fp);
 
+}
+
+
+/**
+ *
+ */
+void SQLiteIndexer::insertGenes(sqlite3 *db) {
+  // Add the genes to the genes table.
+  char* errorMessage;
+  char q[2048];
+  sqlite3_stmt *gene_insert_stmt;
+  sqlite3_stmt *gene_select_stmt;
+  int rc;
+
+  // Start a transaction to make inserts go faster.
+  sqlite3_exec(db, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
+
+
+  // Prepare the SQL statements for selecting data from the SQLite database.
+  sprintf(q, "%s", "SELECT * FROM genes WHERE gene_id = ?;");
+  rc = sqlite3_prepare_v2(db, q, 2048, &gene_select_stmt, NULL);
+  if (rc != SQLITE_OK) {
+    fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+    exit(-1);
+  }
+
+  // Prepare the SQL statements for inserting data into the SQLite database.
+  sprintf(q, "%s", "\
+    INSERT INTO genes \
+      (gene_id, name) VALUES (?, ?);");
+  rc = sqlite3_prepare_v2(db, q, 2048, &gene_insert_stmt, NULL);
+  if (rc != SQLITE_OK) {
+    fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+    exit(-1);
+  }
+
+  // Iterate through the genes in the Expression matrix and add them to
+  // the table.
+  char ** genes = ematrix->getGenes();
+  int num_genes = ematrix->getNumGenes();
+  for (int i = 0; i < num_genes; i++) {
+    // First, make sure the gene does not already exist. If it doesn't then
+    // add it.
+    sqlite3_bind_int(gene_select_stmt, 1, i + 1);
+    if (sqlite3_step(gene_select_stmt) == SQLITE_ROW) {
+      sqlite3_reset(gene_select_stmt);
+      continue;
+    }
+    char * gene = genes[i];
+    sqlite3_bind_int(gene_insert_stmt, 1, i + 1);
+    int gene_len = strlen(gene);
+    sqlite3_bind_text(gene_insert_stmt, 2, gene, gene_len, SQLITE_STATIC);
+    if(sqlite3_step(gene_insert_stmt) != SQLITE_DONE) {
+      fprintf(stderr, "Failed to insert gene: %s\n", sqlite3_errmsg(db));
+      exit(-1);
+    }
+    sqlite3_reset(gene_insert_stmt);
+    sqlite3_reset(gene_select_stmt);
+  }
+  // Close the prepared SQL statement
+  sqlite3_finalize(gene_select_stmt);
+  sqlite3_finalize(gene_insert_stmt);
+
+  // Terminate the transaction
+  sqlite3_exec(db, "COMMIT TRANSACTION", NULL, NULL, &errorMessage);
+}
+/**
+ *
+ */
+void SQLiteIndexer::insertSamples(sqlite3 *db) {
+  // Add the genes to the genes table.
+  char* errorMessage;
+  char q[2048];
+  sqlite3_stmt *sample_insert_stmt;
+  sqlite3_stmt *sample_select_stmt;
+  int rc;
+
+  // Start a transaction to make inserts go faster.
+  sqlite3_exec(db, "BEGIN TRANSACTION", NULL, NULL, &errorMessage);
+
+  // Prepare the SQL statements for selecting data from the SQLite database.
+  sprintf(q, "%s", "SELECT * FROM samples WHERE sample_id = ?;");
+  rc = sqlite3_prepare_v2(db, q, 2048, &sample_select_stmt, NULL);
+  if (rc != SQLITE_OK) {
+    fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+    exit(-1);
+  }
+
+  // Prepare the SQL statements for inserting data into the SQLite database.
+  sprintf(q, "%s", "\
+    INSERT INTO samples \
+      (sample_id, name) VALUES (?, ?);");
+  rc = sqlite3_prepare_v2(db, q, 2048, &sample_insert_stmt, NULL);
+  if (rc != SQLITE_OK) {
+    fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+    exit(-1);
+  }
+
+  // Iterate through the genes in the Expression matrix and add them to
+  // the table.
+  char ** samples = ematrix->getSamples();
+  int num_samples = ematrix->getNumSamples();
+  for (int i = 0; i < num_samples; i++) {
+    // First, make sure the gene does not already exist. If it doesn't then
+    // add it.
+    sqlite3_bind_int(sample_select_stmt, 1, i + 1);
+    if (sqlite3_step(sample_select_stmt) == SQLITE_ROW) {
+      sqlite3_reset(sample_select_stmt);
+      continue;
+    }
+    char * sample = samples[i];
+    sqlite3_bind_int(sample_insert_stmt, 1, i + 1);
+    sqlite3_bind_text(sample_insert_stmt, 2, sample, strlen(sample), SQLITE_STATIC);
+    if(sqlite3_step(sample_insert_stmt) != SQLITE_DONE) {
+      fprintf(stderr, "Failed to insert gene: %s\n", sqlite3_errmsg(db));
+      exit(-1);
+    }
+    sqlite3_reset(sample_insert_stmt);
+    sqlite3_reset(sample_select_stmt);
+  }
+  // Close the prepared SQL statement
+  sqlite3_finalize(sample_select_stmt);
+  sqlite3_finalize(sample_insert_stmt);
+
+  // Terminate the transaction
+  sqlite3_exec(db, "COMMIT TRANSACTION", NULL, NULL, &errorMessage);
 }
 
 /**
@@ -225,24 +444,30 @@ void SQLiteIndexer::createDBTables(sqlite3 * db, char * dbname) {
   sprintf(q, "%s", "\
   CREATE TABLE IF NOT EXISTS comps \
     (comp_id INTEGER PRIMARY KEY, \
-     gene1 INTEGER NOT NULL REFERENCES genes(gene_id), \
-     gene2 INTEGER NOT NULL REFERENCES genes(gene_id), \
+     gene1 INTEGER NOT NULL, \
+     gene2 INTEGER NOT NULL, \
      num_clusters INTEGER NOT NULL DEFAULT 0); ");
   sqlite3_prepare_v2(db, q, 2048, &createStmt, NULL);
   if (sqlite3_step(createStmt) != SQLITE_DONE) {
     printf("ERROR: failed to create '%s' table for index '%s'.  ERROR: %s.\n", "comps", dbname, sqlite3_errmsg(db));
     exit(-1);
   }
-  sprintf(q, "%s", "CREATE INDEX IF NOT EXISTS comps_g1 ON comps(gene1);");
+  sprintf(q, "%s", "CREATE INDEX IF NOT EXISTS comps_gene1 ON comps(gene1);");
   sqlite3_prepare_v2(db, q, 2048, &createStmt, NULL);
   if (sqlite3_step(createStmt) != SQLITE_DONE) {
-    printf("ERROR: failed to create index '%s' on '%s' table for index '%s'.  ERROR: %s.\n", "comps_g1", "comps", dbname, sqlite3_errmsg(db));
+    printf("ERROR: failed to create index '%s' on '%s' table for index '%s'.  ERROR: %s.\n", "comps_gene1", "comps", dbname, sqlite3_errmsg(db));
     exit(-1);
   }
-  sprintf(q, "%s", "CREATE INDEX IF NOT EXISTS comps_g2 ON comps(gene2);");
+  sprintf(q, "%s", "CREATE INDEX IF NOT EXISTS comps_gene2 ON comps(gene2);");
   sqlite3_prepare_v2(db, q, 2048, &createStmt, NULL);
   if (sqlite3_step(createStmt) != SQLITE_DONE) {
-    printf("ERROR: failed to create index '%s' on '%s' table for index '%s'.  ERROR: %s.\n", "comps_g2", "comps", dbname, sqlite3_errmsg(db));
+    printf("ERROR: failed to create index '%s' on '%s' table for index '%s'.  ERROR: %s.\n", "comps_gene1", "comps", dbname, sqlite3_errmsg(db));
+    exit(-1);
+  }
+  sprintf(q, "%s", "CREATE INDEX IF NOT EXISTS comps_g12 ON comps(gene1, gene2);");
+  sqlite3_prepare_v2(db, q, 2048, &createStmt, NULL);
+  if (sqlite3_step(createStmt) != SQLITE_DONE) {
+    printf("ERROR: failed to create index '%s' on '%s' table for index '%s'.  ERROR: %s.\n", "comps_g12", "comps", dbname, sqlite3_errmsg(db));
     exit(-1);
   }
   sprintf(q, "%s", "CREATE INDEX IF NOT EXISTS comps_num_clusters ON comps(num_clusters);");
@@ -258,8 +483,10 @@ void SQLiteIndexer::createDBTables(sqlite3 * db, char * dbname) {
   sprintf(q, "%s",  "\
     CREATE TABLE IF NOT EXISTS clusters \
     (cluster_id INTEGER PRIMARY KEY, \
+     gene1 INTEGER NOT NULL, \
+     gene2 INTEGER NOT NULL, \
+     num_clusters INTEGER NOT NULL DEFAULT 0, \
      cluster_num INTEGER NOT NULL, \
-     comp_id INTEGER NOT NULL REFERENCES comps(comp_id), \
      num_missing INTEGER NOT NULL, \
      num_samples INTEGER NOT NULL, \
      score REAL, \
@@ -269,10 +496,34 @@ void SQLiteIndexer::createDBTables(sqlite3 * db, char * dbname) {
     printf("ERROR: failed to create '%s' table for index '%s'.  ERROR: %s.\n", "clusters", dbname, sqlite3_errmsg(db));
     exit(-1);
   }
-  sprintf(q, "%s", "CREATE INDEX IF NOT EXISTS clusters_comp ON clusters(comp_id);");
+  sprintf(q, "%s", "CREATE INDEX IF NOT EXISTS clusters_gene1 ON clusters(gene1);");
   sqlite3_prepare_v2(db, q, 2048, &createStmt, NULL);
   if (sqlite3_step(createStmt) != SQLITE_DONE) {
-    printf("ERROR: failed to create index '%s' on '%s' table for index '%s'.  ERROR: %s.\n", "clusters_comp", "clusters", dbname, sqlite3_errmsg(db));
+    printf("ERROR: failed to create index '%s' on '%s' table for index '%s'.  ERROR: %s.\n", "clusters_gene1", "clusters", dbname, sqlite3_errmsg(db));
+    exit(-1);
+  }
+  sprintf(q, "%s", "CREATE INDEX IF NOT EXISTS clusters_gene2 ON clusters(gene2);");
+  sqlite3_prepare_v2(db, q, 2048, &createStmt, NULL);
+  if (sqlite3_step(createStmt) != SQLITE_DONE) {
+    printf("ERROR: failed to create index '%s' on '%s' table for index '%s'.  ERROR: %s.\n", "clusters_gene1", "clusters", dbname, sqlite3_errmsg(db));
+    exit(-1);
+  }
+  sprintf(q, "%s", "CREATE INDEX IF NOT EXISTS clusters_g12 ON clusters(gene1, gene2);");
+  sqlite3_prepare_v2(db, q, 2048, &createStmt, NULL);
+  if (sqlite3_step(createStmt) != SQLITE_DONE) {
+    printf("ERROR: failed to create index '%s' on '%s' table for index '%s'.  ERROR: %s.\n", "clusters_g12", "clusters", dbname, sqlite3_errmsg(db));
+    exit(-1);
+  }
+  sprintf(q, "%s", "CREATE INDEX IF NOT EXISTS clusters_g12num ON clusters(gene1, gene2, cluster_num);");
+  sqlite3_prepare_v2(db, q, 2048, &createStmt, NULL);
+  if (sqlite3_step(createStmt) != SQLITE_DONE) {
+    printf("ERROR: failed to create index '%s' on '%s' table for index '%s'.  ERROR: %s.\n", "clusters_g12num", "clusters", dbname, sqlite3_errmsg(db));
+    exit(-1);
+  }
+  sprintf(q, "%s", "CREATE INDEX IF NOT EXISTS clusters_num_clusters ON clusters(num_clusters);");
+  sqlite3_prepare_v2(db, q, 2048, &createStmt, NULL);
+  if (sqlite3_step(createStmt) != SQLITE_DONE) {
+    printf("ERROR: failed to create index '%s' on '%s' table for index '%s'.  ERROR: %s.\n", "clusters_num_clusters", "clusters", dbname, sqlite3_errmsg(db));
     exit(-1);
   }
   sprintf(q, "%s", "CREATE INDEX IF NOT EXISTS clusters_score ON clusters(score);");
@@ -293,5 +544,31 @@ void SQLiteIndexer::createDBTables(sqlite3 * db, char * dbname) {
     printf("ERROR: failed to create index '%s' on '%s' table for index '%s'.  ERROR: %s.\n", "clusters_num_samples", "clusters", dbname, sqlite3_errmsg(db));
     exit(-1);
   }
+
+
+  //
+  // Create the mode histogram table
+  //
+  sprintf(q, "%s",  "\
+    CREATE TABLE IF NOT EXISTS mode_hist \
+    (mode INTEGER NOT NULL, \
+     num_comps INTEGER NOT NULL); ");
+  sqlite3_prepare_v2(db, q, 2048, &createStmt, NULL);
+  if (sqlite3_step(createStmt) != SQLITE_DONE) {
+    printf("ERROR: failed to create '%s' table for index '%s'.  ERROR: %s.\n", "mode_hist", dbname, sqlite3_errmsg(db));
+    exit(-1);
+  }
+
+  //
+  // Create the summary table
+  //
+  sprintf(q, "%s",  "\
+      CREATE TABLE IF NOT EXISTS summary \
+      (num_comps INTEGER NOT NULL); ");
+    sqlite3_prepare_v2(db, q, 2048, &createStmt, NULL);
+    if (sqlite3_step(createStmt) != SQLITE_DONE) {
+      printf("ERROR: failed to create '%s' table for index '%s'.  ERROR: %s.\n", "summary", dbname, sqlite3_errmsg(db));
+      exit(-1);
+    }
 
 }
