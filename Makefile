@@ -12,7 +12,8 @@ CFLAGS = -g -Wall -fno-inline
 # Non-debugging CFLAGS
 #CFLAGS = -Wall 
 INCLUDES = -I/usr/local/include 
-LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -lmixmod_newmat -lclucene-core -lsqlite3 -g
+#LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -lmixmod_newmat -lclucene-core -lsqlite3 -g
+LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -lmixmod_newmat -g
 
 OBJS = \
   general/error.o \
@@ -31,12 +32,6 @@ OBJS = \
   similarity/clustering/MixtureModelPWClusters.o \
   similarity/clustering/MixtureModelClustering.o \
   similarity/RunSimilarity.o \
-  indexer/Indexer.o \
-  indexer/IndexQuery.o \
-  indexer/sqlite/SQLiteIndexer.o \
-  indexer/sqlite/SQLiteQuery.o \
-  indexer/RunIndex.o \
-  indexer/RunQuery.o \
   threshold/ThresholdMethod.o \
   threshold/RMTThreshold.o \
   threshold/RunThreshold.o \
@@ -45,6 +40,14 @@ OBJS = \
   extract/SimMatrixTabCluster.o \
   extract/RunExtract.o \
   kinc.o
+  
+#  indexer/Indexer.o \
+#  indexer/IndexQuery.o \
+#  indexer/sqlite/SQLiteIndexer.o \
+#  indexer/sqlite/SQLiteQuery.o \
+#  indexer/RunIndex.o \
+#  indexer/RunQuery.o \
+
 EXE = kinc
 
 all: ${OBJS}
@@ -119,29 +122,29 @@ similarity/clustering/MixtureModelClustering.o: similarity/clustering/MixtureMod
 similarity/RunSimilarity.o: similarity/RunSimilarity.cpp similarity/RunSimilarity.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/RunSimilarity.cpp -o similarity/RunSimilarity.o
 
-indexer/Indexer.o: indexer/Indexer.cpp indexer/Indexer.h
-	${CC} -c ${CFLAGS} ${INCLUDES} indexer/Indexer.cpp -o indexer/Indexer.o
+#indexer/Indexer.o: indexer/Indexer.cpp indexer/Indexer.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} indexer/Indexer.cpp -o indexer/Indexer.o
 
-indexer/IndexQuery.o: indexer/IndexQuery.cpp indexer/IndexQuery.h
-	${CC} -c ${CFLAGS} ${INCLUDES} indexer/IndexQuery.cpp -o indexer/IndexQuery.o
+#indexer/IndexQuery.o: indexer/IndexQuery.cpp indexer/IndexQuery.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} indexer/IndexQuery.cpp -o indexer/IndexQuery.o
 
-#indexer/clucene/CLuceneIndexer.o: indexer/clucene/CLuceneIndexer.cpp indexer/clucene/CLuceneIndexer.h
-#	${CC} -c ${CFLAGS} ${INCLUDES} indexer/clucene/CLuceneIndexer.cpp -o indexer/clucene/CLuceneIndexer.o
+##indexer/clucene/CLuceneIndexer.o: indexer/clucene/CLuceneIndexer.cpp indexer/clucene/CLuceneIndexer.h
+##	${CC} -c ${CFLAGS} ${INCLUDES} indexer/clucene/CLuceneIndexer.cpp -o indexer/clucene/CLuceneIndexer.o
 
-#indexer/clucene/CLuceneQuery.o: indexer/clucene/CLuceneQuery.cpp indexer/clucene/CLuceneQuery.h
-#	${CC} -c ${CFLAGS} ${INCLUDES} indexer/clucene/CLuceneQuery.cpp -o indexer/clucene/CLuceneQuery.o
+##indexer/clucene/CLuceneQuery.o: indexer/clucene/CLuceneQuery.cpp indexer/clucene/CLuceneQuery.h
+##	${CC} -c ${CFLAGS} ${INCLUDES} indexer/clucene/CLuceneQuery.cpp -o indexer/clucene/CLuceneQuery.o
 
-indexer/sqlite/SQLiteIndexer.o: indexer/sqlite/SQLiteIndexer.cpp indexer/sqlite/SQLiteIndexer.h
-	${CC} -c ${CFLAGS} ${INCLUDES} indexer/sqlite/SQLiteIndexer.cpp -o indexer/sqlite/SQLiteIndexer.o
+#indexer/sqlite/SQLiteIndexer.o: indexer/sqlite/SQLiteIndexer.cpp indexer/sqlite/SQLiteIndexer.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} indexer/sqlite/SQLiteIndexer.cpp -o indexer/sqlite/SQLiteIndexer.o
 
-indexer/sqlite/SQLiteQuery.o: indexer/sqlite/SQLiteQuery.cpp indexer/sqlite/SQLiteQuery.h
-	${CC} -c ${CFLAGS} ${INCLUDES} indexer/sqlite/SQLiteQuery.cpp -o indexer/sqlite/SQLiteQuery.o
+#indexer/sqlite/SQLiteQuery.o: indexer/sqlite/SQLiteQuery.cpp indexer/sqlite/SQLiteQuery.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} indexer/sqlite/SQLiteQuery.cpp -o indexer/sqlite/SQLiteQuery.o
 
-indexer/RunIndex.o: indexer/RunIndex.cpp indexer/RunIndex.h
-	${CC} -c ${CFLAGS} ${INCLUDES} indexer/RunIndex.cpp -o indexer/RunIndex.o
+#indexer/RunIndex.o: indexer/RunIndex.cpp indexer/RunIndex.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} indexer/RunIndex.cpp -o indexer/RunIndex.o
 
-indexer/RunQuery.o: indexer/RunQuery.cpp indexer/RunQuery.h
-	${CC} -c ${CFLAGS} ${INCLUDES} indexer/RunQuery.cpp -o indexer/RunQuery.o
+#indexer/RunQuery.o: indexer/RunQuery.cpp indexer/RunQuery.h
+#	${CC} -c ${CFLAGS} ${INCLUDES} indexer/RunQuery.cpp -o indexer/RunQuery.o
 
 threshold/ThresholdMethod.o: threshold/ThresholdMethod.cpp threshold/ThresholdMethod.h
 	${CC} -c ${CFLAGS} ${INCLUDES} threshold/ThresholdMethod.cpp -o threshold/ThresholdMethod.o

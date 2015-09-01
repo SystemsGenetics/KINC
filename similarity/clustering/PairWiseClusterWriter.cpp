@@ -63,7 +63,7 @@ void PairWiseClusterWriter::openOutFiles() {
     mkdir(clusters_dir, 0700);
   }
 
-  // Open up 102 files, one each for 100 Spearman/Pearson correlation value
+  // Open up 102 directories, one each for 100 Spearman/Pearson correlation value
   // ranges, and another for those without (e.g. 'nan').
   int i =  0;
   char filename[1025];
@@ -76,7 +76,7 @@ void PairWiseClusterWriter::openOutFiles() {
 
     // Check to make sure the file exits. If not, then create it . Otherwise,
     // open for input/output so we can check where we may have left off.
-    sprintf(filename, "%s/%03d/%s.clusters.%03d.%03d.txt", clusters_dir, i, fileprefix, i, job_index);
+    sprintf(filename, "%s/%03d/%s.clusters.%03d.%05d.txt", clusters_dir, i, fileprefix, i, job_index);
     fps[i] = new fstream;
     if (stat(filename, &st) == -1) {
       fps[i]->open(filename, fstream::out);
@@ -85,11 +85,12 @@ void PairWiseClusterWriter::openOutFiles() {
     fps[i]->open(filename, fstream::in|fstream::out|fstream::ate);
   }
 
+  // Create the nan directory and files.
   sprintf(nan_dir, "%s/nan", clusters_dir);
   if (stat(nan_dir, &st) == -1) {
     mkdir(nan_dir, 0700);
   }
-  sprintf(filename, "%s/%s.clusters.nan.%03d.txt", nan_dir, fileprefix, job_index);
+  sprintf(filename, "%s/%s.clusters.nan.%05d.txt", nan_dir, fileprefix, job_index);
   fps[101] = new fstream;
   if (stat(filename, &st) == -1) {
     fps[101]->open(filename, fstream::out);
