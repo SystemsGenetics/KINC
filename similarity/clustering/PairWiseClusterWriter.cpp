@@ -27,7 +27,7 @@ PairWiseClusterWriter::PairWiseClusterWriter(char * method, char * fileprefix, i
   this->fileprefix = (char *) malloc(sizeof(char) * strlen(fileprefix) + 1);
   strcpy(this->fileprefix, fileprefix);
 
-  fps = (fstream **) malloc(sizeof(fstream *) * 102);
+  fps = (fstream **) malloc(sizeof(fstream *) * 103);
 
   // Open the files, find out what was the last coordinates used, then
   // set the position in each file to pick up where it left off.
@@ -47,14 +47,16 @@ PairWiseClusterWriter::~PairWiseClusterWriter() {
 // TODO: need a function to make sure the result directory is empty or that
 // the same number of job files are present.
 /**
- * Opens and creates 102 files for storing the clusters with correlation values.
- * Each file stores a range of 1/100 Spearman correlation values.
+ * Opens and creates 103 files for storing the clusters with correlation values.
+ * Each file stores a range of 1/100 Spearman correlation values. There is
+ * a file for clusters with two few samples, and a file for skipped
+ * comparisions that had too many missing values.
  */
 void PairWiseClusterWriter::openOutFiles() {
 
   char clusters_dir[50];
+  char skipped_dir[50];
   char nan_dir[50];
-
 
   // Make sure the output directory exists.
   sprintf(clusters_dir, "./clusters-%s", method);
@@ -97,6 +99,19 @@ void PairWiseClusterWriter::openOutFiles() {
     fps[101]->close();
   }
   fps[101]->open(filename, fstream::in|fstream::out|fstream::ate);
+
+  // Create the skipped file that will hold all skipped pair-wise comparisions.
+  sprintf(skipped_dir, "%s/skipped", clusters_dir);
+  if (stat(skipped_dir, &st) == -1) {
+    mkdir(skipped_dir, 0700);
+  }
+  sprintf(filename, "%s/%s.clusters.skipped.%05d.txt", skipped_dir, fileprefix, job_index);
+  fps[102] = new fstream;
+  if (stat(filename, &st) == -1) {
+    fps[102]->open(filename, fstream::out);
+    fps[102]->close();
+  }
+  fps[102]->open(filename, fstream::in|fstream::out|fstream::ate);
 }
 
 /**
@@ -388,6 +403,15 @@ void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, 
   fstream *fp;
 
   PairWiseCluster * curr = pwcl->head;
+
+  // If there are no clusters then this comparison was skipped.
+  if (curr == NULL) {
+    fp = fps[102];
+    (*fp) << gene1 + 1 << "\t" << gene2 << endl;
+    fp->flush();
+  }
+
+  // Iterate through the clusters and print them.
   while (curr != NULL) {
     // Determine which file to write the output into
     double score = curr->pwsim->getScore();
