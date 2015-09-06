@@ -51,7 +51,8 @@ void RunThreshold::printUsage() {
   printf("                   Default is 30\n");
   printf("  --max_modes|-d   The maximum number of modes. If a pair-wise comparision\n");
   printf("                   has multiple modes (i.e. multiple clusters) then only clusters from those\n");
-  printf("                   comparisions with modes equal to or less than the value specified are included\n");
+  printf("                   comparisions with modes equal to or less than the value specified are\n");
+  printf("                   included. Default is 1.\n");
   printf("\n");
   printf("For Help:\n");
   printf("  --help|-h     Print these usage instructions\n");

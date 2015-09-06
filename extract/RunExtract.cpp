@@ -46,6 +46,10 @@ void RunExtract::printUsage() {
   printf("                   If not provided, no limit is set.\n");
   printf("  --min_csize|-z   The minimum cluster size (number of samples per cluster).\n");
   printf("                   Default is 30\n");
+  printf("  --max_modes|-d   The maximum number of modes. If a pair-wise comparision\n");
+  printf("                   has multiple modes (i.e. multiple clusters) then only clusters from those\n");
+  printf("                   comparisions with modes equal to or less than the value specified are\n");
+  printf("                   included. Default is 1.\n");
   printf("\n");
   printf("For Help:\n");
   printf("  --help|-h        Print these usage instructions\n");
@@ -58,6 +62,7 @@ RunExtract::RunExtract(int argc, char *argv[]) {
    rows = 0;
    cols = 0;
    max_missing = INFINITY;
+   max_modes = 1;
    min_cluster_size = 30;
    method = NULL;
    x_coord = -1;
@@ -99,13 +104,15 @@ RunExtract::RunExtract(int argc, char *argv[]) {
       {"clustering",   required_argument, 0,  'l' },
       {"max_missing",  required_argument, 0,  'g' },
       {"min_csize",    required_argument, 0,  'z' },
+      {"max_modes",    required_argument, 0,  'd' },
+
       // Last element required to be all zeros.
       {0, 0, 0, 0}
     };
     delete ematrix;
 
     // get the next option
-    c = getopt_long(argc, argv, "m:r:c:f:n:e:t:1:2:x:y:g:z:l:h", long_options, &option_index);
+    c = getopt_long(argc, argv, "m:r:c:f:n:e:t:1:2:x:y:g:d:z:l:h", long_options, &option_index);
 
     // if the index is -1 then we have reached the end of the options list
     // and we break out of the while loop
@@ -163,6 +170,9 @@ RunExtract::RunExtract(int argc, char *argv[]) {
       case 'g':
         max_missing = atoi(optarg);
         break;
+      case 'd':
+        max_modes = atoi(optarg);
+        break;
       case 'h':
         printUsage();
         exit(-1);
@@ -199,6 +209,10 @@ RunExtract::RunExtract(int argc, char *argv[]) {
    if (max_missing < -1) {
      fprintf(stderr, "Please provide a positive integer value for maximum missing values\n");
      fprintf(stderr, "the expression matrix (--max_missing option).\n");
+     exit(-1);
+   }
+   if (max_modes < 1) {
+     fprintf(stderr, "Please provide a positive integer greater than 1 for the maximum modes values (--max_modes option).\n");
      exit(-1);
    }
    if (min_cluster_size < 0 || min_cluster_size == 0) {
@@ -255,7 +269,8 @@ void RunExtract::execute() {
   // Get the similarity matrix.
   if (clustering) {
     SimMatrixTabCluster * smatrix = new SimMatrixTabCluster(ematrix, quiet,
-      method, x_coord, y_coord, gene1, gene2, th, max_missing, min_cluster_size);
+      method, x_coord, y_coord, gene1, gene2, th, max_missing, min_cluster_size,
+      max_modes);
     // If we have a threshold then we want to get the edges of the network.
     // Otherwise the user has asked to print out the similarity value for
     // two genes.

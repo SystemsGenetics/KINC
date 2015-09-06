@@ -5,15 +5,13 @@
  */
 SimMatrixTabCluster::SimMatrixTabCluster(EMatrix *ematrix, int quiet, char * method, int x_coord,
     int y_coord, char * gene1, char * gene2, float th, int max_missing,
-    int min_cluster_size)
+    int min_cluster_size, int max_modes)
   : SimilarityMatrix(ematrix, quiet, method, x_coord, y_coord, gene1, gene2, th) {
 
   // Initialize the class members.
-  this->num_jobs = 0;
   this->max_missing = max_missing;
   this->min_cluster_size = min_cluster_size;
-
-  getNumJobs();
+  this->max_modes = max_modes;
 }
 /**
  * Destructor
@@ -21,44 +19,6 @@ SimMatrixTabCluster::SimMatrixTabCluster(EMatrix *ematrix, int quiet, char * met
 SimMatrixTabCluster::~SimMatrixTabCluster() {
 
 }
-/**
- *
- */
-void SimMatrixTabCluster::getNumJobs() {
-  // Holds the clusters directory name.
-  char dirname[1024];
-
-  // Make sure the output directory exists.
-  struct stat st = {0};
-  char clusterdir[100];
-  sprintf(clusterdir, "clusters-%s", method);
-  if (stat(clusterdir, &st) == -1) {
-    fprintf(stderr, "The clusters directory is missing. Cannot continue.\n");
-    exit(-1);
-  }
-
-  // Iterate through the files in the 'nan' directory to count the number of
-  // jobs used to generate the clusters, we will then intitialize that many
-  // file pointers for each of the 102 file arrays.
-  sprintf(dirname, "./%s/%d", clusterdir, 100);
-  DIR * dir;
-  dir = opendir(dirname);
-  if (!dir) {
-    fprintf(stderr, "The clusters sub directory, %s, is missing. Cannot continue.\n", dirname);
-    exit(-1);
-  }
-  struct dirent * entry;
-  while ((entry = readdir(dir)) != NULL) {
-    const char * filename = entry->d_name;
-    // Skip the . and .. files.
-    if (strcmp(filename, ".") == 0 || strcmp(filename, "..") == 0) {
-      continue;
-    }
-    num_jobs++;
-  }
-}
-
-
 
 /**
  *
@@ -79,11 +39,6 @@ void SimMatrixTabCluster::writeNetwork() {
    char * file_prefix = ematrix->getFilePrefix();
    char ** genes = ematrix->getGenes();
    int num_samples = ematrix->getNumSamples();
-
-   // The 8 fields of the clusters tab file.
-   int x, y, cluster_num, num_clusters, cluster_samples, num_missing;
-   char * samples = (char *) malloc(sizeof(char) * num_samples);
-   float cv;
 
    if (!quiet) {
      printf("  Creating network files...\n");
@@ -120,21 +75,58 @@ void SimMatrixTabCluster::writeNetwork() {
    int limit = (int) (th * 100.0);
    for (int i = 100; i >= limit; i--) {
      sprintf(dirname, "./%s/%03d", clusterdir, i);
-     for (int j = 0; j < num_jobs; j++) {
 
-       // Open the file
-       char path[1024];
-       sprintf(path, "%s/%s.clusters.%03d.%03d.txt", dirname, ematrix->getFilePrefix(), i, j + 1);
-       FILE * fp = fopen(path, "r");
-       if (!fp) {
-         fprintf(stderr, "Could not open clustering file: '%s'.\n", path);
-         exit(-1);
+     DIR * dir;
+     dir = opendir(dirname);
+     if (!dir) {
+       fprintf(stderr, "The clusters sub directory, %s, is missing. Cannot continue.\n", dirname);
+       continue;
+     }
+     struct dirent * entry;
+     while ((entry = readdir(dir)) != NULL) {
+       const char * filename = entry->d_name;
+
+       // Skip the . and .. files.
+       if (strcmp(filename, ".") == 0 || strcmp(filename, "..") == 0) {
+         continue;
        }
 
+       // The file must end in a suffix with 3 digits followed by .txt.
+       // We use a regular expression to see if this is true. If not, then
+       // skip this file.
+       regex_t re;
+       char pattern[64] = "[0-9][0-9][0-9].txt";
+       int  rc;
+       size_t nmatch = 2;
+       regmatch_t pmatch[2];
+       if (0 != (rc = regcomp(&re, pattern, 0))) {
+         printf("regcomp() failed, returning nonzero (%d)\n", rc);
+         exit(-1);
+       }
+       if (regexec(&re, filename, nmatch, pmatch, 0)) {
+         regfree(&re);
+         continue;
+       }
+       regfree(&re);
+
+       // Construct the full path to the file.
+       char path[1024];
+       sprintf(path, "%s/%s", dirname, filename);
+
+       // Open each file and traverse the elements
+       FILE * fp = fopen(path, "r");
+       if (!fp) {
+         fprintf(stderr, "Can't open file, %s. Cannot continue.\n", path);
+         exit(-1);
+       }
+       int j, k, cluster_num, num_clusters, cluster_num_samples, num_missing;
+       char samples[num_samples];
+       float cv;
        while (!feof(fp)) {
+
          // Read in the fields for this line. We must read in 8 fields or
          // we will skip the line.
-         int matches = fscanf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%f\t%s\n", &x, &y, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &cv, samples);
+         int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
          if (matches < 8) {
            char tmp[num_samples*2];
            matches = fscanf(fp, "%s\n", (char *)&tmp);
@@ -142,17 +134,19 @@ void SimMatrixTabCluster::writeNetwork() {
          }
 
          // Filter the records
-         if (fabs(cv) >= th && cluster_samples >= min_cluster_size  && num_missing <= max_missing) {
-           fprintf(edges, "%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", genes[x-1], genes[y-1], cv, cluster_num, num_clusters, cluster_samples, num_missing, samples);
+         if (fabs(cv) >= th && cluster_num_samples >= min_cluster_size  &&
+             num_missing <= max_missing && num_clusters <= max_modes) {
+
+           fprintf(edges, "%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", genes[j-1], genes[k-1], cv, cluster_num, num_clusters, cluster_num_samples, num_missing, samples);
 
            // if the method id 'pc' (Pearson's correlation) then we will have
            // negative and positive values, and we'll write those to separate files
            if (strcmp(method, "pc") == 0 || strcmp(method, "sc") == 0) {
              if(cv >= 0){
-                fprintf(edgesP, "%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", genes[x-1], genes[y-1], cv, cluster_num, num_clusters, cluster_samples, num_missing, samples);
+                fprintf(edgesP, "%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", genes[j-1], genes[k-1], cv, cluster_num, num_clusters, cluster_num_samples, num_missing, samples);
              }
              else {
-               fprintf(edgesN, "%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", genes[x-1], genes[y-1], cv, cluster_num, num_clusters, cluster_samples, num_missing, samples);
+               fprintf(edgesN, "%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", genes[j-1], genes[k-1], cv, cluster_num, num_clusters, cluster_num_samples, num_missing, samples);
              }
            }
          }
@@ -162,7 +156,6 @@ void SimMatrixTabCluster::writeNetwork() {
      }
    }
 
-   free(samples);
    fclose(edges);
    fclose(edgesN);
    fclose(edgesP);
