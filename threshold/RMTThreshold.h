@@ -10,6 +10,7 @@
 #include <gsl/gsl_matrix.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <regex.h>
 #include "../general/vector.h"
 
 

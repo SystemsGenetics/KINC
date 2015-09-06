@@ -410,15 +410,36 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
       struct dirent * entry;
       while ((entry = readdir(dir)) != NULL) {
         const char * filename = entry->d_name;
+
         // Skip the . and .. files.
         if (strcmp(filename, ".") == 0 || strcmp(filename, "..") == 0) {
           continue;
         }
+
+        // The file must end in a suffix with 3 digits followed by .txt.
+        // We use a regular expression to see if this is true. If not, then
+        // skip this file.
+        regex_t re;
+        char pattern[64] = "[0-9][0-9][0-9].txt";
+        int  rc;
+        size_t nmatch = 2;
+        regmatch_t pmatch[2];
+        if (0 != (rc = regcomp(&re, pattern, 0))) {
+          printf("regcomp() failed, returning nonzero (%d)\n", rc);
+          exit(-1);
+        }
+        if (regexec(&re, filename, nmatch, pmatch, 0)) {
+          regfree(&re);
+          continue;
+        }
+        regfree(&re);
+
         // Construct the full path to the file.
         char path[1024];
         sprintf(path, "%s/%s", dirname, filename);
 
         // Open each file and traverse the elements
+        printf("Reading file %s...\n", path);
         FILE * fp = fopen(path, "r");
         if (!fp) {
           fprintf(stderr, "Can't open file, %s. Cannot continue.\n", path);
