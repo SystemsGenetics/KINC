@@ -575,7 +575,6 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
             int ci = index_k + (used * index_j);
             cutM[ci] = cv;
           }
-          matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
         }
         fclose(fp);
       }
