@@ -516,10 +516,30 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
       struct dirent * entry;
       while ((entry = readdir(dir)) != NULL) {
         const char * filename = entry->d_name;
-        // Skipe the . and .. files.
+
+        // Skip the . and .. files.
         if (strcmp(filename, ".") == 0 || strcmp(filename, "..") == 0) {
           continue;
         }
+
+        // The file must end in a suffix with 3 digits followed by .txt.
+        // We use a regular expression to see if this is true. If not, then
+        // skip this file.
+        regex_t re;
+        char pattern[64] = "[0-9][0-9][0-9].txt";
+        int  rc;
+        size_t nmatch = 2;
+        regmatch_t pmatch[2];
+        if (0 != (rc = regcomp(&re, pattern, 0))) {
+          printf("regcomp() failed, returning nonzero (%d)\n", rc);
+          exit(-1);
+        }
+        if (regexec(&re, filename, nmatch, pmatch, 0)) {
+          regfree(&re);
+          continue;
+        }
+        regfree(&re);
+
         // Construct the full path to the file.
         char path[1024];
         sprintf(path, "%s/%s", dirname, filename);
@@ -533,9 +553,19 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
         int j, k, cluster_num, num_clusters, cluster_num_samples, num_missing;
         char samples[num_samples];
         float cv;
-        int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
-        while (matches == 8) {
-          if (fabs(cv) >= th && cluster_num_samples >= min_cluster_size  && num_missing <= max_missing) {
+        while (!feof(fp)) {
+
+          // Read in the fields for this line. We must read in 8 fields or
+          // we will skip the line.
+          int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
+          if (matches < 8) {
+            char tmp[num_samples*2];
+            matches = fscanf(fp, "%s\n", (char *)&tmp);
+            continue;
+          }
+
+          if (fabs(cv) >= th && cluster_num_samples >= min_cluster_size  &&
+              num_missing <= max_missing && num_clusters <= max_modes) {
             if (cluster_num > max_clusters) {
               fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
               exit(-1);
