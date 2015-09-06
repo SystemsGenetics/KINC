@@ -439,7 +439,6 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
         sprintf(path, "%s/%s", dirname, filename);
 
         // Open each file and traverse the elements
-        printf("Reading file %s...\n", path);
         FILE * fp = fopen(path, "r");
         if (!fp) {
           fprintf(stderr, "Can't open file, %s. Cannot continue.\n", path);
