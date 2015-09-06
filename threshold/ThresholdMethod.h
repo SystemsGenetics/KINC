@@ -32,11 +32,13 @@ class ThresholdMethod {
     int max_missing;
     // The minimum number of samples in a cluster.
     int min_cluster_size;
+    // The maximum number of clusters a pair-wise comparision can have.
+    int max_modes;
 
 
   public:
     ThresholdMethod(EMatrix *ematrix, char * method, char * clustering,
-        int min_cluster_size, int max_missing);
+        int min_cluster_size, int max_missing, int max_modes);
     ~ThresholdMethod();
 
     // GETTERS

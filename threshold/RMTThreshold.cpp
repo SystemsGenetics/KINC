@@ -2,8 +2,8 @@
 
 RMTThreshold::RMTThreshold(EMatrix * ematrix, char * method, double thresholdStart,
     double thresholdStep, double chiSoughtValue, char * clustering, int min_cluster_size,
-    int max_missing)
-  : ThresholdMethod(ematrix, method, clustering, min_cluster_size, max_missing) {
+    int max_missing, int max_modes)
+  : ThresholdMethod(ematrix, method, clustering, min_cluster_size, max_missing, max_modes) {
 
   this->thresholdStart = thresholdStart;
   this->thresholdStep  = thresholdStep;
@@ -439,7 +439,8 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
           }
 
           // filter the record.
-          if (fabs(cv) >= th && cluster_num_samples >= min_cluster_size  && num_missing <= max_missing) {
+          if (fabs(cv) >= th && cluster_num_samples >= min_cluster_size  &&
+              num_missing <= max_missing && num_clusters <= max_modes) {
             if (cluster_num > max_clusters) {
               fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
               exit(-1);
