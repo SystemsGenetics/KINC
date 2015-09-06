@@ -65,6 +65,9 @@ void SQLiteIndexer::run(int nsamples, int job_index) {
        exit(-1);
      }
 
+     // Turn on extended result codes:
+     sqlite3_extended_result_codes(db, 1);
+
      printf("\nPreparing database file %s...\n", dbname);
      createDBTables(db, dbname);
      insertGenes(db);
