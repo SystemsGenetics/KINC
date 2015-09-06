@@ -16,22 +16,38 @@ SQLiteIndexer::~SQLiteIndexer() {
 /**
  * Performs the indexing.
  */
-void SQLiteIndexer::run(int nsamples) {
+void SQLiteIndexer::run(int nsamples, int job_index) {
   int i;
   char* errorMessage;
 
+  // Convert a job_index of 101 to be -1.  This is because we want to
+  // process the index files in descending order and we want the 'nan'
+  // directory to be last.
+  if (job_index == 101) {
+    job_index = -1;
+  }
+
 
    // Iterate through the directories.
-   for (i = 100; i >= 0; i--) {
+   for (i = 100; i >= -1; i--) {
+
+     // If we have a job index and it's not -1 (which indicates no splitting
+     // of the indexing into jobs).  Then only continue if i is the same
+     // as the job index.
+     if (job_index > -2 and i != job_index) {
+       continue;
+     }
      char dirname[1024];
      char dbname[1024];
-     if (i > 0) {
-       sprintf(dirname, "./%s/%03d", indexdir, i);
-       sprintf(dbname, "%s/%03d.db", dirname, i);
-     }
-     else {
+     // i == -1 then we will index the 'nan' directory.  This is -1 rather
+     // than 101 because we want to index it last.
+     if (i == -1) {
        sprintf(dirname, "./%s/nan", indexdir);
        sprintf(dbname, "%s/nan.db", dirname);
+     }
+     else {
+       sprintf(dirname, "./%s/%03d", indexdir, i);
+       sprintf(dbname, "%s/%03d.db", dirname, i);
      }
 
      // Open the output directory.

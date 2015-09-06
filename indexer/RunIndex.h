@@ -20,6 +20,9 @@ class RunIndex {
     char * outdir;
     // The number of samples
     int nsamples;
+    // The index of this job within the total jobs.  Must be
+    // between 0 and 101.
+    int job_index;
 
     // Variables for the expression matrix
     // -----------------------------------
@@ -35,7 +38,6 @@ class RunIndex {
     int omit_na;
     // Specifies the value that represents a missing value.
     char *na_val;
-    // Specifies the
 
   public:
     RunIndex(int argc, char *argv[]);

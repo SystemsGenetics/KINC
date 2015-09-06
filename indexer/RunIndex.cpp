@@ -14,13 +14,21 @@ void RunIndex::printUsage() {
   printf("  --cols|-c        The number of columns in the input file\n");
   printf("\n");
   printf("The list of required options:\n");
-  printf("  --outdir|-o     The KINC output directory from a prevous run.\n");
-  printf("  --samples|-g    The number of samples in the original ematrix.\n");
-  printf("                  This corresponds to the --cols argument of the\n");
-  printf("                  similarity program of KINC\n");
+  printf("  --outdir|-o      The KINC output directory from a prevous run.\n");
+  printf("  --samples|-g     The number of samples in the original ematrix.\n");
+  printf("                   This corresponds to the --cols argument of the\n");
+  printf("                   similarity program of KINC\n");
+  printf("\n");
+  printf("Optional Arguments:\n");
+  printf("  --job_index|-i   By default, indexing proceeds as a single job and processes\n");
+  printf("                   one output directory at a time, however to index\n");
+  printf("                   a single directory or to index in parallel, this \n");
+  printf("                   option can be provided where the index is a numeric value \n");
+  printf("                   between 0 and 101. If 101 is provided then the 'nan'\n");
+  printf("                   directory is indexed.\n");
   printf("\n");
   printf("For Help:\n");
-  printf("  --help|-h       Print these usage instructions\n");
+  printf("  --help|-h        Print these usage instructions\n");
   printf("\n");
 }
 
@@ -29,6 +37,9 @@ void RunIndex::printUsage() {
  */
 RunIndex::RunIndex(int argc, char *argv[]) {
   nsamples = 0;
+  // Set a default value of -2 for the job_index. This means that
+  // the indexing should proceed as a single job.
+  job_index = -2;
 
   // loop through the incoming arguments until the
   // getopt_long function returns -1. Then we break out of the loop
@@ -50,6 +61,7 @@ RunIndex::RunIndex(int argc, char *argv[]) {
       {"func",         required_argument, 0,  'f' },
       {"na_val",       required_argument, 0,  'n' },
       {"ematrix",      required_argument, 0,  'e' },
+      {"job_index",    required_argument, 0,  'i' },
 
       // Last element required to be all zeros.
       {0, 0, 0,  0 }
@@ -86,6 +98,9 @@ RunIndex::RunIndex(int argc, char *argv[]) {
          break;
        case 'f':
          strcpy(func, optarg);
+         break;
+       case 'i':
+         job_index = atoi(optarg);
          break;
        // Help and catch-all options.
        case 'h':
@@ -144,6 +159,10 @@ RunIndex::RunIndex(int argc, char *argv[]) {
     fprintf(stderr,"The input file does not exists or is not readable.\n");
     exit(-1);
   }
+  if (job_index < -2 || job_index > 101) {
+    fprintf(stderr, "Please provide a job index that is between 0 and 101 (--job_index option).\n");
+    exit(-1);
+  }
 
   // Retrieve the data from the EMatrix file.
   ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
@@ -157,7 +176,7 @@ RunIndex::RunIndex(int argc, char *argv[]) {
 RunIndex::~RunIndex() {
   //CLuceneIndexer indexer(outdir);
   SQLiteIndexer indexer(ematrix, outdir);
-  indexer.run(nsamples);
+  indexer.run(nsamples, job_index);
 }
 
 /**

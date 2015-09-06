@@ -29,6 +29,6 @@ class SQLiteIndexer : public Indexer {
     SQLiteIndexer(EMatrix * ematrix, char * indexdir);
     ~SQLiteIndexer();
 
-    void run(int nsamples);
+    void run(int nsamples, int job_index);
 };
 #endif
