@@ -25,6 +25,8 @@ class SQLiteIndexer : public Indexer {
 
     void IndexFile(sqlite3 *db, char * filepath, int *mode_hist, int * num_comps);
 
+    void handleSQLiteError(sqlite3 *db);
+
   public:
     SQLiteIndexer(EMatrix * ematrix, char * indexdir);
     ~SQLiteIndexer();
