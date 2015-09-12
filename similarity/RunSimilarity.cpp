@@ -372,14 +372,25 @@ void RunSimilarity::executeTraditional() {
   int num_genes = ematrix->getNumGenes();
   // The binary output file prefix
   char * fileprefix = ematrix->getFilePrefix();
+  char outdir[100];
 
   // calculate the number of binary files needed to store the similarity matrix
   num_bins = (num_genes - 1) / ROWS_PER_OUTPUT_FILE;
 
-  // make sure the Spearman directory exists
+  // Make sure the output directory exists
+  if (strcmp(method, "sc") == 0) {
+    strcpy((char *)&outdir, "./Spearman");
+  }
+  if (strcmp(method, "pc") == 0) {
+    strcpy((char *)&outdir, "./Pearson");
+  }
+  if (strcmp(method, "mi") == 0) {
+    strcpy((char *)&outdir, "./MI");
+  }
   struct stat st = {0};
-  if (stat("./Spearman", &st) == -1) {
-      mkdir("./Spearman", 0700);
+  if (stat(outdir, &st) == -1) {
+    mkdir(outdir, 0700);
+
   }
 
   total_comps = (num_genes * num_genes) / 2;
@@ -398,7 +409,7 @@ void RunSimilarity::executeTraditional() {
     }
 
     // the output file will be located in the Spearman directory and named based on the input file info
-    sprintf(outfilename, "./Spearman/%s.sc%d.bin", fileprefix, curr_bin);
+    sprintf(outfilename, "%s/%s.sc%d.bin", outdir,fileprefix, curr_bin);
     printf("Writing file %d of %d: %s... \n", curr_bin + 1, num_bins + 1, outfilename);
     FILE * outfile = fopen(outfilename, "wb");
 
