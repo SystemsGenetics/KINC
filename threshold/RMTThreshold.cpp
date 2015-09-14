@@ -58,10 +58,21 @@ double RMTThreshold::findThreshold() {
   float * E;
   // The output file prefix.
   char * file_prefix = ematrix->getFilePrefix();
+  // The number of samples in the expression matrix.
+  int num_samples = ematrix->getNumSamples();
+
 
   // Open the output files and print the headers.
-  sprintf(chi_filename, "%s.%s.chiVals.txt", file_prefix, method);
-  sprintf(eigen_filename, "%s.%s.eigenVals.txt", file_prefix, method);
+  if (max_missing > num_samples) {
+    sprintf(chi_filename, "%s.%s.mcs%d.md%d.mmINF.chiVals.txt", file_prefix, method, min_cluster_size, max_modes);
+    sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mmINF.eigenVals.txt", file_prefix, method, min_cluster_size, max_modes);
+  }
+  else {
+    sprintf(chi_filename, "%s.%s.mcs%d.md%d.mm%d.chiVals.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
+    sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mm%d.eigenVals.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
+  }
+
+
   chiF = fopen(chi_filename, "w");
   eigenF = fopen(eigen_filename, "w");
   fprintf(chiF, "Threshold\tChi-square\tCut Matrix Size\n");
@@ -175,7 +186,12 @@ double RMTThreshold::findThreshold() {
     finalTH = ceil(finalTH * 10000) / 10000.0;
     FILE* th;
     char filename[1024];
-    sprintf(filename, "%s.%s.th.txt", ematrix->getFilePrefix(), method);
+    if (max_missing > num_samples) {
+      sprintf(filename, "%s.%s.mcs%d.md%d.mmINF.th.txt", file_prefix, method, min_cluster_size, max_modes);
+    }
+    else {
+      sprintf(filename, "%s.%s.mcs%d.md%d.mm%d.th.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
+    }
     th = fopen(filename, "w");
     fprintf(th, "%f", finalTH);
     fclose(th);
