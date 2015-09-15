@@ -82,7 +82,7 @@ void SQLiteQuery::run(int x_coord, int y_coord, float score) {
     // Prepare the query for execution.
     rc = sqlite3_prepare_v2(db, q, 2048, &cluster_select_stmt, NULL);
     if (rc != SQLITE_OK) {
-      fprintf(stderr, "Failed to prepare cluster select statement: %s\n", sqlite3_errmsg(db));
+      fprintf(stderr, "Failed to prepare cluster select statement for index %s: %s\n", dirname, sqlite3_errmsg(db));
       exit(-1);
     }
 
