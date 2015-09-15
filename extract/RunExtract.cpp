@@ -33,7 +33,7 @@ void RunExtract::printUsage() {
   printf("  -y               Extract a single similarity value: the y coordinate. Must also use -x.\n");
   printf("  --gene1|-1       Extract a single similarity value: The name of the first gene in a singe\n");
   printf("                   pair-wise comparision.  Must be used with --gene2 option.\n");
-  printf("  --gene1|-1       Extract a single similarity value: The name of the second gene in a singe\n");
+  printf("  --gene1|-2       Extract a single similarity value: The name of the second gene in a singe\n");
   printf("                   pair-wise comparision.  Must be used with --gene1 option.\n");
   printf("\n");
   printf("Optional arguments for clustered data:\n");
@@ -242,13 +242,19 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      exit(-1);
    }
 
+   // make sure the required arguments are set and appropriate
+   if (!infilename) {
+     fprintf(stderr,"Please provide an expression matrix (--ematrix option).\n");
+     exit(-1);
+   }
+
    // Load the input expression matrix.
    ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
 
    // if the user supplied gene
    if (gene1 && gene2) {
-     x_coord = findGeneCoord(gene1);
-     y_coord = findGeneCoord(gene2);
+     x_coord = ematrix->getGeneCoord(gene1);
+     y_coord = ematrix->getGeneCoord(gene2);
 
      // Make sure the coordinates are positive integers
      if (x_coord < 0) {
@@ -284,21 +290,6 @@ RunExtract::RunExtract(int argc, char *argv[]) {
  */
 RunExtract::~RunExtract() {
   delete ematrix;
-}
-
-/**
- *
- */
-int RunExtract::findGeneCoord(char * gene) {
-  char ** genes = ematrix->getGenes();
-  int num_genes = ematrix->getNumGenes();
-
-  for (int i = 1; i <= num_genes; i++) {
-    if (strcmp(gene, genes[i-1]) == 0) {
-      return i;
-    }
-  }
-  return -1;
 }
 
 /**

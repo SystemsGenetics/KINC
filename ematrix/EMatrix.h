@@ -51,6 +51,7 @@ class EMatrix {
 
   public:
 
+
     // Constructor
     EMatrix(char * infilename, int rows, int cols, int headers, int omit_na, char *na_val, char * func);
     // Destructor
@@ -81,6 +82,9 @@ class EMatrix {
     // Return the max length of the genes and samples
     int getMaxGeneLen() { return max_gene_len; }
     int getMaxSampleLen() { return max_sample_len; }
+
+    int getGeneCoord(char * gene);
+    char * getGene(int index);
 
     char * getUsage();
 

@@ -143,7 +143,24 @@ EMatrix::~EMatrix() {
   free(genes);
   free(samples);
 }
+/**
+ *
+ */
+int EMatrix::getGeneCoord(char * gene) {
 
+  for (int i = 1; i <= num_genes; i++) {
+    if (strcmp(gene, genes[i-1]) == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+/**
+ *
+ */
+char * EMatrix::getGene(int index) {
+  return genes[index - 1];
+}
 /**
  *
  */

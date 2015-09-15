@@ -33,7 +33,6 @@ class RunExtract {
     // Indicates the clustering method to use.
     char * clustering;
 
-
     // Variables for the expression matrix
     // -----------------------------------
     // Indicates if the expression matrix has headers.
@@ -59,9 +58,6 @@ class RunExtract {
     int min_cluster_size;
     // The maximum number of clusters a pair-wise comparision can have.
     int max_modes;
-
-    // Returns the numerical coordinate of the gene in the ematrix file.
-    int findGeneCoord(char * gene);
 
   public:
     RunExtract(int argc, char *argv[]);
