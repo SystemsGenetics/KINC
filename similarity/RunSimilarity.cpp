@@ -37,7 +37,7 @@ void RunSimilarity::printUsage() {
   printf("Optional Mutual Information Arguments:\n");
   printf("  --mi_bins|-b      Use only if the method is 'mi'. The number of bins for the\n");
   printf("                    B-spline estimator function for MI. Default is 10.\n");
-  printf("  --mi_degree|-d    Use only if the method is 'mi'. The degree of the\n");
+  printf("  --mi_degree|-d  MT-ematrix-log-no.sc6.bin  Use only if the method is 'mi'. The degree of the\n");
   printf("                    B-spline estimator function for MI. Default is 3.\n");
   printf("\n");
   printf("Optional Clustering Arguments:\n");
@@ -409,7 +409,7 @@ void RunSimilarity::executeTraditional() {
     }
 
     // the output file will be located in the Spearman directory and named based on the input file info
-    sprintf(outfilename, "%s/%s.sc%d.bin", outdir,fileprefix, curr_bin);
+    sprintf(outfilename, "%s/%s.%s%d.bin", outdir,fileprefix, method, curr_bin);
     printf("Writing file %d of %d: %s... \n", curr_bin + 1, num_bins + 1, outfilename);
     FILE * outfile = fopen(outfilename, "wb");
 

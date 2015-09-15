@@ -63,13 +63,19 @@ double RMTThreshold::findThreshold() {
 
 
   // Open the output files and print the headers.
-  if (max_missing > num_samples) {
-    sprintf(chi_filename, "%s.%s.mcs%d.md%d.mmINF.chiVals.txt", file_prefix, method, min_cluster_size, max_modes);
-    sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mmINF.eigenVals.txt", file_prefix, method, min_cluster_size, max_modes);
+  if (clustering) {
+    if (max_missing > num_samples) {
+      sprintf(chi_filename, "%s.%s.mcs%d.md%d.mmINF.chiVals.txt", file_prefix, method, min_cluster_size, max_modes);
+      sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mmINF.eigenVals.txt", file_prefix, method, min_cluster_size, max_modes);
+    }
+    else {
+      sprintf(chi_filename, "%s.%s.mcs%d.md%d.mm%d.chiVals.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
+      sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mm%d.eigenVals.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
+    }
   }
   else {
-    sprintf(chi_filename, "%s.%s.mcs%d.md%d.mm%d.chiVals.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
-    sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mm%d.eigenVals.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
+    sprintf(chi_filename, "%s.%s.chiVals.txt", file_prefix, method);
+    sprintf(eigen_filename, "%s.%s.eigenVals.txt", file_prefix, method);
   }
 
 
@@ -186,11 +192,16 @@ double RMTThreshold::findThreshold() {
     finalTH = ceil(finalTH * 10000) / 10000.0;
     FILE* th;
     char filename[1024];
-    if (max_missing > num_samples) {
-      sprintf(filename, "%s.%s.mcs%d.md%d.mmINF.th.txt", file_prefix, method, min_cluster_size, max_modes);
+    if (clustering) {
+      if (max_missing > num_samples) {
+        sprintf(filename, "%s.%s.mcs%d.md%d.mmINF.th.txt", file_prefix, method, min_cluster_size, max_modes);
+      }
+      else {
+        sprintf(filename, "%s.%s.mcs%d.md%d.mm%d.th.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
+      }
     }
     else {
-      sprintf(filename, "%s.%s.mcs%d.md%d.mm%d.th.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
+      sprintf(filename, "%s.%s.th.txt", file_prefix, method);
     }
     th = fopen(filename, "w");
     fprintf(th, "%f", finalTH);
