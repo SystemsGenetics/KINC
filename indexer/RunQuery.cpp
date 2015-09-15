@@ -51,7 +51,7 @@ RunQuery::RunQuery(int argc, char *argv[]) {
   y_coord = -1;
   gene1 = NULL;
   gene2 = NULL;
-  score = 0.92;
+  score = 0;
   method = NULL;
 
 

@@ -31,7 +31,7 @@ void SQLiteQuery::run(int x_coord, int y_coord, float score) {
   for (i = 100; i >= 0; i--) {
 
     // If a threshold is set then don't examine indexes below the requested value.
-    if (i / 100.0 <= th) {
+    if (i / 100.0 <= score) {
       continue;
     }
 

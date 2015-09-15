@@ -8,10 +8,6 @@ class IndexQuery {
     char * indexdir;
     EMatrix * ematrix;
 
-    // The index at which to stop searching.  All indexes in directories
-    // less than this value will be skipped.
-    double th;
-
   public:
     IndexQuery(char * indexdir, EMatrix * ematrix);
     ~IndexQuery();
