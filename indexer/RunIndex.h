@@ -12,12 +12,14 @@ class RunIndex {
   protected:
     // The expression matrix object.
     EMatrix * ematrix;
-    // Specifies the transformation function: log2, none.
-    char func[10];
+    // Specifies the method: sc, pc, mi.
+    char * method;
+
+    // The directory where indexes are housed.
+    char indexdir[1024];
 
     // Variables for indexing
     // ----------------------
-    char * outdir;
     // The number of samples
     int nsamples;
     // The index of this job within the total jobs.  Must be
@@ -41,6 +43,8 @@ class RunIndex {
     int omit_na;
     // Specifies the value that represents a missing value.
     char *na_val;
+    // Specifies the transformation function: log2, none.
+    char func[10];
 
   public:
     RunIndex(int argc, char *argv[]);
