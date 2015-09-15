@@ -16,7 +16,7 @@ SQLiteIndexer::~SQLiteIndexer() {
 /**
  * Performs the indexing.
  */
-void SQLiteIndexer::run(int nsamples, int job_index) {
+void SQLiteIndexer::run(int nsamples, int job_index, int job_start) {
   int i;
   char* errorMessage;
 
@@ -26,10 +26,13 @@ void SQLiteIndexer::run(int nsamples, int job_index) {
   if (job_index == 101) {
     job_index = -1;
   }
+  if (job_start == -2) {
+    job_start = 100;
+  }
 
 
    // Iterate through the directories.
-   for (i = 100; i >= -1; i--) {
+   for (i = job_start; i >= -1; i--) {
 
      // If we have a job index and it's not -1 (which indicates no splitting
      // of the indexing into jobs).  Then only continue if i is the same

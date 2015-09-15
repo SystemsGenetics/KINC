@@ -23,6 +23,9 @@ class RunIndex {
     // The index of this job within the total jobs.  Must be
     // between 0 and 101.
     int job_index;
+    // The index of this job where indexing will begin. Must be between 0 and
+    // 101.
+    int job_start;
 
     // Variables for the expression matrix
     // -----------------------------------

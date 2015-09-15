@@ -26,6 +26,11 @@ void RunIndex::printUsage() {
   printf("                   option can be provided where the index is a numeric value \n");
   printf("                   between 0 and 101. If 101 is provided then the 'nan'\n");
   printf("                   directory is indexed.\n");
+  printf("  --job_start|-s   This argument specifies the start job for indexing. Valid values\n");
+  printf("                   are integers between 0 and 101.  The indexer will begin indexing\n");
+  printf("                   the output directory with the given ID and proceed thereafter\n");
+  printf("                   in descending order. This argument cannot be used at the same\n");
+  printf("                   time as the job_index argument.\n");
   printf("\n");
   printf("For Help:\n");
   printf("  --help|-h        Print these usage instructions\n");
@@ -40,6 +45,9 @@ RunIndex::RunIndex(int argc, char *argv[]) {
   // Set a default value of -2 for the job_index. This means that
   // the indexing should proceed as a single job.
   job_index = -2;
+  // Set the default job start to -2.  this means that no start is specified
+  // by the user.
+  job_start = -2;
 
   // loop through the incoming arguments until the
   // getopt_long function returns -1. Then we break out of the loop
@@ -62,6 +70,8 @@ RunIndex::RunIndex(int argc, char *argv[]) {
       {"na_val",       required_argument, 0,  'n' },
       {"ematrix",      required_argument, 0,  'e' },
       {"job_index",    required_argument, 0,  'i' },
+      {"job_start",    required_argument, 0,  's' },
+
 
       // Last element required to be all zeros.
       {0, 0, 0,  0 }
@@ -101,6 +111,9 @@ RunIndex::RunIndex(int argc, char *argv[]) {
          break;
        case 'i':
          job_index = atoi(optarg);
+         break;
+       case 's':
+         job_start = atoi(optarg);
          break;
        // Help and catch-all options.
        case 'h':
@@ -164,6 +177,11 @@ RunIndex::RunIndex(int argc, char *argv[]) {
     exit(-1);
   }
 
+  if (job_index > -2 && job_start > -2) {
+    fprintf(stderr, "The job_index and job_start arguments cannot both be used at the same time).\n");
+    exit(-1);
+  }
+
   // Retrieve the data from the EMatrix file.
   ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
 
@@ -176,7 +194,7 @@ RunIndex::RunIndex(int argc, char *argv[]) {
 RunIndex::~RunIndex() {
   //CLuceneIndexer indexer(outdir);
   SQLiteIndexer indexer(ematrix, outdir);
-  indexer.run(nsamples, job_index);
+  indexer.run(nsamples, job_index, job_start);
 }
 
 /**
