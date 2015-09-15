@@ -47,10 +47,10 @@ void SimMatrixTabCluster::writeNetwork() {
    // Open the edges output file and write the headers.
    char outfile_prefix[2048];
    if (max_missing > num_samples) {
-     sprintf(outfile_prefix, "%s.%s.th%0.6f.mcs%d.md%d.mmINF", file_prefix, method, th, min_cluster_size, max_modes);
+     sprintf(outfile_prefix, "%s.%s.mcs%d.md%d.mmINF.th%0.6f", file_prefix, method, min_cluster_size, max_modes, th);
    }
    else {
-     sprintf(outfile_prefix, "%s.%s.th%0.6f.mcs%d.md%d.mm%d", file_prefix, method, th, min_cluster_size, max_modes, max_missing);
+     sprintf(outfile_prefix, "%s.%s.mcs%d.md%d.mm%d.th%0.6f", file_prefix, method, min_cluster_size, max_modes, max_missing, th);
    }
    sprintf(edges_file, "%s.coexpnet.edges.txt", outfile_prefix);
    edges = fopen(edges_file, "w");
