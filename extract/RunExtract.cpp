@@ -200,6 +200,22 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      fprintf(stderr,"Error: The method (--method option) must either be 'pc', 'sc' or 'mi'.\n");
      exit(-1);
    }
+   // make sure we have a positive integer for the rows and columns of the matrix
+   if (rows < 0 || rows == 0) {
+     fprintf(stderr, "Please provide a positive integer value for the number of rows in the \n");
+     fprintf(stderr, "expression matrix (--rows option).\n");
+     exit(-1);
+   }
+   if (cols < 0 || cols == 0) {
+     fprintf(stderr, "Please provide a positive integer value for the number of columns in\n");
+     fprintf(stderr, "the expression matrix (--cols option).\n");
+     exit(-1);
+   }
+
+   if (omit_na && !na_val) {
+     fprintf(stderr, "Error: The missing value string should be provided (--na_val option).\n");
+     exit(-1);
+   }
 
    if (th > 0 && (x_coord > 0 ||  y_coord > 0)) {
      fprintf(stderr, "Please provide a threshold or x and y coordinates only but not both\n");
@@ -257,6 +273,9 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      printf("  Using method: '%s'\n", method);
      if (th > 0) {
        printf("  Using threshold of %f\n", th);
+     }
+     else {
+       printf("  Using coords (%d, %d)\n", x_coord, y_coord);
      }
    }
 }
