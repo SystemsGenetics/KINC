@@ -231,6 +231,9 @@ RunExtract::RunExtract(int argc, char *argv[]) {
 
    // if the user supplied gene
    if (gene1 && gene2) {
+     x_coord = findGeneCoord(gene1);
+     y_coord = findGeneCoord(gene2);
+
      // Make sure the coordinates are positive integers
      if (x_coord < 0) {
        fprintf(stderr, "Could not find gene %s in the genes list file\n", gene1);
@@ -264,6 +267,24 @@ RunExtract::~RunExtract() {
   delete ematrix;
 }
 
+/**
+ *
+ */
+int RunExtract::findGeneCoord(char * gene) {
+  char ** genes = ematrix->getGenes();
+  int num_genes = ematrix->getNumGenes();
+
+  for (int i = 1; i <= num_genes; i++) {
+    if (strcmp(gene, genes[i-1]) == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ *
+ */
 void RunExtract::execute() {
 
   // Get the similarity matrix.

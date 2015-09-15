@@ -60,6 +60,9 @@ class RunExtract {
     // The maximum number of clusters a pair-wise comparision can have.
     int max_modes;
 
+    // Returns the numerical coordinate of the gene in the ematrix file.
+    int findGeneCoord(char * gene);
+
   public:
     RunExtract(int argc, char *argv[]);
     ~RunExtract();
