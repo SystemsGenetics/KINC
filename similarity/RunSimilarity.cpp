@@ -65,7 +65,8 @@ void RunSimilarity::printUsage() {
   printf("  --max_clusters|-a The maximum number of clusters that can be found for each\n");
   printf("                    pairwise comparision. Values between 2 to 10 are reasonable.\n");
   printf("  --criterion|-r    The Mixture module criterion to use. Valid values include:\n");
-  printf("                    BIC, ICL, NEC, CV or DCV.\n");
+  printf("                    BIC, ICL, NEC, CV or DCV.  ICL may be more appropriate for\n");
+  printf("                    smaller datasets (e.g. < 100 samples), and BIC for larger.\n");
   printf("\n");
   printf("For Help:\n");
   printf("  --help|-h       Print these usage instructions\n");

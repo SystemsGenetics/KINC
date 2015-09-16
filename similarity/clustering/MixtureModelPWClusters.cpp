@@ -160,34 +160,78 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
     }
   }
   delete gdata;
-  if (found) {
-//    printf("Lowest: %d\n", lowest_cluster_num);
-    // Create the cluster objects using the iteration with the fewest clusters.
-    int cluster_num = 1;
-    int cluster_samples[this->pwset->n_clean];
-    bool done = false;
-    while (!done) {
-      done = true;
-      for (int i = 0; i < this->pwset->n_clean; i++) {
-        if (this->labels[i] == cluster_num) {
-          done = false;
-          cluster_samples[i] = 1;
-        }
-        else {
-          cluster_samples[i] = 0;
-        }
-      }
-      // if we found samples with the current cluster_num then create a
-      // cluster and add it to the list
-      if (!done) {
-        PairWiseCluster * cluster = new PairWiseCluster(this->pwset);
-        cluster->setClusterSamples(cluster_samples, true);
-        // Calculate the Spearman correlation for this cluster.
-        cluster->doSimilarity(this->method, this->min_obs);
-//        cluster->printCluster();
-        this->pwcl->addCluster(cluster);
-      }
-      cluster_num++;
+
+  // If a cluster was not found then simply return.
+  if (!found) {
+    return;
+  }
+
+  // Iterate through the clusters in the set that was selected.  We are
+  // done iterating through the clusters when we run out of labels in the
+  // labels array.
+  int cluster_num = 1;
+  int cluster_samples[this->pwset->n_clean];
+  bool done = false;
+  while (!done) {
+    // As a default set done to be true. If we find a label for the current
+    // cluster number then it will get set to false and we can deal with the
+    // cluster.
+    done = true;
+
+    // Prepare arrays for outlier detection and removal.
+    double cx[this->pwset->n_clean];
+    double cy[this->pwset->n_clean];
+    for (int j = 0; j < this->pwset->n_clean; j++) {
+      cx[j] = 0;
+      cy[j] = 0;
     }
+
+    // Build the samples array of 0's and 1's to indicate which
+    // samples are in the cluster and which are not, also populate the
+    // cx and cy arrays for outlier detection.
+    int l = 0;
+    for (int i = 0; i < this->pwset->n_clean; i++) {
+      if (this->labels[i] == cluster_num) {
+        cx[l] = this->pwset->x_clean[i];
+        cy[l] = this->pwset->y_clean[i];
+        l++;
+        done = false;
+        cluster_samples[i] = 1;
+      }
+      else {
+        cluster_samples[i] = 0;
+      }
+    }
+
+    // Discover any outliers for clusters with size >= min_obs
+    Outliers * outliersCx = NULL;
+    Outliers * outliersCy = NULL;
+    outliersCx = outliers_iqr(cx, this->pwset->n_clean, 1.5);
+    outliersCy = outliers_iqr(cy, this->pwset->n_clean, 1.5);
+
+    // Remove any outliers
+    for (int i = 0; i < this->pwset->n_clean; i++) {
+      for (int j = 0; j < outliersCx->n; j++) {
+        if (cluster_samples[i] == 1 && this->pwset->x_clean[i] == outliersCx->outliers[j]) {
+          cluster_samples[i] = 8;
+        }
+      }
+      for (int j = 0; j < outliersCy->n; j++) {
+        if (cluster_samples[i] == 1 && this->pwset->y_clean[i] == outliersCy->outliers[j]) {
+          cluster_samples[i] = 8;
+        }
+      }
+    }
+
+    // If we found samples with the current cluster_num then create a
+    // cluster and add it to the list.
+    if (!done) {
+      PairWiseCluster * cluster = new PairWiseCluster(this->pwset);
+      cluster->setClusterSamples(cluster_samples, true);
+      cluster->doSimilarity(this->method, this->min_obs);
+//        cluster->printCluster();
+      this->pwcl->addCluster(cluster);
+    }
+    cluster_num++;
   }
 }

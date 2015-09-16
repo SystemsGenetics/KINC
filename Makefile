@@ -18,6 +18,7 @@ OBJS = \
   general/error.o \
   general/misc.o \
   general/vector.o \
+  stats/outlier.o \
   ematrix/EMatrix.o \
   similarity/PairWiseSet.o \
   similarity/PairWiseSimilarity.o \
@@ -77,8 +78,8 @@ ematrix/EMatrix.o: ematrix/EMatrix.cpp ematrix/EMatrix.h
 #stats/royston.o: stats/royston.cpp stats/royston.h
 #	${CC} -c ${CFLAGS} ${INCLUDES} stats/royston.cpp -o stats/royston.o
 #
-#stats/outlier.o: stats/outlier.cpp stats/outlier.h
-#	${CC} -c ${CFLAGS} ${INCLUDES} stats/outlier.cpp -o stats/outlier.o
+stats/outlier.o: stats/outlier.cpp stats/outlier.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/outlier.cpp -o stats/outlier.o
 
 similarity/PairWiseSet.o: similarity/PairWiseSet.cpp similarity/PairWiseSet.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/PairWiseSet.cpp -o similarity/PairWiseSet.o

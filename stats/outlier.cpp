@@ -13,6 +13,9 @@
  *   The size of the array 'x'
  * @param double coef
  *   A coefficient to multiply by the IQR. Default should be 1.5.
+ *
+ * @return Outliers
+ *   An Outliers struct.
  */
 Outliers * outliers_iqr(double * x, int n, double coef) {
 
