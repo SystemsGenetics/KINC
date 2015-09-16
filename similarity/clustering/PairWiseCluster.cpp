@@ -10,6 +10,7 @@ PairWiseCluster::PairWiseCluster(PairWiseSet * pwset) {
   this->cluster_samples = NULL;
   this->cluster_size = 0;
   this->num_missing = 0;
+  this->num_outliers = 0;
   this->neighbor = NULL;
   this->pwsim = NULL;
   this->index = 0;
@@ -47,9 +48,10 @@ void PairWiseCluster::doSimilarity(const char * method, int min_obs) {
  * Sets the PairWiseCluster samples.
  */
 void PairWiseCluster::setClusterSamples(int * samples, bool from_clean) {
+
   this->cluster_samples = (int *) malloc(sizeof(int) * this->pwset->n_orig);
 
-  // If the samples list was derived using the  clean samples of the PWSet
+  // If the samples list was derived using the clean samples of the PWSet
   // then we need strech back out the samples to their original size
   // and marking missing samples with a 9.
   int k = 0;
@@ -60,12 +62,12 @@ void PairWiseCluster::setClusterSamples(int * samples, bool from_clean) {
         if (samples[k] == 1) {
           this->cluster_size++;
         }
+        if (samples[k] == 8) {
+          this->num_outliers++;
+        }
         k++;
       }
       else {
-        //this->cluster_samples[i] = 0;
-        // Using a 9 here is temporary.  Just for debugging to make
-        // it easier to identify missing values.
         this->cluster_samples[i] = 9;
         this->num_missing++;
       }
