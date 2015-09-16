@@ -6,13 +6,14 @@
  * DRArgs constructor.
  */
 ThresholdMethod::ThresholdMethod(EMatrix *ematrix, char * method, char * clustering,
-    int min_cluster_size, int max_missing) {
+    int min_cluster_size, int max_missing, int max_modes) {
 
   this->ematrix = ematrix;
   this->method = method;
   this->clustering = clustering;
   this->min_cluster_size = min_cluster_size;
   this->max_missing = max_missing;
+  this->max_modes = max_modes;
 
   bin_dir = (char *) malloc(sizeof(char) * strlen(ematrix->getInfileName()));
   if (strcmp(method, "mi") == 0) {

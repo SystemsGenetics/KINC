@@ -15,6 +15,7 @@
 #include "PairWiseCluster.h"
 #include "PairWiseClustering.h"
 #include "PairWiseClusterList.h"
+#include "../../stats/outlier.h"
 
 /**
  * A class for a single pair-wise comparision using mixture models.

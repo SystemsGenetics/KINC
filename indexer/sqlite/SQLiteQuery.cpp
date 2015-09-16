@@ -3,7 +3,8 @@
 /**
  * The function to call when running the 'index' command.
  */
-SQLiteQuery::SQLiteQuery(char * indexdir) : IndexQuery(indexdir) {
+SQLiteQuery::SQLiteQuery(char * indexdir, EMatrix * ematrix) :
+  IndexQuery(indexdir, ematrix) {
 
 
 }
@@ -17,7 +18,7 @@ SQLiteQuery::~SQLiteQuery() {
 /**
  * Performs the indexing.
  */
-void SQLiteQuery::run(char * outfile, int x_coord, int y_coord, float score) {
+void SQLiteQuery::run(int x_coord, int y_coord, float score) {
   int i;
   char q[2048];
   sqlite3_stmt *cluster_select_stmt;
@@ -26,15 +27,14 @@ void SQLiteQuery::run(char * outfile, int x_coord, int y_coord, float score) {
   char * samples;
   float cv;
 
-  // Open the output file.
-  FILE * fp = fopen(outfile ,"w");
-  if (!fp) {
-    fprintf(stderr, "The output file cannot be opened for writing. Quiting.\n");
-    exit(-1);
-  }
-
   // Iterate through the directories.
   for (i = 100; i >= 0; i--) {
+
+    // If a threshold is set then don't examine indexes below the requested value.
+    if (i / 100.0 <= score) {
+      continue;
+    }
+
     char dirname[1024];
     char dbname[1024];
     if (i > 0) {
@@ -82,7 +82,7 @@ void SQLiteQuery::run(char * outfile, int x_coord, int y_coord, float score) {
     // Prepare the query for execution.
     rc = sqlite3_prepare_v2(db, q, 2048, &cluster_select_stmt, NULL);
     if (rc != SQLITE_OK) {
-      fprintf(stderr, "Failed to prepare cluster select statement: %s\n", sqlite3_errmsg(db));
+      fprintf(stderr, "Failed to prepare cluster select statement for index %s: %s\n", dirname, sqlite3_errmsg(db));
       exit(-1);
     }
 
@@ -100,8 +100,8 @@ void SQLiteQuery::run(char * outfile, int x_coord, int y_coord, float score) {
       cv  = sqlite3_column_double(cluster_select_stmt, 6);
       samples  = (char *) sqlite3_column_text(cluster_select_stmt, 7);
 
-      // Write the line to the output file
-      printf("%d\t%d\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", j, k, cv,
+      // Write the line to output.
+      printf("%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", ematrix->getGene(j), ematrix->getGene(k), cv,
           cluster_num, num_clusters, num_samples, num_missing, samples);
 
       // Get the next row.
@@ -113,5 +113,4 @@ void SQLiteQuery::run(char * outfile, int x_coord, int y_coord, float score) {
     // Close the database.
     sqlite3_close(db);
   }
-  fclose(fp);
 }

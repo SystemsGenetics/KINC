@@ -25,6 +25,8 @@ class PairWiseCluster {
     PairWiseSimilarity * pwsim;
     // The number of samples that are missing from the cluster.
     int num_missing;
+    // The number of outliers in the cluster.
+    int num_outliers;
 
     // The next cluster in the linked list.
     PairWiseCluster * neighbor;

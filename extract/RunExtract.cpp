@@ -33,7 +33,7 @@ void RunExtract::printUsage() {
   printf("  -y               Extract a single similarity value: the y coordinate. Must also use -x.\n");
   printf("  --gene1|-1       Extract a single similarity value: The name of the first gene in a singe\n");
   printf("                   pair-wise comparision.  Must be used with --gene2 option.\n");
-  printf("  --gene1|-1       Extract a single similarity value: The name of the second gene in a singe\n");
+  printf("  --gene1|-2       Extract a single similarity value: The name of the second gene in a singe\n");
   printf("                   pair-wise comparision.  Must be used with --gene1 option.\n");
   printf("\n");
   printf("Optional arguments for clustered data:\n");
@@ -46,6 +46,10 @@ void RunExtract::printUsage() {
   printf("                   If not provided, no limit is set.\n");
   printf("  --min_csize|-z   The minimum cluster size (number of samples per cluster).\n");
   printf("                   Default is 30\n");
+  printf("  --max_modes|-d   The maximum number of modes. If a pair-wise comparision\n");
+  printf("                   has multiple modes (i.e. multiple clusters) then only clusters from those\n");
+  printf("                   comparisions with modes equal to or less than the value specified are\n");
+  printf("                   included. Default is 1.\n");
   printf("\n");
   printf("For Help:\n");
   printf("  --help|-h        Print these usage instructions\n");
@@ -58,6 +62,7 @@ RunExtract::RunExtract(int argc, char *argv[]) {
    rows = 0;
    cols = 0;
    max_missing = INFINITY;
+   max_modes = 1;
    min_cluster_size = 30;
    method = NULL;
    x_coord = -1;
@@ -99,13 +104,15 @@ RunExtract::RunExtract(int argc, char *argv[]) {
       {"clustering",   required_argument, 0,  'l' },
       {"max_missing",  required_argument, 0,  'g' },
       {"min_csize",    required_argument, 0,  'z' },
+      {"max_modes",    required_argument, 0,  'd' },
+
       // Last element required to be all zeros.
       {0, 0, 0, 0}
     };
     delete ematrix;
 
     // get the next option
-    c = getopt_long(argc, argv, "m:r:c:f:n:e:t:1:2:x:y:g:z:l:h", long_options, &option_index);
+    c = getopt_long(argc, argv, "m:r:c:f:n:e:t:1:2:x:y:g:d:z:l:h", long_options, &option_index);
 
     // if the index is -1 then we have reached the end of the options list
     // and we break out of the while loop
@@ -163,6 +170,9 @@ RunExtract::RunExtract(int argc, char *argv[]) {
       case 'g':
         max_missing = atoi(optarg);
         break;
+      case 'd':
+        max_modes = atoi(optarg);
+        break;
       case 'h':
         printUsage();
         exit(-1);
@@ -190,6 +200,22 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      fprintf(stderr,"Error: The method (--method option) must either be 'pc', 'sc' or 'mi'.\n");
      exit(-1);
    }
+   // make sure we have a positive integer for the rows and columns of the matrix
+   if (rows < 0 || rows == 0) {
+     fprintf(stderr, "Please provide a positive integer value for the number of rows in the \n");
+     fprintf(stderr, "expression matrix (--rows option).\n");
+     exit(-1);
+   }
+   if (cols < 0 || cols == 0) {
+     fprintf(stderr, "Please provide a positive integer value for the number of columns in\n");
+     fprintf(stderr, "the expression matrix (--cols option).\n");
+     exit(-1);
+   }
+
+   if (omit_na && !na_val) {
+     fprintf(stderr, "Error: The missing value string should be provided (--na_val option).\n");
+     exit(-1);
+   }
 
    if (th > 0 && (x_coord > 0 ||  y_coord > 0)) {
      fprintf(stderr, "Please provide a threshold or x and y coordinates only but not both\n");
@@ -199,6 +225,10 @@ RunExtract::RunExtract(int argc, char *argv[]) {
    if (max_missing < -1) {
      fprintf(stderr, "Please provide a positive integer value for maximum missing values\n");
      fprintf(stderr, "the expression matrix (--max_missing option).\n");
+     exit(-1);
+   }
+   if (max_modes < 1) {
+     fprintf(stderr, "Please provide a positive integer greater than 1 for the maximum modes values (--max_modes option).\n");
      exit(-1);
    }
    if (min_cluster_size < 0 || min_cluster_size == 0) {
@@ -212,11 +242,20 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      exit(-1);
    }
 
+   // make sure the required arguments are set and appropriate
+   if (!infilename) {
+     fprintf(stderr,"Please provide an expression matrix (--ematrix option).\n");
+     exit(-1);
+   }
+
    // Load the input expression matrix.
    ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
 
    // if the user supplied gene
    if (gene1 && gene2) {
+     x_coord = ematrix->getGeneCoord(gene1);
+     y_coord = ematrix->getGeneCoord(gene2);
+
      // Make sure the coordinates are positive integers
      if (x_coord < 0) {
        fprintf(stderr, "Could not find gene %s in the genes list file\n", gene1);
@@ -241,6 +280,9 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      if (th > 0) {
        printf("  Using threshold of %f\n", th);
      }
+     else {
+       printf("  Using coords (%d, %d)\n", x_coord, y_coord);
+     }
    }
 }
 /**
@@ -250,12 +292,16 @@ RunExtract::~RunExtract() {
   delete ematrix;
 }
 
+/**
+ *
+ */
 void RunExtract::execute() {
 
   // Get the similarity matrix.
   if (clustering) {
     SimMatrixTabCluster * smatrix = new SimMatrixTabCluster(ematrix, quiet,
-      method, x_coord, y_coord, gene1, gene2, th, max_missing, min_cluster_size);
+      method, x_coord, y_coord, gene1, gene2, th, max_missing, min_cluster_size,
+      max_modes);
     // If we have a threshold then we want to get the edges of the network.
     // Otherwise the user has asked to print out the similarity value for
     // two genes.

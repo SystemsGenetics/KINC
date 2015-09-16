@@ -50,6 +50,8 @@ class RunThreshold {
     int max_missing;
     // The minimum number of samples in a cluster.
     int min_cluster_size;
+    // The maximum number of modes to consider
+    int max_modes;
 
   public:
     RunThreshold(int argc, char *argv[]);

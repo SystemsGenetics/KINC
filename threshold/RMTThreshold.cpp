@@ -2,8 +2,8 @@
 
 RMTThreshold::RMTThreshold(EMatrix * ematrix, char * method, double thresholdStart,
     double thresholdStep, double chiSoughtValue, char * clustering, int min_cluster_size,
-    int max_missing)
-  : ThresholdMethod(ematrix, method, clustering, min_cluster_size, max_missing) {
+    int max_missing, int max_modes)
+  : ThresholdMethod(ematrix, method, clustering, min_cluster_size, max_missing, max_modes) {
 
   this->thresholdStart = thresholdStart;
   this->thresholdStep  = thresholdStep;
@@ -58,10 +58,27 @@ double RMTThreshold::findThreshold() {
   float * E;
   // The output file prefix.
   char * file_prefix = ematrix->getFilePrefix();
+  // The number of samples in the expression matrix.
+  int num_samples = ematrix->getNumSamples();
+
 
   // Open the output files and print the headers.
-  sprintf(chi_filename, "%s.%s.chiVals.txt", file_prefix, method);
-  sprintf(eigen_filename, "%s.%s.eigenVals.txt", file_prefix, method);
+  if (clustering) {
+    if (max_missing > num_samples) {
+      sprintf(chi_filename, "%s.%s.mcs%d.md%d.mmINF.chiVals.txt", file_prefix, method, min_cluster_size, max_modes);
+      sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mmINF.eigenVals.txt", file_prefix, method, min_cluster_size, max_modes);
+    }
+    else {
+      sprintf(chi_filename, "%s.%s.mcs%d.md%d.mm%d.chiVals.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
+      sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mm%d.eigenVals.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
+    }
+  }
+  else {
+    sprintf(chi_filename, "%s.%s.chiVals.txt", file_prefix, method);
+    sprintf(eigen_filename, "%s.%s.eigenVals.txt", file_prefix, method);
+  }
+
+
   chiF = fopen(chi_filename, "w");
   eigenF = fopen(eigen_filename, "w");
   fprintf(chiF, "Threshold\tChi-square\tCut Matrix Size\n");
@@ -175,7 +192,17 @@ double RMTThreshold::findThreshold() {
     finalTH = ceil(finalTH * 10000) / 10000.0;
     FILE* th;
     char filename[1024];
-    sprintf(filename, "%s.%s.th.txt", ematrix->getFilePrefix(), method);
+    if (clustering) {
+      if (max_missing > num_samples) {
+        sprintf(filename, "%s.%s.mcs%d.md%d.mmINF.th.txt", file_prefix, method, min_cluster_size, max_modes);
+      }
+      else {
+        sprintf(filename, "%s.%s.mcs%d.md%d.mm%d.th.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
+      }
+    }
+    else {
+      sprintf(filename, "%s.%s.th.txt", file_prefix, method);
+    }
     th = fopen(filename, "w");
     fprintf(th, "%f", finalTH);
     fclose(th);
@@ -410,10 +437,30 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
       struct dirent * entry;
       while ((entry = readdir(dir)) != NULL) {
         const char * filename = entry->d_name;
+
         // Skip the . and .. files.
         if (strcmp(filename, ".") == 0 || strcmp(filename, "..") == 0) {
           continue;
         }
+
+        // The file must end in a suffix with 3 digits followed by .txt.
+        // We use a regular expression to see if this is true. If not, then
+        // skip this file.
+        regex_t re;
+        char pattern[64] = "[0-9][0-9][0-9].txt";
+        int  rc;
+        size_t nmatch = 2;
+        regmatch_t pmatch[2];
+        if (0 != (rc = regcomp(&re, pattern, 0))) {
+          printf("regcomp() failed, returning nonzero (%d)\n", rc);
+          exit(-1);
+        }
+        if (regexec(&re, filename, nmatch, pmatch, 0)) {
+          regfree(&re);
+          continue;
+        }
+        regfree(&re);
+
         // Construct the full path to the file.
         char path[1024];
         sprintf(path, "%s/%s", dirname, filename);
@@ -439,7 +486,8 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
           }
 
           // filter the record.
-          if (fabs(cv) >= th && cluster_num_samples >= min_cluster_size  && num_missing <= max_missing) {
+          if (fabs(cv) >= th && cluster_num_samples >= min_cluster_size  &&
+              num_missing <= max_missing && num_clusters <= max_modes) {
             if (cluster_num > max_clusters) {
               fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
               exit(-1);
@@ -491,49 +539,76 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
 
     DIR * dir;
     dir = opendir(dirname);
-    if (dir) {
-      struct dirent * entry;
-      while ((entry = readdir(dir)) != NULL) {
-        const char * filename = entry->d_name;
-        // Skipe the . and .. files.
-        if (strcmp(filename, ".") == 0 || strcmp(filename, "..") == 0) {
+    if (!dir) {
+      fprintf(stderr, "The clusters sub directory, %s, is missing. Cannot continue.\n", dirname);
+      continue;
+    }
+    struct dirent * entry;
+    while ((entry = readdir(dir)) != NULL) {
+      const char * filename = entry->d_name;
+
+      // Skip the . and .. files.
+      if (strcmp(filename, ".") == 0 || strcmp(filename, "..") == 0) {
+        continue;
+      }
+
+      // The file must end in a suffix with 3 digits followed by .txt.
+      // We use a regular expression to see if this is true. If not, then
+      // skip this file.
+      regex_t re;
+      char pattern[64] = "[0-9][0-9][0-9].txt";
+      int  rc;
+      size_t nmatch = 2;
+      regmatch_t pmatch[2];
+      if (0 != (rc = regcomp(&re, pattern, 0))) {
+        printf("regcomp() failed, returning nonzero (%d)\n", rc);
+        exit(-1);
+      }
+      if (regexec(&re, filename, nmatch, pmatch, 0)) {
+        regfree(&re);
+        continue;
+      }
+      regfree(&re);
+
+      // Construct the full path to the file.
+      char path[1024];
+      sprintf(path, "%s/%s", dirname, filename);
+
+      // Open each file and traverse the elements
+      FILE * fp = fopen(path, "r");
+      if (!fp) {
+        fprintf(stderr, "Can't open file, %s. Cannot continue.\n", path);
+        exit(-1);
+      }
+      int j, k, cluster_num, num_clusters, cluster_num_samples, num_missing;
+      char samples[num_samples];
+      float cv;
+      while (!feof(fp)) {
+
+        // Read in the fields for this line. We must read in 8 fields or
+        // we will skip the line.
+        int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
+        if (matches < 8) {
+          char tmp[num_samples*2];
+          matches = fscanf(fp, "%s\n", (char *)&tmp);
           continue;
         }
-        // Construct the full path to the file.
-        char path[1024];
-        sprintf(path, "%s/%s", dirname, filename);
 
-        // Open each file and traverse the elements
-        FILE * fp = fopen(path, "r");
-        if (!fp) {
-          fprintf(stderr, "Can't open file, %s. Cannot continue.\n", path);
-          exit(-1);
-        }
-        int j, k, cluster_num, num_clusters, cluster_num_samples, num_missing;
-        char samples[num_samples];
-        float cv;
-        int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
-        while (matches == 8) {
-          if (fabs(cv) >= th && cluster_num_samples >= min_cluster_size  && num_missing <= max_missing) {
-            if (cluster_num > max_clusters) {
-              fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
-              exit(-1);
-            }
-            int index_j = cutM_index[j * max_clusters + (cluster_num - 1)];
-            int index_k = cutM_index[k * max_clusters + (cluster_num - 1)];
-            int ci = index_k + (used * index_j);
-            cutM[ci] = cv;
+        if (fabs(cv) >= th && cluster_num_samples >= min_cluster_size  &&
+            num_missing <= max_missing && num_clusters <= max_modes) {
+          if (cluster_num > max_clusters) {
+            fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
+            exit(-1);
           }
-          matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
+          int index_j = cutM_index[j * max_clusters + (cluster_num - 1)];
+          int index_k = cutM_index[k * max_clusters + (cluster_num - 1)];
+          int ci = index_k + (used * index_j);
+          cutM[ci] = cv;
         }
-        fclose(fp);
       }
-      closedir(dir);
+      fclose(fp);
     }
-    else {
-      fprintf(stderr, "The clusters sub directory, %s, is missing. Cannot continue.\n", dirname);
-      exit(-1);
-    }
+    closedir(dir);
   }
 
   // free memory

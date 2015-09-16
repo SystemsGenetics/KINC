@@ -1,8 +1,8 @@
 #ifndef _OUTLIER_
 #define _OUTLIER_
 
-#include "../error.h"
-#include "../vector.h"
+#include "../general/error.h"
+#include "../general/vector.h"
 
 
 typedef struct {

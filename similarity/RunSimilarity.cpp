@@ -37,7 +37,7 @@ void RunSimilarity::printUsage() {
   printf("Optional Mutual Information Arguments:\n");
   printf("  --mi_bins|-b      Use only if the method is 'mi'. The number of bins for the\n");
   printf("                    B-spline estimator function for MI. Default is 10.\n");
-  printf("  --mi_degree|-d    Use only if the method is 'mi'. The degree of the\n");
+  printf("  --mi_degree|-d  MT-ematrix-log-no.sc6.bin  Use only if the method is 'mi'. The degree of the\n");
   printf("                    B-spline estimator function for MI. Default is 3.\n");
   printf("\n");
   printf("Optional Clustering Arguments:\n");
@@ -64,8 +64,11 @@ void RunSimilarity::printUsage() {
   printf("Optional Mixture Module Clustering Arguments:\n");
   printf("  --max_clusters|-a The maximum number of clusters that can be found for each\n");
   printf("                    pairwise comparision. Values between 2 to 10 are reasonable.\n");
+  printf("                    Default is 5.\n");
   printf("  --criterion|-r    The Mixture module criterion to use. Valid values include:\n");
-  printf("                    BIC, ICL, NEC, CV or DCV.\n");
+  printf("                    BIC, ICL, NEC, CV or DCV.  ICL may be more appropriate for\n");
+  printf("                    smaller datasets (e.g. < 100 samples), and BIC for larger.\n");
+  printf("                    Default is BIC.\n");
   printf("\n");
   printf("For Help:\n");
   printf("  --help|-h       Print these usage instructions\n");
@@ -283,7 +286,7 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
         fprintf(stderr, "Error: Please provide a positive integer for the number of jobs to run. (--num_jobs option).\n");
         exit(-1);
       }
-      if (job_index < 1 || job_index > num_jobs) {
+      if (job_index < 0 || job_index > num_jobs) {
         fprintf(stderr, "Error: The job index must be between 1 and %d. (--job_index option).\n", num_jobs);
         exit(-1);
       }
@@ -372,14 +375,25 @@ void RunSimilarity::executeTraditional() {
   int num_genes = ematrix->getNumGenes();
   // The binary output file prefix
   char * fileprefix = ematrix->getFilePrefix();
+  char outdir[100];
 
   // calculate the number of binary files needed to store the similarity matrix
   num_bins = (num_genes - 1) / ROWS_PER_OUTPUT_FILE;
 
-  // make sure the Spearman directory exists
+  // Make sure the output directory exists
+  if (strcmp(method, "sc") == 0) {
+    strcpy((char *)&outdir, "./Spearman");
+  }
+  if (strcmp(method, "pc") == 0) {
+    strcpy((char *)&outdir, "./Pearson");
+  }
+  if (strcmp(method, "mi") == 0) {
+    strcpy((char *)&outdir, "./MI");
+  }
   struct stat st = {0};
-  if (stat("./Spearman", &st) == -1) {
-      mkdir("./Spearman", 0700);
+  if (stat(outdir, &st) == -1) {
+    mkdir(outdir, 0700);
+
   }
 
   total_comps = (num_genes * num_genes) / 2;
@@ -398,7 +412,7 @@ void RunSimilarity::executeTraditional() {
     }
 
     // the output file will be located in the Spearman directory and named based on the input file info
-    sprintf(outfilename, "./Spearman/%s.sc%d.bin", fileprefix, curr_bin);
+    sprintf(outfilename, "%s/%s.%s%d.bin", outdir,fileprefix, method, curr_bin);
     printf("Writing file %d of %d: %s... \n", curr_bin + 1, num_bins + 1, outfilename);
     FILE * outfile = fopen(outfilename, "wb");
 

@@ -10,6 +10,7 @@
 #include <gsl/gsl_matrix.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <regex.h>
 #include "../general/vector.h"
 
 
@@ -57,7 +58,7 @@ class RMTThreshold : public ThresholdMethod {
   public:
     RMTThreshold(EMatrix * ematrix, char * method, double thresholdStart,
         double thresholdStep, double chiSoughtValue, char * clustering,
-        int min_cluster_size, int max_missing);
+        int min_cluster_size, int max_missing, int max_modes);
     ~RMTThreshold();
 
     double findThreshold();

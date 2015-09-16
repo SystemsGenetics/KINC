@@ -2,6 +2,7 @@
 #define _SIMMATRIXTABCLUSTER_
 
 #include <sys/stat.h>
+#include <regex.h>
 #include "SimilarityMatrix.h"
 
 /**
@@ -10,12 +11,12 @@
 class SimMatrixTabCluster : public SimilarityMatrix {
 
   private:
-    // The number of jobs that were used to construct the files.
-    int num_jobs;
     // The maxiumum number of missing values allowed in a pair-wise comparision.
     int max_missing;
     // The minimum cluster size.
     int min_cluster_size;
+    // The maximum number of modes.
+    int max_modes;
 
 
     // Discovers the number of jobs used to generate the clustering files.
@@ -24,7 +25,7 @@ class SimMatrixTabCluster : public SimilarityMatrix {
     // Constructur.
     SimMatrixTabCluster(EMatrix *ematrix, int quiet, char * method, int x_coord,
         int y_cood, char * gene1, char * gene2, float th, int max_missing,
-        int min_cluster_size);
+        int min_cluster_size, int max_modes);
 
     // Destructor.
     ~SimMatrixTabCluster();

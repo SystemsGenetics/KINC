@@ -49,6 +49,10 @@ void RunThreshold::printUsage() {
   printf("                   If not provided, no limit is set.\n");
   printf("  --min_csize|-z   The minimum cluster size (number of samples per cluster).\n");
   printf("                   Default is 30\n");
+  printf("  --max_modes|-d   The maximum number of modes. If a pair-wise comparision\n");
+  printf("                   has multiple modes (i.e. multiple clusters) then only clusters from those\n");
+  printf("                   comparisions with modes equal to or less than the value specified are\n");
+  printf("                   included. Default is 1.\n");
   printf("\n");
   printf("For Help:\n");
   printf("  --help|-h     Print these usage instructions\n");
@@ -61,6 +65,7 @@ void RunThreshold::printUsage() {
 RunThreshold::RunThreshold(int argc, char *argv[]) {
   // initialize some of the program parameters
   max_missing = INFINITY;
+  max_modes = 1;
   min_cluster_size = 30;
 
   thresholdStart = 0.99;
@@ -94,6 +99,7 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
       {"clustering",   required_argument, 0,  'l' },
       {"max_missing",  required_argument, 0,  'g' },
       {"min_csize",    required_argument, 0,  'z' },
+      {"max_modes",    required_argument, 0,  'd' },
       // RMT Threshold options.
       {"chi",          required_argument, 0,  'i' },
       {"th",           required_argument, 0,  't' },
@@ -104,7 +110,7 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
     };
 
     // get the next option
-    c = getopt_long(argc, argv, "m:g:z:r:c:f:n:e:l:h", long_options, &option_index);
+    c = getopt_long(argc, argv, "m:g:z:r:c:f:n:e:d:l:h", long_options, &option_index);
 
     // if the index is -1 then we have reached the end of the options list
     // and we break out of the while loop
@@ -128,6 +134,9 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
         break;
       case 'g':
         max_missing = atoi(optarg);
+        break;
+      case 'd':
+        max_modes = atoi(optarg);
         break;
       // RMT threshold options.
       case 't':
@@ -191,13 +200,15 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
     }
 
     if (max_missing < -1) {
-      fprintf(stderr, "Please provide a positive integer value for maximum missing values\n");
-      fprintf(stderr, "the expression matrix (--max_missing option).\n");
+      fprintf(stderr, "Please provide a positive integer value for maximum missing values (--max_missing option).\n");
+      exit(-1);
+    }
+    if (max_modes < 1) {
+      fprintf(stderr, "Please provide a positive integer greater than 1 for the maximum modes values (--max_modes option).\n");
       exit(-1);
     }
     if (min_cluster_size < 0 || min_cluster_size == 0) {
-      fprintf(stderr, "Please provide a positive integer value for the minimum cluster size in\n");
-      fprintf(stderr, "the expression matrix (--min_cluster_size option).\n");
+      fprintf(stderr, "Please provide a positive integer value for the minimum cluster size (--min_cluster_size option).\n");
       exit(-1);
     }
   }
@@ -231,7 +242,8 @@ void RunThreshold::execute() {
 
   // Find the RMT threshold.
   RMTThreshold * rmt = new RMTThreshold(ematrix, method, thresholdStart,
-      thresholdStep, chiSoughtValue, clustering, min_cluster_size, max_missing);
+      thresholdStep, chiSoughtValue, clustering, min_cluster_size, max_missing,
+      max_modes);
   rmt->findThreshold();
   printf("Done.\n");
 }

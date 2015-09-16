@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     similarity->execute();
     delete similarity;
   }
-/*  // construct the similarity matrix
+  // construct the similarity matrix
   else if (strcmp(argv[1], "index") == 0) {
     RunIndex * index = new RunIndex(argc, argv);
     index->execute();
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     RunQuery * query = new RunQuery(argc, argv);
     query->execute();
     delete query;
-  }*/
+  }
   // identify the threshold for cutting the similarity matrix
   else if (strcmp(argv[1], "threshold") == 0) {
     RunThreshold * threshold = new RunThreshold(argc, argv);
@@ -75,12 +75,12 @@ int main(int argc, char *argv[]) {
       if (strcmp(argv[2], "extract") == 0) {
         RunExtract::printUsage();
       }
-//      if (strcmp(argv[2], "index") == 0) {
-//        RunIndex::printUsage();
-//      }
-//      if (strcmp(argv[2], "query") == 0) {
-//        RunQuery::printUsage();
-//      }
+      if (strcmp(argv[2], "index") == 0) {
+        RunIndex::printUsage();
+      }
+      if (strcmp(argv[2], "query") == 0) {
+        RunQuery::printUsage();
+      }
     }
     else {
       print_usage();
