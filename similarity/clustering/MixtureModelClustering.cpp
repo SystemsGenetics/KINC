@@ -68,9 +68,13 @@ void MixtureModelClustering::run() {
   long long int num_rows = ematrix->getNumGenes() - 1;
   long long int total_comps  = num_rows * (num_rows + 1) / 2;
   long long int comps_per_process = total_comps / num_jobs;
-  long long int comp_start = (job_index - 1) * comps_per_process;
-  long long int comp_stop = (job_index - 1) * comps_per_process + comps_per_process;
+  long long int comp_start = 0;
+  long long int comp_stop = total_comps;
 
+  if (job_index > 0) {
+    comp_start = (job_index - 1) * comps_per_process;
+    comp_stop = (job_index - 1) * comps_per_process + comps_per_process;
+  }
   // If this is the last process and there are some remainder comparisons
   // then we need to add them to the stop
   if (job_index == num_jobs) {
@@ -112,6 +116,10 @@ void MixtureModelClustering::run() {
       if (j >= i) {
         continue;
       }
+
+//      if (i != 48756 - 1 || j != 7247 - 1) {
+//        continue;
+//      }
 
       // If this computation is not meant for this process, then skip it.
       if (n_comps < comp_start || n_comps >= comp_stop) {

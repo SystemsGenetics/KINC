@@ -64,9 +64,11 @@ void RunSimilarity::printUsage() {
   printf("Optional Mixture Module Clustering Arguments:\n");
   printf("  --max_clusters|-a The maximum number of clusters that can be found for each\n");
   printf("                    pairwise comparision. Values between 2 to 10 are reasonable.\n");
+  printf("                    Default is 5.\n");
   printf("  --criterion|-r    The Mixture module criterion to use. Valid values include:\n");
   printf("                    BIC, ICL, NEC, CV or DCV.  ICL may be more appropriate for\n");
   printf("                    smaller datasets (e.g. < 100 samples), and BIC for larger.\n");
+  printf("                    Default is BIC.\n");
   printf("\n");
   printf("For Help:\n");
   printf("  --help|-h       Print these usage instructions\n");
@@ -284,7 +286,7 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
         fprintf(stderr, "Error: Please provide a positive integer for the number of jobs to run. (--num_jobs option).\n");
         exit(-1);
       }
-      if (job_index < 1 || job_index > num_jobs) {
+      if (job_index < 0 || job_index > num_jobs) {
         fprintf(stderr, "Error: The job index must be between 1 and %d. (--job_index option).\n", num_jobs);
         exit(-1);
       }
