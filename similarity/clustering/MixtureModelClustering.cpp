@@ -127,7 +127,7 @@ void MixtureModelClustering::run() {
         continue;
       }
 
-      // Skip comparisions before where we left off form a previous run.
+      // Skip comparisons before where we left off form a previous run.
       if (i < pwcw->getRecoveryX() - 1) {
         n_comps++;
         continue;

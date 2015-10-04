@@ -407,7 +407,7 @@ void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, 
   // If there are no clusters then this comparison was skipped.
   if (curr == NULL) {
     fp = fps[102];
-    (*fp) << gene1 + 1 << "\t" << gene2 << endl;
+    (*fp) << gene1 + 1 << "\t" << gene2 + 1 << endl;
     fp->flush();
   }
 
