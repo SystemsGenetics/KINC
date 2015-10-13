@@ -26,13 +26,15 @@ PairWiseCluster::PairWiseCluster(PairWiseSet * pwset, char ** method, int num_me
  * Desctructor.
  */
 PairWiseCluster::~PairWiseCluster() {
-  free(this->cluster_samples);
+  if (this->cluster_samples) {
+    free(this->cluster_samples);
+  }
   for (int i = 0; i < this->num_methods; i++) {
     if (this->pwsim[i]) {
       delete this->pwsim[i];
     }
   }
-  free(this->pwsim);
+  delete this->pwsim;
 }
 
 void PairWiseCluster::doSimilarity(int min_obs) {

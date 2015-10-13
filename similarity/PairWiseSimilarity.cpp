@@ -87,7 +87,7 @@ void PairWiseSimilarity::init() {
 }
 
 /**
- * Desctructor
+ * Destructor
  */
 PairWiseSimilarity::~PairWiseSimilarity() {
   free(a);

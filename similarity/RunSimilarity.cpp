@@ -91,7 +91,7 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
   num_jobs = 1;
   job_index = 0;
 
-  // Defaults for mutual informatin B-spline estimate.
+  // Defaults for mutual information B-spline estimate.
   mi_bins = 10;
   mi_degree = 3;
 
