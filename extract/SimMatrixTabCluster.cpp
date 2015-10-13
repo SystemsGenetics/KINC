@@ -166,4 +166,8 @@ void SimMatrixTabCluster::writeNetwork() {
  */
 void SimMatrixTabCluster::getPosition() {
 
+  // Use the largest gene index (i or j) and computing the following
+  // ((n * n - 1) / 2) / jobs = comps_per_job
+  // (((i* i - 1) / 2) / comps_per_job) + 1 = job_index
+  // Look through all files with job_index suffix for results
 }

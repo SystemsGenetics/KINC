@@ -14,10 +14,10 @@ void RunSimilarity::printUsage() {
   printf("  --rows|-r         The number of lines in the ematrix file including the header\n");
   printf("                    row if it exists\n");
   printf("  --cols|-c         The number of columns in the input file\n");
-  printf("  --method|-m       The correlation method to use. Supported methods include\n");
-  printf("                    Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
-  printf("                    and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
-  printf("                    'mi' as values respectively.\n");
+  printf("  --method|-m       The correlation methods to use. Supported methods include\n");
+  printf("                    Pearson's correlation ('pc'), Spearman's rank ('sc')\n");
+  printf("                    and Mutual Information ('mi'). Provide as many methods as\n");
+  printf("                    desired by separating each with a comma with no spaces..\n");
   printf("\n");
   printf("Optional Expression Matrix Arguments:\n");
   printf("  --omit_na         Provide this flag to ignore missing values.\n");
@@ -95,6 +95,16 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
   mi_bins = 10;
   mi_degree = 3;
 
+  // Set the default threshold for expression values.
+  threshold  = -INFINITY;
+
+  // Initialize the array of method names. We set it to 10 as max. We'll
+  // most likely never have this many of similarity methods available.
+  method = (char **) malloc(sizeof(char *) * 10);
+
+  // The concatenated method.
+  char * cmethod;
+
   // loop through the incoming arguments until the
   // getopt_long function returns -1. Then we break out of the loop
   // The value returned by getopt_long.
@@ -108,6 +118,7 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
       {"help",         no_argument,       0,  'h' },
       {"method",       required_argument, 0,  'm' },
       {"min_obs",      required_argument, 0,  'o' },
+      {"th",           required_argument, 0,  's' },
       // Mutual information options.
       {"mi_bins",      required_argument, 0,  'b' },
       {"mi_degree",    required_argument, 0,  'd' },
@@ -131,7 +142,7 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
     };
 
     // get the next option
-    c = getopt_long(argc, argv, "m:o:b:d:j:i:t:a:l:r:c:f:n:e:h", long_options, &option_index);
+    c = getopt_long(argc, argv, "m:o:b:d:j:i:t:a:l:r:c:f:n:e:s:h", long_options, &option_index);
 
     // if the index is -1 then we have reached the end of the options list
     // and we break out of the while loop
@@ -144,10 +155,13 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
       case 0:
         break;
       case 'm':
-        method = optarg;
+        cmethod = optarg;
         break;
       case 'o':
         min_obs = atoi(optarg);
+        break;
+      case 's':
+        threshold = atof(optarg);
         break;
       // Mutual information options.
       case 'b':
@@ -206,17 +220,12 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
     }
   }
 
-  // Nake sure the similarity method is valid.
-  if (!method) {
+  // Make sure the similarity method is valid.
+  if (!cmethod) {
     fprintf(stderr,"Please provide the method (--method option).\n");
     exit(-1);
   }
-  if (strcmp(method, "pc") != 0 &&
-      strcmp(method, "mi") != 0 &&
-      strcmp(method, "sc") != 0 ) {
-    fprintf(stderr,"Error: The method (--method option) must either be 'pc', 'sc' or 'mi'.\n");
-    exit(-1);
-  }
+  parseMethods(cmethod);
 
   // make sure the required arguments are set and appropriate
   if (!infilename) {
@@ -299,9 +308,6 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
     histogram[m] = 0;
   }
 
-  // Retrieve the data from the EMatrix file.
-  ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
-
   if (headers) {
     printf("  Skipping header lines\n");
   }
@@ -310,10 +316,12 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
     printf("  Missing values are: '%s'\n", na_val);
   }
   printf("  Required observations: %d\n", min_obs);
-  printf("  Using similarity method: '%s'\n", method);
-  if (strcmp(method, "mi") ==0) {
-    printf("  Bins for B-Spline estimate of MI: %d\n", mi_bins);
-    printf("  Degree for B-Spline estimate of MI: %d\n", mi_degree);
+  for(int i = 0; i < this->num_methods; i++) {
+    printf("  Using similarity method: '%s'\n", method[i]);
+    if (strcmp(method[i], "mi") ==0) {
+      printf("  Bins for B-Spline estimate of MI: %d\n", mi_bins);
+      printf("  Degree for B-Spline estimate of MI: %d\n", mi_degree);
+    }
   }
   if (clustering) {
     if (strcmp(clustering, "mixmod") == 0) {
@@ -324,6 +332,48 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
       printf("    Job index: %d\n", job_index);
     }
   }
+
+  // Retrieve the data from the EMatrix file.
+  ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
+}
+/**
+ *
+ */
+void RunSimilarity::parseMethods(char * methods_str) {
+  // Split the method into as many parts
+  char * tmp;
+  int i = 0;
+  tmp = strstr(methods_str, ",");
+  while (tmp) {
+    // Get the method and make sure it's valid.
+    method[i] = (char *) malloc(sizeof(char) * (tmp - methods_str + 1));
+    strncpy(method[i], methods_str, (tmp - methods_str));
+    methods_str = tmp + 1;
+    tmp = strstr(methods_str, ",");
+    i++;
+  }
+  // Get the last element of the methods_str.
+  method[i] = (char *) malloc(sizeof(char) * strlen(methods_str) + 1);
+  strcpy(method[i], methods_str);
+  i++;
+
+  this->num_methods = i;
+
+  for (i = 0; i < this->num_methods; i++) {
+    if (strcmp(method[i], "pc") != 0 &&
+        strcmp(method[i], "mi") != 0 &&
+        strcmp(method[i], "sc") != 0 ) {
+      fprintf(stderr,"Error: The method (--method option) must contain only 'pc', 'sc' or 'mi'.\n");
+      exit(-1);
+    }
+    // Make sure the method isn't specified more than once.
+    for (int j = 0; j < i; j++) {
+      if (strcmp(method[i], method[j]) == 0) {
+        fprintf(stderr,"Error: You may only specify a similarity method once (--method option).\n");
+        exit(-1);
+      }
+    }
+  }
 }
 
 /**
@@ -332,6 +382,10 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
 RunSimilarity::~RunSimilarity() {
   delete ematrix;
   free(histogram);
+  for (int i = 0; i < this->num_methods; i++) {
+    free(method[i]);
+  }
+  free(method);
 }
 
 /**
@@ -344,7 +398,8 @@ void RunSimilarity::execute() {
       // integrated. It should be possible for MPI to support multiple
       // jobs for either method.
       MixtureModelClustering * mwc = new MixtureModelClustering(ematrix,
-          min_obs, num_jobs, job_index, method, criterion, max_clusters);
+          min_obs, num_jobs, job_index, method, num_methods, criterion,
+          max_clusters, threshold);
       mwc->run();
     }
   }
@@ -359,7 +414,7 @@ void RunSimilarity::execute() {
 void RunSimilarity::executeTraditional() {
   // The output file name.
   char outfilename[1024];
-  // Used for pairwise comparision of the same gene.
+  // Used for pairwise comparison of the same gene.
   float one = 1.0;
   // The number of binary files needed to store the matrix.
   int num_bins;
@@ -367,7 +422,7 @@ void RunSimilarity::executeTraditional() {
   int curr_bin;
   // Holds the number of rows in the file.
   int bin_rows;
-  // The total number of pair-wise comparisions to be made.
+  // The total number of pair-wise comparisons to be made.
   int total_comps;
   // The number of comparisions completed during looping.
   int n_comps;
@@ -376,24 +431,27 @@ void RunSimilarity::executeTraditional() {
   // The binary output file prefix
   char * fileprefix = ematrix->getFilePrefix();
   char outdir[100];
+  // Hold an array of output files (one per each method).
+  FILE ** outfiles = NULL;
 
   // calculate the number of binary files needed to store the similarity matrix
   num_bins = (num_genes - 1) / ROWS_PER_OUTPUT_FILE;
 
   // Make sure the output directory exists
-  if (strcmp(method, "sc") == 0) {
-    strcpy((char *)&outdir, "./Spearman");
-  }
-  if (strcmp(method, "pc") == 0) {
-    strcpy((char *)&outdir, "./Pearson");
-  }
-  if (strcmp(method, "mi") == 0) {
-    strcpy((char *)&outdir, "./MI");
-  }
-  struct stat st = {0};
-  if (stat(outdir, &st) == -1) {
-    mkdir(outdir, 0700);
-
+  for (int i = 0; i < this->num_methods; i++) {
+    if (strcmp(method[i], "sc") == 0) {
+      strcpy((char *)&outdir, "./Spearman");
+    }
+    if (strcmp(method[i], "pc") == 0) {
+      strcpy((char *)&outdir, "./Pearson");
+    }
+    if (strcmp(method[i], "mi") == 0) {
+      strcpy((char *)&outdir, "./MI");
+    }
+    struct stat st = {0};
+    if (stat(outdir, &st) == -1) {
+      mkdir(outdir, 0700);
+    }
   }
 
   total_comps = (num_genes * num_genes) / 2;
@@ -411,16 +469,21 @@ void RunSimilarity::executeTraditional() {
       bin_rows = num_genes;
     }
 
-    // the output file will be located in the Spearman directory and named based on the input file info
-    sprintf(outfilename, "%s/%s.%s%d.bin", outdir,fileprefix, method, curr_bin);
-    printf("Writing file %d of %d: %s... \n", curr_bin + 1, num_bins + 1, outfilename);
-    FILE * outfile = fopen(outfilename, "wb");
+    // the output file will be located in the  directory and named based on the input file info
+    outfiles = (FILE **) malloc(sizeof(FILE *) * this->num_methods);
+    for (int i = 0; i < this->num_methods; i++) {
+      // Open the file for storing the binary results.
+      sprintf(outfilename, "%s/%s.%s%d.bin", outdir,fileprefix, method[i], curr_bin);
+      printf("Writing file %d of %d: %s... \n", curr_bin + 1, num_bins + 1, outfilename);
+      outfiles[i] = fopen(outfilename, "wb");
 
-    // write the size of the matrix
-    fwrite(&num_genes, sizeof(num_genes), 1, outfile);
-    // write the number of lines in this file
-    int num_lines = bin_rows - (curr_bin * ROWS_PER_OUTPUT_FILE);
-    fwrite(&num_lines, sizeof(num_lines), 1, outfile);
+      // write the size of the matrix.
+      fwrite(&num_genes, sizeof(num_genes), 1, outfiles[i]);
+      // write the number of lines in this file
+      int num_lines = bin_rows - (curr_bin * ROWS_PER_OUTPUT_FILE);
+      fwrite(&num_lines, sizeof(num_lines), 1, outfiles[i]);
+    }
+
 
     // iterate through the genes that belong in this file
     for (int j = curr_bin * ROWS_PER_OUTPUT_FILE; j < bin_rows; j++) {
@@ -434,7 +497,9 @@ void RunSimilarity::executeTraditional() {
         }
         if (j == k) {
           // correlation of an element with itself is 1
-          fwrite(&one, sizeof(one), 1, outfile);
+          for (int i = 0; i < this->num_methods; i++) {
+            fwrite(&one, sizeof(one), 1, outfiles[i]);
+          }
           continue;
         }
 
@@ -442,42 +507,47 @@ void RunSimilarity::executeTraditional() {
         PairWiseSet * pwset = new PairWiseSet(ematrix, j, k);
 
         // Perform the appropriate calculation based on the method
-        if (strcmp(method, "pc") == 0) {
-          PearsonSimilarity * pws = new PearsonSimilarity(pwset, min_obs);
-          pws->run();
-          score = (float) pws->getScore();
-          delete pws;
-        }
-        else if(strcmp(method, "mi") == 0) {
-          MISimilarity * pws = new MISimilarity(pwset, min_obs, mi_bins, mi_degree);
-          pws->run();
-          score = (float) pws->getScore();
-          delete pws;
-        }
-        else if(strcmp(method, "sc") == 0) {
-          SpearmanSimilarity * pws = new SpearmanSimilarity(pwset, min_obs);
-          pws->run();
-          score = (float) pws->getScore();
-          delete pws;
-        }
-
-        delete pwset;
-        fwrite(&score, sizeof(float), 1, outfile);
-
-        // if the historgram is turned on then store the value in the correct bin
-        if (score < 1 && score > -1) {
-          if (score < 0) {
-            score = -score;
+        for (int i = 0; i < this->num_methods; i++) {
+          if (strcmp(method[i], "pc") == 0) {
+            PearsonSimilarity * pws = new PearsonSimilarity(pwset, min_obs);
+            pws->run();
+            score = (float) pws->getScore();
+            delete pws;
           }
-          histogram[(int)(score * HIST_BINS)]++;
+          else if(strcmp(method[i], "mi") == 0) {
+            MISimilarity * pws = new MISimilarity(pwset, min_obs, mi_bins, mi_degree);
+            pws->run();
+            score = (float) pws->getScore();
+            delete pws;
+          }
+          else if(strcmp(method[i], "sc") == 0) {
+            SpearmanSimilarity * pws = new SpearmanSimilarity(pwset, min_obs);
+            pws->run();
+            score = (float) pws->getScore();
+            delete pws;
+          }
+
+          delete pwset;
+          fwrite(&score, sizeof(float), 1, outfiles[i]);
         }
+
+//        // if the historgram is turned on then store the value in the correct bin
+//        if (score < 1 && score > -1) {
+//          if (score < 0) {
+//            score = -score;
+//          }
+//          histogram[(int)(score * HIST_BINS)]++;
+//        }
       }
     }
-    fclose(outfile);
+    for (int i = 0; i < this->num_methods; i++) {
+      fclose(outfiles[i]);
+    }
+    free(outfiles);
   }
 
   // Write the historgram
-  writeHistogram();
+//  writeHistogram();
 
   printf("\nDone.\n");
 }
@@ -493,15 +563,15 @@ void RunSimilarity::executeTraditional() {
  *   populated by calculate_MI or calculate_person.
  *
  */
-void RunSimilarity::writeHistogram() {
-  char outfilename[1024];  // the output file name
-
-  // output the correlation histogram
-  sprintf(outfilename, "%s.%s.corrhist.txt", ematrix->getFilePrefix(), method);
-  FILE * outfile = fopen(outfilename, "w");
-  for (int m = 0; m < HIST_BINS; m++) {
-    fprintf(outfile, "%lf\t%d\n", 1.0 * m / (HIST_BINS), histogram[m]);
-  }
-  fclose(outfile);
-}
+//void RunSimilarity::writeHistogram() {
+//  char outfilename[1024];  // the output file name
+//
+//  // output the correlation histogram
+//  sprintf(outfilename, "%s.%s.corrhist.txt", ematrix->getFilePrefix(), method);
+//  FILE * outfile = fopen(outfilename, "w");
+//  for (int m = 0; m < HIST_BINS; m++) {
+//    fprintf(outfile, "%lf\t%d\n", 1.0 * m / (HIST_BINS), histogram[m]);
+//  }
+//  fclose(outfile);
+//}
 

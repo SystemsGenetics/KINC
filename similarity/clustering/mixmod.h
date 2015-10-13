@@ -41,11 +41,11 @@ class MixtureModelPWClusters {
     char criterion[4];
     // The maximum number of clusters to allow per comparision.
     int min_obs;
-    // The similarity method
-    char * method;
+    // The similarity methods
+    char ** method;
 
   public:
-    MixtureModelPWClusters(PairWiseSet *pwset, int min_obs, char * method);
+    MixtureModelPWClusters(PairWiseSet *pwset, int min_obs, char ** method);
     ~MixtureModelPWClusters();
 
     // Returns the criterion used for mixture model.

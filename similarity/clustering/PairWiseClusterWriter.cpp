@@ -3,8 +3,8 @@
 /**
  * Constructor
  *
- * @param char * m
- *   The method used for similarity: sc, pc, mi
+ * @param char ** method
+ *   The list of similarity methods used: sc, pc, mi
  * @param char * fp
  *   The string used to prefix all files
  * @param int i
@@ -12,7 +12,8 @@
  * @param int n
  *   The number of samples.
  */
-PairWiseClusterWriter::PairWiseClusterWriter(char * method, char * fileprefix, int id, int num_samples) {
+PairWiseClusterWriter::PairWiseClusterWriter(char ** method, int num_methods,
+    char * fileprefix, int id, int num_samples) {
   this->job_index = id;
   this->num_samples = num_samples;
   // Set the recovery x and y coordinates to -1 to indicate that the
@@ -21,8 +22,8 @@ PairWiseClusterWriter::PairWiseClusterWriter(char * method, char * fileprefix, i
   this->recovery_x = -1;
   this->recovery_y = -1;
 
-  this->method = (char *) malloc(sizeof(char) * strlen(method) + 1);
-  strcpy(this->method, method);
+  this->method = method;
+  this->num_methods = num_methods;
 
   this->fileprefix = (char *) malloc(sizeof(char) * strlen(fileprefix) + 1);
   strcpy(this->fileprefix, fileprefix);
@@ -42,7 +43,6 @@ PairWiseClusterWriter::~PairWiseClusterWriter() {
   this->closeOutFiles();
   // Free strings created in constructor.
   free(fileprefix);
-  free(method);
 }
 // TODO: need a function to make sure the result directory is empty or that
 // the same number of job files are present.
@@ -59,7 +59,7 @@ void PairWiseClusterWriter::openOutFiles() {
   char nan_dir[50];
 
   // Make sure the output directory exists.
-  sprintf(clusters_dir, "./clusters-%s", method);
+  sprintf(clusters_dir, "./clusters");
   struct stat st = {0};
   if (stat(clusters_dir, &st) == -1) {
     mkdir(clusters_dir, 0700);
@@ -199,16 +199,16 @@ void PairWiseClusterWriter::findLastPositions() {
         fps[i]->getline(buffer, buffer_size);
 
         // Get the values from this line.
-        int x, y, cluster_num, num_clusters, cluster_samples, num_missing;
+        int x, y, cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold;
         float cv;
         char samples[num_samples];
-        int n = sscanf(buffer, "%d\t%d\t%d\t%d\t%d\t%d\t%f\t%s", &x, &y, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &cv, (char *) &samples);
+        int n = sscanf(buffer, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%f\t%s", &x, &y, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &num_outliers, &num_goutliers, &num_threshold, &cv, (char *) &samples);
 
         // If the correct number of fields was read from the file and the
         // correct number of samples is present then this is a good line. We
         // will store the x and y coordinates for this file as well
         // as the seek position for this file.
-        if (n == 8 && strlen(samples) == (unsigned int) num_samples) {
+        if (n == 11 && strlen(samples) == (unsigned int) num_samples) {
           done = 1;
           last_x[i] = x;
           last_y[i] = y;
@@ -413,9 +413,11 @@ void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, 
 
   // Iterate through the clusters and print them.
   while (curr != NULL) {
-    // Determine which file to write the output into
-    double score = curr->pwsim->getScore();
-    if (!curr->pwsim || isnan(score)) {
+    // Determine which file to write the output into. Use the first similarity
+    // method provided for this.
+    PairWiseSimilarity * pwsim = curr->getPWSimilarity(0);
+    double score = pwsim->getScore();
+    if (!pwsim || isnan(score)) {
       fp = fps[101];
     }
     else {
@@ -424,9 +426,22 @@ void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, 
       int i3 = (int) i2;
       fp = fps[i3];
     }
-    (*fp) << gene1 + 1 << "\t" << gene2 + 1 << "\t" << curr->index << "\t" << pwcl->num_clusters << "\t" << curr->cluster_size << "\t" << curr->num_missing  << "\t";
-    if (curr->pwsim) {
-      (*fp) << score << "\t";
+    (*fp) << gene1 + 1 << "\t" << gene2 + 1 << "\t" << curr->index << "\t" << pwcl->num_clusters << "\t" << curr->cluster_size << "\t" << curr->num_missing  << "\t" << curr->num_outliers << "\t" << curr->num_goutliers << "\t" << curr->num_threshold <<  "\t";
+    // Add in the scores, these should be separated by a comma.
+    int i;
+    char score_str[1024] = "";
+    for (i = 0; i < this->num_methods; i++) {
+      pwsim = curr->getPWSimilarity(i);
+      score = curr->getPWSimilarity(i)->getScore();
+      if (i == 0) {
+        sprintf(score_str, "%f", score);
+      }
+      else {
+        sprintf(score_str, "%s,%f", score_str, score);
+      }
+    }
+    if (i > 0) {
+      (*fp) << score_str << "\t";
     }
     else {
       (*fp) << NAN << "\t";

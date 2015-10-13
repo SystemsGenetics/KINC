@@ -2,6 +2,7 @@
 #define _PAIRWISESET_
 
 #include "../ematrix/EMatrix.h"
+#include "../stats/outlier.h"
 
 /**
  * A class that holds expression data for two genes/probesets.
@@ -28,11 +29,19 @@ class PairWiseSet {
     // was removed and not included in the comparision and one indicates it
     // was preserved and used in the comparision.
     int * samples;
+    // The threshold for expression values.
+    double threshold;
 
   public:
     PairWiseSet(EMatrix * ematrix, int i, int j);
+    PairWiseSet(EMatrix * ematrix, int i, int j, double th);
     PairWiseSet(double *a, double *b, int n, int i, int j);
+    PairWiseSet(double *a, double *b, int n, int i, int j, double th);
     ~PairWiseSet();
+
+    // Detects and removes outliers from the input vectors.
+    void maskOutliers();
+
 };
 
 #endif

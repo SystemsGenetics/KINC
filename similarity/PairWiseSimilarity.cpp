@@ -3,10 +3,6 @@
 /**
  * Constructor
  *
- * @param const char * method
- *   The type of similarity test to perform. Valid values include 'pc' for
- *   Pearson's correlation, 'sc' for Spearman's correlation and 'mi' for
- *   Mutual Information.
  * @param PairWiseSet *pws
  *   The PairWiseSet which provides information about the two genes being
  *   compared.
@@ -21,15 +17,16 @@ PairWiseSimilarity::PairWiseSimilarity(PairWiseSet *pws, int min_obs = 30) {
   this->samples = NULL;
   this->min_obs = min_obs;
 
+  // The similarity type should be a short abbreviation so we'll set the size
+  // to be of length 10 for a large enough string.
+  this->type = (char *) malloc(sizeof(char) * 10);
+
+
   init();
 }
 /**
  * Constructor
  *
- * @param const char * method
- *   The type of similarity test to perform. Valid values include 'pc' for
- *   Pearson's correlation, 'sc' for Spearman's correlation and 'mi' for
- *   Mutual Information.
  * @param PairWiseSet *pws
  *   The PairWiseSet which provides information about the two genes being
  *   compared.
@@ -49,6 +46,10 @@ PairWiseSimilarity::PairWiseSimilarity(PairWiseSet *pws, int min_obs, int * samp
   this->score = NAN;
   this->samples = samples;
   this->min_obs = min_obs;
+
+  // The similarity type should be a short abbreviation so we'll set the size
+  // to be of length 10 for a large enough string.
+  this->type = (char *) malloc(sizeof(char) * 10);
 
   init();
 }
@@ -91,4 +92,5 @@ void PairWiseSimilarity::init() {
 PairWiseSimilarity::~PairWiseSimilarity() {
   free(a);
   free(b);
+  free(type);
 }

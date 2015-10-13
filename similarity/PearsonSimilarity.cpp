@@ -7,12 +7,16 @@
  */
 PearsonSimilarity::PearsonSimilarity(PairWiseSet * pws, int min_obs)
   :PairWiseSimilarity(pws, min_obs) {
+
+  strcpy(this->type, "pc");
 }
 /**
  *
  */
 PearsonSimilarity::PearsonSimilarity(PairWiseSet * pws, int min_obs, int * samples)
   :PairWiseSimilarity(pws, min_obs, samples) {
+
+  strcpy(this->type, "pc");
 }
 
 PearsonSimilarity::~PearsonSimilarity() {

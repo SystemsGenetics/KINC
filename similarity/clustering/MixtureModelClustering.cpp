@@ -1,14 +1,16 @@
 #include "MixtureModelClustering.h"
 
 MixtureModelClustering::MixtureModelClustering(EMatrix *ematrix, int min_obs,
-    int num_jobs, int job_index, char *method, char * criterion,
-    int max_clusters)
+    int num_jobs, int job_index, char **method, int num_methods,
+    char * criterion, int max_clusters, double threshold)
   : PairWiseClustering(ematrix, min_obs, num_jobs, job_index) {
 
   // Initialize some values.
   this->max_clusters = max_clusters;
   this->criterion = criterion;
   this->method = method;
+  this->num_methods = num_methods;
+  this->threshold = threshold;
 
   // Make sure the mixture module criterion are good
   bool $mmc_is_good = false;
@@ -85,7 +87,7 @@ void MixtureModelClustering::run() {
   fflush(stdout);
 
   // Create the writer object to write out the clusters.
-  PairWiseClusterWriter * pwcw = new PairWiseClusterWriter(method,
+  PairWiseClusterWriter * pwcw = new PairWiseClusterWriter(method, num_methods,
       ematrix->getFilePrefix(), job_index, ematrix->getNumSamples());
 
   // Provide a message to the user indicating where the calculations will start.
@@ -106,10 +108,12 @@ void MixtureModelClustering::run() {
   long long int my_comps = 0;
 
   // Iterate through the rows of the expression matrix to perform
-  // pair-wise similarity comparisions.  We only need to process a
+  // pair-wise similarity comparisons.  We only need to process a
   // triangle of the resulting similarity matrix.
   for (int i = 0; i < num_rows; i++) {
     for (int j = 0; j < num_rows; j++) {
+//    for (int j = 5467; j <= 5467; j++) {
+//      for (int i = 32805; i <= 32805; i++) {
 
       // We only need to calculate clusters in the lower triangle of the
       // full pair-wise matrix
@@ -137,9 +141,13 @@ void MixtureModelClustering::run() {
         continue;
       }
 
-      // Perform pairwise clustering using mixture models
-      PairWiseSet * pwset = new PairWiseSet(ematrix, i, j);
-      MixtureModelPWClusters * mixmod = new MixtureModelPWClusters(pwset, min_obs, method);
+      // Initialize the pairwise set and remove global outliers.
+      PairWiseSet * pwset = new PairWiseSet(ematrix, i, j, threshold);
+      pwset->maskOutliers();
+
+      // Perform mixture modules
+      MixtureModelPWClusters * mixmod = new MixtureModelPWClusters(pwset,
+          min_obs, method, num_methods);
       mixmod->run(criterion, max_clusters);
       PairWiseClusterList * cluster_list = mixmod->getClusterList();
       pwcw->writeClusters(cluster_list, i, j);

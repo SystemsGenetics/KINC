@@ -26,8 +26,12 @@ class PairWiseSimilarity {
     // The minimum number of observations required to perform the comparision.
     int min_obs;
 
+    // The type of similarity that was performed.
+    char * type;
+
     // Called by the constructors to initialize the object.
     void init();
+
   public:
     PairWiseSimilarity(PairWiseSet *pws, int min_obs);
     PairWiseSimilarity(PairWiseSet *pws, int min_obs, int * samples);

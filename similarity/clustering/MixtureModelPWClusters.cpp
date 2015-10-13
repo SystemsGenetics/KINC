@@ -5,12 +5,14 @@
  *
  * @param EMatrix *ematrix;
  */
-MixtureModelPWClusters::MixtureModelPWClusters(PairWiseSet *pwset, int min_obs, char * method) {
+MixtureModelPWClusters::MixtureModelPWClusters(PairWiseSet *pwset, int min_obs,
+    char ** method, int num_methods) {
 
   // Initialize some values.
   this->pwset = pwset;
   this->min_obs = min_obs;
   this->method = method;
+  this->num_methods = num_methods;
   labels = NULL;
   pwcl = NULL;
   data = NULL;
@@ -226,9 +228,11 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
     // If we found samples with the current cluster_num then create a
     // cluster and add it to the list.
     if (!done) {
-      PairWiseCluster * cluster = new PairWiseCluster(this->pwset);
+      PairWiseCluster * cluster = new PairWiseCluster(this->pwset, this->method, this->num_methods);
       cluster->setClusterSamples(cluster_samples, true);
-      cluster->doSimilarity(this->method, this->min_obs);
+      for (int i = 0; i < this->num_methods; i++) {
+        cluster->doSimilarity(this->min_obs);
+      }
 //        cluster->printCluster();
       this->pwcl->addCluster(cluster);
     }

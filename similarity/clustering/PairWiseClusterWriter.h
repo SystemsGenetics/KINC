@@ -22,7 +22,9 @@ class PairWiseClusterWriter {
     //FILE ** fps;
     fstream ** fps;
     // Specifies the correlation method: pc, mi, sc
-    char * method;
+    char ** method;
+    // Indicates the number of methods.
+    int num_methods;
     // The prefix for the filename.
     char * fileprefix;
     // A unique id to differentiate between parallel executions.
@@ -38,7 +40,8 @@ class PairWiseClusterWriter {
 
   public:
     // Constructor.
-    PairWiseClusterWriter(char * method, char * fileprefix, int id, int num_samples);
+    PairWiseClusterWriter(char ** method, int num_methods, char * fileprefix,
+        int id, int num_samples);
     // Destructor.
     ~PairWiseClusterWriter();
     // Getters.

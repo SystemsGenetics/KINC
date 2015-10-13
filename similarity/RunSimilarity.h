@@ -3,6 +3,7 @@
 
 #include <getopt.h>
 #include <sys/stat.h>
+#include <string.h>
 #include "SpearmanSimilarity.h"
 #include "PearsonSimilarity.h"
 #include "MISimilarity.h"
@@ -19,12 +20,16 @@ class RunSimilarity {
   private:
     // The expression matrix object.
     EMatrix * ematrix;
-    // Specifies the method: sc, pc, mi.
-    char * method;
+    // Specifies the methods: sc, pc, mi.
+    char ** method;
+    // Indicates the number of methods.
+    int num_methods;
     // The minimum number of observations to calculate correlation.
     int min_obs;
     // An array holding the histogram of similarity scores.
     int * histogram;
+    // The threshold for expression values.
+    double threshold;
 
     // Variables for the expression matrix
     // -----------------------------------
@@ -75,6 +80,7 @@ class RunSimilarity {
     void writeHistogram();
     // Calcualtes pair-wise similarity score the traditional way.
     void executeTraditional();
+    void parseMethods(char * methods_str);
 
   public:
     RunSimilarity(int argc, char *argv[]);

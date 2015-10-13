@@ -17,12 +17,17 @@ class MixtureModelClustering : public PairWiseClustering {
     // The maximum number of clusters to allow per comparision.
     int max_clusters;
     // The similarity method
-    char * method;
+    char ** method;
+    // Indicates the number of methods.
+    int num_methods;
+    // The threshold for expression values.
+    double threshold;
 
   public:
 
     MixtureModelClustering(EMatrix *ematrix, int min_obs, int num_jobs,
-        int job_index, char * method, char * criterion, int max_clusters);
+        int job_index, char ** method, int num_methods, char * criterion,
+        int max_clusters, double threshold);
     ~MixtureModelClustering();
 
     // Returns usage help instructions.

@@ -4,9 +4,13 @@
 SpearmanSimilarity::SpearmanSimilarity(PairWiseSet * pws, int min_obs)
   :PairWiseSimilarity(pws, min_obs) {
 
+  strcpy(this->type, "sc");
+
 }
 SpearmanSimilarity::SpearmanSimilarity(PairWiseSet * pws, int min_obs, int * samples)
   :PairWiseSimilarity(pws, min_obs, samples) {
+
+  strcpy(this->type, "sc");
 
 }
 
