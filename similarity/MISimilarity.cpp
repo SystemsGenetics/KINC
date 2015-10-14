@@ -1,5 +1,15 @@
 #include "MISimilarity.h"
 
+
+MISimilarity::MISimilarity(PairWiseSet * pws, int min_obs, int * samples)
+  :PairWiseSimilarity(pws, min_obs, samples) {
+
+  this->mi_bins = 10;
+  this->mi_degree = 3;
+
+  strcpy(this->type, "mi");
+}
+
 MISimilarity::MISimilarity(PairWiseSet * pws, int min_obs, double mi_bins, double mi_degree)
   :PairWiseSimilarity(pws, min_obs) {
 
@@ -33,27 +43,26 @@ MISimilarity::~MISimilarity() {
  */
 void MISimilarity::run() {
   // Make sure we have the correct number of observations before performing
-  // the comparision.
+  // the comparison.
   if (this->n >= this->min_obs) {
     // Calculate the min and max
-    double xmin = 9999999;
-    double ymin = 9999999;
-    double xmax = -9999999;
-    double ymax = -9999999;
-    int k = 0;
+    double xmin = INFINITY;
+    double ymin = INFINITY;
+    double xmax = -INFINITY;
+    double ymax = -INFINITY;
     for (int i = 0; i < this->n; i++) {
       // calculate the x and y minimum
-      if (this->a[k] < xmin) {
-        xmin = this->a[k];
+      if (this->a[i] < xmin) {
+        xmin = this->a[i];
       }
-      if (this->a[k] > xmax) {
-        xmax = this->a[k];
+      if (this->a[i] > xmax) {
+        xmax = this->a[i];
       }
-      if (this->b[k] < ymin) {
-        ymin = this->b[k];
+      if (this->b[i] < ymin) {
+        ymin = this->b[i];
       }
-      if (this->b[k] > ymax) {
-        ymax = this->b[k];
+      if (this->b[i] > ymax) {
+        ymax = this->b[i];
       }
     }
 

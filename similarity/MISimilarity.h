@@ -20,6 +20,7 @@ class MISimilarity: public PairWiseSimilarity {
         double xmin, double ymin, double xmax, double ymax);
 
   public:
+    MISimilarity(PairWiseSet * pws, int min_obs, int * samples);
     MISimilarity(PairWiseSet * pws, int min_obs, double mi_bins, double mi_degree);
     MISimilarity(PairWiseSet * pws, int min_obs, int * samples, double mi_bins, double mi_degree);
     ~MISimilarity();

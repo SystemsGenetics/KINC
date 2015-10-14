@@ -51,11 +51,14 @@ void PairWiseCluster::doSimilarity(int min_obs) {
       psim->run();
       this->pwsim[i] = (PairWiseSimilarity *) psim;
     }
-  //  else if (strcmp(method[i], "mi") == 0) {
-  //    MISimilarity * msim = new MISimilarity(this->pwset, min_obs, this->cluster_samples);
-  //    msim->run();
-  //    this->pwsim[i] = (PairWiseSimilarity *) msim;
-  //  }
+    else if (strcmp(method[i], "mi") == 0) {
+      // TODO: need to add the ability to pass in additional arguments
+      // to the MISimilarity constructor such as the bins and degree.
+      // The call below just uses the defaults.
+      MISimilarity * msim = new MISimilarity(this->pwset, min_obs, this->cluster_samples);
+      msim->run();
+      this->pwsim[i] = (PairWiseSimilarity *) msim;
+    }
   }
 }
 /**
