@@ -90,7 +90,7 @@ void PairWiseSimilarity::init() {
  * Destructor
  */
 PairWiseSimilarity::~PairWiseSimilarity() {
-  free(a);
-  free(b);
-  free(type);
+  free(this->a);
+  free(this->b);
+  free(this->type);
 }

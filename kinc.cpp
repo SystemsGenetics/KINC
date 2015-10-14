@@ -22,7 +22,7 @@ void print_usage() {
  */
 int main(int argc, char *argv[]) {
   // Enable mtrace memory leak checking
-  //mtrace();
+  mtrace();
 
   // The return value
   int retval = 0;

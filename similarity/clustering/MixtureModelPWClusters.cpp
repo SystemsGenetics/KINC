@@ -224,15 +224,21 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
         }
       }
     }
+    if (outliersCx) {
+      free(outliersCx->outliers);
+      free(outliersCx);
+    }
+    if (outliersCy) {
+      free(outliersCy->outliers);
+      free(outliersCy);
+    }
 
     // If we found samples with the current cluster_num then create a
     // cluster and add it to the list.
     if (!done) {
       PairWiseCluster * cluster = new PairWiseCluster(this->pwset, this->method, this->num_methods);
       cluster->setClusterSamples(cluster_samples, true);
-      for (int i = 0; i < this->num_methods; i++) {
-        cluster->doSimilarity(this->min_obs);
-      }
+      cluster->doSimilarity(this->min_obs);
 //        cluster->printCluster();
       this->pwcl->addCluster(cluster);
     }

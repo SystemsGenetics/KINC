@@ -179,6 +179,7 @@ void PairWiseClusterWriter::findLastPositions() {
           last_x[i] = -1;
           last_y[i] = -1;
           last_seek[i] = file_size;
+          free(buffer);
           break;
         }
       }

@@ -142,6 +142,7 @@ EMatrix::~EMatrix() {
   free(data);
   free(genes);
   free(samples);
+  free(file_prefix);
 }
 /**
  *

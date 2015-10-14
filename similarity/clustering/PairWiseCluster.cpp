@@ -34,7 +34,7 @@ PairWiseCluster::~PairWiseCluster() {
       delete this->pwsim[i];
     }
   }
-  delete this->pwsim;
+  free(this->pwsim);
 }
 
 void PairWiseCluster::doSimilarity(int min_obs) {

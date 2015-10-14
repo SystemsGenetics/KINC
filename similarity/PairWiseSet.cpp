@@ -157,6 +157,14 @@ void PairWiseSet::maskOutliers() {
       }
     }
   }
+  if (outliersCx) {
+    free(outliersCx->outliers);
+    free(outliersCx);
+  }
+  if (outliersCy) {
+    free(outliersCy->outliers);
+    free(outliersCy);
+  }
 
   // Now recreate the clean arrays but with the outliers missing.
   double * nx_clean = (double *) malloc(sizeof(double) * this->n_orig);

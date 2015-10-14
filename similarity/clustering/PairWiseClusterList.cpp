@@ -14,6 +14,7 @@ PairWiseClusterList::PairWiseClusterList(PairWiseSet * pwset) {
 PairWiseClusterList::~PairWiseClusterList() {
   PairWiseCluster * next;
 
+  // Iterate through the pair-wise clusters and delete them.
   PairWiseCluster * curr = head;
   while (curr) {
     next = curr->neighbor;
