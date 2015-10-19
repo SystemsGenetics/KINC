@@ -8,8 +8,12 @@ class RunThreshold {
   private:
     // The expression matrix object.
     EMatrix * ematrix;
-    // Specifies the method: sc, pc, mi.
-    char * method;
+    // Specifies the methods: sc, pc, mi.
+    char ** method;
+    // Indicates the number of methods.
+    int num_methods;
+    // The method used for thresholding.
+    char * th_method;
     // The directory where the binary similarity matrix is found
     char * bin_dir;
 
@@ -52,6 +56,8 @@ class RunThreshold {
     int min_cluster_size;
     // The maximum number of modes to consider
     int max_modes;
+
+    void parseMethods(char * methods_str);
 
   public:
     RunThreshold(int argc, char *argv[]);

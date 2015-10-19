@@ -119,34 +119,34 @@ void SimMatrixTabCluster::writeNetwork() {
          fprintf(stderr, "Can't open file, %s. Cannot continue.\n", path);
          exit(-1);
        }
-       int j, k, cluster_num, num_clusters, cluster_num_samples, num_missing;
+       int j, k, cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold;
        char samples[num_samples];
        float cv;
        while (!feof(fp)) {
 
          // Read in the fields for this line. We must read in 8 fields or
          // we will skip the line.
-         int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
-         if (matches < 8) {
+         int matches = fscanf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%f\t%s", &j, &k, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &num_outliers, &num_goutliers, &num_threshold, &cv, (char *) &samples);
+         if (matches < 11) {
            char tmp[num_samples*2];
            matches = fscanf(fp, "%s\n", (char *)&tmp);
            continue;
          }
 
          // Filter the records
-         if (fabs(cv) >= th && cluster_num_samples >= min_cluster_size  &&
+         if (fabs(cv) >= th && cluster_samples >= min_cluster_size  &&
              num_missing <= max_missing && num_clusters <= max_modes) {
 
-           fprintf(edges, "%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", genes[j-1], genes[k-1], cv, cluster_num, num_clusters, cluster_num_samples, num_missing, samples);
+           fprintf(edges, "%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", genes[j-1], genes[k-1], cv, cluster_num, num_clusters, cluster_samples, num_missing, samples);
 
            // if the method id 'pc' (Pearson's correlation) then we will have
            // negative and positive values, and we'll write those to separate files
            if (strcmp(method, "pc") == 0 || strcmp(method, "sc") == 0) {
              if(cv >= 0){
-                fprintf(edgesP, "%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", genes[j-1], genes[k-1], cv, cluster_num, num_clusters, cluster_num_samples, num_missing, samples);
+                fprintf(edgesP, "%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", genes[j-1], genes[k-1], cv, cluster_num, num_clusters, cluster_samples, num_missing, samples);
              }
              else {
-               fprintf(edgesN, "%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", genes[j-1], genes[k-1], cv, cluster_num, num_clusters, cluster_num_samples, num_missing, samples);
+               fprintf(edgesN, "%s\t%s\t%0.8f\tco\t%d\t%d\t%d\t%d\t%s\n", genes[j-1], genes[k-1], cv, cluster_num, num_clusters, cluster_samples, num_missing, samples);
              }
            }
          }

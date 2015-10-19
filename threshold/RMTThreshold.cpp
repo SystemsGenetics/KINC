@@ -1,9 +1,10 @@
 #include "RMTThreshold.h"
 
-RMTThreshold::RMTThreshold(EMatrix * ematrix, char * method, double thresholdStart,
-    double thresholdStep, double chiSoughtValue, char * clustering, int min_cluster_size,
-    int max_missing, int max_modes)
-  : ThresholdMethod(ematrix, method, clustering, min_cluster_size, max_missing, max_modes) {
+RMTThreshold::RMTThreshold(EMatrix * ematrix, char ** method, int num_methods,
+    char * th_method, double thresholdStart, double thresholdStep, double chiSoughtValue,
+    char * clustering, int min_cluster_size, int max_missing, int max_modes)
+  : ThresholdMethod(ematrix, method, num_methods, th_method, clustering,
+      min_cluster_size, max_missing, max_modes) {
 
   this->thresholdStart = thresholdStart;
   this->thresholdStep  = thresholdStep;
@@ -65,17 +66,17 @@ double RMTThreshold::findThreshold() {
   // Open the output files and print the headers.
   if (clustering) {
     if (max_missing > num_samples) {
-      sprintf(chi_filename, "%s.%s.mcs%d.md%d.mmINF.chiVals.txt", file_prefix, method, min_cluster_size, max_modes);
-      sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mmINF.eigenVals.txt", file_prefix, method, min_cluster_size, max_modes);
+      sprintf(chi_filename, "%s.%s.mcs%d.md%d.mmINF.chiVals.txt", file_prefix, th_method, min_cluster_size, max_modes);
+      sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mmINF.eigenVals.txt", file_prefix, th_method, min_cluster_size, max_modes);
     }
     else {
-      sprintf(chi_filename, "%s.%s.mcs%d.md%d.mm%d.chiVals.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
-      sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mm%d.eigenVals.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
+      sprintf(chi_filename, "%s.%s.mcs%d.md%d.mm%d.chiVals.txt", file_prefix, th_method, min_cluster_size, max_modes, max_missing);
+      sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mm%d.eigenVals.txt", file_prefix, th_method, min_cluster_size, max_modes, max_missing);
     }
   }
   else {
-    sprintf(chi_filename, "%s.%s.chiVals.txt", file_prefix, method);
-    sprintf(eigen_filename, "%s.%s.eigenVals.txt", file_prefix, method);
+    sprintf(chi_filename, "%s.%s.chiVals.txt", file_prefix, th_method);
+    sprintf(eigen_filename, "%s.%s.eigenVals.txt", file_prefix, th_method);
   }
 
 
@@ -194,14 +195,14 @@ double RMTThreshold::findThreshold() {
     char filename[1024];
     if (clustering) {
       if (max_missing > num_samples) {
-        sprintf(filename, "%s.%s.mcs%d.md%d.mmINF.th.txt", file_prefix, method, min_cluster_size, max_modes);
+        sprintf(filename, "%s.%s.mcs%d.md%d.mmINF.th.txt", file_prefix, th_method, min_cluster_size, max_modes);
       }
       else {
-        sprintf(filename, "%s.%s.mcs%d.md%d.mm%d.th.txt", file_prefix, method, min_cluster_size, max_modes, max_missing);
+        sprintf(filename, "%s.%s.mcs%d.md%d.mm%d.th.txt", file_prefix, th_method, min_cluster_size, max_modes, max_missing);
       }
     }
     else {
-      sprintf(filename, "%s.%s.th.txt", file_prefix, method);
+      sprintf(filename, "%s.%s.th.txt", file_prefix, th_method);
     }
     th = fopen(filename, "w");
     fprintf(th, "%f", finalTH);
@@ -249,7 +250,7 @@ float * RMTThreshold::read_similarity_matrix_bin_file(float th, int * size) {
   // open the file and get the number of genes and the lines per file
   // these data are the first two integers in the file
   FILE* info;
-  sprintf(filename, "%s/%s.%s%d.bin", bin_dir, ematrix->getFilePrefix(), method, 0);
+  sprintf(filename, "%s/%s.%s%d.bin", bin_dir, ematrix->getFilePrefix(), th_method, 0);
   // TODO: check that file exists before trying to open
   info = fopen(filename, "rb");
   fread(&file_num_genes, sizeof(int), 1, info);
@@ -285,7 +286,7 @@ float * RMTThreshold::read_similarity_matrix_bin_file(float th, int * size) {
   z = (file_num_genes - 1) / file_num_lines;
   for (i = 0; i <= z; i++) {
 
-    sprintf(filename, "%s/%s.%s%d.bin", bin_dir, ematrix->getFilePrefix(), method, i);
+    sprintf(filename, "%s/%s.%s%d.bin", bin_dir, ematrix->getFilePrefix(), th_method, i);
     in = fopen(filename, "rb");
     fread(&junk, sizeof(int), 1, in); // file_num_genes
     fread(&junk, sizeof(int), 1, in); // file_num_lines
@@ -342,7 +343,7 @@ float * RMTThreshold::read_similarity_matrix_bin_file(float th, int * size) {
   // for each of the genes identified previously.
   for (i = 0; i < z; i++) {
 
-    sprintf(filename, "%s/%s.%s%d.bin", bin_dir, ematrix->getFilePrefix(), method, i);
+    sprintf(filename, "%s/%s.%s%d.bin", bin_dir, ematrix->getFilePrefix(), th_method, i);
     in = fopen(filename, "rb");
     fread(&junk, sizeof(int), 1, in); // file_num_genes
     fread(&junk, sizeof(int), 1, in); // file_num_lines
@@ -416,7 +417,7 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
   // Make sure the output directory exists.
   struct stat st = {0};
   char clusterdir[100];
-  sprintf(clusterdir, "clusters-%s", method);
+  sprintf(clusterdir, "clusters");
   if (stat(clusterdir, &st) == -1) {
     fprintf(stderr, "The clusters directory is missing. Cannot continue.\n");
     exit(-1);
@@ -471,22 +472,27 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
           fprintf(stderr, "Can't open file, %s. Cannot continue.\n", path);
           exit(-1);
         }
-        int j, k, cluster_num, num_clusters, cluster_num_samples, num_missing;
+        int j, k, cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold;
         char samples[num_samples];
+        char cscores[255];
         float cv;
         while (!feof(fp)) {
 
           // Read in the fields for this line. We must read in 8 fields or
           // we will skip the line.
-          int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
-          if (matches < 8) {
+          int matches = fscanf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\t%s", &j, &k, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &num_outliers, &num_goutliers, &num_threshold, (char *) &cscores, (char *) &samples);
+          if (matches < 11) {
             char tmp[num_samples*2];
             matches = fscanf(fp, "%s\n", (char *)&tmp);
             continue;
           }
 
+          // Get the score for the selected method.
+          float ** scores = parseScores((char *) &cscores);
+          cv = *(scores[th_method_index]);
+
           // filter the record.
-          if (fabs(cv) >= th && cluster_num_samples >= min_cluster_size  &&
+          if (fabs(cv) >= th && cluster_samples >= min_cluster_size  &&
               num_missing <= max_missing && num_clusters <= max_modes) {
             if (cluster_num > max_clusters) {
               fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
@@ -495,6 +501,11 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
             usedFlag[j * max_clusters + (cluster_num - 1)] = 1;
             usedFlag[k * max_clusters + (cluster_num - 1)] = 1;
           }
+
+          for (int l = 0; l < num_methods; l++) {
+            free(scores[l]);
+          }
+          free(scores);
         }
         fclose(fp);
       }
@@ -580,21 +591,21 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
         fprintf(stderr, "Can't open file, %s. Cannot continue.\n", path);
         exit(-1);
       }
-      int j, k, cluster_num, num_clusters, cluster_num_samples, num_missing;
+      int j, k, cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold;
       char samples[num_samples];
       float cv;
       while (!feof(fp)) {
 
         // Read in the fields for this line. We must read in 8 fields or
         // we will skip the line.
-        int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
-        if (matches < 8) {
+        int matches = fscanf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%f\t%s", &j, &k, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &num_outliers, &num_goutliers, &num_threshold, &cv, (char *) &samples);
+        if (matches < 11) {
           char tmp[num_samples*2];
           matches = fscanf(fp, "%s\n", (char *)&tmp);
           continue;
         }
 
-        if (fabs(cv) >= th && cluster_num_samples >= min_cluster_size  &&
+        if (fabs(cv) >= th && cluster_samples >= min_cluster_size  &&
             num_missing <= max_missing && num_clusters <= max_modes) {
           if (cluster_num > max_clusters) {
             fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);

@@ -23,7 +23,13 @@ class ThresholdMethod {
     // The directory where the expression matrix is found
     char * bin_dir;
     // Specifies the correlation method that was used: pc, mi, sc
-    char * method;
+    char ** method;
+    // Indicates the number of methods.
+    int num_methods;
+    // The method (e.g. sc, mi, pc) to use for thersholding
+    char * th_method;
+    // The index of the th_method in the methods array
+    int th_method_index;
 
 
     // DATA FILTERS FOR CLUSTERED SIMILARITY DATA
@@ -35,15 +41,17 @@ class ThresholdMethod {
     // The maximum number of clusters a pair-wise comparision can have.
     int max_modes;
 
+    float ** parseScores(char * scores_str);
+
 
   public:
-    ThresholdMethod(EMatrix *ematrix, char * method, char * clustering,
+    ThresholdMethod(EMatrix *ematrix, char ** method, int num_methods,
+        char * th_method, char * clustering,
         int min_cluster_size, int max_missing, int max_modes);
     ~ThresholdMethod();
 
     // GETTERS
     // -------
-    char * getCorMethod() { return method; }
     int getMaxMissing() { return max_missing; }
     int getMinClusterSize() { return min_cluster_size; }
 
