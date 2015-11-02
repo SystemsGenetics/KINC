@@ -3,9 +3,9 @@
 /**
  * Constructor
  */
-SimMatrixBinary::SimMatrixBinary(EMatrix *ematrix, int quiet, char * method, int x_coord,
-    int y_cood, char * gene1, char * gene2, float th)
-  : SimilarityMatrix(ematrix, quiet, method, x_coord, y_cood, gene1, gene2, th){
+SimMatrixBinary::SimMatrixBinary(EMatrix *ematrix, int quiet, char ** method, int num_methods,
+    char * th_method, int x_coord, int y_coord, char * gene1, char * gene2, float th)
+  : SimilarityMatrix(ematrix, quiet, method, num_methods, th_method, x_coord, y_coord, gene1, gene2, th){
 
   // Initialize some variables.
   num_files = 0;
@@ -13,23 +13,6 @@ SimMatrixBinary::SimMatrixBinary(EMatrix *ematrix, int quiet, char * method, int
   // Initialize the file pointer array.
   for(int i = 0; i < 50; i++) {
     files[i] = NULL;
-  }
-
-  if (strcmp(method, "mi") == 0) {
-    bin_dir = (char *) malloc(sizeof(char) * 5);
-    strcpy(bin_dir, "./MI");
-  }
-  else if (strcmp(method, "pc") == 0) {
-    bin_dir = (char *) malloc(sizeof(char) * 10);
-    strcpy(bin_dir, "./Pearson");
-  }
-  else if (strcmp(method, "sc") == 0) {
-    bin_dir = (char *) malloc(sizeof(char) * 11);
-    strcpy(bin_dir, "./Spearman");
-  }
-  else {
-    fprintf(stderr, "Unrecognized method: %s. Cannot find binary directory\n", method);
-    exit(-1);
   }
 
   // Open file handles to all of the binary files.
@@ -87,7 +70,7 @@ void SimMatrixBinary::openBinFiles() {
 
         // Make sure that this file has the method name proceeded by a period.
         char m[5];
-        sprintf(m, ".%s", method);
+        sprintf(m, ".%s", th_method);
         method_pos = strstr(curr_file->d_name, m);
 
         if (method_pos) {
@@ -162,7 +145,7 @@ void SimMatrixBinary::writeNetwork() {
    int num_genes = ematrix->getNumGenes();
    char ** genes = ematrix->getGenes();
 
-   sprintf(edges_file, "%s.%s.th%0.6f.coexpnet.edges.txt", file_prefix, method, th);
+   sprintf(edges_file, "%s.%s.th%0.6f.coexpnet.edges.txt", file_prefix, th_method, th);
    edges = fopen(edges_file, "w");
    if (!quiet) {
      printf("  Creating network files...\n");
@@ -172,10 +155,10 @@ void SimMatrixBinary::writeNetwork() {
 
    // The Spearman and Pearson correlation methods will have both negative and
    // positive values, so we want to create separate files for each one.
-   if (strcmp(method, "pc") == 0 ||
-       strcmp(method, "sc") == 0) {
-     sprintf(edgesN_file, "%s.%s.th%0.6f.neg.coexpnet.edges.txt", file_prefix, method, th);
-     sprintf(edgesP_file, "%s.%s.th%0.6f.pos.coexpnet.edges.txt", file_prefix, method, th);
+   if (strcmp(th_method, "pc") == 0 ||
+       strcmp(th_method, "sc") == 0) {
+     sprintf(edgesN_file, "%s.%s.th%0.6f.neg.coexpnet.edges.txt", file_prefix, th_method, th);
+     sprintf(edgesP_file, "%s.%s.th%0.6f.pos.coexpnet.edges.txt", file_prefix, th_method, th);
      edgesN = fopen(edgesN_file, "w");
      edgesP = fopen(edgesP_file, "w");
      fprintf(edgesN, "gene1\tgene2\tsimilarity\tinteraction\n");
@@ -211,8 +194,8 @@ void SimMatrixBinary::writeNetwork() {
 
             // if the method id 'pc' (Pearson's correlation) then we will have
             // negative and positive values, and we'll write those to separate files
-            if (strcmp(method, "pc") == 0 ||
-                strcmp(method, "sc") == 0) {
+            if (strcmp(th_method, "pc") == 0 ||
+                strcmp(th_method, "sc") == 0) {
               if(n >= 0){
                  fprintf(edgesP, "%s\t%s\t%0.8f\tco\n", genes[x], genes[y], n);
               }

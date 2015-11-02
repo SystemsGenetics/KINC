@@ -11,8 +11,12 @@ class RunExtract {
     // The expression matrix object.
     EMatrix * ematrix;
     // Specifies the method: sc, pc, mi.
-    char * method;
-    // Set to 1 if nothing but the sim value is shown
+    // Specifies the correlation method that was used: pc, mi, sc
+    char ** method;
+    // Indicates the number of methods.
+    int num_methods;
+    // The method used for thresholding.
+    char * th_method;
     int quiet;
 
     // Common Filters
@@ -58,6 +62,8 @@ class RunExtract {
     int min_cluster_size;
     // The maximum number of clusters a pair-wise comparision can have.
     int max_modes;
+
+    void parseMethods(char * methods_str);
 
   public:
     RunExtract(int argc, char *argv[]);

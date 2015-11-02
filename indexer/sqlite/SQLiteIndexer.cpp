@@ -240,15 +240,13 @@ void SQLiteIndexer::IndexFile(sqlite3 *db, char * filepath, int *mode_hist, int 
   }
 
   int nsamples = ematrix->getNumSamples();
-  int j, k, cluster_num, num_clusters, cluster_num_samples, num_missing;
+  int j, k, cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold;
   char samples[nsamples];
   float cv;
   while (!feof(fp)) {
     // Read in the fields for this line.
-    int matches = fscanf(fp, "%d\t%d\%d\t%d\%d\t%d\t%f\t%s\n", &j, &k, &cluster_num, &num_clusters, &cluster_num_samples, &num_missing, &cv, (char *)&samples);
-
-    // Skip lines that don't have the proper number of columns
-    if (matches < 8) {
+    int matches = fscanf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%f\t%s", &j, &k, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &num_outliers, &num_goutliers, &num_threshold, &cv, (char *) &samples);
+    if (matches < 11) {
       char tmp[nsamples*2];
       matches = fscanf(fp, "%s\n", (char *)&tmp);
       continue;
@@ -282,7 +280,7 @@ void SQLiteIndexer::IndexFile(sqlite3 *db, char * filepath, int *mode_hist, int 
       sqlite3_bind_int(cluster_insert_stmt, 3, num_clusters);
       sqlite3_bind_int(cluster_insert_stmt, 4, cluster_num);
       sqlite3_bind_int(cluster_insert_stmt, 5, num_missing);
-      sqlite3_bind_int(cluster_insert_stmt, 6, cluster_num_samples);
+      sqlite3_bind_int(cluster_insert_stmt, 6, cluster_samples);
       sqlite3_bind_double(cluster_insert_stmt, 7, cv);
       sqlite3_bind_text(cluster_insert_stmt, 8, samples, sample_len, SQLITE_STATIC);
       if(sqlite3_step(cluster_insert_stmt) != SQLITE_DONE) {

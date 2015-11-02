@@ -3,18 +3,28 @@
 /**
  * Constructor.
  */
-SimilarityMatrix::SimilarityMatrix(EMatrix *ematrix, int quiet, char * method,
-    int x_coord, int y_coord, char * gene1, char * gene2, float th) {
+SimilarityMatrix::SimilarityMatrix(EMatrix *ematrix, int quiet, char ** method,
+    int num_methods, char * th_method, int x_coord, int y_coord,
+    char * gene1, char * gene2, float th) {
 
   // Set some default values;
   this->ematrix = ematrix;
   this->quiet = quiet;
   this->method = method;
+  this->num_methods = num_methods;
+  this->th_method = th_method,
   this->x_coord = x_coord;
   this->y_coord = y_coord;
   this->gene1 = gene1;
   this->gene2 = gene2;
   this->th = th;
+
+  // Find the index of the th_method in the methods array
+  for (int i = 0; i < this->num_methods; i++) {
+    if (strcmp(method[i], th_method) == 0) {
+      this->th_method_index = i;
+    }
+  }
 
   if ((gene1 && !gene2) || (!gene1 && gene2)) {
     fprintf(stderr, "You must provide both gene1 and gene2 options.\n");

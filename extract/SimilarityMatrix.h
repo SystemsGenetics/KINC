@@ -21,8 +21,14 @@ class SimilarityMatrix {
     EMatrix * ematrix;
     // Set to 1 if nothing but the sim value is shown
     int quiet;
-    // Specifies the method: cor, mi.
-    char * method;
+    // Specifies the correlation method that was used: pc, mi, sc
+    char ** method;
+    // Indicates the number of methods.
+    int num_methods;
+    // The method used for thresholding.
+    char * th_method;
+    // The index of the th_method in the methods array
+    int th_method_index;
     // The user-specified x coordinate to retrieve
     int x_coord;
     // The user-specified y coordinate to retrieve
@@ -35,8 +41,8 @@ class SimilarityMatrix {
     float th;
   public:
     // Constructor.
-    SimilarityMatrix(EMatrix *ematrix, int quiet, char * method, int x_coord,
-        int y_cood, char * gene1, char * gene2, float th);
+    SimilarityMatrix(EMatrix *ematrix, int quiet, char ** method, int num_methods,
+        char * th_method, int x_coord, int y_cood, char * gene1, char * gene2, float th);
     // Desctructor.
     ~SimilarityMatrix();
 

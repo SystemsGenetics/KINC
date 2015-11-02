@@ -59,7 +59,7 @@ void PairWiseClusterWriter::openOutFiles() {
   char nan_dir[50];
 
   // Make sure the output directory exists.
-  sprintf(clusters_dir, "./clusters");
+  sprintf(clusters_dir, "./clusters-%s", method[0]);
   struct stat st = {0};
   if (stat(clusters_dir, &st) == -1) {
     mkdir(clusters_dir, 0700);

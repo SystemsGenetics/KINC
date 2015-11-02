@@ -19,13 +19,15 @@ class SimMatrixTabCluster : public SimilarityMatrix {
     int max_modes;
 
 
+
+
     // Discovers the number of jobs used to generate the clustering files.
     void getNumJobs();
   public:
     // Constructur.
-    SimMatrixTabCluster(EMatrix *ematrix, int quiet, char * method, int x_coord,
-        int y_cood, char * gene1, char * gene2, float th, int max_missing,
-        int min_cluster_size, int max_modes);
+    SimMatrixTabCluster(EMatrix *ematrix, int quiet, char ** method, int num_methods,
+        char * th_method, int x_coord, int y_cood, char * gene1, char * gene2, float th,
+        int max_missing, int min_cluster_size, int max_modes);
 
     // Destructor.
     ~SimMatrixTabCluster();
@@ -35,6 +37,9 @@ class SimMatrixTabCluster : public SimilarityMatrix {
     // Retrieves the similarity value for the given filtering paramters.
     // The user must have provided an x and y coordiante.
     void getPosition();
+
+    float ** parseScores(char * scores_str);
+
 };
 
 #endif

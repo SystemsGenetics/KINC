@@ -417,7 +417,7 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
   // Make sure the output directory exists.
   struct stat st = {0};
   char clusterdir[100];
-  sprintf(clusterdir, "clusters");
+  sprintf(clusterdir, "clusters-%s", th_method);
   if (stat(clusterdir, &st) == -1) {
     fprintf(stderr, "The clusters directory is missing. Cannot continue.\n");
     exit(-1);

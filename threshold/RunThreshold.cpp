@@ -224,6 +224,31 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
     }
   }
 
+  // Make sure we have a positive integer for the rows and columns of the matrix.
+  if (rows < 0 || rows == 0) {
+    fprintf(stderr, "Please provide a positive integer value for the number of rows in the \n");
+    fprintf(stderr, "expression matrix (--rows option).\n");
+    exit(-1);
+  }
+  if (cols < 0 || cols == 0) {
+    fprintf(stderr, "Please provide a positive integer value for the number of columns in\n");
+    fprintf(stderr, "the expression matrix (--cols option).\n");
+    exit(-1);
+  }
+
+  if (omit_na && !na_val) {
+    fprintf(stderr, "Error: The missing value string should be provided (--na_val option).\n");
+    exit(-1);
+  }
+
+  // make sure the required arguments are set and appropriate
+  if (!infilename) {
+    fprintf(stderr,"Please provide an expression matrix (--ematrix option).\n");
+    exit(-1);
+  }
+
+  // TODO: make sure the th_method is in the method array.
+
   // Load the input expression matrix.
   ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
 

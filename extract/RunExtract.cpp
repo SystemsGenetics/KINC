@@ -13,10 +13,14 @@ void RunExtract::printUsage() {
   printf("                   row if it exists\n");
   printf("  --cols|-c        The number of columns in the input file\n");
   printf("  --th|-t          The threshold to cut the similarity matrix. Network files will be generated.\n");
-  printf("  --method|-m      The correlation method to use. Supported methods include\n");
-  printf("                   Pearson's correlation ('pc'), Spearman's rank correlation ('sc')\n");
-  printf("                   and Mutual Information ('mi'). Provide either 'pc', 'sc', or\n");
-  printf("                   'mi' as values respectively.\n");
+  printf("  --method|-m      The correlation methods used. Supported methods include\n");
+  printf("                   Pearson's correlation ('pc'), Spearman's rank ('sc')\n");
+  printf("                   and Mutual Information ('mi'). Provide the methods that\n");
+  printf("                   were used in the 'similarity' step.  The methods must appear\n");
+  printf("                   in the same order.");
+  printf("  --th_method|-t   The method used for thresholding.  Only one method uses used\n");
+  printf("                   for thresholding even if multiple methods are provided\n");
+  printf("                   for the --method argument.\n");
   printf("\n");
   printf("Optional expression matrix arguments:\n");
   printf("  --omit_na        Provide this flag to ignore missing values.\n");
@@ -57,20 +61,28 @@ void RunExtract::printUsage() {
 }
 
 RunExtract::RunExtract(int argc, char *argv[]) {
+  // Set clustering defaults.
+  max_missing = INFINITY;
+  max_modes = 1;
+  min_cluster_size = 30;
+
   // Set some default values;
-   headers = 0;
-   rows = 0;
-   cols = 0;
-   max_missing = INFINITY;
-   max_modes = 1;
-   min_cluster_size = 30;
-   method = NULL;
-   x_coord = -1;
-   y_coord = -1;
-   gene1 = NULL;
-   gene2 = NULL;
-   th = 0;
-   quiet = 0;
+  headers = 0;
+  rows = 0;
+  cols = 0;
+  x_coord = -1;
+  y_coord = -1;
+  gene1 = NULL;
+  gene2 = NULL;
+  th = 0;
+  quiet = 0;
+
+   // Initialize the array of method names. We set it to 10 as max. We'll
+   // most likely never have this many of similarity methods available.
+   method = (char **) malloc(sizeof(char *) * 10);
+
+   // The concatenated method.
+   char * cmethod;
 
    // The value returned by getopt_long
    int c;
@@ -85,6 +97,7 @@ RunExtract::RunExtract(int argc, char *argv[]) {
     static struct option long_options[] = {
       {"quiet",        no_argument,       &quiet,  1 },
       {"method",       required_argument, 0,  'm' },
+      {"th_method",    required_argument, 0,  'p' },
       {"help",         no_argument,       0,  'h' },
       // Expression matrix options.
       {"rows",         required_argument, 0,  'r' },
@@ -125,7 +138,10 @@ RunExtract::RunExtract(int argc, char *argv[]) {
       case 0:
         break;
       case 'm':
-        method = optarg;
+        cmethod = optarg;
+        break;
+      case 'p':
+        th_method = optarg;
         break;
       // Clustering options.
       case 'l':
@@ -189,17 +205,34 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      }
    }
 
-   if (!method) {
-     fprintf(stderr, "Please provide the method (--method option) used to construct the similarity matrix.\n");
+   // Make sure the similarity method is valid.
+   if (!cmethod) {
+     fprintf(stderr,"Please provide the method (--method option).\n");
      exit(-1);
    }
-   // make sure the method is valid
-   if (strcmp(method, "pc") != 0 &&
-       strcmp(method, "mi") != 0 &&
-       strcmp(method, "sc") != 0 ) {
-     fprintf(stderr,"Error: The method (--method option) must either be 'pc', 'sc' or 'mi'.\n");
-     exit(-1);
+   parseMethods(cmethod);
+
+   if (clustering) {
+     // Make sure the clustering method is valid.
+     if (strcmp(clustering, "mixmod") != 0) {
+       fprintf(stderr,"Error: The clustering type (--clustering option) must be 'mixmod'. It is currently the only clustering method supported.\n");
+           exit(-1);
+     }
+
+     if (max_missing < -1) {
+       fprintf(stderr, "Please provide a positive integer value for maximum missing values (--max_missing option).\n");
+       exit(-1);
+     }
+     if (max_modes < 1) {
+       fprintf(stderr, "Please provide a positive integer greater than 1 for the maximum modes values (--max_modes option).\n");
+       exit(-1);
+     }
+     if (min_cluster_size < 0 || min_cluster_size == 0) {
+       fprintf(stderr, "Please provide a positive integer value for the minimum cluster size (--min_cluster_size option).\n");
+       exit(-1);
+     }
    }
+
    // make sure we have a positive integer for the rows and columns of the matrix
    if (rows < 0 || rows == 0) {
      fprintf(stderr, "Please provide a positive integer value for the number of rows in the \n");
@@ -219,21 +252,6 @@ RunExtract::RunExtract(int argc, char *argv[]) {
 
    if (th > 0 && (x_coord > 0 ||  y_coord > 0)) {
      fprintf(stderr, "Please provide a threshold or x and y coordinates only but not both\n");
-     exit(-1);
-   }
-
-   if (max_missing < -1) {
-     fprintf(stderr, "Please provide a positive integer value for maximum missing values\n");
-     fprintf(stderr, "the expression matrix (--max_missing option).\n");
-     exit(-1);
-   }
-   if (max_modes < 1) {
-     fprintf(stderr, "Please provide a positive integer greater than 1 for the maximum modes values (--max_modes option).\n");
-     exit(-1);
-   }
-   if (min_cluster_size < 0 || min_cluster_size == 0) {
-     fprintf(stderr, "Please provide a positive integer value for the minimum cluster size in\n");
-     fprintf(stderr, "the expression matrix (--min_csize option).\n");
      exit(-1);
    }
 
@@ -274,9 +292,14 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      exit(-1);
    }
 
+   // TODO: make sure the th_method is in the method array.
+
    // print out some setup details
    if (!quiet) {
-     printf("  Using method: '%s'\n", method);
+     for(int i = 0; i < this->num_methods; i++) {
+       printf("  Expecting similarity methods: '%s'\n", method[i]);
+     }
+     printf("  Method for thresholding: %s\n", th_method);
      if (th > 0) {
        printf("  Using threshold of %f\n", th);
      }
@@ -285,6 +308,48 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      }
    }
 }
+/**
+ *
+ */
+void RunExtract::parseMethods(char * methods_str) {
+
+  // Split the method into as many parts
+  char * tmp;
+  int i = 0;
+  tmp = strstr(methods_str, ",");
+  while (tmp) {
+    // Get the method and make sure it's valid.
+    method[i] = (char *) malloc(sizeof(char) * (tmp - methods_str + 1));
+    strncpy(method[i], methods_str, (tmp - methods_str));
+    methods_str = tmp + 1;
+    tmp = strstr(methods_str, ",");
+    i++;
+  }
+  // Get the last element of the methods_str.
+  method[i] = (char *) malloc(sizeof(char) * strlen(methods_str) + 1);
+  strcpy(method[i], methods_str);
+  i++;
+
+  this->num_methods = i;
+
+  for (i = 0; i < this->num_methods; i++) {
+    if (strcmp(method[i], "pc") != 0 &&
+        strcmp(method[i], "mi") != 0 &&
+        strcmp(method[i], "sc") != 0 ) {
+      fprintf(stderr,"Error: The method (--method option) must contain only 'pc', 'sc' or 'mi'.\n");
+      exit(-1);
+    }
+    // Make sure the method isn't specified more than once.
+    for (int j = 0; j < i; j++) {
+      if (strcmp(method[i], method[j]) == 0) {
+        fprintf(stderr,"Error: You may only specify a similarity method once (--method option).\n");
+        exit(-1);
+      }
+    }
+  }
+}
+
+
 /**
  *
  */
@@ -300,7 +365,7 @@ void RunExtract::execute() {
   // Get the similarity matrix.
   if (clustering) {
     SimMatrixTabCluster * smatrix = new SimMatrixTabCluster(ematrix, quiet,
-      method, x_coord, y_coord, gene1, gene2, th, max_missing, min_cluster_size,
+      method, num_methods, th_method, x_coord, y_coord, gene1, gene2, th, max_missing, min_cluster_size,
       max_modes);
     // If we have a threshold then we want to get the edges of the network.
     // Otherwise the user has asked to print out the similarity value for
@@ -314,7 +379,7 @@ void RunExtract::execute() {
   }
   else {
     SimMatrixBinary * smatrix = new SimMatrixBinary(ematrix, quiet, method,
-      x_coord, y_coord, gene1, gene2, th);
+      num_methods, th_method, x_coord, y_coord, gene1, gene2, th);
     // If we have a threshold then we want to get the edges of the network.
     // Otherwise the user has asked to print out the similarity value for
     // two genes.
