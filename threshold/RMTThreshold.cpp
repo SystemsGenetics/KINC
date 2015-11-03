@@ -67,21 +67,21 @@ double RMTThreshold::findThreshold() {
   if (clustering) {
     if (max_missing > num_samples) {
       sprintf(chi_filename, "%s.%s.mcs%d.md%d.mmINF.chiVals.txt", file_prefix, th_method, min_cluster_size, max_modes);
-      sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mmINF.eigenVals.txt", file_prefix, th_method, min_cluster_size, max_modes);
+      //sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mmINF.eigenVals.txt", file_prefix, th_method, min_cluster_size, max_modes);
     }
     else {
       sprintf(chi_filename, "%s.%s.mcs%d.md%d.mm%d.chiVals.txt", file_prefix, th_method, min_cluster_size, max_modes, max_missing);
-      sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mm%d.eigenVals.txt", file_prefix, th_method, min_cluster_size, max_modes, max_missing);
+      //sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mm%d.eigenVals.txt", file_prefix, th_method, min_cluster_size, max_modes, max_missing);
     }
   }
   else {
     sprintf(chi_filename, "%s.%s.chiVals.txt", file_prefix, th_method);
-    sprintf(eigen_filename, "%s.%s.eigenVals.txt", file_prefix, th_method);
+    //sprintf(eigen_filename, "%s.%s.eigenVals.txt", file_prefix, th_method);
   }
 
 
   chiF = fopen(chi_filename, "w");
-  eigenF = fopen(eigen_filename, "w");
+  //eigenF = fopen(eigen_filename, "w");
   fprintf(chiF, "Threshold\tChi-square\tCut Matrix Size\n");
 
   // Iterate through successively smaller threshold values until the following
@@ -105,11 +105,11 @@ double RMTThreshold::findThreshold() {
       free(newM);
 
       // print out eigenvalues to file
-      fprintf(eigenF, "%f\t", th);
+      /*fprintf(eigenF, "%f\t", th);
       for (int i = 0; i < size ; i++) {
         fprintf(eigenF, "%f\t", E[i]);
       }
-      fprintf(eigenF,"\n");
+      fprintf(eigenF,"\n");*/
 
       printf("  testing similarity of NNSD with Poisson...\n");
       chi = chiSquareTestUnfoldingNNSDWithPoisson(E, size);
@@ -159,11 +159,11 @@ double RMTThreshold::findThreshold() {
         free(newM);
 
         // print out eigenvalues to file
-        fprintf(eigenF, "%f\t", th);
+       /* fprintf(eigenF, "%f\t", th);
         for (int j = 0 ; j < size ; j++) {
           fprintf(eigenF, "%f\t", E[j]);
         }
-        fprintf(eigenF, "\n");
+        fprintf(eigenF, "\n");*/
         chi = chiSquareTestUnfoldingNNSDWithPoisson(E, size);
         fprintf(chiF, "%f\t%f\t%d\n", th, chi, size);
         fflush(chiF);
@@ -186,7 +186,7 @@ double RMTThreshold::findThreshold() {
 
   // close the chi and eigen files now that results are written
   fclose(chiF);
-  fclose(eigenF);
+  //fclose(eigenF);
 
   // Set the Properties file according to success or failure
   if(finalChi < chiSquareTestThreshold){
