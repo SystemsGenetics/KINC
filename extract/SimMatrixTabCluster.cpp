@@ -57,11 +57,11 @@ void SimMatrixTabCluster::writeNetwork() {
 
    // Generate the header string
    char headers[2048];
-   sprintf((char *) &headers, "gene1\tgene2\t");
+   sprintf((char *) &headers, "Source\tTarget\t");
    for (int i = 0; i < num_methods; i++) {
      sprintf((char *) (&headers) + strlen(headers), "%s\t", method[i]);
    }
-   sprintf((char *) (&headers) + strlen(headers), "interaction\tcluster\tnum_clusters\tcluster_samples\tmissing_samples\tcluster_outliers\tpair_outliers\ttoo_low\tsamples\n");
+   sprintf((char *) (&headers) + strlen(headers), "Interaction\tCluster\tNum_Clusters\tCluster_Samples\tMissing_Samples\tCluster_Outliers\tPair_Outliers\tToo_Low\tSamples\n");
 
    edges = fopen(edges_file, "w");
    fprintf(edges, "%s\n", headers);

@@ -46,11 +46,12 @@ double RMTThreshold::findThreshold() {
   // The size of newM.
   int size;
   // File handles for the eigenvector and Chi-square output files.
-  FILE* eigenF, *chiF;
+  //FILE* eigenF, *chiF;
+  FILE *chiF;
   // The output file name
   char chi_filename[1024];
   // The output file name
-  char eigen_filename[1024];
+  //char eigen_filename[1024];
   // The threshold currently being tested.
   float th = thresholdStart;
   // The current chi-square value for the threshold being tested.
