@@ -1,0 +1,147 @@
+\documentclass[10pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{tabularx}
+\usepackage{parskip}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{graphicx}
+
+\hypersetup{
+    colorlinks,
+    linkcolor={red!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}
+}
+
+\setlength{\parindent}{0cm}
+
+\begin{document}
+
+\title{\textbf{KINC Specification}\\
+\vspace{1mm}
+\includegraphics[width=12cm,height=1cm]{dna}
+\\Knowledge Independent Network Construction}
+\author{Joshua Burns\\Stephen Ficklin}
+\maketitle
+
+\tableofcontents
+
+\newpage
+\section{Introduction}
+
+This software is designed to take biological information and transform it into 
+new types of data based off statistical analysis.
+
+\newpage
+\section{Abstract Classes}
+
+These interface classes describe the overall structure of the kinc program and 
+how implemenation classes work with one another.
+
+The structure of this code will allow for user implemented plugins in the 
+future, since the interaction of the interface classes are clearly defined.
+
+\subsection{BioData}
+
+This is responsible to storing and representing a certain type of biological 
+data. It is responsible for reading and writing to a file the data it holds, 
+merging two or more files of its type together into one, modifying the data it 
+holds, and providing results to queries about the data it holds.
+
+These classes are also responsible for importing from human readable file 
+formats to their binary file format and exporting back out to human readable 
+formats.
+
+\subsection{BioAnalytic}
+
+This is responsible for taking in one or more BioData objects and through 
+statistical analysis producing one or more new BioData objects.
+
+\newpage
+\section{BioData Classes}
+
+\subsection{Expression}
+
+This is responsible for storing expression sample data for genes.
+
+\subsubsection{File Structure}
+
+\begin{list}{}{}
+\item[1.] Special Identifier that identifies this file as an expression file.
+\item[2.] User defined name for expression data.
+\item[3.] History of this data, where it came from.
+\item[4.] Number of genes, then number of samples per gene.
+\item[5.] List of all genes.
+\item[6.] 2 Dimensional list of all gene samples, per gene.
+\end{list}
+
+\subsection{Correlation}
+
+This is responsible for storing correlation data between genes.
+
+\subsubsection{File Structure}
+
+\begin{list}{}{}
+\item[1.] Special Identifier that identifies this file as a correlation file.
+\item[2.] User defined name for correlation data.
+\item[3.] History of this data, where it came from.
+\item[4.] Number of genes, number of correlations per gene pair.
+\item[5.] List of correlation methods used.
+\item[5.] List of all genes.
+\item[6.] Special lists of all gene correlations sorted by their correlation 
+value. Each entry will have a correlation value, then a number representing how 
+many gene correlations are this value, then the list of gene correlations. For 
+each type of correlation used a list is made.
+\item[7.] Special 2 Dimensional list of all gene correlations, special being a 
+diagonal matrix instead of square.
+\end{list}
+
+\subsection{Network}
+
+This is responsible for storing network data between genes.
+
+\subsubsection{File Structure}
+
+\begin{list}{}{}
+\item[1.] Special Identifier that identifies this file as a network file.
+\item[2.] User defined name for network data.
+\item[3.] History of this data, where it came from.
+\item[4.] Number of genes.
+\item[5.] List of all genes.
+\item[6.] Special 2 Dimensional list of all gene edges, special being a 
+diagonal matrix instead of square.
+\end{list}
+
+\subsection{Annotation}
+
+This is responsible for storing additional information for genes.
+
+\subsubsection{File Structure}
+
+\begin{list}{}{}
+\item[1.] Special Identifier that identifies this file as an annotation file.
+\item[2.] User defined name for annotation data.
+\item[4.] Number of genes, number of annotations.
+\item[5.] List of all genes.
+\item[6.] List of all annotation types.
+\item[7.] 2 Dimensional list of all gene annotations, per gene.
+\end{list}
+
+\newpage
+\section{BioAnalytic Classes}
+
+\subsection{Pearson}
+
+This takes an Expression BioData object and produces a Correlation BioData 
+object. It uses the Pearson correlation statistical method for giving 
+correlation values.
+
+\subsection{Spearman}
+
+This takes an Expression BioData object and produces a Correlation BioData 
+object. It uses the Spearman correlation statistical method for giving 
+correlation values.
+
+\end{document}
