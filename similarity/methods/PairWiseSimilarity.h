@@ -2,7 +2,7 @@
 #define _PAIRWISESIMILARITY_
 
 #include <getopt.h>
-#include "PairWiseSet.h"
+#include "../PairWiseSet.h"
 
 /**
  * A base class for similiarity functions.

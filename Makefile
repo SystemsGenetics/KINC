@@ -21,10 +21,10 @@ OBJS = \
   stats/outlier.o \
   ematrix/EMatrix.o \
   similarity/PairWiseSet.o \
-  similarity/PairWiseSimilarity.o \
-  similarity/MISimilarity.o \
-  similarity/PearsonSimilarity.o \
-  similarity/SpearmanSimilarity.o \
+  similarity/methods/PairWiseSimilarity.o \
+  similarity/methods/MISimilarity.o \
+  similarity/methods/PearsonSimilarity.o \
+  similarity/methods/SpearmanSimilarity.o \
   similarity/clustering/PairWiseCluster.o \
   similarity/clustering/PairWiseClusterList.o \
   similarity/clustering/PairWiseClusterWriter.o \
@@ -38,8 +38,8 @@ OBJS = \
   indexer/sqlite/SQLiteQuery.o \
   indexer/RunIndex.o \
   indexer/RunQuery.o \
-  threshold/ThresholdMethod.o \
-  threshold/RMTThreshold.o \
+  threshold/methods/ThresholdMethod.o \
+  threshold/methods/RMTThreshold.o \
   threshold/RunThreshold.o \
   extract/SimilarityMatrix.o \
   extract/SimMatrixBinary.o \
@@ -84,17 +84,17 @@ stats/outlier.o: stats/outlier.cpp stats/outlier.h
 similarity/PairWiseSet.o: similarity/PairWiseSet.cpp similarity/PairWiseSet.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/PairWiseSet.cpp -o similarity/PairWiseSet.o
 
-similarity/PairWiseSimilarity.o: similarity/PairWiseSimilarity.cpp similarity/PairWiseSimilarity.h
-	${CC} -c ${CFLAGS} ${INCLUDES} similarity/PairWiseSimilarity.cpp -o similarity/PairWiseSimilarity.o
+similarity/PairWiseSimilarity.o: similarity/methods/PairWiseSimilarity.cpp similarity/methods/PairWiseSimilarity.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/methods/PairWiseSimilarity.cpp -o similarity/methods/PairWiseSimilarity.o
 
-similarity/SpearmanSimilarity.o: similarity/SpearmanSimilarity.cpp similarity/SpearmanSimilarity.h
-	${CC} -c ${CFLAGS} ${INCLUDES} similarity/SpearmanSimilarity.cpp -o similarity/SpearmanSimilarity.o
+similarity/SpearmanSimilarity.o: similarity/methods/SpearmanSimilarity.cpp similarity/methods/SpearmanSimilarity.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/methods/SpearmanSimilarity.cpp -o similarity/methods/SpearmanSimilarity.o
 
-similarity/PearsonSimilarity.o: similarity/PearsonSimilarity.cpp similarity/PearsonSimilarity.h
-	${CC} -c ${CFLAGS} ${INCLUDES} similarity/PearsonSimilarity.cpp -o similarity/PearsonSimilarity.o
+similarity/PearsonSimilarity.o: similarity/methods/PearsonSimilarity.cpp similarity/methods/PearsonSimilarity.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/methods/PearsonSimilarity.cpp -o similarity/methods/PearsonSimilarity.o
 
-similarity/MISimilarity.o: similarity/MISimilarity.cpp similarity/MISimilarity.h
-	${CC} -c ${CFLAGS} ${INCLUDES} similarity/MISimilarity.cpp -o similarity/MISimilarity.o
+similarity/MISimilarity.o: similarity/methods/MISimilarity.cpp similarity/methods/MISimilarity.h
+	${CC} -c ${CFLAGS} ${INCLUDES} similarity/methods/MISimilarity.cpp -o similarity/methods/MISimilarity.o
 
 #clustering/meanshift.o: clustering/meanshift.cpp clustering/meanshift.h
 #	${CC} -c ${CFLAGS} ${INCLUDES} clustering/meanshift.cpp -o clustering/meanshift.o
@@ -144,11 +144,11 @@ indexer/RunIndex.o: indexer/RunIndex.cpp indexer/RunIndex.h
 indexer/RunQuery.o: indexer/RunQuery.cpp indexer/RunQuery.h
 	${CC} -c ${CFLAGS} ${INCLUDES} indexer/RunQuery.cpp -o indexer/RunQuery.o
 
-threshold/ThresholdMethod.o: threshold/ThresholdMethod.cpp threshold/ThresholdMethod.h
-	${CC} -c ${CFLAGS} ${INCLUDES} threshold/ThresholdMethod.cpp -o threshold/ThresholdMethod.o
+threshold/ThresholdMethod.o: threshold/methods/ThresholdMethod.cpp threshold/methods/ThresholdMethod.h
+	${CC} -c ${CFLAGS} ${INCLUDES} threshold/methods/ThresholdMethod.cpp -o threshold/methods/ThresholdMethod.o
 
-threshold/RMTThreshold.o: threshold/RMTThreshold.cpp threshold/RMTThreshold.h
-	${CC} -c ${CFLAGS} ${INCLUDES} threshold/RMTThreshold.cpp -o threshold/RMTThreshold.o
+threshold/RMTThreshold.o: threshold/methods/RMTThreshold.cpp threshold/methods/RMTThreshold.h
+	${CC} -c ${CFLAGS} ${INCLUDES} threshold/methods/RMTThreshold.cpp -o threshold/methods/RMTThreshold.o
 
 threshold/RunThreshold.o: threshold/RunThreshold.cpp threshold/RunThreshold.h
 	${CC} -c ${CFLAGS} ${INCLUDES} threshold/RunThreshold.cpp -o threshold/RunThreshold.o

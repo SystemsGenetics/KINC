@@ -1,7 +1,6 @@
 #ifndef _MIXMODPWCLUSTERING_
 #define _MIXMODPWCLUSTERING_
 
-#include "../SpearmanSimilarity.h"
 #include "PairWiseCluster.h"
 #include "PairWiseClusterList.h"
 #include "PairWiseClusterWriter.h"
