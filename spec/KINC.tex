@@ -7,6 +7,8 @@
 \usepackage{amsmath}
 \usepackage{xcolor}
 \usepackage{graphicx}
+\usepackage{soul}
+\usepackage[margin=1in]{geometry}
 
 \hypersetup{
     colorlinks,
@@ -19,52 +21,97 @@
 
 \begin{document}
 
-\title{\textbf{KINC Specification}\\
+\title{\textbf{KINC v0.1 Specification}\\
 \vspace{1mm}
-\includegraphics[width=12cm,height=1cm]{dna}
+\includegraphics[width=8cm,height=4cm]{KINClogo.png}
 \\Knowledge Independent Network Construction}
-\author{Joshua Burns\\Stephen Ficklin}
+\author{Joshua Burns\thanks{Dept. of Horticulture, Washington State University}, Stephen Ficklin\footnotemark[1]}
 \maketitle
 
+\newpage
 \tableofcontents
 
 \newpage
 \section{Introduction}
 
-This software is designed to take biological information and transform it into 
-new types of data based off statistical analysis.
+KINC is designed for use in construction of biological networks, specifically, 
+gene co-expression networks. KINC performs three major steps:  1) construction
+of a similarity matrix of pair-wise expression correlations, 2) thresholding of 
+the similarity matrix to form an adjaceny matrix, 3) export of the adjaceny 
+matrix to form a tab-delimited network file.  
+
+This document provides an overview for the data structures and file formats used 
+by KINC. 
+
+\hl{Can we describe here how the command-line for KINC will work and how
+use of the classes described below translates into command-line arguments?}
 
 \newpage
 \section{Abstract Classes}
 
-These interface classes describe the overall structure of the kinc program and 
-how implemenation classes work with one another.
+The following abstract classes serve as the base for all structures within the 
+kinc program.  All other classes should inherit from these. This design will 
+allow for dynamic addition of user implemented plugins in the future, because
+the functions of the abstract classes are clearly defined.
 
-The structure of this code will allow for user implemented plugins in the 
-future, since the interaction of the interface classes are clearly defined.
+\subsection{KINCData}
 
-\subsection{BioData}
+Th KINCData class is responsible for reading and writing of KINC data files.  
+Classes that inherit from the KINCData class are responsible for implementing 
+the generic functions exposed by this class.  This includes reading, writing, 
+merging, exporing, indexing and querying. Typically, child classes provide 
+importers that read commonly used file formats into their own binary file 
+format and exporters to convert back to those same file formats.
 
-This is responsible to storing and representing a certain type of biological 
-data. It is responsible for reading and writing to a file the data it holds, 
-merging two or more files of its type together into one, modifying the data it 
-holds, and providing results to queries about the data it holds.
+\subsection{KINCAnalytic}
 
-These classes are also responsible for importing from human readable file 
-formats to their binary file format and exporting back out to human readable 
-formats.
-
-\subsection{BioAnalytic}
-
-This is responsible for taking in one or more BioData objects and through 
-statistical analysis producing one or more new BioData objects.
+The KINCAnalytic class is responsible for taking in one or more KINCData objects
+and employ an algorithm such as a statistical test to produce one or more 
+new KINCData objects.   A KINCAnalytic 
 
 \newpage
-\section{BioData Classes}
+\section{KINCData Classes}
 
 \subsection{Expression}
 
-This is responsible for storing expression sample data for genes.
+The Expression class is responsible for manging gene expression-level data.  
+
+\subsubsection{Properties}
+
+\hl{Do we need any properties?}
+
+\subsubsection{Constructor}
+
+{\bfseries KINCData(int argc, char *argv[])}
+
+\hl{We need to design how the functions of the class will receive arguments. 
+ will we have a constructor that receives, parses and responds to errors
+ for all functions?  Or should each function be responsible for checking 
+ it's own arguments. I know we can't do that in the abstract class, but 
+ we need to accomdate the behavior we settle on in our design so plugins
+ are consistent.}
+
+\subsubsection{Virtual Functions}
+
+The following functions should be implemented by any plugin that creates
+classes that inherits the KINCData class.
+
+{\bfseries virtual void import() = 0}
+
+This function reads a tab-delimited file.  Each line of this file
+represents the gene expression levels of a single gene, transcript or probeset.
+Each tab-separated value in a single line indicates the gene expression level 
+for each sample. The expression level of a samples must be in the same 
+order for every line.  The first line of the file may contain a tab-delimited
+list of sample names, and a file may contain as many samples and genes as
+desired.
+
+{\bfseries virtual void export() = 0}
+
+{\bfseries virtual void query() = 0}
+
+{\bfseries virtual void merge() = 0}
+
 
 \subsubsection{File Structure}
 
@@ -81,8 +128,29 @@ This is responsible for storing expression sample data for genes.
 
 This is responsible for storing correlation data between genes.
 
-\subsubsection{File Structure}
+\subsubsection{Correlation Binary File Format}
+The following describes the format of the KINC correlation file. All 
+multi-byte numbers are little-endian, regardless of the machine endianness.
 
+\begin{tabular}{| l | l | l | l |}
+  \hline
+  {\bfseries Field } & {\bfseries Description } & {\bfseries Type } & {\bfseries Value } \\ 
+  \hline			
+  magic & The magic number that identifies this file as a correlation file. & char[5] & kcor\textbackslash1 \\ 
+  \hline
+  historyLen & The length of the header. & int32\_t & \\
+  \hline
+  nameLen & The length of the dataset name. & int32\_t & \\
+  \hline
+  name & The user defined name for this correlation dataset. & char[nameLen] & \\
+  \hline
+  historyLen & The length of history information. & int32\_t & \\
+  \hline
+  history & A string that describes the provenance of this file. & char[historyLen] & \\
+  \hline
+\end{tabular}
+\hl{I like this type of table for describing the file format. I borrowed it 
+from the BAM file specification}
 \begin{list}{}{}
 \item[1.] Special Identifier that identifies this file as a correlation file.
 \item[2.] User defined name for correlation data.
@@ -130,7 +198,7 @@ This is responsible for storing additional information for genes.
 \end{list}
 
 \newpage
-\section{BioAnalytic Classes}
+\section{KINCAnalytic Classes}
 
 \subsection{Pearson}
 
