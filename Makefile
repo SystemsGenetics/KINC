@@ -18,7 +18,12 @@ OBJS = \
   general/error.o \
   general/misc.o \
   general/vector.o \
+  stats/stats.o \
   stats/outlier.o \
+  stats/swilk.o \
+  stats/kurtosis.o \
+  stats/sfrancia.o \
+  stats/royston.o \
   ematrix/EMatrix.o \
   similarity/PairWiseSet.o \
   similarity/methods/PairWiseSimilarity.o \
@@ -63,21 +68,21 @@ general/error.o: general/error.cpp general/error.h
 ematrix/EMatrix.o: ematrix/EMatrix.cpp ematrix/EMatrix.h
 	${CC} -c ${CFLAGS} ${INCLUDES} ematrix/EMatrix.cpp -o ematrix/EMatrix.o
 
-#stats/stats.o: stats/stats.cpp stats/stats.h
-#	${CC} -c ${CFLAGS} ${INCLUDES} stats/stats.cpp -o stats/stats.o
-#
-#stats/kurtosis.o: stats/kurtosis.cpp stats/kurtosis.h
-#	${CC} -c ${CFLAGS} ${INCLUDES} stats/kurtosis.cpp -o stats/kurtosis.o
-#
-#stats/sfrancia.o: stats/sfrancia.cpp stats/sfrancia.h
-#	${CC} -c ${CFLAGS} ${INCLUDES} stats/sfrancia.cpp -o stats/sfrancia.o
-#
-#stats/swilk.o: stats/swilk.cpp stats/swilk.h
-#	${CC} -c ${CFLAGS} ${INCLUDES} stats/swilk.cpp -o stats/swilk.o
-#
-#stats/royston.o: stats/royston.cpp stats/royston.h
-#	${CC} -c ${CFLAGS} ${INCLUDES} stats/royston.cpp -o stats/royston.o
-#
+stats/stats.o: stats/stats.cpp stats/stats.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/stats.cpp -o stats/stats.o
+
+stats/kurtosis.o: stats/kurtosis.cpp stats/kurtosis.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/kurtosis.cpp -o stats/kurtosis.o
+
+stats/sfrancia.o: stats/sfrancia.cpp stats/sfrancia.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/sfrancia.cpp -o stats/sfrancia.o
+
+stats/swilk.o: stats/swilk.cpp stats/swilk.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/swilk.cpp -o stats/swilk.o
+
+stats/royston.o: stats/royston.cpp stats/royston.h
+	${CC} -c ${CFLAGS} ${INCLUDES} stats/royston.cpp -o stats/royston.o
+
 stats/outlier.o: stats/outlier.cpp stats/outlier.h
 	${CC} -c ${CFLAGS} ${INCLUDES} stats/outlier.cpp -o stats/outlier.o
 

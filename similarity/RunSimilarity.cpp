@@ -33,6 +33,7 @@ void RunSimilarity::printUsage() {
   printf("  --min_obs|-o      The minimum number of observations (after missing values\n");
   printf("                    removed) that must be present to calculate a simililarity score.\n");
   printf("                    Default is 30.\n");
+  printf("  --th|s            The minimum expression level to include. Anything below is excluded\n");
   printf("\n");
   printf("Optional Mutual Information Arguments:\n");
   printf("  --mi_bins|-b      Use only if the method is 'mi'. The number of bins for the\n");
@@ -423,9 +424,9 @@ void RunSimilarity::executeTraditional() {
   // Holds the number of rows in the file.
   int bin_rows;
   // The total number of pair-wise comparisons to be made.
-  int total_comps;
+  long long int total_comps;
   // The number of comparisions completed during looping.
-  int n_comps;
+  long long int n_comps;
   // The number of genes.
   int num_genes = ematrix->getNumGenes();
   // The binary output file prefix
@@ -454,7 +455,7 @@ void RunSimilarity::executeTraditional() {
     }
   }
 
-  total_comps = (num_genes * (num_genes - 1)) / 2;
+  total_comps = ((long long int)num_genes * ((long long int)num_genes - 1)) / 2;
   n_comps = 0;
 
   // each iteration of m is a new output file
@@ -489,6 +490,8 @@ void RunSimilarity::executeTraditional() {
     for (int j = curr_bin * ROWS_PER_OUTPUT_FILE; j < bin_rows; j++) {
       // iterate through all the genes up to j (only need lower triangle)
       for (int k = 0; k <= j; k++) {
+//        for (int j = 1862; j <= 1862; j++) {
+//          for (int k = 8562; k <= 8562; k++) {
         n_comps++;
         if (n_comps % 1000 == 0) {
           statm_t * memory = memory_get_usage();
@@ -503,33 +506,39 @@ void RunSimilarity::executeTraditional() {
           continue;
         }
 
-        float score;
-        PairWiseSet * pwset = new PairWiseSet(ematrix, j, k);
+        float score = NAN;
+        PairWiseSet * pwset = new PairWiseSet(ematrix, j, k, threshold);
 
-        // Perform the appropriate calculation based on the method
-        for (int i = 0; i < this->num_methods; i++) {
-          if (strcmp(method[i], "pc") == 0) {
-            PearsonSimilarity * pws = new PearsonSimilarity(pwset, min_obs);
-            pws->run();
-            score = (float) pws->getScore();
-            delete pws;
-          }
-          else if(strcmp(method[i], "mi") == 0) {
-            MISimilarity * pws = new MISimilarity(pwset, min_obs, mi_bins, mi_degree);
-            pws->run();
-            score = (float) pws->getScore();
-            delete pws;
-          }
-          else if(strcmp(method[i], "sc") == 0) {
-            SpearmanSimilarity * pws = new SpearmanSimilarity(pwset, min_obs);
-            pws->run();
-            score = (float) pws->getScore();
-            delete pws;
-          }
+        // If we have the correct number of observations then run the tests.
+        if (pwset->n_clean >= this->min_obs) {
+          // First check for normality
+          double *pcc;
+          double p = roystonH(pwset->x_clean, pwset->y_clean, pwset->n_clean, pcc);
 
-          delete pwset;
-          fwrite(&score, sizeof(float), 1, outfiles[i]);
+          // Perform the appropriate calculation based on the method
+          if (p > 0.05) {
+            if (strcmp(method[0], "pc") == 0) {
+              PearsonSimilarity * pws = new PearsonSimilarity(pwset, min_obs);
+              pws->run();
+              score = (float) pws->getScore();
+              delete pws;
+            }
+            else if(strcmp(method[0], "mi") == 0) {
+              MISimilarity * pws = new MISimilarity(pwset, min_obs, mi_bins, mi_degree);
+              pws->run();
+              score = (float) pws->getScore();
+              delete pws;
+            }
+            else if(strcmp(method[0], "sc") == 0) {
+              SpearmanSimilarity * pws = new SpearmanSimilarity(pwset, min_obs);
+              pws->run();
+              score = (float) pws->getScore();
+              delete pws;
+            }
+          }
         }
+        delete pwset;
+        fwrite(&score, sizeof(float), 1, outfiles[0]);
 
 //        // if the historgram is turned on then store the value in the correct bin
 //        if (score < 1 && score > -1) {

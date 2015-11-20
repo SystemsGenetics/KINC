@@ -1,4 +1,3 @@
-#include <math.h>
 #include "swilk.h"
 
 /**
@@ -50,7 +49,7 @@ double poly(const double *cc, int nord, double x) {
  */
 void swilk(double *vector, int n, double *w, double *pw, int *ifault) {
 
-  // Create a copy of the vecto and sort it.
+  // Create a copy of the vector and sort it.
   double * x = (double *) malloc(sizeof(double) * n);
   memcpy(x, vector, sizeof(double) * n);
 
@@ -158,7 +157,7 @@ void swilk(double *vector, int n, double *w, double *pw, int *ifault) {
     sx += xi;
     i++;
     if (i != j) {
-      sa += sign(i - j) * a[min(i, j)];
+      sa += sign(i - j) * a[std::min(i, j)];
     }
     xx = xi;
   }
@@ -174,7 +173,7 @@ void swilk(double *vector, int n, double *w, double *pw, int *ifault) {
   ssa = ssx = sax = 0.;
   for (i = 0, j = n - 1; i < n; i++, j--) {
     if (i != j) {
-      asa = sign(i - j) * a[1 + min(i, j)] - sa;
+      asa = sign(i - j) * a[1 + std::min(i, j)] - sa;
     }
     else {
       asa = -sa;

@@ -13,7 +13,7 @@ void sfrancia(double *vector, int n, double *w, double *pw, int *ifault) {
 
   // Remove missing values from x
 
-  // Create a copy of the vectot and sort it.
+  // Create a copy of the vector and sort it.
   double * x = (double *) malloc(sizeof(double) * n);
   memcpy(x, vector, sizeof(double) * n);
 

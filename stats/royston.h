@@ -15,6 +15,6 @@
 #include "swilk.h"
 #include "../error.h"
 
-double royston2D(double* a, double * b, int n, double *pcc);
+double roystonH(double* a, double * b, int n, double *pcc);
 
 #endif
