@@ -17,6 +17,14 @@
     urlcolor={blue!80!black}
 }
 
+\definecolor{lyellow}{rgb}{1,1,0.2}
+\definecolor{lblue}{rgb}{0.8,0.8,1}
+\providecommand{\stephen}[1]{\sethlcolor{lyellow}\hl{#1}}
+\providecommand{\josh}[1]{\sethlcolor{lblue}\hl{#1}}
+
+\definecolor{darkblue}{rgb}{0,0,0.6}
+\providecommand{\h}[1]{\textcolor{darkblue}{#1}}
+
 \setlength{\parindent}{0cm}
 
 \begin{document}
@@ -35,16 +43,26 @@
 \section{Introduction}
 
 KINC is designed for use in construction of biological networks, specifically, 
-gene co-expression networks. KINC performs three major steps:  1) construction
-of a similarity matrix of pair-wise expression correlations, 2) thresholding of 
-the similarity matrix to form an adjaceny matrix, 3) export of the adjaceny 
-matrix to form a tab-delimited network file.  
+gene co-expression networks.
 
-This document provides an overview for the data structures and file formats used 
+KINC performs three major steps:
+
+\begin{list}{}{}
+\item[1)] Construction of a similarity matrix of pair-wise expression 
+correlations.
+\item[2)] Thresholding of the similarity matrix to form an adjaceny matrix.
+\item[3)] Export of the adjaceny matrix to form a tab-delimited network file.
+\end{list}
+
+This document provides an overview for the data structures and file formats 
+used 
 by KINC. 
 
-\hl{Can we describe here how the command-line for KINC will work and how
+\stephen{Can we describe here how the command-line for KINC will work and how
 use of the classes described below translates into command-line arguments?}
+
+\josh{Yes I will add descriptions of command line arguments that will apply to 
+all abstract classes.}
 
 \newpage
 \section{Abstract Classes}
@@ -56,12 +74,93 @@ the functions of the abstract classes are clearly defined.
 
 \subsection{KINCData}
 
-Th KINCData class is responsible for reading and writing of KINC data files.  
+\josh{I am thinking the header of a file, specifically its KINCData type, user 
+defined name, and history, should all be defined here since any KINC data file 
+will share all of these things in their file data.}
+
+The KINCData class is responsible for reading and writing KINC data files.  
 Classes that inherit from the KINCData class are responsible for implementing 
 the generic functions exposed by this class.  This includes reading, writing, 
 merging, exporing, indexing and querying. Typically, child classes provide 
 importers that read commonly used file formats into their own binary file 
 format and exporters to convert back to those same file formats.
+
+This abstract class is responsible for reading in the header information of any 
+data file since it is generic to any specific data type. 
+\autoref{fig:kincdata:header} shows the binary format for the beginning of any 
+KINC data file. \h{headerTag} represents the specific data type this file 
+represents. The rest of the header information is the history information for 
+this data, starting with how this specific data was created.
+
+\begin{figure}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Field} & \textbf{Description} & \textbf{Type} \\
+\hline
+headerTag & Special header string that defines KINCData type for a file. & 
+char[10] \\
+\hline
+history & Array of history items. & byte[] \\
+\hline
+\end{tabularx}
+\caption{Binary File Format of Header}
+\label{fig:kincdata:header}
+\end{figure}
+
+\autoref{fig:kincdata:history} shows the format for a single history item. The 
+history item structure is a nested structure with subhistories of all input 
+files used to create the current history item. This nesting continues until you 
+reach the origional files that were created through importation of data outside 
+of KINC. The first history item in any file is a reference of itself, therefore 
+any data file has at least one history item which describes itself. Any sub 
+history items after that describe any input files that helped create this file.
+
+\h{file} is the filename of the input file or an empty string if this is the 
+first history item referencing itself. \h{name} is the user defined name of the 
+file and its data. \h{object} is teh name of the KINC Analytic or Data class 
+which created this file. \h{description} is a detailed description about the 
+creation of the data. Lastly, \h{date} is a linux timestamp of the time this 
+file was created or last modified.
+
+The \h{subHistory} items represent a list of further history items that 
+describe all input files used in the creation of this current history item.
+
+\begin{figure}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Field} & \textbf{Description} & \textbf{Type} \\
+\hline
+fileLen & Length of file name string in bytes. & uint16\_t \\
+\hline
+nameLen & Length of user defined name string in bytes. & uint16\_t \\
+\hline
+objectLen & Length of object name string in bytes. & uint16\_t \\
+\hline
+descriptionLen & Length of description string in bytes. & uint16\_t \\
+\hline
+date & Linux time-stamp of when file was built. & uint64\_t \\
+\hline
+file & File name string. & char[fileLen] \\
+\hline
+name & User defined name string. & char[nameLen] \\
+\hline
+object & Name of object that built file in bytes. & char[objectLen] \\
+\hline
+description & Detailed description of how file was built. & 
+char[descriptionLen] \\
+\hline
+subHistorySize & Size of input history data in bytes. & uint32\_t \\
+\hline
+subHistoryAmt & Number of input history items. & uint16\_t \\
+\hline
+subHistory & Array of input history items. & byte[historySize] \\
+\hline
+\end{tabularx}
+\caption{Binary File Format of Individual History Item}
+\label{fig:kincdata:history}
+\end{figure}
 
 \subsection{KINCAnalytic}
 
@@ -78,18 +177,29 @@ The Expression class is responsible for manging gene expression-level data.
 
 \subsubsection{Properties}
 
-\hl{Do we need any properties?}
+\stephen{Do we need any properties?}
+
+\josh{I don't think we need properties. I am also unsure how to implement them 
+in C++. My thought is all interactions between the classes will be defined in 
+the Abstract Classes section using virtual functions?}
 
 \subsubsection{Constructor}
 
 {\bfseries KINCData(int argc, char *argv[])}
 
-\hl{We need to design how the functions of the class will receive arguments. 
- will we have a constructor that receives, parses and responds to errors
- for all functions?  Or should each function be responsible for checking 
- it's own arguments. I know we can't do that in the abstract class, but 
- we need to accomdate the behavior we settle on in our design so plugins
- are consistent.}
+\stephen{We need to design how the functions of the class will receive 
+arguments.  will we have a constructor that receives, parses and responds to 
+errors for all functions?  Or should each function be responsible for checking 
+it's own arguments. I know we can't do that in the abstract class, but 
+we need to accomdate the behavior we settle on in our design so plugins
+are consistent.}
+
+\josh{I almost completely agree. These functions and interactions will all be 
+defined in the abstract classes section if that is OK? It is standard C++ to 
+define everything you are talking about in the abstract interface class with 
+virtual functions. It is usually a good idea to have a default constructor only 
+for implemenation classes, and have any additional configuation added into 
+additional virtual functions that any implementation must handle.}
 
 \subsubsection{Virtual Functions}
 
@@ -115,87 +225,196 @@ desired.
 
 \subsubsection{File Structure}
 
-\begin{list}{}{}
-\item[1.] Special Identifier that identifies this file as an expression file.
-\item[2.] User defined name for expression data.
-\item[3.] History of this data, where it came from.
-\item[4.] Number of genes, then number of samples per gene.
-\item[5.] List of all genes.
-\item[6.] 2 Dimensional list of all gene samples, per gene.
-\end{list}
+\autoref{fig:expression} shows the binary format of expression data and how it 
+is stored on file. \h{geneAmt} and \h{sampleAmt} give the total number of genes 
+and samples in the data, respectively. \h{geneNames} is the list of all gene 
+names as a string who's length and partitioning is defined by \h{geneNameLen} 
+and \h{geneNameSize}. \h{sampleNames} is the list of all sample names as a 
+string who's length and partitioning is defined by \h{sampleNameLen} and 
+\h{sampleNameSize}. Lastly, \h{samples} is 2 dimensional matrix of all samples 
+for each gene, where the matrix is sorted by gene major order.
+
+\begin{figure}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Field} & \textbf{Description} & \textbf{Type} \\
+\hline
+geneAmt & Total number of genes. & uint32\_t \\
+\hline
+sampleAmt & Number of samples per gene. & uint32\_t \\
+\hline
+geneNameLen & Length of each string identifying genes. & uint16\_t \\
+\hline
+geneNameSize & Total size of gene name list in bytes. & uint64\_t \\
+\hline
+sampleNameLen & Length of each string identifying samples. & uint16\_t \\
+\hline
+sampleNameSize & Total size of sample name list in bytes. & uint64\_t \\
+\hline
+geneNames & List of gene string identifiers. & char[geneNameSize] \\
+\hline
+sampleNames & List of sample string identifiers. & char[sampleNameSize] \\
+\hline
+sampleTotal & Total number of samples for all genes. & uint64\_t \\
+\hline
+samples & List of all samples per gene. & float[sampleTotal] \\
+\hline
+\end{tabularx}
+\caption{Binary File Format of Expression Data}
+\label{fig:expression}
+\end{figure}
 
 \subsection{Correlation}
 
 This is responsible for storing correlation data between genes.
 
-\subsubsection{Correlation Binary File Format}
 The following describes the format of the KINC correlation file. All 
 multi-byte numbers are little-endian, regardless of the machine endianness.
 
-\begin{tabular}{| l | l | l | l |}
-  \hline
-  {\bfseries Field } & {\bfseries Description } & {\bfseries Type } & {\bfseries Value } \\ 
-  \hline			
-  magic & The magic number that identifies this file as a correlation file. & char[5] & kcor\textbackslash1 \\ 
-  \hline
-  historyLen & The length of the header. & int32\_t & \\
-  \hline
-  nameLen & The length of the dataset name. & int32\_t & \\
-  \hline
-  name & The user defined name for this correlation dataset. & char[nameLen] & \\
-  \hline
-  historyLen & The length of history information. & int32\_t & \\
-  \hline
-  history & A string that describes the provenance of this file. & char[historyLen] & \\
-  \hline
-\end{tabular}
-\hl{I like this type of table for describing the file format. I borrowed it 
-from the BAM file specification}
-\begin{list}{}{}
-\item[1.] Special Identifier that identifies this file as a correlation file.
-\item[2.] User defined name for correlation data.
-\item[3.] History of this data, where it came from.
-\item[4.] Number of genes, number of correlations per gene pair.
-\item[5.] List of correlation methods used.
-\item[5.] List of all genes.
-\item[6.] Special lists of all gene correlations sorted by their correlation 
-value. Each entry will have a correlation value, then a number representing how 
-many gene correlations are this value, then the list of gene correlations. For 
-each type of correlation used a list is made.
-\item[7.] Special 2 Dimensional list of all gene correlations, special being a 
-diagonal matrix instead of square.
-\end{list}
+\stephen{I like this type of table for describing the file format. I borrowed 
+it from the BAM file specification}
+
+\josh{So do I! I was actually going to convert these defintions to a tabular 
+format after your first review. :)}
+
+\autoref{fig:correlation} shows the binary format of correlation data and how 
+it is stored on file. \h{geneAmt}, \h{sampleAmt}, and \h{corrAmt} give the 
+number of genes, number of samples per gene, and number of correlations per 
+gene, respectively. \h{geneNames} is the list of all gene names that are 
+correlated who's length and partitioning is defined by \h{geneNameLen} and 
+\h{geneNameSize}. \h{sampleNames} is the list of all sample names used for 
+correlation between genes who's length and partitioning is defiend by 
+\h{sampleNameLen} and \h{sampleNameSize}. \h{corrTypes} is the list of all 
+correlation types listed for all gene pairs who's length and partitioning is 
+defined by \h{corrTypeLen} and \h{corrTypeSize}. Lastly, \h{correlations} is a 
+special diagonal matrix where all correlations for gene pairs are stored using 
+gene major order.
+
+\begin{figure}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Field} & \textbf{Description} & \textbf{Type} \\
+\hline
+geneAmt & Total number of genes. & uint32\_t \\
+\hline
+sampleAmt & Number of samples per gene. & uint32\_t \\
+\hline
+corrAmt & Number of correlations per gene relationship. & uint8\_t \\
+\hline
+geneNameLen & Length of each string identifying genes. & uint16\_t \\
+\hline
+geneNameSize & Total size of gene name list in bytes. & uint64\_t \\
+\hline
+sampleNameLen & Length of each string identifying samples. & uint16\_t \\
+\hline
+sampleNameSize & Total size of sample name list in bytes. & uint64\_t \\
+\hline
+corrTypeLen & Length of each string identifying correlation type. & uint16\_t \\
+\hline
+corrTypeSize & Total size of correlation type list in bytes. & uint16\_t \\
+\hline
+geneNames & List of gene string identifiers. & char[geneNameSize] \\
+\hline
+sampleNames & List of sample string identifiers. & char[sampleNameSize] \\
+\hline
+corrTypes & List of correlation type strings. & char[corrTypeSize] \\
+\hline
+corrTotal & Total number of correlations for all gene relationships. & 
+uint64\_t \\
+\hline
+correlations & Diagonal matrix list of all gene correlations for all 
+relationships. & float[corrTotal] \\
+\hline
+\end{tabularx}
+\caption{Binary File Format of Correlation Data}
+\label{fig:correlation}
+\end{figure}
 
 \subsection{Network}
 
 This is responsible for storing network data between genes.
 
-\subsubsection{File Structure}
+\autoref{fig:network} shows the binary format of network data and how it is 
+stored on file. \h{geneAmt} give the number of genes in the network. 
+\h{geneNames} is the list of all gene names that are correlated who's length and 
+partitioning is defined by \h{geneNameLen} and \h{geneNameSize}. Lastly, 
+\h{network} is a special diagonal matrix where all network edges for gene pairs 
+are stored using gene major order.
 
-\begin{list}{}{}
-\item[1.] Special Identifier that identifies this file as a network file.
-\item[2.] User defined name for network data.
-\item[3.] History of this data, where it came from.
-\item[4.] Number of genes.
-\item[5.] List of all genes.
-\item[6.] Special 2 Dimensional list of all gene edges, special being a 
-diagonal matrix instead of square.
-\end{list}
+\begin{figure}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Field} & \textbf{Description} & \textbf{Type} \\
+\hline
+geneAmt & Total number of genes. & uint32\_t \\
+\hline
+geneNameLen & Length of each string identifying genes. & uint16\_t \\
+\hline
+geneNameSize & Total size of gene name list in bytes. & uint64\_t \\
+\hline
+geneNames & List of gene string identifiers. & char[geneNameSize] \\
+\hline
+netTotal & Total number of edges, true or false, in network data. & uint64\_t \\
+\hline
+network & Diagonal matrix list of all possible edges in gene network. & 
+bool[netTotal] \\
+\hline
+\end{tabularx}
+\caption{Binary File Format of Network Data}
+\label{fig:network}
+\end{figure}
 
 \subsection{Annotation}
 
 This is responsible for storing additional information for genes.
 
-\subsubsection{File Structure}
+\autoref{fig:annotation} shows the binary format of annotation data and how it 
+is stored on file. \h{geneAmt} and \h{annotAmt} give the number of genes and 
+the number of annotations, respectively. \h{geneNames} is the list of all gene 
+names who's length and partitioning is defined by \h{geneNameLen} and 
+\h{geneNameSize}.\h{annotNames} is the list of all annotation names who's 
+length and partitioning is defined by \h{annotNameLen} and \h{annotNameSize}.
+\h{annotValSize} is a list of all string lengths for each annotation value per 
+each gene. Lastly, \h{annotations} is a 2 dimensional matrix that lists all 
+annotations for all genes using gene major order.
 
-\begin{list}{}{}
-\item[1.] Special Identifier that identifies this file as an annotation file.
-\item[2.] User defined name for annotation data.
-\item[4.] Number of genes, number of annotations.
-\item[5.] List of all genes.
-\item[6.] List of all annotation types.
-\item[7.] 2 Dimensional list of all gene annotations, per gene.
-\end{list}
+\begin{figure}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Field} & \textbf{Description} & \textbf{Type} \\
+\hline
+geneAmt & Total number of genes. & uint32\_t \\
+\hline
+annotAmt & Total number of annotations per gene. & uint32\_t \\
+\hline
+geneNameLen & Length of each string identifying genes. & uint16\_t \\
+\hline
+geneNameSize & Total size of gene name list in bytes. & uint64\_t \\
+\hline
+annotNameLen & Length of each string identifying the name of a annotation. & 
+uint16\_t \\
+\hline
+annotNameSize & Total size of annotation name list in bytes. & uint64\_t \\
+\hline
+annotNames & List of annotation string identifiers. & char[annotNameSize] \\
+\hline
+geneNames & List of gene string identifiers. & char[geneNameSize] \\
+\hline
+annotValLens & List of numbers that identify the length of each value string 
+for each annotation. & uint16\_t[annotAmt] \\
+\hline
+annotValSize & Total size of all annotation values. & uint64\_t \\
+\hline
+annotations & List of all annotations per gene. & char[annotValSize] \\
+\hline
+\end{tabularx}
+\caption{Binary File Format of Annotation Data}
+\label{fig:annotation}
+\end{figure}
 
 \newpage
 \section{KINCAnalytic Classes}
