@@ -454,7 +454,7 @@ void RunSimilarity::executeTraditional() {
     }
   }
 
-  total_comps = (num_genes * num_genes) / 2;
+  total_comps = (num_genes * (num_genes - 1)) / 2;
   n_comps = 0;
 
   // each iteration of m is a new output file

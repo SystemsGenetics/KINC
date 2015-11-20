@@ -112,10 +112,10 @@ void MixtureModelClustering::run() {
   // triangle of the resulting similarity matrix.
 //    for (int i = 2000; i < 2005; i++) {
 //      for (int j = 2000; j < 2005; j++) {
-  for (int i = 0; i < num_rows; i++) {
-    for (int j = 0; j < num_rows; j++) {
-  //  for (int j = 5467; j <= 5467; j++) {
-    //  for (int i = 32805; i <= 32805; i++) {
+//  for (int i = 0; i < num_rows; i++) {
+//    for (int j = 0; j < num_rows; j++) {
+    for (int j = 1862; j <= 1862; j++) {
+      for (int i = 8562; i <= 8562; i++) {
 
       // We only need to calculate clusters in the lower triangle of the
       // full pair-wise matrix
