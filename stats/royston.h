@@ -13,7 +13,7 @@
 #include "kurtosis.h"
 #include "sfrancia.h"
 #include "swilk.h"
-#include "../error.h"
+#include "../general/error.h"
 
 double roystonH(double* a, double * b, int n, double *pcc);
 
