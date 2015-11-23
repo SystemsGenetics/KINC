@@ -8,6 +8,7 @@
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{soul}
+\usepackage{mdframed}
 \usepackage[margin=1in]{geometry}
 
 \hypersetup{
@@ -16,6 +17,43 @@
     citecolor={blue!50!black},
     urlcolor={blue!80!black}
 }
+
+\definecolor{btablecol}{rgb}{.9,.9,.9}
+\providecommand{\btable}[3]
+{
+\begin{figure}[H]
+\begin{mdframed}[hidealllines=true,backgroundcolor=btablecol]
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Name} & \textbf{Description} & \textbf{Type} \\
+\hline
+#3
+\hline
+\end{tabularx}
+\end{mdframed}
+\caption{#1}
+\label{#2}
+\end{figure}
+}
+
+\definecolor{funclistbcol}{rgb}{.9,.9,1}
+\definecolor{funclistlcol}{rgb}{.6,.6,1}
+\providecommand{\funclist}[3]
+{
+\begin{figure}[H]
+\begin{mdframed}[backgroundcolor=funclistbcol,topline=false,bottomline=false,%
+linecolor=funclistlcol,linewidth=2mm,align=center]
+\textbf{
+\begin{center}
+#3
+\end{center}
+}
+\end{mdframed}
+\caption{#1}
+\label{#2}
+\end{figure}
+}
+\providecommand{\funcnl}{\vspace{2mm}}
 
 \definecolor{lyellow}{rgb}{1,1,0.2}
 \definecolor{lblue}{rgb}{0.8,0.8,1}
@@ -92,21 +130,12 @@ KINC data file. \h{headerTag} represents the specific data type this file
 represents. The rest of the header information is the history information for 
 this data, starting with how this specific data was created.
 
-\begin{figure}[H]
-\centering
-\begin{tabularx}{\textwidth}{|l|X|l|}
-\hline
-\textbf{Field} & \textbf{Description} & \textbf{Type} \\
-\hline
+\btable{Binary File Format of Header}{fig:kincdata:header}{
 headerTag & Special header string that defines KINCData type for a file. & 
 char[10] \\
 \hline
 history & Array of history items. & byte[] \\
-\hline
-\end{tabularx}
-\caption{Binary File Format of Header}
-\label{fig:kincdata:header}
-\end{figure}
+}
 
 \autoref{fig:kincdata:history} shows the format for a single history item. The 
 history item structure is a nested structure with subhistories of all input 
@@ -126,12 +155,7 @@ file was created or last modified.
 The \h{subHistory} items represent a list of further history items that 
 describe all input files used in the creation of this current history item.
 
-\begin{figure}[H]
-\centering
-\begin{tabularx}{\textwidth}{|l|X|l|}
-\hline
-\textbf{Field} & \textbf{Description} & \textbf{Type} \\
-\hline
+\btable{Binary File Format of Individual History Item}{fig:kincdata:history}{
 fileLen & Length of file name string in bytes. & uint16\_t \\
 \hline
 nameLen & Length of user defined name string in bytes. & uint16\_t \\
@@ -156,11 +180,7 @@ subHistorySize & Size of input history data in bytes. & uint32\_t \\
 subHistoryAmt & Number of input history items. & uint16\_t \\
 \hline
 subHistory & Array of input history items. & byte[historySize] \\
-\hline
-\end{tabularx}
-\caption{Binary File Format of Individual History Item}
-\label{fig:kincdata:history}
-\end{figure}
+}
 
 \subsection{KINCAnalytic}
 
@@ -216,12 +236,11 @@ order for every line.  The first line of the file may contain a tab-delimited
 list of sample names, and a file may contain as many samples and genes as
 desired.
 
-{\bfseries virtual void export() = 0}
-
-{\bfseries virtual void query() = 0}
-
-{\bfseries virtual void merge() = 0}
-
+\funclist{Example Function List}{fig:func:example}{
+virtual void export() = 0 \\
+virtual void query() = 0 \\
+virtual void merge() = 0 \\
+}
 
 \subsubsection{File Structure}
 
@@ -234,12 +253,7 @@ string who's length and partitioning is defined by \h{sampleNameLen} and
 \h{sampleNameSize}. Lastly, \h{samples} is 2 dimensional matrix of all samples 
 for each gene, where the matrix is sorted by gene major order.
 
-\begin{figure}[H]
-\centering
-\begin{tabularx}{\textwidth}{|l|X|l|}
-\hline
-\textbf{Field} & \textbf{Description} & \textbf{Type} \\
-\hline
+\btable{Binary File Format of Expression Data}{fig:expression}{
 geneAmt & Total number of genes. & uint32\_t \\
 \hline
 sampleAmt & Number of samples per gene. & uint32\_t \\
@@ -259,11 +273,7 @@ sampleNames & List of sample string identifiers. & char[sampleNameSize] \\
 sampleTotal & Total number of samples for all genes. & uint64\_t \\
 \hline
 samples & List of all samples per gene. & float[sampleTotal] \\
-\hline
-\end{tabularx}
-\caption{Binary File Format of Expression Data}
-\label{fig:expression}
-\end{figure}
+}
 
 \subsection{Correlation}
 
@@ -291,12 +301,7 @@ defined by \h{corrTypeLen} and \h{corrTypeSize}. Lastly, \h{correlations} is a
 special diagonal matrix where all correlations for gene pairs are stored using 
 gene major order.
 
-\begin{figure}[H]
-\centering
-\begin{tabularx}{\textwidth}{|l|X|l|}
-\hline
-\textbf{Field} & \textbf{Description} & \textbf{Type} \\
-\hline
+\btable{Binary File Format of Correlation Data}{fig:correlation}{
 geneAmt & Total number of genes. & uint32\_t \\
 \hline
 sampleAmt & Number of samples per gene. & uint32\_t \\
@@ -326,11 +331,7 @@ uint64\_t \\
 \hline
 correlations & Diagonal matrix list of all gene correlations for all 
 relationships. & float[corrTotal] \\
-\hline
-\end{tabularx}
-\caption{Binary File Format of Correlation Data}
-\label{fig:correlation}
-\end{figure}
+}
 
 \subsection{Network}
 
@@ -343,12 +344,7 @@ partitioning is defined by \h{geneNameLen} and \h{geneNameSize}. Lastly,
 \h{network} is a special diagonal matrix where all network edges for gene pairs 
 are stored using gene major order.
 
-\begin{figure}[H]
-\centering
-\begin{tabularx}{\textwidth}{|l|X|l|}
-\hline
-\textbf{Field} & \textbf{Description} & \textbf{Type} \\
-\hline
+\btable{Binary File Format of Network Data}{fig:network}{
 geneAmt & Total number of genes. & uint32\_t \\
 \hline
 geneNameLen & Length of each string identifying genes. & uint16\_t \\
@@ -361,11 +357,7 @@ netTotal & Total number of edges, true or false, in network data. & uint64\_t \\
 \hline
 network & Diagonal matrix list of all possible edges in gene network. & 
 bool[netTotal] \\
-\hline
-\end{tabularx}
-\caption{Binary File Format of Network Data}
-\label{fig:network}
-\end{figure}
+}
 
 \subsection{Annotation}
 
@@ -381,12 +373,7 @@ length and partitioning is defined by \h{annotNameLen} and \h{annotNameSize}.
 each gene. Lastly, \h{annotations} is a 2 dimensional matrix that lists all 
 annotations for all genes using gene major order.
 
-\begin{figure}[H]
-\centering
-\begin{tabularx}{\textwidth}{|l|X|l|}
-\hline
-\textbf{Field} & \textbf{Description} & \textbf{Type} \\
-\hline
+\btable{Binary File Format of Annotation Data}{fig:annotation}{
 geneAmt & Total number of genes. & uint32\_t \\
 \hline
 annotAmt & Total number of annotations per gene. & uint32\_t \\
@@ -410,11 +397,7 @@ for each annotation. & uint16\_t[annotAmt] \\
 annotValSize & Total size of all annotation values. & uint64\_t \\
 \hline
 annotations & List of all annotations per gene. & char[annotValSize] \\
-\hline
-\end{tabularx}
-\caption{Binary File Format of Annotation Data}
-\label{fig:annotation}
-\end{figure}
+}
 
 \newpage
 \section{KINCAnalytic Classes}
