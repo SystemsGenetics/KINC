@@ -80,53 +80,157 @@ by KINC.
 \newpage
 \section{Console}
 
+The \h{Console} class has a single instance within the main function and is 
+designed to be given control of the program through one of its \h{run()} 
+functions. This class creates a terminal console for the user, creates and 
+manages all \h{Data} objects, and handles all \h{Analytic} execution.
+
+This class also interfaces with the plugin object factory functions that 
+generate new data or analytic interface object based off their unique names. 
+These functions are implemented in a common source file which requires editing 
+whenever a new plugin is added to the program.
+
+\autoref{fig:console:func} shows the functions this class implements.
+
+The constructor takes any arguments from the command line.
+
 \begin{figure}[H]
 \begin{mdframed}[style=functions]
 \begin{lstlisting}[language=C++]
-Console();
+Console(int,char*[]);
 void run();
-void run(std::string&);
 bool __register(Data*,std::string&);
+bool unregister(std::string&);
 Data* find(std::string&);
-Data* data_plugin(std::string&);
-Analytic* analytic_plugin(std::string&);
+Data* new_data(std::string&);
+Analytic* new_analytic(std::string&);
 \end{lstlisting}
 \end{mdframed}
 \caption{Functions for Console Class}
-\label{fig:console}
+\label{fig:console:func}
 \end{figure}
+
+The \h{run(...)} function takes control of the process and runs a console for 
+the user or executes a script, depending on the command line arguments 
+supplied. Once the user exits the console or the script has finished executing 
+this function returns control to the caller.
+
+The \h{\_\_register(...)} function adds a new \h{Data} object to the list of 
+available \h{Data} objects within the console with the name string supplied. 
+The name must be unique from all other loaded \h{Data} objects.
+
+The \h{unregister(...)} function removes the \h{Data} object with the name 
+string specified if it exists. If it exists and it was removed it returns 
+\h{TRUE} else it returns \h{FALSE}.
+
+The \h{find(...)} function finds a loaded \h{Data} object with the given name. 
+If no object is found with that name then \h{NULL} is returned, else a 
+pointer to the found object is returned.
+
+The \h{new\_data(...)} function creates a new data object of the type 
+specified in the supplied string. If the string is not a valid data type then 
+\h{NULL} is returned, else a pointer to the new data object is returned.
+
+The \h{new\_analytic(...)} creates a new analytic object of the type specified 
+in the supplied string. If the string is not a valid data type then \h{NULL} is 
+returned, else a pointer to the new analytic object is returned.
+
+The \h{new\_data(...)} and \h{new\_analytic(...)} functions are designed to be 
+plugin object factories which return data and analytic objects with the type 
+given to them as a string. These two functions along with the list of all 
+available plugins containing their unique string names and unique number 
+identifiers are all contained in the same source and header file. These two 
+files will represent where new static plugins that implement either a data or 
+analytic interface can be added.
 
 \newpage
 \section{Data}
 
+The abstract \h{Data} class creates a common data object interface to the 
+console program and provides file input/output for any data class implementing 
+it. This class is responsible for implementing the basic file input and output 
+operations along with specifying a common interface with the console program.
+
+Additional functions can and should be added to any implementation of this 
+interface class that deals with manipulating the specific type of data that is 
+being implemented.
+
+\autoref{fig:data:func} shows the public functions this class defines. 
+Exluding the constructor, all of these functions are pure virtual functions 
+that any class inheriting this class are required to implement.
+
 \begin{figure}[H]
 \begin{mdframed}[style=functions]
 \begin{lstlisting}[language=C++]
-Data(Console*);
-bool fopen(std::string&);
-void fclose();
-void print_history();
+Data();
+void __history();
+virtual uint32_t type() = 0;
+virtual bool __load(std::vector<std::string>&) = 0;
+virtual bool __export(std::vector<std::string>&) = 0;
+virtual bool __query(std::vector<std::string>&) = 0;
+virtual bool __merge(std::vector<std::string>&) = 0;
+virtual bool flush() = 0;
+\end{lstlisting}
+\end{mdframed}
+\caption{Functions for Data Class}
+\label{fig:data:func}
+\end{figure}
+
+The virtual \h{type()} function must return the unique identier of the type of 
+data this object represents. The list of unique identifiers are stored in a 
+common header file.
+
+The \h{load(...)}, \h{\_\_export(...)}, \h{query(...)}, and \h{merge(...)} 
+functions are all supplied with the same argument. This argument is a list of 
+additional arguments given to the specific command issued by the user on the 
+console.
+
+The virtual \h{load(...)} function is called when a load console command 
+is issued on a new data object. The data object instance can assume that it is 
+empty and was just created by the console. This function is responsible for 
+loading data from a human readable ASCII file and encoding it into its binary 
+format in a new file of the same name.
+
+The virtual \h{\_\_export(...)} function is called when a export console command 
+is issued on a given data object. This function is responsible for exporting 
+its internal data stored in binary format and decoding it into a human readable 
+ASCII file.
+
+The virtual \h{query(...)} function is called when a query console command is 
+issued on a given data object. This function is responsible for giving 
+information about the data this object holds to the user based off arguments 
+given.
+
+The virtual \h{merge(...)} function is called when a merge console command is 
+issued on a given data object. This function is responsible for merging two or 
+more seperate data objects of the same type into a new single data object. The 
+data object this command is called on is the first data object in the list of 
+objects that will be merged. The rest of the objects are supplied as additional 
+arguments. This function does not have to merge the given data objects if the 
+data is of a type that cannot be merged without calling an analytic object.
+
+The \h{load(...)}, \h{\_\_export(...)}, \h{merge(...)}, and \h{flush()} 
+functions will not return control to the caller of the function until all write 
+operations to the binary file the data object represents have completed.
+
+\autoref{fig:data:func:prot} shows the protected functions this class 
+implements that a class inheriting this abstract class can use for file input 
+and output of its binary data.
+
+\begin{figure}[H]
+\begin{mdframed}[style=functions]
+\begin{lstlisting}[language=C++]
 uint64_t fsize();
 void fseek(uint64_t);
 template<class T> bool fread(T*,uint64_t);
 template<class T> bool fwrite(T*,uint64_t);
-virtual uint32_t type() = 0;
-virtual bool load(std::vector<std::string>&) = 0;
-virtual bool __export(std::vector<std::string>&) = 0;
-virtual bool query(std::vector<std::string>&) = 0;
-virtual bool merge(std::vector<std::string>&) = 0;
 \end{lstlisting}
 \end{mdframed}
-\caption{Functions for Data Class}
-\label{fig:kincdata}
+\caption{Protected Functions for Data Class}
+\label{fig:data:func:prot}
 \end{figure}
 
-The Data class is responsible for reading and writing KINC data files.  
-Classes that inherit from the Data class are responsible for implementing 
-the generic functions exposed by this class.  This includes reading, writing, 
-merging, exporing, indexing and querying. Typically, child classes provide 
-importers that read commonly used file formats into their own binary file 
-format and exporters to convert back to those same file formats.
+Add descriptions of file input/output functions here.
 
 This abstract class is responsible for reading in the header information of any 
 data file since it is generic to any specific data type. 
