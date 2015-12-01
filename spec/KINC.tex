@@ -9,6 +9,7 @@
 \usepackage{graphicx}
 \usepackage{soul}
 \usepackage{mdframed}
+\usepackage{listings}
 \usepackage[margin=1in]{geometry}
 
 \hypersetup{
@@ -19,41 +20,20 @@
 }
 
 \definecolor{btablecol}{rgb}{.9,.9,.9}
-\providecommand{\btable}[3]
-{
-\begin{figure}[H]
-\begin{mdframed}[hidealllines=true,backgroundcolor=btablecol]
-\begin{tabularx}{\textwidth}{|l|X|l|}
-\hline
-\textbf{Name} & \textbf{Description} & \textbf{Type} \\
-\hline
-#3
-\hline
-\end{tabularx}
-\end{mdframed}
-\caption{#1}
-\label{#2}
-\end{figure}
-}
+\mdfdefinestyle{btable}{
+hidealllines=true,
+backgroundcolor=btablecol,
+innertopmargin=3mm,
+innerbottommargin=3mm}
 
 \definecolor{funclistbcol}{rgb}{.9,.9,1}
 \definecolor{funclistlcol}{rgb}{.6,.6,1}
-\providecommand{\funclist}[3]
-{
-\begin{figure}[H]
-\begin{mdframed}[backgroundcolor=funclistbcol,topline=false,bottomline=false,%
-linecolor=funclistlcol,linewidth=2mm,align=center]
-\textbf{
-\begin{center}
-#3
-\end{center}
-}
-\end{mdframed}
-\caption{#1}
-\label{#2}
-\end{figure}
-}
-\providecommand{\funcnl}{\vspace{2mm}}
+\mdfdefinestyle{functions}{
+backgroundcolor=funclistbcol,
+topline=false,
+bottomline=false,
+linecolor=funclistlcol,
+linewidth=2mm}
 
 \definecolor{lyellow}{rgb}{1,1,0.2}
 \definecolor{lblue}{rgb}{0.8,0.8,1}
@@ -71,7 +51,8 @@ linecolor=funclistlcol,linewidth=2mm,align=center]
 \vspace{1mm}
 \includegraphics[width=8cm,height=4cm]{KINClogo.png}
 \\Knowledge Independent Network Construction}
-\author{Joshua Burns\thanks{Dept. of Horticulture, Washington State University}, Stephen Ficklin\footnotemark[1]}
+\author{Joshua Burns\thanks{Dept. of Horticulture, Washington State 
+University}, Stephen Ficklin\footnotemark[1]}
 \maketitle
 
 \newpage
@@ -96,28 +77,52 @@ This document provides an overview for the data structures and file formats
 used 
 by KINC. 
 
-\stephen{Can we describe here how the command-line for KINC will work and how
-use of the classes described below translates into command-line arguments?}
+\newpage
+\section{Console}
 
-\josh{Yes I will add descriptions of command line arguments that will apply to 
-all abstract classes.}
+\begin{figure}[H]
+\begin{mdframed}[style=functions]
+\begin{lstlisting}[language=C++]
+Console();
+void run();
+void run(std::string&);
+bool __register(Data*,std::string&);
+Data* find(std::string&);
+Data* data_plugin(std::string&);
+Analytic* analytic_plugin(std::string&);
+\end{lstlisting}
+\end{mdframed}
+\caption{Functions for Console Class}
+\label{fig:console}
+\end{figure}
 
 \newpage
-\section{Abstract Classes}
+\section{Data}
 
-The following abstract classes serve as the base for all structures within the 
-kinc program.  All other classes should inherit from these. This design will 
-allow for dynamic addition of user implemented plugins in the future, because
-the functions of the abstract classes are clearly defined.
+\begin{figure}[H]
+\begin{mdframed}[style=functions]
+\begin{lstlisting}[language=C++]
+Data(Console*);
+bool fopen(std::string&);
+void fclose();
+void print_history();
+uint64_t fsize();
+void fseek(uint64_t);
+template<class T> bool fread(T*,uint64_t);
+template<class T> bool fwrite(T*,uint64_t);
+virtual uint32_t type() = 0;
+virtual bool load(std::vector<std::string>&) = 0;
+virtual bool __export(std::vector<std::string>&) = 0;
+virtual bool query(std::vector<std::string>&) = 0;
+virtual bool merge(std::vector<std::string>&) = 0;
+\end{lstlisting}
+\end{mdframed}
+\caption{Functions for Data Class}
+\label{fig:kincdata}
+\end{figure}
 
-\subsection{KINCData}
-
-\josh{I am thinking the header of a file, specifically its KINCData type, user 
-defined name, and history, should all be defined here since any KINC data file 
-will share all of these things in their file data.}
-
-The KINCData class is responsible for reading and writing KINC data files.  
-Classes that inherit from the KINCData class are responsible for implementing 
+The Data class is responsible for reading and writing KINC data files.  
+Classes that inherit from the Data class are responsible for implementing 
 the generic functions exposed by this class.  This includes reading, writing, 
 merging, exporing, indexing and querying. Typically, child classes provide 
 importers that read commonly used file formats into their own binary file 
@@ -130,12 +135,23 @@ KINC data file. \h{headerTag} represents the specific data type this file
 represents. The rest of the header information is the history information for 
 this data, starting with how this specific data was created.
 
-\btable{Binary File Format of Header}{fig:kincdata:header}{
-headerTag & Special header string that defines KINCData type for a file. & 
-char[10] \\
+\begin{figure}[H]
+\begin{mdframed}[style=btable]
+\begin{tabularx}{\textwidth}{|l|X|l|}
 \hline
-history & Array of history items. & byte[] \\
-}
+\textbf{Name} & \textbf{Description} & \textbf{Type} \\
+\hline
+type & Number that defines Data type for a file. & uint32\_t \\
+\hline
+historySize & Total size of all history items in bytes. & uint32\_t \\
+\hline
+history & Array of history items. & byte[historySize] \\
+\hline
+\end{tabularx}
+\end{mdframed}
+\caption{Binary File Format of Header}
+\label{fig:kincdata:header}
+\end{figure}
 
 \autoref{fig:kincdata:history} shows the format for a single history item. The 
 history item structure is a nested structure with subhistories of all input 
@@ -155,7 +171,12 @@ file was created or last modified.
 The \h{subHistory} items represent a list of further history items that 
 describe all input files used in the creation of this current history item.
 
-\btable{Binary File Format of Individual History Item}{fig:kincdata:history}{
+\begin{figure}[H]
+\begin{mdframed}[style=btable]
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Name} & \textbf{Description} & \textbf{Type} \\
+\hline
 fileLen & Length of file name string in bytes. & uint16\_t \\
 \hline
 nameLen & Length of user defined name string in bytes. & uint16\_t \\
@@ -164,7 +185,11 @@ objectLen & Length of object name string in bytes. & uint16\_t \\
 \hline
 descriptionLen & Length of description string in bytes. & uint16\_t \\
 \hline
-date & Linux time-stamp of when file was built. & uint64\_t \\
+date & Linux time-stamp of when file was last modified. & uint64\_t \\
+\hline
+subHistoryAmt & Number of input history items. & uint16\_t \\
+\hline
+subHistorySize & Size of input history data in bytes. & uint32\_t \\
 \hline
 file & File name string. & char[fileLen] \\
 \hline
@@ -175,21 +200,35 @@ object & Name of object that built file in bytes. & char[objectLen] \\
 description & Detailed description of how file was built. & 
 char[descriptionLen] \\
 \hline
-subHistorySize & Size of input history data in bytes. & uint32\_t \\
+subHistory & Array of input history items. & byte[subHistorySize] \\
 \hline
-subHistoryAmt & Number of input history items. & uint16\_t \\
-\hline
-subHistory & Array of input history items. & byte[historySize] \\
-}
-
-\subsection{KINCAnalytic}
-
-The KINCAnalytic class is responsible for taking in one or more KINCData objects
-and employ an algorithm such as a statistical test to produce one or more 
-new KINCData objects.   A KINCAnalytic 
+\end{tabularx}
+\end{mdframed}
+\caption{Binary File Format of Individual History Item}
+\label{fig:kincdata:history}
+\end{figure}
 
 \newpage
-\section{KINCData Classes}
+\section{Analytic}
+
+The Analytic class is responsible for taking in one or more Data objects
+and employ an algorithm such as a statistical test to produce one or more 
+new Data objects.   A Analytic 
+
+\begin{figure}[H]
+\begin{mdframed}[style=functions]
+\begin{lstlisting}[language=C++]
+Analytic(Console*,cl::Context*);
+virtual uint32_t type() = 0;
+virtual bool execute(std::vector<std::string>&) = 0;
+\end{lstlisting}
+\end{mdframed}
+\caption{Functions for Analytic Class}
+\label{fig:kincanalytic}
+\end{figure}
+
+\newpage
+\section{Data Classes}
 
 \subsection{Expression}
 
@@ -205,7 +244,7 @@ the Abstract Classes section using virtual functions?}
 
 \subsubsection{Constructor}
 
-{\bfseries KINCData(int argc, char *argv[])}
+{\bfseries Data(int argc, char *argv[])}
 
 \stephen{We need to design how the functions of the class will receive 
 arguments.  will we have a constructor that receives, parses and responds to 
@@ -224,7 +263,7 @@ additional virtual functions that any implementation must handle.}
 \subsubsection{Virtual Functions}
 
 The following functions should be implemented by any plugin that creates
-classes that inherits the KINCData class.
+classes that inherits the Data class.
 
 {\bfseries virtual void import() = 0}
 
@@ -235,12 +274,6 @@ for each sample. The expression level of a samples must be in the same
 order for every line.  The first line of the file may contain a tab-delimited
 list of sample names, and a file may contain as many samples and genes as
 desired.
-
-\funclist{Example Function List}{fig:func:example}{
-virtual void export() = 0 \\
-virtual void query() = 0 \\
-virtual void merge() = 0 \\
-}
 
 \subsubsection{File Structure}
 
@@ -253,7 +286,12 @@ string who's length and partitioning is defined by \h{sampleNameLen} and
 \h{sampleNameSize}. Lastly, \h{samples} is 2 dimensional matrix of all samples 
 for each gene, where the matrix is sorted by gene major order.
 
-\btable{Binary File Format of Expression Data}{fig:expression}{
+\begin{figure}[H]
+\begin{mdframed}[style=btable]
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Name} & \textbf{Description} & \textbf{Type} \\
+\hline
 geneAmt & Total number of genes. & uint32\_t \\
 \hline
 sampleAmt & Number of samples per gene. & uint32\_t \\
@@ -273,7 +311,12 @@ sampleNames & List of sample string identifiers. & char[sampleNameSize] \\
 sampleTotal & Total number of samples for all genes. & uint64\_t \\
 \hline
 samples & List of all samples per gene. & float[sampleTotal] \\
-}
+\hline
+\end{tabularx}
+\end{mdframed}
+\caption{Binary File Format of Expression Data}
+\label{fig:expression}
+\end{figure}
 
 \subsection{Correlation}
 
@@ -301,7 +344,12 @@ defined by \h{corrTypeLen} and \h{corrTypeSize}. Lastly, \h{correlations} is a
 special diagonal matrix where all correlations for gene pairs are stored using 
 gene major order.
 
-\btable{Binary File Format of Correlation Data}{fig:correlation}{
+\begin{figure}[H]
+\begin{mdframed}[style=btable]
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Name} & \textbf{Description} & \textbf{Type} \\
+\hline
 geneAmt & Total number of genes. & uint32\_t \\
 \hline
 sampleAmt & Number of samples per gene. & uint32\_t \\
@@ -331,7 +379,12 @@ uint64\_t \\
 \hline
 correlations & Diagonal matrix list of all gene correlations for all 
 relationships. & float[corrTotal] \\
-}
+\hline
+\end{tabularx}
+\end{mdframed}
+\caption{Binary File Format of Correlation Data}
+\label{fig:correlation}
+\end{figure}
 
 \subsection{Network}
 
@@ -339,12 +392,18 @@ This is responsible for storing network data between genes.
 
 \autoref{fig:network} shows the binary format of network data and how it is 
 stored on file. \h{geneAmt} give the number of genes in the network. 
-\h{geneNames} is the list of all gene names that are correlated who's length and 
+\h{geneNames} is the list of all gene names that are correlated who's length 
+and 
 partitioning is defined by \h{geneNameLen} and \h{geneNameSize}. Lastly, 
 \h{network} is a special diagonal matrix where all network edges for gene pairs 
 are stored using gene major order.
 
-\btable{Binary File Format of Network Data}{fig:network}{
+\begin{figure}[H]
+\begin{mdframed}[style=btable]
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Name} & \textbf{Description} & \textbf{Type} \\
+\hline
 geneAmt & Total number of genes. & uint32\_t \\
 \hline
 geneNameLen & Length of each string identifying genes. & uint16\_t \\
@@ -357,7 +416,12 @@ netTotal & Total number of edges, true or false, in network data. & uint64\_t \\
 \hline
 network & Diagonal matrix list of all possible edges in gene network. & 
 bool[netTotal] \\
-}
+\hline
+\end{tabularx}
+\end{mdframed}
+\caption{Binary File Format of Network Data}
+\label{fig:network}
+\end{figure}
 
 \subsection{Annotation}
 
@@ -373,7 +437,12 @@ length and partitioning is defined by \h{annotNameLen} and \h{annotNameSize}.
 each gene. Lastly, \h{annotations} is a 2 dimensional matrix that lists all 
 annotations for all genes using gene major order.
 
-\btable{Binary File Format of Annotation Data}{fig:annotation}{
+\begin{figure}[H]
+\begin{mdframed}[style=btable]
+\begin{tabularx}{\textwidth}{|l|X|l|}
+\hline
+\textbf{Name} & \textbf{Description} & \textbf{Type} \\
+\hline
 geneAmt & Total number of genes. & uint32\_t \\
 \hline
 annotAmt & Total number of annotations per gene. & uint32\_t \\
@@ -397,10 +466,15 @@ for each annotation. & uint16\_t[annotAmt] \\
 annotValSize & Total size of all annotation values. & uint64\_t \\
 \hline
 annotations & List of all annotations per gene. & char[annotValSize] \\
-}
+\hline
+\end{tabularx}
+\end{mdframed}
+\caption{Binary File Format of Annotation Data}
+\label{fig:annotation}
+\end{figure}
 
 \newpage
-\section{KINCAnalytic Classes}
+\section{Analytic Classes}
 
 \subsection{Pearson}
 
