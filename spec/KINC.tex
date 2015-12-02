@@ -80,9 +80,9 @@ by KINC.
 \newpage
 \section{Console}
 
-The \h{Console} class has a single instance within the main function and is 
-designed to be given control of the program through one of its \h{run()} 
-functions. This class creates a terminal console for the user, creates and 
+The \h{Console} class has a single instance within the main program and is 
+designed to be given control through its \h{run()} 
+function. This class creates a terminal console for the user, creates and 
 manages all \h{Data} objects, and handles all \h{Analytic} execution.
 
 This class also interfaces with the plugin object factory functions that 
@@ -92,7 +92,7 @@ whenever a new plugin is added to the program.
 
 \autoref{fig:console:func} shows the functions this class implements.
 
-The constructor takes any arguments from the command line.
+The constructor takes any command line arguments.
 
 \begin{figure}[H]
 \begin{mdframed}[style=functions]
@@ -157,12 +157,14 @@ being implemented.
 
 \autoref{fig:data:func} shows the public functions this class defines. 
 Exluding the constructor, all of these functions are pure virtual functions 
-that any class inheriting this class are required to implement.
+that any class inheriting this class are required to implement. The constructor 
+takes a single argument which is the binary file location where the data for an 
+object is stored.
 
 \begin{figure}[H]
 \begin{mdframed}[style=functions]
 \begin{lstlisting}[language=C++]
-Data();
+Data(const std::string&);
 void __history();
 virtual uint32_t type() = 0;
 virtual bool __load(std::vector<std::string>&) = 0;
@@ -175,6 +177,9 @@ virtual bool flush() = 0;
 \caption{Functions for Data Class}
 \label{fig:data:func}
 \end{figure}
+
+The \h{history()} function prints the entire history of its object to standard 
+output.
 
 The virtual \h{type()} function must return the unique identier of the type of 
 data this object represents. The list of unique identifiers are stored in a 
@@ -241,15 +246,18 @@ this data, starting with how this specific data was created.
 
 \begin{figure}[H]
 \begin{mdframed}[style=btable]
-\begin{tabularx}{\textwidth}{|l|X|l|}
+\begin{tabularx}{\textwidth}{|l|l|X|l|}
 \hline
-\textbf{Name} & \textbf{Description} & \textbf{Type} \\
+\textbf{Name} & \textbf{Value} & \textbf{Description} & \textbf{Type} \\
 \hline
-type & Number that defines Data type for a file. & uint32\_t \\
+header & KINC & Special header tag specifying this is a KINC binary data file. 
+& char[4] \\
 \hline
-historySize & Total size of all history items in bytes. & uint32\_t \\
+type & & Number that defines Data type for a file. & uint32\_t \\
 \hline
-history & Array of history items. & byte[historySize] \\
+historySize & & Total size of all history items in bytes. & uint32\_t \\
+\hline
+history & & Array of history items. & byte[historySize] \\
 \hline
 \end{tabularx}
 \end{mdframed}
@@ -281,6 +289,9 @@ describe all input files used in the creation of this current history item.
 \hline
 \textbf{Name} & \textbf{Description} & \textbf{Type} \\
 \hline
+elemSize & The total size of this history item and all subhistory items it 
+bytes. & uint64\_t \\
+\hline
 fileLen & Length of file name string in bytes. & uint16\_t \\
 \hline
 nameLen & Length of user defined name string in bytes. & uint16\_t \\
@@ -288,6 +299,8 @@ nameLen & Length of user defined name string in bytes. & uint16\_t \\
 objectLen & Length of object name string in bytes. & uint16\_t \\
 \hline
 descriptionLen & Length of description string in bytes. & uint16\_t \\
+\hline
+commandLen & Length of command string in bytes. & uint16\_t \\
 \hline
 date & Linux time-stamp of when file was last modified. & uint64\_t \\
 \hline
@@ -303,6 +316,9 @@ object & Name of object that built file in bytes. & char[objectLen] \\
 \hline
 description & Detailed description of how file was built. & 
 char[descriptionLen] \\
+\hline
+command & Command line used in console to construct data file. & 
+command[commandLen] \\
 \hline
 subHistory & Array of input history items. & byte[subHistorySize] \\
 \hline
@@ -322,7 +338,7 @@ new Data objects.   A Analytic
 \begin{figure}[H]
 \begin{mdframed}[style=functions]
 \begin{lstlisting}[language=C++]
-Analytic(Console*,cl::Context*);
+Analytic(cl::Context*);
 virtual uint32_t type() = 0;
 virtual bool execute(std::vector<std::string>&) = 0;
 \end{lstlisting}
