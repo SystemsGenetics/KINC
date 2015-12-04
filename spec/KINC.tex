@@ -74,11 +74,71 @@ correlations.
 \end{list}
 
 This document provides an overview for the data structures and file formats 
-used 
-by KINC. 
+used by KINC.
+
+The KINC program upon loading presents the user with a console. 
+\autoref{intro:ccommands} shows the basic commands this console will support.
+
+\begin{figure}[H]
+\begin{mdframed}[style=btable]
+\begin{tabularx}{\textwidth}{|l|X|}
+\hline
+\textbf{Command} & \textbf{Description} \\
+\hline
+history & Shows the history of a given data file. \\
+\hline
+load & Loads a new data file with the given type and name. \\
+\hline
+export & Exports a given data file to an ASCII export file. \\
+\hline
+query & Query a given data file for information. \\
+\hline
+merge & Merge two or more data files into one, if possible. \\
+\hline
+list & List all loaded data files. \\
+\hline
+gpu & GPU commands. \\
+\hline
+\end{tabularx}
+\end{mdframed}
+\caption{Basic Console Commands}
+\label{intro:ccommands}
+\end{figure}
+
+Any other command will be treated as the name of an analytic object to load and 
+execute. If no analytic is found with the given name nothing is done.
+
+The GPU command has a list of subcommands for querying and setting up any GPGPU 
+device to be used with analytic objects. \autoref{intro:gpucommands} shows all 
+subcommands pertaining to GPGPU setup through OpenCL.
+
+\begin{figure}[H]
+\begin{mdframed}[style=btable]
+\begin{tabularx}{\textwidth}{|l|X|}
+\hline
+\textbf{Command} & \textbf{Description} \\
+\hline
+list & List all availbale OpenCL compatible devices. \\
+\hline
+set & Set a specific OpenCL device to be used for accelerated computation. \\
+\hline
+clear & Clear any previously set OpenCL device. \\
+\hline
+\end{tabularx}
+\end{mdframed}
+\caption{GPU Console Subcommands}
+\label{intro:gpucommands}
+\end{figure}
 
 \newpage
-\section{Console}
+\section{Main Program}
+
+The main program consists of a console management class which acts as the 
+program's controller and two abstract data classes that create a common 
+interface to the program any implementation object or analytic must inherit and 
+follow.
+
+\subsection{Console}
 
 The \h{Console} class has a single instance within the main program and is 
 designed to be given control through its \h{run()} 
@@ -99,8 +159,8 @@ The constructor takes any command line arguments.
 \begin{lstlisting}[language=C++]
 Console(int,char*[]);
 void run();
-bool __register(Data*,std::string&);
-bool unregister(std::string&);
+bool list(Data*,std::string&);
+bool unlist(std::string&);
 Data* find(std::string&);
 Data* new_data(std::string&);
 Analytic* new_analytic(std::string&);
@@ -115,11 +175,11 @@ the user or executes a script, depending on the command line arguments
 supplied. Once the user exits the console or the script has finished executing 
 this function returns control to the caller.
 
-The \h{\_\_register(...)} function adds a new \h{Data} object to the list of 
+The \h{list(...)} function adds a new \h{Data} object to the list of 
 available \h{Data} objects within the console with the name string supplied. 
 The name must be unique from all other loaded \h{Data} objects.
 
-The \h{unregister(...)} function removes the \h{Data} object with the name 
+The \h{unlist(...)} function removes the \h{Data} object with the name 
 string specified if it exists. If it exists and it was removed it returns 
 \h{TRUE} else it returns \h{FALSE}.
 
@@ -143,8 +203,7 @@ identifiers are all contained in the same source and header file. These two
 files will represent where new static plugins that implement either a data or 
 analytic interface can be added.
 
-\newpage
-\section{Data}
+\subsection{Data}
 
 The abstract \h{Data} class creates a common data object interface to the 
 console program and provides file input/output for any data class implementing 
@@ -178,19 +237,19 @@ virtual bool flush() = 0;
 \label{fig:data:func}
 \end{figure}
 
-The \h{history()} function prints the entire history of its object to standard 
-output.
+The \h{\_\_history()} function prints the entire history of its object to 
+standard output.
 
 The virtual \h{type()} function must return the unique identier of the type of 
 data this object represents. The list of unique identifiers are stored in a 
 common header file.
 
-The \h{load(...)}, \h{\_\_export(...)}, \h{query(...)}, and \h{merge(...)} 
-functions are all supplied with the same argument. This argument is a list of 
-additional arguments given to the specific command issued by the user on the 
-console.
+The \h{\_\_load(...)}, \h{\_\_export(...)}, \h{\_\_query(...)}, and 
+\h{\_\_merge(...)} functions are all supplied with the same argument. This 
+argument is a list of additional arguments given to the specific command issued 
+by the user on the console.
 
-The virtual \h{load(...)} function is called when a load console command 
+The virtual \h{\_\_load(...)} function is called when a load console command 
 is issued on a new data object. The data object instance can assume that it is 
 empty and was just created by the console. This function is responsible for 
 loading data from a human readable ASCII file and encoding it into its binary 
@@ -201,31 +260,35 @@ is issued on a given data object. This function is responsible for exporting
 its internal data stored in binary format and decoding it into a human readable 
 ASCII file.
 
-The virtual \h{query(...)} function is called when a query console command is 
-issued on a given data object. This function is responsible for giving 
+The virtual \h{\_\_query(...)} function is called when a query console command 
+is issued on a given data object. This function is responsible for giving 
 information about the data this object holds to the user based off arguments 
 given.
 
-The virtual \h{merge(...)} function is called when a merge console command is 
-issued on a given data object. This function is responsible for merging two or 
-more seperate data objects of the same type into a new single data object. The 
-data object this command is called on is the first data object in the list of 
-objects that will be merged. The rest of the objects are supplied as additional 
-arguments. This function does not have to merge the given data objects if the 
-data is of a type that cannot be merged without calling an analytic object.
+The virtual \h{\_\_merge(...)} function is called when a merge console command 
+is issued on a given data object. This function is responsible for merging two 
+or more seperate data objects of the same type into a new single data object. 
+The data object this command is called on is the first data object in the list 
+of objects that will be merged. The rest of the objects are supplied as 
+additional arguments. This function does not have to merge the given data 
+objects if the data is of a type that cannot be merged without calling an 
+analytic object.
 
-The \h{load(...)}, \h{\_\_export(...)}, \h{merge(...)}, and \h{flush()} 
+The \h{\_\_load(...)}, \h{\_\_export(...)}, \h{\_\_merge(...)}, and \h{flush()} 
 functions will not return control to the caller of the function until all write 
 operations to the binary file the data object represents have completed.
 
 \autoref{fig:data:func:prot} shows the protected functions this class 
 implements that a class inheriting this abstract class can use for file input 
-and output of its binary data.
+and output of its binary data. These functions are designed to hide the raw 
+file from an implemenation class so it is impossible to overwrite the header 
+part of the file that this abstract class is responsible for maintaining.
 
 \begin{figure}[H]
 \begin{mdframed}[style=functions]
 \begin{lstlisting}[language=C++]
 uint64_t fsize();
+bool fgrow(uint64_t);
 void fseek(uint64_t);
 template<class T> bool fread(T*,uint64_t);
 template<class T> bool fwrite(T*,uint64_t);
@@ -235,14 +298,34 @@ template<class T> bool fwrite(T*,uint64_t);
 \label{fig:data:func:prot}
 \end{figure}
 
-Add descriptions of file input/output functions here.
+The \h{fsize()} function returns the total size of the binary file in bytes. 
+This does not include the header information that is hidden from any 
+implementation class.
+
+The \h{fgrow()} function will increase the size of the binary file by the 
+number of bytes given. If this was successful it returns \h{TRUE} else if it 
+could not grow the size of the file it returns \h{FALSE}.
+
+The \h{fseek()} function will move the file position's indent to the number 
+given in bytes. This number must be within range of the total size of the 
+binary file.
+
+The \h{fread(...)} function reads the number of elements given and writes them 
+to the pointer of that element type given, starting at the current file 
+position and incrementing by the number of bytes read. The new file position 
+cannot exceed the total size of the file.
+
+The \h{fwrite(...)} function overwrites the number of elements given from the 
+given pointer to the binary file, starting at the current file position and 
+incrementing by the number of bytes overwritten. The new file position cannot 
+exceed the total size of the file.
 
 This abstract class is responsible for reading in the header information of any 
-data file since it is generic to any specific data type. 
-\autoref{fig:kincdata:header} shows the binary format for the beginning of any 
-KINC data file. \h{headerTag} represents the specific data type this file 
-represents. The rest of the header information is the history information for 
-this data, starting with how this specific data was created.
+data file since it is generic to any specific data type. This part of the 
+binary file is hidden from any implementation class.
+
+\autoref{fig:kincdata:header} shows the binary format for the beginning 
+of a data file.
 
 \begin{figure}[H]
 \begin{mdframed}[style=btable]
@@ -265,23 +348,15 @@ history & & Array of history items. & byte[historySize] \\
 \label{fig:kincdata:header}
 \end{figure}
 
-\autoref{fig:kincdata:history} shows the format for a single history item. The 
-history item structure is a nested structure with subhistories of all input 
-files used to create the current history item. This nesting continues until you 
-reach the origional files that were created through importation of data outside 
-of KINC. The first history item in any file is a reference of itself, therefore 
-any data file has at least one history item which describes itself. Any sub 
-history items after that describe any input files that helped create this file.
+The \h{header} field is a special tag that specifies this is a KINC data file. 
+The \h{type} field represents the specific type of data this file represents. 
+The \h{historySize} field represents the total size of all history data in 
+bytes.
 
-\h{file} is the filename of the input file or an empty string if this is the 
-first history item referencing itself. \h{name} is the user defined name of the 
-file and its data. \h{object} is teh name of the KINC Analytic or Data class 
-which created this file. \h{description} is a detailed description about the 
-creation of the data. Lastly, \h{date} is a linux timestamp of the time this 
-file was created or last modified.
-
-The \h{subHistory} items represent a list of further history items that 
-describe all input files used in the creation of this current history item.
+\autoref{fig:kincdata:history} shows the format for a single history item 
+within the history buffer. History items are nested inside one another, the 
+highest history element being the history of the current file, and all 
+subhistories being the history for all input files.
 
 \begin{figure}[H]
 \begin{mdframed}[style=btable]
@@ -294,11 +369,7 @@ bytes. & uint64\_t \\
 \hline
 fileLen & Length of file name string in bytes. & uint16\_t \\
 \hline
-nameLen & Length of user defined name string in bytes. & uint16\_t \\
-\hline
 objectLen & Length of object name string in bytes. & uint16\_t \\
-\hline
-descriptionLen & Length of description string in bytes. & uint16\_t \\
 \hline
 commandLen & Length of command string in bytes. & uint16\_t \\
 \hline
@@ -310,12 +381,7 @@ subHistorySize & Size of input history data in bytes. & uint32\_t \\
 \hline
 file & File name string. & char[fileLen] \\
 \hline
-name & User defined name string. & char[nameLen] \\
-\hline
 object & Name of object that built file in bytes. & char[objectLen] \\
-\hline
-description & Detailed description of how file was built. & 
-char[descriptionLen] \\
 \hline
 command & Command line used in console to construct data file. & 
 command[commandLen] \\
@@ -328,12 +394,37 @@ subHistory & Array of input history items. & byte[subHistorySize] \\
 \label{fig:kincdata:history}
 \end{figure}
 
-\newpage
-\section{Analytic}
+The \h{elemSize} field represents the total size of this history item, 
+including all subhistory items nested within it.
 
-The Analytic class is responsible for taking in one or more Data objects
-and employ an algorithm such as a statistical test to produce one or more 
-new Data objects.   A Analytic 
+The \h{file}, \h{object}, and \h{command} fields represent the name of the 
+files, the object that created the data, and the specific KINC console command 
+that invoked the creation of the file. For the \h{object} field, it begins with 
+``D/'' or ``A/'' that states it was made by either a data object or an analytic 
+object, respectively.
+
+The \h{date} field represents the date when this data file was last modified.
+
+The \h{subHistoryAmt} and \h{subHistorySize} represents the total number of 
+history items in the list of subhistory items nested within this history item 
+and the total size of all nested history items in bytes, respectively.
+
+The \h{subHistory} field contains the list of all nested subhistory items 
+contained within this history item.
+
+\subsection{Analytic}
+
+The abstract \h{Analytic} class creates a command analytic interface to the 
+console program. This class is almost a pure virtual class and only supplies a 
+pointer to an OpenCL context from its constructor, provided to it from the main 
+console.
+
+\autoref{fig:kincanalytic} shows the virtual functions an implemenation of this 
+class must define along with its constructor. The constructor takes a pointer 
+to an OpenCL context that can be used for accelerated computation of the data, 
+but it is not required and can be given \h{NULL}. An implementation of this 
+class is required to provide a means to compute its data with or without an 
+OpenCL device.
 
 \begin{figure}[H]
 \begin{mdframed}[style=functions]
@@ -346,6 +437,39 @@ virtual bool execute(std::vector<std::string>&) = 0;
 \caption{Functions for Analytic Class}
 \label{fig:kincanalytic}
 \end{figure}
+
+The virtual \h{type()} function must return the unique identier of the type of 
+analytic this object represents. The list of unique identifiers are stored in a 
+common header file.
+
+The virtual \h{execute(...)} function is called for this analytic to execute 
+the task it is designed to implement. The argument passed to it is a list of 
+additional arguments given to the specific command issued by the user on the 
+console. This command should be blocking until all file input/output has 
+completed.
+
+Typically this class takes input from one or more data files and creates a new 
+data file as a result. This class is responsible for communicating to these 
+individual data objects and creating a new data object if one is to be created. 
+This class must know all pertanent functions involved in all data types it is 
+responsible for reading and writing to.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \newpage
 \section{Data Classes}
