@@ -14,8 +14,9 @@ LDFLAGS=-L$(CLPP)/lib -lOpenCL -lclpp `sdl-config --libs`
 NAME=kinc
 
 SOURCES=\
+console.cpp \
 consolestream.cpp \
-console.cpp
+exception.cpp
 
 UNITS=\
 unit.cpp
