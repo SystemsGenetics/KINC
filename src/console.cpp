@@ -1,6 +1,6 @@
 #include "console.h"
 
-Console g_console();
+Console g_console;
 
 
 

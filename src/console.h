@@ -30,7 +30,7 @@ public:
 
 
 
-extern Console g_console();
+extern Console g_console;
 
 
 
