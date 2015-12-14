@@ -1,9 +1,11 @@
 #include "console.h"
-#include <iostream>
 
 Console g_console();
 
 
 
-Console::Console()
+Console::Console():
+   out(ConsoleStream::out),
+   warn(ConsoleStream::warning),
+   err(ConsoleStream::error)
 {}
