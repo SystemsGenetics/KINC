@@ -22,6 +22,7 @@ public:
    void print(double);
    void print(const char*);
    void print(const std::string&);
+   void flush();
    ConsoleStream& operator<<(short);
    ConsoleStream& operator<<(unsigned short);
    ConsoleStream& operator<<(int);
