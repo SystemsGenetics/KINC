@@ -1,5 +1,7 @@
 main.cpp
 Makefile
 unit.cpp
+consolestream.cpp
+consolestream.h
 console.cpp
 console.h
