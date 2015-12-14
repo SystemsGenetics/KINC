@@ -13,7 +13,8 @@ LDFLAGS=-L$(CLPP)/lib -lOpenCL -lclpp `sdl-config --libs`
 
 NAME=kinc
 
-SOURCES=
+SOURCES=\
+console.cpp
 
 UNITS=\
 unit.cpp
@@ -55,7 +56,7 @@ $(BUILD)%.o : %.cpp
 
 $(BUILD)%.d: %.cpp
 +@echo "Building depend $@"
-+@echo -n "$@ $(BUILD)/" > $@
++@echo -n "$@ $(BUILD)" > $@
 +@$(CXX) -MM $< >> $@
 
 .PHONY=clean
