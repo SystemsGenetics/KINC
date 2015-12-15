@@ -8,6 +8,7 @@
 
 class Data;
 class Analytic;
+struct termios;
 
 
 
@@ -15,6 +16,9 @@ class Console
 {
 private:
    std::list<Data*> _data;
+   void stty_raw(struct termios*);
+   void stty_cooked(struct termios*);
+   void command();
 public:
    ConsoleStream out;
    ConsoleStream warn;
