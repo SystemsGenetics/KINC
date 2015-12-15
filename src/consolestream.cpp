@@ -1,5 +1,6 @@
 #include "consolestream.h"
 #include <iostream>
+#include "exception.h"
 
 
 
@@ -8,7 +9,7 @@ ConsoleStream::ConsoleStream(int which):
 {
    if (which!=out&&which!=warning&&which!=error)
    {
-      throw "error";
+      throw InvalidInput(__FILE__,__LINE__);
    }
 }
 
