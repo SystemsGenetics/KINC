@@ -45,4 +45,22 @@ public:
 
 
 
+class SystemError : public Exception
+{
+private:
+   const char* _system;
+public:
+   SystemError(const char*,int,const char*);
+   const char* system();
+};
+
+
+
+struct InvalidInput : public Exception
+{
+   InvalidInput(const char*,int);
+};
+
+
+
 #endif

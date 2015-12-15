@@ -58,3 +58,23 @@ Analytic* AnalyticException::who()
 {
    return _who;
 }
+
+
+
+SystemError::SystemError(const char* file, int line, const char* system):
+   Exception(file,line,"SystemError"),
+   _system(system)
+{}
+
+
+
+const char* SystemError::system()
+{
+   return _system;
+}
+
+
+
+InvalidInput::InvalidInput(const char* file, int line):
+   Exception(file,line,"InvalidInput")
+{}
