@@ -7,7 +7,7 @@ RUN=../run/
 CLPP=../../OpenCLPP
 CXX=g++
 CXXFLAGS=-g `sdl-config --libs` -I$(CLPP)/include
-LDFLAGS=-L$(CLPP)/lib -lOpenCL -lclpp `sdl-config --libs`
+LDFLAGS=-L$(CLPP)/lib -lOpenCL -lclpp -lncurses `sdl-config --libs`
 
 
 
@@ -15,6 +15,7 @@ NAME=kinc
 
 SOURCES=\
 console.cpp \
+terminal.cpp \
 consolestream.cpp \
 exception.cpp
 

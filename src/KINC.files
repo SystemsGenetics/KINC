@@ -1,6 +1,8 @@
 Makefile
 consolestream.cpp
 consolestream.h
+terminal.cpp
+terminal.h
 console.cpp
 console.h
 exception.cpp
