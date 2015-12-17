@@ -1,109 +1,137 @@
+#define __CL_ENABLE_EXCEPTIONS
 #include "console.h"
 #include <iostream>
-#include <unistd.h>
-#include <termios.h>
-#include "exception.h"
-#include <stdio.h>
+#include "terminal.h"
+#include <CL/cl.hpp>
+#include <vector>
+
+
 
 Console g_console;
 
 
 
-void Console::stty_raw(struct termios* term)
+bool Console::gpu(std::list<std::string>& list)
 {
-   if (tcgetattr(0,term)<0)
+   bool ret = false;
+   if (list.size()>0)
    {
-      throw SystemError(__FILE__,__LINE__,"tcgetattr");
+      if (list.front()=="list")
+      {
+         try
+         {
+            std::vector<cl::Platform> platforms;
+            cl::Platform::get(&platforms);
+            for (int i=0;i<platforms.size();i++)
+            {
+               std::vector<cl::Device> devices;
+               platforms[i].getDevices(CL_DEVICE_TYPE_ALL,&devices);
+               for (int j=0;j<devices.size();j++)
+               {
+                  std::cout << i << ":" << j << " "
+                            << devices[j].getInfo<CL_DEVICE_NAME>()
+                            << std::endl;
+               }
+            }
+         }
+         catch (cl::Error e)
+         {
+            ret = false;
+         }
+         ret = true;
+      }
+      else if (list.front()=="set")
+      {
+         ret = true;
+      }
+      else if (list.front()=="clear")
+      {
+         ret = true;
+      }
+      else
+      {
+         std::cout << "Error: " << list.front() << " GPU subcommand not found."
+                   << std::endl;
+      }
    }
-   term->c_lflag &= ~ICANON;
-   term->c_lflag &= ~ECHO;
-   term->c_cc[VMIN] = 1;
-   term->c_cc[VTIME] = 0;
-   if (tcsetattr(0,TCSANOW,term)<0)
+   else
    {
-      throw SystemError(__FILE__,__LINE__,"tcsetattr");
+      std::cout << "Error: GPU subcommand required." << std::endl;
    }
+   return ret;
 }
 
 
 
-void Console::stty_cooked(struct termios* term)
+bool Console::process(std::string& line)
 {
-   term->c_lflag |= ICANON;
-   term->c_lflag |= ECHO;
-   if (tcsetattr(0,TCSANOW,term)<0)
+   bool ret = false;
+   enum {_new,build} state = _new;
+   std::list<std::string> list;
+   char newBuf[2] = {" "};
+   for (std::string::iterator i=line.begin();i!=line.end();i++)
    {
-      throw SystemError(__FILE__,__LINE__,"tcsetattr");
+      switch (state)
+      {
+      case _new:
+         if (*i!=' '&&*i!='\t')
+         {
+            newBuf[0] = *i;
+            list.push_back(newBuf);
+            state = build;
+         }
+         break;
+      case build:
+         if (*i!=' '&&*i!='\t')
+         {
+            list.back() += *i;
+         }
+         else
+         {
+            state = _new;
+         }
+         break;
+      }
    }
+   if (list.size()>0)
+   {
+      if (list.front()=="gpu")
+      {
+         list.pop_front();
+         ret = gpu(list);
+      }
+      else if (list.front()=="quit")
+      {
+         ret = true;
+      }
+      else
+      {
+         std::cout << "Error: " << list.front()
+                   << " command/analytic not found." << std::endl;
+      }
+   }
+   return ret;
 }
 
 
 
 void Console::command()
 {
-   struct termios term = {0};
-   stty_raw(&term);
+   Terminal cline;
    char input;
-   int i = 0;
-   std::string line;
    bool alive = true;
    while (alive)
    {
-      input = getchar();
-      if (input>=32&&input<=126) // regular input
+      cline.clear("KINC:> ");
+      while (!cline.read());
+      std::string termCommand = cline.get();
+      std::cout << "\n";
+      process(termCommand);
+      if (termCommand=="quit")
       {
-         if (i==line.size())
-         {
-            i++;
-            line += input;
-         }
-         else
-         {
-            line[i++] = input;
-         }
-         std::cout << input;
-      }
-      else
-      {
-         switch(input)
-         {
-         case '\n': // newline
-            alive = false;
-            break;
-         case 127: // backspace key
-            if (i>0)
-            {
-               i--;
-               line.erase(i,i+1);
-               std::cout << "\b \b";
-            }
-            break;
-         case 27: // special key hit
-            if (getchar()==91) // Arrow key
-            {
-               switch(getchar())
-               {
-               case 67: //right
-                  if (i<line.size())
-                  {
-                     std::cout << line[i++];
-                  }
-                  break;
-               case 68: //left
-                  if (i>0)
-                  {
-                     i--;
-                     std::cout << "\b";
-                  }
-                  break;
-               }
-            }
-            break;
-         }
+         alive = false;
       }
    }
-   std::cout << "\n" << line << std::endl;
-   stty_cooked(&term);
 }
 
 

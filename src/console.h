@@ -16,8 +16,8 @@ class Console
 {
 private:
    std::list<Data*> _data;
-   void stty_raw(struct termios*);
-   void stty_cooked(struct termios*);
+   bool gpu(std::list<std::string>&);
+   bool process(std::string&);
    void command();
 public:
    ConsoleStream out;
@@ -30,6 +30,7 @@ public:
    Data* find(std::string&);
    Data* new_data(std::string&);
    Analytic* new_analytic(std::string&);
+   void touch_output();
 };
 
 
