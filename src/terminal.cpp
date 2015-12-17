@@ -18,6 +18,46 @@
 
 
 
+bool Terminal::__lock = false;
+
+
+
+void Terminal::stty_raw()
+{
+   struct termios term = {0};
+   if (tcgetattr(0,&term)<0)
+   {
+      throw SystemError(__FILE__,__LINE__,"tcgetattr");
+   }
+   term.c_lflag &= ~ICANON;
+   term.c_lflag &= ~ECHO;
+   term.c_cc[VMIN] = 1;
+   term.c_cc[VTIME] = 0;
+   if (tcsetattr(0,TCSANOW,&term)<0)
+   {
+      throw SystemError(__FILE__,__LINE__,"tcsetattr");
+   }
+}
+
+
+
+void Terminal::stty_cooked()
+{
+   struct termios term = {0};
+   if (tcgetattr(0,&term)<0)
+   {
+      throw SystemError(__FILE__,__LINE__,"tcgetattr");
+   }
+   term.c_lflag |= ICANON;
+   term.c_lflag |= ECHO;
+   if (tcsetattr(0,TCSANOW,&term)<0)
+   {
+      throw SystemError(__FILE__,__LINE__,"tcsetattr");
+   }
+}
+
+
+
 void Terminal::reset_cursor(int chCount)
 {
    for (int i=0;i<(chCount/_cols);i++)
@@ -43,7 +83,9 @@ void Terminal::reprint(bool rewind)
    std::cout << " ";
    reset_cursor(_line.size()+_header.size());
    _chCount = _header.size();
+   std::cout << (char)27 << "[1m";
    std::cout << _header;
+   std::cout << (char)27 << "[0m";
    for (std::list<char>::iterator i=_line.begin();i!=_i;i++)
    {
       std::cout << *i;
@@ -58,15 +100,29 @@ Terminal::Terminal():
    _i(_line.end()),
    _chCount(0)
 {
+   if (__lock)
+   {
+      throw InvalidUse(__FILE__,__LINE__);
+   }
+   __lock = true;
+   stty_raw();
 #ifdef TIOCGSIZE
    struct ttysize ts;
-   ioctl(STDIN_FILENO, TIOCGSIZE, &ts);
+   ioctl(STDIN_FILENO,TIOCGSIZE,&ts);
    int _cols = ts.ts_cols;
 #elif defined(TIOCGWINSZ)
    struct winsize ts;
-   ioctl(STDIN_FILENO, TIOCGWINSZ, &ts);
+   ioctl(STDIN_FILENO,TIOCGWINSZ,&ts);
    _cols = ts.ws_col;
 #endif
+}
+
+
+
+Terminal::~Terminal()
+{
+   __lock = false;
+   stty_cooked();
 }
 
 
@@ -94,7 +150,25 @@ void Terminal::clear(const char* header)
 {
    _header = header;
    _line.clear();
+   _i = _line.end();
    reprint(false);
+}
+
+
+
+bool Terminal::read()
+{
+   bool ret = false;
+   char ch = getchar();
+   if (ch=='\n')
+   {
+      ret = true;
+   }
+   else
+   {
+      *this << ch;
+   }
+   return ret;
 }
 
 
@@ -145,40 +219,4 @@ Terminal& Terminal::operator<<(char input)
       }
    }
    reprint(true);
-}
-
-
-
-void Terminal::stty_raw()
-{
-   struct termios term = {0};
-   if (tcgetattr(0,&term)<0)
-   {
-      throw SystemError(__FILE__,__LINE__,"tcgetattr");
-   }
-   term.c_lflag &= ~ICANON;
-   term.c_lflag &= ~ECHO;
-   term.c_cc[VMIN] = 1;
-   term.c_cc[VTIME] = 0;
-   if (tcsetattr(0,TCSANOW,&term)<0)
-   {
-      throw SystemError(__FILE__,__LINE__,"tcsetattr");
-   }
-}
-
-
-
-void Terminal::stty_cooked()
-{
-   struct termios term = {0};
-   if (tcgetattr(0,&term)<0)
-   {
-      throw SystemError(__FILE__,__LINE__,"tcgetattr");
-   }
-   term.c_lflag |= ICANON;
-   term.c_lflag |= ECHO;
-   if (tcsetattr(0,TCSANOW,&term)<0)
-   {
-      throw SystemError(__FILE__,__LINE__,"tcsetattr");
-   }
 }
