@@ -1,56 +1,55 @@
-.RECIPEPREFIX=+
-BUILD=../build/
-RUN=../run/
+.RECIPEPREFIX := +
+BUILD := ../build/
+RUN := ../run/
 
 
 
-CLPP=../../OpenCLPP
-CXX=g++
-CXXFLAGS=-g `sdl-config --libs` -I$(CLPP)/include
-LDFLAGS=-L$(CLPP)/lib -lOpenCL -lclpp -lncurses `sdl-config --libs`
+CXX := g++
+CXXFLAGS := -g `sdl-config --libs`
+LDFLAGS := -lOpenCL `sdl-config --libs`
 
 
 
-NAME=kinc
+NAME := kinc
 
-SOURCES=\
+SOURCES := \
 console.cpp \
 terminal.cpp \
 consolestream.cpp \
 exception.cpp
 
-UNITS=\
+UNITS := \
 unit.cpp
 
 
 
-PROGF=$(RUN)$(NAME)
-PROGRAM=$(SOURCES) main.cpp
-UTEST=$(SOURCES) $(UNITS)
-ALLSRC=$(SOURCES) $(UNITS) main.cpp
-ALLDPDS=$(patsubst %.cpp,$(BUILD)%.d,$(ALLSRC))
-DPDS=$(patsubst %.cpp,$(BUILD)%.d,$(PROGRAM))
-OBJS=$(patsubst %.cpp,$(BUILD)%.o,$(PROGRAM))
-UDPDS=$(patsubst %.cpp,$(BUILD)%.d,$(UTEST))
-UOBJS=$(patsubst %.cpp,$(BUILD)%.o,$(UTEST))
+progf=$(RUN)$(NAME)
+program=$(SOURCES) main.cpp
+utest=$(SOURCES) $(UNITS)
+allsrc=$(SOURCES) $(UNITS) main.cpp
+alldpds=$(patsubst %.cpp,$(BUILD)%.d,$(allsrc))
+dpds=$(patsubst %.cpp,$(BUILD)%.d,$(program))
+objs=$(patsubst %.cpp,$(BUILD)%.o,$(program))
+udpds=$(patsubst %.cpp,$(BUILD)%.d,$(utest))
+uobjs=$(patsubst %.cpp,$(BUILD)%.o,$(utest))
 
 
 
 all: program test
-program: $(PROGF)
+program: $(progf)
 test: $(RUN)unit
 
-include $(ALLDPDS)
+include $(alldpds)
 
-$(PROGF): $(OBJS) $(DPDS)
+$(progf): $(objs) $(dpds)
 +@echo "Building program."
-+@$(CXX) $(OBJS) $(LDFLAGS) -o $@
++@$(CXX) $(objs) $(LDFLAGS) -o $@
 
-$(RUN)unit: $(UOBJS) $(UDPDS)
+$(RUN)unit: $(uobjs) $(udpds)
 +@echo "Building unit test."
-+@$(CXX) $(UOBJS) $(LDFLAGS) -o $@
++@$(CXX) $(uobjs) $(LDFLAGS) -o $@
 
-depend: $(ALLDPDS)
+depend: $(alldpds)
 +@echo Done.
 
 $(BUILD)%.o : %.cpp
@@ -65,4 +64,4 @@ $(BUILD)%.d: %.cpp
 .PHONY=clean
 clean:
 +@echo "Cleaning all."
-+@rm -f $(BUILD)*.o $(PROGF)
++@rm -f $(BUILD)*.o $(progf)
