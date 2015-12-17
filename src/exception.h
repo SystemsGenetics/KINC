@@ -63,4 +63,11 @@ struct InvalidInput : public Exception
 
 
 
+struct InvalidUse : public Exception
+{
+   InvalidUse(const char*,int);
+};
+
+
+
 #endif

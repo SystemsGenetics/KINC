@@ -78,3 +78,9 @@ const char* SystemError::system()
 InvalidInput::InvalidInput(const char* file, int line):
    Exception(file,line,"InvalidInput")
 {}
+
+
+
+InvalidUse::InvalidUse(const char* file, int line):
+   Exception(file,line,"InvalidUse")
+{}
