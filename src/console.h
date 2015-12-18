@@ -8,13 +8,16 @@
 
 class Data;
 class Analytic;
-struct termios;
 
 
 
 class Console
 {
 private:
+   struct {
+      int platform;
+      int device;
+   } _gpu;
    std::list<Data*> _data;
    bool gpu(std::list<std::string>&);
    bool process(std::string&);

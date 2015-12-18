@@ -1,9 +1,11 @@
 #define __CL_ENABLE_EXCEPTIONS
-#include "console.h"
 #include <iostream>
-#include "terminal.h"
 #include <CL/cl.hpp>
 #include <vector>
+#include <stdio.h>
+#include "console.h"
+#include "terminal.h"
+#include "exception.h"
 
 
 
@@ -18,6 +20,7 @@ bool Console::gpu(std::list<std::string>& list)
    {
       if (list.front()=="list")
       {
+         std::cout << "ADDR    NAME\n";
          try
          {
             std::vector<cl::Platform> platforms;
@@ -28,30 +31,81 @@ bool Console::gpu(std::list<std::string>& list)
                platforms[i].getDevices(CL_DEVICE_TYPE_ALL,&devices);
                for (int j=0;j<devices.size();j++)
                {
-                  std::cout << i << ":" << j << " "
-                            << devices[j].getInfo<CL_DEVICE_NAME>()
-                            << std::endl;
+                  std::cout << i << ":" << j;
+                  if (_gpu.platform==i&&_gpu.device==j)
+                  {
+                     std::cout << " *** ";
+                  }
+                  else
+                  {
+                     std::cout << "     ";
+                  }
+                  std::cout << devices[j].getInfo<CL_DEVICE_NAME>() << "\n";
                }
             }
          }
          catch (cl::Error e)
          {
-            ret = false;
+            throw OpenCLError(__FILE__,__LINE__,e);
          }
+         std::cout << std::flush;
          ret = true;
       }
       else if (list.front()=="set")
       {
-         ret = true;
+         if (list.size()>1)
+         {
+            list.pop_front();
+            int platform;
+            int device;
+            if (sscanf(list.front().c_str(),"%d:%d",&platform,&device)!=2||platform<0||device<0)
+            {
+               std::cout << "Error: argument given for OpenCL device ADDR is invalid." << std::endl;
+            }
+            else
+            {
+               try
+               {
+                  std::vector<cl::Platform> platforms;
+                  cl::Platform::get(&platforms);
+                  if (platform<platforms.size())
+                  {
+                     std::vector<cl::Device> devices;
+                     platforms[platform].getDevices(CL_DEVICE_TYPE_ALL,&devices);
+                     if (device<devices.size())
+                     {
+                        _gpu.platform = platform;
+                        _gpu.device = device;
+                        ret = true;
+                     }
+                  }
+               }
+               catch (cl::Error e)
+               {
+                  throw OpenCLError(__FILE__,__LINE__,e);
+               }
+
+               if (!ret)
+               {
+                  std::cout << "Error: cannot find OpenCL device " << platform << ":" << device
+                            << "." << std::endl;
+               }
+            }
+         }
+         else
+         {
+            std::cout << "Error: the gpu set command requires one argument." << std::endl;
+         }
       }
       else if (list.front()=="clear")
       {
+         _gpu.platform = -1;
+         _gpu.device = -1;
          ret = true;
       }
       else
       {
-         std::cout << "Error: " << list.front() << " GPU subcommand not found."
-                   << std::endl;
+         std::cout << "Error: " << list.front() << " GPU subcommand not found." << std::endl;
       }
    }
    else
@@ -106,8 +160,7 @@ bool Console::process(std::string& line)
       }
       else
       {
-         std::cout << "Error: " << list.front()
-                   << " command/analytic not found." << std::endl;
+         std::cout << "Error: " << list.front() << " command/analytic not found." << std::endl;
       }
    }
    return ret;
@@ -140,7 +193,10 @@ Console::Console():
    out(ConsoleStream::out),
    warn(ConsoleStream::warning),
    err(ConsoleStream::error)
-{}
+{
+   _gpu.platform = -1;
+   _gpu.device = -1;
+}
 
 
 
