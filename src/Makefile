@@ -23,15 +23,15 @@ unit.cpp
 
 
 
-progf=$(RUN)$(NAME)
-program=$(SOURCES) main.cpp
-utest=$(SOURCES) $(UNITS)
-allsrc=$(SOURCES) $(UNITS) main.cpp
-alldpds=$(patsubst %.cpp,$(BUILD)%.d,$(allsrc))
-dpds=$(patsubst %.cpp,$(BUILD)%.d,$(program))
-objs=$(patsubst %.cpp,$(BUILD)%.o,$(program))
-udpds=$(patsubst %.cpp,$(BUILD)%.d,$(utest))
-uobjs=$(patsubst %.cpp,$(BUILD)%.o,$(utest))
+progf := $(RUN)$(NAME)
+program := $(SOURCES) main.cpp
+utest := $(SOURCES) $(UNITS)
+allsrc := $(SOURCES) $(UNITS) main.cpp
+alldpds := $(addprefix $(BUILD),$(allsrc:%.cpp=%.d))
+dpds := $(addprefix $(BUILD),$(program:%.cpp=%.d))
+objs := $(addprefix $(BUILD),$(program:%.cpp=%.o))
+udpds := $(addprefix $(BUILD),$(utest:%.cpp=%.d))
+uobjs := $(addprefix $(BUILD),$(utest:%.cpp=%.o))
 
 
 
