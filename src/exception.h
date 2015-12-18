@@ -1,5 +1,7 @@
 #ifndef EXCEPTION_H
 #define EXCEPTION_H
+#define __CL_ENABLE_EXCEPTIONS
+#include <CL/cl.hpp>
 
 
 
@@ -52,6 +54,21 @@ private:
 public:
    SystemError(const char*,int,const char*);
    const char* system();
+};
+
+
+
+class OpenCLError : public Exception
+{
+private:
+   static const char* c_clDescErrors[];
+   const char* _clFunc;
+   cl_int _code;
+public:
+   OpenCLError(const char*,int,cl::Error&);
+   const char* clFunc();
+   cl_int code();
+   const char* code_str();
 };
 
 
