@@ -66,7 +66,7 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
     return;
   }
 
-  // The data we are using is qualitative, so set the data type.
+  // The data we are using is quantitative, so set the data type.
   XEM::GaussianData * gdata = new XEM::GaussianData(pwset->n_clean, 2, data);
   XEM::DataDescription dataDescription(gdata);
 
@@ -79,7 +79,7 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
   // Create the ClusteringInput object.
   XEM::ClusteringInput cInput(nbCluster, dataDescription);
 
-  // Set the criterion to ICL
+  // Set the criterion
   cInput.removeCriterion(0);
   if (strcmp(criterion, "BIC") == 0) {
     cInput.addCriterion(XEM::BIC);

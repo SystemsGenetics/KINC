@@ -143,9 +143,9 @@ void MixtureModelClustering::run() {
         continue;
       }
 
-      // Initialize the pairwise set and remove global outliers.
+      // Initialize the pairwise set.
       PairWiseSet * pwset = new PairWiseSet(ematrix, i, j, threshold);
-      pwset->maskOutliers();
+      //pwset->maskOutliers();
 
       // Perform mixture modules
       MixtureModelPWClusters * mixmod = new MixtureModelPWClusters(pwset,
