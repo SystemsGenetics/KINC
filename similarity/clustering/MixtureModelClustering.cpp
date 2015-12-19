@@ -110,22 +110,13 @@ void MixtureModelClustering::run() {
   // Iterate through the rows of the expression matrix to perform
   // pair-wise similarity comparisons.  We only need to process a
   // triangle of the resulting similarity matrix.
-//    for (int i = 2000; i < 2005; i++) {
-//      for (int j = 2000; j < 2005; j++) {
   for (int i = 0; i < num_rows; i++) {
     for (int j = 0; j < num_rows; j++) {
-//    for (int j = 1862; j <= 1862; j++) {
-//      for (int i = 8562; i <= 8562; i++) {
-
       // We only need to calculate clusters in the lower triangle of the
       // full pair-wise matrix
       if (j >= i) {
         continue;
       }
-
-//      if (i != 48756 - 1 || j != 7247 - 1) {
-//        continue;
-//      }
 
       // If this computation is not meant for this process, then skip it.
       if (n_comps < comp_start || n_comps >= comp_stop) {
