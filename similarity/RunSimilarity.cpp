@@ -33,6 +33,8 @@ void RunSimilarity::printUsage() {
   printf("  --min_obs|-o      The minimum number of observations (after missing values\n");
   printf("                    removed) that must be present to calculate a simililarity score.\n");
   printf("                    Default is 30.\n");
+  printf("  --th|-s           The minimal observed value. Any observations less than this are removed.\n");
+  printf("                    Default is -INF, indicating no values are removed.\n");
   printf("\n");
   printf("Optional Mutual Information Arguments:\n");
   printf("  --mi_bins|-b      Use only if the method is 'mi'. The number of bins for the\n");
@@ -323,6 +325,8 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
       printf("  Degree for B-Spline estimate of MI: %d\n", mi_degree);
     }
   }
+  printf("  Minimal observed value: %f\n", threshold);
+
   if (clustering) {
     if (strcmp(clustering, "mixmod") == 0) {
       printf("\n  Mixture Model Settings:\n");
