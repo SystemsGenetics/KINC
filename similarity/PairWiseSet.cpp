@@ -4,7 +4,21 @@
  *
  */
 PairWiseSet::PairWiseSet(EMatrix * ematrix, int i, int j) {
-  PairWiseSet(ematrix, i, j, NAN);
+  this->gene1 = i;
+  this->gene2 = j;
+
+  this->n_orig = ematrix->getNumSamples();
+  this->x_orig = ematrix->getRow(this->gene1);
+  this->y_orig = ematrix->getRow(this->gene2);
+
+  this->x_clean = NULL;
+  this->y_clean = NULL;
+  this->n_clean = NAN;
+  this->samples = NULL;
+  this->threshold= NAN;
+
+  // Create the clean arrays.
+  this->clean();
 }
 /**
  *
@@ -87,14 +101,16 @@ void PairWiseSet::clean() {
   for (int i = 0; i < n_orig; i++) {
     th_index[i] = 0;
   }
-  for (int i = 0; i < n_orig; i++) {
-    if (x_orig[i] <= threshold) {
-      th_index[i] = 1;
-      x_orig[i] = NAN;
-    }
-    if (y_orig[i] <= threshold) {
-      th_index[i] = 1;
-      y_orig[i] = NAN;
+  if (!isnan(threshold)) {
+    for (int i = 0; i < n_orig; i++) {
+      if (x_orig[i] <= threshold) {
+        th_index[i] = 1;
+        x_orig[i] = NAN;
+      }
+      if (y_orig[i] <= threshold) {
+        th_index[i] = 1;
+        y_orig[i] = NAN;
+      }
     }
   }
 

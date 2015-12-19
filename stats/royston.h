@@ -13,8 +13,8 @@
 #include "kurtosis.h"
 #include "sfrancia.h"
 #include "swilk.h"
-#include "../error.h"
+#include "../general/error.h"
 
-double royston2D(double* a, double * b, int n, double *pcc);
+double roystonH(double* a, double * b, int n, double *pcc);
 
 #endif

@@ -3,7 +3,7 @@
 
 #include <getopt.h>
 
-#include "../ematrix/EMatrix.h"
+#include "../../ematrix/EMatrix.h"
 
 void print_threshold_usage();
 

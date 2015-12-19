@@ -15,6 +15,18 @@ SimMatrixBinary::SimMatrixBinary(EMatrix *ematrix, int quiet, char ** method, in
     files[i] = NULL;
   }
 
+  // For the binary file format:
+  bin_dir = (char *) malloc(sizeof(char) * strlen(ematrix->getInfileName()));
+  if (strcmp(th_method, "mi") == 0) {
+    strcpy(bin_dir, "MI");
+  }
+  else if (strcmp(th_method, "pc") == 0) {
+    strcpy(bin_dir, "Pearson");
+  }
+  else if (strcmp(th_method, "sc") == 0) {
+    strcpy(bin_dir, "Spearman");
+  }
+
   // Open file handles to all of the binary files.
   openBinFiles();
 }

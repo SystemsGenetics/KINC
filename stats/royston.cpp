@@ -17,7 +17,7 @@
  * @param double * pcc
  *   The pearson's correlation value. It is set during function run
  */
-double royston2D(double* a, double * b, int n, double *pcc) {
+double roystonH(double* a, double * b, int n, double *pcc) {
 
   // The cols variable is the number of genes. Because this is bivariate it
   // will always be 2.  The rows is the number of sample measurements per gene.

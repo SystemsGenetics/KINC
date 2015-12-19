@@ -4,11 +4,12 @@
 #include <getopt.h>
 #include <sys/stat.h>
 #include <string.h>
-#include "SpearmanSimilarity.h"
-#include "PearsonSimilarity.h"
-#include "MISimilarity.h"
+#include "./methods/SpearmanSimilarity.h"
+#include "./methods/PearsonSimilarity.h"
+#include "./methods/MISimilarity.h"
 #include "./clustering/MixtureModelClustering.h"
 #include "../general/misc.h"
+#include "../stats/royston.h"
 
 // a global variable for the number of rows in each output file
 #define ROWS_PER_OUTPUT_FILE 10000
