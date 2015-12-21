@@ -2,7 +2,7 @@
 #define _RUNTHRESHOLD_
 
 #include <getopt.h>
-#include "RMTThreshold.h"
+#include "./methods/RMTThreshold.h"
 
 class RunThreshold {
   private:

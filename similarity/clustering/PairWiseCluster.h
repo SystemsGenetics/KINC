@@ -2,10 +2,10 @@
 #define _PAIRWISECLUSTER_
 
 #include "../PairWiseSet.h"
-#include "../PairWiseSimilarity.h"
-#include "../SpearmanSimilarity.h"
-#include "../PearsonSimilarity.h"
-#include "../MISimilarity.h"
+#include "../methods/PairWiseSimilarity.h"
+#include "../methods/SpearmanSimilarity.h"
+#include "../methods/PearsonSimilarity.h"
+#include "../methods/MISimilarity.h"
 
 /**
  * The PairWiseCluster class contains the information about a cluster.

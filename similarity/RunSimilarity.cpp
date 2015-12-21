@@ -33,6 +33,7 @@ void RunSimilarity::printUsage() {
   printf("  --min_obs|-o      The minimum number of observations (after missing values\n");
   printf("                    removed) that must be present to calculate a simililarity score.\n");
   printf("                    Default is 30.\n");
+  printf("  --th|s            The minimum expression level to include. Anything below is excluded\n");
   printf("\n");
   printf("Optional Mutual Information Arguments:\n");
   printf("  --mi_bins|-b      Use only if the method is 'mi'. The number of bins for the\n");
@@ -323,6 +324,8 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
       printf("  Degree for B-Spline estimate of MI: %d\n", mi_degree);
     }
   }
+  printf("  Minimal observed value: %f\n", threshold);
+
   if (clustering) {
     if (strcmp(clustering, "mixmod") == 0) {
       printf("\n  Mixture Model Settings:\n");
@@ -423,9 +426,9 @@ void RunSimilarity::executeTraditional() {
   // Holds the number of rows in the file.
   int bin_rows;
   // The total number of pair-wise comparisons to be made.
-  int total_comps;
+  long long int total_comps;
   // The number of comparisions completed during looping.
-  int n_comps;
+  long long int n_comps;
   // The number of genes.
   int num_genes = ematrix->getNumGenes();
   // The binary output file prefix
@@ -454,7 +457,7 @@ void RunSimilarity::executeTraditional() {
     }
   }
 
-  total_comps = (num_genes * num_genes) / 2;
+  total_comps = ((long long int)num_genes * ((long long int)num_genes - 1)) / 2;
   n_comps = 0;
 
   // each iteration of m is a new output file
@@ -526,10 +529,9 @@ void RunSimilarity::executeTraditional() {
             score = (float) pws->getScore();
             delete pws;
           }
-
-          delete pwset;
-          fwrite(&score, sizeof(float), 1, outfiles[i]);
         }
+        delete pwset;
+        fwrite(&score, sizeof(float), 1, outfiles[0]);
 
 //        // if the historgram is turned on then store the value in the correct bin
 //        if (score < 1 && score > -1) {

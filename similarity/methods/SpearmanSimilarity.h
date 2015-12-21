@@ -2,7 +2,6 @@
 #define _SPEARMAN_
 
 #include <gsl/gsl_statistics.h>
-#include "PairWiseSet.h"
 #include "PairWiseSimilarity.h"
 
 /**

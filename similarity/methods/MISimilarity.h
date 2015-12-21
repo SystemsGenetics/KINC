@@ -4,7 +4,6 @@
 #include <math.h>
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_bspline.h>
-#include "PairWiseSet.h"
 #include "PairWiseSimilarity.h"
 
 /**
