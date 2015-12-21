@@ -1,67 +1,65 @@
 .RECIPEPREFIX := +
-BUILD := ../build/
-RUN := ../run/
-
-
-
 CXX := g++
-CXXFLAGS := -g `sdl-config --libs`
-LDFLAGS := -lOpenCL `sdl-config --libs`
-
-
-
 NAME := kinc
-
-SOURCES := \
-console.cpp \
-terminal.cpp \
-consolestream.cpp \
-exception.cpp
-
-UNITS := \
-unit.cpp
+FILES := KINC.files
 
 
 
-progf := $(RUN)$(NAME)
-program := $(SOURCES) main.cpp
-utest := $(SOURCES) $(UNITS)
-allsrc := $(SOURCES) $(UNITS) main.cpp
-alldpds := $(addprefix $(BUILD),$(allsrc:%.cpp=%.d))
-dpds := $(addprefix $(BUILD),$(program:%.cpp=%.d))
-objs := $(addprefix $(BUILD),$(program:%.cpp=%.o))
-udpds := $(addprefix $(BUILD),$(utest:%.cpp=%.d))
-uobjs := $(addprefix $(BUILD),$(utest:%.cpp=%.o))
+build := ../build/
+run := ../run/
+
+acxxflags := $(CXXFLAGS) $(shell sdl-config --cflags)
+aldflags := $(LDFLAGS)
+aldlibs := $(LDLIBS) -lOpenCL $(shell sdl-config --libs)
+
+progf := $(run)$(NAME)
+
+allsrc := $(filter %.cpp,$(shell cat $(FILES)))
+utest := $(filter-out main.cpp,$(allsrc))
+program := $(filter-out %.t.cpp,$(allsrc))
+
+alldpds := $(addprefix $(build),$(allsrc:%.cpp=%.d))
+
+dpds := $(addprefix $(build),$(program:%.cpp=%.d))
+objs := $(addprefix $(build),$(program:%.cpp=%.o))
+
+udpds := $(addprefix $(build),$(utest:%.cpp=%.d))
+uobjs := $(addprefix $(build),$(utest:%.cpp=%.o))
 
 
 
-all: program test
+.PHONY := clean all program test btest
+
+all: program btest
 program: $(progf)
-test: $(RUN)unit
+btest: $(run)unit
 
 include $(alldpds)
 
 $(progf): $(objs) $(dpds)
 +@echo "Building program."
-+@$(CXX) $(objs) $(LDFLAGS) -o $@
++@$(CXX) $(objs) $(aldflags) $(aldlibs) -o $@
 
-$(RUN)unit: $(uobjs) $(udpds)
+$(run)unit: $(uobjs) $(udpds)
 +@echo "Building unit test."
-+@$(CXX) $(uobjs) $(LDFLAGS) -o $@
++@$(CXX) $(uobjs) $(aldflags) $(aldlibs) -o $@
 
 depend: $(alldpds)
 +@echo Done.
 
-$(BUILD)%.o : %.cpp
+$(build)%.o : %.cpp
 +@echo "Building object $@"
-+@$(CXX) $(CXXFLAGS) -c $< -o $(BUILD)$@
++@$(CXX) $(acxxflags) -c $< -o $(build)$@
 
-$(BUILD)%.d: %.cpp
+$(build)%.d: %.cpp
 +@echo "Building depend $@"
-+@echo -n "$@ $(BUILD)" > $@
++@echo -n "$@ $(build)" > $@
 +@$(CXX) -MM $< >> $@
 
-.PHONY=clean
+test: btest
++@echo "Running unit tests..."
++@cd $(run) && ./unit
+
 clean:
 +@echo "Cleaning all."
-+@rm -f $(BUILD)*.o $(progf)
++@rm -f $(build)*.o $(progf)
