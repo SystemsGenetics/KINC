@@ -8,7 +8,7 @@ FILES := KINC.files
 build := ../build/
 run := ../run/
 
-acxxflags := $(CXXFLAGS) $(shell sdl-config --cflags)
+acxxflags := $(CXXFLAGS) -g $(shell sdl-config --cflags)
 aldflags := $(LDFLAGS)
 aldlibs := $(LDLIBS) -lOpenCL $(shell sdl-config --libs)
 
@@ -28,11 +28,11 @@ uobjs := $(addprefix $(build),$(utest:%.cpp=%.o))
 
 
 
-.PHONY := clean all program test btest
+.PHONY := clean all program test check
 
-all: program btest
+all: program test
 program: $(progf)
-btest: $(run)unit
+test: $(run)unit
 
 include $(alldpds)
 
@@ -56,7 +56,7 @@ $(build)%.d: %.cpp
 +@echo -n "$@ $(build)" > $@
 +@$(CXX) -MM $< >> $@
 
-test: btest
+check: test
 +@echo "Running unit tests..."
 +@cd $(run) && ./unit
 
