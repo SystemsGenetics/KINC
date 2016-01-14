@@ -1,11 +1,13 @@
 Makefile
-consolestream.cpp
-consolestream.h
 terminal.cpp
 terminal.h
+linuxterm.cpp
+linuxterm.h
 console.cpp
 console.h
 exception.cpp
 exception.h
+cldevice.cpp
+cldevice.h
 main.cpp
 unit.t.cpp

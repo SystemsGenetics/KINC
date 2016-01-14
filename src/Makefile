@@ -8,7 +8,7 @@ FILES := KINC.files
 build := ../build/
 run := ../run/
 
-acxxflags := $(CXXFLAGS) -g $(shell sdl-config --cflags)
+acxxflags := $(CXXFLAGS) -g -std=c++11 $(shell sdl-config --cflags)
 aldflags := $(LDFLAGS)
 aldlibs := $(LDLIBS) -lOpenCL $(shell sdl-config --libs)
 
