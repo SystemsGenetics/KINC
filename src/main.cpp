@@ -1,14 +1,23 @@
 #include "console.h"
+#include "linuxterm.h"
+#include <iostream>
 
-
-const char* g_weclomeMsg = "Welcome to KINC!\n"
-      "Version 0.0001 :)\n";
 
 
 int main(int argc, char* argv[])
 {
-   g_console.out << g_weclomeMsg << "\n";
-   g_console.out.flush();
-   g_console.run(argc,argv);
+   try
+   {
+      LinuxTerm terminal;
+      LinuxTerm::stty_raw();
+      Console console(argc,argv,terminal);
+      console.run();
+      LinuxTerm::stty_cooked();
+   }
+   catch (...)
+   {
+      LinuxTerm::stty_cooked();
+      throw;
+   }
    return 0;
 }
