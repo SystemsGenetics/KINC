@@ -34,6 +34,9 @@ class Console
  * by the user and all data and analytic objects. The run() function will take
  * over execution and release when the user quits the program. Only one instance
  * of this class is allowed to exist for the entire program.
+ *
+ * CONDITIONS:
+ * 1. Only one instance of this class can exist at anytime.
  */
 {
 public:

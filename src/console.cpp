@@ -23,6 +23,9 @@ Console::Console(int argc, char* argv[], Terminal& terminal)
  * argc: the argc argument from main().
  * argv: the argv argument from main().
  * terminal: reference to terminal interface for input and output to user.
+ *
+ * PRECONDITION:
+ * 1. _lock variable is false.
  */
    :_alive(false),
    _tm(terminal),

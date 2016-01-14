@@ -7,6 +7,7 @@
 #include "linuxterm.h"
 #include "exception.h"
 
+//TODO: Change these defines into cosntexpr char variables.
 #define LOWER_LIMIT 32
 #define UPPER_LIMIT 126
 #define BACKSPACE 127
@@ -19,12 +20,21 @@
 
 
 
+// Make sure only one instance of this class exists.
 bool LinuxTerm::_lock = false;
+// Tracks if terminal is currently in cooked or raw mode.
 bool LinuxTerm::_cooked = true;
 
 
 
 void LinuxTerm::stty_raw()
+/*
+ * Uses Linux system calls to turn off echoing and canonical for terminal this
+ * program is using.
+ *
+ * PRECONDITION:
+ * 1. System currently in cooked mode.
+ */
 {
    InvalidUse::assert(_cooked,__FILE__,__LINE__);
    struct termios term = {0};
@@ -43,6 +53,13 @@ void LinuxTerm::stty_raw()
 
 
 void LinuxTerm::stty_cooked()
+/*
+ * Uses Linux system calls to turn on echoing and canonical for terminal this
+ * program is using.
+ *
+ * PRECONDITION:
+ * 1. System currently in raw mode.
+ */
 {
    InvalidUse::assert(!_cooked,__FILE__,__LINE__);
    struct termios term = {0};
@@ -58,46 +75,14 @@ void LinuxTerm::stty_cooked()
 
 
 
-void LinuxTerm::reset_cursor(int chCount)
-{
-   for (int i=0;i<(chCount/_cols);i++)
-   {
-      std::cout << (char)27 << "[A";
-   }
-   std::cout << "\r";
-}
-
-
-
-void LinuxTerm::reprint(bool rewind)
-{
-   if (rewind)
-   {
-      reset_cursor(_chCount-1);
-   }
-   std::cout << _header;
-   for (auto i:_line)
-   {
-      std::cout << i;
-   }
-   std::cout << " ";
-   reset_cursor(_line.size()+_header.size());
-   _chCount = _header.size();
-   std::cout << (char)27 << "[1m";
-   std::cout << _header;
-   std::cout << (char)27 << "[0m";
-   for (auto i=_line.begin();i!=_i;i++)
-   {
-      std::cout << *i;
-      _chCount++;
-   }
-   std::cout << std::flush;
-}
-
-
-
-LinuxTerm::LinuxTerm():
-   _i(_line.end()),
+LinuxTerm::LinuxTerm()
+/*
+ * Grabs the width of the program's terminal in characters.
+ *
+ * PRECONDITIONS:
+ * 1. _lock variable is false.
+ */
+   :_i(_line.end()),
    _chCount(0)
 {
    InvalidUse::assert(!_lock,__FILE__,__LINE__);
@@ -230,6 +215,15 @@ LinuxTerm& LinuxTerm::operator<<(const std::string& n)
 
 
 void LinuxTerm::operator>>(std::string& buffer)
+/*
+ * Uses object's list of characters to build input line from user.
+ *
+ * buffer: string that user input will be written to, overwrites anything
+ *         currently in the string.
+ *
+ * PRECONDITIONS:
+ * 1. _cooked variable is false.
+ */
 {
    InvalidUse::assert(!_cooked,__FILE__,__LINE__);
    buffer.clear();
@@ -288,4 +282,60 @@ void LinuxTerm::operator>>(std::string& buffer)
    {
       buffer += i;
    }
+}
+
+
+
+void LinuxTerm::reset_cursor(int chCount)
+/*
+ * Rewinds cursor of program's terminal to where the user's input line began
+ * along with the header string, if any, set by user of class. The number of
+ * lines to go back is computed by width of terminal.
+ */
+{
+   for (int i=0;i<(chCount/_cols);i++)
+   {
+      // TODO; make constexpr of this and explain! (move cursor up)
+      std::cout << (char)27 << "[A";
+   }
+   std::cout << "\r";
+}
+
+
+
+void LinuxTerm::reprint(bool rewind)
+/*
+ * Erases the current line the user is inputing and move cursor to beginning if
+ * desired. (Re)Print the line the user is currently inputing.
+ *
+ * rewind: specifies if the line has already been printed once and should be
+ *         erased and the cursor rewound to the beginning to printing out the
+ *         user line again.
+ */
+{
+   if (rewind)
+   {
+      reset_cursor(_chCount-1);
+   }
+   std::cout << _header;
+   for (auto i:_line)
+   {
+      std::cout << i;
+   }
+   std::cout << " ";
+   reset_cursor(_line.size()+_header.size());
+   _chCount = _header.size();
+   // TODO; make constexpr of these and explain them!
+   // https://en.wikipedia.org/wiki/ANSI_escape_code
+   // Make text bold
+   std::cout << (char)27 << "[1m";
+   std::cout << _header;
+   // Reset to normal text
+   std::cout << (char)27 << "[0m";
+   for (auto i=_line.begin();i!=_i;i++)
+   {
+      std::cout << *i;
+      _chCount++;
+   }
+   std::cout << std::flush;
 }
