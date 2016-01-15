@@ -11,30 +11,24 @@
 
 
 
-// Makes sure only one console object exists.
 bool Console::_lock {false};
 
 
 
-Console::Console(int argc, char* argv[], Terminal& terminal)
-/*
- * Prints welcome message to terminal interface, set lock to console.
- *
- * argc: the argc argument from main().
- * argv: the argv argument from main().
- * terminal: reference to terminal interface for input and output to user.
- *
- * PRECONDITION:
- * 1. _lock variable is false.
- */
-   :_alive(false),
-   _tm(terminal),
-   _device(nullptr)
+/// @brief Prepares console interface.
+///
+/// Initializes internal variables, locks console interface, and sets terminal
+/// header.
+///
+/// @pre Console must not be locked.
+Console::Console(int argc, char* argv[], Terminal& terminal):
+   _alive {false},
+   _tm {terminal},
+   _device {nullptr}
 {
    InvalidUse::assert(!_lock,__FILE__,__LINE__);
    _lock = true;
    _tm.header("KINC:> ");
-   _tm << "Welcome to KINC!\nVersion 0.0001 :)\n\n";
 }
 
 
@@ -59,6 +53,7 @@ void Console::run()
  * Goes directly to terminal loop.
  */
 {
+   _tm << "Welcome to KINC!\nVersion 0.0001 :)\n\n";
    terminal_loop();
 }
 
@@ -288,8 +283,8 @@ void Console::gpu_list()
    for (auto i = CLDevice::begin();i!=CLDevice::end();i++)
    {
       CLDevice& dev = *i;
-      _tm << dev.info(CLInfo::ident) << " ";
-      _tm << dev.info(CLInfo::name);
+      _tm << dev.info(CLDevice::ident) << " ";
+      _tm << dev.info(CLDevice::name);
       if (_device&&dev==*_device)
       {
          _tm << " ***";
@@ -319,16 +314,16 @@ bool Console::gpu_info(std::list<std::string>& list)
       if ((str >> p >> sep >> d)&&sep==':'&&CLDevice::exist(p,d))
       {
          CLDevice dev(p,d);
-         _tm << "===== " << dev.info(CLInfo::name) << " ("
-             << dev.info(CLInfo::type) << ") =====\n";
-         _tm << "Online: " << dev.info(CLInfo::online) << ".\n";
-         _tm << "Unified Memory: " << dev.info(CLInfo::unified_mem) << ".\n";
-         _tm << dev.info(CLInfo::addr_space) << " bit address space.\n";
-         _tm << dev.info(CLInfo::clock) << "Mhz max clock frequency.\n";
-         _tm << dev.info(CLInfo::compute_units) << " compute unit(s), "
-             << dev.info(CLInfo::work_size) << " work-item(s) per unit.\n";
-         _tm << dev.info(CLInfo::global_mem) << " global memory, "
-             << dev.info(CLInfo::local_mem) << " local memory."
+         _tm << "===== " << dev.info(CLDevice::name) << " ("
+             << dev.info(CLDevice::type) << ") =====\n";
+         _tm << "Online: " << dev.info(CLDevice::online) << ".\n";
+         _tm << "Unified Memory: " << dev.info(CLDevice::unified_mem) << ".\n";
+         _tm << dev.info(CLDevice::addr_space) << " bit address space.\n";
+         _tm << dev.info(CLDevice::clock) << "Mhz max clock frequency.\n";
+         _tm << dev.info(CLDevice::compute_units) << " compute unit(s), "
+             << dev.info(CLDevice::work_size) << " work-item(s) per unit.\n";
+         _tm << dev.info(CLDevice::global_mem) << " global memory, "
+             << dev.info(CLDevice::local_mem) << " local memory."
              << Terminal::endl;
          ret = true;
       }
