@@ -45,72 +45,72 @@ Terminal& Terminal::error(Terminal& term)
 
 
 
-void Terminal::print(short n)
+Terminal& Terminal::print(short n)
 {
-   *this << n;
+   return *this << n;
 }
 
 
 
-void Terminal::print(unsigned short n)
+Terminal& Terminal::print(unsigned short n)
 {
-   *this << n;
+   return *this << n;
 }
 
 
 
-void Terminal::print(int n)
+Terminal& Terminal::print(int n)
 {
-   *this << n;
+   return *this << n;
 }
 
 
 
-void Terminal::print(unsigned int n)
+Terminal& Terminal::print(unsigned int n)
 {
-   *this << n;
+   return *this << n;
 }
 
 
 
-void Terminal::print(long n)
+Terminal& Terminal::print(long n)
 {
-   *this << n;
+   return *this << n;
 }
 
 
 
-void Terminal::print(unsigned long n)
+Terminal& Terminal::print(unsigned long n)
 {
-   *this << n;
+   return *this << n;
 }
 
 
 
-void Terminal::print(float n)
+Terminal& Terminal::print(float n)
 {
-   *this << n;
+   return *this << n;
 }
 
 
 
-void Terminal::print(double n)
+Terminal& Terminal::print(double n)
 {
-   *this << n;
+   return *this << n;
 }
 
 
 
-void Terminal::print(const char* n)
+Terminal& Terminal::print(const char* n)
 {
-   *this << n;
+   return *this << n;
 }
 
 
 
-void Terminal::print(const std::string& n)
+Terminal& Terminal::print(const std::string& n)
 {
-   *this << n;
+   return *this << n;
 }
 
 
