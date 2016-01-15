@@ -22,11 +22,17 @@
 class LinuxTerm : public Terminal
 {
 public:
-   // ****************************** Functions ******************************
+   // ****************************** Deleted Methods ************************
+   LinuxTerm(const LinuxTerm&) = delete;
+   LinuxTerm& operator=(const LinuxTerm&) = delete;
+   LinuxTerm& operator=(LinuxTerm&&) = delete;
+   // ****************************** Static Functions ***********************
    static void stty_raw();
    static void stty_cooked();
+   // ****************************** Constructors/Destructors ***************
    LinuxTerm();
    ~LinuxTerm();
+   // ****************************** Functions ******************************
    void header(const std::string&);
    void set_ops(Ops);
    void precision(int);
@@ -54,9 +60,10 @@ private:
    const char* _cursorUpStr {"\x1b[A"};
    const char* _boldTextStr {"\x1b[1m"};
    const char* _normTextStr {"\x1b[0m"};
-   // ****************************** Variables ******************************
+   // ****************************** Static Variables ***********************
    static bool _lock;
    static bool _cooked;
+   // ****************************** Variables ******************************
    int _cols;
    int _chCount;
    std::string _header;

@@ -9,9 +9,7 @@
 
 
 
-// Make sure only one instance of this class exists.
 bool LinuxTerm::_lock {false};
-// Tracks if terminal is currently in cooked or raw mode.
 bool LinuxTerm::_cooked {true};
 
 
@@ -293,15 +291,15 @@ void LinuxTerm::reset_cursor(int chCount)
 }
 
 
-/// @brief Erases printed line on terminal if it exists and prints out line.
+/// @brief Prints header and input line of user, resetting and overwriting old
+/// line if specified.
 ///
-/// Erases the current line the user is inputing and move cursor to beginning if
-/// desired. Prints or reprints the user input line. The header is included.
+/// If specified, moves cursor back to beginning of current input line and
+/// header. Either way prints out header and input line along with one extra
+/// white space. If the cursor resets itself, this effectively overwrites the
+/// previous input line printed.
 ///
-/// @param rewind Specifies if the current line is to be erased.
-///
-/// @pre If the user line is erased it must have already been printed to the
-/// terminal before calling this function.
+/// @param rewind Specifies if cursor will be reset to beginning of line.
 void LinuxTerm::reprint(bool rewind)
 {
    if (rewind)
