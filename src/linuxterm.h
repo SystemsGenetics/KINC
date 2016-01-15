@@ -6,17 +6,20 @@
 
 
 
+/// @brief Implements Terminal in Linux OS environment.
+///
+/// Implements terminal interface for user in linux terminal environment. Uses
+/// system calls to get the width of the terminal and VT100 and ANSI escape
+/// codes to control the terminal in raw mode to create an interactive terminal
+/// environment. See https://en.wikipedia.org/wiki/ANSI_escape_code for more
+/// information about control characters used.
+///
+/// @pre Only one instance of this class can exist at any one time.
+/// @pre stty_raw() must be called before instantiating this class.
+/// @pre stty_cooked() must be called after destroying this class.
+/// @pre The terminal this program is running in cannot change its width during
+/// the lifetime of an instance.
 class LinuxTerm : public Terminal
-/*
- * Linux OS specific implemenation.
- *
- * CONDITIONS:
- * 1. Only one instance of this class can exist at anytime.
- * 2. stty_raw() must be called before constructor.
- * 3. stty_cooked() must be called after destructor.
- * 4. The terminal this program is running in cannot change its width during
- *    the lifetime of an instance.
- */
 {
 public:
    // ****************************** Functions ******************************
@@ -43,6 +46,14 @@ private:
    // ****************************** Functions ******************************
    void reset_cursor(int);
    void reprint(bool);
+   // ****************************** Constants ******************************
+   constexpr static char _backspaceCh {'\x7f'};
+   constexpr static char _escapeCh {'\x1b'};
+   constexpr static char _arrowRightCh {'C'};
+   constexpr static char _arrowLeftCh {'D'};
+   const char* _cursorUpStr {"\x1b[A"};
+   const char* _boldTextStr {"\x1b[1m"};
+   const char* _normTextStr {"\x1b[0m"};
    // ****************************** Variables ******************************
    static bool _lock;
    static bool _cooked;
