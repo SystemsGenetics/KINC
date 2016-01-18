@@ -44,11 +44,11 @@ class Console
 {
    struct UnitTest;
 public:
-   // ****************************** Deleted Methods ************************
+   // ****************************** Basic Methods **************************
    Console(const Console&) = delete;
+   Console(Console&&) = delete;
    Console& operator=(const Console&) = delete;
    Console& operator=(Console&&) = delete;
-   // ****************************** Constructors/Destructors ***************
    Console(int argc, char* argv[], Terminal& tm);
    ~Console();
    // ****************************** Functions ******************************

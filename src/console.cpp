@@ -33,12 +33,11 @@ Console::Console(int argc, char* argv[], Terminal& terminal):
 
 
 
+/// @brief Cleans up after console interface.
+///
+/// Deletes OpenCL device if one is set and unsets lock to console.
 Console::~Console()
-/*
- * Deletes OpenCL device if one is set, unset lock to console.
- */
 {
-   InvalidUse::assert(_lock,__FILE__,__LINE__);
    _lock = false;
    if (_device)
    {
@@ -48,10 +47,10 @@ Console::~Console()
 
 
 
+/// @brief Main program starter.
+///
+/// Prints welcome message and goes directly to terminal loop.
 void Console::run()
-/*
- * Goes directly to terminal loop.
- */
 {
    _tm << "Welcome to KINC!\nVersion 0.0001 :)\n\n";
    terminal_loop();
@@ -59,12 +58,13 @@ void Console::run()
 
 
 
+/// @brief Main program terminal loop.
+///
+/// This is the main function loop of the program. This loop will continue to
+/// grab one input from the Terminal interface until the quit command has been
+/// processed. Each user line is processed by calling parse. The _alive state
+/// of the program is set to false in a subfunction if quit is given.
 void Console::terminal_loop()
-/*
- * This is the main function loop of the program. This loop will continue to
- * grab one input from the Terminal interface until the quit command has been
- * processed. Each user line is processed by calling parse.
- */
 {
    _alive = true;
    while (_alive)
@@ -79,16 +79,16 @@ void Console::terminal_loop()
 
 
 
+/// @brief Parses one line of user input into list of strings.
+///
+/// Takes one line of user input and seperates it into list of strings using
+/// space or tab characters as delimiters between arguments. Once parsed into a
+/// list passes onto function that decodes user input and processes the command.
+///
+/// @param line One line of user input.
+///
+/// @return True if the user command was processed successfully.
 bool Console::parse(std::string& line)
-/*
- * Takes one line of user input and seperates it into list of strings using
- * space or tab characters as delimiters between arguments. Once parsed into a
- * list passes onto function that decodes user input and processes the command.
- *
- * line: one line of user input.
- *
- * Returns true if the user command was processed successfully.
- */
 {
    enum {_new,build} state = _new;
    std::list<std::string> list;
@@ -122,14 +122,16 @@ bool Console::parse(std::string& line)
 
 
 
+/// @brief Decodes string command into enumerated type.
+///
+/// Takes the first argument in user command and decodes into specific
+/// enumerated command type. Possibly modified command argument list and
+/// enumerated command type is then passed to subfunction.
+///
+/// @param list List of user arguments from command.
+///
+/// @return True if command was successful.
 bool Console::decode(std::list<std::string>& list)
-/*
- * Decodes user command from what user typed.
- *
- * list: list of user arguments.
- *
- * Returns true if command was successful.
- */
 {
    Command comm;
    if (list.size()>0)
@@ -161,15 +163,15 @@ bool Console::decode(std::list<std::string>& list)
 
 
 
+/// @brief Processes enumerated command.
+///
+/// Processes decoded user command and routes to specific command.
+///
+/// @param comm Enumerated command to be processed.
+/// @param list List of user arguments for command.
+///
+/// @return True if command was successful.
 bool Console::process(Command comm, std::list<std::string>& list)
-/*
- * Processes decoded user command and routes to specific command.
- *
- * comm: user command to be processed.
- * list: list of user arguments for command.
- *
- * Returns true if command was successful.
- */
 {
    bool ret;
    switch (comm)
@@ -189,15 +191,16 @@ bool Console::process(Command comm, std::list<std::string>& list)
 
 
 
+/// @brief decodes string OpenCL subcommand into enumerated type.
+///
+/// Takes the first argument of the OpenCL subcommand and decodes to proper
+/// enumerated command. Possibly modified subcommand argument list and
+/// enumerated command type is then passed to subfunction.
+///
+/// @param list List of arguments for OpenCL command.
+///
+/// @return True if the command was successful.
 bool Console::gpu_decode(std::list<std::string>& list)
-/*
- * Decodes the specific OpenCL command the user typed and passes it to a
- * processing function.
- *
- * list: list of arguments for OpenCL command.
- *
- * Returns true if the command was successful.
- */
 {
    GpuCommand comm;
    if (list.size()>0)
@@ -239,15 +242,15 @@ bool Console::gpu_decode(std::list<std::string>& list)
 
 
 
+/// @brief Processes enumerated OpenCL subcommand.
+///
+/// Processes decoded OpenCL command and routes to specific command given.
+///
+/// @param comm The OpenCL command to be processed.
+/// @param list List of arguments for this command.
+///
+/// @return True if the command was successful.
 bool Console::gpu_process(GpuCommand comm, std::list<std::string>& list)
-/*
- * Processes decoded OpenCL command and routes to specific command given.
- *
- * comm: the OpenCL command to be processed.
- * list: list of arguments for this command.
- *
- * Returns true if the command was successful.
- */
 {
    bool ret;
    switch (comm)
@@ -275,10 +278,10 @@ bool Console::gpu_process(GpuCommand comm, std::list<std::string>& list)
 
 
 
+/// @brief List all OpenCL devices.
+///
+/// Executes command to list all available OpenCL devices.
 void Console::gpu_list()
-/*
- * Executes command to list all available OpenCL devices.
- */
 {
    for (auto i = CLDevice::begin();i!=CLDevice::end();i++)
    {
@@ -296,14 +299,14 @@ void Console::gpu_list()
 
 
 
+/// @brief Prints info about specific OpenCL device.
+///
+/// Executes command to print basic info of of given OpenCL device.
+///
+/// @param list List of arguments for this command.
+///
+/// @return True if the command was successful.
 bool Console::gpu_info(std::list<std::string>& list)
-/*
- * Executes command to print basic info of of given OpenCL device.
- *
- * list : list of arguments for this command.
- *
- * Returns true if the command was successful.
- */
 {
    bool ret = false;
    if (list.size()>0)
@@ -343,14 +346,14 @@ bool Console::gpu_info(std::list<std::string>& list)
 
 
 
+/// @brief Sets OpenCL device for use in console.
+///
+/// Executes command that sets OpenCL device for analytic computation.
+///
+/// @param list List of arguments for this command.
+///
+/// @return True if the command was successful.
 bool Console::gpu_set(std::list<std::string>& list)
-/*
- * Executes command that sets OpenCL device for analytic computation.
- *
- * list : list of arguments for this command.
- *
- * Returns true if the command was successful.
- */
 {
    bool ret = false;
    if (list.size()>0)
@@ -383,10 +386,10 @@ bool Console::gpu_set(std::list<std::string>& list)
 
 
 
+/// @brief Clear any previously set OpenCL device.
+///
+/// Executes command that clears any OpenCL device set for computation.
 void Console::gpu_clear()
-/*
- * Executes command that clears any OpenCL device set for computation.
- */
 {
    if (_device)
    {
