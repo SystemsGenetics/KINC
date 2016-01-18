@@ -24,6 +24,7 @@ class LinuxTerm : public Terminal
 public:
    // ****************************** Deleted Methods ************************
    LinuxTerm(const LinuxTerm&) = delete;
+   LinuxTerm(LinuxTerm&&) = delete;
    LinuxTerm& operator=(const LinuxTerm&) = delete;
    LinuxTerm& operator=(LinuxTerm&&) = delete;
    // ****************************** Static Functions ***********************
@@ -53,13 +54,13 @@ private:
    void reset_cursor(int);
    void reprint(bool);
    // ****************************** Constants ******************************
-   constexpr static char _backspaceCh {'\x7f'};
-   constexpr static char _escapeCh {'\x1b'};
-   constexpr static char _arrowRightCh {'C'};
-   constexpr static char _arrowLeftCh {'D'};
-   const char* _cursorUpStr {"\x1b[A"};
-   const char* _boldTextStr {"\x1b[1m"};
-   const char* _normTextStr {"\x1b[0m"};
+   static constexpr char _backspaceCh {'\x7f'};
+   static constexpr char _escapeCh {'\x1b'};
+   static constexpr char _arrowRightCh {'C'};
+   static constexpr char _arrowLeftCh {'D'};
+   static const char* _cursorUpStr;
+   static const char* _boldTextStr;
+   static const char* _normTextStr;
    // ****************************** Static Variables ***********************
    static bool _lock;
    static bool _cooked;

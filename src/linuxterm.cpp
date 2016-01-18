@@ -9,6 +9,9 @@
 
 
 
+const char* LinuxTerm::_cursorUpStr {"\x1b[A"};
+const char* LinuxTerm::_boldTextStr {"\x1b[1m"};
+const char* LinuxTerm::_normTextStr {"\x1b[0m"};
 bool LinuxTerm::_lock {false};
 bool LinuxTerm::_cooked {true};
 
