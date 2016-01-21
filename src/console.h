@@ -6,17 +6,16 @@
  */
 #ifndef CONSOLE_H
 #define CONSOLE_H
-#define __CL_ENABLE_EXCEPTIONS
 #include <string>
 #include <list>
-#include <CL/cl.hpp>
 #include "terminal.h"
-#include "cldevice.h"
+#include "cldevlist.h"
 
 
 
 class Data;
 class Analytic;
+class CLDevice;
 
 
 
@@ -59,7 +58,7 @@ public:
 private:
    // ****************************** Enumerations ***************************
    enum class Command {gpu,quit,error};
-   enum class GpuCommand { list,info,set,clear,error };
+   enum class GpuCommand {list,info,set,clear,error};
    // ****************************** Functions ******************************
    void terminal_loop();
    bool parse(std::string&);
@@ -76,6 +75,7 @@ private:
    // ****************************** Variables ******************************
    Terminal& _tm;
    CLDevice* _device;
+   CLDevList _devList;
    //std::list<Data*> _data;
    bool _alive;
 };

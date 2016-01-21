@@ -8,6 +8,7 @@
 #include <sstream>
 #include "console.h"
 #include "exception.h"
+#include "cldevice.h"
 
 
 
@@ -283,12 +284,11 @@ bool Console::gpu_process(GpuCommand comm, std::list<std::string>& list)
 /// Executes command to list all available OpenCL devices.
 void Console::gpu_list()
 {
-   for (auto i = CLDevice::begin();i!=CLDevice::end();i++)
+   for (auto d:_devList)
    {
-      CLDevice& dev = *i;
-      _tm << dev.info(CLDevice::ident) << " ";
-      _tm << dev.info(CLDevice::name);
-      if (_device&&dev==*_device)
+      _tm << d.info(CLDevice::ident) << " ";
+      _tm << d.info(CLDevice::name);
+      if (_device&&d==*_device)
       {
          _tm << " ***";
       }
@@ -314,9 +314,9 @@ bool Console::gpu_info(std::list<std::string>& list)
       int p,d;
       char sep;
       std::istringstream str(list.front());
-      if ((str >> p >> sep >> d)&&sep==':'&&CLDevice::exist(p,d))
+      if ((str >> p >> sep >> d)&&sep==':'&&_devList.exist(p,d))
       {
-         CLDevice dev(p,d);
+         CLDevice& dev {_devList.at(p,d)};
          _tm << "===== " << dev.info(CLDevice::name) << " ("
              << dev.info(CLDevice::type) << ") =====\n";
          _tm << "Online: " << dev.info(CLDevice::online) << ".\n";
@@ -361,13 +361,13 @@ bool Console::gpu_set(std::list<std::string>& list)
       int p,d;
       char sep;
       std::istringstream str(list.front());
-      if ((str >> p >> sep >> d)&&sep==':'&&CLDevice::exist(p,d))
+      if ((str >> p >> sep >> d)&&sep==':'&&_devList.exist(p,d))
       {
          if (_device)
          {
             delete _device;
          }
-         _device = new CLDevice(p,d);
+         _device = new CLDevice {_devList.at(p,d)};
          ret = true;
       }
       else
