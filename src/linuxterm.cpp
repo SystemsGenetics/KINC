@@ -68,7 +68,7 @@ void LinuxTerm::stty_cooked()
 /// @brief Initializes terminal.
 ///
 /// Grabs the width of the program's terminal in characters and locks terminal
-/// exclusive use.
+/// for exclusive use.
 ///
 /// @pre There can be no current instance of this constructor's class.
 /// @pre The terminal must be in raw mode.

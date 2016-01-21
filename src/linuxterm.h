@@ -22,35 +22,34 @@
 class LinuxTerm : public Terminal
 {
 public:
-   // ****************************** Deleted Methods ************************
+   // ****************************** Basic Methods **************************
    LinuxTerm(const LinuxTerm&) = delete;
    LinuxTerm(LinuxTerm&&) = delete;
    LinuxTerm& operator=(const LinuxTerm&) = delete;
    LinuxTerm& operator=(LinuxTerm&&) = delete;
+   LinuxTerm();
+   ~LinuxTerm() override final;
    // ****************************** Static Functions ***********************
    static void stty_raw();
    static void stty_cooked();
-   // ****************************** Constructors/Destructors ***************
-   LinuxTerm();
-   ~LinuxTerm();
    // ****************************** Functions ******************************
-   void header(const std::string&);
-   void set_ops(Ops);
-   void precision(int);
+   void header(const std::string&) override final;
+   void precision(int) override final;
    // ****************************** Operators ******************************
-   LinuxTerm& operator<<(short);
-   LinuxTerm& operator<<(unsigned short);
-   LinuxTerm& operator<<(int);
-   LinuxTerm& operator<<(unsigned int);
-   LinuxTerm& operator<<(long);
-   LinuxTerm& operator<<(unsigned long);
-   LinuxTerm& operator<<(float);
-   LinuxTerm& operator<<(double);
-   LinuxTerm& operator<<(const char*);
-   LinuxTerm& operator<<(const std::string&);
-   void operator>>(std::string&);
+   LinuxTerm& operator<<(short) override final;
+   LinuxTerm& operator<<(unsigned short) override final;
+   LinuxTerm& operator<<(int) override final;
+   LinuxTerm& operator<<(unsigned int) override final;
+   LinuxTerm& operator<<(long) override final;
+   LinuxTerm& operator<<(unsigned long) override final;
+   LinuxTerm& operator<<(float) override final;
+   LinuxTerm& operator<<(double) override final;
+   LinuxTerm& operator<<(const char*) override final;
+   LinuxTerm& operator<<(const std::string&) override final;
+   void operator>>(std::string&) override final;
 private:
    // ****************************** Functions ******************************
+   void set_ops(Ops) override final;
    void reset_cursor(int);
    void reprint(bool);
    // ****************************** Constants ******************************
