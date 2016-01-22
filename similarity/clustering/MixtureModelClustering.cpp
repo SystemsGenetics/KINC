@@ -72,9 +72,20 @@ void MixtureModelClustering::run() {
   // because we do not calculate the diagonal.
   long long int num_rows = ematrix->getNumGenes();
   long long int total_comps  = (num_rows * (num_rows - 1)) / 2;
+
+  // Adjust the totals above if we have a filter on the genes
+  if (set1->num_genes > 0) {
+    total_comps  = (set1->num_genes * (num_rows - 1));
+  }
+  if (set2->num_genes > 0) {
+    total_comps  = (set1->num_genes * set2->num_genes);
+  }
+
   long long int comps_per_process = total_comps / num_jobs;
   long long int comp_start = 0;
   long long int comp_stop = total_comps;
+
+
 
   if (job_index > 0) {
     comp_start = (job_index - 1) * comps_per_process;
@@ -86,7 +97,7 @@ void MixtureModelClustering::run() {
     comp_stop = total_comps;
   }
   printf("  Job %d of %d. \n", job_index, num_jobs);
-  printf("  Performing (%lld x %lld)/2 comparisons: %lld to %lld (%lld) of %lld\n", num_rows, num_rows-1, comp_start, comp_stop, comp_stop - comp_start, total_comps);
+  printf("  Performing %lld to %lld (%lld) of %lld\n", comp_start, comp_stop, comp_stop - comp_start, total_comps);
   fflush(stdout);
 
   // Create the writer object to write out the clusters.
