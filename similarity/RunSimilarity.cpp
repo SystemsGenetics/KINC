@@ -19,6 +19,17 @@ void RunSimilarity::printUsage() {
   printf("                    and Mutual Information ('mi'). Provide as many methods as\n");
   printf("                    desired by separating each with a comma with no spaces..\n");
   printf("\n");
+  printf("Optional Filtering Arguments:\n");
+  printf("  --set1|-1         The path to a file that contains a set of genes to limit\n");
+  printf("                    for similarity analaysis.  The genes in this file will\n");
+  printf("                    be compared to all other genes. Each gene must be on a \n");
+  printf("                    separate line\n");
+  printf("  --set2|-2         The path to a file that contains a set of genes to limit\n");
+  printf("                    similarity analysis. The genes in this file will be\n");
+  printf("                    compared with the genes in the file specified by --set1.\n");
+  printf("                    set2 cannot be used by itself.  It must be used with set1.\n");
+  printf("                    Each gene must be on a spearate line\n");
+  printf("\n");
   printf("Optional Expression Matrix Arguments:\n");
   printf("  --omit_na         Provide this flag to ignore missing values.\n");
   printf("  --na_val|-n       A string representing the missing values in the input file\n");
@@ -85,6 +96,8 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
   // Initialize some of the program parameters.
   clustering = NULL;
   min_obs = 30;
+  set1.filename = NULL;
+  set2.filename = NULL;
 
   // Initialize the clustering arguments.
   strcpy(criterion, "BIC");
@@ -120,6 +133,9 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
       {"method",       required_argument, 0,  'm' },
       {"min_obs",      required_argument, 0,  'o' },
       {"th",           required_argument, 0,  's' },
+      // Filtering options.
+      {"set1",         required_argument, 0,  '1' },
+      {"set2",         required_argument, 0,  '2' },
       // Mutual information options.
       {"mi_bins",      required_argument, 0,  'b' },
       {"mi_degree",    required_argument, 0,  'd' },
@@ -163,6 +179,13 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
         break;
       case 's':
         threshold = atof(optarg);
+        break;
+      // Filtering Options.
+      case '1':
+        set1.filename = optarg;
+        break;
+      case '2':
+        set2.filename = optarg;
         break;
       // Mutual information options.
       case 'b':
@@ -255,6 +278,22 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
     exit(-1);
   }
 
+  // If the user provided gene sets to filter similarity then check the
+  // options.
+  if (set2.filename and !set1.filename) {
+    fprintf(stderr,"Please provide the first gene set list before providing the second.  (--set1 and --set2 options).\n");
+    exit(-1);
+  }
+  // Make sure the input file exists.
+  if (set1.filename and access(set1.filename, F_OK) == -1) {
+    fprintf(stderr,"The set1 file does not exists or is not readable.\n");
+    exit(-1);
+  }
+  if (set2.filename and access(set2.filename, F_OK) == -1) {
+    fprintf(stderr,"The set2 file does not exists or is not readable.\n");
+    exit(-1);
+  }
+
   // Validate the clustering options.
   if (clustering) {
     // Make sure the clustering method is valid.
@@ -337,7 +376,15 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
   }
 
   // Retrieve the data from the EMatrix file.
+  printf("  Reading expression matrix...\n");
   ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
+
+  if (set1.filename) {
+    getGeneSet(&set1);
+  }
+  if (set2.filename) {
+    getGeneSet(&set2);
+  }
 }
 /**
  *
@@ -402,7 +449,7 @@ void RunSimilarity::execute() {
       // jobs for either method.
       MixtureModelClustering * mwc = new MixtureModelClustering(ematrix,
           min_obs, num_jobs, job_index, method, num_methods, criterion,
-          max_clusters, threshold);
+          max_clusters, threshold, &set1, &set2);
       mwc->run();
     }
   }
@@ -577,3 +624,35 @@ void RunSimilarity::executeTraditional() {
 //  fclose(outfile);
 //}
 
+void RunSimilarity::getGeneSet(geneFilter * set) {
+
+  std::ifstream input(set->filename);
+  std::string gene;
+
+  // The number of genes in the file that weren't found in the ematrix.
+  int not_found = 0;
+
+  // Initialize the gene indicies to be the same size as the ematrix.
+  set->indicies = (int *) malloc(sizeof(int) * ematrix->getNumGenes());
+
+  // First iterate through the file to count the number of genes.
+  set->num_genes = 0;
+  while (std::getline(input, gene)) {
+    int coord = ematrix->getGeneCoord(&gene[0u]);
+    if (coord != -1) {
+      set->indicies[set->num_genes] = coord;
+      set->num_genes++;
+    }
+    else {
+      printf("    WARNING: Cannot find the gene, '%s', in the ematrix. Skipping.\n", &gene[0u]);
+      not_found++;
+    }
+  }
+  printf("  Filtered %d gene(s) using file, %s\n", set->num_genes, set->filename);
+  if (not_found > 0) {
+    printf("  Skipped filtering of %d gene(s)\n", not_found);
+  }
+
+  // Order the indexes.
+  quickSortI(set->indicies, set->num_genes);
+}

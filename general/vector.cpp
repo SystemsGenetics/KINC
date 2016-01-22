@@ -46,7 +46,18 @@ void swapD(double* l, int idx1, int idx2) {
   l[idx2] = temp;
   return;
 }
+/*
+ * @param double* l
+ * @param int idx1
+ * @param int idx2
+ */
 
+void swapI(int* l, int idx1, int idx2) {
+  int temp = l[idx1];
+  l[idx1] = l[idx2];
+  l[idx2] = temp;
+  return;
+}
 /*
  * @param float* l
  * @param int idx1
@@ -60,6 +71,30 @@ void swapF(float* l, int idx1, int idx2) {
   return;
 }
 
+/*
+ * @param double* l
+ * @param int size
+ */
+
+void quickSortI(int* l, int size){
+  if (size <= 1) {
+    return;
+  }
+  int pivIdx = (int) size / 1.618; // golden ratio
+  int pivot = l[pivIdx];
+  swapI(l, pivIdx, size-1);
+  int leftPlace = 0;
+  int i;
+  for (i = 0; i < size - 1; i++) {
+    if(l[i] < pivot){
+      swapI(l, i, leftPlace);
+      leftPlace++;
+    }
+  }
+  swapI(l, size-1, leftPlace);
+  quickSortI(l, leftPlace);
+  quickSortI(&l[leftPlace + 1], size - leftPlace - 1);
+}
 
 /*
  * @param double* l

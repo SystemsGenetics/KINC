@@ -16,6 +16,7 @@
 // the number of bins in the correlation value histogram
 #define HIST_BINS 100
 
+
 class RunSimilarity {
 
   private:
@@ -78,10 +79,24 @@ class RunSimilarity {
     double msc_bw1;
     double msc_bw2;
 
+    // Variables to limit pair-wise comparisions to a specific set
+    // of genes.
+    // --------------------------------
+    // An array of gene indexes that should be used for correlation. If this
+    // list is set then only these genes will have a pair-wise similarity test
+    // with every other gene.  If list2 is also set then pair-wise correlation
+    // of genes in list1 will only occur with genes in list2.
+    geneFilter set1;
+
+    // A second array of gene indexes that should be used for correlation.
+    // This list can only be set if the list1 is also set.
+    geneFilter set2;
+
     void writeHistogram();
     // Calcualtes pair-wise similarity score the traditional way.
     void executeTraditional();
     void parseMethods(char * methods_str);
+    void getGeneSet(geneFilter * set);
 
   public:
     RunSimilarity(int argc, char *argv[]);

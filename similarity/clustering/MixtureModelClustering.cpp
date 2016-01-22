@@ -2,7 +2,8 @@
 
 MixtureModelClustering::MixtureModelClustering(EMatrix *ematrix, int min_obs,
     int num_jobs, int job_index, char **method, int num_methods,
-    char * criterion, int max_clusters, double threshold)
+    char * criterion, int max_clusters, double threshold,
+    geneFilter *set1, geneFilter *set2)
   : PairWiseClustering(ematrix, min_obs, num_jobs, job_index) {
 
   // Initialize some values.
@@ -11,6 +12,8 @@ MixtureModelClustering::MixtureModelClustering(EMatrix *ematrix, int min_obs,
   this->method = method;
   this->num_methods = num_methods;
   this->threshold = threshold;
+  this->set1 = set1;
+  this->set2 = set2;
 
   // Make sure the mixture module criterion are good
   bool $mmc_is_good = false;
@@ -110,11 +113,37 @@ void MixtureModelClustering::run() {
   // Iterate through the rows of the expression matrix to perform
   // pair-wise similarity comparisons.  We only need to process a
   // triangle of the resulting similarity matrix.
+  int set1_index = 0;
   for (int i = 0; i < num_rows; i++) {
+    // If the user has requested that we filter the genes, then we will
+    // skip any genes that are not in the index.
+    if (set1->num_genes > 0) {
+      if (i != set1->indicies[set1_index]) {
+        continue;
+      }
+      else {
+        set1_index++;
+      }
+    }
+    //printf("i = %d\n", i);
+    int set2_index = 0;
     for (int j = 0; j < num_rows; j++) {
-      // We only need to calculate clusters in the lower triangle of the
-      // full pair-wise matrix
-      if (j >= i) {
+
+      // If the user has requested that we filter the genes, then we will
+      // skip any genes that are not in the index.
+      if (set2->num_genes > 0) {
+        if (j != set2->indicies[set2_index]) {
+          continue;
+        }
+        else {
+          set2_index++;
+        }
+      }
+      //printf("j = %d\n", j);
+
+      // if the user has not requested to filter by genes then we only
+      // want to perform comparisions for the lower triangle.
+      if (!set1->num_genes && j >= i) {
         continue;
       }
 
