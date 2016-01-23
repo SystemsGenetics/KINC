@@ -92,6 +92,7 @@ LinuxTerm::LinuxTerm():
 
 
 
+/// Release lock on terminal.
 LinuxTerm::~LinuxTerm()
 {
    _lock = false;
@@ -99,6 +100,7 @@ LinuxTerm::~LinuxTerm()
 
 
 
+/// Set new header for terminal input.
 void LinuxTerm::header(const std::string& header)
 {
    _header = header;
@@ -106,98 +108,60 @@ void LinuxTerm::header(const std::string& header)
 
 
 
-void LinuxTerm::set_ops(Ops op)
-{
-   switch (op)
-   {
-   case Ops::newline:
-      std::cout << "\n";
-      break;
-   case Ops::flush:
-      std::cout << std::flush;
-      break;
-   }
-}
-
-
-
+/// Set floating point precision.
+///
+/// @todo Need to finish this function.
 void LinuxTerm::precision(int)
 {}
 
 
 
+// Output operators, self-explanatory.
 LinuxTerm& LinuxTerm::operator<<(short n)
 {
    std::cout << n;
    return *this;
 }
-
-
-
 LinuxTerm& LinuxTerm::operator<<(unsigned short n)
 {
    std::cout << n;
    return *this;
 }
-
-
-
 LinuxTerm& LinuxTerm::operator<<(int n)
 {
    std::cout << n;
    return *this;
 }
-
-
-
 LinuxTerm& LinuxTerm::operator<<(unsigned int n)
 {
    std::cout << n;
    return *this;
 }
-
-
-
 LinuxTerm& LinuxTerm::operator<<(long n)
 {
    std::cout << n;
    return *this;
 }
-
-
-
 LinuxTerm& LinuxTerm::operator<<(unsigned long n)
 {
    std::cout << n;
    return *this;
 }
-
-
-
 LinuxTerm& LinuxTerm::operator<<(float n)
 {
    std::cout << n;
    return *this;
 }
-
-
-
 LinuxTerm& LinuxTerm::operator<<(double n)
 {
    std::cout << n;
    return *this;
 }
-
-
-
 LinuxTerm& LinuxTerm::operator<<(const char* n)
 {
    std::cout << n;
    return *this;
 }
-
-
-
 LinuxTerm& LinuxTerm::operator<<(const std::string& n)
 {
    std::cout << n;
@@ -278,6 +242,27 @@ void LinuxTerm::operator>>(std::string& buffer)
 
 
 
+/// @brief Setting special control types.
+///
+/// Internal callback function for handling special control types enumerated by
+/// Terminal interface class.
+///
+/// @todo Still need to finish this function.
+void LinuxTerm::set_ops(Ops op)
+{
+   switch (op)
+   {
+   case Ops::newline:
+      std::cout << "\n";
+      break;
+   case Ops::flush:
+      std::cout << std::flush;
+      break;
+   }
+}
+
+
+
 /// @brief Move cursor up.
 ///
 /// Move cursor up as many lines needed to get back to origional line from
@@ -292,6 +277,7 @@ void LinuxTerm::reset_cursor(int chCount)
    }
    std::cout << "\r";
 }
+
 
 
 /// @brief Prints header and input line of user, resetting and overwriting old

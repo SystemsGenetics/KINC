@@ -23,32 +23,71 @@ class CLDevList;
 /// The "address" of these devices are represented by two numbers, the first
 /// being the platform the device is part of and the second being which device
 /// in the platform.
+///
+/// @author Josh Burns
+/// @date 22 Jan 2016
 class CLDevice
 {
    friend class CLDevList;
 public:
-   // ****************************** Enumerations ***************************
-   enum CLInfo {ident,name,type,online,unified_mem,addr_space,clock,
-                compute_units,work_size,global_mem,local_mem,extensions,
-                float_hp,float_sp,float_dp};
-   // ****************************** Functions ******************************
+   // *
+   // * ENUMERATIONS
+   // *
+   /// Defines all possible types of information that can be queried about an
+   /// OpenCL device.
+   enum CLInfo
+   {
+      ident, ///< The two identifying numbers of device.
+      name, ///< The name of the device.
+      type, ///< The OpenCL device type.
+      online, ///< Is the device online or not.
+      unified_mem, ///< Does the device have unified memory.
+      addr_space, ///< The address space in bits.
+      clock, ///< The maximum clock frequency.
+      compute_units, ///< The number of compute units.
+      work_size, ///< The maximum workgroup size.
+      global_mem, ///< Size of global memory.
+      local_mem, ///< Size of local memory.
+      extensions, ///< Extensions this device supports.
+      float_hp, ///< Floating point operations supported for half precision.
+      float_sp, ///< Floating point operations supported for single precision.
+      float_dp ///< Floating point operations supported for double precision.
+   };
+   // *
+   // * FUNCTIONS
+   // *
    cl::Platform& platform();
    cl::Device& device();
    std::string info(CLInfo) const;
-   // ****************************** Operators ******************************
+   // *
+   // * OPERATORS
+   // *
    bool operator==(const CLDevice&);
 private:
-   // ****************************** Basic Methods **************************
+   // *
+   // * BASIC METHODS
+   // *
    CLDevice(int,int,const cl::Platform&,const cl::Device&);
-   // ****************************** Functions ******************************
+   // *
+   // * FUNCTIONS
+   // *
    inline void yes_no(std::ostringstream&,bool) const;
    void size_it(std::ostringstream&,long) const;
-   // ****************************** Constants ******************************
+   // *
+   // * CONSTANTS
+   // *
    static constexpr int _fPrecision {2};
-   // ****************************** Variables ******************************
+   // *
+   // * VARIABLES
+   // *
+   /// The increment into list of Platforms this device belongs to.
    int _pinc;
+   /// The increment into list of devices of given platform that corresponds to
+   /// this device.
    int _dinc;
+   /// OpenCL platform of device.
    cl::Platform _platform;
+   /// OpenCL object of actual device.
    cl::Device _device;
 };
 

@@ -9,5 +9,7 @@ exception.cpp
 exception.h
 cldevice.cpp
 cldevice.h
+cldevlist.cpp
+cldevlist.h
 main.cpp
 unit.t.cpp

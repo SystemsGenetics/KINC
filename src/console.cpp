@@ -299,7 +299,7 @@ void Console::gpu_list()
 
 
 
-/// @brief Prints info about specific OpenCL device.
+/// @brief Prints info about OpenCL device.
 ///
 /// Executes command to print basic info of of given OpenCL device.
 ///

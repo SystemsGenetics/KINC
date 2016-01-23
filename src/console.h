@@ -31,35 +31,62 @@ namespace KINCPlugins
 
 
 
-/// @brief Takes over execution of program and controls data/analytic objects.
+/// @brief Main program Console.
 ///
 /// Designed to take over execution of the program and manage commands supplied
 /// by the user and all data and analytic objects. The run() function will take
 /// over execution and release when the user quits the program. Only one
 /// instance of this class is allowed to exist for the entire program.
 ///
-/// @pre Only one instance of this class can exist at any one time.
+/// @warning Only one instance of this class can exist at any one time.
+///
+/// @author Josh Burns
+/// @date 22 Jan 2016
 class Console
 {
    struct UnitTest;
 public:
-   // ****************************** Basic Methods **************************
+   // *
+   // * BASIC METHODS
+   // *
    Console(const Console&) = delete;
    Console(Console&&) = delete;
    Console& operator=(const Console&) = delete;
    Console& operator=(Console&&) = delete;
    Console(int argc, char* argv[], Terminal& tm);
    ~Console();
-   // ****************************** Functions ******************************
+   // *
+   // * FUNCTIONS
+   // *
    void run();
    //bool add(Data*,std::string&);
    //bool del(std::string&);
    //Data* find(std::string&);
 private:
-   // ****************************** Enumerations ***************************
-   enum class Command {gpu,quit,error};
-   enum class GpuCommand {list,info,set,clear,error};
-   // ****************************** Functions ******************************
+   // *
+   // * ENUMERATIONS
+   // *
+   ///
+   /// Main commands.
+   enum class Command
+   {
+      gpu, ///< This is an OpenCL command.
+      quit, ///< The quit command.
+      error ///< Error at parsing command.
+   };
+   ///
+   /// OpenCL subcommands.
+   enum class GpuCommand
+   {
+      list, ///< The list subcommand.
+      info, ///< The info subcommand.
+      set, ///< The set subcommand.
+      clear, ///< The clear subcommand.
+      error ///< Error at parsing OpenCL subcommand.
+   };
+   // *
+   // * FUNCTIONS
+   // *
    void terminal_loop();
    bool parse(std::string&);
    bool decode(std::list<std::string>&);
@@ -70,13 +97,24 @@ private:
    bool gpu_info(std::list<std::string>&);
    bool gpu_set(std::list<std::string>&);
    void gpu_clear();
-   // ****************************** Static Variables ***********************
+   // *
+   // * STATIC VARIABLES
+   // *
    static bool _lock;
-   // ****************************** Variables ******************************
+   // *
+   // * VARIABLES
+   // *
+   /// Reference to program's main Terminal interface.
    Terminal& _tm;
+   /// Pointer to OpenCL device that is set for computation acceleration. By
+   /// or if clear command issues this is set to nullptr.
    CLDevice* _device;
+   /// List of all possible OpenCL devices on program's computer.
    CLDevList _devList;
    //std::list<Data*> _data;
+   /// Boolean variable that is used as state information stating if the console
+   /// is still active and should continue accepting input from user. Once this
+   /// is false the run() command will exit and return control.
    bool _alive;
 };
 

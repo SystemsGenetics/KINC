@@ -104,7 +104,6 @@ std::string CLDevice::info(CLInfo which) const
 
 
 
-/// Defines equality between two CLDevice objects.
 bool CLDevice::operator==(const CLDevice& cmp)
 {
    return (_pinc==cmp._pinc&&_dinc==cmp._dinc);

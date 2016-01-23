@@ -2,7 +2,7 @@
 
 
 
-// List of all possible OpenCL errors.
+/// C style list of all possible OpenCL errors.
 const char* OpenCLError::c_clDescErrors[] = {
    "CL_SUCCESS",
    "CL_DEVICE_NOT_FOUND",
