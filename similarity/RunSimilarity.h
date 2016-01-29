@@ -59,6 +59,10 @@ class RunSimilarity {
     // The index of this job within the total jobs.  Must be
     // between 1 and num_jobs (no zero index).
     int job_index;
+    // An array that specifies the set of minimum thresholds to include.
+    // All methods must have a minimum value, -1 should be used to exclude
+    // a filter for that method.
+    double * min_sim;
 
     // Variables for mutual information
     // --------------------------------
@@ -97,6 +101,7 @@ class RunSimilarity {
     void executeTraditional();
     void parseMethods(char * methods_str);
     void getGeneSet(geneFilter * set);
+    void parseMinSim(char * minsim_str);
 
   public:
     RunSimilarity(int argc, char *argv[]);

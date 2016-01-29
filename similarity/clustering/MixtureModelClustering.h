@@ -30,12 +30,15 @@ class MixtureModelClustering : public PairWiseClustering {
     double threshold;
     // Filter sets.
     geneFilter *set1, *set2;
+    // The minimum similarity to write out.
+    double * min_sim;
 
   public:
 
     MixtureModelClustering(EMatrix *ematrix, int min_obs, int num_jobs,
         int job_index, char ** method, int num_methods, char * criterion,
-        int max_clusters, double threshold, geneFilter * set1, geneFilter * set2);
+        int max_clusters, double threshold, geneFilter * set1,
+        geneFilter * set2, double * min_sim);
     ~MixtureModelClustering();
 
     // Returns usage help instructions.

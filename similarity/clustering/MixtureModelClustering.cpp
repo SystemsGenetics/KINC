@@ -3,7 +3,7 @@
 MixtureModelClustering::MixtureModelClustering(EMatrix *ematrix, int min_obs,
     int num_jobs, int job_index, char **method, int num_methods,
     char * criterion, int max_clusters, double threshold,
-    geneFilter *set1, geneFilter *set2)
+    geneFilter *set1, geneFilter *set2, double * min_sim)
   : PairWiseClustering(ematrix, min_obs, num_jobs, job_index) {
 
   // Initialize some values.
@@ -14,6 +14,7 @@ MixtureModelClustering::MixtureModelClustering(EMatrix *ematrix, int min_obs,
   this->threshold = threshold;
   this->set1 = set1;
   this->set2 = set2;
+  this->min_sim = min_sim;
 
   // Make sure the mixture module criterion are good
   bool $mmc_is_good = false;
@@ -183,7 +184,7 @@ void MixtureModelClustering::run() {
           min_obs, method, num_methods);
       mixmod->run(criterion, max_clusters);
       PairWiseClusterList * cluster_list = mixmod->getClusterList();
-      pwcw->writeClusters(cluster_list, i, j);
+      pwcw->writeClusters(cluster_list, i, j, this->min_sim);
 
       // Print run stats.
       if (my_comps % 100 == 0) {

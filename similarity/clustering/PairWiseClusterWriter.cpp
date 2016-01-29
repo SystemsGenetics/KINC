@@ -398,7 +398,7 @@ void PairWiseClusterWriter::closeOutFiles() {
  *
  * @param SampleCluster pws
  */
-void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, int gene2) {
+void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, int gene2, double * min_sim) {
 
   // The file pointer of the file to write to.
   fstream *fp;
@@ -414,6 +414,22 @@ void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, 
 
   // Iterate through the clusters and print them.
   while (curr != NULL) {
+    // Before writing, make sure that the line should not be filtered out.
+    int do_write = 0;
+    for (int i = 0; i < this->num_methods; i++) {
+      // If the minimum similarity is -1 then the user requested that this
+      // method not be considered.
+      if (min_sim[i] == -1) {
+        continue;
+      }
+      // If the score is greater than the min similarity filter of  at least
+      // one of the methods then write the line.
+      double ascore = fabs(curr->getPWSimilarity(i)->getScore());
+      if (ascore >= min_sim[i]) {
+        do_write = 1;
+      }
+    }
+
     // Determine which file to write the output into. Use the first similarity
     // method provided for this.
     PairWiseSimilarity * pwsim = curr->getPWSimilarity(0);
@@ -427,30 +443,34 @@ void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, 
       int i3 = (int) i2;
       fp = fps[i3];
     }
-    (*fp) << gene1 + 1 << "\t" << gene2 + 1 << "\t" << curr->index << "\t" << pwcl->num_clusters << "\t" << curr->cluster_size << "\t" << curr->num_missing  << "\t" << curr->num_outliers << "\t" << curr->num_goutliers << "\t" << curr->num_threshold <<  "\t";
-    // Add in the scores, these should be separated by a comma.
-    int i;
-    char score_str[1024] = "";
-    for (i = 0; i < this->num_methods; i++) {
-      pwsim = curr->getPWSimilarity(i);
-      score = curr->getPWSimilarity(i)->getScore();
-      if (i == 0) {
-        sprintf(score_str, "%f", score);
+    if (do_write) {
+      (*fp) << gene1 + 1 << "\t" << gene2 + 1 << "\t" << curr->index << "\t" << pwcl->num_clusters << "\t" << curr->cluster_size << "\t" << curr->num_missing  << "\t" << curr->num_outliers << "\t" << curr->num_goutliers << "\t" << curr->num_threshold <<  "\t";
+
+      // Add in the scores, these should be separated by a comma.
+      int i;
+      char score_str[1024] = "";
+      for (i = 0; i < this->num_methods; i++) {
+        pwsim = curr->getPWSimilarity(i);
+        score = curr->getPWSimilarity(i)->getScore();
+        if (i == 0) {
+          sprintf(score_str, "%f", score);
+        }
+        else {
+          sprintf(score_str, "%s,%f", score_str, score);
+        }
+      }
+
+      if (i > 0) {
+        (*fp) << score_str << "\t";
       }
       else {
-        sprintf(score_str, "%s,%f", score_str, score);
+        (*fp) << NAN << "\t";
       }
+      for (int i = 0; i < curr->pwset->n_orig; i++) {
+        (*fp) << curr->cluster_samples[i];
+      }
+      (*fp) << endl;
     }
-    if (i > 0) {
-      (*fp) << score_str << "\t";
-    }
-    else {
-      (*fp) << NAN << "\t";
-    }
-    for (int i = 0; i < curr->pwset->n_orig; i++) {
-      (*fp) << curr->cluster_samples[i];
-    }
-    (*fp) << endl;
     curr = curr->neighbor;
     fp->flush();
   }

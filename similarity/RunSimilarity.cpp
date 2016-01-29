@@ -72,6 +72,16 @@ void RunSimilarity::printUsage() {
   printf("  --job_index|-i    When the argument num_jobs is provided, this argument indicates which\n");
   printf("                    job is being run. For example, if num_jobs is set to 10, then this\n");
   printf("                    argument should be any number between 1 and 10. Defaults to 1.\n");
+  printf("  --min_sim|-x      Output from KINC can be very large.  This argument limits the size\n");
+  printf("                    of the output by not writing lines to the clusters output directory\n");
+  printf("                    if the similarity scores fall below the specified thresholds.\n");
+  printf("                    This argument is a comma separated list of numeric values equal\n ");
+  printf("                    to the number of arguments provided to the --method argument. The\n");
+  printf("                    values set the minimum threshold for each method.  For a line to be\n");
+  printf("                    excluded it must fall below the minimum value specified for all methods.\n");
+  printf("                    use a minimum value of -1 to exclude a method from consideration.  For\n");
+  printf("                    correlation values (e.g. Pearson/Spearman) an absolute value will\n");
+  printf("                    be used.\n");
   printf("\n");
   printf("Optional Mixture Module Clustering Arguments:\n");
   printf("  --max_clusters|-a The maximum number of clusters that can be found for each\n");
@@ -115,9 +125,11 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
   // Initialize the array of method names. We set it to 10 as max. We'll
   // most likely never have this many of similarity methods available.
   method = (char **) malloc(sizeof(char *) * 10);
+  min_sim = (double *) malloc(sizeof(double *) * 10);
 
   // The concatenated method.
-  char * cmethod;
+  char * cmethod = NULL;
+  char * cmin_sim = NULL;
 
   // loop through the incoming arguments until the
   // getopt_long function returns -1. Then we break out of the loop
@@ -143,6 +155,7 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
       {"clustering",   required_argument, 0,  'l' },
       {"num_jobs",     required_argument, 0,  'j' },
       {"job_index",    required_argument, 0,  'i' },
+      {"min_sim",      required_argument, 0,  'x' },
       // Mixture module options.
       {"criterion",    required_argument, 0,  't' },
       {"max_clusters", required_argument, 0,  'a' },
@@ -210,6 +223,9 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
       case 'a':
         max_clusters = atoi(optarg);
         break;
+      case 'x':
+        cmin_sim = optarg;
+        break;
       // Expression matrix options.
       case 'e':
         infilename = optarg;
@@ -250,6 +266,14 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
     exit(-1);
   }
   parseMethods(cmethod);
+  if (cmin_sim) {
+    parseMinSim(cmin_sim);
+  }
+  else {
+    for (int i = 0; i < this->num_methods; i++) {
+      min_sim[i] = 0;
+    }
+  }
 
   // make sure the required arguments are set and appropriate
   if (!infilename) {
@@ -373,6 +397,14 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
       printf("    Number of jobs: %d\n", num_jobs);
       printf("    Job index: %d\n", job_index);
     }
+    if (cmin_sim) {
+      printf("\n  Excluding results for similarity scores less than:\n");
+      for(int i = 0; i < this->num_methods; i++) {
+        if (min_sim[i] > 0) {
+          printf("    '%s': %f\n", method[i], min_sim[i]);
+        }
+      }
+    }
   }
 
   // Retrieve the data from the EMatrix file.
@@ -427,6 +459,35 @@ void RunSimilarity::parseMethods(char * methods_str) {
 }
 
 /**
+ *
+ */
+void RunSimilarity::parseMinSim(char * minsim_str) {
+  // Split the method into as many parts
+  char * tmp;
+  int i = 0;
+  tmp = strstr(minsim_str, ",");
+  while (tmp) {
+    // Get the method and make sure it's valid.
+    char * num = (char *) malloc(sizeof(char) * (tmp - minsim_str + 1));
+    strncpy(num, minsim_str, (tmp - minsim_str));
+    min_sim[i] = atof(num);
+    minsim_str = tmp + 1;
+    tmp = strstr(minsim_str, ",");
+    i++;
+  }
+  // Get the last element of the methods_str.
+  char * num = (char *) malloc(sizeof(char) * strlen(minsim_str) + 1);
+  strcpy(num, minsim_str);
+  min_sim[i] = atof(num);
+  i++;
+
+  if (i < this->num_methods) {
+    fprintf(stderr,"Error: The minimum similarity filter (--min_sim option) must have the same number of elements as the --methods argument.\n");
+    exit(-1);
+  }
+}
+
+/**
  * Implements the destructor.
  */
 RunSimilarity::~RunSimilarity() {
@@ -449,7 +510,7 @@ void RunSimilarity::execute() {
       // jobs for either method.
       MixtureModelClustering * mwc = new MixtureModelClustering(ematrix,
           min_obs, num_jobs, job_index, method, num_methods, criterion,
-          max_clusters, threshold, &set1, &set2);
+          max_clusters, threshold, &set1, &set2, min_sim);
       mwc->run();
     }
   }
