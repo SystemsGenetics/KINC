@@ -7,6 +7,7 @@
 #ifndef CLDEVLIST_H
 #define CLDEVLIST_H
 #include <vector>
+#include "exception.h"
 
 
 
@@ -24,8 +25,15 @@ class CLDevice;
 /// @date 22 Jan 2016
 class CLDevList
 {
-   class Iterator;
 public:
+   // *
+   // * EXCEPTIONS
+   // *
+   struct OpenCLError;
+   // *
+   // * DECLERATIONS
+   // *
+   class Iterator;
    // *
    // * BASIC METHODS
    // *
@@ -63,8 +71,11 @@ private:
 /// @date 22 Jan 2016
 class CLDevList::Iterator
 {
-   friend class CLDevList;
 public:
+   // *
+   // * DECLERATIONS
+   // *
+   friend class CLDevList;
    // *
    // * OPERATORS
    // *
@@ -86,6 +97,14 @@ private:
    int _pi;
    /// Current increment into list of devices of given platform.
    int _di;
+};
+
+
+
+/// Exception is thrown when an OpenCL error occurs.
+struct CLDevList::OpenCLError : public ::OpenCLError
+{
+   using ::OpenCLError::OpenCLError;
 };
 
 

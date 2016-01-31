@@ -7,8 +7,9 @@
 #include <vector>
 #include <sstream>
 #include "console.h"
-#include "exception.h"
 #include "cldevice.h"
+#include "data.h"
+#include "analytic.h"
 
 
 
@@ -27,7 +28,7 @@ Console::Console(int argc, char* argv[], Terminal& terminal):
    _tm {terminal},
    _device {nullptr}
 {
-   InvalidUse::assert(!_lock,__FILE__,__LINE__);
+   assert<InvalidUse>(!_lock,__FILE__,__LINE__);
    _lock = true;
    _tm.header("KINC:> ");
 }

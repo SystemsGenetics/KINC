@@ -68,13 +68,20 @@ private:
    // *
    // * CONSTANTS
    // *
+   /// Special linux backspace character.
    static constexpr char _backspaceCh {'\x7f'};
+   /// Special linux escape character.
    static constexpr char _escapeCh {'\x1b'};
+   /// Special Linux right arrow character.
    static constexpr char _arrowRightCh {'C'};
+   /// Special linux left arrow character.
    static constexpr char _arrowLeftCh {'D'};
-   static const char* _cursorUpStr;
-   static const char* _boldTextStr;
-   static const char* _normTextStr;
+   /// String of special characters to move cursor up one line.
+   constexpr static const char* _cursorUpStr {"\x1b[A"};
+   /// String of special characters to make text output bold.
+   constexpr static const char* _boldTextStr {"\x1b[1m"};
+   /// String of special characters to make test output normal.
+   constexpr static const char* _normTextStr {"\x1b[0m"};
    // *
    // * STATIC VARIABLES
    // *

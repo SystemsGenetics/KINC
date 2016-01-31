@@ -10,6 +10,7 @@
 #include <list>
 #include "terminal.h"
 #include "cldevlist.h"
+#include "exception.h"
 
 
 
@@ -44,8 +45,12 @@ namespace KINCPlugins
 /// @date 22 Jan 2016
 class Console
 {
-   struct UnitTest;
 public:
+   // *
+   // * EXCEPTIONS
+   // *
+   struct Exception;
+   struct InvalidUse;
    // *
    // * BASIC METHODS
    // *
@@ -116,6 +121,22 @@ private:
    /// is still active and should continue accepting input from user. Once this
    /// is false the run() command will exit and return control.
    bool _alive;
+};
+
+
+
+/// Base exception class for any exception thrown from Console class.
+struct Console::Exception : public ::Exception
+{
+   using ::Exception::Exception;
+};
+
+/// Exception thrown if console class is used in an invalid way.
+struct Console::InvalidUse : public Console::Exception
+{
+   InvalidUse(const char* file, int line):
+      Exception(file,line,"Terminal::InvalidUse")
+   {}
 };
 
 

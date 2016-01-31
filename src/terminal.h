@@ -1,6 +1,7 @@
 #ifndef TERMINAL_H
 #define TERMINAL_H
 #include <string>
+#include "exception.h"
 
 
 
@@ -11,10 +12,16 @@
 /// direct or indirect wraparounds to virtual functions.
 ///
 /// @author Josh Burns
-/// @date 23 Jan 2016
+/// @date 30 Jan 2016
 class Terminal
 {
 public:
+   // *
+   // * EXCEPTIONS
+   // *
+   struct Exception;
+   struct SystemError;
+   struct InvalidUse;
    // *
    // * BASIC METHODS
    // *
@@ -106,6 +113,29 @@ protected:
    ///
    /// @param oper Specific operator being given to output of terminal.
    virtual void set_ops(Ops oper) = 0;
+};
+
+
+
+/// Generic base exception class for all exceptions thrown in Terminal class.
+struct Terminal::Exception : public ::Exception
+{
+   using ::Exception::Exception;
+};
+
+/// Exception that is thrown when a system error occurs.
+struct Terminal::SystemError : public ::SystemError
+{
+   using ::SystemError::SystemError;
+};
+
+/// Exception that is thrown when an implementation of Terminal is used in an
+/// invalid way.
+struct Terminal::InvalidUse : public Terminal::Exception
+{
+   InvalidUse(const char* file, int line):
+      Exception(file,line,"Terminal::InvalidUse")
+   {}
 };
 
 

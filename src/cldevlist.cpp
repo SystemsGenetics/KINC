@@ -2,7 +2,6 @@
 #include <CL/cl.hpp>
 #include "cldevlist.h"
 #include "cldevice.h"
-#include "exception.h"
 
 
 

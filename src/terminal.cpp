@@ -95,6 +95,7 @@ Terminal& Terminal::print(const std::string& n)
 
 
 
+/// Takes pointers to functions that can manipulate Terminal operators.
 Terminal& Terminal::operator<<(Terminal& (*pf)(Terminal&))
 {
    return pf(*this);

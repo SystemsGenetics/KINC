@@ -9,9 +9,6 @@
 
 
 
-const char* LinuxTerm::_cursorUpStr {"\x1b[A"};
-const char* LinuxTerm::_boldTextStr {"\x1b[1m"};
-const char* LinuxTerm::_normTextStr {"\x1b[0m"};
 bool LinuxTerm::_lock {false};
 bool LinuxTerm::_cooked {true};
 
@@ -25,17 +22,17 @@ bool LinuxTerm::_cooked {true};
 /// @pre Terminal status is in cooked mode.
 void LinuxTerm::stty_raw()
 {
-   InvalidUse::assert(_cooked,__FILE__,__LINE__);
+   assert<InvalidUse>(_cooked,__FILE__,__LINE__);
    struct termios term = {0};
    bool cond;
    cond = tcgetattr(0,&term)>=0;
-   SystemError::assert(cond,__FILE__,__LINE__,"tcgetattr");
+   assert<SystemError>(cond,__FILE__,__LINE__,"tcgetattr");
    term.c_lflag &= ~ICANON;
    term.c_lflag &= ~ECHO;
    term.c_cc[VMIN] = 1;
    term.c_cc[VTIME] = 0;
    cond = tcsetattr(0,TCSANOW,&term)>=0;
-   SystemError::assert(cond,__FILE__,__LINE__,"tcsetattr");
+   assert<SystemError>(cond,__FILE__,__LINE__,"tcsetattr");
    _cooked = false;
 }
 
@@ -50,16 +47,16 @@ void LinuxTerm::stty_raw()
 /// @pre There can be no current instance of this function's class.
 void LinuxTerm::stty_cooked()
 {
-   InvalidUse::assert(!_cooked,__FILE__,__LINE__);
-   InvalidUse::assert(!_lock,__FILE__,__LINE__);
+   assert<InvalidUse>(!_cooked,__FILE__,__LINE__);
+   assert<InvalidUse>(!_lock,__FILE__,__LINE__);
    struct termios term = {0};
    bool cond;
    cond = tcgetattr(0,&term)>=0;
-   SystemError::assert(cond,__FILE__,__LINE__,"tcgetattr");
+   assert<SystemError>(cond,__FILE__,__LINE__,"tcgetattr");
    term.c_lflag |= ICANON;
    term.c_lflag |= ECHO;
    cond = tcsetattr(0,TCSANOW,&term)>=0;
-   SystemError::assert(cond,__FILE__,__LINE__,"tcsetattr");
+   assert<SystemError>(cond,__FILE__,__LINE__,"tcsetattr");
    _cooked = true;
 }
 
@@ -76,8 +73,8 @@ LinuxTerm::LinuxTerm():
    _i {_line.end()},
    _chCount {0}
 {
-   InvalidUse::assert(!_lock,__FILE__,__LINE__);
-   InvalidUse::assert(!_cooked,__FILE__,__LINE__);
+   assert<InvalidUse>(!_lock,__FILE__,__LINE__);
+   assert<InvalidUse>(!_cooked,__FILE__,__LINE__);
    _lock = true;
 #ifdef TIOCGSIZE
    struct ttysize ts;
@@ -181,7 +178,7 @@ LinuxTerm& LinuxTerm::operator<<(const std::string& n)
 /// blank line.
 void LinuxTerm::operator>>(std::string& buffer)
 {
-   InvalidUse::assert(!_cooked,__FILE__,__LINE__);
+   assert<InvalidUse>(!_cooked,__FILE__,__LINE__);
    buffer.clear();
    _line.clear();
    _i = _line.end();
