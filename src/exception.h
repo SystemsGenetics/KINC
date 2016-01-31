@@ -16,6 +16,49 @@ class Analytic;
 
 
 
+/// Tests assertion and throws basic Exception if it fails.
+///
+/// @param cond Condition to be tested.
+/// @param file File where assertion is being tested.
+/// @param line Line in file where assertion is being tested.
+template<class T> inline void assert(bool cond, const char* file, int line)
+{
+   if (!cond)
+   {
+      throw T(file,line);
+   }
+}
+/// Tests assertion and throws SystemError Exception if it fails.
+///
+/// @param cond Condition to be tested.
+/// @param file File where assertion is being tested.
+/// @param line Line in file where assertion is being tested.
+/// @param system System function that failed.
+template<class T> inline void assert(bool cond, const char* file, int line,
+                                     const char* system)
+{
+   if (!cond)
+   {
+      throw T(file,line,system);
+   }
+}
+/// Tests assertion and throws OpenCL Exception if it fails.
+///
+/// @param cond Condition to be tested.
+/// @param file File where assertion is being tested.
+/// @param line Line in file where assertion is being tested.
+/// @param e Reference to OpenCL Error.
+template<class T> inline void assert(bool cond, const char* file, int line,
+                                     cl::Error& e)
+{
+   if (!cond)
+   {
+      throw T(file,line,e);
+   }
+}
+
+
+
 /// @brief Base exception class.
 ///
 /// Base class for any exception that this program will throw. It provides
@@ -57,10 +100,6 @@ public:
    // *
    DataException(const char*,int,Data*,const char*);
    // *
-   // * STATIC FUNCTIONS
-   // *
-   static void assert(bool,const char*,int,Data*,const char*);
-   // *
    // * FUNCTIONS
    // *
    Data* who();
@@ -85,10 +124,6 @@ public:
    // *
    AnalyticException(const char*,int,Analytic*,const char*);
    // *
-   // * STATIC FUNCTIONS
-   // *
-   static void assert(bool,const char*,int,Analytic*,const char*);
-   // *
    // * FUNCTIONS
    // *
    Analytic* who();
@@ -109,10 +144,6 @@ public:
    // * BASIC METHODS
    // *
    SystemError(const char*,int,const char*);
-   // *
-   // * STATIC FUNCTIONS
-   // *
-   static void assert(bool,const char*,int,const char*);
    // *
    // * FUNCTIONS
    // *
@@ -135,10 +166,6 @@ public:
    // *
    OpenCLError(const char*,int,cl::Error&);
    // *
-   // * STATIC FUNCTIONS
-   // *
-   static void assert(bool,const char*,int,cl::Error&);
-   // *
    // * FUNCTIONS
    // *
    const char* clFunc();
@@ -151,51 +178,6 @@ private:
    static const char* c_clDescErrors[];
    const char* _clFunc;
    cl_int _code;
-};
-
-
-
-/// A function was given an argument that is invalid.
-struct InvalidInput : public Exception
-{
-   // *
-   // * BASIC METHODS
-   // *
-   InvalidInput(const char*,int);
-   // *
-   // * STATIC FUNCTIONS
-   // *
-   static void assert(bool,const char*,int);
-};
-
-
-
-/// An object was used in a way that is invalid.
-struct InvalidUse : public Exception
-{
-   // *
-   // * BASIC METHODS
-   // *
-   InvalidUse(const char*,int);
-   // *
-   // * STATIC FUNCTIONS
-   // *
-   static void assert(bool,const char*,int);
-};
-
-
-
-/// A function was given a numeric argument that is out of range.
-struct OutOfRange : public Exception
-{
-   // *
-   // * BASIC METHODS
-   // *
-   OutOfRange(const char*,int);
-   // *
-   // * STATIC FUNCTIONS
-   // *
-   static void assert(bool,const char*,int);
 };
 
 

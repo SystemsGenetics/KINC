@@ -102,17 +102,6 @@ const char* Exception::what()
 
 
 
-void DataException::assert(bool cond, const char* file, int line,
-                           Data* who, const char* system)
-{
-   if (!cond)
-   {
-      throw DataException(file,line,who,system);
-   }
-}
-
-
-
 DataException::DataException(const char* file, int line, Data* who,
                              const char* what):
    Exception(file,line,what),
@@ -124,17 +113,6 @@ DataException::DataException(const char* file, int line, Data* who,
 Data* DataException::who()
 {
    return _who;
-}
-
-
-
-void AnalyticException::assert(bool cond, const char* file, int line,
-                               Analytic* who, const char* system)
-{
-   if (!cond)
-   {
-      throw AnalyticException(file,line,who,system);
-   }
 }
 
 
@@ -154,17 +132,6 @@ Analytic* AnalyticException::who()
 
 
 
-void SystemError::assert(bool cond, const char* file, int line,
-                         const char* system)
-{
-   if (!cond)
-   {
-      throw SystemError(file,line,system);
-   }
-}
-
-
-
 SystemError::SystemError(const char* file, int line, const char* system):
    Exception(file,line,"SystemError"),
    _system(system)
@@ -175,16 +142,6 @@ SystemError::SystemError(const char* file, int line, const char* system):
 const char* SystemError::system()
 {
    return _system;
-}
-
-
-
-void OpenCLError::assert(bool cond, const char* file, int line, cl::Error& e)
-{
-   if (!cond)
-   {
-      throw OpenCLError(file,line,e);
-   }
 }
 
 
@@ -222,51 +179,3 @@ const char* OpenCLError::code_str()
       return nullptr;
    }
 }
-
-
-
-void InvalidInput::assert(bool cond, const char* file, int line)
-{
-   if (!cond)
-   {
-      throw InvalidInput(file,line);
-   }
-}
-
-
-
-InvalidInput::InvalidInput(const char* file, int line):
-   Exception(file,line,"InvalidInput")
-{}
-
-
-
-void InvalidUse::assert(bool cond, const char* file, int line)
-{
-   if (!cond)
-   {
-      throw InvalidUse(file,line);
-   }
-}
-
-
-
-InvalidUse::InvalidUse(const char* file, int line):
-   Exception(file,line,"InvalidUse")
-{}
-
-
-
-void OutOfRange::assert(bool cond, const char* file, int line)
-{
-   if (!cond)
-   {
-      throw OutOfRange(file,line);
-   }
-}
-
-
-
-OutOfRange::OutOfRange(const char* file, int line):
-   Exception(file,line,"OutOfRange")
-{}
