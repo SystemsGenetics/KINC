@@ -1,8 +1,11 @@
 #include <iostream>
 
 
+bool linuxfile_ut();
+
+
 int main(int argc, char* argv[])
 {
-   std::cout << "HELLO" << std::endl;
+   linuxfile_ut();
    return 0;
 }
