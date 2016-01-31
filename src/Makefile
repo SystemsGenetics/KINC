@@ -54,7 +54,7 @@ $(build)%.o : %.cpp
 $(build)%.d: %.cpp
 +@echo "Building depend $@"
 +@echo -n "$@ $(build)" > $@
-+@$(CXX) -MM $< >> $@
++@$(CXX) $(acxxflags) -MM $< >> $@
 
 check: test
 +@echo "Running unit tests..."
