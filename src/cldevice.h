@@ -9,10 +9,7 @@
 #define __CL_ENABLE_EXCEPTIONS
 #include <CL/cl.hpp>
 #include <string>
-
-
-
-class CLDevList;
+#include "exception.h"
 
 
 
@@ -28,8 +25,15 @@ class CLDevList;
 /// @date 22 Jan 2016
 class CLDevice
 {
-   friend class CLDevList;
 public:
+   // *
+   // * EXCEPTIONS
+   // *
+   struct OpenCLError;
+   // *
+   // * DECLERATIONS
+   // *
+   friend class CLDevList;
    // *
    // * ENUMERATIONS
    // *
@@ -89,6 +93,14 @@ private:
    cl::Platform _platform;
    /// OpenCL object of actual device.
    cl::Device _device;
+};
+
+
+
+/// Exception is thrown when an OpenCL error occurs.
+struct CLDevice::OpenCLError : public ::OpenCLError
+{
+   using ::OpenCLError::OpenCLError;
 };
 
 

@@ -6,7 +6,6 @@
  */
 #include <sstream>
 #include "cldevice.h"
-#include "exception.h"
 
 
 
@@ -67,7 +66,7 @@ std::string CLDevice::info(CLInfo which) const
          break;
       case CLInfo::online:
          yes_no(buffer,_device.getInfo<CL_DEVICE_AVAILABLE>()&&
-                      _device.getInfo<CL_DEVICE_COMPILER_AVAILABLE>());
+                       _device.getInfo<CL_DEVICE_COMPILER_AVAILABLE>());
          break;
       case CLInfo::unified_mem:
          yes_no(buffer,_device.getInfo<CL_DEVICE_HOST_UNIFIED_MEMORY>());
