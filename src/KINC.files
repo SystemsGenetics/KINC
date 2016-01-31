@@ -11,5 +11,11 @@ cldevice.cpp
 cldevice.h
 cldevlist.cpp
 cldevlist.h
+data.h
+analytic.h
+filemem.h
+linuxfile.cpp
+linuxfile.h
+linuxfile.t.cpp
 main.cpp
 unit.t.cpp
