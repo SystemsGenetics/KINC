@@ -57,8 +57,7 @@ LinuxFile::~LinuxFile()
 
 void LinuxFile::clear()
 {
-   _size = 0;
-   _available = 0;
+   _available = _size;
    _next = 0;
    bool cond = lseek64(_fd,_idLen,SEEK_SET)==_idLen;
    assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
@@ -71,7 +70,7 @@ void LinuxFile::clear()
 bool LinuxFile::reserve(int64_t newBytes)
 {
    bool ret = false;
-   if (posix_fallocate64(_fd,lseek64(_fd,0,SEEK_END)-1,newBytes)==0)
+   if (posix_fallocate64(_fd,lseek64(_fd,0,SEEK_END),newBytes)==0)
    {
       ret = true;
       _size += newBytes;
@@ -82,21 +81,21 @@ bool LinuxFile::reserve(int64_t newBytes)
 
 
 
-int64_t LinuxFile::size()
+uint64_t LinuxFile::size()
 {
    return _size;
 }
 
 
 
-int64_t LinuxFile::available()
+uint64_t LinuxFile::available()
 {
    return _available;
 }
 
 
 
-void LinuxFile::write(void* data, VPtr ptr, int size)
+void LinuxFile::write(const void* data, VPtr ptr, uint64_t size)
 {
    assert<FileSegFault>((ptr + size)<=_size,__FILE__,__LINE__);
    int64_t seekr = ptr + _idLen + sizeof(VPtr);
@@ -108,7 +107,7 @@ void LinuxFile::write(void* data, VPtr ptr, int size)
 
 
 
-void LinuxFile::read(void* data, VPtr ptr, int size)
+void LinuxFile::read(void* data, VPtr ptr, uint64_t size)
 {
    assert<FileSegFault>((ptr + size)<=_size,__FILE__,__LINE__);
    int64_t seekr = ptr + _idLen + sizeof(VPtr);
@@ -120,7 +119,7 @@ void LinuxFile::read(void* data, VPtr ptr, int size)
 
 
 
-FileMem::VPtr LinuxFile::allocate(int size)
+FileMem::VPtr LinuxFile::allocate(uint64_t size)
 {
    assert<OutOfMemory>(size<=_available,__FILE__,__LINE__);
    VPtr ret = _next;
@@ -131,4 +130,11 @@ FileMem::VPtr LinuxFile::allocate(int size)
    cond = ::write(_fd,&_next,sizeof(VPtr))==sizeof(VPtr);
    assert<SystemError>(cond,__FILE__,__LINE__,"write");
    return ret;
+}
+
+
+
+FileMem::VPtr LinuxFile::head()
+{
+   return 0;
 }

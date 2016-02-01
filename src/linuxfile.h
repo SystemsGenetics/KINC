@@ -19,17 +19,18 @@ public:
    ~LinuxFile();
    void clear() override final;
    bool reserve(int64_t) override final;
-   int64_t size() override final;
-   int64_t available() override final;
+   uint64_t size() override final;
+   uint64_t available() override final;
 protected:
-   void write(void*,VPtr,int) override final;
-   void read(void*,VPtr,int) override final;
-   VPtr allocate(int) override final;
+   void write(const void*,VPtr,uint64_t) override final;
+   void read(void*,VPtr,uint64_t) override final;
+   VPtr allocate(uint64_t) override final;
+   VPtr head() override final;
 private:
    int _fd;
    int _idLen;
-   int64_t _size;
-   int64_t _available;
+   uint64_t _size;
+   uint64_t _available;
    VPtr _next;
 };
 
