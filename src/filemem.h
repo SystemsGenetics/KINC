@@ -15,17 +15,18 @@ public:
    struct FileSegFault;
    struct OutOfMemory;
    template<class T> class Ptr;
-   using VPtr = int64_t;
+   using VPtr = uint64_t;
    virtual ~FileMem() = default;
    virtual void clear() = 0;
    virtual bool reserve(int64_t) = 0;
-   virtual int64_t size() = 0;
-   virtual int64_t available() = 0;
+   virtual uint64_t size() = 0;
+   virtual uint64_t available() = 0;
    constexpr const static char* _identString = "KINCBINDAT";
 protected:
-   virtual void write(void*,VPtr,int) = 0;
-   virtual void read(void*,VPtr,int) = 0;
-   virtual VPtr allocate(int) = 0;
+   virtual void write(const void*,VPtr,uint64_t) = 0;
+   virtual void read(void*,VPtr,uint64_t) = 0;
+   virtual VPtr allocate(uint64_t) = 0;
+   virtual VPtr head() = 0;
 };
 
 
