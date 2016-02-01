@@ -1,11 +1,17 @@
 #include <iostream>
+#include "unit.h"
 
-
-bool linuxfile_ut();
 
 
 int main(int argc, char* argv[])
 {
-   linuxfile_ut();
+   if (unit::linuxfile::main())
+   {
+      std::cout << "ALL PASSED." << std::endl;
+   }
+   else
+   {
+      std::cout << "FAILURE." << std::endl;
+   }
    return 0;
 }
