@@ -13,7 +13,7 @@ void RunThreshold::printUsage() {
   printf("                   Pearson's correlation ('pc'), Spearman's rank ('sc')\n");
   printf("                   and Mutual Information ('mi'). Provide the methods that\n");
   printf("                   were used in the 'similarity' step.  The methods must appear\n");
-  printf("                   in the same order.");
+  printf("                   in the same order.\n");
   printf("  --th_method|-t   The method to be used for thresholding.  Only one method can\n");
   printf("                   be used for thresholding even if multiple methods are provided\n");
   printf("                   for the --method argument.\n");
@@ -247,10 +247,12 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
     exit(-1);
   }
 
-  // TODO: make sure the th_method is in the method array.
+  if (!th_method) {
+    fprintf(stderr,"Please provide the method to use for thresholding (e.g. pc, sc, or mi) (--th_method option).\n");
+    exit(-1);
+  }
 
-  // Load the input expression matrix.
-  ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
+  // TODO: make sure the th_method is in the method array.
 
   if (headers) {
     printf("  Skipping header lines\n");
@@ -266,6 +268,10 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
   printf("  Start threshold: %f\n", thresholdStart);
   printf("  Stopping Chi-square %f\n", chiSoughtValue);
   printf("  Step per iteration: %f\n", thresholdStep);
+
+  // Load the input expression matrix.
+  printf("  Reading expression matrix...\n");
+  ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
 }
 /**
  *
