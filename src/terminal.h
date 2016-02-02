@@ -12,7 +12,7 @@
 /// direct or indirect wraparounds to virtual functions.
 ///
 /// @author Josh Burns
-/// @date 30 Jan 2016
+/// @date 2 Feb 2016
 class Terminal
 {
 public:
@@ -55,17 +55,14 @@ public:
    // *
    // * VIRTUAL FUNCTIONS
    // *
-   /// @brief Set header for Terminal interface.
+   /// Must set the header of the terminal interface to the string provided.
    ///
-   /// This function must set the header of the terminal interface to the string
-   /// provided.
-   ///
-   /// @param newHeader String providing new header
+   /// @param newHeader New header
    virtual void header(const std::string& newHeader) = 0;
    /// @brief Set precision for floating point numbers.
    ///
-   /// This function must set the precision for all proceeding floating point
-   /// outputs to the precision given.
+   /// Must set the precision for all proceeding floating point outputs to the
+   /// precision given.
    ///
    /// @param prec The precision defined by the number of digits displayed past
    /// the point.
@@ -83,11 +80,10 @@ public:
    virtual Terminal& operator<<(const std::string& str) = 0;
    /// @brief Reads line from user and returns result.
    ///
-   /// This function must read a single line of input from the user terminal.
-   /// This function must be blocking until a new line of input has been read.
+   /// Must read a single line of input from the user terminal. Must also be
+   /// blocking until a new line of input has been read.
    ///
-   /// @param input String that will be overwritten with new line of input from
-   /// user.
+   /// @param input Will be overwritten with new line of input from user.
    virtual void operator>>(std::string& input) = 0;
 protected:
    // *
@@ -107,9 +103,9 @@ protected:
    // *
    /// @brief Outputs operator type.
    ///
-   /// This function must take any operator from the enumerated type Ops and
-   /// process it to output of the terminal. Some operators change state
-   /// information which must be saved after call of this function.
+   /// Must take any operator from the enumerated type Ops and process it to
+   /// output of the terminal. Some operators change state information which
+   /// must be saved after call of this function.
    ///
    /// @param oper Specific operator being given to output of terminal.
    virtual void set_ops(Ops oper) = 0;
