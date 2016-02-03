@@ -35,8 +35,6 @@ Console::Console(int argc, char* argv[], Terminal& terminal):
 
 
 
-/// @brief Cleans up after console interface.
-///
 /// Deletes OpenCL device if one is set and unsets lock to console.
 Console::~Console()
 {
@@ -49,8 +47,6 @@ Console::~Console()
 
 
 
-/// @brief Main program starter.
-///
 /// Prints welcome message and goes directly to terminal loop.
 void Console::run()
 {
@@ -165,8 +161,6 @@ bool Console::decode(std::list<std::string>& list)
 
 
 
-/// @brief Processes enumerated command.
-///
 /// Processes decoded user command and routes to specific command.
 ///
 /// @param comm Enumerated command to be processed.
@@ -244,8 +238,6 @@ bool Console::gpu_decode(std::list<std::string>& list)
 
 
 
-/// @brief Processes enumerated OpenCL subcommand.
-///
 /// Processes decoded OpenCL command and routes to specific command given.
 ///
 /// @param comm The OpenCL command to be processed.
@@ -280,8 +272,6 @@ bool Console::gpu_process(GpuCommand comm, std::list<std::string>& list)
 
 
 
-/// @brief List all OpenCL devices.
-///
 /// Executes command to list all available OpenCL devices.
 void Console::gpu_list()
 {
@@ -300,8 +290,6 @@ void Console::gpu_list()
 
 
 
-/// @brief Prints info about OpenCL device.
-///
 /// Executes command to print basic info of of given OpenCL device.
 ///
 /// @param list List of arguments for this command.
@@ -347,8 +335,6 @@ bool Console::gpu_info(std::list<std::string>& list)
 
 
 
-/// @brief Sets OpenCL device for use in console.
-///
 /// Executes command that sets OpenCL device for analytic computation.
 ///
 /// @param list List of arguments for this command.
@@ -387,8 +373,6 @@ bool Console::gpu_set(std::list<std::string>& list)
 
 
 
-/// @brief Clear any previously set OpenCL device.
-///
 /// Executes command that clears any OpenCL device set for computation.
 void Console::gpu_clear()
 {

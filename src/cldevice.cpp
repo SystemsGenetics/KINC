@@ -10,6 +10,8 @@
 
 
 /// Return OpenCL platform of device.
+///
+/// @return OpenCL platform.
 cl::Platform& CLDevice::platform()
 {
    return _platform;
@@ -18,6 +20,8 @@ cl::Platform& CLDevice::platform()
 
 
 /// Return OpenCL device of CLDevice object.
+///
+/// @return OpenCL device.
 cl::Device& CLDevice::device()
 {
    return _device;
@@ -31,6 +35,7 @@ cl::Device& CLDevice::device()
 /// types of information to be queired is defined as a class enumeration.
 ///
 /// @param which Enumerated type specifying what type of information to query.
+/// @return Requesting information.
 std::string CLDevice::info(CLInfo which) const
 {
    std::ostringstream buffer;
@@ -147,14 +152,14 @@ inline void CLDevice::yes_no(std::ostringstream& buffer, bool test) const
 
 
 
+/// @brief Converts integer to memory size.
+///
+/// Takes integer value as bytes and outputs formatted output to buffer with the
+/// appropriate label. Maximum size is 1024 terrabytes.
+///
+/// @param buffer Where formatted output is written.
+/// @param size Size to be reported in bytes.
 void CLDevice::size_it(std::ostringstream& buffer, long size) const
-/*
- * Takes integer value as bytes and outputs formatted output to buffer with the
- * appropriate label. Maximum size is 1024 terrabytes.
- *
- * buffer: where formatted output is written.
- * size: size to be reported in bytes.
- */
 {
    constexpr double kilobit = 1024.0f;
    constexpr int max = 4;

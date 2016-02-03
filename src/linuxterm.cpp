@@ -277,8 +277,7 @@ void LinuxTerm::reset_cursor(int chCount)
 
 
 
-/// @brief Prints header and input line of user, resetting and overwriting old
-/// line if specified.
+/// @brief Prints current user input line.
 ///
 /// If specified, moves cursor back to beginning of current input line and
 /// header. Either way prints out header and input line along with one extra

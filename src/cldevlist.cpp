@@ -82,6 +82,7 @@ void CLDevList::refresh()
 ///
 /// @param p The increment into list of platforms.
 /// @param d The increment into list of devices of given platform.
+/// @return True if given OpenCL device exists.
 bool CLDevList::exist(int p, int d)
 {
    return (p<_list.size()&&d<_list[p].size());
@@ -93,6 +94,7 @@ bool CLDevList::exist(int p, int d)
 ///
 /// @param p The increment into list of platforms.
 /// @param d The increment into list of devices of given platform.
+/// @return OpenCL device.
 ///
 /// @pre p must not exceed the last platform.
 /// @pre d must not exceed the last device in given platform.
