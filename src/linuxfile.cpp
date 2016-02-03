@@ -106,7 +106,7 @@ bool LinuxFile::reserve(int64_t newBytes)
 /// Get total size of file memory object.
 ///
 /// @return Size of object.
-uint64_t LinuxFile::size()
+uint64_t LinuxFile::size() const
 {
    return _size;
 }
@@ -116,7 +116,7 @@ uint64_t LinuxFile::size()
 /// Get available space for allocation of file memory object.
 ///
 /// @return Available space of object.
-uint64_t LinuxFile::available()
+uint64_t LinuxFile::available() const
 {
    return _available;
 }
@@ -151,7 +151,7 @@ void LinuxFile::write(const void* data, VPtr ptr, uint64_t size)
 ///
 /// @pre The block location in file memory cannot exceed the size of the file
 /// memory object.
-void LinuxFile::read(void* data, VPtr ptr, uint64_t size)
+void LinuxFile::read(void* data, VPtr ptr, uint64_t size) const
 {
    assert<FileSegFault>((ptr + size)<=_size,__FILE__,__LINE__);
    int64_t seekr = ptr + _idLen + sizeof(VPtr);
@@ -188,7 +188,7 @@ FileMem::VPtr LinuxFile::allocate(uint64_t size)
 /// Get beginning of file memory object.
 ///
 /// @return Points to beginning of file memory.
-FileMem::VPtr LinuxFile::head()
+FileMem::VPtr LinuxFile::head() const
 {
    return 0;
 }

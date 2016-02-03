@@ -29,16 +29,16 @@ public:
    // *
    void clear() override final;
    bool reserve(int64_t) override final;
-   uint64_t size() override final;
-   uint64_t available() override final;
+   uint64_t size() const override final;
+   uint64_t available() const override final;
 protected:
    // *
    // * FUNCTIONS
    // *
    void write(const void*,VPtr,uint64_t) override final;
-   void read(void*,VPtr,uint64_t) override final;
+   void read(void*,VPtr,uint64_t) const override final;
    VPtr allocate(uint64_t) override final;
-   VPtr head() override final;
+   VPtr head() const override final;
 private:
    // *
    // * VARIABLES

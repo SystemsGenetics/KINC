@@ -2,6 +2,7 @@
 #define FILEMEM_H
 #include <string>
 #include <cstdint>
+#include <type_traits>
 #include "exception.h"
 
 
@@ -52,12 +53,12 @@ public:
    /// not fail.
    virtual bool reserve(int64_t newBytes) = 0;
    /// Must return the total size in bytes of the file memory object.
-   virtual uint64_t size() = 0;
+   virtual uint64_t size() const = 0;
    /// @brief Return available space.
    ///
    /// Must return the total amount of bytes available for memory
    /// allocation.
-   virtual uint64_t available() = 0;
+   virtual uint64_t available() const = 0;
    // *
    // * CONSTANTS
    // *
@@ -79,7 +80,7 @@ protected:
    /// @param data Binary data in memory that will be written to from the file.
    /// @param ptr Specifies location in file to read.
    /// @param size Total number of bytes that will be read.
-   virtual void read(void*,VPtr,uint64_t) = 0;
+   virtual void read(void*,VPtr,uint64_t) const = 0;
    /// @brief Allocate new file memory space.
    ///
    /// Must allocate new space from the object file and return a new file memory
@@ -94,7 +95,7 @@ protected:
    /// file memory space.
    ///
    /// @return Points to beginning of file memory space.
-   virtual VPtr head() = 0;
+   virtual VPtr head() const = 0;
 };
 
 
@@ -105,19 +106,24 @@ protected:
 template<class T> class FileMem::Ptr
 {
 public:
+   static_assert(std::is_integral<T>::value||std::is_floating_point<T>::value||
+                 (std::is_class<T>::value&&!std::is_polymorphic<T>::value),
+                 "Error: FileMem::Ptr type is of an unsupported type.");
    Ptr(const Ptr<T>&) = delete;
    Ptr<T>& operator=(const Ptr<T>&) = delete;
    Ptr(FileMem&,T,int);
    Ptr(FileMem&,int);
    Ptr(FileMem&,VPtr,int);
    Ptr(Ptr<T>&&);
+   Ptr(VPtr);
    Ptr<T>& operator=(Ptr<T>&&);
    Ptr<T>& operator=(VPtr);
    T& operator*();
    T& operator[](int);
+   const T& operator*() const;
+   const T& operator[](int) const;
    VPtr addr();
    void save();
-   void free();
 };
 
 
