@@ -12,6 +12,9 @@
 /// Implements the file memory object interface within the Linux OS environment.
 /// Uses basic file IO calls in linux such as open/close/read/write and
 /// posix_fallocate.
+///
+/// @author Josh Burns
+/// @date 3 Feb 2016
 class LinuxFile : public FileMem
 {
 public:
