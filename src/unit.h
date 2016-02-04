@@ -26,6 +26,9 @@ namespace unit
       bool clear1();
       bool allocate3();
    }
+   namespace filemem_ptr
+   {
+   }
 }
 
 

@@ -1,7 +1,6 @@
+#include <iostream>
 #include "console.h"
 #include "linuxterm.h"
-#include "exception.h"
-#include <iostream>
 
 
 
