@@ -8,15 +8,10 @@
 
 
 
-/// @brief File memory interface class.
-///
-/// Defines the behavior of a file memory class. An object implementing this
-/// interface takes a file and maps it as a memory object; providing pointers
-/// to portions of the file that the user can read and write from using the
-/// FileMem::VPtr class defined elsewhere.
-///
-/// @author Josh Burns
-/// @date 2 Feb 2016
+class LinuxFile;
+
+
+
 class FileMem
 {
 public:
@@ -32,91 +27,54 @@ public:
    // * DECLERATIONS
    // *
    using VPtr = uint64_t;
+   template<class M,class T> class RawPtr;
    template<class T> class Ptr;
-   // *
-   // * BASIC METHODS
-   // *
-   virtual ~FileMem() = default;
-   // *
-   // * VIRTUAL FUNCTIONS
-   // *
-   /// Must clear any allocated memory on the object's file.
-   virtual void clear() = 0;
-   /// @brief Add additional space to file.
-   ///
-   /// Must reserve additional unallocated space on the file for memory
-   /// allocation.
-   ///
-   /// @param newBytes The number of new bytes to reserve from object's file.
-   /// @return True if the reservation of additional space was successful.
-   ///
-   /// @post The allocation of additional space from the reserved amount will
-   /// not fail.
-   virtual bool reserve(int64_t newBytes) = 0;
-   /// Must return the total size in bytes of the file memory object.
-   virtual uint64_t size() const = 0;
-   /// @brief Return available space.
-   ///
-   /// Must return the total amount of bytes available for memory
-   /// allocation.
-   virtual uint64_t available() const = 0;
+   template<int S> struct Object;
    // *
    // * CONSTANTS
    // *
+   /// Defines the value of a null pointer for file memory.
    constexpr static VPtr nullPtr = 0xffffffffffffffffll;
-   /// Must be at the beginning of any file used as a memory object of this
-   /// interface.
-   constexpr const static char* _identString = "KINCBINDAT";
-protected:
-   // *
-   // * VIRTUAL FUNCTIONS
-   // *
-   /// Must write a block of binary data to the object's file.
-   ///
-   /// @param data Binary data in memory that will be written to the file.
-   /// @param ptr Specifies location in file to write.
-   /// @param size Total number of bytes that will be written.
-   virtual void write(const void* data, VPtr ptr, uint64_t size) = 0;
-   /// Must read a block of binary data from the object's file.
-   ///
-   /// @param data Binary data in memory that will be written to from the file.
-   /// @param ptr Specifies location in file to read.
-   /// @param size Total number of bytes that will be read.
-   virtual void read(void*,VPtr,uint64_t) const = 0;
-   /// @brief Allocate new file memory space.
-   ///
-   /// Must allocate new space from the object file and return a new file memory
-   /// pointer that points to the beginning of that newly allocated space.
-   ///
-   /// @param size Total size in bytes of space to be allocated.
-   /// @return Points to newly allocated space on file object.
-   virtual VPtr allocate(uint64_t size) = 0;
-   /// @brief Provide head pointer.
-   ///
-   /// Must return a file memory pointer that points to the very beginning of
-   /// file memory space.
-   ///
-   /// @return Points to beginning of file memory space.
-   virtual VPtr head() const = 0;
+   /// Identifying string at the beginning of any memory object file.
+   constexpr const static char* _identString = "\0\15\41\102\104\101\124\0\0";
+   constexpr static int _idLen = 9;
 };
 
 
 
-template<class T> class FileMem::Ptr
+template<class T> class FileMem::Ptr : public FileMem::RawPtr<LinuxFile,T>
+{
+   using RawPtr<LinuxFile,T>::RawPtr;
+};
+
+
+
+template<int S> struct FileMem::Object
+{
+   char bytes[S];
+   constexpr static uint64_t size = S;
+   template<class T> T& get(int n)
+   {
+      return *reinterpret_cast<T*>(&bytes[n]);
+   }
+};
+
+
+
+template<class M,class T> class FileMem::RawPtr
 {
 public:
    static_assert(std::is_class<T>::value,
                  "FileMem::Ptr<T>, T is of an unsupported type.");
-   Ptr(const Ptr<T>&) = delete;
-   Ptr<T>& operator=(const Ptr<T>&) = delete;
-   Ptr(FileMem&,T*);
-   Ptr(FileMem&,const T&);
-   Ptr(FileMem&,T&&);
-   Ptr(FileMem&,VPtr);
-   Ptr(Ptr<T>&&);
-   ~Ptr();
-   inline Ptr<T>& operator=(Ptr<T>&&);
-   inline Ptr<T>& operator=(VPtr);
+   RawPtr(const Ptr<T>&) = delete;
+   RawPtr<M,T>& operator=(const Ptr<T>&) = delete;
+   RawPtr(M&);
+   RawPtr(M&,const T&);
+   RawPtr(M&,T&&);
+   RawPtr(M&,VPtr);
+   RawPtr(RawPtr<M,T>&&);
+   inline RawPtr<M,T>& operator=(RawPtr<M,T>&&);
+   inline RawPtr<M,T>& operator=(VPtr);
    inline T& operator*();
    inline const T& operator*() const;
    inline T* operator->();
@@ -124,135 +82,123 @@ public:
    inline VPtr addr() const;
    inline void save();
 private:
-   T* _val;
-   FileMem& _base;
+   T _val;
+   M& _base;
    VPtr _ptr;
 };
 
 
 
-template<class T> FileMem::Ptr<T>::Ptr(FileMem& mem, T* val):
+template<class M,class T> FileMem::RawPtr<M,T>::RawPtr(M& mem):
+   _base(mem),
+   _ptr(nullPtr)
+{
+   _ptr = _base.allocate(_val.size);
+}
+
+
+
+template<class M,class T> FileMem::RawPtr<M,T>::RawPtr(M& mem, const T& val):
    _val(val),
    _base(mem),
    _ptr(nullPtr)
 {
-   _ptr = _base.allocate(val.bin_size());
+   _ptr = _base.allocate(val.size);
 }
 
 
 
-template<class T> FileMem::Ptr<T>::Ptr(FileMem& mem, const T& val):
-   _val(nullptr),
+template<class M,class T> FileMem::RawPtr<M,T>::RawPtr(M& mem, T&& val):
+   _val(std::move(val)),
    _base(mem),
    _ptr(nullPtr)
 {
-   _ptr = _base.allocate(val.bin_size());
-   _val = new T {val};
+   _ptr = _base.allocate(val.size);
 }
 
 
 
-template<class T> FileMem::Ptr<T>::Ptr(FileMem& mem, T&& val):
-   _val(nullptr),
-   _base(mem),
-   _ptr(nullPtr)
-{
-   _val = new T {std::move(val)};
-   _ptr = _base.allocate(val.bin_size());
-}
-
-
-
-template<class T> FileMem::Ptr<T>::Ptr(FileMem& mem, VPtr loc):
-   _val(nullptr),
+template<class M,class T> FileMem::RawPtr<M,T>::RawPtr(M& mem, VPtr loc):
    _base(mem),
    _ptr(loc)
 {
-   _val = new T;
-   _base.read(_val->bin_data(),_ptr,_val->bin_size());
+   _base.read(_val.bytes,_ptr,_val.size);
 }
 
 
 
-template<class T> FileMem::Ptr<T>::Ptr(FileMem::Ptr<T>&& tmp):
-   _val(tmp._val),
+template<class M,class T>
+FileMem::RawPtr<M,T>::RawPtr(FileMem::RawPtr<M,T>&& tmp):
+   _val(std::move(tmp._val)),
    _base(tmp._base),
    _ptr(tmp._ptr)
 {
-   tmp._val = nullptr;
    tmp._ptr = nullPtr;
 }
 
 
 
-template<class T> FileMem::Ptr<T>::~Ptr()
+template<class M,class T>
+inline FileMem::RawPtr<M,T>& FileMem::RawPtr<M,T>::operator=(RawPtr<M,T>&& tmp)
 {
-   if (_val)
-   {
-      delete _val;
-   }
-}
-
-
-
-template<class T> inline FileMem::Ptr<T>&
-FileMem::Ptr<T>::operator=(Ptr<T>&& tmp)
-{
-   _val = tmp._val;
+   _val = std::move(tmp._val);
    _base = tmp._base;
    _ptr = tmp._ptr;
-   tmp._val = nullptr;
    tmp._ptr = nullPtr;
 }
 
 
 
-template<class T> inline FileMem::Ptr<T>& FileMem::Ptr<T>::operator=(VPtr ptr)
+template<class M,class T>
+inline FileMem::RawPtr<M,T>& FileMem::RawPtr<M,T>::operator=(VPtr ptr)
 {
    _ptr = ptr;
-   _base.read(_val->bin_data(),_ptr,_val->bin_size());
+   _base.read(_val.bytes,_ptr,_val.size);
 }
 
 
 
-template<class T> inline T& FileMem::Ptr<T>::operator*()
+template<class M,class T> inline T& FileMem::RawPtr<M,T>::operator*()
 {
    return *_val;
 }
 
 
 
-template<class T> inline const T& FileMem::Ptr<T>::operator*() const
+template<class M,class T>
+inline const T& FileMem::RawPtr<M,T>::operator*() const
 {
    return *_val;
 }
 
 
 
-template<class T> inline T* FileMem::Ptr<T>::operator->()
+template<class M,class T> inline T* FileMem::RawPtr<M,T>::operator->()
 {
    return _val;
 }
 
 
 
-template<class T> inline const T* FileMem::Ptr<T>::operator->() const
+template<class M,class T>
+inline const T* FileMem::RawPtr<M,T>::operator->() const
 {
    return _val;
 }
 
 
 
-template<class T> inline FileMem::VPtr FileMem::Ptr<T>::addr() const
+template<class M,class T>
+inline FileMem::VPtr FileMem::RawPtr<M,T>::addr() const
 {
    return _ptr;
 }
 
 
 
-template<class T> inline void FileMem::Ptr<T>::save()
+template<class M,class T> inline void FileMem::RawPtr<M,T>::save()
 {
-   _base.write(_val->bin_data(),_ptr,_val->bin_size());
+   _base.write(_val.data,_ptr,_val.size);
 }
 
 
