@@ -75,7 +75,7 @@ private:
    // *
    // * FUNCTIONS
    // *
-   inline void yes_no(std::ostringstream&,bool) const;
+   void yes_no(std::ostringstream&,bool) const;
    void size_it(std::ostringstream&,long) const;
    // *
    // * CONSTANTS

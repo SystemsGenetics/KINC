@@ -144,7 +144,7 @@ CLDevice::CLDevice(int p, int d, const cl::Platform& pl, const cl::Device& de)
 ///
 /// @param buffer Where textual yes/no will be written to.
 /// @param test Value that will be read.
-inline void CLDevice::yes_no(std::ostringstream& buffer, bool test) const
+void CLDevice::yes_no(std::ostringstream& buffer, bool test) const
 {
    const char* ans[] = {"yes","no"};
    buffer << ans[(test?0:1)];
