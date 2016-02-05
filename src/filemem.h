@@ -3,6 +3,7 @@
 #include <string>
 #include <cstdint>
 #include <type_traits>
+#include <utility>
 #include "exception.h"
 
 
@@ -62,6 +63,7 @@ public:
    // *
    // * CONSTANTS
    // *
+   constexpr static VPtr nullPtr = 0xffffffffffffffffll;
    /// Must be at the beginning of any file used as a memory object of this
    /// interface.
    constexpr const static char* _identString = "KINCBINDAT";
@@ -100,31 +102,158 @@ protected:
 
 
 
-// in <type_traits> std::is_integral<T>::value &&
-//                  std::is_floating_point<T>::value :D
-// and std::is_class<T>::value AND std::is_polymorphic<T>::value :D
 template<class T> class FileMem::Ptr
 {
 public:
-   static_assert(std::is_integral<T>::value||std::is_floating_point<T>::value||
-                 (std::is_class<T>::value&&!std::is_polymorphic<T>::value),
-                 "Error: FileMem::Ptr type is of an unsupported type.");
+   static_assert(std::is_class<T>::value,
+                 "FileMem::Ptr<T>, T is of an unsupported type.");
    Ptr(const Ptr<T>&) = delete;
    Ptr<T>& operator=(const Ptr<T>&) = delete;
-   Ptr(FileMem&,T,int);
-   Ptr(FileMem&,int);
-   Ptr(FileMem&,VPtr,int);
+   Ptr(FileMem&,T*);
+   Ptr(FileMem&,const T&);
+   Ptr(FileMem&,T&&);
+   Ptr(FileMem&,VPtr);
    Ptr(Ptr<T>&&);
-   Ptr(VPtr);
-   Ptr<T>& operator=(Ptr<T>&&);
-   Ptr<T>& operator=(VPtr);
-   T& operator*();
-   T& operator[](int);
-   const T& operator*() const;
-   const T& operator[](int) const;
-   VPtr addr();
-   void save();
+   ~Ptr();
+   inline Ptr<T>& operator=(Ptr<T>&&);
+   inline Ptr<T>& operator=(VPtr);
+   inline T& operator*();
+   inline const T& operator*() const;
+   inline T* operator->();
+   inline const T* operator->() const;
+   inline VPtr addr() const;
+   inline void save();
+private:
+   T* _val;
+   FileMem& _base;
+   VPtr _ptr;
 };
+
+
+
+template<class T> FileMem::Ptr<T>::Ptr(FileMem& mem, T* val):
+   _val(val),
+   _base(mem),
+   _ptr(nullPtr)
+{
+   _ptr = _base.allocate(val.bin_size());
+}
+
+
+
+template<class T> FileMem::Ptr<T>::Ptr(FileMem& mem, const T& val):
+   _val(nullptr),
+   _base(mem),
+   _ptr(nullPtr)
+{
+   _ptr = _base.allocate(val.bin_size());
+   _val = new T {val};
+}
+
+
+
+template<class T> FileMem::Ptr<T>::Ptr(FileMem& mem, T&& val):
+   _val(nullptr),
+   _base(mem),
+   _ptr(nullPtr)
+{
+   _val = new T {std::move(val)};
+   _ptr = _base.allocate(val.bin_size());
+}
+
+
+
+template<class T> FileMem::Ptr<T>::Ptr(FileMem& mem, VPtr loc):
+   _val(nullptr),
+   _base(mem),
+   _ptr(loc)
+{
+   _val = new T;
+   _base.read(_val->bin_data(),_ptr,_val->bin_size());
+}
+
+
+
+template<class T> FileMem::Ptr<T>::Ptr(FileMem::Ptr<T>&& tmp):
+   _val(tmp._val),
+   _base(tmp._base),
+   _ptr(tmp._ptr)
+{
+   tmp._val = nullptr;
+   tmp._ptr = nullPtr;
+}
+
+
+
+template<class T> FileMem::Ptr<T>::~Ptr()
+{
+   if (_val)
+   {
+      delete _val;
+   }
+}
+
+
+
+template<class T> inline FileMem::Ptr<T>&
+FileMem::Ptr<T>::operator=(Ptr<T>&& tmp)
+{
+   _val = tmp._val;
+   _base = tmp._base;
+   _ptr = tmp._ptr;
+   tmp._val = nullptr;
+   tmp._ptr = nullPtr;
+}
+
+
+
+template<class T> inline FileMem::Ptr<T>& FileMem::Ptr<T>::operator=(VPtr ptr)
+{
+   _ptr = ptr;
+   _base.read(_val->bin_data(),_ptr,_val->bin_size());
+}
+
+
+
+template<class T> inline T& FileMem::Ptr<T>::operator*()
+{
+   return *_val;
+}
+
+
+
+template<class T> inline const T& FileMem::Ptr<T>::operator*() const
+{
+   return *_val;
+}
+
+
+
+template<class T> inline T* FileMem::Ptr<T>::operator->()
+{
+   return _val;
+}
+
+
+
+template<class T> inline const T* FileMem::Ptr<T>::operator->() const
+{
+   return _val;
+}
+
+
+
+template<class T> inline FileMem::VPtr FileMem::Ptr<T>::addr() const
+{
+   return _ptr;
+}
+
+
+
+template<class T> inline void FileMem::Ptr<T>::save()
+{
+   _base.write(_val->bin_data(),_ptr,_val->bin_size());
+}
 
 
 
