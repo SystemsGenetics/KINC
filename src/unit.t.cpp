@@ -7,7 +7,8 @@
 
 int main(int argc, char* argv[])
 {
-   if (unit::linuxfile::main())
+   if (unit::linuxfile::main()&&
+       unit::filemem::main())
    {
       std::cout << "ALL PASSED." << std::endl;
    }

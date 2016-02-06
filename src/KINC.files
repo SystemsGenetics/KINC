@@ -14,6 +14,7 @@ cldevlist.h
 data.h
 analytic.h
 filemem.h
+filemem.t.cpp
 linuxfile.cpp
 linuxfile.h
 linuxfile.t.cpp

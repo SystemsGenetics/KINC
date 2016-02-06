@@ -12,7 +12,6 @@ public:
    using LinuxFile::write;
    using LinuxFile::read;
    using LinuxFile::allocate;
-   using LinuxFile::head;
 };
 
 
