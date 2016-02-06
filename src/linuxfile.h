@@ -26,6 +26,10 @@ class LinuxFile : public FileMem
 {
 public:
    // *
+   // * DECLERATIONS
+   // *
+   template<class M,class T> friend class FileMem::RawPtr;
+   // *
    // * BASIC METHODS
    // *
    LinuxFile(const LinuxFile&) = delete;
@@ -41,10 +45,14 @@ public:
    bool reserve(int64_t);
    inline uint64_t size() const;
    inline uint64_t available() const;
+   inline VPtr head() const;
+protected:
+   // *
+   // * FUNCTIONS
+   // *
    inline void write(const void*,VPtr,uint64_t);
    inline void read(void*,VPtr,uint64_t) const;
    inline VPtr allocate(uint64_t);
-   inline VPtr head() const;
 private:
    // *
    // * VARIABLES
@@ -89,6 +97,16 @@ inline uint64_t LinuxFile::size() const
 inline uint64_t LinuxFile::available() const
 {
    return _available;
+}
+
+
+
+/// Get beginning of file memory object.
+///
+/// @return Points to beginning of file memory.
+inline FileMem::VPtr LinuxFile::head() const
+{
+   return 0;
 }
 
 
@@ -151,16 +169,6 @@ inline FileMem::VPtr LinuxFile::allocate(uint64_t size)
    cond = ::write(_fd,&_next,sizeof(VPtr))==sizeof(VPtr);
    assert<SystemError>(cond,__FILE__,__LINE__,"write");
    return ret;
-}
-
-
-
-/// Get beginning of file memory object.
-///
-/// @return Points to beginning of file memory.
-inline FileMem::VPtr LinuxFile::head() const
-{
-   return 0;
 }
 
 

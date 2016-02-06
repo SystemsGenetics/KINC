@@ -28,7 +28,7 @@ public:
    // *
    using VPtr = uint64_t;
    template<class M,class T> class RawPtr;
-   template<class T> class Ptr;
+   template<class T> using Ptr = RawPtr<LinuxFile,T>;
    template<int S> struct Object;
    // *
    // * CONSTANTS
@@ -38,13 +38,6 @@ public:
    /// Identifying string at the beginning of any memory object file.
    constexpr const static char* _identString = "\0\15\41\102\104\101\124\0\0";
    constexpr static int _idLen = 9;
-};
-
-
-
-template<class T> class FileMem::Ptr : public FileMem::RawPtr<LinuxFile,T>
-{
-   using RawPtr<LinuxFile,T>::RawPtr;
 };
 
 
@@ -73,8 +66,8 @@ public:
    RawPtr(M&,T&&);
    RawPtr(M&,VPtr);
    RawPtr(RawPtr<M,T>&&);
-   inline RawPtr<M,T>& operator=(RawPtr<M,T>&&);
-   inline RawPtr<M,T>& operator=(VPtr);
+   inline void operator=(RawPtr<M,T>&&);
+   inline void operator=(VPtr);
    inline T& operator*();
    inline const T& operator*() const;
    inline T* operator->();
@@ -83,46 +76,46 @@ public:
    inline void save();
 private:
    T _val;
-   M& _base;
+   M* _base;
    VPtr _ptr;
 };
 
 
 
 template<class M,class T> FileMem::RawPtr<M,T>::RawPtr(M& mem):
-   _base(mem),
+   _base(&mem),
    _ptr(nullPtr)
 {
-   _ptr = _base.allocate(_val.size);
+   _ptr = _base->allocate(_val.size);
 }
 
 
 
 template<class M,class T> FileMem::RawPtr<M,T>::RawPtr(M& mem, const T& val):
    _val(val),
-   _base(mem),
+   _base(&mem),
    _ptr(nullPtr)
 {
-   _ptr = _base.allocate(val.size);
+   _ptr = _base->allocate(val.size);
 }
 
 
 
 template<class M,class T> FileMem::RawPtr<M,T>::RawPtr(M& mem, T&& val):
    _val(std::move(val)),
-   _base(mem),
+   _base(&mem),
    _ptr(nullPtr)
 {
-   _ptr = _base.allocate(val.size);
+   _ptr = _base->allocate(val.size);
 }
 
 
 
 template<class M,class T> FileMem::RawPtr<M,T>::RawPtr(M& mem, VPtr loc):
-   _base(mem),
+   _base(&mem),
    _ptr(loc)
 {
-   _base.read(_val.bytes,_ptr,_val.size);
+   _base->read(_val.bytes,_ptr,_val.size);
 }
 
 
@@ -139,7 +132,7 @@ FileMem::RawPtr<M,T>::RawPtr(FileMem::RawPtr<M,T>&& tmp):
 
 
 template<class M,class T>
-inline FileMem::RawPtr<M,T>& FileMem::RawPtr<M,T>::operator=(RawPtr<M,T>&& tmp)
+inline void FileMem::RawPtr<M,T>::operator=(RawPtr<M,T>&& tmp)
 {
    _val = std::move(tmp._val);
    _base = tmp._base;
@@ -150,17 +143,17 @@ inline FileMem::RawPtr<M,T>& FileMem::RawPtr<M,T>::operator=(RawPtr<M,T>&& tmp)
 
 
 template<class M,class T>
-inline FileMem::RawPtr<M,T>& FileMem::RawPtr<M,T>::operator=(VPtr ptr)
+inline void FileMem::RawPtr<M,T>::operator=(VPtr ptr)
 {
    _ptr = ptr;
-   _base.read(_val.bytes,_ptr,_val.size);
+   _base->read(_val.bytes,_ptr,_val.size);
 }
 
 
 
 template<class M,class T> inline T& FileMem::RawPtr<M,T>::operator*()
 {
-   return *_val;
+   return _val;
 }
 
 
@@ -168,14 +161,14 @@ template<class M,class T> inline T& FileMem::RawPtr<M,T>::operator*()
 template<class M,class T>
 inline const T& FileMem::RawPtr<M,T>::operator*() const
 {
-   return *_val;
+   return _val;
 }
 
 
 
 template<class M,class T> inline T* FileMem::RawPtr<M,T>::operator->()
 {
-   return _val;
+   return &_val;
 }
 
 
@@ -183,7 +176,7 @@ template<class M,class T> inline T* FileMem::RawPtr<M,T>::operator->()
 template<class M,class T>
 inline const T* FileMem::RawPtr<M,T>::operator->() const
 {
-   return _val;
+   return &_val;
 }
 
 
@@ -198,7 +191,7 @@ inline FileMem::VPtr FileMem::RawPtr<M,T>::addr() const
 
 template<class M,class T> inline void FileMem::RawPtr<M,T>::save()
 {
-   _base.write(_val.data,_ptr,_val.size);
+   _base->write(_val.bytes,_ptr,_val.size);
 }
 
 
