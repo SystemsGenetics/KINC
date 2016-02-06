@@ -19,6 +19,19 @@ struct Node : FileMem::Object<12>
 
 
 
+struct DNode : FileMem::DObject
+{
+   DNode(): DObject(12)
+   {
+      val() = 42;
+      next() = FileMem::nullPtr;
+   }
+   uint32_t& val() { get<uint32_t>(0); }
+   FileMem::VPtr& next() { get<FileMem::VPtr>(4); }
+};
+
+
+
 bool unit::filemem::main()
 {
    bool ret = false;
@@ -238,14 +251,14 @@ bool unit::filemem::node1()
    {
       LinuxFile tf("testfiles/filememdat");
       tf.clear();
-      FileMem::Ptr<Node> t(tf);
+      FileMem::Ptr<DNode> t(tf);
       t->val() = 0;
       t->next() = FileMem::nullPtr;
       t.save();
    }
    {
       LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> t(tf,tf.head());
+      FileMem::Ptr<DNode> t(tf,tf.head());
       ret = t->val()==0&&t->next()==FileMem::nullPtr;
    }
    if (!ret)
@@ -263,12 +276,12 @@ bool unit::filemem::node2()
    bool ret = false;
    {
       LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> link(tf,tf.head());
+      FileMem::Ptr<DNode> link(tf,tf.head());
       while (link->next()!=FileMem::nullPtr)
       {
          link = link->next();
       }
-      FileMem::Ptr<Node> t(tf);
+      FileMem::Ptr<DNode> t(tf);
       link->next() = t.addr();
       link.save();
       t->val() = 1;
@@ -277,7 +290,7 @@ bool unit::filemem::node2()
    }
    {
       LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> t(tf,tf.head());
+      FileMem::Ptr<DNode> t(tf,tf.head());
       ret = true;
       for (int i=0;i<2;i++)
       {
@@ -300,12 +313,12 @@ bool unit::filemem::node3()
    bool ret = false;
    {
       LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> link(tf,tf.head());
+      FileMem::Ptr<DNode> link(tf,tf.head());
       while (link->next()!=FileMem::nullPtr)
       {
          link = link->next();
       }
-      FileMem::Ptr<Node> t(tf);
+      FileMem::Ptr<DNode> t(tf);
       link->next() = t.addr();
       link.save();
       t->val() = 2;
@@ -314,7 +327,7 @@ bool unit::filemem::node3()
    }
    {
       LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> t(tf,tf.head());
+      FileMem::Ptr<DNode> t(tf,tf.head());
       ret = true;
       for (int i=0;i<3;i++)
       {
@@ -337,12 +350,12 @@ bool unit::filemem::node4()
    bool ret = false;
    {
       LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> link(tf,tf.head());
+      FileMem::Ptr<DNode> link(tf,tf.head());
       while (link->next()!=FileMem::nullPtr)
       {
          link = link->next();
       }
-      FileMem::Ptr<Node> t(tf);
+      FileMem::Ptr<DNode> t(tf);
       link->next() = t.addr();
       link.save();
       t->val() = 3;
@@ -351,7 +364,7 @@ bool unit::filemem::node4()
    }
    {
       LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> t(tf,tf.head());
+      FileMem::Ptr<DNode> t(tf,tf.head());
       ret = true;
       for (int i=0;i<4;i++)
       {
@@ -374,12 +387,12 @@ bool unit::filemem::node5()
    bool ret = false;
    {
       LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> link(tf,tf.head());
+      FileMem::Ptr<DNode> link(tf,tf.head());
       while (link->next()!=FileMem::nullPtr)
       {
          link = link->next();
       }
-      FileMem::Ptr<Node> t(tf);
+      FileMem::Ptr<DNode> t(tf);
       link->next() = t.addr();
       link.save();
       t->val() = 4;
@@ -388,7 +401,7 @@ bool unit::filemem::node5()
    }
    {
       LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> t(tf,tf.head());
+      FileMem::Ptr<DNode> t(tf,tf.head());
       ret = true;
       for (int i=0;i<5;i++)
       {

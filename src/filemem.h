@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <type_traits>
 #include <utility>
+#include <cstring>
 #include "exception.h"
 
 
@@ -27,9 +28,10 @@ public:
    // * DECLERATIONS
    // *
    using VPtr = uint64_t;
+   template<int S> struct Object;
+   struct DObject;
    template<class M,class T> class RawPtr;
    template<class T> using Ptr = RawPtr<LinuxFile,T>;
-   template<int S> struct Object;
    // *
    // * CONSTANTS
    // *
@@ -46,6 +48,60 @@ template<int S> struct FileMem::Object
 {
    char bytes[S];
    constexpr static uint64_t size = S;
+   template<class T> T& get(int n)
+   {
+      return *reinterpret_cast<T*>(&bytes[n]);
+   }
+};
+
+
+
+struct FileMem::DObject
+{
+   DObject(uint64_t dSize):
+      size(dSize)
+   {
+      bytes = new char[size];
+   }
+   DObject(const DObject& obj):
+      size(obj.size)
+   {
+      bytes = new char[size];
+      memcpy(bytes,obj.bytes,size);
+   }
+   DObject(DObject&& tmp):
+      size(tmp.size),
+      bytes(tmp.bytes)
+   {
+      tmp.bytes = nullptr;
+      tmp.size = 0;
+   }
+   DObject& operator=(const DObject& obj)
+   {
+      size = obj.size;
+      if (bytes)
+      {
+         delete[] bytes;
+      }
+      bytes = new char[size];
+      memcpy(bytes,obj.bytes,size);
+   }
+   DObject& operator=(DObject&& tmp)
+   {
+      size = tmp.size;
+      bytes = tmp.bytes;
+      tmp.bytes = nullptr;
+      tmp.size = 0;
+   }
+   ~DObject()
+   {
+      if (bytes)
+      {
+         delete[] bytes;
+      }
+   }
+   char* bytes;
+   uint64_t size;
    template<class T> T& get(int n)
    {
       return *reinterpret_cast<T*>(&bytes[n]);
