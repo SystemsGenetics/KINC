@@ -61,7 +61,7 @@ CLDevList::Iterator CLDevList::begin()
 CLDevList::Iterator CLDevList::end()
 {
    int pi = 0;
-   int di = 1;
+   int di = 0;
    if (_list.size()>0)
    {
       pi = static_cast<int>(_list.size()-1);
@@ -125,19 +125,15 @@ CLDevice& CLDevList::Iterator::operator*()
 /// already at end of list in which case it stays the same.
 void CLDevList::Iterator::operator++()
 {
-   if (++_di>=_devList->_list[_pi].size())
+   if (_devList->_list.size()>0)
    {
-      _di = 0;
-      if (++_pi>=_devList->_list.size())
+      if (++_di>=_devList->_list[_pi].size())
       {
-         _pi--;
-         if (_devList->_list.size()>0)
+         _di = 0;
+         if (++_pi>=_devList->_list.size())
          {
+            _pi--;
             _di = _devList->_list.back().size();
-         }
-         else
-         {
-            _di = 1;
          }
       }
    }
