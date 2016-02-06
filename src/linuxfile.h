@@ -42,7 +42,7 @@ public:
    // * FUNCTIONS
    // *
    void clear();
-   bool reserve(int64_t);
+   inline bool reserve(int64_t);
    inline uint64_t size() const;
    inline uint64_t available() const;
    inline VPtr head() const;
@@ -67,6 +67,28 @@ private:
    /// allocated.
    VPtr _next;
 };
+
+
+
+/// @brief Add additional space to object.
+///
+/// Attempts to add additional space to file memory object that can be used for
+/// allocation. If successful at increasing the size of file then additional
+/// space is added to available space for allocation.
+///
+/// @param newBytes Number of additional bytes to add to object.
+/// @return True if additional space added.
+inline bool LinuxFile::reserve(int64_t newBytes)
+{
+   bool ret = false;
+   if (posix_fallocate64(_fd,lseek64(_fd,0,SEEK_END),newBytes)==0)
+   {
+      ret = true;
+      _size += newBytes;
+      _available += newBytes;
+   }
+   return ret;
+}
 
 
 

@@ -66,25 +66,3 @@ void LinuxFile::clear()
    cond = ::write(_fd,&_next,sizeof(VPtr))==sizeof(VPtr);
    assert<SystemError>(cond,__FILE__,__LINE__,"write");
 }
-
-
-
-/// @brief Add additional space to object.
-///
-/// Attempts to add additional space to file memory object that can be used for
-/// allocation. If successful at increasing the size of file then additional
-/// space is added to available space for allocation.
-///
-/// @param newBytes Number of additional bytes to add to object.
-/// @return True if additional space added.
-bool LinuxFile::reserve(int64_t newBytes)
-{
-   bool ret = false;
-   if (posix_fallocate64(_fd,lseek64(_fd,0,SEEK_END),newBytes)==0)
-   {
-      ret = true;
-      _size += newBytes;
-      _available += newBytes;
-   }
-   return ret;
-}
