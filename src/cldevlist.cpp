@@ -43,7 +43,7 @@ void CLDevList::build()
    }
    catch (cl::Error e)
    {
-      throw OpenCLError(__FILE__,__LINE__,e);
+      _list.clear();
    }
 }
 
@@ -60,8 +60,14 @@ CLDevList::Iterator CLDevList::begin()
 /// Return iterator at one past end of list.
 CLDevList::Iterator CLDevList::end()
 {
-   return {static_cast<int>(_list.size()-1),
-           static_cast<int>(_list.back().size()),this};
+   int pi = 0;
+   int di = 1;
+   if (_list.size()>0)
+   {
+      pi = static_cast<int>(_list.size()-1);
+      di = static_cast<int>(_list.back().size());
+   }
+   return {pi,di,this};
 }
 
 
@@ -122,10 +128,17 @@ void CLDevList::Iterator::operator++()
    if (++_di>=_devList->_list[_pi].size())
    {
       _di = 0;
-      if (++_pi==_devList->_list.size())
+      if (++_pi>=_devList->_list.size())
       {
          _pi--;
-         _di = _devList->_list.back().size();
+         if (_devList->_list.size()>0)
+         {
+            _di = _devList->_list.back().size();
+         }
+         else
+         {
+            _di = 1;
+         }
       }
    }
 }
