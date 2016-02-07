@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <iostream>
 #include <utility>
 #include "linuxfile.h"
 #include "unit.h"
@@ -32,32 +31,49 @@ struct DNode : FileMem::DObject
 
 
 
+namespace unit
+{
+   namespace filemem
+   {
+      constexpr const char* fileName = "testfiles/filememdat";
+   }
+}
+
+
+
 bool unit::filemem::main()
 {
-   bool ret = false;
-   std::cout << "FileMem";
+  bool ret = false;
+   header("FileMem");
    try
    {
-      ret = init1()&&
+      ret = object1()&&
+            object1()&&
+            object2()&&
+            dobject1()&&
+            dobject2()&&
+            dobject3()&&
+            dobject4()&&
+            dobject5()&&
+            init1()&&
             init2()&&
             init3()&&
             init4()&&
             init5()&&
-            opmove1()&&
-            opref1()&&
-            opref2()&&
-            opcallref1()&&
-            opcallref2()&&
-            node1()&&
-            node2()&&
-            node3()&&
-            node4()&&
-            node5()&&
-            node6()&&
-            node7()&&
-            node8()&&
-            node9()&&
-            node10();
+            init6()&&
+            addr1()&&
+            raw1()&&
+            raw2()&&
+            save1()&&
+            operat1()&&
+            operat2()&&
+            operat3()&&
+            operat4()&&
+            operat5()&&
+            operat6()&&
+            operat7()&&
+            operat8()&&
+            operat9();
    }
    catch (...)
    {
@@ -72,531 +88,362 @@ bool unit::filemem::main()
 
 
 
+bool unit::filemem::object1()
+{
+   start();
+   Node t;
+   bool ret = (*reinterpret_cast<uint32_t*>(&t.bytes[0]))==42;
+   return finish(ret,"object1");
+}
+
+
+
+bool unit::filemem::object2()
+{
+   start();
+   Node t;
+   bool ret = t.val()==42;
+   return finish(ret,"object2");
+}
+
+
+
+bool unit::filemem::dobject1()
+{
+   start();
+   DNode t;
+   bool ret = t.val()==42;
+   return finish(ret,"dobject1");
+}
+
+
+
+bool unit::filemem::dobject2()
+{
+   start();
+   DNode cpy;
+   DNode t(cpy);
+   bool ret = t.val()==42;
+   return finish(ret,"dobject2");
+}
+
+
+
+bool unit::filemem::dobject3()
+{
+   start();
+   DNode cpy;
+   DNode t(std::move(cpy));
+   bool ret = t.val()==42;
+   return finish(ret,"dobject3");
+}
+
+
+
+bool unit::filemem::dobject4()
+{
+   start();
+   DNode cpy;
+   DNode t;
+   t = cpy;
+   bool ret = t.val()==42;
+   return finish(ret,"dobject4");
+}
+
+
+
+bool unit::filemem::dobject5()
+{
+   start();
+   DNode cpy;
+   DNode t;
+   t = std::move(cpy);
+   bool ret = t.val()==42;
+   return finish(ret,"dobject5");
+}
+
+
+
 bool unit::filemem::init1()
 {
-   std::cout << "." << std::flush;
-   bool ret = false;
-   LinuxFile tf("testfiles/filememdat");
+   start();
+   LinuxFile tf(fileName);
    tf.reserve(4096);
-   FileMem::Ptr<Node> t(tf);
-   ret = t->val()==42;
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::init1 FAILED." << std::endl;
-   }
-   return ret;
+   FileMem::Ptr<Node> tmp(tf);
+   FileMem::Ptr<Node> t(std::move(tmp));
+   bool ret = t->val()==42;
+   t.save();
+   return finish(ret,"init1");
 }
 
 
 
 bool unit::filemem::init2()
 {
-   std::cout << "." << std::flush;
-   bool ret = false;
-   LinuxFile tf("testfiles/filememdat");
-   tf.reserve(4096);
-   Node tmp;
-   tmp.val() = 43;
-   FileMem::Ptr<Node> t(tf,tmp);
-   ret = t->val()==43;
-   t.save();
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::init2 FAILED." << std::endl;
-   }
-   return ret;
+   start();
+   LinuxFile tf(fileName);
+   FileMem::Ptr<Node> tmp(tf);
+   FileMem::Ptr<Node> t(tf);
+   t = std::move(tmp);
+   bool ret = t->val()==42;
+   return finish(ret,"init2");
 }
 
 
 
 bool unit::filemem::init3()
 {
-   std::cout << "." << std::flush;
-   bool ret = false;
-   LinuxFile tf("testfiles/filememdat");
-   Node tmp;
-   tmp.val() = 43;
-   FileMem::Ptr<Node> t(tf,std::move(tmp));
-   ret = t->val()==43;
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::init3 FAILED." << std::endl;
-   }
-   return ret;
+   start();
+   LinuxFile tf(fileName);
+   FileMem::Ptr<Node> t(tf);
+   t = tf.head();
+   bool ret = t->val()==42;
+   return finish(ret,"init3");
 }
 
 
 
 bool unit::filemem::init4()
 {
-   std::cout << "." << std::flush;
-   bool ret = false;
-   LinuxFile tf("testfiles/filememdat");
-   FileMem::Ptr<Node> t(tf,tf.head()+12);
-   ret = t->val()==43;
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::init4 FAILED." << std::endl;
-   }
-   return ret;
+   start();
+   LinuxFile tf(fileName);
+   FileMem::Ptr<Node> t(tf);
+   bool ret = t->val()==42;
+   t.save();
+   return finish(ret,"init4");
 }
 
 
 
 bool unit::filemem::init5()
 {
-   std::cout << "." << std::flush;
-   bool ret = false;
-   LinuxFile tf("testfiles/filememdat");
-   FileMem::Ptr<Node> tmp(tf,tf.head()+12);
-   FileMem::Ptr<Node> t(std::move(tmp));
-   ret = t->val()==43;
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::init4 FAILED." << std::endl;
-   }
-   return ret;
+   start();
+   LinuxFile tf(fileName);
+   FileMem::Ptr<Node> t(tf,tf.head());
+   bool ret = t->val()==42;
+   return finish(ret,"init5");
 }
 
 
 
-bool unit::filemem::opmove1()
+bool unit::filemem::init6()
 {
-   std::cout << "." << std::flush;
+   start();
+   LinuxFile tf(fileName);
    bool ret = false;
-   LinuxFile tf("testfiles/filememdat");
-   FileMem::Ptr<Node> tmp(tf,tf.head()+12);
+   try
+   {
+      FileMem::Ptr<Node> t(tf,tf.head(),0);
+   }
+   catch (FileMem::FileSegFault)
+   {
+      ret = true;
+   }
+   return finish(ret,"init6");
+}
+
+
+
+bool unit::filemem::addr1()
+{
+   start();
+   LinuxFile tf(fileName);
+   FileMem::Ptr<Node> t(tf,tf.head());
+   bool ret = t.addr()==tf.head();
+   return finish(ret,"addr1");
+}
+
+
+
+bool unit::filemem::raw1()
+{
+   start();
+   LinuxFile tf(fileName);
+   FileMem::Ptr<Node> t(tf,tf.head(),5);
+   t.raw(3);
+   bool ret = t->val()==42;
+   return finish(ret,"raw1");
+}
+
+
+
+bool unit::filemem::raw2()
+{
+   start();
+   LinuxFile tf(fileName);
+   bool ret = false;
+   try
+   {
+      FileMem::Ptr<Node> t(tf,tf.head());
+      t.raw(1);
+   }
+   catch (FileMem::FileSegFault)
+   {
+      ret = true;
+   }
+   return finish(ret,"raw2");
+}
+
+
+
+bool unit::filemem::save1()
+{
+   start();
+   LinuxFile tf(fileName);
+   FileMem::VPtr ptr = FileMem::nullPtr;
+   {
+      FileMem::Ptr<Node> t(tf);
+      ptr = t.addr();
+      t.save();
+   }
+   FileMem::Ptr<Node> t(tf,ptr);
+   bool ret = t->val()==42;
+   return finish(ret,"save1");
+}
+
+
+
+bool unit::filemem::operat1()
+{
+   start();
+   LinuxFile tf(fileName);
    FileMem::Ptr<Node> t(tf);
-   t = std::move(tmp);
-   ret = t->val()==43;
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::init4 FAILED." << std::endl;
-   }
-   return ret;
+   bool ret = (*t).val()==42;
+   return finish(ret,"operat1");
 }
 
 
 
-bool unit::filemem::opref1()
+bool unit::filemem::operat2()
 {
-   std::cout << "." << std::flush;
-   bool ret = false;
-   LinuxFile tf("testfiles/filememdat");
-   FileMem::Ptr<Node> t(tf,tf.head()+12);
-   ret = (*t).val()==43;
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::init4 FAILED." << std::endl;
-   }
-   return ret;
+   start();
+   LinuxFile tf(fileName);
+   FileMem::Ptr<Node> t(tf);
+   bool ret = t->val()==42;
+   return finish(ret,"operat2");
 }
 
 
 
-bool unit::filemem::opref2()
+bool unit::filemem::operat3()
 {
-   std::cout << "." << std::flush;
-   bool ret = false;
-   LinuxFile tf("testfiles/filememdat");
-   FileMem::Ptr<Node> t(tf,tf.head());
-   (*t).val() = 55;
-   ret = (*t).val()==55;
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::init4 FAILED." << std::endl;
-   }
-   return ret;
+   start();
+   LinuxFile tf(fileName);
+   FileMem::Ptr<Node> t(tf);
+   bool ret = t[0].val()==42;
+   return finish(ret,"operat3");
 }
 
 
 
-bool unit::filemem::opcallref1()
+bool unit::filemem::operat4()
 {
-   std::cout << "." << std::flush;
-   bool ret = false;
-   LinuxFile tf("testfiles/filememdat");
-   FileMem::Ptr<Node> t(tf,tf.head()+12);
-   ret = t->val()==43;
-   if (!ret)
+   start();
+   LinuxFile tf(fileName);
+   FileMem::VPtr ptr = FileMem::nullPtr;
    {
-      std::cout << std::endl << "unit::filemem::init4 FAILED." << std::endl;
-   }
-   return ret;
-}
-
-
-
-bool unit::filemem::opcallref2()
-{
-   std::cout << "." << std::flush;
-   bool ret = false;
-   LinuxFile tf("testfiles/filememdat");
-   FileMem::Ptr<Node> t(tf,tf.head());
-   t->val() = 55;
-   ret = t->val()==55;
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::init4 FAILED." << std::endl;
-   }
-   return ret;
-}
-
-
-
-bool unit::filemem::node1()
-{
-   std::cout << "." << std::flush;
-   bool ret = false;
-   {
-      LinuxFile tf("testfiles/filememdat");
-      tf.clear();
-      FileMem::Ptr<DNode> t(tf);
-      t->val() = 0;
-      t->next() = FileMem::nullPtr;
+      FileMem::Ptr<Node> t(tf,FileMem::nullPtr,3);
+      t[2].val() = 33;
       t.save();
+      ptr = t.addr();
    }
-   {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<DNode> t(tf,tf.head());
-      ret = t->val()==0&&t->next()==FileMem::nullPtr;
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::node1 FAILED." << std::endl;
-   }
-   return ret;
+   FileMem::Ptr<Node> t(tf,ptr,3);
+   bool ret = t[2].val()==33;
+   return finish(ret,"operat4");
 }
 
 
 
-bool unit::filemem::node2()
+bool unit::filemem::operat5()
 {
-   std::cout << "." << std::flush;
+   start();
+   LinuxFile tf(fileName);
    bool ret = false;
+   try
    {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<DNode> link(tf,tf.head());
-      while (link->next()!=FileMem::nullPtr)
-      {
-         link = link->next();
-      }
-      FileMem::Ptr<DNode> t(tf);
-      link->next() = t.addr();
-      link.save();
-      t->val() = 1;
-      t->next() = FileMem::nullPtr;
-      t.save();
-   }
-   {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<DNode> t(tf,tf.head());
-      ret = true;
-      for (int i=0;i<2;i++)
-      {
-         ret = ret&&t->val()==i;
-         t = t->next();
-      }
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::node2 FAILED." << std::endl;
-   }
-   return ret;
-}
-
-
-
-bool unit::filemem::node3()
-{
-   std::cout << "." << std::flush;
-   bool ret = false;
-   {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<DNode> link(tf,tf.head());
-      while (link->next()!=FileMem::nullPtr)
-      {
-         link = link->next();
-      }
-      FileMem::Ptr<DNode> t(tf);
-      link->next() = t.addr();
-      link.save();
-      t->val() = 2;
-      t->next() = FileMem::nullPtr;
-      t.save();
-   }
-   {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<DNode> t(tf,tf.head());
-      ret = true;
-      for (int i=0;i<3;i++)
-      {
-         ret = ret&&t->val()==i;
-         t = t->next();
-      }
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::node3 FAILED." << std::endl;
-   }
-   return ret;
-}
-
-
-
-bool unit::filemem::node4()
-{
-   std::cout << "." << std::flush;
-   bool ret = false;
-   {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<DNode> link(tf,tf.head());
-      while (link->next()!=FileMem::nullPtr)
-      {
-         link = link->next();
-      }
-      FileMem::Ptr<DNode> t(tf);
-      link->next() = t.addr();
-      link.save();
-      t->val() = 3;
-      t->next() = FileMem::nullPtr;
-      t.save();
-   }
-   {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<DNode> t(tf,tf.head());
-      ret = true;
-      for (int i=0;i<4;i++)
-      {
-         ret = ret&&t->val()==i;
-         t = t->next();
-      }
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::node4 FAILED." << std::endl;
-   }
-   return ret;
-}
-
-
-
-bool unit::filemem::node5()
-{
-   std::cout << "." << std::flush;
-   bool ret = false;
-   {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<DNode> link(tf,tf.head());
-      while (link->next()!=FileMem::nullPtr)
-      {
-         link = link->next();
-      }
-      FileMem::Ptr<DNode> t(tf);
-      link->next() = t.addr();
-      link.save();
-      t->val() = 4;
-      t->next() = FileMem::nullPtr;
-      t.save();
-   }
-   {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<DNode> t(tf,tf.head());
-      ret = true;
-      for (int i=0;i<5;i++)
-      {
-         ret = ret&&t->val()==i;
-         t = t->next();
-      }
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::node5 FAILED." << std::endl;
-   }
-   return ret;
-}
-
-
-
-bool unit::filemem::node6()
-{
-   std::cout << "." << std::flush;
-   bool ret = false;
-   {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> link(tf,tf.head());
-      while (link->next()!=FileMem::nullPtr)
-      {
-         link = link->next();
-      }
-      FileMem::Ptr<Node> t(tf);
-      link->next() = t.addr();
-      link.save();
-      t->val() = 5;
-      t->next() = FileMem::nullPtr;
-      t.save();
-   }
-   {
-      LinuxFile tf("testfiles/filememdat");
       FileMem::Ptr<Node> t(tf,tf.head());
-      ret = true;
-      for (int i=0;i<6;i++)
-      {
-         ret = ret&&t->val()==i;
-         t = t->next();
-      }
+      t[1].next();
    }
-   if (!ret)
+   catch (FileMem::FileSegFault)
    {
-      std::cout << std::endl << "unit::filemem::node6 FAILED." << std::endl;
+      ret = true;
    }
-   return ret;
+   return finish(ret,"operat5");
 }
 
 
 
-bool unit::filemem::node7()
+bool unit::filemem::operat6()
 {
-   std::cout << "." << std::flush;
-   bool ret = false;
+   start();
+   LinuxFile tf(fileName);
+   FileMem::VPtr ptr = FileMem::nullPtr;
    {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> link(tf,tf.head());
-      while (link->next()!=FileMem::nullPtr)
-      {
-         link = link->next();
-      }
       FileMem::Ptr<Node> t(tf);
-      link->next() = t.addr();
-      link.save();
-      t->val() = 6;
-      t->next() = FileMem::nullPtr;
+      t->val() = 33;
       t.save();
+      ptr = t.addr();
    }
-   {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> t(tf,tf.head());
-      ret = true;
-      for (int i=0;i<7;i++)
-      {
-         ret = ret&&t->val()==i;
-         t = t->next();
-      }
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::node7 FAILED." << std::endl;
-   }
-   return ret;
+   FileMem::Ptr<Node> t(tf,ptr);
+   ++t;
+   bool ret = t->val()==33;
+   return finish(ret,"operat6");
 }
 
 
 
-bool unit::filemem::node8()
+bool unit::filemem::operat7()
 {
-   std::cout << "." << std::flush;
-   bool ret = false;
+   start();
+   LinuxFile tf(fileName);
+   FileMem::VPtr ptr = FileMem::nullPtr;
    {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> link(tf,tf.head());
-      while (link->next()!=FileMem::nullPtr)
-      {
-         link = link->next();
-      }
-      FileMem::Ptr<Node> t(tf);
-      link->next() = t.addr();
-      link.save();
-      t->val() = 7;
-      t->next() = FileMem::nullPtr;
+      FileMem::Ptr<Node> t(tf,FileMem::nullPtr,2);
+      t[1].val() = 33;
       t.save();
+      ptr = t.addr();
    }
-   {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> t(tf,tf.head());
-      ret = true;
-      for (int i=0;i<8;i++)
-      {
-         ret = ret&&t->val()==i;
-         t = t->next();
-      }
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::node8 FAILED." << std::endl;
-   }
-   return ret;
+   FileMem::Ptr<Node> t(tf,ptr,2);
+   ++t;
+   bool ret = t->val()==33;
+   return finish(ret,"operat7");
 }
 
 
 
-bool unit::filemem::node9()
+bool unit::filemem::operat8()
 {
-   std::cout << "." << std::flush;
-   bool ret = false;
+   start();
+   LinuxFile tf(fileName);
+   FileMem::VPtr ptr = FileMem::nullPtr;
    {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> link(tf,tf.head());
-      while (link->next()!=FileMem::nullPtr)
-      {
-         link = link->next();
-      }
       FileMem::Ptr<Node> t(tf);
-      link->next() = t.addr();
-      link.save();
-      t->val() = 8;
-      t->next() = FileMem::nullPtr;
+      t->val() = 33;
       t.save();
+      ptr = t.addr();
    }
-   {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> t(tf,tf.head());
-      ret = true;
-      for (int i=0;i<9;i++)
-      {
-         ret = ret&&t->val()==i;
-         t = t->next();
-      }
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::node9 FAILED." << std::endl;
-   }
-   return ret;
+   FileMem::Ptr<Node> t(tf,ptr);
+   --t;
+   bool ret = t->val()==33;
+   return finish(ret,"operat8");
 }
 
 
 
-bool unit::filemem::node10()
+bool unit::filemem::operat9()
 {
-   std::cout << "." << std::flush;
-   bool ret = false;
+   start();
+   LinuxFile tf(fileName);
+   FileMem::VPtr ptr = FileMem::nullPtr;
    {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> link(tf,tf.head());
-      while (link->next()!=FileMem::nullPtr)
-      {
-         link = link->next();
-      }
       FileMem::Ptr<Node> t(tf);
-      link->next() = t.addr();
-      link.save();
-      t->val() = 9;
-      t->next() = FileMem::nullPtr;
+      t->val() = 33;
       t.save();
+      ptr = t.addr();
    }
-   {
-      LinuxFile tf("testfiles/filememdat");
-      FileMem::Ptr<Node> t(tf,tf.head());
-      ret = true;
-      for (int i=0;i<10;i++)
-      {
-         ret = ret&&t->val()==i;
-         t = t->next();
-      }
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::filemem::node10 FAILED." << std::endl;
-   }
-   return ret;
+   FileMem::Ptr<Node> t(tf,ptr,2);
+   t.raw(1);
+   --t;
+   bool ret = t->val()==33;
+   return finish(ret,"operat9");
 }

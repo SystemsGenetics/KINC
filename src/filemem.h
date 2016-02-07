@@ -46,66 +46,24 @@ public:
 
 template<int S> struct FileMem::Object
 {
+   template<class T> inline T& get(int n);
    char bytes[S];
    constexpr static uint64_t size = S;
-   template<class T> T& get(int n)
-   {
-      return *reinterpret_cast<T*>(&bytes[n]);
-   }
 };
 
 
 
 struct FileMem::DObject
 {
-   DObject(uint64_t dSize):
-      size(dSize)
-   {
-      bytes = new char[size];
-   }
-   DObject(const DObject& obj):
-      size(obj.size)
-   {
-      bytes = new char[size];
-      memcpy(bytes,obj.bytes,size);
-   }
-   DObject(DObject&& tmp):
-      size(tmp.size),
-      bytes(tmp.bytes)
-   {
-      tmp.bytes = nullptr;
-      tmp.size = 0;
-   }
-   DObject& operator=(const DObject& obj)
-   {
-      size = obj.size;
-      if (bytes)
-      {
-         delete[] bytes;
-      }
-      bytes = new char[size];
-      memcpy(bytes,obj.bytes,size);
-   }
-   DObject& operator=(DObject&& tmp)
-   {
-      size = tmp.size;
-      bytes = tmp.bytes;
-      tmp.bytes = nullptr;
-      tmp.size = 0;
-   }
-   ~DObject()
-   {
-      if (bytes)
-      {
-         delete[] bytes;
-      }
-   }
+   inline DObject(const DObject&);
+   inline DObject(DObject&&);
+   inline DObject& operator=(const DObject&);
+   inline DObject& operator=(DObject&&);
+   inline DObject(uint64_t);
+   template<class T> inline T& get(int);
+   inline ~DObject();
    char* bytes;
    uint64_t size;
-   template<class T> T& get(int n)
-   {
-      return *reinterpret_cast<T*>(&bytes[n]);
-   }
 };
 
 
@@ -116,71 +74,110 @@ public:
    static_assert(std::is_class<T>::value,
                  "FileMem::Ptr<T>, T is of an unsupported type.");
    RawPtr(const Ptr<T>&) = delete;
+   inline RawPtr(RawPtr<M,T>&&);
    RawPtr<M,T>& operator=(const Ptr<T>&) = delete;
-   RawPtr(M&);
-   RawPtr(M&,const T&);
-   RawPtr(M&,T&&);
-   RawPtr(M&,VPtr);
-   RawPtr(RawPtr<M,T>&&);
    inline void operator=(RawPtr<M,T>&&);
    inline void operator=(VPtr);
-   inline T& operator*();
-   inline const T& operator*() const;
-   inline T* operator->();
-   inline const T* operator->() const;
+   inline RawPtr(M&,VPtr = nullPtr,uint64_t = 1);
    inline VPtr addr() const;
+   inline void raw(uint64_t);
    inline void save();
+   inline T& operator*();
+   inline T* operator->();
+   inline T& operator[](uint64_t);
+   void operator++();
+   void operator--();
 private:
    T _val;
    M* _base;
    VPtr _ptr;
+   uint64_t _size;
+   uint64_t _inc;
 };
 
 
 
-template<class M,class T> FileMem::RawPtr<M,T>::RawPtr(M& mem):
-   _base(&mem),
-   _ptr(nullPtr)
+template<int S> template<class T> inline T& FileMem::Object<S>::get(int n)
 {
-   _ptr = _base->allocate(_val.size);
+   return *reinterpret_cast<T*>(&bytes[n]);
 }
 
 
 
-template<class M,class T> FileMem::RawPtr<M,T>::RawPtr(M& mem, const T& val):
-   _val(val),
-   _base(&mem),
-   _ptr(nullPtr)
+inline FileMem::DObject::DObject(const DObject& obj):
+   size(obj.size)
 {
-   _ptr = _base->allocate(val.size);
+   bytes = new char[size];
+   memcpy(bytes,obj.bytes,size);
 }
 
 
 
-template<class M,class T> FileMem::RawPtr<M,T>::RawPtr(M& mem, T&& val):
-   _val(std::move(val)),
-   _base(&mem),
-   _ptr(nullPtr)
+inline FileMem::DObject::DObject(DObject&& tmp):
+   size(tmp.size),
+   bytes(tmp.bytes)
 {
-   _ptr = _base->allocate(val.size);
+   tmp.bytes = nullptr;
+   tmp.size = 0;
 }
 
 
 
-template<class M,class T> FileMem::RawPtr<M,T>::RawPtr(M& mem, VPtr loc):
-   _base(&mem),
-   _ptr(loc)
+inline FileMem::DObject& FileMem::DObject::operator=(const DObject& obj)
 {
-   _base->read(_val.bytes,_ptr,_val.size);
+   size = obj.size;
+   if (bytes)
+   {
+      delete[] bytes;
+   }
+   bytes = new char[size];
+   memcpy(bytes,obj.bytes,size);
+}
+
+
+
+inline FileMem::DObject& FileMem::DObject::operator=(DObject&& tmp)
+{
+   size = tmp.size;
+   bytes = tmp.bytes;
+   tmp.bytes = nullptr;
+   tmp.size = 0;
+}
+
+
+
+inline FileMem::DObject::DObject(uint64_t dSize):
+   size(dSize)
+{
+   bytes = new char[size];
+}
+
+
+
+inline FileMem::DObject::~DObject()
+{
+   if (bytes)
+   {
+      delete[] bytes;
+   }
+}
+
+
+
+template<class T> inline T& FileMem::DObject::get(int n)
+{
+   return *reinterpret_cast<T*>(&bytes[n]);
 }
 
 
 
 template<class M,class T>
-FileMem::RawPtr<M,T>::RawPtr(FileMem::RawPtr<M,T>&& tmp):
+inline FileMem::RawPtr<M,T>::RawPtr(FileMem::RawPtr<M,T>&& tmp):
    _val(std::move(tmp._val)),
    _base(tmp._base),
-   _ptr(tmp._ptr)
+   _ptr(tmp._ptr),
+   _size(tmp._size),
+   _inc(tmp._inc)
 {
    tmp._ptr = nullPtr;
 }
@@ -193,6 +190,8 @@ inline void FileMem::RawPtr<M,T>::operator=(RawPtr<M,T>&& tmp)
    _val = std::move(tmp._val);
    _base = tmp._base;
    _ptr = tmp._ptr;
+   _size = tmp._size;
+   _inc = tmp._inc;
    tmp._ptr = nullPtr;
 }
 
@@ -202,20 +201,56 @@ template<class M,class T>
 inline void FileMem::RawPtr<M,T>::operator=(VPtr ptr)
 {
    _ptr = ptr;
+   _inc = 0;
    _base->read(_val.bytes,_ptr,_val.size);
 }
 
 
 
-template<class M,class T> inline T& FileMem::RawPtr<M,T>::operator*()
+template<class M,class T> inline FileMem::RawPtr<M,T>::RawPtr(M& mem, VPtr loc,
+                                                              uint64_t size):
+   _base(&mem),
+   _ptr(loc),
+   _size(size),
+   _inc(0)
 {
-   return _val;
+   assert<FileSegFault>(size!=0,__FILE__,__LINE__);
+   if (loc!=nullPtr)
+   {
+      _base->read(_val.bytes,_ptr,_val.size);
+   }
+   else
+   {
+      _ptr = _base->allocate(_val.size*_size);
+   }
 }
 
 
 
 template<class M,class T>
-inline const T& FileMem::RawPtr<M,T>::operator*() const
+inline FileMem::VPtr FileMem::RawPtr<M,T>::addr() const
+{
+   return _ptr;
+}
+
+
+
+template<class M,class T> inline void FileMem::RawPtr<M,T>::raw(uint64_t inc)
+{
+   assert<FileSegFault>(inc<_size,__FILE__,__LINE__);
+   _inc = inc;
+}
+
+
+
+template<class M,class T> inline void FileMem::RawPtr<M,T>::save()
+{
+   _base->write(_val.bytes,_ptr + _inc*_val.size,_val.size);
+}
+
+
+
+template<class M,class T> inline T& FileMem::RawPtr<M,T>::operator*()
 {
    return _val;
 }
@@ -230,24 +265,35 @@ template<class M,class T> inline T* FileMem::RawPtr<M,T>::operator->()
 
 
 template<class M,class T>
-inline const T* FileMem::RawPtr<M,T>::operator->() const
+inline T& FileMem::RawPtr<M,T>::operator[](uint64_t inc)
 {
-   return &_val;
+   assert<FileSegFault>(inc<_size,__FILE__,__LINE__);
+   if (inc!=_inc)
+   {
+      _inc = inc;
+      _base->read(_val.bytes,_ptr + _inc*_val.size,_val.size);
+   }
+   return _val;
 }
 
 
 
-template<class M,class T>
-inline FileMem::VPtr FileMem::RawPtr<M,T>::addr() const
+template<class M,class T> inline void FileMem::RawPtr<M,T>::operator++()
 {
-   return _ptr;
+   if (_inc!=(_size - 1))
+   {
+      _base->read(_val.bytes,_ptr + (++_inc)*_val.size,_val.size);
+   }
 }
 
 
 
-template<class M,class T> inline void FileMem::RawPtr<M,T>::save()
+template<class M,class T> inline void FileMem::RawPtr<M,T>::operator--()
 {
-   _base->write(_val.bytes,_ptr,_val.size);
+   if (_inc!=0)
+   {
+      _base->read(_val.bytes,_ptr + (--_inc)*_val.size,_val.size);
+   }
 }
 
 
