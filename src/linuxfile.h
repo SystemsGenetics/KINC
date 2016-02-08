@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "filemem.h"
+#include "fmembase.h"
 
 
 

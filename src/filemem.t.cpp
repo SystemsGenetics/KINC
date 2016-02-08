@@ -1,6 +1,6 @@
 #include <cstdlib>
 #include <utility>
-#include "linuxfile.h"
+#include "filemem.h"
 #include "unit.h"
 
 
@@ -78,11 +78,11 @@ bool unit::filemem::main()
    catch (...)
    {
       system("rm -f testfiles/filememdat");
-      std::cout << std::endl;
+      end();
       throw;
    }
    system("rm -f testfiles/filememdat");
-   std::cout << std::endl;
+   end();
    return ret;
 }
 
@@ -167,7 +167,7 @@ bool unit::filemem::dobject5()
 bool unit::filemem::init1()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    tf.reserve(4096);
    FileMem::Ptr<Node> tmp(tf);
    FileMem::Ptr<Node> t(std::move(tmp));
@@ -181,7 +181,7 @@ bool unit::filemem::init1()
 bool unit::filemem::init2()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::Ptr<Node> tmp(tf);
    FileMem::Ptr<Node> t(tf);
    t = std::move(tmp);
@@ -194,7 +194,7 @@ bool unit::filemem::init2()
 bool unit::filemem::init3()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::Ptr<Node> t(tf);
    t = tf.head();
    bool ret = t->val()==42;
@@ -206,7 +206,7 @@ bool unit::filemem::init3()
 bool unit::filemem::init4()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::Ptr<Node> t(tf);
    bool ret = t->val()==42;
    t.save();
@@ -218,7 +218,7 @@ bool unit::filemem::init4()
 bool unit::filemem::init5()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::Ptr<Node> t(tf,tf.head());
    bool ret = t->val()==42;
    return finish(ret,"init5");
@@ -229,7 +229,7 @@ bool unit::filemem::init5()
 bool unit::filemem::init6()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    bool ret = false;
    try
    {
@@ -247,7 +247,7 @@ bool unit::filemem::init6()
 bool unit::filemem::addr1()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::Ptr<Node> t(tf,tf.head());
    bool ret = t.addr()==tf.head();
    return finish(ret,"addr1");
@@ -258,7 +258,7 @@ bool unit::filemem::addr1()
 bool unit::filemem::raw1()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::Ptr<Node> t(tf,tf.head(),5);
    t.raw(3);
    bool ret = t->val()==42;
@@ -270,7 +270,7 @@ bool unit::filemem::raw1()
 bool unit::filemem::raw2()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    bool ret = false;
    try
    {
@@ -289,7 +289,7 @@ bool unit::filemem::raw2()
 bool unit::filemem::save1()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::VPtr ptr = FileMem::nullPtr;
    {
       FileMem::Ptr<Node> t(tf);
@@ -306,7 +306,7 @@ bool unit::filemem::save1()
 bool unit::filemem::operat1()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::Ptr<Node> t(tf);
    bool ret = (*t).val()==42;
    return finish(ret,"operat1");
@@ -317,7 +317,7 @@ bool unit::filemem::operat1()
 bool unit::filemem::operat2()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::Ptr<Node> t(tf);
    bool ret = t->val()==42;
    return finish(ret,"operat2");
@@ -328,7 +328,7 @@ bool unit::filemem::operat2()
 bool unit::filemem::operat3()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::Ptr<Node> t(tf);
    bool ret = t[0].val()==42;
    return finish(ret,"operat3");
@@ -339,7 +339,7 @@ bool unit::filemem::operat3()
 bool unit::filemem::operat4()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::VPtr ptr = FileMem::nullPtr;
    {
       FileMem::Ptr<Node> t(tf,FileMem::nullPtr,3);
@@ -357,7 +357,7 @@ bool unit::filemem::operat4()
 bool unit::filemem::operat5()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    bool ret = false;
    try
    {
@@ -376,7 +376,7 @@ bool unit::filemem::operat5()
 bool unit::filemem::operat6()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::VPtr ptr = FileMem::nullPtr;
    {
       FileMem::Ptr<Node> t(tf);
@@ -395,7 +395,7 @@ bool unit::filemem::operat6()
 bool unit::filemem::operat7()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::VPtr ptr = FileMem::nullPtr;
    {
       FileMem::Ptr<Node> t(tf,FileMem::nullPtr,2);
@@ -414,7 +414,7 @@ bool unit::filemem::operat7()
 bool unit::filemem::operat8()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::VPtr ptr = FileMem::nullPtr;
    {
       FileMem::Ptr<Node> t(tf);
@@ -433,7 +433,7 @@ bool unit::filemem::operat8()
 bool unit::filemem::operat9()
 {
    start();
-   LinuxFile tf(fileName);
+   FileMem::Base tf(fileName);
    FileMem::VPtr ptr = FileMem::nullPtr;
    {
       FileMem::Ptr<Node> t(tf);

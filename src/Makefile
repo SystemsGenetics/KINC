@@ -63,3 +63,7 @@ check: test
 clean:
 +@echo "Cleaning all."
 +@rm -f $(build)*.o $(progf)
+
+depclean:
++@echo "Cleaning all dependency files."
++@rm -f $(build)*.d

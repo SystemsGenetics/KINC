@@ -54,6 +54,7 @@ namespace unit
       bool operat9();
    }
    inline void header(const char*);
+   inline void end();
    inline void start();
    inline bool finish(bool,const char*);
    static const char* headerStr {nullptr};
@@ -65,6 +66,13 @@ inline void unit::header(const char* hdr)
 {
    headerStr = hdr;
    std::cout << headerStr;
+}
+
+
+
+inline void unit::end()
+{
+   std::cout << std::endl;
 }
 
 
