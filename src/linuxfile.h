@@ -28,7 +28,7 @@ public:
    // *
    // * DECLERATIONS
    // *
-   template<class M,class T> friend class FileMem::RawPtr;
+   template<class M,class T> friend class FileMem::RawMap;
    // *
    // * BASIC METHODS
    // *
@@ -45,14 +45,14 @@ public:
    inline bool reserve(int64_t);
    inline uint64_t size() const;
    inline uint64_t available() const;
-   inline VPtr head() const;
+   inline Ptr head();
+   inline Ptr allocate(uint64_t);
 protected:
    // *
    // * FUNCTIONS
    // *
    inline void write(const void*,VPtr,uint64_t);
    inline void read(void*,VPtr,uint64_t) const;
-   inline VPtr allocate(uint64_t);
 private:
    // *
    // * VARIABLES
@@ -126,9 +126,31 @@ inline uint64_t LinuxFile::available() const
 /// Get beginning of file memory object.
 ///
 /// @return Points to beginning of file memory.
-inline FileMem::VPtr LinuxFile::head() const
+inline FileMem::Ptr LinuxFile::head()
 {
-   return 0;
+   return {0,this};
+}
+
+
+
+/// Allocate new space from file memory object.
+///
+/// @param size Total size in bytes to be allocated.
+/// @return Points to beginning of newly allocated file memory.
+///
+/// @pre The size of the allocation cannot exceed the total space available
+/// for allocation in the file memory object.
+inline FileMem::Ptr LinuxFile::allocate(uint64_t size)
+{
+   assert<OutOfMemory>(size<=_available,__FILE__,__LINE__);
+   Ptr ret {_next,this};
+   _next += size;
+   _available -= size;
+   bool cond = lseek64(_fd,_idLen,SEEK_SET)==_idLen;
+   assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
+   cond = ::write(_fd,&_next,sizeof(VPtr))==sizeof(VPtr);
+   assert<SystemError>(cond,__FILE__,__LINE__,"write");
+   return ret;
 }
 
 
@@ -144,7 +166,7 @@ inline FileMem::VPtr LinuxFile::head() const
 inline void LinuxFile::write(const void* data, VPtr ptr, uint64_t size)
 {
    assert<FileSegFault>((ptr + size)<=_size,__FILE__,__LINE__);
-   int64_t seekr = ptr + _idLen + sizeof(VPtr);
+   int64_t seekr = ptr + _idLen + sizeof(Ptr);
    bool cond = lseek64(_fd,seekr,SEEK_SET)==seekr;
    assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
    cond = ::write(_fd,data,size)==size;
@@ -164,33 +186,11 @@ inline void LinuxFile::write(const void* data, VPtr ptr, uint64_t size)
 inline void LinuxFile::read(void* data, VPtr ptr, uint64_t size) const
 {
    assert<FileSegFault>((ptr + size)<=_size,__FILE__,__LINE__);
-   int64_t seekr = ptr + _idLen + sizeof(VPtr);
+   int64_t seekr = ptr + _idLen + sizeof(Ptr);
    bool cond = lseek64(_fd,seekr,SEEK_SET)==seekr;
    assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
    cond = ::read(_fd,data,size)==size;
    assert<SystemError>(cond,__FILE__,__LINE__,"read");
-}
-
-
-
-/// Allocate new space from file memory object.
-///
-/// @param size Total size in bytes to be allocated.
-/// @return Points to beginning of newly allocated file memory.
-///
-/// @pre The size of the allocation cannot exceed the total space available
-/// for allocation in the file memory object.
-inline FileMem::VPtr LinuxFile::allocate(uint64_t size)
-{
-   assert<OutOfMemory>(size<=_available,__FILE__,__LINE__);
-   VPtr ret = _next;
-   _next += size;
-   _available -= size;
-   bool cond = lseek64(_fd,_idLen,SEEK_SET)==_idLen;
-   assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
-   cond = ::write(_fd,&_next,sizeof(VPtr))==sizeof(VPtr);
-   assert<SystemError>(cond,__FILE__,__LINE__,"write");
-   return ret;
 }
 
 

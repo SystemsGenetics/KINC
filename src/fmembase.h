@@ -27,17 +27,24 @@ public:
    // *
    // * DECLERATIONS
    // *
+   enum class Sync { read,write };
    using Base = LinuxFile;
    using VPtr = uint64_t;
    template<int S> struct Object;
    struct DObject;
-   template<class M,class T> class RawPtr;
-   template<class T> using Ptr = RawPtr<LinuxFile,T>;
+   template<class M,class T> class RawMap;
+   template<class T> using Map = RawMap<LinuxFile,T>;
+   template<class M> struct RawPtr
+   {
+      VPtr inc;
+      M* fmem;
+   };
+   using Ptr = RawPtr<LinuxFile>;
    // *
    // * CONSTANTS
    // *
    /// Defines the value of a null pointer for file memory.
-   constexpr static VPtr nullPtr = 0xffffffffffffffffll;
+   constexpr static VPtr nullPtr {0xffffffffffffffffull};
    /// Identifying string at the beginning of any memory object file.
    constexpr const static char* _identString = "\0\15\41\102\104\101\124\0\0";
    constexpr static int _idLen = 9;
@@ -69,31 +76,18 @@ struct FileMem::DObject
 
 
 
-template<class M,class T> class FileMem::RawPtr
+template<class M,class T> class FileMem::RawMap
 {
 public:
-   static_assert(std::is_class<T>::value,
-                 "FileMem::Ptr<T>, T is of an unsupported type.");
-   RawPtr(const Ptr<T>&) = delete;//SADFACE... AND THIS :(((
-   inline RawPtr(RawPtr<M,T>&&);
-   RawPtr<M,T>& operator=(const Ptr<T>&) = delete; // SAD FACE, we will need this
-   inline void operator=(RawPtr<M,T>&&);
    inline void operator=(VPtr);
-   inline RawPtr(M&,VPtr = nullPtr,uint64_t = 1);
+   inline RawMap(RawPtr<M>);
    inline VPtr addr() const;
-   inline void raw(uint64_t);
-   inline void save();
+   inline void sync(Sync,uint64_t = 0);
    inline T& operator*();
    inline T* operator->();
-   inline T& operator[](uint64_t);
-   void operator++();
-   void operator--();
 private:
    T _val;
-   M* _base;
-   VPtr _ptr;
-   uint64_t _size;
-   uint64_t _inc;
+   RawPtr<M> _ptr;
 };
 
 
@@ -172,129 +166,54 @@ template<class T> inline T& FileMem::DObject::get(int n)
 
 
 
-template<class M,class T>
-inline FileMem::RawPtr<M,T>::RawPtr(FileMem::RawPtr<M,T>&& tmp):
-   _val(std::move(tmp._val)),
-   _base(tmp._base),
-   _ptr(tmp._ptr),
-   _size(tmp._size),
-   _inc(tmp._inc)
+template<class M,class T> inline void FileMem::RawMap<M,T>::operator=(VPtr vptr)
 {
-   tmp._ptr = nullPtr;
+   _ptr.inc = vptr;
 }
 
 
 
-template<class M,class T>
-inline void FileMem::RawPtr<M,T>::operator=(RawPtr<M,T>&& tmp)
-{
-   _val = std::move(tmp._val);
-   _base = tmp._base;
-   _ptr = tmp._ptr;
-   _size = tmp._size;
-   _inc = tmp._inc;
-   tmp._ptr = nullPtr;
-}
+template<class M,class T> inline FileMem::RawMap<M,T>::RawMap(RawPtr<M> loc):
+   _ptr(loc)
+{}
 
 
 
 template<class M,class T>
-inline void FileMem::RawPtr<M,T>::operator=(VPtr ptr)
+inline FileMem::VPtr FileMem::RawMap<M,T>::addr() const
 {
-   _ptr = ptr;
-   _inc = 0;
-   _base->read(_val.bytes,_ptr,_val.size);
+   return _ptr.inc;
 }
 
 
 
-template<class M,class T> inline FileMem::RawPtr<M,T>::RawPtr(M& mem, VPtr loc,
-                                                              uint64_t size):
-   _base(&mem),
-   _ptr(loc),
-   _size(size),
-   _inc(0)
+template<class M,class T> inline void FileMem::RawMap<M,T>::sync(Sync which,
+                                                                 uint64_t inc)
 {
-   assert<FileSegFault>(size!=0,__FILE__,__LINE__);
-   if (loc!=nullPtr)
+   uint64_t offset = _ptr.inc + inc*_val.size;
+   switch (which)
    {
-      _base->read(_val.bytes,_ptr,_val.size);
-   }
-   else
-   {
-      _ptr = _base->allocate(_val.size*_size);
+   case Sync::read:
+      _ptr.fmem->read(_val.bytes,offset,_val.size);
+      break;
+   case Sync::write:
+      _ptr.fmem->write(_val.bytes,offset,_val.size);
+      break;
    }
 }
 
 
 
-template<class M,class T>
-inline FileMem::VPtr FileMem::RawPtr<M,T>::addr() const
-{
-   return _ptr;
-}
-
-
-
-template<class M,class T> inline void FileMem::RawPtr<M,T>::raw(uint64_t inc)
-{
-   assert<FileSegFault>(inc<_size,__FILE__,__LINE__);
-   _inc = inc;
-}
-
-
-
-template<class M,class T> inline void FileMem::RawPtr<M,T>::save()
-{
-   _base->write(_val.bytes,_ptr + _inc*_val.size,_val.size);
-}
-
-
-
-template<class M,class T> inline T& FileMem::RawPtr<M,T>::operator*()
+template<class M,class T> inline T& FileMem::RawMap<M,T>::operator*()
 {
    return _val;
 }
 
 
 
-template<class M,class T> inline T* FileMem::RawPtr<M,T>::operator->()
+template<class M,class T> inline T* FileMem::RawMap<M,T>::operator->()
 {
    return &_val;
-}
-
-
-
-template<class M,class T>
-inline T& FileMem::RawPtr<M,T>::operator[](uint64_t inc)
-{
-   assert<FileSegFault>(inc<_size,__FILE__,__LINE__);
-   if (inc!=_inc)
-   {
-      _inc = inc;
-      _base->read(_val.bytes,_ptr + _inc*_val.size,_val.size);
-   }
-   return _val;
-}
-
-
-
-template<class M,class T> inline void FileMem::RawPtr<M,T>::operator++()
-{
-   if (_inc!=(_size - 1))
-   {
-      _base->read(_val.bytes,_ptr + (++_inc)*_val.size,_val.size);
-   }
-}
-
-
-
-template<class M,class T> inline void FileMem::RawPtr<M,T>::operator--()
-{
-   if (_inc!=0)
-   {
-      _base->read(_val.bytes,_ptr + (--_inc)*_val.size,_val.size);
-   }
 }
 
 

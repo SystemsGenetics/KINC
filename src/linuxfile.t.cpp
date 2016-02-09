@@ -11,43 +11,46 @@ public:
    using LinuxFile::LinuxFile;
    using LinuxFile::write;
    using LinuxFile::read;
-   using LinuxFile::allocate;
 };
 
 
 
-const char* writeData = "1234567890123456";
+namespace unit
+{
+   namespace linuxfile
+   {
+      constexpr const char* tmpFile = "testfiles/memfiletmp";
+      constexpr const char* validFile = "testfiles/memfile";
+      constexpr const char* invalidFile = "testfiles/notmemfile";
+      const char* wData = "1234567890123456";
+   }
+}
 
 
 
 bool unit::linuxfile::main()
 {
    bool ret = false;
-   std::cout << "LinuxFile";
+   header("LinuxFile");
    try
    {
       ret = init1()&&
             init2()&&
             init3()&&
             reserve1()&&
-            reserve2()&&
-            allocate1()&&
-            write_read1()&&
-            write_read2()&&
-            allocate2()&&
-            write1()&&
-            read1()&&
             clear1()&&
-            allocate3();
+            available1()&&
+            head1()&&
+            read1();
    }
    catch (...)
    {
-      system("rm -f testfiles/kincdat2");
-      std::cout << std::endl;
+      system("rm -f testfiles/memfiletmp");
+      end();
       throw;
    }
-   system("rm -f testfiles/kincdat2");
-   std::cout << std::endl;
+   system("rm -f testfiles/memfiletmp");
+   end();
    return ret;
 }
 
@@ -55,287 +58,116 @@ bool unit::linuxfile::main()
 
 bool unit::linuxfile::init1()
 {
-   std::cout << "." << std::flush;
-   LinuxFile t("testfiles/kincdat1");
-   bool ret = t.size()==0&&t.available()==0;
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::linuxfile::init1 FAILED." << std::endl;
-   }
-   return ret;
+   start();
+   LinuxFile t(tmpFile);
+   bool ret = t.size()==0;
+   return finish(ret,"init1");
 }
 
 
 
 bool unit::linuxfile::init2()
 {
-   std::cout << "." << std::flush;
-   LinuxFile t("testfiles/kincdat2");
-   bool ret = t.size()==0&&t.available()==0;
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::linuxfile::init2 FAILED." << std::endl;
-   }
-   return ret;
+   start();
+   LinuxFile t(validFile);
+   bool ret = t.size()==0;
+   return finish(ret,"init2");
 }
 
 
 
 bool unit::linuxfile::init3()
 {
-   std::cout << "." << std::flush;
+   start();
    bool ret = false;
    try
    {
-      LinuxFile t("testfiles/notkincdat");
+      LinuxFile t(invalidFile);
       t.size();
    }
    catch (FileMem::InvalidFile)
    {
       ret = true;
    }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::linuxfile::init3 FAILED." << std::endl;
-   }
-   return ret;
+   return finish(ret,"init3");
 }
 
 
 
 bool unit::linuxfile::reserve1()
 {
-   std::cout << "." << std::flush;
+   start();
    bool ret = false;
    {
-      LinuxFile t("testfiles/kincdat2");
+      LinuxFile t(tmpFile);
       ret = t.reserve(128);
       ret = ret&&t.size()==128&&t.available()==128;
    }
    {
-      LinuxFile t("testfiles/kincdat2");
+      LinuxFile t(tmpFile);
       ret = ret&&t.size()==128&&t.available()==128;
    }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::linuxfile::reserve1 FAILED."
-                << std::endl;
-   }
-   return ret;
-}
-
-
-
-bool unit::linuxfile::reserve2()
-{
-   std::cout << "." << std::flush;
-   bool ret = false;
-   {
-      LinuxFile t("testfiles/kincdat2");
-      ret = t.reserve(128);
-      ret = ret&&t.size()==256&&t.available()==256;
-   }
-   {
-      LinuxFile t("testfiles/kincdat2");
-      ret = ret&&t.size()==256&&t.available()==256;
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::linuxfile::reserve2 FAILED."
-                << std::endl;
-   }
-   return ret;
-}
-
-
-
-bool unit::linuxfile::allocate1()
-{
-   std::cout << "." << std::flush;
-   bool ret = false;
-   FileMem::VPtr ptr;
-   {
-      PublicLinuxFile t("testfiles/kincdat2");
-      ptr = t.allocate(16);
-      ret = ptr==t.head()&&t.available()==(256 - 16);
-   }
-   {
-      PublicLinuxFile t("testfiles/kincdat2");
-      ret = ret&&t.allocate(16)==(t.head() + 16)&&t.available()==(256 - 32);
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::linuxfile::allocate1 FAILED."
-                << std::endl;
-   }
-   return ret;
-}
-
-
-
-bool unit::linuxfile::write_read1()
-{
-   std::cout << "." << std::flush;
-   bool ret = false;
-   {
-      char buffer[17] {'\0'};
-      PublicLinuxFile t("testfiles/kincdat2");
-      t.write(writeData,0,16);
-      t.read(buffer,0,16);
-      ret = strcmp(writeData,buffer)==0;
-   }
-   {
-      char buffer[17] {'\0'};
-      PublicLinuxFile t("testfiles/kincdat2");
-      t.read(buffer,0,16);
-      ret = ret&&strcmp(writeData,buffer)==0;
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::linuxfile::write_read1 FAILED."
-                << std::endl;
-   }
-   return ret;
-}
-
-
-
-bool unit::linuxfile::write_read2()
-{
-   std::cout << "." << std::flush;
-   bool ret = false;
-   {
-      char buffer[17] {'\0'};
-      PublicLinuxFile t("testfiles/kincdat2");
-      t.write(writeData,16,16);
-      t.read(buffer,16,16);
-      ret = strcmp(writeData,buffer)==0;
-   }
-   {
-      char buffer[17] {'\0'};
-      PublicLinuxFile t("testfiles/kincdat2");
-      t.read(buffer,16,16);
-      ret = ret&&strcmp(writeData,buffer)==0;
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::linuxfile::write_read2 FAILED."
-                << std::endl;
-   }
-   return ret;
-}
-
-
-
-bool unit::linuxfile::allocate2()
-{
-   std::cout << "." << std::flush;
-   bool ret = false;
-   try
-   {
-      PublicLinuxFile t("testfiles/kincdat2");
-      t.allocate(225);
-   }
-   catch (FileMem::OutOfMemory)
-   {
-      ret = true;
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::linuxfile::allocate2 FAILED."
-                << std::endl;
-   }
-   return ret;
-}
-
-
-
-bool unit::linuxfile::write1()
-{
-   std::cout << "." << std::flush;
-   bool ret = false;
-   try
-   {
-      PublicLinuxFile t("testfiles/kincdat2");
-      t.write(writeData,241,16);
-   }
-   catch (FileMem::FileSegFault)
-   {
-      ret = true;
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::linuxfile::write1 FAILED."
-                << std::endl;
-   }
-   return ret;
-}
-
-
-
-bool unit::linuxfile::read1()
-{
-   std::cout << "." << std::flush;
-   bool ret = false;
-   try
-   {
-      char buffer[16];
-      PublicLinuxFile t("testfiles/kincdat2");
-      t.read(buffer,241,16);
-   }
-   catch (FileMem::FileSegFault)
-   {
-      ret = true;
-   }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::linuxfile::read1 FAILED."
-                << std::endl;
-   }
-   return ret;
+   return finish(ret,"reserve1");
 }
 
 
 
 bool unit::linuxfile::clear1()
 {
-   std::cout << "." << std::flush;
+   start();
    bool ret = false;
    {
-      LinuxFile t("testfiles/kincdat2");
+      LinuxFile t(tmpFile);
+      t.allocate(64);
       t.clear();
-      ret = t.size()==256&&t.available()==256;
+      ret = t.size()==128&&t.available()==128;
    }
    {
-      LinuxFile t("testfiles/kincdat2");
-      ret = t.size()==256&&t.available()==256;
+      LinuxFile t(tmpFile);
+      ret = ret&&t.size()==128&&t.available()==128;
    }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::linuxfile::clear1 FAILED."
-                << std::endl;
-   }
-   return ret;
+   return finish(ret,"reserve1");
 }
 
 
 
-bool unit::linuxfile::allocate3()
+bool unit::linuxfile::available1()
 {
-   std::cout << "." << std::flush;
+   start();
+   LinuxFile t(tmpFile);
+   t.allocate(64);
+   bool ret = t.size()==128&&t.available()==64;
+   return finish(ret,"available1");
+}
+
+
+
+bool unit::linuxfile::head1()
+{
+   start();
+   LinuxFile t(tmpFile);
+   t.clear();
+   FileMem::Ptr a = t.head();
+   FileMem::Ptr b = t.allocate(64);
+   bool ret = a.inc==b.inc&&b.fmem==b.fmem;
+   return finish(ret,"head1");
+}
+
+
+
+bool unit::linuxfile::read1()
+{
+   start();
    bool ret = false;
    {
-      PublicLinuxFile t("testfiles/kincdat2");
-      ret = t.allocate(16)==t.head();
+      PublicLinuxFile t(tmpFile);
+      t.write(wData,0,16);
    }
    {
-      PublicLinuxFile t("testfiles/kincdat2");
-      ret = ret&&t.allocate(16)==(t.head() + 16);
+      char buf[17] {'\0'};
+      PublicLinuxFile t(tmpFile);
+      t.read(buf,0,16);
+      ret = strcmp(buf,wData)==0;
    }
-   if (!ret)
-   {
-      std::cout << std::endl << "unit::linuxfile::allocate3 FAILED."
-                << std::endl;
-   }
-   return ret;
+   return finish(ret,"read1");
 }

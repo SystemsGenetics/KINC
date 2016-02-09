@@ -5,6 +5,10 @@
 
 
 
+const char* unit::headerStr {nullptr};
+
+
+
 int main(int argc, char* argv[])
 {
    if (unit::linuxfile::main()&&
