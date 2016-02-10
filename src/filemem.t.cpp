@@ -13,7 +13,7 @@ struct Node : FileMem::Object<12>
       next() = FileMem::nullPtr;
    }
    uint32_t& val() { get<uint32_t>(0); }
-   FileMem::VPtr& next() { get<FileMem::VPtr>(4); }
+   FileMem::Ptr& next() { get<FileMem::Ptr>(4); }
 };
 
 
@@ -26,7 +26,7 @@ struct DNode : FileMem::DObject
       next() = FileMem::nullPtr;
    }
    uint32_t& val() { get<uint32_t>(0); }
-   FileMem::VPtr& next() { get<FileMem::VPtr>(4); }
+   FileMem::Ptr& next() { get<FileMem::Ptr>(4); }
 };
 
 
@@ -153,7 +153,7 @@ bool unit::filemem::dobject5()
 bool unit::filemem::init1()
 {
    start();
-   FileMem::Base tf(fileName);
+   FileMem tf(fileName);
    tf.reserve(4096);
    FileMem::Map<Node> t(tf.allocate(12));
    bool ret = t->val()==42;
@@ -165,7 +165,7 @@ bool unit::filemem::init1()
 bool unit::filemem::init2()
 {
    start();
-   FileMem::Base tf(fileName);
+   FileMem tf(fileName);
    FileMem::Map<Node> tmp(tf.allocate(12));
    FileMem::Map<Node> t({FileMem::nullPtr,&tf});
    t = tmp.addr();
@@ -180,14 +180,14 @@ bool unit::filemem::sync1()
    start();
    bool ret = false;
    {
-      FileMem::Base tf(fileName);
+      FileMem tf(fileName);
       tf.clear();
       FileMem::Map<Node> t = tf.allocate(12);
       t->val() = 33;
       t.sync(FileMem::Sync::write);
    }
    {
-      FileMem::Base tf(fileName);
+      FileMem tf(fileName);
       FileMem::Map<Node> t = tf.head();
       t.sync(FileMem::Sync::read);
       ret = t->val()==33;
@@ -202,14 +202,14 @@ bool unit::filemem::sync2()
    start();
    bool ret = false;
    {
-      FileMem::Base tf(fileName);
+      FileMem tf(fileName);
       tf.clear();
       FileMem::Map<Node> t = tf.allocate(24);
       t->val() = 33;
       t.sync(FileMem::Sync::write,1);
    }
    {
-      FileMem::Base tf(fileName);
+      FileMem tf(fileName);
       FileMem::Map<Node> t = tf.head();
       t.sync(FileMem::Sync::read,1);
       ret = t->val()==33;
@@ -222,7 +222,7 @@ bool unit::filemem::sync2()
 bool unit::filemem::operat1()
 {
    start();
-   FileMem::Base tf(fileName);
+   FileMem tf(fileName);
    FileMem::Map<Node> t = tf.head();
    bool ret = (*t).val()==42;
    return finish(ret,"operat1");

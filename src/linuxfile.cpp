@@ -10,11 +10,13 @@
 /// valid memory object file. If it is valid, it reads in the next pointer and
 /// calculates total size and available bytes of file object.
 ///
+/// @param fileName Location of file that will be used as memory object.
+///
 /// @pre The file opened must be a valid memory object or a new file.
 LinuxFile::LinuxFile(const std::string& fileName):
    _fd(-1),
    _size(0),
-   _available(0),
+   _capacity(0),
    _next(0)
 {
    constexpr static int flags = O_CREAT|O_RDWR|O_LARGEFILE;
@@ -25,7 +27,7 @@ LinuxFile::LinuxFile(const std::string& fileName):
    if (lseek64(_fd,0,SEEK_END)==0)
    {
       cond = ::write(_fd,_identString,_idLen)==_idLen&&
-             ::write(_fd,&_next,sizeof(VPtr))==sizeof(VPtr);
+             ::write(_fd,&_next,sizeof(Ptr))==sizeof(Ptr);
       assert<SystemError>(cond,__FILE__,__LINE__,"write");
    }
    else
@@ -44,10 +46,10 @@ LinuxFile::LinuxFile(const std::string& fileName):
          }
       }
       assert<InvalidFile>(cond,__FILE__,__LINE__);
-      cond = ::read(_fd,&_next,sizeof(VPtr))==sizeof(VPtr);
+      cond = ::read(_fd,&_next,sizeof(Ptr))==sizeof(Ptr);
       assert<SystemError>(cond,__FILE__,__LINE__,"read");
-      _size = lseek64(_fd,0,SEEK_END) - _idLen - sizeof(VPtr);
-      _available = _size - _next;
+      _size = lseek64(_fd,0,SEEK_END) - _idLen - sizeof(Ptr);
+      _capacity = _size - _next;
    }
 }
 
@@ -59,10 +61,10 @@ LinuxFile::LinuxFile(const std::string& fileName):
 /// size of the object as available bytes that can be allocated.
 void LinuxFile::clear()
 {
-   _available = _size;
+   _capacity = _size;
    _next = 0;
    bool cond = lseek64(_fd,_idLen,SEEK_SET)==_idLen;
    assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
-   cond = ::write(_fd,&_next,sizeof(VPtr))==sizeof(VPtr);
+   cond = ::write(_fd,&_next,sizeof(Ptr))==sizeof(Ptr);
    assert<SystemError>(cond,__FILE__,__LINE__,"write");
 }

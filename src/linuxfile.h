@@ -10,25 +10,26 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "fmembase.h"
+#include "exception.h"
 
 
 
-/// @brief Linux OS FileMem implementation.
-///
-/// Implements the file memory base class within the Linux OS environment.
-/// Uses basic file IO calls in linux such as open/close/read/write and
-/// posix_fallocate.
-///
-/// @author Josh Burns
-/// @date 3 Feb 2016
-class LinuxFile : public FileMem
+class LinuxFile
 {
 public:
    // *
+   // * EXCEPTIONS
+   // *
+   struct Exception;
+   struct SystemError;
+   struct InvalidFile;
+   struct FileSegFault;
+   struct OutOfMemory;
+   // *
    // * DECLERATIONS
    // *
-   template<class M,class T> friend class FileMem::RawMap;
+   using Ptr = uint64_t;
+   using SizeT = uint64_t;
    // *
    // * BASIC METHODS
    // *
@@ -42,17 +43,23 @@ public:
    // * FUNCTIONS
    // *
    void clear();
-   inline bool reserve(int64_t);
-   inline uint64_t size() const;
-   inline uint64_t available() const;
+   inline bool reserve(SizeT);
+   inline SizeT size() const;
+   inline SizeT capacity() const;
    inline Ptr head();
-   inline Ptr allocate(uint64_t);
+   inline Ptr allocate(SizeT);
+   // *
+   // * CONSTANTS
+   // *
+   constexpr static Ptr nullPtr {0xffffffffffffffffull};
+   constexpr const static char* _identString = "\0\15\41\102\104\101\124\0\0";
+   constexpr static int _idLen = 9;
 protected:
    // *
    // * FUNCTIONS
    // *
-   inline void write(const void*,VPtr,uint64_t);
-   inline void read(void*,VPtr,uint64_t) const;
+   inline void write(const void*,Ptr,SizeT);
+   inline void read(void*,Ptr,SizeT) const;
 private:
    // *
    // * VARIABLES
@@ -60,12 +67,12 @@ private:
    /// File descriptor for file memory object.
    int _fd;
    /// Total size of the file memory object in bytes.
-   uint64_t _size;
+   SizeT _size;
    /// Space available for allocation in bytes.
-   uint64_t _available;
+   SizeT _capacity;
    /// The next location in file memory that will be returned when new space is
    /// allocated.
-   VPtr _next;
+   Ptr _next;
 };
 
 
@@ -78,14 +85,14 @@ private:
 ///
 /// @param newBytes Number of additional bytes to add to object.
 /// @return True if additional space added.
-inline bool LinuxFile::reserve(int64_t newBytes)
+inline bool LinuxFile::reserve(SizeT size)
 {
    bool ret = false;
-   if (posix_fallocate64(_fd,lseek64(_fd,0,SEEK_END),newBytes)==0)
+   if (posix_fallocate64(_fd,lseek64(_fd,0,SEEK_END),size)==0)
    {
       ret = true;
-      _size += newBytes;
-      _available += newBytes;
+      _size += size;
+      _capacity += size;
    }
    return ret;
 }
@@ -106,7 +113,7 @@ inline LinuxFile::~LinuxFile()
 /// Get total size of file memory object.
 ///
 /// @return Size of object.
-inline uint64_t LinuxFile::size() const
+inline LinuxFile::SizeT LinuxFile::size() const
 {
    return _size;
 }
@@ -116,9 +123,9 @@ inline uint64_t LinuxFile::size() const
 /// Get available space for allocation of file memory object.
 ///
 /// @return Available space of object.
-inline uint64_t LinuxFile::available() const
+inline LinuxFile::SizeT LinuxFile::capacity() const
 {
-   return _available;
+   return _capacity;
 }
 
 
@@ -126,9 +133,9 @@ inline uint64_t LinuxFile::available() const
 /// Get beginning of file memory object.
 ///
 /// @return Points to beginning of file memory.
-inline FileMem::Ptr LinuxFile::head()
+inline LinuxFile::Ptr LinuxFile::head()
 {
-   return {0,this};
+   return 0;
 }
 
 
@@ -140,15 +147,15 @@ inline FileMem::Ptr LinuxFile::head()
 ///
 /// @pre The size of the allocation cannot exceed the total space available
 /// for allocation in the file memory object.
-inline FileMem::Ptr LinuxFile::allocate(uint64_t size)
+inline LinuxFile::Ptr LinuxFile::allocate(SizeT size)
 {
-   assert<OutOfMemory>(size<=_available,__FILE__,__LINE__);
-   Ptr ret {_next,this};
+   assert<OutOfMemory>(size<=_capacity,__FILE__,__LINE__);
+   Ptr ret {_next};
    _next += size;
-   _available -= size;
+   _capacity -= size;
    bool cond = lseek64(_fd,_idLen,SEEK_SET)==_idLen;
    assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
-   cond = ::write(_fd,&_next,sizeof(VPtr))==sizeof(VPtr);
+   cond = ::write(_fd,&_next,sizeof(Ptr))==sizeof(Ptr);
    assert<SystemError>(cond,__FILE__,__LINE__,"write");
    return ret;
 }
@@ -163,7 +170,7 @@ inline FileMem::Ptr LinuxFile::allocate(uint64_t size)
 ///
 /// @pre The block location in file memory cannot exceed the size of the file
 /// memory object.
-inline void LinuxFile::write(const void* data, VPtr ptr, uint64_t size)
+inline void LinuxFile::write(const void* data, Ptr ptr, SizeT size)
 {
    assert<FileSegFault>((ptr + size)<=_size,__FILE__,__LINE__);
    int64_t seekr = ptr + _idLen + sizeof(Ptr);
@@ -183,7 +190,7 @@ inline void LinuxFile::write(const void* data, VPtr ptr, uint64_t size)
 ///
 /// @pre The block location in file memory cannot exceed the size of the file
 /// memory object.
-inline void LinuxFile::read(void* data, VPtr ptr, uint64_t size) const
+inline void LinuxFile::read(void* data, Ptr ptr, SizeT size) const
 {
    assert<FileSegFault>((ptr + size)<=_size,__FILE__,__LINE__);
    int64_t seekr = ptr + _idLen + sizeof(Ptr);
@@ -192,6 +199,47 @@ inline void LinuxFile::read(void* data, VPtr ptr, uint64_t size) const
    cond = ::read(_fd,data,size)==size;
    assert<SystemError>(cond,__FILE__,__LINE__,"read");
 }
+
+
+
+/// Generic base exception class for all exceptions thrown in LinuxFile class.
+struct LinuxFile::Exception : public ::Exception
+{
+   using ::Exception::Exception;
+};
+
+/// Exception that is thrown when a system error occurs.
+struct LinuxFile::SystemError : public ::SystemError
+{
+   using ::SystemError::SystemError;
+};
+
+/// Exception that is thrown when a file that is not a valid file memory object
+/// is opened.
+struct LinuxFile::InvalidFile : public LinuxFile::Exception
+{
+   InvalidFile(const char* file, int line):
+      Exception(file,line,"FileMem::InvalidFile")
+   {}
+};
+
+/// Exception that is thrown when a read or write operation is attempted that
+/// goes beyond the limits of the total file object's size.
+struct LinuxFile::FileSegFault : public LinuxFile::Exception
+{
+   FileSegFault(const char* file, int line):
+      Exception(file,line,"FileMem::FileSegFault")
+   {}
+};
+
+/// Exception that is thrown when an allocation of new file memory is attempted
+/// that is greater than the available amount of bytes that can be allocated.
+struct LinuxFile::OutOfMemory : public LinuxFile::Exception
+{
+   OutOfMemory(const char* file, int line):
+      Exception(file,line,"FileMem::OutOfMemory")
+   {}
+};
 
 
 

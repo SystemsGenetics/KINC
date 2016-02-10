@@ -18,6 +18,8 @@ filemem.t.cpp
 linuxfile.cpp
 linuxfile.h
 linuxfile.t.cpp
+history.cpp
+history.h
 main.cpp
 unit.t.cpp
 unit.h

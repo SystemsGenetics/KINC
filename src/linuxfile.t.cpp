@@ -85,7 +85,7 @@ bool unit::linuxfile::init3()
       LinuxFile t(invalidFile);
       t.size();
    }
-   catch (FileMem::InvalidFile)
+   catch (LinuxFile::InvalidFile)
    {
       ret = true;
    }
@@ -101,11 +101,11 @@ bool unit::linuxfile::reserve1()
    {
       LinuxFile t(tmpFile);
       ret = t.reserve(128);
-      ret = ret&&t.size()==128&&t.available()==128;
+      ret = ret&&t.size()==128&&t.capacity()==128;
    }
    {
       LinuxFile t(tmpFile);
-      ret = ret&&t.size()==128&&t.available()==128;
+      ret = ret&&t.size()==128&&t.capacity()==128;
    }
    return finish(ret,"reserve1");
 }
@@ -120,11 +120,11 @@ bool unit::linuxfile::clear1()
       LinuxFile t(tmpFile);
       t.allocate(64);
       t.clear();
-      ret = t.size()==128&&t.available()==128;
+      ret = t.size()==128&&t.capacity()==128;
    }
    {
       LinuxFile t(tmpFile);
-      ret = ret&&t.size()==128&&t.available()==128;
+      ret = ret&&t.size()==128&&t.capacity()==128;
    }
    return finish(ret,"reserve1");
 }
@@ -136,7 +136,7 @@ bool unit::linuxfile::available1()
    start();
    LinuxFile t(tmpFile);
    t.allocate(64);
-   bool ret = t.size()==128&&t.available()==64;
+   bool ret = t.size()==128&&t.capacity()==64;
    return finish(ret,"available1");
 }
 
@@ -147,9 +147,7 @@ bool unit::linuxfile::head1()
    start();
    LinuxFile t(tmpFile);
    t.clear();
-   FileMem::Ptr a = t.head();
-   FileMem::Ptr b = t.allocate(64);
-   bool ret = a.inc==b.inc&&b.fmem==b.fmem;
+   bool ret = t.head()==t.allocate(64);
    return finish(ret,"head1");
 }
 
