@@ -11,8 +11,7 @@ const char* unit::headerStr {nullptr};
 
 int main(int argc, char* argv[])
 {
-   if (unit::linuxfile::main()&&
-       unit::filemem::main())
+   if (unit::filemem::main())
    {
       std::cout << "ALL PASSED." << std::endl;
    }

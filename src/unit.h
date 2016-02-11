@@ -6,34 +6,32 @@
 
 namespace unit
 {
-   namespace linuxfile
-   {
-      bool main();
-      bool init1();
-      bool init2();
-      bool init3();
-      bool clear1();
-      bool reserve1();
-      bool allocate1();
-      bool available1();
-      bool head1();
-      bool read1();
-   }
    namespace filemem
    {
       bool main();
+      bool static1();
       bool object1();
       bool object2();
-      bool dobject1();
-      bool dobject2();
-      bool dobject3();
-      bool dobject4();
-      bool dobject5();
+      bool object3();
+      bool object4();
+      bool object5();
       bool init1();
       bool init2();
+      bool init3();
+      bool init4();
+      bool reserve1();
+      bool capacity1();
+      bool allocate1();
+      bool allocate2();
+      bool allocate3();
+      bool clear1();
+      bool addr1();
       bool sync1();
       bool sync2();
-      bool operat1();
+      bool sync3();
+      bool sync4();
+      bool sync5();
+      bool sync6();
    }
    inline void header(const char*);
    inline void end();

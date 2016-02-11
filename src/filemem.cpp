@@ -1,19 +1,11 @@
-#include "linuxfile.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include "filemem.h"
 
 
 
-/// @brief Opens memory object file and initializes object.
-///
-/// Opens the memory object file. If the file is new(0 size) then it writes
-/// to the file making a new memory object with 0 size. If it is not new(size
-/// greater than 0) then it reads the header of the file to make sure it is a
-/// valid memory object file. If it is valid, it reads in the next pointer and
-/// calculates total size and available bytes of file object.
-///
-/// @param fileName Location of file that will be used as memory object.
-///
-/// @pre The file opened must be a valid memory object or a new file.
-LinuxFile::LinuxFile(const std::string& fileName):
+FileMem::FileMem(const std::string& fileName):
    _fd(-1),
    _size(0),
    _capacity(0),
@@ -32,6 +24,8 @@ LinuxFile::LinuxFile(const std::string& fileName):
    }
    else
    {
+      cond = lseek64(_fd,0,SEEK_END)>=(_idLen + sizeof(Ptr));
+      assert<InvalidFile>(cond,__FILE__,__LINE__);
       char buf[_idLen];
       cond = ::lseek64(_fd,0,SEEK_SET)==0;
       assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
@@ -55,11 +49,17 @@ LinuxFile::LinuxFile(const std::string& fileName):
 
 
 
-/// @brief Clears allocated memory of object.
-///
-/// Clears the file memory object of all allocated space, returning the total
-/// size of the object as available bytes that can be allocated.
-void LinuxFile::clear()
+FileMem::~FileMem()
+{
+   if (_fd!=-1)
+   {
+      close(_fd);
+   }
+}
+
+
+
+void FileMem::clear()
 {
    _capacity = _size;
    _next = 0;
@@ -67,4 +67,18 @@ void LinuxFile::clear()
    assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
    cond = ::write(_fd,&_next,sizeof(Ptr))==sizeof(Ptr);
    assert<SystemError>(cond,__FILE__,__LINE__,"write");
+}
+
+
+
+bool FileMem::reserve(SizeT size)
+{
+   bool ret = false;
+   if (posix_fallocate64(_fd,lseek64(_fd,0,SEEK_END),size)==0)
+   {
+      ret = true;
+      _size += size;
+      _capacity += size;
+   }
+   return ret;
 }

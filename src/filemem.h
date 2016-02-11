@@ -1,94 +1,245 @@
 #ifndef FILEMEM_H
 #define FILEMEM_H
-#include "linuxfile.h"
+#include <string>
+#include <cstdint>
+#include <unistd.h>
+#include "exception.h"
 
 
 
-template<class T> class RawFileMem : public T
+enum class FileSync { read,write };
+
+
+
+class FileMem
 {
 public:
-   using T::T;
-   using T::Exception;
-   using T::SystemError;
-   using T::InvalidFile;
-   using T::FileSegFault;
-   using T::OutOfMemory;
-   enum class Sync { read,write };
-   using Ptr = typename T::Ptr;
-   struct VPtr
-   {
-      Ptr ptr;
-      RawFileMem<T>* mem;
-   };
-   using SizeT = typename T::SizeT;
-   template<SizeT S> struct Object;
-   struct DObject;
-   template<class V> class Map;
-   constexpr static Ptr nullPtr {T::nullPtr};
-   void clear() { T::clear(); }
-   bool reserve(size_t size) { return T::reserve(size); }
-   size_t size() { return T::size(); }
-   size_t capacity() { return T::capacity(); }
-   VPtr head() { return {T::head(),this}; }
-   VPtr allocate(size_t size) { return {T::allocate(size),this}; }
-   void read(void* data,Ptr ptr,SizeT size) const
-   { T::read(data,ptr,size); }
-   void write(const void* data,Ptr ptr,SizeT size) { T::write(data,ptr,size); }
+   // *
+   // * EXCEPTIONS
+   // *
+   struct Exception;
+   struct SystemError;
+   struct InvalidFile;
+   struct FileSegFault;
+   struct OutOfMemory;
+   // *
+   // * DECLERATIONS
+   // *
+   using Ptr = uint64_t;
+   using SizeT = uint64_t;
+   template<int S> struct Static;
+   struct Object;
+   class Map;
+   // *
+   // * BASIC METHODS
+   // *
+   FileMem(const std::string&);
+   ~FileMem();
+   // *
+   // * FUNCTIONS
+   // *
+   void clear();
+   bool reserve(SizeT);
+   inline SizeT size() const;
+   inline SizeT capacity() const;
+   template<class T> inline void allocate(T&,SizeT = 1);
+   template<class T> inline void sync(T&,FileSync,Ptr = 0);
+   Ptr head();
+   // *
+   // * CONSTANTS
+   // *
+   constexpr static Ptr nullPtr = 0xffffffffffffffffll;
+   constexpr static int PtrSize = sizeof(Ptr);
+   constexpr const static char* _identString = "\0\15\41\102\104\101\124\0\0";
+   constexpr static int _idLen = 9;
+private:
+   // *
+   // * FUNCTIONS
+   // *
+   inline void write(const void* data,Ptr,SizeT);
+   inline void read(void*,Ptr,SizeT) const;
+   // *
+   // * VARIABLES
+   // *
+   int _fd;
+   SizeT _size;
+   SizeT _capacity;
+   Ptr _next;
 };
-using FileMem = RawFileMem<LinuxFile>;
 
 
 
-template<> template<FileMem::SizeT S> struct FileMem::Object
+template<int S> struct FileMem::Static
 {
-   template<class T> inline T& get(int n);
-   char bytes[S];
-   constexpr static SizeT size = S;
-};
-
-
-
-template<> struct FileMem::DObject
-{
-   inline DObject(const DObject&);
-   inline DObject(DObject&&);
-   inline DObject& operator=(const DObject&);
-   inline DObject& operator=(DObject&&);
-   inline DObject(SizeT);
+   // *
+   // * DECLERATIONS
+   // *
+   friend class FileMem;
+   // *
+   // * BASIC METHODS
+   // *
+   Static() = default;
+   Static(Ptr);
+   inline void operator=(Ptr);
+   // *
+   // * FUNCTIONS
+   // *
    template<class T> inline T& get(int);
-   inline ~DObject();
+   inline Ptr addr();
+private:
+   // *
+   // * VARIABLES
+   // *
+   char bytes[S];
+   Ptr ptr {FileMem::nullPtr};
+   // *
+   // * CONSTANTS
+   // *
+   constexpr static SizeT size {S};
+};
+
+
+
+struct FileMem::Object
+{
+   // *
+   // * DECLERATIONS
+   // *
+   friend class FileMem;
+   // *
+   // * BASIC METHODS
+   // *
+   inline Object(const Object&);
+   inline Object(Object&&);
+   inline Object& operator=(const Object&);
+   inline Object& operator=(Object&&);
+   inline Object(SizeT,Ptr = nullPtr);
+   inline ~Object();
+   inline void operator=(Ptr);
+   // *
+   // * FUNCTIONS
+   // *
+   template<class T> inline T& get(int);
+   inline Ptr addr();
+private:
+   // *
+   // * VARIABLES
+   // *
    char* bytes;
    SizeT size;
+   Ptr ptr {FileMem::nullPtr};
 };
 
 
 
-template<> template<class V> class FileMem::Map
+inline FileMem::SizeT FileMem::size() const
 {
-public:
-   inline void operator=(Ptr);//
-   inline Map(VPtr);//
-   inline Ptr addr() const;//
-   inline void sync(Sync,uint64_t = 0);//
-   inline V& operator*();
-   inline V* operator->();
-private:
-   V _val;
-   FileMem* _mem;
-   Ptr _ptr;
-};
+   return _size;
+}
 
 
 
-template<> template<FileMem::SizeT S> template<class T>
-inline T& FileMem::Object<S>::get(int n)
+inline FileMem::SizeT FileMem::capacity() const
+{
+   return _capacity;
+}
+
+
+
+template<class T> inline void FileMem::allocate(T& obj, SizeT amt)
+{
+   if (amt>0)
+   {
+      SizeT size = obj.size*amt;
+      assert<OutOfMemory>(size<=_capacity,__FILE__,__LINE__);
+      obj.ptr = _next;
+      _next += size;
+      _capacity -= size;
+      bool cond = lseek64(_fd,_idLen,SEEK_SET)==_idLen;
+      assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
+      cond = ::write(_fd,&_next,sizeof(Ptr))==sizeof(Ptr);
+      assert<SystemError>(cond,__FILE__,__LINE__,"write");
+   }
+}
+
+
+
+template<class T> inline void FileMem::sync(T& obj, FileSync which, Ptr inc)
+{
+   assert<FileSegFault>(obj.ptr!=nullPtr,__FILE__,__LINE__);
+   Ptr seekr = obj.ptr + obj.size*inc;
+   switch (which)
+   {
+   case FileSync::read:
+      read(obj.bytes,seekr,obj.size);
+      break;
+   case FileSync::write:
+      write(obj.bytes,seekr,obj.size);
+      break;
+   }
+}
+
+
+
+inline FileMem::Ptr FileMem::head()
+{
+   return 0;
+}
+
+
+
+inline void FileMem::write(const void* data, Ptr ptr, SizeT size)
+{
+   assert<FileSegFault>((ptr + size)<=_size,__FILE__,__LINE__);
+   int64_t seekr = ptr + _idLen + sizeof(Ptr);
+   bool cond = lseek64(_fd,seekr,SEEK_SET)==seekr;
+   assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
+   cond = ::write(_fd,data,size)==size;
+   assert<SystemError>(cond,__FILE__,__LINE__,"write");
+}
+
+
+
+inline void FileMem::read(void* data, Ptr ptr, SizeT size) const
+{
+   assert<FileSegFault>((ptr + size)<=_size,__FILE__,__LINE__);
+   int64_t seekr = ptr + _idLen + sizeof(Ptr);
+   bool cond = lseek64(_fd,seekr,SEEK_SET)==seekr;
+   assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
+   cond = ::read(_fd,data,size)==size;
+   assert<SystemError>(cond,__FILE__,__LINE__,"read");
+}
+
+
+
+template<int S> FileMem::Static<S>::Static(Ptr p):
+   ptr(p)
+{}
+
+
+
+template<int S> inline void FileMem::Static<S>::operator=(Ptr p)
+{
+   ptr = p;
+}
+
+
+
+template<int S> template<class T> inline T& FileMem::Static<S>::get(int n)
 {
    return *reinterpret_cast<T*>(&bytes[n]);
 }
 
 
 
-inline FileMem::DObject::DObject(const DObject& obj):
+template<int S> inline FileMem::Ptr FileMem::Static<S>::addr()
+{
+   return ptr;
+}
+
+
+
+inline FileMem::Object::Object(const Object& obj):
    size(obj.size)
 {
    bytes = new char[size];
@@ -97,7 +248,7 @@ inline FileMem::DObject::DObject(const DObject& obj):
 
 
 
-inline FileMem::DObject::DObject(DObject&& tmp):
+inline FileMem::Object::Object(Object&& tmp):
    size(tmp.size),
    bytes(tmp.bytes)
 {
@@ -107,7 +258,7 @@ inline FileMem::DObject::DObject(DObject&& tmp):
 
 
 
-inline FileMem::DObject& FileMem::DObject::operator=(const DObject& obj)
+inline FileMem::Object& FileMem::Object::operator=(const Object& obj)
 {
    size = obj.size;
    if (bytes)
@@ -120,7 +271,7 @@ inline FileMem::DObject& FileMem::DObject::operator=(const DObject& obj)
 
 
 
-inline FileMem::DObject& FileMem::DObject::operator=(DObject&& tmp)
+inline FileMem::Object& FileMem::Object::operator=(Object&& tmp)
 {
    size = tmp.size;
    bytes = tmp.bytes;
@@ -130,15 +281,16 @@ inline FileMem::DObject& FileMem::DObject::operator=(DObject&& tmp)
 
 
 
-inline FileMem::DObject::DObject(uint64_t dSize):
-   size(dSize)
+inline FileMem::Object::Object(SizeT s, Ptr p):
+   size(s),
+   ptr(p)
 {
    bytes = new char[size];
 }
 
 
 
-inline FileMem::DObject::~DObject()
+inline FileMem::Object::~Object()
 {
    if (bytes)
    {
@@ -148,65 +300,65 @@ inline FileMem::DObject::~DObject()
 
 
 
-template<class T> inline T& FileMem::DObject::get(int n)
+inline void FileMem::Object::operator=(Ptr p)
+{
+   ptr = p;
+}
+
+
+
+template<class T> inline T& FileMem::Object::get(int n)
 {
    return *reinterpret_cast<T*>(&bytes[n]);
 }
 
 
 
-template<> template<class V>
-inline void FileMem::Map<V>::operator=(Ptr ptr)
+inline FileMem::Ptr FileMem::Object::addr()
 {
-   _ptr = ptr;
+   return ptr;
 }
 
 
 
-template<> template<class V>
-inline FileMem::Map<V>::Map(VPtr vptr):
-   _ptr(vptr.ptr),
-   _mem(vptr.mem)
-{}
-
-
-
-template<> template<class V>
-inline FileMem::Ptr FileMem::Map<V>::addr() const
+/// Generic base exception class for all exceptions thrown in FileMem class.
+struct FileMem::Exception : public ::Exception
 {
-   return _ptr;
-}
+   using ::Exception::Exception;
+};
 
-
-
-template<> template<class V>
-inline void FileMem::Map<V>::sync(Sync which, uint64_t inc)
+/// Exception that is thrown when a system error occurs.
+struct FileMem::SystemError : public ::SystemError
 {
-   uint64_t offset = _ptr + inc*_val.size;
-   switch (which)
-   {
-   case Sync::read:
-      _mem->read(_val.bytes,offset,_val.size);
-      break;
-   case Sync::write:
-      _mem->write(_val.bytes,offset,_val.size);
-      break;
-   }
-}
+   using ::SystemError::SystemError;
+};
 
-
-
-template<> template<class V> inline V& FileMem::Map<V>::operator*()
+/// Exception that is thrown when a file that is not a valid file memory object
+/// is opened.
+struct FileMem::InvalidFile : public FileMem::Exception
 {
-   return _val;
-}
+   InvalidFile(const char* file, int line):
+      Exception(file,line,"FileMem::InvalidFile")
+   {}
+};
 
-
-
-template<> template<class V> inline V* FileMem::Map<V>::operator->()
+/// Exception that is thrown when a read or write operation is attempted that
+/// goes beyond the limits of the total file object's size.
+struct FileMem::FileSegFault : public FileMem::Exception
 {
-   return &_val;
-}
+   FileSegFault(const char* file, int line):
+      Exception(file,line,"FileMem::FileSegFault")
+   {}
+};
+
+/// Exception that is thrown when an allocation of new file memory is attempted
+/// that is greater than the available amount of bytes that can be allocated.
+struct FileMem::OutOfMemory : public FileMem::Exception
+{
+   OutOfMemory(const char* file, int line):
+      Exception(file,line,"FileMem::OutOfMemory")
+   {}
+};
 
 
 
