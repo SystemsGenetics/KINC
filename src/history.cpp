@@ -165,18 +165,9 @@ void History::copy_child(Node& child, Iterator& i)
                child.objectPtr()!=FileMem::nullPtr&&
                child.commandPtr()!=FileMem::nullPtr;
    assert<NotSet>(cond,__FILE__,__LINE__);
-   String fileName(child.fileNameSize());
-   String object(child.objectSize());
-   String command(child.commandSize());
-   memcpy(fileName.c_str(),i.filename().c_str(),child.fileNameSize());
-   memcpy(object.c_str(),i.object().c_str(),child.objectSize());
-   memcpy(command.c_str(),i.command().c_str(),child.commandSize());
-   _mem.allocate(fileName);
-   _mem.allocate(object);
-   _mem.allocate(command);
-   _mem.sync(fileName,FileSync::write);
-   _mem.sync(object,FileSync::write);
-   _mem.sync(command,FileSync::write);
+   child.fileNamePtr() = write_string(i.filename());
+   child.objectPtr() = write_string(i.object());
+   child.commandPtr() = write_string(i.command());
 }
 
 
