@@ -44,8 +44,8 @@ public:
    // *
    struct Exception;
    struct AlreadySet;
-   struct AlreadyAllocated;
-   struct NullPtr;
+   struct IsAllocated;
+   struct IsNullPtr;
    // *
    // * BASIC METHODS
    // *
@@ -114,17 +114,17 @@ struct HistItem::AlreadySet : public HistItem::Exception
    {}
 };
 
-struct HistItem::AlreadyAllocated : public HistItem::Exception
+struct HistItem::IsAllocated : public HistItem::Exception
 {
-   AlreadyAllocated(const char* file, int line):
-      Exception(file,line,"History::AlreadyAllocated")
+   IsAllocated(const char* file, int line):
+      Exception(file,line,"History::IsAllocated")
    {}
 };
 
-struct HistItem::NullPtr : public HistItem::Exception
+struct HistItem::IsNullPtr : public HistItem::Exception
 {
-   NullPtr(const char* file, int line):
-      Exception(file,line,"History::NullPtr")
+   IsNullPtr(const char* file, int line):
+      Exception(file,line,"History::IsNullPtr")
    {}
 };
 

@@ -5,7 +5,7 @@
 HistItem& HistItem::operator=(const HistItem& hist)
 {
    bool cond = _item.addr()==FileMem::nullPtr;
-   assert<AlreadyAllocated>(cond,__FILE__,__LINE__);
+   assert<IsAllocated>(cond,__FILE__,__LINE__);
    _mem.allocate(_item);
    _fileName = hist.fileName();
    _object = hist.object();
@@ -53,7 +53,7 @@ void HistItem::operator=(FileMem::Ptr ptr)
 void HistItem::allocate()
 {
    bool cond = _item.addr()==FileMem::nullPtr;
-   assert<AlreadyAllocated>(cond,__FILE__,__LINE__);
+   assert<IsAllocated>(cond,__FILE__,__LINE__);
    _item.timeStamp() = 0;
    _item.fileNamePtr() = FileMem::nullPtr;
    _item.fileNameSize() = 0;
@@ -72,7 +72,7 @@ void HistItem::allocate()
 void HistItem::sync()
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
-   assert<NullPtr>(cond,__FILE__,__LINE__);
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
    _mem.sync(_item,FileSync::write);
 }
 
@@ -81,7 +81,7 @@ void HistItem::sync()
 void HistItem::timeStamp(int64_t n)
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
-   assert<NullPtr>(cond,__FILE__,__LINE__);
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
    _item.timeStamp() = n;
 }
 
@@ -90,7 +90,7 @@ void HistItem::timeStamp(int64_t n)
 int64_t HistItem::timeStamp() const
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
-   assert<NullPtr>(cond,__FILE__,__LINE__);
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
    return _item.timeStamp();
 }
 
@@ -99,7 +99,7 @@ int64_t HistItem::timeStamp() const
 void HistItem::fileName(const std::string& str)
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
-   assert<NullPtr>(cond,__FILE__,__LINE__);
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
    cond = _item.fileNamePtr()==FileMem::nullPtr;
    assert<AlreadySet>(cond,__FILE__,__LINE__);
    _fileName = str;
@@ -112,7 +112,7 @@ void HistItem::fileName(const std::string& str)
 std::string HistItem::fileName() const
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
-   assert<NullPtr>(cond,__FILE__,__LINE__);
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
    return _fileName;
 }
 
@@ -121,7 +121,7 @@ std::string HistItem::fileName() const
 void HistItem::object(const std::string& str)
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
-   assert<NullPtr>(cond,__FILE__,__LINE__);
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
    cond = _item.objectPtr()==FileMem::nullPtr;
    assert<AlreadySet>(cond,__FILE__,__LINE__);
    _object = str;
@@ -134,7 +134,7 @@ void HistItem::object(const std::string& str)
 std::string HistItem::object() const
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
-   assert<NullPtr>(cond,__FILE__,__LINE__);
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
    return _object;
 }
 
@@ -143,7 +143,7 @@ std::string HistItem::object() const
 void HistItem::command(const std::string& str)
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
-   assert<NullPtr>(cond,__FILE__,__LINE__);
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
    cond = _item.commandPtr()==FileMem::nullPtr;
    assert<AlreadySet>(cond,__FILE__,__LINE__);
    _command = str;
@@ -156,7 +156,7 @@ void HistItem::command(const std::string& str)
 std::string HistItem::command() const
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
-   assert<NullPtr>(cond,__FILE__,__LINE__);
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
    return _command;
 }
 
@@ -165,7 +165,7 @@ std::string HistItem::command() const
 void HistItem::next(FileMem::Ptr ptr)
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
-   assert<NullPtr>(cond,__FILE__,__LINE__);
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
    cond = _item.next()==FileMem::nullPtr;
    assert<AlreadySet>(cond,__FILE__,__LINE__);
    _item.next() = ptr;
@@ -176,7 +176,7 @@ void HistItem::next(FileMem::Ptr ptr)
 FileMem::Ptr HistItem::next() const
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
-   assert<NullPtr>(cond,__FILE__,__LINE__);
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
    return _item.next();
 }
 
@@ -185,7 +185,7 @@ FileMem::Ptr HistItem::next() const
 void HistItem::childHead(FileMem::Ptr ptr)
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
-   assert<NullPtr>(cond,__FILE__,__LINE__);
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
    cond = _item.childHead()==FileMem::nullPtr;
    assert<AlreadySet>(cond,__FILE__,__LINE__);
    _item.childHead() = ptr;
@@ -196,7 +196,7 @@ void HistItem::childHead(FileMem::Ptr ptr)
 FileMem::Ptr HistItem::childHead() const
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
-   assert<NullPtr>(cond,__FILE__,__LINE__);
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
    return _item.childHead();
 }
 
