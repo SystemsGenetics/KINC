@@ -1,42 +1,6 @@
-#include <cstdlib>
 #include <utility>
 #include "filemem.h"
 #include "unit.h"
-
-
-
-struct Node : FileMem::Static<12>
-{
-   using Static<12>::Static;
-   Node()
-   {
-      val() = 42;
-   }
-   uint32_t& val() { get<uint32_t>(0); }
-   FileMem::Ptr& next() { get<FileMem::Ptr>(4); }
-};
-
-
-
-struct LNode : FileMem::Static<4085>
-{};
-
-
-
-struct DNode : FileMem::Object
-{
-   using Object::Object;
-   DNode(): Object(12)
-   {
-      val() = 42;
-   }
-   DNode(FileMem::Ptr p): Object(12,p)
-   {
-      val() = 42;
-   }
-   uint32_t& val() { get<uint32_t>(0); }
-   FileMem::Ptr& next() { get<FileMem::Ptr>(4); }
-};
 
 
 
@@ -44,6 +8,32 @@ namespace unit
 {
    namespace filemem
    {
+      struct Node : FileMem::Static<12>
+      {
+         using Static<12>::Static;
+         Node()
+         {
+            val() = 42;
+         }
+         uint32_t& val() { get<uint32_t>(0); }
+         FileMem::Ptr& next() { get<FileMem::Ptr>(4); }
+      };
+      struct LNode : FileMem::Static<4085>
+      {};
+      struct DNode : FileMem::Object
+      {
+         using Object::Object;
+         DNode(): Object(12)
+         {
+            val() = 42;
+         }
+         DNode(FileMem::Ptr p): Object(12,p)
+         {
+            val() = 42;
+         }
+         uint32_t& val() { get<uint32_t>(0); }
+         FileMem::Ptr& next() { get<FileMem::Ptr>(4); }
+      };
       constexpr const char* tmpFile = "testfiles/memfile.tmp";
       constexpr const char* validFile = "testfiles/memfile";
       constexpr const char* invalidFile = "testfiles/notmemfile";
