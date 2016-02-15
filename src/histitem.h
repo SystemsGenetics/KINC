@@ -10,12 +10,12 @@ namespace HistItemData
 {
    struct Item;
    struct String;
-   constexpr static int nodeLen = 60;
+   constexpr auto nodeSz = 60;
 }
 
-struct HistItemData::Item : FileMem::Static<nodeLen>
+struct HistItemData::Item : FileMem::Static<nodeSz>
 {
-   using Static<nodeLen>::Static;
+   using Static<nodeSz>::Static;
    int64_t& timeStamp() { get<int64_t>(0); }
    FileMem::Ptr& fileNamePtr() { get<FileMem::Ptr>(8); }
    int32_t& fileNameSize() { get<int32_t>(16); }
@@ -82,14 +82,14 @@ private:
    // *
    // * FUNCTIONS
    // *
-   void load_item();
-   std::string get_string(FileMem::Ptr,FileMem::SizeT);
-   FileMem::Ptr set_string(const std::string&);
+   inline void load_item();
+   inline std::string get_string(FileMem::Ptr,FileMem::SizeT);
+   inline FileMem::Ptr set_string(const std::string&);
    FileMem::Ptr rec_add_item(FileMem&,FileMem::Ptr);
    // *
    // * CONSTANTS
    // *
-   constexpr static int _nodeLen = HistItemData::nodeLen;
+   constexpr static auto _nodeSz = HistItemData::nodeSz;
    // *
    // * VARIABLES
    // *

@@ -15,11 +15,12 @@ data.h
 analytic.h
 filemem.cpp
 filemem.h
-filemem.t.cpp
 histitem.cpp
 histitem.h
 history.cpp
 history.h
 main.cpp
-unit.t.cpp
 unit.h
+unit.t.cpp
+filemem.t.cpp
+histitem.t.cpp

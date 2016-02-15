@@ -6,6 +6,7 @@ HistItem& HistItem::operator=(const HistItem& hist)
 {
    bool cond = _item.addr()==FileMem::nullPtr;
    assert<IsAllocated>(cond,__FILE__,__LINE__);
+   _mem.reserve(_nodeSz);
    _mem.allocate(_item);
    _fileName = hist.fileName();
    _object = hist.object();
@@ -54,6 +55,8 @@ void HistItem::allocate()
 {
    bool cond = _item.addr()==FileMem::nullPtr;
    assert<IsAllocated>(cond,__FILE__,__LINE__);
+   _mem.reserve(_nodeSz);
+   _mem.allocate(_item);
    _item.timeStamp() = 0;
    _item.fileNamePtr() = FileMem::nullPtr;
    _item.fileNameSize() = 0;
@@ -63,8 +66,6 @@ void HistItem::allocate()
    _item.commandSize() = 0;
    _item.childHead() = FileMem::nullPtr;
    _item.next() = FileMem::nullPtr;
-   _mem.allocate(_item);
-   _mem.sync(_item,FileSync::write);
 }
 
 
@@ -209,7 +210,7 @@ FileMem::Ptr HistItem::addr() const
 
 
 
-void HistItem::load_item()
+inline void HistItem::load_item()
 {
    _mem.sync(_item,FileSync::read);
    if (_item.fileNamePtr()!=FileMem::nullPtr)
@@ -228,7 +229,7 @@ void HistItem::load_item()
 
 
 
-std::string HistItem::get_string(FileMem::Ptr ptr, FileMem::SizeT size)
+inline std::string HistItem::get_string(FileMem::Ptr ptr, FileMem::SizeT size)
 {
    String str(size,ptr);
    _mem.sync(str,FileSync::read);
@@ -237,9 +238,10 @@ std::string HistItem::get_string(FileMem::Ptr ptr, FileMem::SizeT size)
 
 
 
-FileMem::Ptr HistItem::set_string(const std::string& newStr)
+inline FileMem::Ptr HistItem::set_string(const std::string& newStr)
 {
    String str(newStr.size()+1);
+   _mem.reserve(newStr.size()+1);
    _mem.allocate(str);
    memcpy(str.c_str(),newStr.c_str(),newStr.size()+1);
    _mem.sync(str,FileSync::write);
@@ -250,7 +252,7 @@ FileMem::Ptr HistItem::set_string(const std::string& newStr)
 
 FileMem::Ptr HistItem::rec_add_item(FileMem& mem, FileMem::Ptr ptr)
 {
-   bool ret = ptr;
+   FileMem::Ptr ret = ptr;
    if (ptr!=FileMem::nullPtr)
    {
       HistItem from(mem,ptr);
