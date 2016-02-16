@@ -53,7 +53,8 @@ bool unit::histitem::main()
             childhead1()&&
             childhead2()&&
             childhead3()&&
-            childhead4();
+            childhead4()&&
+            init5();
    }
    catch (...)
    {
@@ -94,6 +95,13 @@ bool unit::histitem::allocate1()
 bool unit::histitem::init2()
 {
    start();
+   {
+      FileMem tf(tmpFile);
+      tf.clear();
+      HistItem t(tf);
+      t.allocate();
+      t.sync();
+   }
    FileMem tf(tmpFile);
    HistItem t(tf,tf.head());
    bool ret = t.addr()!=FileMem::nullPtr;
@@ -599,4 +607,36 @@ bool unit::histitem::childhead4()
       ret = true;
    }
    return finish(ret,"childhead4");
+}
+
+
+
+bool unit::histitem::init5()
+{
+   start();
+   std::string fileName = "filename";
+   std::string object = "object";
+   std::string command = "command";
+   {
+      FileMem tf(tmpFile);
+      tf.clear();
+      HistItem t(tf);
+      t.allocate();
+      t.timeStamp(9999);
+      t.fileName(fileName);
+      t.object(object);
+      t.command(command);
+      t.next(8888);
+      t.childHead(7777);
+      t.sync();
+   }
+   FileMem tf(tmpFile);
+   HistItem t(tf,tf.head());
+   bool ret = t.timeStamp()==9999;
+   ret = ret&&t.fileName()==fileName;
+   ret = ret&&t.object()==object;
+   ret = ret&&t.command()==command;
+   ret = ret&&t.next()==8888;
+   ret = ret&&t.childHead()==7777;
+   return finish(ret,"init5");
 }

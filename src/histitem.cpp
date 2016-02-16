@@ -233,6 +233,8 @@ inline std::string HistItem::get_string(FileMem::Ptr ptr, FileMem::SizeT size)
 {
    String str(size,ptr);
    _mem.sync(str,FileSync::read);
+   bool cond = str.c_str()[size-1]=='\0';
+   assert<InvalidItem>(cond,__FILE__,__LINE__);
    return {str.c_str()};
 }
 

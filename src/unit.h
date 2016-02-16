@@ -64,6 +64,7 @@ namespace unit
       bool childhead2();
       bool childhead3();
       bool childhead4();
+      bool init5();
    }
    inline void header(const char*);
    inline void end();

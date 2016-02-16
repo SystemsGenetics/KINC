@@ -10,7 +10,7 @@ namespace HistItemData
 {
    struct Item;
    struct String;
-   constexpr auto nodeSz = 60;
+   constexpr FileMem::SizeT nodeSz = 60;
 }
 
 struct HistItemData::Item : FileMem::Static<nodeSz>
@@ -46,6 +46,7 @@ public:
    struct AlreadySet;
    struct IsAllocated;
    struct IsNullPtr;
+   struct InvalidItem;
    // *
    // * BASIC METHODS
    // *
@@ -125,6 +126,13 @@ struct HistItem::IsNullPtr : public HistItem::Exception
 {
    IsNullPtr(const char* file, int line):
       Exception(file,line,"History::IsNullPtr")
+   {}
+};
+
+struct HistItem::InvalidItem : public HistItem::Exception
+{
+   InvalidItem(const char* file, int line):
+      Exception(file,line,"History::InvalidItem")
    {}
 };
 
