@@ -22,6 +22,8 @@ history.h
 kincfile.cpp
 kincfile.h
 dataplugin.h
+datamap.cpp
+datamap.h
 main.cpp
 unit.h
 unit.t.cpp
