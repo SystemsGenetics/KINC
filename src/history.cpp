@@ -15,6 +15,13 @@ History::History(FileMem& mem, FileMem::Ptr ptr):
 
 
 
+FileMem::Ptr History::addr()
+{
+   return _head.addr();
+}
+
+
+
 void History::timeStamp(int64_t ts)
 {
    _head.timeStamp(ts);

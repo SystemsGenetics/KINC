@@ -24,6 +24,7 @@ public:
    // *
    // * FUNCTIONS
    // *
+   FileMem::Ptr addr();
    void timeStamp(int64_t);
    void fileName(const std::string&);
    void object(const std::string&);
