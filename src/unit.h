@@ -20,10 +20,12 @@ namespace unit
       bool init3();
       bool init4();
       bool reserve1();
+      bool expand1();
       bool capacity1();
       bool allocate1();
       bool allocate2();
       bool allocate3();
+      bool allot1();
       bool clear1();
       bool addr1();
       bool sync1();
