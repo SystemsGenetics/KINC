@@ -1,6 +1,5 @@
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include "filemem.h"
 
 
@@ -67,18 +66,4 @@ void FileMem::clear()
    assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
    cond = ::write(_fd,&_next,sizeof(Ptr))==sizeof(Ptr);
    assert<SystemError>(cond,__FILE__,__LINE__,"write");
-}
-
-
-
-bool FileMem::reserve(SizeT size)
-{
-   bool ret = false;
-   if (posix_fallocate64(_fd,lseek64(_fd,0,SEEK_END),size)==0)
-   {
-      ret = true;
-      _size += size;
-      _capacity += size;
-   }
-   return ret;
 }
