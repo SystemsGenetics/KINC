@@ -19,6 +19,9 @@ histitem.cpp
 histitem.h
 history.cpp
 history.h
+kincfile.cpp
+kincfile.h
+dataplugin.h
 main.cpp
 unit.h
 unit.t.cpp
