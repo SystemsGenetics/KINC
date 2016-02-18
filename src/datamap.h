@@ -17,6 +17,7 @@ public:
    DataMap(DataMap&&) = delete;
    DataMap& operator=(const DataMap&) = delete;
    DataMap& operator=(DataMap&&) = delete;
+   DataMap() = default;
    // *
    // * FUNCTIONS
    // *

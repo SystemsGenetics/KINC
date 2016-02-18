@@ -10,6 +10,7 @@
 #include <list>
 #include "terminal.h"
 #include "cldevlist.h"
+#include "datamap.h"
 #include "exception.h"
 
 
@@ -58,7 +59,7 @@ public:
    Console(Console&&) = delete;
    Console& operator=(const Console&) = delete;
    Console& operator=(Console&&) = delete;
-   Console(int argc, char* argv[], Terminal& tm);
+   Console(int,char*[],Terminal&,DataMap&);
    ~Console();
    // *
    // * FUNCTIONS
@@ -68,6 +69,13 @@ public:
    //bool del(std::string&);
    //Data* find(std::string&);
 private:
+   struct CommandError
+   {
+      CommandError(const char* c, const std::string& m): cmd {c}, msg {m} {}
+      const char* cmd;
+      std::string msg;
+   };
+   struct CommandQuit {};
    // *
    // * ENUMERATIONS
    // *
@@ -76,6 +84,13 @@ private:
    enum class Command
    {
       gpu, ///< This is an OpenCL command.
+      open,
+      load,
+      dump,
+      query,
+      close,
+      list,
+      analytic,
       quit, ///< The quit command.
       error ///< Error at parsing command.
    };
@@ -86,22 +101,22 @@ private:
       list, ///< The list subcommand.
       info, ///< The info subcommand.
       set, ///< The set subcommand.
-      clear, ///< The clear subcommand.
-      error ///< Error at parsing OpenCL subcommand.
+      clear ///< The clear subcommand.
    };
    // *
    // * FUNCTIONS
    // *
    void terminal_loop();
-   bool parse(std::string&);
-   bool decode(std::list<std::string>&);
-   bool process(Command,std::list<std::string>&);
-   bool gpu_decode(std::list<std::string>&);
-   bool gpu_process(GpuCommand,std::list<std::string>&);
+   void parse(std::string&);
+   void decode(std::list<std::string>&);
+   void process(Command,std::list<std::string>&);
+   void gpu_decode(std::list<std::string>&);
+   void gpu_process(GpuCommand,std::list<std::string>&);
    void gpu_list();
-   bool gpu_info(std::list<std::string>&);
-   bool gpu_set(std::list<std::string>&);
+   void gpu_info(std::list<std::string>&);
+   void gpu_set(std::list<std::string>&);
    void gpu_clear();
+   void data_open(std::list<std::string>&);
    // *
    // * STATIC VARIABLES
    // *
@@ -111,6 +126,8 @@ private:
    // *
    /// Reference to program's main Terminal interface.
    Terminal& _tm;
+   //
+   DataMap& _dataMap;
    /// Pointer to OpenCL device that is set for computation acceleration. By
    /// or if clear command issues this is set to nullptr.
    CLDevice* _device;

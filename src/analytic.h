@@ -1,16 +1,17 @@
 #ifndef ANALYTIC_H
 #define ANALYTIC_H
 #include <string>
+#include "dataplugin.h"
 
 
 
 class Analytic
 {
    virtual ~Analytic() = default;
-   virtual bool input(const std::string&) = 0;
-   virtual bool output(const std::string&) = 0;
+   virtual void input(DataPlugin*) = 0;
+   virtual void output(DataPlugin*) = 0;
    virtual void option(const std::string&,const std::string&) = 0;
-   virtual bool execute() = 0;
+   virtual void execute() = 0;
 };
 
 

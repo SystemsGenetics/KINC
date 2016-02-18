@@ -10,6 +10,7 @@
 #include "cldevice.h"
 #include "data.h"
 #include "analytic.h"
+#include "plugins/plugins.h"
 
 
 
@@ -23,9 +24,10 @@ bool Console::_lock {false};
 /// header.
 ///
 /// @pre Console must not be locked.
-Console::Console(int argc, char* argv[], Terminal& terminal):
+Console::Console(int argc, char* argv[], Terminal& terminal, DataMap& datamap):
    _alive {false},
    _tm {terminal},
+   _dataMap {datamap},
    _device {nullptr}
 {
    assert<InvalidUse>(!_lock,__FILE__,__LINE__);
@@ -64,14 +66,24 @@ void Console::run()
 /// of the program is set to false in a subfunction if quit is given.
 void Console::terminal_loop()
 {
-   _alive = true;
-   while (_alive)
+   bool alive = true;
+   while (alive)
    {
       std::string line;
       _tm >> line;
       _tm << Terminal::endl;
-      parse(line);
-      _tm << Terminal::endl;
+      try
+      {
+         parse(line);
+      }
+      catch (CommandError e)
+      {
+         _tm << e.cmd << ": " << e.msg << Terminal::endl;
+      }
+      catch (CommandQuit)
+      {
+         alive = false;
+      }
    }
 }
 
@@ -84,9 +96,7 @@ void Console::terminal_loop()
 /// list passes onto function that decodes user input and processes the command.
 ///
 /// @param line One line of user input.
-///
-/// @return True if the user command was processed successfully.
-bool Console::parse(std::string& line)
+void Console::parse(std::string& line)
 {
    enum {_new,build} state = _new;
    std::list<std::string> list;
@@ -115,7 +125,7 @@ bool Console::parse(std::string& line)
          break;
       }
    }
-   return decode(list);
+   decode(list);
 }
 
 
@@ -127,16 +137,44 @@ bool Console::parse(std::string& line)
 /// enumerated command type is then passed to subfunction.
 ///
 /// @param list List of user arguments from command.
-///
-/// @return True if command was successful.
-bool Console::decode(std::list<std::string>& list)
+void Console::decode(std::list<std::string>& list)
 {
-   Command comm;
+   Command comm = Command::error;
    if (list.size()>0)
    {
       if (list.front()=="gpu")
       {
          comm = Command::gpu;
+         list.pop_front();
+      }
+      else if (list.front()=="open")
+      {
+         comm = Command::open;
+         list.pop_front();
+      }
+      else if (list.front()=="load")
+      {
+         comm = Command::load;
+         list.pop_front();
+      }
+      else if (list.front()=="dump")
+      {
+         comm = Command::dump;
+         list.pop_front();
+      }
+      else if (list.front()=="query")
+      {
+         comm = Command::query;
+         list.pop_front();
+      }
+      else if (list.front()=="close")
+      {
+         comm = Command::close;
+         list.pop_front();
+      }
+      else if (list.front()=="list")
+      {
+         comm = Command::close;
          list.pop_front();
       }
       else if (list.front()=="quit")
@@ -146,17 +184,10 @@ bool Console::decode(std::list<std::string>& list)
       }
       else
       {
-         comm = Command::error;
-         _tm << "Error: " << list.front() << " command/analytic not found."
-             << Terminal::endl;
+         comm = Command::analytic;
       }
    }
-   else
-   {
-      comm = Command::error;
-      _tm << "Error: empty command given." << Terminal::endl;
-   }
-   return process(comm,list);
+   process(comm,list);
 }
 
 
@@ -165,24 +196,33 @@ bool Console::decode(std::list<std::string>& list)
 ///
 /// @param comm Enumerated command to be processed.
 /// @param list List of user arguments for command.
-///
-/// @return True if command was successful.
-bool Console::process(Command comm, std::list<std::string>& list)
+void Console::process(Command comm, std::list<std::string>& list)
 {
-   bool ret;
    switch (comm)
    {
    case Command::gpu:
-      ret = gpu_decode(list);
+      gpu_decode(list);
+      break;
+   case Command::open:
+      data_open(list);
+      break;
+   case Command::load:
+      break;
+   case Command::dump:
+      break;
+   case Command::query:
+      break;
+   case Command::close:
+      break;
+   case Command::list:
+      break;
+   case Command::analytic:
       break;
    case Command::quit:
-      _alive = false;
-      ret = true;
-      break;
+      throw CommandQuit();
    case Command::error:
-      ret = false;
+      return;
    }
-   return ret;
 }
 
 
@@ -194,9 +234,7 @@ bool Console::process(Command comm, std::list<std::string>& list)
 /// enumerated command type is then passed to subfunction.
 ///
 /// @param list List of arguments for OpenCL command.
-///
-/// @return True if the command was successful.
-bool Console::gpu_decode(std::list<std::string>& list)
+void Console::gpu_decode(std::list<std::string>& list)
 {
    GpuCommand comm;
    if (list.size()>0)
@@ -223,17 +261,14 @@ bool Console::gpu_decode(std::list<std::string>& list)
       }
       else
       {
-         comm = GpuCommand::error;
-         _tm << "Error: " << list.front() << " GPU subcommand not found."
-             << Terminal::endl;
+         throw CommandError("gpu","Unknown command.");
       }
    }
    else
    {
-      comm = GpuCommand::error;
-      _tm << "Error: GPU subcommand required." << Terminal::endl;
+      throw CommandError("gpu","No command given.");
    }
-   return gpu_process(comm,list);
+   gpu_process(comm,list);
 }
 
 
@@ -242,32 +277,23 @@ bool Console::gpu_decode(std::list<std::string>& list)
 ///
 /// @param comm The OpenCL command to be processed.
 /// @param list List of arguments for this command.
-///
-/// @return True if the command was successful.
-bool Console::gpu_process(GpuCommand comm, std::list<std::string>& list)
+void Console::gpu_process(GpuCommand comm, std::list<std::string>& list)
 {
-   bool ret;
    switch (comm)
    {
    case GpuCommand::list:
       gpu_list();
-      ret = true;
       break;
    case GpuCommand::info:
-      ret = gpu_info(list);
+      gpu_info(list);
       break;
    case GpuCommand::set:
-      ret = gpu_set(list);
+      gpu_set(list);
       break;
    case GpuCommand::clear:
       gpu_clear();
-      ret = true;
-      break;
-   case GpuCommand::error:
-      ret = false;
       break;
    }
-   return ret;
 }
 
 
@@ -293,44 +319,36 @@ void Console::gpu_list()
 /// Executes command to print basic info of of given OpenCL device.
 ///
 /// @param list List of arguments for this command.
-///
-/// @return True if the command was successful.
-bool Console::gpu_info(std::list<std::string>& list)
+void Console::gpu_info(std::list<std::string>& list)
 {
-   bool ret = false;
-   if (list.size()>0)
+   if (list.size()==0)
    {
-      int p,d;
-      char sep;
-      std::istringstream str(list.front());
-      if ((str >> p >> sep >> d)&&sep==':'&&_devList.exist(p,d))
-      {
-         CLDevice& dev {_devList.at(p,d)};
-         _tm << "===== " << dev.info(CLDevice::name) << " ("
-             << dev.info(CLDevice::type) << ") =====\n";
-         _tm << "Online: " << dev.info(CLDevice::online) << ".\n";
-         _tm << "Unified Memory: " << dev.info(CLDevice::unified_mem) << ".\n";
-         _tm << dev.info(CLDevice::addr_space) << " bit address space.\n";
-         _tm << dev.info(CLDevice::clock) << "Mhz max clock frequency.\n";
-         _tm << dev.info(CLDevice::compute_units) << " compute unit(s), "
-             << dev.info(CLDevice::work_size) << " work-item(s) per unit.\n";
-         _tm << dev.info(CLDevice::global_mem) << " global memory, "
-             << dev.info(CLDevice::local_mem) << " local memory."
-             << Terminal::endl;
-         ret = true;
-      }
-      else
-      {
-         _tm << "Error: cannot find OpenCL device " << list.front()
-                    << Terminal::endl;
-      }
+      throw CommandError("gpu info","command requires 1 argument.");
+   }
+   int p,d;
+   char sep;
+   std::istringstream str(list.front());
+   if ((str >> p >> sep >> d)&&sep==':'&&_devList.exist(p,d))
+   {
+      CLDevice& dev {_devList.at(p,d)};
+      _tm << "===== " << dev.info(CLDevice::name) << " ("
+          << dev.info(CLDevice::type) << ") =====\n";
+      _tm << "Online: " << dev.info(CLDevice::online) << ".\n";
+      _tm << "Unified Memory: " << dev.info(CLDevice::unified_mem) << ".\n";
+      _tm << dev.info(CLDevice::addr_space) << " bit address space.\n";
+      _tm << dev.info(CLDevice::clock) << "Mhz max clock frequency.\n";
+      _tm << dev.info(CLDevice::compute_units) << " compute unit(s), "
+          << dev.info(CLDevice::work_size) << " work-item(s) per unit.\n";
+      _tm << dev.info(CLDevice::global_mem) << " global memory, "
+          << dev.info(CLDevice::local_mem) << " local memory."
+          << Terminal::endl;
    }
    else
    {
-      _tm << "Error: the gpu info command requires one argument."
-                 << Terminal::endl;
+      std::ostringstream buffer;
+      buffer << "cannot find OpenCL device \"" << list.front() << "\".";
+      throw CommandError("gpu info",buffer.str());
    }
-   return ret;
 }
 
 
@@ -338,37 +356,31 @@ bool Console::gpu_info(std::list<std::string>& list)
 /// Executes command that sets OpenCL device for analytic computation.
 ///
 /// @param list List of arguments for this command.
-///
-/// @return True if the command was successful.
-bool Console::gpu_set(std::list<std::string>& list)
+void Console::gpu_set(std::list<std::string>& list)
 {
-   bool ret = false;
-   if (list.size()>0)
+   if (list.size()==0)
    {
-      int p,d;
-      char sep;
-      std::istringstream str(list.front());
-      if ((str >> p >> sep >> d)&&sep==':'&&_devList.exist(p,d))
+      throw CommandError("gpu info","command requires 1 argument.");
+   }
+   int p,d;
+   char sep;
+   std::istringstream str(list.front());
+   if ((str >> p >> sep >> d)&&sep==':'&&_devList.exist(p,d))
+   {
+      if (_device)
       {
-         if (_device)
-         {
-            delete _device;
-         }
-         _device = new CLDevice {_devList.at(p,d)};
-         ret = true;
+         delete _device;
       }
-      else
-      {
-         _tm << "Error: cannot find OpenCL device " << list.front()
-                    << Terminal::endl;
-      }
+      _device = new CLDevice {_devList.at(p,d)};
+      _tm << "OpenCL device set to \"" << list.front() << "\"."
+          << Terminal::endl;
    }
    else
    {
-      _tm << "Error: the gpu set command requires one argument."
-                 << Terminal::endl;
+      std::ostringstream buffer;
+      buffer << "cannot find OpenCL device \"" << list.front() << "\".";
+      throw CommandError("gpu info",buffer.str());
    }
-   return ret;
 }
 
 
@@ -380,5 +392,32 @@ void Console::gpu_clear()
    {
       delete _device;
       _device = nullptr;
+      _tm << "OpenCL device cleared." << Terminal::endl;
    }
+   else
+   {
+      _tm << "no OpenCL devie set." << Terminal::endl;
+   }
+}
+
+
+
+void Console::data_open(std::list<std::string>& list)
+{
+   if (list.size()<2)
+   {
+      throw CommandError("open","command requires 2 arguments.");
+   }
+   std::string type = list.front();
+   list.pop_front();
+   std::string name = list.front();
+   DataPlugin* nd = KINCPlugins::new_data(type,name);
+   if (!nd)
+   {
+      std::ostringstream buffer;
+      buffer << "cannot find data type \"" << type << "\".";
+      throw CommandError("open",buffer.str());
+   }
+   _dataMap.add(name,nd);
+   _tm << "Added " << name << "(" << type << ") data object." << Terminal::endl;
 }
