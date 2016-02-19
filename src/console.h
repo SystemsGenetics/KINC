@@ -102,6 +102,7 @@ private:
    void gpu_info(std::list<std::string>&);
    void gpu_set(std::list<std::string>&);
    void gpu_clear();
+   void data_main(Command,std::list<std::string>&);
    void data_open(std::list<std::string>&);
    void data_load(std::list<std::string>&);
    void data_dump(std::list<std::string>&);
@@ -109,6 +110,8 @@ private:
    void data_close(std::list<std::string>&);
    void data_list(std::list<std::string>&);
    void analytic(std::list<std::string>&);
+   DataPlugin* find_data(const std::string&);
+   void parse_data_options(DataPlugin*,std::list<std::string>&);
    // *
    // * STATIC VARIABLES
    // *

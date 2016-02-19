@@ -101,22 +101,22 @@ void Console::parse(std::string& line)
    enum {_new,build} state = _new;
    std::list<std::string> list;
    char newBuf[2] = {" "};
-   for (std::string::iterator i=line.begin();i!=line.end();i++)
+   for (auto i:line)
    {
       switch (state)
       {
       case _new:
-         if (*i!=' '&&*i!='\t')
+         if (i!=' '&&i!='\t')
          {
-            newBuf[0] = *i;
+            newBuf[0] = i;
             list.push_back(newBuf);
             state = build;
          }
          break;
       case build:
-         if (*i!=' '&&*i!='\t')
+         if (i!=' '&&i!='\t')
          {
-            list.back() += *i;
+            list.back() += i;
          }
          else
          {
@@ -204,15 +204,11 @@ void Console::process(Command comm, std::list<std::string>& list)
       gpu_decode(list);
       break;
    case Command::open:
-      data_open(list);
-      break;
    case Command::load:
-      break;
    case Command::dump:
-      break;
    case Command::query:
-      break;
    case Command::close:
+      data_main(comm,list);
       break;
    case Command::list:
       break;
@@ -402,6 +398,68 @@ void Console::gpu_clear()
 
 
 
+void Console::data_main(Command comm, std::list<std::string>& list)
+{
+   try
+   {
+      switch (comm)
+      {
+      case Command::open:
+         data_open(list);
+         break;
+      case Command::load:
+         data_load(list);
+         break;
+      case Command::dump:
+         data_dump(list);
+         break;
+      case Command::query:
+         data_query(list);
+         break;
+      case Command::close:
+         data_close(list);
+         break;
+      }
+   }
+   catch (DataException e)
+   {
+      if (e.level()==DataException::Level::fatal)
+      {
+         _dataMap.del(e.who());
+         if (e.who())
+         {
+            delete e.who();
+         }
+      }
+      std::ostringstream buffer;
+      buffer << "Data Exception Caught!" << std::endl;
+      buffer << "Level: ";
+      switch (e.level())
+      {
+      case DataException::Level::general:
+         buffer << "General" << std::endl;
+         break;
+      case DataException::Level::caution:
+         buffer << "Caution" << std::endl;
+         break;
+      case DataException::Level::warning:
+         buffer << "Warning" << std::endl;
+         break;
+      case DataException::Level::severe:
+         buffer << "Severe" << std::endl;
+         break;
+      case DataException::Level::fatal:
+         buffer << "Fatal" << std::endl;
+         break;
+      }
+      buffer << "Location: " << e.file() << ":" << e.line() << std::endl;
+      buffer << "What: " << e.what();
+      throw CommandError("data",buffer.str());
+   }
+}
+
+
+
 void Console::data_open(std::list<std::string>& list)
 {
    if (list.size()<2)
@@ -411,7 +469,26 @@ void Console::data_open(std::list<std::string>& list)
    std::string type = list.front();
    list.pop_front();
    std::string name = list.front();
-   DataPlugin* nd = KINCPlugins::new_data(type,name);
+   if (_dataMap.find(name)!=_dataMap.end())
+   {
+      std::ostringstream buffer;
+      buffer << "data object with name \"" << name << "\" already exists.";
+      throw CommandError("open",buffer.str());
+   }
+   DataPlugin* nd {nullptr};
+   try
+   {
+      nd = KINCPlugins::new_data(type,name);
+   }
+   catch (DataException)
+   {
+      throw;
+   }
+   catch (...)
+   {
+      throw DataException(__FILE__,__LINE__,nd,"UNKNOWN",
+                          DataException::Level::fatal);
+   }
    if (!nd)
    {
       std::ostringstream buffer;
@@ -426,18 +503,82 @@ void Console::data_open(std::list<std::string>& list)
 
 void Console::data_load(std::list<std::string>& list)
 {
+   if (list.size()<2)
+   {
+      throw CommandError("load","command requires 2 arguments.");
+   }
+   std::string textFile = list.front();
+   list.pop_front();
+   DataPlugin* data = find_data(list.front());
+   list.pop_front();
+   try
+   {
+      parse_data_options(data,list);
+      data->load(textFile,_tm);
+   }
+   catch (DataException)
+   {
+      throw;
+   }
+   catch (...)
+   {
+      throw DataException(__FILE__,__LINE__,data,"UNKNOWN",
+                          DataException::Level::fatal);
+   }
 }
 
 
 
 void Console::data_dump(std::list<std::string>& list)
 {
+   if (list.size()<2)
+   {
+      throw CommandError("dump","command requires 2 arguments.");
+   }
+   std::string textFile = list.front();
+   list.pop_front();
+   DataPlugin* data = find_data(list.front());
+   list.pop_front();
+   try
+   {
+      parse_data_options(data,list);
+      data->dump(textFile,_tm);
+   }
+   catch (DataException)
+   {
+      throw;
+   }
+   catch (...)
+   {
+      throw DataException(__FILE__,__LINE__,data,"UNKNOWN",
+                          DataException::Level::fatal);
+   }
 }
 
 
 
 void Console::data_query(std::list<std::string>& list)
 {
+   if (list.size()<1)
+   {
+      throw CommandError("query","command requires 1 argument.");
+   }
+   DataPlugin* data = find_data(list.front());
+   list.pop_front();
+   try
+   {
+      parse_data_options(data,list);
+      data->query(_tm);
+   }
+   catch (DataException)
+   {
+      throw;
+   }
+   catch (...)
+   {
+      throw DataException(__FILE__,__LINE__,data,"UNKNOWN",
+                          DataException::Level::fatal);
+   }
 }
 
 
@@ -456,4 +597,50 @@ void Console::data_list(std::list<std::string>& list)
 
 void Console::analytic(std::list<std::string>& list)
 {
+}
+
+
+
+DataPlugin* Console::find_data(const std::string& name)
+{
+   auto i = _dataMap.find(name);
+   if (i==_dataMap.end())
+   {
+      std::ostringstream buffer;
+      buffer << "data object \"" << name << "\" not found.";
+      throw CommandError("load",buffer.str());
+   }
+   return i->second;
+}
+
+
+
+void Console::parse_data_options(DataPlugin* data, std::list<std::string>& list)
+{
+   while (list.size()>0)
+   {
+      std::string key;
+      std::string val;
+      enum {front,back} state = front;
+      for (auto i:list.front())
+      {
+         switch (state)
+         {
+         case front:
+            if (i=='=')
+            {
+               state = back;
+            }
+            else
+            {
+               key += i;
+            }
+            break;
+         case back:
+            val += i;
+            break;
+         }
+      }
+      data->option(key,val);
+   }
 }
