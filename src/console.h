@@ -15,21 +15,7 @@
 
 
 
-class Data;
-class Analytic;
 class CLDevice;
-
-
-
-/*
- * NOTE: for new_data and new_analytic see plugin.cpp for source code and
- * comments.
- */
-namespace KINCPlugins
-{
-   extern Data* new_kinc_data(std::string&);
-   extern Analytic* new_kinc_analytic(std::string&);
-}
 
 
 
@@ -117,6 +103,12 @@ private:
    void gpu_set(std::list<std::string>&);
    void gpu_clear();
    void data_open(std::list<std::string>&);
+   void data_load(std::list<std::string>&);
+   void data_dump(std::list<std::string>&);
+   void data_query(std::list<std::string>&);
+   void data_close(std::list<std::string>&);
+   void data_list(std::list<std::string>&);
+   void analytic(std::list<std::string>&);
    // *
    // * STATIC VARIABLES
    // *

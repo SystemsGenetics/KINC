@@ -421,3 +421,39 @@ void Console::data_open(std::list<std::string>& list)
    _dataMap.add(name,nd);
    _tm << "Added " << name << "(" << type << ") data object." << Terminal::endl;
 }
+
+
+
+void Console::data_load(std::list<std::string>& list)
+{
+}
+
+
+
+void Console::data_dump(std::list<std::string>& list)
+{
+}
+
+
+
+void Console::data_query(std::list<std::string>& list)
+{
+}
+
+
+
+void Console::data_close(std::list<std::string>& list)
+{
+}
+
+
+
+void Console::data_list(std::list<std::string>& list)
+{
+}
+
+
+
+void Console::analytic(std::list<std::string>& list)
+{
+}
