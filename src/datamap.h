@@ -23,6 +23,7 @@ public:
    // *
    bool add(const std::string&,DataPlugin*);
    bool del(const std::string&);
+   bool del(DataPlugin*);
    StdMap::iterator find(const std::string&);
    StdMap::iterator begin();
    StdMap::iterator end();

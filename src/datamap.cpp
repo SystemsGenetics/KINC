@@ -22,6 +22,26 @@ bool DataMap::del(const std::string& name)
 
 
 
+bool DataMap::del(DataPlugin* data)
+{
+   bool ret = false;
+   for (auto i = _map.begin();i!=_map.end();)
+   {
+      if (i->second==data)
+      {
+         _map.erase(i);
+         ret = true;
+      }
+      else
+      {
+         ++i;
+      }
+   }
+   return ret;
+}
+
+
+
 DataMap::StdMap::iterator DataMap::find(const std::string& name)
 {
    return _map.find(name);
