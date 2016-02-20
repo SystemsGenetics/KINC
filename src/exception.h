@@ -106,17 +106,15 @@ public:
    // *
    // * BASIC METHODS
    // *
-   DataException(const char*,int,DataPlugin*,const char*,Level);
+   DataException(const char*,int,const char*,Level);
    // *
    // * FUNCTIONS
    // *
-   DataPlugin* who();
    Level level();
 private:
    // *
    // * VARIABLES
    // *
-   DataPlugin* _who;
    Level _level;
 };
 
@@ -132,16 +130,7 @@ public:
    // *
    // * BASIC METHODS
    // *
-   AnalyticException(const char*,int,Analytic*,const char*);
-   // *
-   // * FUNCTIONS
-   // *
-   Analytic* who();
-private:
-   // *
-   // * VARIABLES
-   // *
-   Analytic* _who;
+   AnalyticException(const char*,int,const char*);
 };
 
 

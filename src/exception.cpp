@@ -102,19 +102,11 @@ const char* Exception::what()
 
 
 
-DataException::DataException(const char* file, int line, DataPlugin* who,
+DataException::DataException(const char* file, int line,
                              const char* what, Level lvl):
    Exception(file,line,what),
-   _who(who),
    _level(lvl)
 {}
-
-
-
-DataPlugin* DataException::who()
-{
-   return _who;
-}
 
 
 
@@ -125,18 +117,10 @@ DataException::Level DataException::level()
 
 
 
-AnalyticException::AnalyticException(const char* file, int line, Analytic* who,
+AnalyticException::AnalyticException(const char* file, int line,
                                      const char* what):
-   Exception(file,line,what),
-   _who(who)
+   Exception(file,line,what)
 {}
-
-
-
-Analytic* AnalyticException::who()
-{
-   return _who;
-}
 
 
 
