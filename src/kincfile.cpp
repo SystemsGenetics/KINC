@@ -1,3 +1,4 @@
+#include <cstring>
 #include "kincfile.h"
 
 
@@ -23,14 +24,7 @@ KincFile::KincFile(const std::string& fileName):
       _mem->sync(_header,FileSync::read);
       cond = _header.histHead()!=FileMem::nullPtr;
       assert<InvalidFile>(cond,__FILE__,__LINE__);
-      cond = true;
-      for (int i=0;i<_idSz;++i)
-      {
-         if (_header.idString()[i]!=_idString[i])
-         {
-            cond = false;
-         }
-      }
+      cond = strncmp(_header.idString(),_idString,_idSz)==0;
       assert<InvalidFile>(cond,__FILE__,__LINE__);
       _hist = new History(*_mem,_header.histHead());
    }
