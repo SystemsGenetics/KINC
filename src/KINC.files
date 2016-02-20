@@ -29,3 +29,5 @@ unit.h
 unit.t.cpp
 filemem.t.cpp
 histitem.t.cpp
+plugins/plugins.h
+plugins/Makefile

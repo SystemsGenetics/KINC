@@ -1,4 +1,5 @@
 .RECIPEPREFIX := +
+MAKEFLAGS := $(MAKEFLAGS) --no-print-directory
 CXX := g++
 NAME := kinc
 FILES := KINC.files
@@ -26,9 +27,11 @@ objs := $(addprefix $(build),$(program:%.cpp=%.o))
 udpds := $(addprefix $(build),$(utest:%.cpp=%.d))
 uobjs := $(addprefix $(build),$(utest:%.cpp=%.o))
 
+plugin := plugins/plugins.a
 
 
-.PHONY := clean all program test check
+
+.PHONY: clean all program test check plugins plugclean
 
 all: program test
 program: $(progf)
@@ -36,16 +39,22 @@ test: $(run)unit
 
 include $(alldpds)
 
-$(progf): $(objs) $(dpds)
+$(progf): $(objs) $(dpds) $(plugin)
 +@echo "Building program."
 +@$(CXX) $(objs) $(aldflags) $(aldlibs) -o $@
 
-$(run)unit: $(uobjs) $(udpds)
+$(run)unit: $(uobjs) $(udpds) $(plugin)
 +@echo "Building unit test."
 +@$(CXX) $(uobjs) $(aldflags) $(aldlibs) -o $@
 
 depend: $(alldpds)
 +@echo Done.
+
+plugins:
++@cd plugins && $(MAKE)
+
+$(plugin):
++@cd plugins && $(MAKE)
 
 $(build)%.o : %.cpp
 +@echo "Building object $@"
@@ -67,3 +76,6 @@ clean:
 depclean:
 +@echo "Cleaning all dependency files."
 +@rm -f $(build)*.d
+
+plugclean:
++@cd plugins && $(MAKE) plugclean
