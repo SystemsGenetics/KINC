@@ -55,6 +55,10 @@ public:
    //bool del(std::string&);
    //Data* find(std::string&);
 private:
+   using string = std::string;
+   using slist = std::list<std::string>;
+   using dlist = std::list<std::pair<std::string,DataPlugin*>>;
+   using aptr = std::unique_ptr<Analytic>;
    struct CommandError
    {
       CommandError(const char* c, const std::string& m): cmd {c}, msg {m} {}
@@ -65,7 +69,6 @@ private:
    // *
    // * ENUMERATIONS
    // *
-   ///
    /// Main commands.
    enum class Command
    {
@@ -80,7 +83,6 @@ private:
       quit, ///< The quit command.
       error ///< Error at parsing command.
    };
-   ///
    /// OpenCL subcommands.
    enum class GpuCommand
    {
@@ -93,25 +95,28 @@ private:
    // * FUNCTIONS
    // *
    void terminal_loop();
-   void parse(std::string&);
-   void decode(std::list<std::string>&);
-   void process(Command,std::list<std::string>&);
-   void gpu_decode(std::list<std::string>&);
-   void gpu_process(GpuCommand,std::list<std::string>&);
+   void parse(string&);
+   void decode(slist&);
+   void process(Command,slist&);
+   void gpu_decode(slist&);
+   void gpu_process(GpuCommand,slist&);
    void gpu_list();
-   void gpu_info(std::list<std::string>&);
-   void gpu_set(std::list<std::string>&);
+   void gpu_info(slist&);
+   void gpu_set(slist&);
    void gpu_clear();
-   void data_main(Command,std::list<std::string>&);
-   void data_open(std::list<std::string>&);
-   void data_load(std::list<std::string>&);
-   void data_dump(std::list<std::string>&);
-   void data_query(std::list<std::string>&);
-   void data_close(std::list<std::string>&);
-   void data_list(std::list<std::string>&);
-   void analytic(std::list<std::string>&);
-   DataPlugin* find_data(const std::string&);
-   void parse_data_options(DataPlugin*,std::list<std::string>&);
+   void data_open(slist&);
+   void data_load(slist&);
+   void data_dump(slist&);
+   void data_query(slist&);
+   void data_close(slist&);
+   void data_list();
+   void analytic(slist&);
+   DataPlugin* find_data(const string&);
+   void parse_data_options(DataPlugin*,slist&);
+   void parse_analytic_inputs(aptr&,const string&);
+   void parse_analytic_outputs(aptr&,const string&,dlist&);
+   DataPlugin* parse_analytic_ndata(const string&,string&);
+   void parse_analytic_options(aptr&,slist&);
    // *
    // * STATIC VARIABLES
    // *
