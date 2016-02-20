@@ -2,6 +2,7 @@
 #define DATAMAP_H
 #include <unordered_map>
 #include <string>
+#include <memory>
 #include "dataplugin.h"
 
 
@@ -9,7 +10,7 @@
 class DataMap
 {
 public:
-   using StdMap = std::unordered_map<std::string,DataPlugin*>;
+   using smap = std::unordered_map<std::string,DataPlugin*>;
    // *
    // * BASIC METHODS
    // *
@@ -24,14 +25,15 @@ public:
    bool add(const std::string&,DataPlugin*);
    bool del(const std::string&);
    bool del(DataPlugin*);
-   StdMap::iterator find(const std::string&);
-   StdMap::iterator begin();
-   StdMap::iterator end();
+   bool exist(const std::string&);
+   DataPlugin* find(const std::string&);
+   smap::iterator begin();
+   smap::iterator end();
 private:
    // *
    // * VARIABLES
    // *
-   StdMap _map;
+   smap _map;
 };
 
 
