@@ -13,10 +13,12 @@ arscript := ar.sh
 
 
 
-.PHONY: plugclean
+.PHONY: clean
 
 plugins.a: $(data) $(analytic)
 +@echo "Building plugins library."
++@cd analytic && ./gen.sh
++@cd data && ./gen.sh
 +@echo "CREATE $@" > $(arscript)
 +@for a in $^; do (echo "ADDLIB $$a" >> $(arscript)); done
 +@echo "SAVE" >> $(arscript)
@@ -31,6 +33,6 @@ plugins.a: $(data) $(analytic)
 +@echo "Building analytic plugin $*"
 +@cd $< && $(MAKE) TARGET=../../$@
 
-plugclean:
+clean:
 +@echo "Cleaning all plugins."
 +@rm -f *.a
