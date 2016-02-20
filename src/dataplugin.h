@@ -8,11 +8,20 @@
 
 class DataPlugin : public Data, public KincFile
 {
+public:
+   inline std::string type();
+protected:
    inline DataPlugin(const std::string&,const std::string&);
-   std::string type();
 private:
    std::string _type;
 };
+
+
+
+inline std::string DataPlugin::type()
+{
+   return _type;
+}
 
 
 
