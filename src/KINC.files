@@ -11,6 +11,8 @@ cldevice.cpp
 cldevice.h
 cldevlist.cpp
 cldevlist.h
+getopts.cpp
+getopts.h
 data.h
 analytic.h
 filemem.cpp
