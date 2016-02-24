@@ -29,6 +29,7 @@ datamap.h
 main.cpp
 unit.h
 unit.t.cpp
+getopts.t.cpp
 filemem.t.cpp
 histitem.t.cpp
 plugins/plugins.h

@@ -11,7 +11,8 @@ const char* unit::headerStr {nullptr};
 
 int main(int argc, char* argv[])
 {
-   if (unit::filemem::main()&&
+   if (unit::getopts::main()&&
+       unit::filemem::main()&&
        unit::histitem::main())
    {
       std::cout << "ALL PASSED." << std::endl;
