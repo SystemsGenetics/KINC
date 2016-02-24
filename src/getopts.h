@@ -11,22 +11,45 @@
 class GetOpts
 {
 public:
+   // *
+   // * EXCEPTIONS
+   // *
    struct Exception;
    struct InvalidType;
+   // *
+   // * DECLERATIONS
+   // *
    class Iterator;
    using string = std::string;
-   using clist = std::list<string>;
-   using oplist = std::list<std::pair<string,string>>;
+   // *
+   // * BASIC METHODS
+   // *
    GetOpts(const string&);
-   int get_com(std::initializer_list<string>);
-   void pop_com();
+   // *
+   // * FUNCTIONS
+   // *
+   int com_size();
+   bool com_empty();
+   int com_get(std::initializer_list<string>);
+   void com_pop();
    int size();
    bool empty();
    Iterator begin();
    Iterator end();
    Iterator erase(Iterator);
 private:
+   // *
+   // * DECLERATIONS
+   // *
+   using clist = std::list<string>;
+   using oplist = std::list<std::pair<string,string>>;
+   // *
+   // * FUNCTIONS
+   // *
    inline clist explode(const string&);
+   // *
+   // * VARIABLES
+   // *
    clist _comms;
    oplist _opts;
 };
@@ -36,10 +59,19 @@ private:
 class GetOpts::Iterator
 {
 public:
+   // *
+   // * DECLERATIONS
+   // *
    friend class GetOpts;
    using string = GetOpts::string;
    using oplist = GetOpts::oplist;
+   // *
+   // * FUNCTIONS
+   // *
    const string& key();
+   // *
+   // * OPERATORS
+   // *
    Iterator& operator>>(short&);
    Iterator& operator>>(unsigned short&);
    Iterator& operator>>(int&);
@@ -50,10 +82,20 @@ public:
    Iterator& operator>>(double&);
    Iterator& operator>>(string&);
    void operator++();
+   bool operator==(const Iterator&);
    bool operator!=(const Iterator&);
 private:
+   // *
+   // * DECLERATIONS
+   // *
    using istring = std::istringstream;
-   Iterator(const oplist::iterator&);
+   // *
+   // * BASIC METHODS
+   // *
+   inline Iterator(const oplist::iterator&);
+   // *
+   // * VARIABLES
+   // *
    oplist::iterator _i;
 };
 

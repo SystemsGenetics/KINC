@@ -18,7 +18,7 @@ GetOpts::GetOpts(const string& raw)
             ++y;
          }
          string val(y,i.end());
-         string key(x,--y);
+         string key(x,y);
          _opts.push_back({key,val});
       }
       else
@@ -30,7 +30,21 @@ GetOpts::GetOpts(const string& raw)
 
 
 
-int GetOpts::get_com(std::initializer_list<string> commands)
+int GetOpts::com_size()
+{
+   return _comms.size();
+}
+
+
+
+bool GetOpts::com_empty()
+{
+   return _comms.empty();
+}
+
+
+
+int GetOpts::com_get(std::initializer_list<string> commands)
 {
    int ret = 0;
    int count = 0;
@@ -51,7 +65,7 @@ int GetOpts::get_com(std::initializer_list<string> commands)
 
 
 
-void GetOpts::pop_com()
+void GetOpts::com_pop()
 {
    if (!_comms.empty())
    {
@@ -226,6 +240,13 @@ void GetOpts::Iterator::operator++()
 
 
 
+bool GetOpts::Iterator::operator==(const Iterator& cmp)
+{
+   return _i==cmp._i;
+}
+
+
+
 bool GetOpts::Iterator::operator!=(const Iterator& cmp)
 {
    return _i!=cmp._i;
@@ -233,6 +254,6 @@ bool GetOpts::Iterator::operator!=(const Iterator& cmp)
 
 
 
-GetOpts::Iterator::Iterator(const oplist::iterator& i):
+inline GetOpts::Iterator::Iterator(const oplist::iterator& i):
    _i(i)
 {}
