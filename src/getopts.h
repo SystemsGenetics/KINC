@@ -31,6 +31,7 @@ public:
    int com_size();
    bool com_empty();
    int com_get(std::initializer_list<string>);
+   string& com_front();//NOT TESTED!!
    void com_pop();
    int size();
    bool empty();

@@ -25,6 +25,7 @@ bool unit::getopts::main()
       ret = init1()&&
             com_get1()&&
             com_get2()&&
+            com_front1()&&
             com_pop1()&&
             com_empty1()&&
             size1()&&
@@ -88,6 +89,16 @@ bool unit::getopts::com_get2()
    GetOpts t(commStr1);
    bool ret = t.com_get({"one"})==1;
    return finish(ret,"get_com2");
+}
+
+
+
+bool unit::getopts::com_front1()
+{
+   start();
+   GetOpts t(commStr1);
+   bool ret = t.com_front()==std::string("one");
+   return finish(ret,"com_front1");
 }
 
 

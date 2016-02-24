@@ -65,6 +65,13 @@ int GetOpts::com_get(std::initializer_list<string> commands)
 
 
 
+GetOpts::string& GetOpts::com_front()
+{
+   return _comms.front();
+}
+
+
+
 void GetOpts::com_pop()
 {
    if (!_comms.empty())
