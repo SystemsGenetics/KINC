@@ -12,6 +12,7 @@ namespace unit
       bool init1();
       bool com_get1();
       bool com_get2();
+      bool com_front1();
       bool com_pop1();
       bool com_empty1();
       bool size1();
@@ -100,11 +101,29 @@ namespace unit
       bool childhead4();
       bool init5();
    }
+   extern int numTestsDone;
+   inline void initiate();
+   inline void complete();
    inline void header(const char*);
    inline void end();
    inline void start();
    inline bool finish(bool,const char*);
    extern const char* headerStr;
+}
+
+
+
+inline void unit::initiate()
+{
+   numTestsDone = 0;
+   std::cout << "Initiating Unit Tests >>>" << std::endl;
+}
+
+
+
+inline void unit::complete()
+{
+   std::cout << numTestsDone << " unit test(s) passed. <<<" << std::endl;
 }
 
 
@@ -126,6 +145,7 @@ inline void unit::end()
 
 inline void unit::start()
 {
+   numTestsDone++;
    std::cout << "." << std::flush;
 }
 

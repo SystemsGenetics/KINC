@@ -6,20 +6,21 @@
 
 
 const char* unit::headerStr {nullptr};
+int unit::numTestsDone {0};
 
 
 
 int main(int argc, char* argv[])
 {
+   unit::initiate();
    if (unit::getopts::main()&&
        unit::filemem::main()&&
        unit::histitem::main())
    {
-      std::cout << "ALL PASSED." << std::endl;
+      unit::complete();
    }
    else
    {
-      std::cout << "FAILURE." << std::endl;
       exit(1);
    }
    try

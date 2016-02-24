@@ -76,7 +76,6 @@ $(build)%.d: %.cpp $(datahdr) $(analytichdr)
 +@$(CXX) $(acxxflags) -MM $< >> $@
 
 check: test
-+@echo "Running unit tests..."
 +@cd $(run) && ./unit
 
 clean:
