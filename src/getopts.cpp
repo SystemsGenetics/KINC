@@ -30,20 +30,6 @@ GetOpts::GetOpts(const string& raw)
 
 
 
-int GetOpts::com_size()
-{
-   return _comms.size();
-}
-
-
-
-bool GetOpts::com_empty()
-{
-   return _comms.empty();
-}
-
-
-
 int GetOpts::com_get(std::initializer_list<string> commands)
 {
    int ret = 0;
@@ -61,58 +47,6 @@ int GetOpts::com_get(std::initializer_list<string> commands)
       }
    }
    return ret;
-}
-
-
-
-GetOpts::string& GetOpts::com_front()
-{
-   return _comms.front();
-}
-
-
-
-void GetOpts::com_pop()
-{
-   if (!_comms.empty())
-   {
-      _comms.pop_front();
-   }
-}
-
-
-
-int GetOpts::size()
-{
-   return _opts.size();
-}
-
-
-
-bool GetOpts::empty()
-{
-   return _opts.empty();
-}
-
-
-
-GetOpts::Iterator GetOpts::begin()
-{
-   return {_opts.begin()};
-}
-
-
-
-GetOpts::Iterator GetOpts::end()
-{
-   return {_opts.end()};
-}
-
-
-
-GetOpts::Iterator GetOpts::erase(Iterator i)
-{
-   return {_opts.erase(i._i)};
 }
 
 
@@ -139,13 +73,6 @@ inline GetOpts::clist GetOpts::explode(const string& raw)
       ++i;
    }
    return list;
-}
-
-
-
-const GetOpts::string& GetOpts::Iterator::key()
-{
-   return _i->first;
 }
 
 
@@ -237,30 +164,3 @@ GetOpts::Iterator& GetOpts::Iterator::operator>>(string& n)
    assert<InvalidType>(cond,__FILE__,__LINE__);
    return *this;
 }
-
-
-
-void GetOpts::Iterator::operator++()
-{
-   ++_i;
-}
-
-
-
-bool GetOpts::Iterator::operator==(const Iterator& cmp)
-{
-   return _i==cmp._i;
-}
-
-
-
-bool GetOpts::Iterator::operator!=(const Iterator& cmp)
-{
-   return _i!=cmp._i;
-}
-
-
-
-inline GetOpts::Iterator::Iterator(const oplist::iterator& i):
-   _i(i)
-{}
