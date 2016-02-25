@@ -1,84 +1,102 @@
 #include "datamap.h"
+#include "plugins/plugins.h"
 
 
 
-bool DataMap::add(const std::string& name, DataPlugin* data)
+DataPlugin& DataMap::open(const string& name, bool select)
 {
-   bool ret = false;
-   if (_map.find(name)==_map.end())
+   auto n = name.begin();
+   while (n!=name.end()&&*n!=':')
    {
-      _map[name] = data;
-      ret = true;
+      ++n;
    }
-   return ret;
-}
-
-
-
-bool DataMap::del(const std::string& name)
-{
-   bool ret = false;
-   auto i = _map.find(name);
-   if (i!=_map.end())
+   string file(name.begin(),n);
+   string type(++n,name.end());
+   bool cond = _map.find(file)==_map.end();
+   assert<AlreadyExists>(cond,__FILE__,__LINE__);
+   std::unique_ptr<DataPlugin> nd(KINCPlugins::new_data(type,file));
+   assert<InvalidType>(bool(nd),__FILE__,__LINE__);
+   auto x = _map.emplace(file,std::move(nd));
+   auto i = x.first;
+   if (select)
    {
-      delete i->second;
-      _map.erase(i);
-      ret = true;
+      _i = i;
    }
-   return ret;
+   return *(i->second);
 }
 
 
 
-bool DataMap::del(DataPlugin* data)
+void DataMap::close(const string& file)
 {
-   bool ret = false;
-   for (auto i = _map.begin();i!=_map.end();)
+   auto i = get(file);
+   if (_i==i)
    {
-      if (i->second==data)
-      {
-         delete i->second;
-         _map.erase(i);
-         ret = true;
-      }
-      else
-      {
-         ++i;
-      }
+      _i = _map.end();
    }
-   return ret;
+   _map.erase(i);
 }
 
 
 
-bool DataMap::exist(const std::string& name)
+void DataMap::load(GetOpts& ops, Terminal& tm)
 {
-   return _map.find(name)!=_map.end();
-}
-
-
-
-DataPlugin* DataMap::find(const std::string& name)
-{
-   DataPlugin* ret {nullptr};
-   auto i = _map.find(name);
-   if (i!=_map.end())
+   bool cond = _i!=_map.end();
+   assert<NoSelect>(cond,__FILE__,__LINE__);
+   try
    {
-      ret = i->second;
+      _i->second->load(ops,tm);
    }
-   return ret;
+   catch (...)
+   {
+      _map.erase(_i);
+      _i = _map.end();
+      throw;
+   }
 }
 
 
 
-DataMap::smap::iterator DataMap::begin()
+void DataMap::dump(GetOpts& ops, Terminal& tm)
 {
-   return _map.begin();
+   bool cond = _i!=_map.end();
+   assert<NoSelect>(cond,__FILE__,__LINE__);
+   try
+   {
+      _i->second->dump(ops,tm);
+   }
+   catch (...)
+   {
+      _map.erase(_i);
+      _i = _map.end();
+      throw;
+   }
 }
 
 
 
-DataMap::smap::iterator DataMap::end()
+void DataMap::query(GetOpts& ops, Terminal& tm)
 {
-   return _map.end();
+   bool cond = _i!=_map.end();
+   assert<NoSelect>(cond,__FILE__,__LINE__);
+   try
+   {
+      _i->second->query(ops,tm);
+   }
+   catch (...)
+   {
+      _map.erase(_i);
+      _i = _map.end();
+      throw;
+   }
+}
+
+
+
+DataMap::Map::iterator DataMap::get(const string& file)
+{
+   auto i = _map.find(file);
+   bool cond = i!=_map.end();
+   assert<DoesNotExist>(cond,__FILE__,__LINE__);
+   return i;
 }
