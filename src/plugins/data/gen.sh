@@ -2,7 +2,7 @@
 
 nl='
 '
-header="";
+header="#include \"../plugins.h\"";
 code="";
 
 for file in *
@@ -14,12 +14,12 @@ code="${code}${nl}   if (strcmp(type.c_str(),\"${file}\")==0) ret = new ${file}(
 fi
 done
 
-echo "$header" > plugin.h
-echo >> plugin.h
-echo "DataPlugin* KINCPlugins::new_data(const std::string& type, const std::string& name)" >> plugin.h
-echo "{" >> plugin.h
-echo -n "   DataPlugin* ret = nullptr;" >> plugin.h
-echo "$code" >> plugin.h
-echo "   return ret;" >> plugin.h
-echo "}" >> plugin.h
+echo "$header" > plugin.cpp
+echo >> plugin.cpp
+echo "DataPlugin* KINCPlugins::new_data(const std::string& type, const std::string& name)" >> plugin.cpp
+echo "{" >> plugin.cpp
+echo -n "   DataPlugin* ret = nullptr;" >> plugin.cpp
+echo "$code" >> plugin.cpp
+echo "   return ret;" >> plugin.cpp
+echo "}" >> plugin.cpp
 

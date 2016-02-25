@@ -2,7 +2,7 @@
 
 nl='
 '
-header="";
+header="#include \"../plugins.h\"";
 code="";
 
 for file in *
@@ -14,12 +14,12 @@ code="${code}${nl}   if (strcmp(type.c_str(),\"${file}\")==0) ret = new ${file};
 fi
 done
 
-echo "$header" > plugin.h
-echo >> plugin.h
-echo "Analytic* KINCPlugins::new_analytic(const std::string& type)" >> plugin.h
-echo "{" >> plugin.h
-echo -n "   Analytic* ret = nullptr;" >> plugin.h
-echo "$code" >> plugin.h
-echo "   return ret;" >> plugin.h
-echo "}" >> plugin.h
+echo "$header" > plugin.cpp
+echo >> plugin.cpp
+echo "Analytic* KINCPlugins::new_analytic(const std::string& type)" >> plugin.cpp
+echo "{" >> plugin.cpp
+echo -n "   Analytic* ret = nullptr;" >> plugin.cpp
+echo "$code" >> plugin.cpp
+echo "   return ret;" >> plugin.cpp
+echo "}" >> plugin.cpp
 

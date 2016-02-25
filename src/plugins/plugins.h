@@ -14,6 +14,4 @@ namespace KINCPlugins
 
 
 
-#include "data/plugin.h"
-#include "analytic/plugin.h"
 #endif
