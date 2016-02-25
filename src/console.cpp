@@ -12,7 +12,6 @@
 #include "cldevice.h"
 #include "data.h"
 #include "analytic.h"
-#include "plugins/plugins.h"
 
 
 
@@ -74,9 +73,10 @@ void Console::terminal_loop()
       string line;
       _tm >> line;
       _tm << Terminal::endl;
+      GetOpts ops(line);
       try
       {
-         parse(line);
+         process(ops);
       }
       catch (CommandError e)
       {
@@ -86,7 +86,7 @@ void Console::terminal_loop()
       {
          alive = false;
       }
-      catch (DataException e)
+      /*catch (DataException e)
       {
          std::ostringstream buffer;
          buffer << "Data Exception Caught!" << std::endl;
@@ -128,111 +128,8 @@ void Console::terminal_loop()
       catch (...)
       {
          ;
-      }
+      }*/
    }
-}
-
-
-
-/// @brief Parses one line of user input into list of strings.
-///
-/// Takes one line of user input and seperates it into list of strings using
-/// space or tab characters as delimiters between arguments. Once parsed into a
-/// list passes onto function that decodes user input and processes the command.
-///
-/// @param line One line of user input.
-void Console::parse(string& line)
-{
-   enum {_new,build} state = _new;
-   slist list;
-   char newBuf[2] = {" "};
-   for (auto i:line)
-   {
-      switch (state)
-      {
-      case _new:
-         if (i!=' '&&i!='\t')
-         {
-            newBuf[0] = i;
-            list.push_back(newBuf);
-            state = build;
-         }
-         break;
-      case build:
-         if (i!=' '&&i!='\t')
-         {
-            list.back() += i;
-         }
-         else
-         {
-            state = _new;
-         }
-         break;
-      }
-   }
-   decode(list);
-}
-
-
-
-/// @brief Decodes string command into enumerated type.
-///
-/// Takes the first argument in user command and decodes into specific
-/// enumerated command type. Possibly modified command argument list and
-/// enumerated command type is then passed to subfunction.
-///
-/// @param list List of user arguments from command.
-void Console::decode(slist& list)
-{
-   Command comm = Command::error;
-   if (list.size()>0)
-   {
-      if (list.front()=="gpu")
-      {
-         comm = Command::gpu;
-         list.pop_front();
-      }
-      else if (list.front()=="open")
-      {
-         comm = Command::open;
-         list.pop_front();
-      }
-      else if (list.front()=="load")
-      {
-         comm = Command::load;
-         list.pop_front();
-      }
-      else if (list.front()=="dump")
-      {
-         comm = Command::dump;
-         list.pop_front();
-      }
-      else if (list.front()=="query")
-      {
-         comm = Command::query;
-         list.pop_front();
-      }
-      else if (list.front()=="close")
-      {
-         comm = Command::close;
-         list.pop_front();
-      }
-      else if (list.front()=="list")
-      {
-         comm = Command::list;
-         list.pop_front();
-      }
-      else if (list.front()=="quit")
-      {
-         comm = Command::quit;
-         list.pop_front();
-      }
-      else
-      {
-         comm = Command::analytic;
-      }
-   }
-   process(comm,list);
 }
 
 
@@ -241,85 +138,33 @@ void Console::decode(slist& list)
 ///
 /// @param comm Enumerated command to be processed.
 /// @param list List of user arguments for command.
-void Console::process(Command comm, slist& list)
+void Console::process(GetOpts& ops)
 {
-   switch (comm)
+   enum {Analytic=0,GPU,Open,Load,Dump,Query,Close,List,Quit};
+   switch (ops.com_get({"gpu","open","load","dump","query","close","list",
+                        "quit"}))
    {
-   case Command::gpu:
-      gpu_decode(list);
+   case GPU:
+      ops.com_pop();
+      gpu_process(ops);
       break;
-   case Command::open:
-      data_open(list);
+   case Open:
       break;
-   case Command::load:
-      data_load(list);
+   case Load:
       break;
-   case Command::dump:
-      data_dump(list);
+   case Dump:
       break;
-   case Command::query:
-      data_query(list);
+   case Query:
       break;
-   case Command::close:
-      data_close(list);
+   case Close:
       break;
-   case Command::list:
-      data_list();
+   case List:
       break;
-   case Command::analytic:
-      analytic(list);
-      break;
-   case Command::quit:
+   case Quit:
       throw CommandQuit();
-   case Command::error:
-      return;
+   case Analytic:
+      break;
    }
-}
-
-
-
-/// @brief decodes string OpenCL subcommand into enumerated type.
-///
-/// Takes the first argument of the OpenCL subcommand and decodes to proper
-/// enumerated command. Possibly modified subcommand argument list and
-/// enumerated command type is then passed to subfunction.
-///
-/// @param list List of arguments for OpenCL command.
-void Console::gpu_decode(slist& list)
-{
-   GpuCommand comm;
-   if (list.size()>0)
-   {
-      if (list.front()=="list")
-      {
-         comm = GpuCommand::list;
-         list.pop_front();
-      }
-      else if (list.front()=="info")
-      {
-         comm = GpuCommand::info;
-         list.pop_front();
-      }
-      else if (list.front()=="set")
-      {
-         comm = GpuCommand::set;
-         list.pop_front();
-      }
-      else if (list.front()=="clear")
-      {
-         comm = GpuCommand::clear;
-         list.pop_front();
-      }
-      else
-      {
-         throw CommandError("gpu","Unknown command.");
-      }
-   }
-   else
-   {
-      throw CommandError("gpu","No command given.");
-   }
-   gpu_process(comm,list);
 }
 
 
@@ -328,21 +173,33 @@ void Console::gpu_decode(slist& list)
 ///
 /// @param comm The OpenCL command to be processed.
 /// @param list List of arguments for this command.
-void Console::gpu_process(GpuCommand comm, slist& list)
+void Console::gpu_process(GetOpts& ops)
 {
-   switch (comm)
+   if (ops.com_empty())
    {
-   case GpuCommand::list:
+      throw CommandError("gpu","subcommand not provided.");
+   }
+   enum {Error=0,List,Info,Set,Clear};
+   switch (ops.com_get({"list","info","set","clear"}))
+   {
+   case List:
       gpu_list();
       break;
-   case GpuCommand::info:
-      gpu_info(list);
+   case Info:
+      ops.com_pop();
+      gpu_info(ops);
       break;
-   case GpuCommand::set:
-      gpu_set(list);
+   case Set:
+      ops.com_pop();
+      gpu_set(ops);
       break;
-   case GpuCommand::clear:
+   case Clear:
       gpu_clear();
+      break;
+   case Error:
+      std::ostringstream buffer;
+      buffer << "command " << ops.com_front() << " not recognized.";
+      throw CommandError("gpu",buffer.str());
       break;
    }
 }
@@ -370,15 +227,15 @@ void Console::gpu_list()
 /// Executes command to print basic info of of given OpenCL device.
 ///
 /// @param list List of arguments for this command.
-void Console::gpu_info(slist& list)
+void Console::gpu_info(GetOpts& ops)
 {
-   if (list.size()==0)
+   if (ops.com_empty())
    {
       throw CommandError("gpu info","command requires 1 argument.");
    }
    int p,d;
    char sep;
-   std::istringstream str(list.front());
+   std::istringstream str(ops.com_front());
    if ((str >> p >> sep >> d)&&sep==':'&&_devList.exist(p,d))
    {
       CLDevice& dev {_devList.at(p,d)};
@@ -397,7 +254,7 @@ void Console::gpu_info(slist& list)
    else
    {
       std::ostringstream buffer;
-      buffer << "cannot find OpenCL device \"" << list.front() << "\".";
+      buffer << "cannot find OpenCL device \"" << ops.com_front() << "\".";
       throw CommandError("gpu info",buffer.str());
    }
 }
@@ -407,15 +264,15 @@ void Console::gpu_info(slist& list)
 /// Executes command that sets OpenCL device for analytic computation.
 ///
 /// @param list List of arguments for this command.
-void Console::gpu_set(slist& list)
+void Console::gpu_set(GetOpts& ops)
 {
-   if (list.size()==0)
+   if (ops.com_empty())
    {
       throw CommandError("gpu info","command requires 1 argument.");
    }
    int p,d;
    char sep;
-   std::istringstream str(list.front());
+   std::istringstream str(ops.com_front());
    if ((str >> p >> sep >> d)&&sep==':'&&_devList.exist(p,d))
    {
       if (_device)
@@ -423,13 +280,13 @@ void Console::gpu_set(slist& list)
          delete _device;
       }
       _device = new CLDevice {_devList.at(p,d)};
-      _tm << "OpenCL device set to \"" << list.front() << "\"."
+      _tm << "OpenCL device set to \"" << ops.com_front() << "\"."
           << Terminal::endl;
    }
    else
    {
       std::ostringstream buffer;
-      buffer << "cannot find OpenCL device \"" << list.front() << "\".";
+      buffer << "cannot find OpenCL device \"" << ops.com_front() << "\".";
       throw CommandError("gpu info",buffer.str());
    }
 }
@@ -452,7 +309,7 @@ void Console::gpu_clear()
 }
 
 
-
+/*
 void Console::data_open(slist& list)
 {
    if (list.size()<2)
@@ -821,3 +678,4 @@ void Console::parse_analytic_options(aptr& a, slist& list)
       list.pop_front();
    }
 }
+*/

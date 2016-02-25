@@ -12,6 +12,7 @@
 #include "cldevlist.h"
 #include "datamap.h"
 #include "exception.h"
+#include "getopts.h"
 
 
 
@@ -56,9 +57,6 @@ public:
    //Data* find(std::string&);
 private:
    using string = std::string;
-   using slist = std::list<std::string>;
-   using dlist = std::list<std::pair<std::string,DataPlugin*>>;
-   using aptr = std::unique_ptr<Analytic>;
    struct CommandError
    {
       CommandError(const char* c, const std::string& m): cmd {c}, msg {m} {}
@@ -67,44 +65,16 @@ private:
    };
    struct CommandQuit {};
    // *
-   // * ENUMERATIONS
-   // *
-   /// Main commands.
-   enum class Command
-   {
-      gpu, ///< This is an OpenCL command.
-      open,
-      load,
-      dump,
-      query,
-      close,
-      list,
-      analytic,
-      quit, ///< The quit command.
-      error ///< Error at parsing command.
-   };
-   /// OpenCL subcommands.
-   enum class GpuCommand
-   {
-      list, ///< The list subcommand.
-      info, ///< The info subcommand.
-      set, ///< The set subcommand.
-      clear ///< The clear subcommand.
-   };
-   // *
    // * FUNCTIONS
    // *
    void terminal_loop();
-   void parse(string&);
-   void decode(slist&);
-   void process(Command,slist&);
-   void gpu_decode(slist&);
-   void gpu_process(GpuCommand,slist&);
+   void process(GetOpts&);
+   void gpu_process(GetOpts&);
    void gpu_list();
-   void gpu_info(slist&);
-   void gpu_set(slist&);
+   void gpu_info(GetOpts&);
+   void gpu_set(GetOpts&);
    void gpu_clear();
-   void data_open(slist&);
+   /*void data_open(slist&);
    void data_load(slist&);
    void data_dump(slist&);
    void data_query(slist&);
@@ -116,7 +86,7 @@ private:
    void parse_analytic_inputs(aptr&,const string&);
    void parse_analytic_outputs(aptr&,const string&,dlist&);
    DataPlugin* parse_analytic_ndata(const string&,string&);
-   void parse_analytic_options(aptr&,slist&);
+   void parse_analytic_options(aptr&,slist&);*/
    // *
    // * STATIC VARIABLES
    // *
