@@ -272,6 +272,7 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
   // Load the input expression matrix.
   printf("  Reading expression matrix...\n");
   ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
+
 }
 /**
  *

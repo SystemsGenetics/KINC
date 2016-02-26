@@ -1,67 +1,91 @@
 .RECIPEPREFIX := +
-BUILD := ../build/
-RUN := ../run/
-
-
-
+MAKEFLAGS := $(MAKEFLAGS) --no-print-directory
 CXX := g++
-CXXFLAGS := -g `sdl-config --libs`
-LDFLAGS := -lOpenCL `sdl-config --libs`
-
-
-
 NAME := kinc
-
-SOURCES := \
-console.cpp \
-terminal.cpp \
-consolestream.cpp \
-exception.cpp
-
-UNITS := \
-unit.cpp
+FILES := KINC.files
 
 
 
-progf := $(RUN)$(NAME)
-program := $(SOURCES) main.cpp
-utest := $(SOURCES) $(UNITS)
-allsrc := $(SOURCES) $(UNITS) main.cpp
-alldpds := $(addprefix $(BUILD),$(allsrc:%.cpp=%.d))
-dpds := $(addprefix $(BUILD),$(program:%.cpp=%.d))
-objs := $(addprefix $(BUILD),$(program:%.cpp=%.o))
-udpds := $(addprefix $(BUILD),$(utest:%.cpp=%.d))
-uobjs := $(addprefix $(BUILD),$(utest:%.cpp=%.o))
+build := ../build/
+run := ../run/
+
+acxxflags := $(CXXFLAGS) -g -std=c++11 $(shell sdl-config --cflags)
+aldflags := $(LDFLAGS)
+aldlibs := $(LDLIBS) -lOpenCL $(shell sdl-config --libs)
+
+progf := $(run)$(NAME)
+
+allsrc := $(filter %.cpp,$(shell cat $(FILES)))
+utest := $(filter-out main.cpp,$(allsrc))
+program := $(filter-out %.t.cpp,$(allsrc))
+
+alldpds := $(addprefix $(build),$(allsrc:%.cpp=%.d))
+
+dpds := $(addprefix $(build),$(program:%.cpp=%.d))
+objs := $(addprefix $(build),$(program:%.cpp=%.o))
+
+udpds := $(addprefix $(build),$(utest:%.cpp=%.d))
+uobjs := $(addprefix $(build),$(utest:%.cpp=%.o))
+
+plugin := plugins/plugins.a
+datahdr := plugins/data/plugin.h
+analytichdr := plugins/analytic/plugin.h
 
 
+
+.PHONY: clean all program test check plugins pclean
 
 all: program test
 program: $(progf)
-test: $(RUN)unit
+test: $(run)unit
+
+$(analytichdr):
++@echo "Generating analytic plugin header."
++@cd plugins/analytic && ./gen.sh
+
+$(datahdr):
++@echo "Generating data plugin header."
++@cd plugins/data && ./gen.sh
 
 include $(alldpds)
 
-$(progf): $(objs) $(dpds)
+$(progf): $(objs) $(dpds) $(plugin)
 +@echo "Building program."
-+@$(CXX) $(objs) $(LDFLAGS) -o $@
++@$(CXX) $(objs) $(plugin) $(aldflags) $(aldlibs) -o $@
 
-$(RUN)unit: $(uobjs) $(udpds)
+$(run)unit: $(uobjs) $(udpds) $(plugin)
 +@echo "Building unit test."
-+@$(CXX) $(uobjs) $(LDFLAGS) -o $@
++@$(CXX) $(uobjs) $(plugin) $(aldflags) $(aldlibs) -o $@
 
 depend: $(alldpds)
 +@echo Done.
 
-$(BUILD)%.o : %.cpp
+plugins:
++@cd plugins && $(MAKE)
+
+$(plugin):
++@cd plugins && $(MAKE)
+
+$(build)%.o : %.cpp
 +@echo "Building object $@"
-+@$(CXX) $(CXXFLAGS) -c $< -o $(BUILD)$@
++@$(CXX) $(acxxflags) -c $< -o $(build)$@
 
-$(BUILD)%.d: %.cpp
+$(build)%.d: %.cpp $(datahdr) $(analytichdr)
 +@echo "Building depend $@"
-+@echo -n "$@ $(BUILD)" > $@
-+@$(CXX) -MM $< >> $@
++@echo -n "$@ $(build)" > $@
++@$(CXX) $(acxxflags) -MM $< >> $@
 
-.PHONY=clean
+check: test
++@echo "Running unit tests..."
++@cd $(run) && ./unit
+
 clean:
 +@echo "Cleaning all."
-+@rm -f $(BUILD)*.o $(progf)
++@rm -f $(build)*.o $(progf)
+
+depclean:
++@echo "Cleaning all dependency files."
++@rm -f $(build)*.d
+
+pclean:
++@cd plugins && $(MAKE) clean

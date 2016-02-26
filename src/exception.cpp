@@ -2,78 +2,7 @@
 
 
 
-Exception::Exception(const char* file, int line, const char* what):
-   _file(file),
-   _line(line),
-   _what(what)
-{}
-
-
-
-const char* Exception::file()
-{
-   return _file;
-}
-
-
-
-const int Exception::line()
-{
-   return _line;
-}
-
-
-
-const char* Exception::what()
-{
-   return _what;
-}
-
-
-
-DataException::DataException(const char* file, int line, Data* who, const char* what):
-   Exception(file,line,what),
-   _who(who)
-{}
-
-
-
-Data* DataException::who()
-{
-   return _who;
-}
-
-
-
-AnalyticException::AnalyticException(const char* file, int line, Analytic* who, const char* what):
-   Exception(file,line,what),
-   _who(who)
-{}
-
-
-
-Analytic* AnalyticException::who()
-{
-   return _who;
-}
-
-
-
-SystemError::SystemError(const char* file, int line, const char* system):
-   Exception(file,line,"SystemError"),
-   _system(system)
-{}
-
-
-
-const char* SystemError::system()
-{
-   return _system;
-}
-
-
-
-// List of all possible OpenCL errors.
+/// C style list of all possible OpenCL errors.
 const char* OpenCLError::c_clDescErrors[] = {
    "CL_SUCCESS",
    "CL_DEVICE_NOT_FOUND",
@@ -144,6 +73,71 @@ const char* OpenCLError::c_clDescErrors[] = {
 
 
 
+Exception::Exception(const char* file, int line, const char* what):
+   _file(file),
+   _line(line),
+   _what(what)
+{}
+
+
+
+const char* Exception::file()
+{
+   return _file;
+}
+
+
+
+const int Exception::line()
+{
+   return _line;
+}
+
+
+
+const char* Exception::what()
+{
+   return _what;
+}
+
+
+
+DataException::DataException(const char* file, int line,
+                             const char* what, Level lvl):
+   Exception(file,line,what),
+   _level(lvl)
+{}
+
+
+
+DataException::Level DataException::level()
+{
+   return _level;
+}
+
+
+
+AnalyticException::AnalyticException(const char* file, int line,
+                                     const char* what):
+   Exception(file,line,what)
+{}
+
+
+
+SystemError::SystemError(const char* file, int line, const char* system):
+   Exception(file,line,"SystemError"),
+   _system(system)
+{}
+
+
+
+const char* SystemError::system()
+{
+   return _system;
+}
+
+
+
 OpenCLError::OpenCLError(const char* file, int line, cl::Error& e):
    Exception(file,line,"OpenCLError"),
    _clFunc(e.what()),
@@ -161,7 +155,6 @@ const char* OpenCLError::clFunc()
 
 cl_int OpenCLError::code()
 {
-   // Return OpenCL error code.
    return _code;
 }
 
@@ -169,27 +162,12 @@ cl_int OpenCLError::code()
 
 const char* OpenCLError::code_str()
 {
-   // Make sure OpenCL code is within range.
    if (_code<=0&&_code>=-64)
    {
-      // Return pointer to string that describes error code.
       return c_clDescErrors[-_code];
    }
    else
    {
-      // Unknown error code, return NULL.
-      return NULL;
+      return nullptr;
    }
 }
-
-
-
-InvalidInput::InvalidInput(const char* file, int line):
-   Exception(file,line,"InvalidInput")
-{}
-
-
-
-InvalidUse::InvalidUse(const char* file, int line):
-   Exception(file,line,"InvalidUse")
-{}

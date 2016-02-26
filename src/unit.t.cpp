@@ -1,11 +1,26 @@
 #include <iostream>
+#include "unit.h"
 #include "console.h"
 #include "linuxterm.h"
 
 
 
+const char* unit::headerStr {nullptr};
+
+
+
 int main(int argc, char* argv[])
 {
+   if (unit::filemem::main()&&
+       unit::histitem::main())
+   {
+      std::cout << "ALL PASSED." << std::endl;
+   }
+   else
+   {
+      std::cout << "FAILURE." << std::endl;
+      exit(1);
+   }
    try
    {
       DataMap dataMap;
