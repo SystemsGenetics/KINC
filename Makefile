@@ -89,16 +89,16 @@ stats/outlier.o: stats/outlier.cpp stats/outlier.h
 similarity/PairWiseSet.o: similarity/PairWiseSet.cpp similarity/PairWiseSet.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/PairWiseSet.cpp -o similarity/PairWiseSet.o
 
-similarity/PairWiseSimilarity.o: similarity/methods/PairWiseSimilarity.cpp similarity/methods/PairWiseSimilarity.h
+similarity/methods/PairWiseSimilarity.o: similarity/methods/PairWiseSimilarity.cpp similarity/methods/PairWiseSimilarity.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/methods/PairWiseSimilarity.cpp -o similarity/methods/PairWiseSimilarity.o
 
-similarity/SpearmanSimilarity.o: similarity/methods/SpearmanSimilarity.cpp similarity/methods/SpearmanSimilarity.h
+similarity/methods/SpearmanSimilarity.o: similarity/methods/SpearmanSimilarity.cpp similarity/methods/SpearmanSimilarity.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/methods/SpearmanSimilarity.cpp -o similarity/methods/SpearmanSimilarity.o
 
-similarity/PearsonSimilarity.o: similarity/methods/PearsonSimilarity.cpp similarity/methods/PearsonSimilarity.h
+similarity/methods/PearsonSimilarity.o: similarity/methods/PearsonSimilarity.cpp similarity/methods/PearsonSimilarity.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/methods/PearsonSimilarity.cpp -o similarity/methods/PearsonSimilarity.o
 
-similarity/MISimilarity.o: similarity/methods/MISimilarity.cpp similarity/methods/MISimilarity.h
+similarity/methods/MISimilarity.o: similarity/methods/MISimilarity.cpp similarity/methods/MISimilarity.h
 	${CC} -c ${CFLAGS} ${INCLUDES} similarity/methods/MISimilarity.cpp -o similarity/methods/MISimilarity.o
 
 #clustering/meanshift.o: clustering/meanshift.cpp clustering/meanshift.h
@@ -149,10 +149,10 @@ indexer/RunIndex.o: indexer/RunIndex.cpp indexer/RunIndex.h
 indexer/RunQuery.o: indexer/RunQuery.cpp indexer/RunQuery.h
 	${CC} -c ${CFLAGS} ${INCLUDES} indexer/RunQuery.cpp -o indexer/RunQuery.o
 
-threshold/ThresholdMethod.o: threshold/methods/ThresholdMethod.cpp threshold/methods/ThresholdMethod.h
+threshold/methods/ThresholdMethod.o: threshold/methods/ThresholdMethod.cpp threshold/methods/ThresholdMethod.h
 	${CC} -c ${CFLAGS} ${INCLUDES} threshold/methods/ThresholdMethod.cpp -o threshold/methods/ThresholdMethod.o
 
-threshold/RMTThreshold.o: threshold/methods/RMTThreshold.cpp threshold/methods/RMTThreshold.h
+threshold/methods/RMTThreshold.o: threshold/methods/RMTThreshold.cpp threshold/methods/RMTThreshold.h
 	${CC} -c ${CFLAGS} ${INCLUDES} threshold/methods/RMTThreshold.cpp -o threshold/methods/RMTThreshold.o
 
 threshold/RunThreshold.o: threshold/RunThreshold.cpp threshold/RunThreshold.h

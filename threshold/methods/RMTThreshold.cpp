@@ -46,12 +46,12 @@ double RMTThreshold::findThreshold() {
   // The size of newM.
   int size;
   // File handles for the eigenvector and Chi-square output files.
-  //FILE* eigenF, *chiF;
+  FILE *eigenF;
   FILE *chiF;
   // The output file name
   char chi_filename[1024];
   // The output file name
-  //char eigen_filename[1024];
+  char eigen_filename[1024];
   // The threshold currently being tested.
   float th = thresholdStart;
   // The current chi-square value for the threshold being tested.
@@ -68,21 +68,21 @@ double RMTThreshold::findThreshold() {
   if (clustering) {
     if (max_missing > num_samples) {
       sprintf(chi_filename, "%s.%s.mcs%d.md%d.mmINF.chiVals.txt", file_prefix, th_method, min_cluster_size, max_modes);
-      //sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mmINF.eigenVals.txt", file_prefix, th_method, min_cluster_size, max_modes);
+      sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mmINF.eigenVals.txt", file_prefix, th_method, min_cluster_size, max_modes);
     }
     else {
       sprintf(chi_filename, "%s.%s.mcs%d.md%d.mm%d.chiVals.txt", file_prefix, th_method, min_cluster_size, max_modes, max_missing);
-      //sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mm%d.eigenVals.txt", file_prefix, th_method, min_cluster_size, max_modes, max_missing);
+      sprintf(eigen_filename, "%s.%s.mcs%d.md%d.mm%d.eigenVals.txt", file_prefix, th_method, min_cluster_size, max_modes, max_missing);
     }
   }
   else {
     sprintf(chi_filename, "%s.%s.chiVals.txt", file_prefix, th_method);
-    //sprintf(eigen_filename, "%s.%s.eigenVals.txt", file_prefix, th_method);
+    sprintf(eigen_filename, "%s.%s.eigenVals.txt", file_prefix, th_method);
   }
 
 
   chiF = fopen(chi_filename, "w");
-  //eigenF = fopen(eigen_filename, "w");
+  eigenF = fopen(eigen_filename, "w");
   fprintf(chiF, "Threshold\tChi-square\tCut Matrix Size\n");
 
   // Iterate through successively smaller threshold values until the following
@@ -106,11 +106,11 @@ double RMTThreshold::findThreshold() {
       free(newM);
 
       // print out eigenvalues to file
-      /*fprintf(eigenF, "%f\t", th);
+      fprintf(eigenF, "%f\t", th);
       for (int i = 0; i < size ; i++) {
         fprintf(eigenF, "%f\t", E[i]);
       }
-      fprintf(eigenF,"\n");*/
+      fprintf(eigenF,"\n");
 
       printf("  testing similarity of NNSD with Poisson...\n");
       chi = chiSquareTestUnfoldingNNSDWithPoisson(E, size);
@@ -675,9 +675,9 @@ float * RMTThreshold::calculateEigen(float * smatrix, int size) {
  * @param float* e
  *   A sorted eigenvalue array with duplicates removed.
  * @param int size
- *   The sieze of the eigenvalue array.
+ *   The size of the eigenvalue array.
  * @param int m
- *
+ *  The pace.
  *
  * @return
  *  Returned array will always be sorted and of length size-1
@@ -691,7 +691,7 @@ double * RMTThreshold::unfolding(float * e, int size, int m) {
 
   // Figure out how many points we will use from the submitted
   // eigenvalue array.  If the pace (m) is 10 and the size is 100
-  // then we count will be 10 and we will use 10 points for spline
+  // then the count will be 10 and we will use 10 points for spline
   // calculation
   for(i = 0; i < size - m; i += m) {
     count++;
@@ -718,21 +718,24 @@ double * RMTThreshold::unfolding(float * e, int size, int m) {
 
   // Initialize the spline function using a csspline. See gsl docs,
   // chapter 27: cspline is a natural spline.
+  // Changed to akima spline (2/25/2016) -- spf
   gsl_interp_accel *acc = gsl_interp_accel_alloc();
-  gsl_spline *spline = gsl_spline_alloc(gsl_interp_cspline, count);
+  gsl_spline *spline = gsl_spline_alloc(gsl_interp_akima, count);
   gsl_spline_init(spline, oX, oY, count);
 
-  // Estimate new eigenvalues along the spline curve.
+  // Estimate new eigenvalues along the spline curve.  We provide the
+  // eigenvalues and the interplolation function gives us new y values
+  // in the range of 0 to 1.
   double * yy = (double*) malloc(sizeof(double) * size);
   for (i = 0; i < size - 2; i++) {
     yy[i+1] = gsl_spline_eval(spline, e[i+1], acc);
   }
 
-  // Calculate the nearest neighbor spacing array.
+  // Calculate the spacing array.
   yy[0] = 0.0;
   yy[size - 1] = 1.0;
   for (i = 0; i < size - 1; i++) {
-    yy[i] = size * (yy[i+1] - yy[i]);
+    yy[i] = (yy[i+1] - yy[i]) * size;
   }
   quickSortD(yy, size-1);
 
@@ -825,6 +828,10 @@ double RMTThreshold::chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int si
   // unfolding. Therefore, we iterate through the min and max unfolding pace
   // and then average the Chi-square values returned
   for (m = minUnfoldingPace; m < maxUnfoldingPace; m++) {
+    // If the size / pace is fewer than 5 then skip this test
+    if (size / m < 5) {
+      continue;
+    }
     chiTest = chiSquareTestUnfoldingNNSDWithPoisson4(eigens, size, nnsdHistogramBin, m);
 
     // if the test failed then return -1
@@ -858,7 +865,9 @@ double RMTThreshold::chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int si
  *   A Chi-square value, or -1 on failure
  */
 
-double RMTThreshold::chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace) {
+double RMTThreshold::chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens,
+    int size, double bin, int pace) {
+
   // The new eigenvalue array after duplicates removed
   float * newE;
   // The new size of the eigenvalue array after duplicates removed
@@ -896,15 +905,27 @@ double RMTThreshold::chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int s
   int n = (int) (3.0 / bin) + 1;
   for (i = 0; i < n; i++) {
     count = 0;
-    // Count the number of occurrences in the nearest neighbor spacing array
-    // that should fall within the given bin.
+
+    // Create the histogram (or NNSD).  We are only interested in the
+    // bins between 0 and 3.
     for (j = 0; j < size; j++) {
       if (edif[j] > i * bin && edif[j] < (i + 1) * bin) {
         count++;
       }
     }
 
-    // Calculate the expected value of a Poisson distribution for the bin.
+    // https://books.google.com/books?id=Kp3Nx03_gMwC, pg 12.
+    // The probability of s, p(s), from a poisson distribution is the integral
+    // between a and b, where a and b are points between 0 and 3 (our
+    // range of interest). The p(s) is calculated as:
+    //
+    //      p(s)ds = e(-s)ds
+    //   or
+    //      p(s) = e(-s) - e(-s+1)
+    //
+    //  The expected value is therefore the probability, p(s) times the
+    //  number of eigenvalues.
+    //
     expect = (exp(-1 * i * bin) - exp(-1 * (i + 1) *bin)) * size;
 
     // Perform the summation used for calculating the Chi-square value.
