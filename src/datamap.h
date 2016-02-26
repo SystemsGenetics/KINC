@@ -25,6 +25,7 @@ public:
    // *
    class Iterator;
    using string = std::string;
+   using wptr = std::weak_ptr<DataPlugin>;
    // *
    // * BASIC METHODS
    // *
@@ -36,19 +37,20 @@ public:
    // *
    // * FUNCTIONS
    // *
-   DataPlugin& open(const string&,bool = false);
+   wptr open(const string&,bool = false);
    void close(const string&);
    inline void select(const string&);
    void load(GetOpts&,Terminal&);
    void dump(GetOpts&,Terminal&);
    void query(GetOpts&,Terminal&);
-   Iterator begin();
-   Iterator end();
+   inline wptr find(const string&);
+   inline Iterator begin();
+   inline Iterator end();
 private:
    // *
    // * DECLERATIONS
    // *
-   using Map = std::unordered_map<std::string,std::unique_ptr<DataPlugin>>;
+   using Map = std::unordered_map<std::string,std::shared_ptr<DataPlugin>>;
    // *
    // * FUNCTIONS
    // *
@@ -68,6 +70,7 @@ public:
    // *
    // * DECLERATIONS
    // *
+   friend class DataMap;
    using string = DataMap::string;
    // *
    // * FUNCTIONS
@@ -105,6 +108,26 @@ inline DataMap::DataMap():
 inline void DataMap::select(const string& file)
 {
    _i = get(file);
+}
+
+
+inline DataMap::wptr DataMap::find(const string& file)
+{
+   return get(file)->second;
+}
+
+
+
+inline DataMap::Iterator DataMap::begin()
+{
+   return _map.begin();
+}
+
+
+
+inline DataMap::Iterator DataMap::end()
+{
+   return _map.end();
 }
 
 

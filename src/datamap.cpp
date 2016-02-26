@@ -3,8 +3,9 @@
 
 
 
-DataPlugin& DataMap::open(const string& name, bool select)
+DataMap::wptr DataMap::open(const string& name, bool select)
 {
+   using uptr = std::unique_ptr<DataPlugin>;
    auto n = name.begin();
    while (n!=name.end()&&*n!=':')
    {
@@ -14,7 +15,7 @@ DataPlugin& DataMap::open(const string& name, bool select)
    string type(++n,name.end());
    bool cond = _map.find(file)==_map.end();
    assert<AlreadyExists>(cond,__FILE__,__LINE__);
-   std::unique_ptr<DataPlugin> nd(KINCPlugins::new_data(type,file));
+   uptr nd(KINCPlugins::new_data(type,file));
    assert<InvalidType>(bool(nd),__FILE__,__LINE__);
    auto x = _map.emplace(file,std::move(nd));
    auto i = x.first;
@@ -22,7 +23,7 @@ DataPlugin& DataMap::open(const string& name, bool select)
    {
       _i = i;
    }
-   return *(i->second);
+   return i->second;
 }
 
 
