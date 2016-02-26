@@ -113,7 +113,7 @@ double RMTThreshold::findThreshold() {
       fprintf(eigenF,"\n");
 
       printf("  testing similarity of NNSD with Poisson...\n");
-      chi = chiSquareTestUnfoldingNNSDWithPoisson(E, size);
+      chi = getNNSDChiSquare(E, size);
       free(E);
 
       // if the chi-square test did not fail (== -1) then set the values
@@ -165,7 +165,7 @@ double RMTThreshold::findThreshold() {
           fprintf(eigenF, "%f\t", E[j]);
         }
         fprintf(eigenF, "\n");*/
-        chi = chiSquareTestUnfoldingNNSDWithPoisson(E, size);
+        chi = getNNSDChiSquare(E, size);
         fprintf(chiF, "%f\t%f\t%d\n", th, chi, size);
         fflush(chiF);
         free(E);
@@ -818,28 +818,42 @@ float * RMTThreshold::degenerate(float* eigens, int size, int* newSize) {
  *   A Chi-square value or -1 for failure
  */
 
-double RMTThreshold::chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size) {
+double RMTThreshold::getNNSDChiSquare(float* eigens, int size) {
   double chiTest = 0;
   double avg_chiTest;
   int i = 0;
   int m;
+  // The new eigenvalue array after duplicates removed
+  float * newE;
+  // The new size of the eigenvalue array after duplicates removed
+  int newSize;
 
   // We want to generate an average Chi-square value across various levels of
   // unfolding. Therefore, we iterate through the min and max unfolding pace
   // and then average the Chi-square values returned
   for (m = minUnfoldingPace; m < maxUnfoldingPace; m++) {
-    // If the size / pace is fewer than 5 then skip this test
-    if (size / m < 5) {
+
+    // Remove duplicates from the list of eigenvalues.
+    newE = degenerate(eigens, size, &newSize);
+
+    // Make sure our vector of eigenvalues is still large enough after
+    // duplicates have been removed. If not, return a -1.
+    if (newSize < minEigenVectorSize) {
+      printf("    Chi-square test failed: eigenvalue array too small after duplicate removal. See the eigenvector output file.\n");
       continue;
     }
-    chiTest = chiSquareTestUnfoldingNNSDWithPoisson4(eigens, size, nnsdHistogramBin, m);
 
-    // if the test failed then return -1
-    if (chiTest == -1) {
-      return -1;
+    // If the size / pace is fewer than 5 then skip this test
+    if (newSize / m < 5) {
+      continue;
     }
+
+    // Get the Chi-Square value
+    chiTest = getNNSDPaceChiSquare(newE, newSize, nnsdHistogramBin, m);
     avg_chiTest += chiTest;
     i++;
+
+    free(newE);
   }
 
   // return the average Chi-square value
@@ -848,7 +862,7 @@ double RMTThreshold::chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int si
 
 /**
  * Performs a Chi-square test by comparing NNSD of the eigenvalues
- * to a Poisson distribution.
+ * to a Poisson distribution for a given pace.
  *
  * @param float* eigens
  *   The eigenvalue array
@@ -865,13 +879,9 @@ double RMTThreshold::chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int si
  *   A Chi-square value, or -1 on failure
  */
 
-double RMTThreshold::chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens,
+double RMTThreshold::getNNSDPaceChiSquare(float* eigens,
     int size, double bin, int pace) {
 
-  // The new eigenvalue array after duplicates removed
-  float * newE;
-  // The new size of the eigenvalue array after duplicates removed
-  int newSize;
   // The nearest neighbor spacing array.
   double * edif;
   double obj;
@@ -880,20 +890,9 @@ double RMTThreshold::chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens,
   int i, j, count;
 
 
-  // Remove duplicates from the list of eigenvalues.
-  newE = degenerate(eigens, size, &newSize);
-  size = newSize;
-
-  // Make sure our vector of eigenvalues is still large enough after
-  // duplicates have been removed. If not, return a -1.
-  if (size < minEigenVectorSize) {
-    printf("    Chi-square test failed: eigenvalue array too small after duplicate removal. See the eigenvector output file.\n");
-    return -1;
-  }
-
   // Unfolding will calculate the nearest neighbor spacing via estimation using
   // a spline curve. It returns a new array of length size - 1
-  edif = unfolding(newE, size, pace);
+  edif = unfolding(eigens, size, pace);
   size = size - 1;
 
   // Construct a histogram of (3.0/bin) + 1 bins.  If bin is 0.05 then the
@@ -933,8 +932,6 @@ double RMTThreshold::chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens,
     obj = (double) count;
     chi += (obj - expect) * (obj - expect) / expect;
   }
-
-  free(newE);
   free(edif);
   return chi;
 }

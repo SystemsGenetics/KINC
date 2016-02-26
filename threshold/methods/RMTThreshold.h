@@ -43,8 +43,8 @@ class RMTThreshold : public ThresholdMethod {
     int minUnfoldingPace;
     int maxUnfoldingPace;
 
-    double chiSquareTestUnfoldingNNSDWithPoisson(float* eigens, int size);
-    double chiSquareTestUnfoldingNNSDWithPoisson4(float* eigens, int size, double bin, int pace);
+    double getNNSDChiSquare(float* eigens, int size);
+    double getNNSDPaceChiSquare(float* eigens, int size, double bin, int pace);
     // Calculates the eigenvalues of the given matrix.
     float * calculateEigen(float * smatrix, int size);
     //
