@@ -11,7 +11,7 @@
 
 
 
-class Data;
+class DataPlugin;
 class Analytic;
 
 
@@ -95,19 +95,27 @@ private:
 class DataException : public Exception
 {
 public:
+   enum class Level
+   {
+      general,
+      warning,
+      caution,
+      severe,
+      fatal
+   };
    // *
    // * BASIC METHODS
    // *
-   DataException(const char*,int,Data*,const char*);
+   DataException(const char*,int,const char*,Level);
    // *
    // * FUNCTIONS
    // *
-   Data* who();
+   Level level();
 private:
    // *
    // * VARIABLES
    // *
-   Data* _who;
+   Level _level;
 };
 
 
@@ -122,16 +130,7 @@ public:
    // *
    // * BASIC METHODS
    // *
-   AnalyticException(const char*,int,Analytic*,const char*);
-   // *
-   // * FUNCTIONS
-   // *
-   Analytic* who();
-private:
-   // *
-   // * VARIABLES
-   // *
-   Analytic* _who;
+   AnalyticException(const char*,int,const char*);
 };
 
 

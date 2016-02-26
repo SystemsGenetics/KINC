@@ -3,6 +3,7 @@
 #include <string>
 #include <cstdint>
 #include <unistd.h>
+#include <fcntl.h>
 #include "exception.h"
 
 
@@ -39,10 +40,12 @@ public:
    // * FUNCTIONS
    // *
    void clear();
-   bool reserve(SizeT);
+   inline bool reserve(SizeT);
+   template<class T> inline bool expand(T&,SizeT = 1);
    inline SizeT size() const;
    inline SizeT capacity() const;
    template<class T> inline void allocate(T&,SizeT = 1);
+   template<class T> inline void allot(T&,SizeT = 1);
    template<class T> inline void sync(T&,FileSync,Ptr = 0);
    Ptr head();
    // *
@@ -56,6 +59,7 @@ private:
    // *
    // * FUNCTIONS
    // *
+   inline Ptr fallocate(SizeT);
    inline void write(const void* data,Ptr,SizeT);
    inline void read(void*,Ptr,SizeT) const;
    // *
@@ -132,6 +136,27 @@ private:
 
 
 
+inline bool FileMem::reserve(SizeT size)
+{
+   bool ret = false;
+   if (posix_fallocate64(_fd,lseek64(_fd,0,SEEK_END),size)==0)
+   {
+      ret = true;
+      _size += size;
+      _capacity += size;
+   }
+   return ret;
+}
+
+
+
+template<class T> inline bool FileMem::expand(T& obj, SizeT amt)
+{
+   return reserve(obj.size*amt);
+}
+
+
+
 inline FileMem::SizeT FileMem::size() const
 {
    return _size;
@@ -150,15 +175,22 @@ template<class T> inline void FileMem::allocate(T& obj, SizeT amt)
 {
    if (amt>0)
    {
+      obj.ptr = fallocate(obj.size*amt);
+   }
+}
+
+
+
+template<class T> inline void FileMem::allot(T& obj, SizeT amt)
+{
+   if (amt>0)
+   {
       SizeT size = obj.size*amt;
-      assert<OutOfMemory>(size<=_capacity,__FILE__,__LINE__);
-      obj.ptr = _next;
-      _next += size;
-      _capacity -= size;
-      bool cond = lseek64(_fd,_idLen,SEEK_SET)==_idLen;
-      assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
-      cond = ::write(_fd,&_next,sizeof(Ptr))==sizeof(Ptr);
-      assert<SystemError>(cond,__FILE__,__LINE__,"write");
+      if (size>_capacity)
+      {
+         reserve(size-_capacity);
+      }
+      obj.ptr = fallocate(size);
    }
 }
 
@@ -166,7 +198,8 @@ template<class T> inline void FileMem::allocate(T& obj, SizeT amt)
 
 template<class T> inline void FileMem::sync(T& obj, FileSync which, Ptr inc)
 {
-   assert<FileSegFault>(obj.ptr!=nullPtr,__FILE__,__LINE__);
+   bool cond = obj.ptr!=nullPtr;
+   assert<FileSegFault>(cond,__FILE__,__LINE__);
    Ptr seekr = obj.ptr + obj.size*inc;
    switch (which)
    {
@@ -184,6 +217,21 @@ template<class T> inline void FileMem::sync(T& obj, FileSync which, Ptr inc)
 inline FileMem::Ptr FileMem::head()
 {
    return 0;
+}
+
+
+
+inline FileMem::Ptr FileMem::fallocate(SizeT size)
+{
+   assert<OutOfMemory>(size<=_capacity,__FILE__,__LINE__);
+   Ptr ret = _next;
+   _next += size;
+   _capacity -= size;
+   bool cond = lseek64(_fd,_idLen,SEEK_SET)==_idLen;
+   assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
+   cond = ::write(_fd,&_next,sizeof(Ptr))==sizeof(Ptr);
+   assert<SystemError>(cond,__FILE__,__LINE__,"write");
+   return ret;
 }
 
 

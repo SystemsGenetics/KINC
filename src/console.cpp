@@ -6,10 +6,13 @@
  */
 #include <vector>
 #include <sstream>
+#include <forward_list>
+#include <memory>
 #include "console.h"
 #include "cldevice.h"
 #include "data.h"
 #include "analytic.h"
+#include "plugins/plugins.h"
 
 
 
@@ -23,9 +26,10 @@ bool Console::_lock {false};
 /// header.
 ///
 /// @pre Console must not be locked.
-Console::Console(int argc, char* argv[], Terminal& terminal):
+Console::Console(int argc, char* argv[], Terminal& terminal, DataMap& datamap):
    _alive {false},
    _tm {terminal},
+   _dataMap {datamap},
    _device {nullptr}
 {
    assert<InvalidUse>(!_lock,__FILE__,__LINE__);
@@ -64,14 +68,67 @@ void Console::run()
 /// of the program is set to false in a subfunction if quit is given.
 void Console::terminal_loop()
 {
-   _alive = true;
-   while (_alive)
+   bool alive = true;
+   while (alive)
    {
-      std::string line;
+      string line;
       _tm >> line;
       _tm << Terminal::endl;
-      parse(line);
-      _tm << Terminal::endl;
+      try
+      {
+         parse(line);
+      }
+      catch (CommandError e)
+      {
+         _tm << e.cmd << ": " << e.msg << Terminal::endl;
+      }
+      catch (CommandQuit)
+      {
+         alive = false;
+      }
+      catch (DataException e)
+      {
+         std::ostringstream buffer;
+         buffer << "Data Exception Caught!" << std::endl;
+         buffer << "Level: ";
+         switch (e.level())
+         {
+         case DataException::Level::general:
+            buffer << "General" << std::endl;
+            break;
+         case DataException::Level::caution:
+            buffer << "Caution" << std::endl;
+            break;
+         case DataException::Level::warning:
+            buffer << "Warning" << std::endl;
+            break;
+         case DataException::Level::severe:
+            buffer << "Severe" << std::endl;
+            break;
+         case DataException::Level::fatal:
+            buffer << "Fatal" << std::endl;
+            break;
+         }
+         buffer << "Location: " << e.file() << ":" << e.line() << std::endl;
+         buffer << "What: " << e.what();
+         throw CommandError("data",buffer.str());
+      }
+      catch (AnalyticException e)
+      {
+         ;
+      }
+      catch (Exception e)
+      {
+         ;
+      }
+      catch (std::exception stde)
+      {
+         ;
+      }
+      catch (...)
+      {
+         ;
+      }
    }
 }
 
@@ -84,29 +141,27 @@ void Console::terminal_loop()
 /// list passes onto function that decodes user input and processes the command.
 ///
 /// @param line One line of user input.
-///
-/// @return True if the user command was processed successfully.
-bool Console::parse(std::string& line)
+void Console::parse(string& line)
 {
    enum {_new,build} state = _new;
-   std::list<std::string> list;
+   slist list;
    char newBuf[2] = {" "};
-   for (std::string::iterator i=line.begin();i!=line.end();i++)
+   for (auto i:line)
    {
       switch (state)
       {
       case _new:
-         if (*i!=' '&&*i!='\t')
+         if (i!=' '&&i!='\t')
          {
-            newBuf[0] = *i;
+            newBuf[0] = i;
             list.push_back(newBuf);
             state = build;
          }
          break;
       case build:
-         if (*i!=' '&&*i!='\t')
+         if (i!=' '&&i!='\t')
          {
-            list.back() += *i;
+            list.back() += i;
          }
          else
          {
@@ -115,7 +170,7 @@ bool Console::parse(std::string& line)
          break;
       }
    }
-   return decode(list);
+   decode(list);
 }
 
 
@@ -127,16 +182,44 @@ bool Console::parse(std::string& line)
 /// enumerated command type is then passed to subfunction.
 ///
 /// @param list List of user arguments from command.
-///
-/// @return True if command was successful.
-bool Console::decode(std::list<std::string>& list)
+void Console::decode(slist& list)
 {
-   Command comm;
+   Command comm = Command::error;
    if (list.size()>0)
    {
       if (list.front()=="gpu")
       {
          comm = Command::gpu;
+         list.pop_front();
+      }
+      else if (list.front()=="open")
+      {
+         comm = Command::open;
+         list.pop_front();
+      }
+      else if (list.front()=="load")
+      {
+         comm = Command::load;
+         list.pop_front();
+      }
+      else if (list.front()=="dump")
+      {
+         comm = Command::dump;
+         list.pop_front();
+      }
+      else if (list.front()=="query")
+      {
+         comm = Command::query;
+         list.pop_front();
+      }
+      else if (list.front()=="close")
+      {
+         comm = Command::close;
+         list.pop_front();
+      }
+      else if (list.front()=="list")
+      {
+         comm = Command::list;
          list.pop_front();
       }
       else if (list.front()=="quit")
@@ -146,17 +229,10 @@ bool Console::decode(std::list<std::string>& list)
       }
       else
       {
-         comm = Command::error;
-         _tm << "Error: " << list.front() << " command/analytic not found."
-             << Terminal::endl;
+         comm = Command::analytic;
       }
    }
-   else
-   {
-      comm = Command::error;
-      _tm << "Error: empty command given." << Terminal::endl;
-   }
-   return process(comm,list);
+   process(comm,list);
 }
 
 
@@ -165,24 +241,39 @@ bool Console::decode(std::list<std::string>& list)
 ///
 /// @param comm Enumerated command to be processed.
 /// @param list List of user arguments for command.
-///
-/// @return True if command was successful.
-bool Console::process(Command comm, std::list<std::string>& list)
+void Console::process(Command comm, slist& list)
 {
-   bool ret;
    switch (comm)
    {
    case Command::gpu:
-      ret = gpu_decode(list);
+      gpu_decode(list);
+      break;
+   case Command::open:
+      data_open(list);
+      break;
+   case Command::load:
+      data_load(list);
+      break;
+   case Command::dump:
+      data_dump(list);
+      break;
+   case Command::query:
+      data_query(list);
+      break;
+   case Command::close:
+      data_close(list);
+      break;
+   case Command::list:
+      data_list();
+      break;
+   case Command::analytic:
+      analytic(list);
       break;
    case Command::quit:
-      _alive = false;
-      ret = true;
-      break;
+      throw CommandQuit();
    case Command::error:
-      ret = false;
+      return;
    }
-   return ret;
 }
 
 
@@ -194,9 +285,7 @@ bool Console::process(Command comm, std::list<std::string>& list)
 /// enumerated command type is then passed to subfunction.
 ///
 /// @param list List of arguments for OpenCL command.
-///
-/// @return True if the command was successful.
-bool Console::gpu_decode(std::list<std::string>& list)
+void Console::gpu_decode(slist& list)
 {
    GpuCommand comm;
    if (list.size()>0)
@@ -223,17 +312,14 @@ bool Console::gpu_decode(std::list<std::string>& list)
       }
       else
       {
-         comm = GpuCommand::error;
-         _tm << "Error: " << list.front() << " GPU subcommand not found."
-             << Terminal::endl;
+         throw CommandError("gpu","Unknown command.");
       }
    }
    else
    {
-      comm = GpuCommand::error;
-      _tm << "Error: GPU subcommand required." << Terminal::endl;
+      throw CommandError("gpu","No command given.");
    }
-   return gpu_process(comm,list);
+   gpu_process(comm,list);
 }
 
 
@@ -242,32 +328,23 @@ bool Console::gpu_decode(std::list<std::string>& list)
 ///
 /// @param comm The OpenCL command to be processed.
 /// @param list List of arguments for this command.
-///
-/// @return True if the command was successful.
-bool Console::gpu_process(GpuCommand comm, std::list<std::string>& list)
+void Console::gpu_process(GpuCommand comm, slist& list)
 {
-   bool ret;
    switch (comm)
    {
    case GpuCommand::list:
       gpu_list();
-      ret = true;
       break;
    case GpuCommand::info:
-      ret = gpu_info(list);
+      gpu_info(list);
       break;
    case GpuCommand::set:
-      ret = gpu_set(list);
+      gpu_set(list);
       break;
    case GpuCommand::clear:
       gpu_clear();
-      ret = true;
-      break;
-   case GpuCommand::error:
-      ret = false;
       break;
    }
-   return ret;
 }
 
 
@@ -293,44 +370,36 @@ void Console::gpu_list()
 /// Executes command to print basic info of of given OpenCL device.
 ///
 /// @param list List of arguments for this command.
-///
-/// @return True if the command was successful.
-bool Console::gpu_info(std::list<std::string>& list)
+void Console::gpu_info(slist& list)
 {
-   bool ret = false;
-   if (list.size()>0)
+   if (list.size()==0)
    {
-      int p,d;
-      char sep;
-      std::istringstream str(list.front());
-      if ((str >> p >> sep >> d)&&sep==':'&&_devList.exist(p,d))
-      {
-         CLDevice& dev {_devList.at(p,d)};
-         _tm << "===== " << dev.info(CLDevice::name) << " ("
-             << dev.info(CLDevice::type) << ") =====\n";
-         _tm << "Online: " << dev.info(CLDevice::online) << ".\n";
-         _tm << "Unified Memory: " << dev.info(CLDevice::unified_mem) << ".\n";
-         _tm << dev.info(CLDevice::addr_space) << " bit address space.\n";
-         _tm << dev.info(CLDevice::clock) << "Mhz max clock frequency.\n";
-         _tm << dev.info(CLDevice::compute_units) << " compute unit(s), "
-             << dev.info(CLDevice::work_size) << " work-item(s) per unit.\n";
-         _tm << dev.info(CLDevice::global_mem) << " global memory, "
-             << dev.info(CLDevice::local_mem) << " local memory."
-             << Terminal::endl;
-         ret = true;
-      }
-      else
-      {
-         _tm << "Error: cannot find OpenCL device " << list.front()
-                    << Terminal::endl;
-      }
+      throw CommandError("gpu info","command requires 1 argument.");
+   }
+   int p,d;
+   char sep;
+   std::istringstream str(list.front());
+   if ((str >> p >> sep >> d)&&sep==':'&&_devList.exist(p,d))
+   {
+      CLDevice& dev {_devList.at(p,d)};
+      _tm << "===== " << dev.info(CLDevice::name) << " ("
+          << dev.info(CLDevice::type) << ") =====\n";
+      _tm << "Online: " << dev.info(CLDevice::online) << ".\n";
+      _tm << "Unified Memory: " << dev.info(CLDevice::unified_mem) << ".\n";
+      _tm << dev.info(CLDevice::addr_space) << " bit address space.\n";
+      _tm << dev.info(CLDevice::clock) << "Mhz max clock frequency.\n";
+      _tm << dev.info(CLDevice::compute_units) << " compute unit(s), "
+          << dev.info(CLDevice::work_size) << " work-item(s) per unit.\n";
+      _tm << dev.info(CLDevice::global_mem) << " global memory, "
+          << dev.info(CLDevice::local_mem) << " local memory."
+          << Terminal::endl;
    }
    else
    {
-      _tm << "Error: the gpu info command requires one argument."
-                 << Terminal::endl;
+      std::ostringstream buffer;
+      buffer << "cannot find OpenCL device \"" << list.front() << "\".";
+      throw CommandError("gpu info",buffer.str());
    }
-   return ret;
 }
 
 
@@ -338,37 +407,31 @@ bool Console::gpu_info(std::list<std::string>& list)
 /// Executes command that sets OpenCL device for analytic computation.
 ///
 /// @param list List of arguments for this command.
-///
-/// @return True if the command was successful.
-bool Console::gpu_set(std::list<std::string>& list)
+void Console::gpu_set(slist& list)
 {
-   bool ret = false;
-   if (list.size()>0)
+   if (list.size()==0)
    {
-      int p,d;
-      char sep;
-      std::istringstream str(list.front());
-      if ((str >> p >> sep >> d)&&sep==':'&&_devList.exist(p,d))
+      throw CommandError("gpu info","command requires 1 argument.");
+   }
+   int p,d;
+   char sep;
+   std::istringstream str(list.front());
+   if ((str >> p >> sep >> d)&&sep==':'&&_devList.exist(p,d))
+   {
+      if (_device)
       {
-         if (_device)
-         {
-            delete _device;
-         }
-         _device = new CLDevice {_devList.at(p,d)};
-         ret = true;
+         delete _device;
       }
-      else
-      {
-         _tm << "Error: cannot find OpenCL device " << list.front()
-                    << Terminal::endl;
-      }
+      _device = new CLDevice {_devList.at(p,d)};
+      _tm << "OpenCL device set to \"" << list.front() << "\"."
+          << Terminal::endl;
    }
    else
    {
-      _tm << "Error: the gpu set command requires one argument."
-                 << Terminal::endl;
+      std::ostringstream buffer;
+      buffer << "cannot find OpenCL device \"" << list.front() << "\".";
+      throw CommandError("gpu info",buffer.str());
    }
-   return ret;
 }
 
 
@@ -380,5 +443,381 @@ void Console::gpu_clear()
    {
       delete _device;
       _device = nullptr;
+      _tm << "OpenCL device cleared." << Terminal::endl;
+   }
+   else
+   {
+      _tm << "no OpenCL devie set." << Terminal::endl;
+   }
+}
+
+
+
+void Console::data_open(slist& list)
+{
+   if (list.size()<2)
+   {
+      throw CommandError("open","command requires 2 arguments.");
+   }
+   string type = list.front();
+   list.pop_front();
+   if (_dataMap.exist(list.front()))
+   {
+      std::ostringstream buffer;
+      buffer << "data object with name \"" << list.front()
+             << "\" already exists.";
+      throw CommandError("open",buffer.str());
+   }
+   std::unique_ptr<DataPlugin> nd(KINCPlugins::new_data(type,list.front()));
+   if (!nd)
+   {
+      std::ostringstream buffer;
+      buffer << "cannot find data type \"" << type << "\".";
+      throw CommandError("open",buffer.str());
+   }
+   _dataMap.add(list.front(),nd.release());
+   _tm << "Added " << list.front() << "(" << type << ") data object."
+       << Terminal::endl;
+}
+
+
+
+void Console::data_load(slist& list)
+{
+   if (list.size()<2)
+   {
+      throw CommandError("load","command requires 2 arguments.");
+   }
+   string textFile = list.front();
+   list.pop_front();
+   DataPlugin* data = find_data(list.front());
+   list.pop_front();
+   try
+   {
+      parse_data_options(data,list);
+      data->load(textFile,_tm);
+   }
+   catch (DataException e)
+   {
+      if (e.level()==DataException::Level::fatal)
+      {
+         _dataMap.del(data);
+      }
+      throw;
+   }
+   catch (...)
+   {
+      _dataMap.del(data);
+      throw;
+   }
+}
+
+
+
+void Console::data_dump(slist& list)
+{
+   if (list.size()<2)
+   {
+      throw CommandError("dump","command requires 2 arguments.");
+   }
+   string textFile = list.front();
+   list.pop_front();
+   DataPlugin* data = find_data(list.front());
+   list.pop_front();
+   try
+   {
+      parse_data_options(data,list);
+      data->dump(textFile,_tm);
+   }
+   catch (DataException e)
+   {
+      if (e.level()==DataException::Level::fatal)
+      {
+         _dataMap.del(data);
+      }
+      throw;
+   }
+   catch (...)
+   {
+      _dataMap.del(data);
+      throw;
+   }
+}
+
+
+
+void Console::data_query(slist& list)
+{
+   if (list.size()<1)
+   {
+      throw CommandError("query","command requires 1 argument.");
+   }
+   DataPlugin* data = find_data(list.front());
+   list.pop_front();
+   try
+   {
+      parse_data_options(data,list);
+      data->query(_tm);
+   }
+   catch (DataException e)
+   {
+      if (e.level()==DataException::Level::fatal)
+      {
+         _dataMap.del(data);
+      }
+      throw;
+   }
+   catch (...)
+   {
+      _dataMap.del(data);
+      throw;
+   }
+}
+
+
+
+void Console::data_close(slist& list)
+{
+   if (list.size()<1)
+   {
+      throw CommandError("close","command requires 1 argument.");
+   }
+   DataPlugin* data = _dataMap.find(list.front());
+   if (!data)
+   {
+      std::ostringstream buffer;
+      buffer << "data object \"" << list.front() << "\" not found.";
+      throw CommandError("close",buffer.str());
+   }
+   else
+   {
+      _dataMap.del(data);
+      _tm << "data object closed." << Terminal::endl;
+   }
+}
+
+
+
+void Console::data_list()
+{
+   for (auto i=_dataMap.begin();i!=_dataMap.end();++i)
+   {
+      DataPlugin* data = i->second;
+      _tm << i->first << " [" << data->type() << "]" << Terminal::endl;
+   }
+}
+
+
+
+void Console::analytic(slist& list)
+{
+   if (list.size()<3)
+   {
+      throw CommandError("analytic","command requires 2 argument.");
+   }
+   string type = list.front();
+   list.pop_front();
+   aptr a(KINCPlugins::new_analytic(type));
+   if (!a)
+   {
+      std::ostringstream buffer;
+      buffer << "cannot find analytic type \"" << type << "\".";
+      throw CommandError("open",buffer.str());
+   }
+   dlist nd;
+   try
+   {
+      parse_analytic_inputs(a,list.front());
+      list.pop_front();
+      parse_analytic_outputs(a,list.front(),nd);
+      parse_analytic_options(a,list);
+      a->execute(_tm,&(_device->device()));
+      for (auto i:nd)
+      {
+         _dataMap.add(i.first,i.second);
+      }
+   }
+   catch (...)
+   {
+      for (auto i:nd)
+      {
+         if (i.second) delete i.second;
+      }
+   }
+}
+
+
+
+DataPlugin* Console::find_data(const string& name)
+{
+   DataPlugin* ret {_dataMap.find(name)};
+   if (!ret)
+   {
+      std::ostringstream buffer;
+      buffer << "data object \"" << name << "\" not found.";
+      throw CommandError("find",buffer.str());
+   }
+   return ret;
+}
+
+
+
+void Console::parse_data_options(DataPlugin* data, slist& list)
+{
+   while (list.size()>0)
+   {
+      string key;
+      string val;
+      enum {front,back} state = front;
+      for (auto i:list.front())
+      {
+         switch (state)
+         {
+         case front:
+            if (i=='=')
+            {
+               state = back;
+            }
+            else
+            {
+               key += i;
+            }
+            break;
+         case back:
+            val += i;
+            break;
+         }
+      }
+      data->option(key,val);
+      list.pop_front();
+   }
+}
+
+
+
+void Console::parse_analytic_inputs(aptr& a, const string& arg)
+{
+   string name;
+   auto i = arg.begin();
+   while (true)
+   {
+      if (*i==','||i==arg.end())
+      {
+         if (name.size()>0)
+         {
+            a->input(find_data(name));
+         }
+         name.clear();
+      }
+      else
+      {
+         name += *i;
+      }
+      if (i==arg.end())
+      {
+         break;
+      }
+      ++i;
+   }
+}
+
+
+
+void Console::parse_analytic_outputs(aptr& a, const string& arg, dlist& nd)
+{
+   string ndata;
+   auto i = arg.begin();
+   while (true)
+   {
+      if (*i==','||i==arg.end())
+      {
+         if (ndata.size()>0)
+         {
+            std::string name;
+            DataPlugin* n {nullptr};
+            try
+            {
+               n = parse_analytic_ndata(ndata,name);
+               a->input(n);
+            }
+            catch(...)
+            {
+               if (n) delete n;
+               throw;
+            }
+            nd.push_back({name,n});
+         }
+         ndata.clear();
+      }
+      else
+      {
+         ndata += *i;
+      }
+      if (i==arg.end())
+      {
+         break;
+      }
+      ++i;
+   }
+}
+
+
+
+DataPlugin* Console::parse_analytic_ndata(const string& ndata, string& name)
+{
+   string type;
+   enum {front,back} state = front;
+   for (auto i:ndata)
+   {
+      switch (state)
+      {
+      case front:
+         if (i==':')
+         {
+            state = back;
+         }
+         else
+         {
+            type += i;
+         }
+         break;
+      case back:
+         name += i;
+         break;
+      }
+   }
+   return KINCPlugins::new_data(type,name);
+}
+
+
+
+void Console::parse_analytic_options(aptr& a, slist& list)
+{
+   while (list.size()>0)
+   {
+      string key;
+      string val;
+      enum {front,back} state = front;
+      for (auto i:list.front())
+      {
+         switch (state)
+         {
+         case front:
+            if (i=='=')
+            {
+               state = back;
+            }
+            else
+            {
+               key += i;
+            }
+            break;
+         case back:
+            val += i;
+            break;
+         }
+      }
+      a->option(key,val);
+      list.pop_front();
    }
 }

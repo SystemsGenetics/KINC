@@ -88,10 +88,6 @@ private:
    inline FileMem::Ptr set_string(const std::string&);
    FileMem::Ptr rec_add_item(FileMem&,FileMem::Ptr);
    // *
-   // * CONSTANTS
-   // *
-   constexpr static auto _nodeSz = HistItemData::nodeSz;
-   // *
    // * VARIABLES
    // *
    FileMem& _mem;

@@ -1,6 +1,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <cstring>
 #include "filemem.h"
 
 
@@ -31,14 +31,7 @@ FileMem::FileMem(const std::string& fileName):
       assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
       cond = ::read(_fd,buf,_idLen)!=-1;
       assert<SystemError>(cond,__FILE__,__LINE__,"read");
-      cond = true;
-      for (int i=0;i<_idLen;i++)
-      {
-         if (buf[i]!=_identString[i])
-         {
-            cond = false;
-         }
-      }
+      cond = strncmp(buf,_identString,_idLen)==0;
       assert<InvalidFile>(cond,__FILE__,__LINE__);
       cond = ::read(_fd,&_next,sizeof(Ptr))==sizeof(Ptr);
       assert<SystemError>(cond,__FILE__,__LINE__,"read");
@@ -67,18 +60,4 @@ void FileMem::clear()
    assert<SystemError>(cond,__FILE__,__LINE__,"lseek64");
    cond = ::write(_fd,&_next,sizeof(Ptr))==sizeof(Ptr);
    assert<SystemError>(cond,__FILE__,__LINE__,"write");
-}
-
-
-
-bool FileMem::reserve(SizeT size)
-{
-   bool ret = false;
-   if (posix_fallocate64(_fd,lseek64(_fd,0,SEEK_END),size)==0)
-   {
-      ret = true;
-      _size += size;
-      _capacity += size;
-   }
-   return ret;
 }

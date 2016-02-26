@@ -1,4 +1,5 @@
 .RECIPEPREFIX := +
+MAKEFLAGS := $(MAKEFLAGS) --no-print-directory
 CXX := g++
 NAME := kinc
 FILES := KINC.files
@@ -26,32 +27,50 @@ objs := $(addprefix $(build),$(program:%.cpp=%.o))
 udpds := $(addprefix $(build),$(utest:%.cpp=%.d))
 uobjs := $(addprefix $(build),$(utest:%.cpp=%.o))
 
+plugin := plugins/plugins.a
+datahdr := plugins/data/plugin.h
+analytichdr := plugins/analytic/plugin.h
 
 
-.PHONY := clean all program test check
+
+.PHONY: clean all program test check plugins pclean
 
 all: program test
 program: $(progf)
 test: $(run)unit
 
+$(analytichdr):
++@echo "Generating analytic plugin header."
++@cd plugins/analytic && ./gen.sh
+
+$(datahdr):
++@echo "Generating data plugin header."
++@cd plugins/data && ./gen.sh
+
 include $(alldpds)
 
-$(progf): $(objs) $(dpds)
+$(progf): $(objs) $(dpds) $(plugin)
 +@echo "Building program."
-+@$(CXX) $(objs) $(aldflags) $(aldlibs) -o $@
++@$(CXX) $(objs) $(plugin) $(aldflags) $(aldlibs) -o $@
 
-$(run)unit: $(uobjs) $(udpds)
+$(run)unit: $(uobjs) $(udpds) $(plugin)
 +@echo "Building unit test."
-+@$(CXX) $(uobjs) $(aldflags) $(aldlibs) -o $@
++@$(CXX) $(uobjs) $(plugin) $(aldflags) $(aldlibs) -o $@
 
 depend: $(alldpds)
 +@echo Done.
+
+plugins:
++@cd plugins && $(MAKE)
+
+$(plugin):
++@cd plugins && $(MAKE)
 
 $(build)%.o : %.cpp
 +@echo "Building object $@"
 +@$(CXX) $(acxxflags) -c $< -o $(build)$@
 
-$(build)%.d: %.cpp
+$(build)%.d: %.cpp $(datahdr) $(analytichdr)
 +@echo "Building depend $@"
 +@echo -n "$@ $(build)" > $@
 +@$(CXX) $(acxxflags) -MM $< >> $@
@@ -67,3 +86,6 @@ clean:
 depclean:
 +@echo "Cleaning all dependency files."
 +@rm -f $(build)*.d
+
+pclean:
++@cd plugins && $(MAKE) clean

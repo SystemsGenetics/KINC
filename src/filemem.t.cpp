@@ -18,7 +18,7 @@ namespace unit
          uint32_t& val() { get<uint32_t>(0); }
          FileMem::Ptr& next() { get<FileMem::Ptr>(4); }
       };
-      struct LNode : FileMem::Static<4085>
+      struct LNode : FileMem::Static<5285>
       {};
       struct DNode : FileMem::Object
       {
@@ -61,10 +61,12 @@ bool unit::filemem::main()
             init3()&&
             init4()&&
             reserve1()&&
+            expand1()&&
             capacity1()&&
             allocate1()&&
             allocate2()&&
             allocate3()&&
+            allot1()&&
             clear1()&&
             addr1()&&
             sync1()&&
@@ -220,11 +222,23 @@ bool unit::filemem::reserve1()
 
 
 
+bool unit::filemem::expand1()
+{
+   start();
+   FileMem tf(tmpFile);
+   Node tmp;
+   tf.expand(tmp,100);
+   bool ret = tf.size()==5296;
+   return finish(ret,"expand1");
+}
+
+
+
 bool unit::filemem::capacity1()
 {
    start();
    FileMem tf(tmpFile);
-   bool ret = tf.capacity()==4096;
+   bool ret = tf.capacity()==5296;
    return finish(ret,"capacity1");
 }
 
@@ -236,7 +250,7 @@ bool unit::filemem::allocate1()
    FileMem tf(tmpFile);
    Node tmp;
    tf.allocate(tmp);
-   bool ret = tf.capacity()==4084;
+   bool ret = tf.capacity()==5284;
    return finish(ret,"allocate1");
 }
 
@@ -276,6 +290,25 @@ bool unit::filemem::allocate3()
       ret = false;
    }
    return finish(ret,"allocate3");
+}
+
+
+
+bool unit::filemem::allot1()
+{
+   start();
+   bool ret = true;
+   try
+   {
+      FileMem tf(tmpFile);
+      LNode tmp;
+      tf.allot(tmp);
+   }
+   catch (FileMem::OutOfMemory)
+   {
+      ret = false;
+   }
+   return finish(ret,"allot1");
 }
 
 

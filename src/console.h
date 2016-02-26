@@ -10,25 +10,12 @@
 #include <list>
 #include "terminal.h"
 #include "cldevlist.h"
+#include "datamap.h"
 #include "exception.h"
 
 
 
-class Data;
-class Analytic;
 class CLDevice;
-
-
-
-/*
- * NOTE: for new_data and new_analytic see plugin.cpp for source code and
- * comments.
- */
-namespace KINCPlugins
-{
-   extern Data* new_kinc_data(std::string&);
-   extern Analytic* new_kinc_analytic(std::string&);
-}
 
 
 
@@ -58,7 +45,7 @@ public:
    Console(Console&&) = delete;
    Console& operator=(const Console&) = delete;
    Console& operator=(Console&&) = delete;
-   Console(int argc, char* argv[], Terminal& tm);
+   Console(int,char*[],Terminal&,DataMap&);
    ~Console();
    // *
    // * FUNCTIONS
@@ -68,40 +55,68 @@ public:
    //bool del(std::string&);
    //Data* find(std::string&);
 private:
+   using string = std::string;
+   using slist = std::list<std::string>;
+   using dlist = std::list<std::pair<std::string,DataPlugin*>>;
+   using aptr = std::unique_ptr<Analytic>;
+   struct CommandError
+   {
+      CommandError(const char* c, const std::string& m): cmd {c}, msg {m} {}
+      const char* cmd;
+      std::string msg;
+   };
+   struct CommandQuit {};
    // *
    // * ENUMERATIONS
    // *
-   ///
    /// Main commands.
    enum class Command
    {
       gpu, ///< This is an OpenCL command.
+      open,
+      load,
+      dump,
+      query,
+      close,
+      list,
+      analytic,
       quit, ///< The quit command.
       error ///< Error at parsing command.
    };
-   ///
    /// OpenCL subcommands.
    enum class GpuCommand
    {
       list, ///< The list subcommand.
       info, ///< The info subcommand.
       set, ///< The set subcommand.
-      clear, ///< The clear subcommand.
-      error ///< Error at parsing OpenCL subcommand.
+      clear ///< The clear subcommand.
    };
    // *
    // * FUNCTIONS
    // *
    void terminal_loop();
-   bool parse(std::string&);
-   bool decode(std::list<std::string>&);
-   bool process(Command,std::list<std::string>&);
-   bool gpu_decode(std::list<std::string>&);
-   bool gpu_process(GpuCommand,std::list<std::string>&);
+   void parse(string&);
+   void decode(slist&);
+   void process(Command,slist&);
+   void gpu_decode(slist&);
+   void gpu_process(GpuCommand,slist&);
    void gpu_list();
-   bool gpu_info(std::list<std::string>&);
-   bool gpu_set(std::list<std::string>&);
+   void gpu_info(slist&);
+   void gpu_set(slist&);
    void gpu_clear();
+   void data_open(slist&);
+   void data_load(slist&);
+   void data_dump(slist&);
+   void data_query(slist&);
+   void data_close(slist&);
+   void data_list();
+   void analytic(slist&);
+   DataPlugin* find_data(const string&);
+   void parse_data_options(DataPlugin*,slist&);
+   void parse_analytic_inputs(aptr&,const string&);
+   void parse_analytic_outputs(aptr&,const string&,dlist&);
+   DataPlugin* parse_analytic_ndata(const string&,string&);
+   void parse_analytic_options(aptr&,slist&);
    // *
    // * STATIC VARIABLES
    // *
@@ -111,6 +126,8 @@ private:
    // *
    /// Reference to program's main Terminal interface.
    Terminal& _tm;
+   //
+   DataMap& _dataMap;
    /// Pointer to OpenCL device that is set for computation acceleration. By
    /// or if clear command issues this is set to nullptr.
    CLDevice* _device;

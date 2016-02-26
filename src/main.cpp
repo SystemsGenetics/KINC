@@ -8,9 +8,10 @@ int main(int argc, char* argv[])
 {
    try
    {
+      DataMap dataMap;
       LinuxTerm::stty_raw();
       LinuxTerm terminal;
-      Console console(argc,argv,terminal);
+      Console console(argc,argv,terminal,dataMap);
       console.run();
    }
    catch (...)
