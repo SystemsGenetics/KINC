@@ -248,9 +248,10 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
   }
 
   // TODO: make sure the th_method is in the method array.
-
-  // Load the input expression matrix.
-  ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
+  if (!th_method) {
+    fprintf(stderr, "Error: please provide a thresholding method (--th_method option).\n");
+    exit(-1);
+  }
 
   if (headers) {
     printf("  Skipping header lines\n");
@@ -266,6 +267,10 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
   printf("  Start threshold: %f\n", thresholdStart);
   printf("  Stopping Chi-square %f\n", chiSoughtValue);
   printf("  Step per iteration: %f\n", thresholdStep);
+
+  // Load the input expression matrix.
+  ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
+
 }
 /**
  *
