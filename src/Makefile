@@ -43,9 +43,9 @@ $(progf): $(objs) $(dpds) $(plugins)
 +@echo "Building program."
 +@$(CXX) $(objs) $(plugins) $(aldflags) $(aldlibs) -o $@
 
-$(run)unit: $(uobjs) $(udpds) $(plugins)
+$(run)unit: $(uobjs) $(udpds)
 +@echo "Building unit test."
-+@$(CXX) $(uobjs) $(plugins) $(aldflags) $(aldlibs) -o $@
++@$(CXX) $(uobjs) $(aldflags) $(aldlibs) -o $@
 
 depend: $(alldpds)
 +@echo Done.

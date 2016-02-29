@@ -2,6 +2,7 @@
 #include "unit.h"
 #include "console.h"
 #include "linuxterm.h"
+#include "plugins/plugins.h"
 
 
 
@@ -10,10 +11,19 @@ int unit::numTestsDone {0};
 
 
 
+Analytic* KINCPlugins::new_analytic(const std::string& type)
+{
+   Analytic* ret = nullptr;
+   return ret;
+}
+
+
+
 int main(int argc, char* argv[])
 {
    unit::initiate();
    if (unit::getopts::main()&&
+       unit::datamap::main()&&
        unit::filemem::main()&&
        unit::histitem::main())
    {

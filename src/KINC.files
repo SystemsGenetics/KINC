@@ -30,6 +30,7 @@ main.cpp
 unit.h
 unit.t.cpp
 getopts.t.cpp
+datamap.t.cpp
 filemem.t.cpp
 histitem.t.cpp
 plugins/plugins.h
