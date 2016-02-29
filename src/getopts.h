@@ -70,6 +70,7 @@ public:
    // * FUNCTIONS
    // *
    inline const string& key();
+   inline bool empty();// NOT TESTED
    // *
    // * OPERATORS
    // *
@@ -171,6 +172,13 @@ inline GetOpts::Iterator GetOpts::erase(Iterator i)
 inline const GetOpts::string& GetOpts::Iterator::key()
 {
    return _i->first;
+}
+
+
+
+inline bool GetOpts::Iterator::empty()
+{
+   return _i->second.empty();
 }
 
 

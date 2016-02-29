@@ -33,6 +33,7 @@ bool unit::getopts::main()
             iterate1()&&
             erase1()&&
             key1()&&
+            iter_empty1()&&
             operate1()&&
             operate2()&&
             operate3()&&
@@ -186,6 +187,19 @@ bool unit::getopts::key1()
    ++i;
    ret = i.key()==std::string("fifth");
    return finish(ret,"key1");
+}
+
+
+
+bool unit::getopts::iter_empty1()
+{
+   start();
+   GetOpts t(commStr2);
+   auto i = t.begin();
+   bool ret = i.empty();
+   ++i;
+   ret = ret&&!i.empty();
+   return finish(ret,"iter_empty1");
 }
 
 

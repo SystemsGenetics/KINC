@@ -20,6 +20,7 @@ namespace unit
       bool iterate1();
       bool erase1();
       bool key1();
+      bool iter_empty1();
       bool operate1();
       bool operate2();
       bool operate3();
@@ -38,6 +39,10 @@ namespace unit
       bool operate16();
       bool operate17();
       bool operate18();
+   }
+   namespace datamap
+   {
+      bool main();
    }
    namespace filemem
    {
