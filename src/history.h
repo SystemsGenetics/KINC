@@ -17,26 +17,29 @@ public:
    // *
    // * BASIC METHODS
    // *
+   History(FileMem&,FPtr = FileMem::nullPtr);//
+   // *
+   // * COPY METHODS
+   // *
    History(const History&) = delete;
+   History& operator=(const History&) = delete;
+   // *
+   // * MOVE METHODS
+   // *
    History(History&&) = delete;
-   History(FileMem&,FPtr = fNullPtr);
+   History& operator=(History&&) = delete;
    // *
    // * FUNCTIONS
    // *
-   inline FileMem::Ptr addr();
-   void add_child(const History&);
-   inline HistItem& head();
-   inline Iterator begin();
-   inline Iterator end();
+   inline FileMem::Ptr addr();//
+   void add_child(const History&);//
+   inline Iterator begin();//
+   inline Iterator end();//
    // *
    // * OPERATORS
    // *
-   History& operator=(const History&) = delete;
-   History& operator=(History&&) = delete;
-   // *
-   // * CONSTANTS
-   // *
-   const static auto fNullPtr = FileMem::nullPtr;
+   inline HistItem& operator*();
+   inline HistItem* operator->();//
 private:
    // *
    // * VARIABLES
@@ -64,13 +67,13 @@ public:
    // *
    inline HistItem& operator*();
    inline HistItem* operator->();
-   inline void operator++();
-   inline bool operator!=(const Iterator&);
+   inline void operator++();//
+   inline bool operator!=(const Iterator&);//
 private:
    // *
    // * BASIC METHODS
    // *
-   inline Iterator(FileMem&,FPtr = fNullPtr);
+   inline Iterator(FileMem&,FPtr = FileMem::nullPtr);//
    // *
    // * VARIABLES
    // *
@@ -84,7 +87,7 @@ inline History::History(FileMem& mem, FPtr ptr):
    _mem(mem),
    _head(mem,ptr)
 {
-   if (ptr==fNullPtr)
+   if (ptr==FileMem::nullPtr)
    {
       _head.allocate();
       _head.sync();
@@ -100,13 +103,6 @@ inline FileMem::Ptr History::addr()
 
 
 
-inline HistItem& History::head()
-{
-   return _head;
-}
-
-
-
 inline History::Iterator History::begin()
 {
    return {_mem,_head.childHead()};
@@ -117,6 +113,20 @@ inline History::Iterator History::begin()
 inline History::Iterator History::end()
 {
    return {_mem};
+}
+
+
+
+inline HistItem& History::operator*()
+{
+   return _head;
+}
+
+
+
+inline HistItem* History::operator->()
+{
+   return &_head;
 }
 
 
