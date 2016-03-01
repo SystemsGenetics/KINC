@@ -14,6 +14,31 @@ HistItem::HistItem(FileMem& mem, FileMem::Ptr ptr):
 
 
 
+HistItem::HistItem(HistItem&& tmp):
+   _mem(tmp._mem),
+   _item(tmp._item),
+   _fileName(std::move(tmp._fileName)),
+   _object(std::move(tmp._object)),
+   _command(std::move(tmp._command))
+{
+   tmp._item = FileMem::nullPtr;
+}
+
+
+
+HistItem& HistItem::operator=(HistItem&& tmp)
+{
+   bool cond = &_mem==&tmp._mem;
+   assert<DiffFiles>(cond,__FILE__,__LINE__);
+   _item = tmp._item;
+   _fileName = std::move(tmp._fileName);
+   _object = std::move(tmp._object);
+   _command = std::move(tmp._command);
+   tmp._item = FileMem::nullPtr;
+}
+
+
+
 void HistItem::allocate()
 {
    bool cond = _item.addr()==FileMem::nullPtr;

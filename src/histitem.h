@@ -49,6 +49,7 @@ public:
    struct IsAllocated;
    struct IsNullPtr;
    struct InvalidItem;
+   struct DiffFiles;
    // *
    // * DECLERATIONS
    // *
@@ -60,15 +61,10 @@ public:
    // *
    HistItem(FileMem&,FPtr = FileMem::nullPtr);
    // *
-   // * COPY METHODS
-   // *
-   HistItem(const HistItem&) = delete;
-   HistItem& operator=(const HistItem&) = delete;
-   // *
    // * MOVE METHODS
    // *
-   HistItem(HistItem&&) = delete;
-   HistItem& operator=(HistItem&&) = delete;
+   HistItem(HistItem&&);// NOT TESTED
+   HistItem& operator=(HistItem&&);// NOT TESTED
    // *
    // * FUNCTIONS
    // *
@@ -148,6 +144,13 @@ struct HistItem::InvalidItem : public HistItem::Exception
 {
    InvalidItem(const char* file, int line):
       Exception(file,line,"History::InvalidItem")
+   {}
+};
+
+struct HistItem::DiffFiles : public HistItem::Exception
+{
+   DiffFiles(const char* file, int line):
+      Exception(file,line,"History::DiffFiles")
    {}
 };
 
