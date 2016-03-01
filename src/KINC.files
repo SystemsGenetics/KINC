@@ -33,5 +33,6 @@ getopts.t.cpp
 datamap.t.cpp
 filemem.t.cpp
 histitem.t.cpp
+history.t.cpp
 plugins/plugins.h
 plugins/Makefile

@@ -85,6 +85,22 @@ namespace unit
       bool copy_from();
       bool final();
    }
+   namespace history
+   {
+      bool main();
+      bool construct();
+      bool operat_fp();
+      bool add_child();
+      bool iterate();
+      bool head();
+      bool begin();
+      bool end();
+      bool iter_childhead();
+      bool iter_operat_deref();
+      bool iter_operat_fp();
+      bool iter_operat_pp();
+      bool iter_operat_neql();
+   }
    namespace datamap
    {
       bool main();
