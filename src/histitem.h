@@ -15,22 +15,24 @@ namespace HistItemData
 
 struct HistItemData::Item : FileMem::Static<nodeSz>
 {
+   using FPtr = FileMem::Ptr;
    using Static<nodeSz>::Static;
    int64_t& timeStamp() { get<int64_t>(0); }
-   FileMem::Ptr& fileNamePtr() { get<FileMem::Ptr>(8); }
+   FPtr& fileNamePtr() { get<FPtr>(8); }
    int32_t& fileNameSize() { get<int32_t>(16); }
-   FileMem::Ptr& objectPtr() { get<FileMem::Ptr>(20); }
+   FPtr& objectPtr() { get<FPtr>(20); }
    int32_t& objectSize() { get<int32_t>(28); }
-   FileMem::Ptr& commandPtr() { get<FileMem::Ptr>(32); }
+   FPtr& commandPtr() { get<FPtr>(32); }
    int32_t& commandSize() { get<int32_t>(40); }
-   FileMem::Ptr& childHead() { get<FileMem::Ptr>(44); }
-   FileMem::Ptr& next() { get<FileMem::Ptr>(52); }
+   FPtr& childHead() { get<FPtr>(44); }
+   FPtr& next() { get<FPtr>(52); }
 };
 
 struct HistItemData::String : FileMem::Object
 {
+   using FSizeT = FileMem::SizeT;
    using Object::Object;
-   String(FileMem::SizeT size): Object(size) {}
+   String(FSizeT size): Object(size) {}
    char* c_str() { &get<char>(0); }
 };
 
@@ -48,53 +50,70 @@ public:
    struct IsNullPtr;
    struct InvalidItem;
    // *
+   // * DECLERATIONS
+   // *
+   using string = std::string;
+   using FPtr = FileMem::Ptr;
+   using TimeT = int64_t;
+   // *
    // * BASIC METHODS
+   // *
+   HistItem(FileMem&,FPtr = FileMem::nullPtr);
+   // *
+   // * COPY METHODS
+   // *
+   HistItem(const HistItem&) = delete;
+   HistItem& operator=(const HistItem&) = delete;
+   // *
+   // * MOVE METHODS
    // *
    HistItem(HistItem&&) = delete;
    HistItem& operator=(HistItem&&) = delete;
-   HistItem(const HistItem&) = delete;
-   HistItem& operator=(const HistItem&);
-   HistItem(FileMem&,FileMem::Ptr = FileMem::nullPtr);
-   void operator=(FileMem::Ptr);
    // *
    // * FUNCTIONS
    // *
    void allocate();
+   void copy_from(const HistItem&);
    void sync();
-   void timeStamp(int64_t);
-   int64_t timeStamp() const;
-   void fileName(const std::string&);
-   std::string fileName() const;
-   void object(const std::string&);
-   std::string object() const;
-   void command(const std::string&);
-   std::string command() const;
-   void next(FileMem::Ptr);
+   void timeStamp(TimeT);
+   TimeT timeStamp() const;
+   void fileName(const string&);
+   string fileName() const;
+   void object(const string&);
+   string object() const;
+   void command(const string&);
+   string command() const;
+   void next(FPtr);
    FileMem::Ptr next() const;
-   void childHead(FileMem::Ptr);
-   FileMem::Ptr childHead() const;
-   FileMem::Ptr addr() const;
+   void childHead(FPtr);
+   FPtr childHead() const;
+   FPtr addr() const;
+   // *
+   // * FUNCTIONS
+   // *
+   void operator=(FPtr);
 private:
    // *
    // * DECLERATIONS
    // *
    using Item = HistItemData::Item;
    using String = HistItemData::String;
+   using FSizeT = FileMem::SizeT;
    // *
    // * FUNCTIONS
    // *
    inline void load_item();
-   inline std::string get_string(FileMem::Ptr,FileMem::SizeT);
-   inline FileMem::Ptr set_string(const std::string&);
-   FileMem::Ptr rec_add_item(FileMem&,FileMem::Ptr);
+   inline string get_string(FPtr,FSizeT);
+   inline FPtr set_string(const string&);
+   FPtr rec_add_item(FileMem&,FPtr);
    // *
    // * VARIABLES
    // *
    FileMem& _mem;
    mutable Item _item;
-   std::string _fileName;
-   std::string _object;
-   std::string _command;
+   string _fileName;
+   string _object;
+   string _command;
 };
 
 

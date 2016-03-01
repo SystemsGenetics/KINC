@@ -2,46 +2,10 @@
 
 
 
-HistItem& HistItem::operator=(const HistItem& hist)
-{
-   bool cond = _item.addr()==FileMem::nullPtr;
-   assert<IsAllocated>(cond,__FILE__,__LINE__);
-   _mem.allot(_item);
-   _fileName = hist.fileName();
-   _object = hist.object();
-   _command = hist.command();
-   _item.timeStamp() = hist.timeStamp();
-   _item.fileNamePtr() = set_string(_fileName);
-   _item.fileNameSize() = _fileName.size()+1;
-   _item.objectPtr() = set_string(_object);
-   _item.objectSize() = _object.size()+1;
-   _item.commandPtr() = set_string(_command);
-   _item.commandSize() = _command.size()+1;
-   _item.childHead() = rec_add_item(hist._mem,hist.childHead());
-   _item.next() = rec_add_item(hist._mem,hist.next());
-   _mem.sync(_item,FileSync::write);
-}
-
-
-
 HistItem::HistItem(FileMem& mem, FileMem::Ptr ptr):
    _mem(mem),
    _item(ptr)
 {
-   if (_item.addr()!=FileMem::nullPtr)
-   {
-      load_item();
-   }
-}
-
-
-
-void HistItem::operator=(FileMem::Ptr ptr)
-{
-   _item = ptr;
-   _fileName.clear();
-   _object.clear();
-   _command.clear();
    if (_item.addr()!=FileMem::nullPtr)
    {
       load_item();
@@ -64,6 +28,30 @@ void HistItem::allocate()
    _item.commandSize() = 0;
    _item.childHead() = FileMem::nullPtr;
    _item.next() = FileMem::nullPtr;
+}
+
+
+
+void HistItem::copy_from(const HistItem& hist)
+{
+   bool cond = _item.addr()==FileMem::nullPtr;
+   assert<IsAllocated>(cond,__FILE__,__LINE__);
+   cond = hist.addr()!=FileMem::nullPtr;
+   assert<IsNullPtr>(cond,__FILE__,__LINE__);
+   _mem.allot(_item);
+   _fileName = hist.fileName();
+   _object = hist.object();
+   _command = hist.command();
+   _item.timeStamp() = hist.timeStamp();
+   _item.fileNamePtr() = set_string(_fileName);
+   _item.fileNameSize() = _fileName.size()+1;
+   _item.objectPtr() = set_string(_object);
+   _item.objectSize() = _object.size()+1;
+   _item.commandPtr() = set_string(_command);
+   _item.commandSize() = _command.size()+1;
+   _item.childHead() = rec_add_item(hist._mem,hist.childHead());
+   _item.next() = rec_add_item(hist._mem,hist.next());
+   _mem.sync(_item,FileSync::write);
 }
 
 
@@ -208,6 +196,20 @@ FileMem::Ptr HistItem::addr() const
 
 
 
+void HistItem::operator=(FileMem::Ptr ptr)
+{
+   _item = ptr;
+   _fileName.clear();
+   _object.clear();
+   _command.clear();
+   if (_item.addr()!=FileMem::nullPtr)
+   {
+      load_item();
+   }
+}
+
+
+
 inline void HistItem::load_item()
 {
    _mem.sync(_item,FileSync::read);
@@ -256,7 +258,7 @@ FileMem::Ptr HistItem::rec_add_item(FileMem& mem, FileMem::Ptr ptr)
    {
       HistItem from(mem,ptr);
       HistItem to(_mem);
-      to = from;
+      to.copy_from(from);
       ret = to.addr();
    }
    return ret;

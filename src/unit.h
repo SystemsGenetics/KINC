@@ -40,10 +40,6 @@ namespace unit
       bool operate17();
       bool operate18();
    }
-   namespace datamap
-   {
-      bool main();
-   }
    namespace filemem
    {
       bool main();
@@ -76,43 +72,30 @@ namespace unit
    namespace histitem
    {
       bool main();
-      bool init1();
-      bool allocate1();
-      bool init2();
-      bool allocate2();
-      bool init3();
-      bool init4();
-      bool timestamp1();
-      bool timestamp2();
-      bool filename1();
-      bool filename2();
-      bool filename3();
-      bool filename4();
-      bool object1();
-      bool object2();
-      bool object3();
-      bool object4();
-      bool command1();
-      bool command2();
-      bool command3();
-      bool command4();
-      bool next1();
-      bool next2();
-      bool next3();
-      bool next4();
-      bool childhead1();
-      bool childhead2();
-      bool childhead3();
-      bool childhead4();
-      bool init5();
+      bool construct();
+      bool allocate();
+      bool sync();
+      bool timestamp();
+      bool filename();
+      bool object();
+      bool command();
+      bool next();
+      bool childhead();
+      bool operat_set();
+      bool copy_from();
+      bool final();
    }
-   extern int numTestsDone;
+   namespace datamap
+   {
+      bool main();
+   }
    inline void initiate();
    inline void complete();
    inline void header(const char*);
    inline void end();
    inline void start();
    inline bool finish(bool,const char*);
+   extern int numTestsDone;
    extern const char* headerStr;
 }
 
