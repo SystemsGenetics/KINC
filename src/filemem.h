@@ -37,6 +37,16 @@ public:
    FileMem(const std::string&);
    ~FileMem();
    // *
+   // * COPY METHODS
+   // *
+   FileMem(const FileMem&) = delete;
+   FileMem& operator=(const FileMem&) = delete;
+   // *
+   // * MOVE METHODS
+   // *
+   FileMem(FileMem&&) = delete;
+   FileMem& operator=(FileMem&&) = delete;
+   // *
    // * FUNCTIONS
    // *
    void clear();
