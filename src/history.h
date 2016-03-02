@@ -17,7 +17,7 @@ public:
    // *
    // * BASIC METHODS
    // *
-   History(FileMem&,FPtr = FileMem::nullPtr);//
+   History(FileMem&,FPtr = FileMem::nullPtr);
    // *
    // * COPY METHODS
    // *
@@ -31,15 +31,15 @@ public:
    // *
    // * FUNCTIONS
    // *
-   inline FileMem::Ptr addr();//
-   void add_child(const History&);//
-   inline Iterator begin();//
-   inline Iterator end();//
+   FileMem::Ptr addr();
+   void add_child(const History&);
+   Iterator begin();
+   Iterator end();
    // *
    // * OPERATORS
    // *
-   inline HistItem& operator*();
-   inline HistItem* operator->();//
+   HistItem& operator*();
+   HistItem* operator->();
 private:
    // *
    // * VARIABLES
@@ -61,38 +61,24 @@ public:
    // *
    // * FUNCTIONS
    // *
-   inline Iterator childHead();
+   Iterator childHead();
    // *
    // * OPERATORS
    // *
-   inline HistItem& operator*();
-   inline HistItem* operator->();
-   inline void operator++();//
-   inline bool operator!=(const Iterator&);//
+   HistItem& operator*();
+   HistItem* operator->();
+   void operator++();
+   bool operator!=(const Iterator&);
 private:
    // *
    // * BASIC METHODS
    // *
-   inline Iterator(FileMem&,FPtr = FileMem::nullPtr);//
+   Iterator(FileMem*,FPtr = FileMem::nullPtr);
    // *
    // * VARIABLES
    // *
-   FileMem& _mem;
    HistItem _item;
 };
-
-
-
-inline History::History(FileMem& mem, FPtr ptr):
-   _mem(mem),
-   _head(mem,ptr)
-{
-   if (ptr==FileMem::nullPtr)
-   {
-      _head.allocate();
-      _head.sync();
-   }
-}
 
 
 
@@ -105,14 +91,14 @@ inline FileMem::Ptr History::addr()
 
 inline History::Iterator History::begin()
 {
-   return {_mem,_head.childHead()};
+   return {&_mem,_head.childHead()};
 }
 
 
 
 inline History::Iterator History::end()
 {
-   return {_mem};
+   return {&_mem};
 }
 
 
@@ -133,7 +119,7 @@ inline HistItem* History::operator->()
 
 inline History::Iterator History::Iterator::childHead()
 {
-   return {_mem,_item.childHead()};
+   return {_item.mem(),_item.childHead()};
 }
 
 
@@ -169,8 +155,7 @@ inline bool History::Iterator::operator!=(const Iterator& cmp)
 
 
 
-inline History::Iterator::Iterator(FileMem& mem, FPtr ptr):
-   _mem(mem),
+inline History::Iterator::Iterator(FileMem* mem, FPtr ptr):
    _item(mem,ptr)
 {}
 
