@@ -73,6 +73,7 @@ namespace unit
    {
       bool main();
       bool construct();
+      bool move();
       bool allocate();
       bool sync();
       bool timestamp();
@@ -83,6 +84,7 @@ namespace unit
       bool childhead();
       bool operat_set();
       bool copy_from();
+      bool mem();
       bool final();
    }
    namespace history
@@ -92,14 +94,10 @@ namespace unit
       bool operat_fp();
       bool add_child();
       bool iterate();
-      bool head();
-      bool begin();
-      bool end();
-      bool iter_childhead();
+      bool operat_deref();
       bool iter_operat_deref();
       bool iter_operat_fp();
-      bool iter_operat_pp();
-      bool iter_operat_neql();
+      bool iter_childhead();
    }
    namespace datamap
    {
@@ -127,7 +125,7 @@ inline void unit::initiate()
 
 inline void unit::complete()
 {
-   std::cout << numTestsDone << " unit test(s) passed. <<<" << std::endl;
+   std::cout << numTestsDone << " unit test(s) passed <<<" << std::endl;
 }
 
 

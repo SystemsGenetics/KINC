@@ -11,7 +11,8 @@ namespace unit
       constexpr auto tmpFile2 = "testfiles/histfile2.tmp";
       constexpr int headNum = 9999;
       constexpr int childNum = 8888;
-      constexpr int nextNum = 7777;
+      constexpr int child2Num = 7777;
+      constexpr int nextNum = 6666;
    }
 }
 
@@ -29,10 +30,15 @@ void construct_history_file()
    HistItem n(tf);
    n.allocate();
    n.timeStamp(unit::history::nextNum);
+   HistItem ch2(tf);
+   ch2.allocate();
+   ch2.timeStamp(unit::history::child2Num);
    t.childHead(ch.addr());
    ch.next(n.addr());
+   ch.childHead(ch2.addr());
    t.sync();
    ch.sync();
+   ch2.sync();
    n.sync();
 }
 
@@ -52,16 +58,9 @@ bool unit::history::main()
       ret = construct()&&
             operat_fp()&&
             add_child()&&
-            iterate();/*&&
-            add_child()&&
-            head()&&
-            begin()&&
-            end()&&
-            iter_childhead()&&
-            iter_operat_deref()&&
-            iter_operat_fp()&&
-            iter_operate_pp()&&
-            iter_operate_neql();*/
+            iterate()&&
+            operat_deref()&&
+            iter_childhead();
    }
    catch (...)
    {
@@ -155,4 +154,52 @@ bool unit::history::iterate()
    }
    bool test = count==2;
    return finish(test,"iterate1");
+}
+
+
+
+bool unit::history::operat_deref()
+{
+   start();
+   FileMem tf(tmpFile);
+   History t(tf,tf.head());
+   bool test = (*t).timeStamp()==headNum;
+   return finish(test,"operat_deref1");
+}
+
+
+
+bool unit::history::iter_operat_deref()
+{
+   start();
+   FileMem tf(tmpFile);
+   History th(tf,tf.head());
+   auto t = th.begin();
+   bool test = (*t).timeStamp()==childNum;
+   return finish(test,"iter_operat_deref1");
+}
+
+
+
+bool unit::history::iter_operat_fp()
+{
+   start();
+   FileMem tf(tmpFile);
+   History th(tf,tf.head());
+   auto t = th.begin();
+   bool test = t->timeStamp()==childNum;
+   return finish(test,"iter_operat_fp1");
+}
+
+
+
+bool unit::history::iter_childhead()
+{
+   start();
+   FileMem tf(tmpFile);
+   History th(tf,tf.head());
+   auto t = th.begin();
+   t = t.childHead();
+   bool test = t->timeStamp()==child2Num;
+   return finish(test,"iter_childhead1");
 }
