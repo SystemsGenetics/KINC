@@ -49,7 +49,6 @@ public:
    struct IsAllocated;
    struct IsNullPtr;
    struct InvalidItem;
-   struct DiffFiles;
    // *
    // * DECLERATIONS
    // *
@@ -60,11 +59,17 @@ public:
    // * BASIC METHODS
    // *
    HistItem(FileMem&,FPtr = FileMem::nullPtr);
+   HistItem(FileMem*,FPtr = FileMem::nullPtr);
+   // *
+   // * COPY METHODS
+   // *
+   HistItem(const HistItem&) = delete;
+   HistItem& operator=(const HistItem&) = delete;
    // *
    // * MOVE METHODS
    // *
-   HistItem(HistItem&&);// NOT TESTED
-   HistItem& operator=(HistItem&&);// NOT TESTED
+   HistItem(HistItem&&);
+   HistItem& operator=(HistItem&&);
    // *
    // * FUNCTIONS
    // *
@@ -84,6 +89,7 @@ public:
    void childHead(FPtr);
    FPtr childHead() const;
    FPtr addr() const;
+   FileMem* mem() const;// NOT TESTED
    // *
    // * FUNCTIONS
    // *
@@ -98,19 +104,39 @@ private:
    // *
    // * FUNCTIONS
    // *
-   inline void load_item();
-   inline string get_string(FPtr,FSizeT);
-   inline FPtr set_string(const string&);
-   FPtr rec_add_item(FileMem&,FPtr);
+   void load_item();
+   string get_string(FPtr,FSizeT);
+   FPtr set_string(const string&);
+   FPtr rec_add_item(FileMem*,FPtr);
    // *
    // * VARIABLES
    // *
-   FileMem& _mem;
+   FileMem* _mem;
    mutable Item _item;
    string _fileName;
    string _object;
    string _command;
 };
+
+
+
+inline HistItem::HistItem(FileMem& mem, FileMem::Ptr ptr):
+   HistItem(&mem,ptr)
+{}
+
+
+
+inline FileMem::Ptr HistItem::addr() const
+{
+   return _item.addr();
+}
+
+
+
+inline FileMem* HistItem::mem() const
+{
+   return _mem;
+}
 
 
 
@@ -144,13 +170,6 @@ struct HistItem::InvalidItem : public HistItem::Exception
 {
    InvalidItem(const char* file, int line):
       Exception(file,line,"History::InvalidItem")
-   {}
-};
-
-struct HistItem::DiffFiles : public HistItem::Exception
-{
-   DiffFiles(const char* file, int line):
-      Exception(file,line,"History::DiffFiles")
    {}
 };
 

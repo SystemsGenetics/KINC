@@ -2,7 +2,7 @@
 
 
 
-HistItem::HistItem(FileMem& mem, FileMem::Ptr ptr):
+HistItem::HistItem(FileMem* mem, FileMem::Ptr ptr):
    _mem(mem),
    _item(ptr)
 {
@@ -28,8 +28,7 @@ HistItem::HistItem(HistItem&& tmp):
 
 HistItem& HistItem::operator=(HistItem&& tmp)
 {
-   bool cond = &_mem==&tmp._mem;
-   assert<DiffFiles>(cond,__FILE__,__LINE__);
+   _mem = tmp._mem;
    _item = tmp._item;
    _fileName = std::move(tmp._fileName);
    _object = std::move(tmp._object);
@@ -43,7 +42,7 @@ void HistItem::allocate()
 {
    bool cond = _item.addr()==FileMem::nullPtr;
    assert<IsAllocated>(cond,__FILE__,__LINE__);
-   _mem.allot(_item);
+   _mem->allot(_item);
    _item.timeStamp() = 0;
    _item.fileNamePtr() = FileMem::nullPtr;
    _item.fileNameSize() = 0;
@@ -63,7 +62,7 @@ void HistItem::copy_from(const HistItem& hist)
    assert<IsAllocated>(cond,__FILE__,__LINE__);
    cond = hist.addr()!=FileMem::nullPtr;
    assert<IsNullPtr>(cond,__FILE__,__LINE__);
-   _mem.allot(_item);
+   _mem->allot(_item);
    _fileName = hist.fileName();
    _object = hist.object();
    _command = hist.command();
@@ -76,7 +75,7 @@ void HistItem::copy_from(const HistItem& hist)
    _item.commandSize() = _command.size()+1;
    _item.childHead() = rec_add_item(hist._mem,hist.childHead());
    _item.next() = rec_add_item(hist._mem,hist.next());
-   _mem.sync(_item,FileSync::write);
+   _mem->sync(_item,FileSync::write);
 }
 
 
@@ -85,7 +84,7 @@ void HistItem::sync()
 {
    bool cond = _item.addr()!=FileMem::nullPtr;
    assert<IsNullPtr>(cond,__FILE__,__LINE__);
-   _mem.sync(_item,FileSync::write);
+   _mem->sync(_item,FileSync::write);
 }
 
 
@@ -214,13 +213,6 @@ FileMem::Ptr HistItem::childHead() const
 
 
 
-FileMem::Ptr HistItem::addr() const
-{
-   return _item.addr();
-}
-
-
-
 void HistItem::operator=(FileMem::Ptr ptr)
 {
    _item = ptr;
@@ -237,7 +229,7 @@ void HistItem::operator=(FileMem::Ptr ptr)
 
 inline void HistItem::load_item()
 {
-   _mem.sync(_item,FileSync::read);
+   _mem->sync(_item,FileSync::read);
    if (_item.fileNamePtr()!=FileMem::nullPtr)
    {
       _fileName = get_string(_item.fileNamePtr(),_item.fileNameSize());
@@ -257,7 +249,7 @@ inline void HistItem::load_item()
 inline std::string HistItem::get_string(FileMem::Ptr ptr, FileMem::SizeT size)
 {
    String str(size,ptr);
-   _mem.sync(str,FileSync::read);
+   _mem->sync(str,FileSync::read);
    bool cond = str.c_str()[size-1]=='\0';
    assert<InvalidItem>(cond,__FILE__,__LINE__);
    return {str.c_str()};
@@ -268,15 +260,15 @@ inline std::string HistItem::get_string(FileMem::Ptr ptr, FileMem::SizeT size)
 inline FileMem::Ptr HistItem::set_string(const std::string& newStr)
 {
    String str(newStr.size()+1);
-   _mem.allot(str);
+   _mem->allot(str);
    memcpy(str.c_str(),newStr.c_str(),newStr.size()+1);
-   _mem.sync(str,FileSync::write);
+   _mem->sync(str,FileSync::write);
    return str.addr();
 }
 
 
 
-FileMem::Ptr HistItem::rec_add_item(FileMem& mem, FileMem::Ptr ptr)
+FileMem::Ptr HistItem::rec_add_item(FileMem* mem, FileMem::Ptr ptr)
 {
    FileMem::Ptr ret = ptr;
    if (ptr!=FileMem::nullPtr)

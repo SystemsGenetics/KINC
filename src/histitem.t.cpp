@@ -27,6 +27,7 @@ bool unit::histitem::main()
    try
    {
       ret = construct()&&
+            move()&&
             allocate()&&
             sync()&&
             timestamp()&&
@@ -37,6 +38,7 @@ bool unit::histitem::main()
             childhead()&&
             operat_set()&&
             copy_from()&&
+            mem()&&
             final();
    }
    catch (...)
@@ -76,6 +78,32 @@ bool unit::histitem::construct()
       HistItem t(tf,tf.head());
       bool test = t.addr()!=FileMem::nullPtr;
       cont = cont&&finish(test,"construct2");
+   }
+   return cont;
+}
+
+
+
+bool unit::histitem::move()
+{
+   bool cont = true;
+   {
+      start();
+      FileMem tf(tmpFile);
+      HistItem tmp(tf,tf.head());
+      HistItem t(std::move(tmp));
+      bool test = t.addr()!=FileMem::nullPtr&&tmp.addr()==FileMem::nullPtr;
+      cont = cont&&finish(test,"move1");
+   }
+   if (cont)
+   {
+      start();
+      FileMem tf(tmpFile);
+      HistItem tmp(tf,tf.head());
+      HistItem t(tf);
+      t = std::move(tmp);
+      bool test = t.addr()!=FileMem::nullPtr&&tmp.addr()==FileMem::nullPtr;
+      cont = cont&&finish(test,"move2");
    }
    return cont;
 }
@@ -627,12 +655,47 @@ bool unit::histitem::copy_from()
 
 
 
+bool unit::histitem::mem()
+{
+   start();
+   FileMem tf(tmpFile);
+   HistItem t(tf);
+   bool test = t.mem()==&tf;
+   return finish(test,"mem1");
+}
+
+
+
 bool unit::histitem::final()
 {
    bool cont = true;
    std::string fileName = "filename";
    std::string object = "object";
    std::string command = "command";
+   {
+      start();
+      FileMem tf(tmpFile);
+      tf.clear();
+      HistItem tmp(tf);
+      tmp.allocate();
+      tmp.timeStamp(9999);
+      tmp.fileName(fileName);
+      tmp.object(object);
+      tmp.command(command);
+      tmp.next(8888);
+      tmp.childHead(7777);
+      tmp.sync();
+      HistItem t(std::move(tmp));
+      bool test = t.timeStamp()==9999;
+      test = test&&t.fileName()==fileName;
+      test = test&&t.object()==object;
+      test = test&&t.command()==command;
+      test = test&&t.next()==8888;
+      test = test&&t.childHead()==7777;
+      test = test&&t.addr()!=FileMem::nullPtr&&tmp.addr()==FileMem::nullPtr;
+      cont = cont&&finish(test,"final1");
+   }
+   if (cont)
    {
       start();
       {
@@ -656,7 +719,7 @@ bool unit::histitem::final()
       test = test&&t.command()==command;
       test = test&&t.next()==8888;
       test = test&&t.childHead()==7777;
-      cont = cont&&finish(test,"final1");
+      cont = cont&&finish(test,"final2");
    }
    if (cont)
    {
@@ -713,7 +776,7 @@ bool unit::histitem::final()
       test = test&&t.fileName()==fileName;
       test = test&&t.object()==object;
       test = test&&t.command()==command;
-      cont = cont&&finish(test,"final2");
+      cont = cont&&finish(test,"final3");
    }
    return cont;
 }
