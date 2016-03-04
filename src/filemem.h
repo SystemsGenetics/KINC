@@ -99,7 +99,7 @@ template<int S> struct FileMem::Static
    // * FUNCTIONS
    // *
    template<class T> inline T& get(int);
-   inline Ptr addr();
+   inline Ptr addr() const;
 private:
    // *
    // * VARIABLES
@@ -134,7 +134,7 @@ struct FileMem::Object
    // * FUNCTIONS
    // *
    template<class T> inline T& get(int);
-   inline Ptr addr();
+   inline Ptr addr() const;
 private:
    // *
    // * VARIABLES
@@ -290,7 +290,7 @@ template<int S> template<class T> inline T& FileMem::Static<S>::get(int n)
 
 
 
-template<int S> inline FileMem::Ptr FileMem::Static<S>::addr()
+template<int S> inline FileMem::Ptr FileMem::Static<S>::addr() const
 {
    return ptr;
 }
@@ -298,7 +298,8 @@ template<int S> inline FileMem::Ptr FileMem::Static<S>::addr()
 
 
 inline FileMem::Object::Object(const Object& obj):
-   size(obj.size)
+   size(obj.size),
+   ptr(obj.ptr)
 {
    bytes = new char[size];
    memcpy(bytes,obj.bytes,size);
@@ -308,10 +309,12 @@ inline FileMem::Object::Object(const Object& obj):
 
 inline FileMem::Object::Object(Object&& tmp):
    size(tmp.size),
-   bytes(tmp.bytes)
+   bytes(tmp.bytes),
+   ptr(tmp.ptr)
 {
    tmp.bytes = nullptr;
    tmp.size = 0;
+   tmp.ptr = nullPtr;
 }
 
 
@@ -325,6 +328,7 @@ inline FileMem::Object& FileMem::Object::operator=(const Object& obj)
    }
    bytes = new char[size];
    memcpy(bytes,obj.bytes,size);
+   ptr = obj.ptr;
 }
 
 
@@ -333,8 +337,10 @@ inline FileMem::Object& FileMem::Object::operator=(Object&& tmp)
 {
    size = tmp.size;
    bytes = tmp.bytes;
+   ptr = tmp.ptr;
    tmp.bytes = nullptr;
    tmp.size = 0;
+   tmp.ptr = nullPtr;
 }
 
 
@@ -372,7 +378,7 @@ template<class T> inline T& FileMem::Object::get(int n)
 
 
 
-inline FileMem::Ptr FileMem::Object::addr()
+inline FileMem::Ptr FileMem::Object::addr() const
 {
    return ptr;
 }
