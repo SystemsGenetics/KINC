@@ -148,28 +148,28 @@ struct HistItem::Exception : public ::Exception
 struct HistItem::AlreadySet : public HistItem::Exception
 {
    AlreadySet(const char* file, int line):
-      Exception(file,line,"History::AlreadySet")
+      Exception(file,line,"HistItem::AlreadySet")
    {}
 };
 
 struct HistItem::IsAllocated : public HistItem::Exception
 {
    IsAllocated(const char* file, int line):
-      Exception(file,line,"History::IsAllocated")
+      Exception(file,line,"HistItem::IsAllocated")
    {}
 };
 
 struct HistItem::IsNullPtr : public HistItem::Exception
 {
    IsNullPtr(const char* file, int line):
-      Exception(file,line,"History::IsNullPtr")
+      Exception(file,line,"HistItem::IsNullPtr")
    {}
 };
 
 struct HistItem::InvalidItem : public HistItem::Exception
 {
    InvalidItem(const char* file, int line):
-      Exception(file,line,"History::InvalidItem")
+      Exception(file,line,"HistItem::InvalidItem")
    {}
 };
 

@@ -87,9 +87,9 @@ private:
    // *
    // * CONSTANTS
    // *
-   constexpr static auto _idString {KincFileData::idString};
-   constexpr static auto _idSz {KincFileData::idSz};
-   constexpr static auto _hdrSz {KincFileData::hdrSz};
+   constexpr static auto _idString  = KincFileData::idString;
+   constexpr static auto _idSz = KincFileData::idSz;
+   constexpr static auto _hdrSz = KincFileData::hdrSz;
    // *
    // * VARIABLES
    // *
