@@ -3,9 +3,7 @@
 
 
 
-KincFile::KincFile(const std::string& fileName):
-   _mem(nullptr),
-   _hist(nullptr)
+KincFile::KincFile(const std::string& fileName)
 {
    _mem = new FileMem(fileName);
    if (_mem->size()==0)
@@ -27,6 +25,7 @@ KincFile::KincFile(const std::string& fileName):
       cond = strncmp(_header.idString(),_idString,_idSz)==0;
       assert<InvalidFile>(cond,__FILE__,__LINE__);
       _hist = new History(*_mem,_header.histHead());
+      _new = false;
    }
 }
 

@@ -17,6 +17,8 @@ data.h
 analytic.h
 filemem.cpp
 filemem.h
+fstring.cpp
+fstring.h
 histitem.cpp
 histitem.h
 history.cpp
