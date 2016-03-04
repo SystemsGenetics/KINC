@@ -69,6 +69,17 @@ namespace unit
       bool sync5();
       bool sync6();
    }
+   namespace fstring
+   {
+      bool main();
+      bool construct();
+      bool move();
+      bool addr();
+      bool operat_deref();
+      bool operat_fp();
+      bool operat_set();
+      bool final();
+   }
    namespace histitem
    {
       bool main();

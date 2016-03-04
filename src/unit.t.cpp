@@ -24,6 +24,7 @@ int main(int argc, char* argv[])
    unit::initiate();
    if (unit::getopts::main()&&
        unit::filemem::main()&&
+       unit::fstring::main()&&
        unit::histitem::main()&&
        unit::history::main())
    {

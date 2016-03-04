@@ -34,6 +34,7 @@ unit.t.cpp
 getopts.t.cpp
 datamap.t.cpp
 filemem.t.cpp
+fstring.t.cpp
 histitem.t.cpp
 history.t.cpp
 plugins/plugins.h

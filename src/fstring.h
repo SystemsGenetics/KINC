@@ -23,6 +23,7 @@ struct FStringData::String : FileMem::Object
 {
    using FPtr = FileMem::Ptr;
    using FSizeT = FileMem::SizeT;
+   using Object::operator=;
    String(FSizeT size, FPtr ptr = FileMem::nullPtr): Object(size,ptr) {}
    char* c_str() { &get<char>(0); }
 };
@@ -58,6 +59,11 @@ public:
    FString(FString&&);
    FString& operator=(FString&&);
    // *
+   // * FUNCTIONS
+   // *
+   void addr(FPtr);
+   FPtr addr() const;
+   // *
    // * OPERATORS
    // *
    const string& operator*();
@@ -70,12 +76,37 @@ private:
    using Header = FStringData::Header;
    using String = FStringData::String;
    // *
+   // * FUNCTIONS
+   // *
+   void load();
+   // *
    // * VARIABLES
    // *
    FileMem* _mem;
    Header _hdr;
    string _str;
 };
+
+
+
+inline FString::FPtr FString::addr() const
+{
+   return _hdr.addr();
+}
+
+
+
+inline const FString::string& FString::operator*()
+{
+   return _str;
+}
+
+
+
+inline const FString::string* FString::operator->()
+{
+   return &_str;
+}
 
 
 
