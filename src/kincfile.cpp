@@ -5,13 +5,14 @@
 
 KincFile::KincFile(const std::string& fileName)
 {
-   _mem = new FileMem(fileName);
+   _mem = fptr(new FileMem(fileName));
    if (_mem->size()==0)
    {
       _mem->allot(_header);
-      _hist = new History(*_mem);
-      _header.dataHead() = FileMem::nullPtr;
+      _hist = hptr(new History(*_mem));
       _header.histHead() = _hist->addr();
+      _header.dataHead() = FileMem::nullPtr;
+      _header.ident() = FileMem::nullPtr;
       _mem->sync(_header,FileSync::write);
    }
    else
@@ -24,23 +25,47 @@ KincFile::KincFile(const std::string& fileName)
       assert<InvalidFile>(cond,__FILE__,__LINE__);
       cond = strncmp(_header.idString(),_idString,_idSz)==0;
       assert<InvalidFile>(cond,__FILE__,__LINE__);
-      _hist = new History(*_mem,_header.histHead());
+      _hist = hptr(new History(*_mem,_header.histHead()));
+      _ident.addr(_header.ident());
       _new = false;
    }
 }
 
 
 
-KincFile::~KincFile()
+bool KincFile::is_new()
 {
-   if (_hist)
+   return _new;
+}
+
+
+
+History& KincFile::history()
+{
+   return *_hist;
+}
+
+
+
+KincFile::string KincFile::ident() const
+{
+   return *_ident;
+}
+
+
+
+void KincFile::ident(const string& id)
+{
+   try
    {
-      delete _hist;
+      _ident = id;
    }
-   if (_mem)
+   catch (FString::AlreadySet)
    {
-      delete _mem;
+      throw AlreadySet(__FILE__,__LINE__);
    }
+   _header.ident() = _ident.addr();
+   _mem->sync(_header,FileSync::write);
 }
 
 
@@ -56,11 +81,4 @@ void KincFile::head(FileMem::Ptr ptr)
 {
    _header.dataHead() = ptr;
    _mem->sync(_header,FileSync::write);
-}
-
-
-
-History& KincFile::history()
-{
-   return *_hist;
 }

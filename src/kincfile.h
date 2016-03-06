@@ -1,17 +1,18 @@
 #ifndef KINCFILE_H
 #define KINCFILE_H
 #include <string>
+#include <memory>
 #include "filemem.h"
 #include "history.h"
+#include "fstring.h"
 
 
 
 namespace KincFileData
 {
    struct Header;
-   struct String;
    constexpr FileMem::SizeT idSz = 10;
-   constexpr FileMem::SizeT hdrSz = idSz+28;
+   constexpr FileMem::SizeT hdrSz = idSz+24;
    constexpr auto idString = "\030\031\032\113\111\116\103\032\031\030";
 }
 
@@ -21,18 +22,9 @@ struct KincFileData::Header : FileMem::Static<hdrSz>
    using FSizeT = FileMem::SizeT;
    using Static<hdrSz>::Static;
    char* idString() { &get<char>(0); }
-   FPtr& ident() { get<FPtr>(idSz); }
-   uint32_t identSize() { get<uint32_t>(idSz+8); }
-   FPtr& histHead() { get<FPtr>(idSz+12); }
-   FPtr& dataHead() { get<FPtr>(idSz+20); }
-};
-
-struct KincFileData::String : FileMem::Object
-{
-   using FSizeT = FileMem::SizeT;
-   using Object::Object;
-   String(FSizeT size): Object(size) {}
-   char* c_str() { &get<char>(0); }
+   FPtr& histHead() { get<FPtr>(idSz); }
+   FPtr& dataHead() { get<FPtr>(idSz+8); }
+   FPtr& ident() { get<FPtr>(idSz+16); }
 };
 
 
@@ -55,7 +47,6 @@ public:
    // * BASIC METHODS
    // *
    KincFile(const string&);
-   ~KincFile();
    // *
    // * COPY METHODS
    // *
@@ -84,6 +75,8 @@ private:
    // * DECLERATIONS
    // *
    using Header = KincFileData::Header;
+   using fptr = std::unique_ptr<FileMem>;
+   using hptr = std::unique_ptr<History>;
    // *
    // * CONSTANTS
    // *
@@ -94,9 +87,10 @@ private:
    // * VARIABLES
    // *
    bool _new {true};
-   FileMem* _mem {nullptr};
-   History* _hist {nullptr};
+   fptr _mem {nullptr};
+   hptr _hist {nullptr};
    mutable Header _header;
+   FString _ident {nullptr};
 };
 
 
