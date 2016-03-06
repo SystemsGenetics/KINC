@@ -66,8 +66,8 @@ public:
    // *
    // * OPERATORS
    // *
-   const string& operator*();
-   const string* operator->();
+   const string& operator*() const;
+   const string* operator->() const;
    FString& operator=(const string&);
 private:
    // *
@@ -96,14 +96,14 @@ inline FString::FPtr FString::addr() const
 
 
 
-inline const FString::string& FString::operator*()
+inline const FString::string& FString::operator*() const
 {
    return _str;
 }
 
 
 
-inline const FString::string* FString::operator->()
+inline const FString::string* FString::operator->() const
 {
    return &_str;
 }
