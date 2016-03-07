@@ -110,6 +110,14 @@ namespace unit
       bool iter_operat_fp();
       bool iter_childhead();
    }
+   namespace kincfile
+   {
+      bool main();
+      bool construct();
+      bool history();
+      bool ident();
+      bool head();
+   }
    namespace datamap
    {
       bool main();

@@ -37,5 +37,6 @@ filemem.t.cpp
 fstring.t.cpp
 histitem.t.cpp
 history.t.cpp
+kincfile.t.cpp
 plugins/plugins.h
 plugins/Makefile

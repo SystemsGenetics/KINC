@@ -26,7 +26,8 @@ int main(int argc, char* argv[])
        unit::filemem::main()&&
        unit::fstring::main()&&
        unit::histitem::main()&&
-       unit::history::main())
+       unit::history::main()&&
+       unit::kincfile::main())
    {
       unit::complete();
    }
