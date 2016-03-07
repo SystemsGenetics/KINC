@@ -75,7 +75,6 @@ private:
    // * DECLERATIONS
    // *
    using Header = KincFileData::Header;
-   using fptr = std::unique_ptr<FileMem>;
    using hptr = std::unique_ptr<History>;
    // *
    // * CONSTANTS
@@ -86,12 +85,40 @@ private:
    // *
    // * VARIABLES
    // *
+   FileMem _mem;
    bool _new {true};
-   fptr _mem {nullptr};
    hptr _hist {nullptr};
-   mutable Header _header;
-   FString _ident {nullptr};
+   mutable Header _hdr;
+   FString _ident;
 };
+
+
+
+inline bool KincFile::is_new()
+{
+   return _new;
+}
+
+
+
+inline History& KincFile::history()
+{
+   return *_hist;
+}
+
+
+
+inline KincFile::string KincFile::ident() const
+{
+   return *_ident;
+}
+
+
+
+inline FileMem::Ptr KincFile::head() const
+{
+   return _hdr.dataHead();
+}
 
 
 

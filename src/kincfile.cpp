@@ -3,53 +3,34 @@
 
 
 
-KincFile::KincFile(const std::string& fileName)
+KincFile::KincFile(const std::string& fileName):
+   _mem(fileName),
+   _ident(&_mem)
 {
-   _mem = fptr(new FileMem(fileName));
-   if (_mem->size()==0)
+   if (_mem.size()==0)
    {
-      _mem->allot(_header);
-      _hist = hptr(new History(*_mem));
-      _header.histHead() = _hist->addr();
-      _header.dataHead() = FileMem::nullPtr;
-      _header.ident() = FileMem::nullPtr;
-      _mem->sync(_header,FileSync::write);
+      _mem.allot(_hdr);
+      _hist = hptr(new History(_mem));
+      _hdr.histHead() = _hist->addr();
+      _hdr.dataHead() = FileMem::nullPtr;
+      _hdr.ident() = FileMem::nullPtr;
+      memcpy(_hdr.idString(),_idString,_idSz);
+      _mem.sync(_hdr,FileSync::write);
    }
    else
    {
-      bool cond = _mem->size()>=_hdrSz;
+      bool cond = _mem.size()>=_hdrSz;
       assert<InvalidFile>(cond,__FILE__,__LINE__);
-      _header = _mem->head();
-      _mem->sync(_header,FileSync::read);
-      cond = _header.histHead()!=FileMem::nullPtr;
+      _hdr = _mem.head();
+      _mem.sync(_hdr,FileSync::read);
+      cond = _hdr.histHead()!=FileMem::nullPtr;
       assert<InvalidFile>(cond,__FILE__,__LINE__);
-      cond = strncmp(_header.idString(),_idString,_idSz)==0;
+      cond = strncmp(_hdr.idString(),_idString,_idSz)==0;
       assert<InvalidFile>(cond,__FILE__,__LINE__);
-      _hist = hptr(new History(*_mem,_header.histHead()));
-      _ident.addr(_header.ident());
+      _hist = hptr(new History(_mem,_hdr.histHead()));
+      _ident.addr(_hdr.ident());
       _new = false;
    }
-}
-
-
-
-bool KincFile::is_new()
-{
-   return _new;
-}
-
-
-
-History& KincFile::history()
-{
-   return *_hist;
-}
-
-
-
-KincFile::string KincFile::ident() const
-{
-   return *_ident;
 }
 
 
@@ -64,21 +45,14 @@ void KincFile::ident(const string& id)
    {
       throw AlreadySet(__FILE__,__LINE__);
    }
-   _header.ident() = _ident.addr();
-   _mem->sync(_header,FileSync::write);
-}
-
-
-
-FileMem::Ptr KincFile::head() const
-{
-   return _header.dataHead();
+   _hdr.ident() = _ident.addr();
+   _mem.sync(_hdr,FileSync::write);
 }
 
 
 
 void KincFile::head(FileMem::Ptr ptr)
 {
-   _header.dataHead() = ptr;
-   _mem->sync(_header,FileSync::write);
+   _hdr.dataHead() = ptr;
+   _mem.sync(_hdr,FileSync::write);
 }
