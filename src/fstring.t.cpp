@@ -7,14 +7,14 @@ namespace unit
 {
    namespace fstring
    {
-      constexpr const char* testStr = "hello";
-      struct TestString : FileMem::Static<9>
+      constexpr const char* testStr = "hello world! A really long string.";
+      struct TestString : FileMem::Static<38>
       {
          TestString()
          {
             stripe() = FStringData::strip;
-            sSize() = 6;
-            memcpy(c_str(),testStr,6);
+            sSize() = 35;
+            memcpy(c_str(),testStr,35);
          }
          uint8_t& stripe() { get<uint8_t>(0); }
          uint16_t& sSize() { get<uint16_t>(1); }
@@ -102,7 +102,21 @@ bool unit::fstring::construct()
       {
          test = true;
       }
-      cont = cont&&finish(test,"construct2");
+      cont = cont&&finish(test,"construct3");
+   }
+   if (cont)
+   {
+      start();
+      bool test = false;
+      try
+      {
+         FString t(nullptr);
+      }
+      catch(FString::InvalidPtr)
+      {
+         test = true;
+      }
+      cont = cont&&finish(test,"construct4");
    }
    return cont;
 }
