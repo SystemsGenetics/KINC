@@ -1,6 +1,7 @@
 #include "datamap.h"
 #include "unit.h"
 #include "plugins/plugins.h"
+#include "linuxterm.h"
 
 
 
@@ -55,17 +56,28 @@ bool unit::datamap::main()
 {
    bool ret = false;
    header("DataMap");
+   LinuxTerm::stty_raw();
    try
    {
       ret = construct()&&
             open()&&
-            close();
+            close()&&
+            load()&&
+            dump()&&
+            query()&&
+            iterate()&&
+            iter_file()&&
+            iter_type();
    }
    catch (...)
    {
+      system("rm -fr *.tmp");
+      LinuxTerm::stty_cooked();
       end();
       throw;
    }
+   system("rm -fr *.tmp");
+   LinuxTerm::stty_cooked();
    end();
    return ret;
 }
@@ -87,8 +99,8 @@ bool unit::datamap::open()
    bool cont = true;
    {
       start();
-      DataPlugin* n = t.open("test:FakeData",true);
-      bool test = n==t.find("test");
+      DataPlugin* n = t.open("test.tmp","FakeData",true);
+      bool test = n==t.find("test.tmp");
       cont = cont&&finish(test,"open1");
    }
    if (cont)
@@ -97,7 +109,7 @@ bool unit::datamap::open()
       bool test = false;
       try
       {
-         t.open("test2:UnknownData");
+         t.open("test2.tmp","UnknownData");
       }
       catch (DataMap::InvalidType)
       {
@@ -111,7 +123,7 @@ bool unit::datamap::open()
       bool test = false;
       try
       {
-         t.open("test:FakeData");
+         t.open("test.tmp","FakeData");
       }
       catch (DataMap::AlreadyExists)
       {
@@ -128,16 +140,196 @@ bool unit::datamap::close()
 {
    start();
    DataMap t;
-   t.open("test:FakeData");
-   t.close("test");
-   bool test = false;
-   try
-   {
-      t.find("test");
-   }
-   catch (DataMap::DoesNotExist)
-   {
-      test = true;
-   }
+   t.open("test.tmp","FakeData");
+   t.close("test.tmp");
+   bool test = t.find("test.tmp")==nullptr;
    return finish(test,"close1");
+}
+
+
+
+bool unit::datamap::load()
+{
+   LinuxTerm term;
+   GetOpts got("one");
+   DataMap t;
+   t.open("test.tmp","FakeData");
+   bool cont = true;
+   {
+      start();
+      bool test = false;
+      try
+      {
+         t.load(got,term);
+      }
+      catch (DataMap::NoSelect)
+      {
+         test = true;
+      }
+      cont = cont&&finish(test,"load1");
+   }
+   if (cont)
+   {
+      start();
+      t.select("test.tmp");
+      t.load(got,term);
+      FakeData* tmp = dynamic_cast<FakeData*>(t.find("test.tmp"));
+      bool test = tmp->touched;
+      cont = cont&&finish(test,"load2");
+   }
+   if (cont)
+   {
+      start();
+      bool test = false;
+      try
+      {
+         t.load(got,term);
+      }
+      catch (int x)
+      {
+         test = x==0;
+      }
+      cont = cont&&finish(test,"load3");
+   }
+   return cont;
+}
+
+
+
+bool unit::datamap::dump()
+{
+   LinuxTerm term;
+   GetOpts got("one");
+   DataMap t;
+   t.open("test.tmp","FakeData");
+   bool cont = true;
+   {
+      start();
+      bool test = false;
+      try
+      {
+         t.dump(got,term);
+      }
+      catch (DataMap::NoSelect)
+      {
+         test = true;
+      }
+      cont = cont&&finish(test,"dump1");
+   }
+   if (cont)
+   {
+      start();
+      t.select("test.tmp");
+      t.dump(got,term);
+      FakeData* tmp = dynamic_cast<FakeData*>(t.find("test.tmp"));
+      bool test = tmp->touched;
+      cont = cont&&finish(test,"dump2");
+   }
+   if (cont)
+   {
+      start();
+      bool test = false;
+      try
+      {
+         t.dump(got,term);
+      }
+      catch (int x)
+      {
+         test = x==1;
+      }
+      cont = cont&&finish(test,"dump3");
+   }
+   return cont;
+}
+
+
+
+bool unit::datamap::query()
+{
+   LinuxTerm term;
+   GetOpts got("one");
+   DataMap t;
+   t.open("test.tmp","FakeData");
+   bool cont = true;
+   {
+      start();
+      bool test = false;
+      try
+      {
+         t.query(got,term);
+      }
+      catch (DataMap::NoSelect)
+      {
+         test = true;
+      }
+      cont = cont&&finish(test,"query1");
+   }
+   if (cont)
+   {
+      start();
+      t.select("test.tmp");
+      t.query(got,term);
+      FakeData* tmp = dynamic_cast<FakeData*>(t.find("test.tmp"));
+      bool test = tmp->touched;
+      cont = cont&&finish(test,"query2");
+   }
+   if (cont)
+   {
+      start();
+      bool test = false;
+      try
+      {
+         t.query(got,term);
+      }
+      catch (int x)
+      {
+         test = x==2;
+      }
+      cont = cont&&finish(test,"query3");
+   }
+   return cont;
+}
+
+
+
+bool unit::datamap::iterate()
+{
+   start();
+   DataMap t;
+   t.open("test1.tmp","FakeData");
+   t.open("test2.tmp","FakeData");
+   t.open("test3.tmp","FakeData");
+   int count {0};
+   for (auto i = t.begin();i!=t.end();++i)
+   {
+      ++count;
+   }
+   bool test = count==3;
+   return finish(test,"iterate1");
+}
+
+
+
+bool unit::datamap::iter_file()
+{
+   start();
+   std::string file("test.tmp");
+   DataMap t;
+   t.open(file,"FakeData");
+   auto i = t.begin();
+   bool test = i.file()==file;
+   return finish(test,"iter_file1");
+}
+
+
+
+bool unit::datamap::iter_type()
+{
+   start();
+   std::string type("FakeData");
+   DataMap t;
+   t.open("test.tmp",type);
+   auto i = t.begin();
+   bool test = i.type()==type;
+   return finish(test,"iter_type1");
 }

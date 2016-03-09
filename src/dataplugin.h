@@ -9,24 +9,24 @@
 class DataPlugin : public Data, public KincFile
 {
 public:
-   inline std::string type();
+   using string = std::string;
+   string type();
 protected:
-   inline DataPlugin(const std::string&,const std::string&);
+   DataPlugin(const string&,const string&);
 private:
-   std::string _type;
+   string _type;
 };
 
 
 
-inline std::string DataPlugin::type()
+inline DataPlugin::string DataPlugin::type()
 {
    return _type;
 }
 
 
 
-inline DataPlugin::DataPlugin(const std::string& type,
-                              const std::string& fileName):
+inline DataPlugin::DataPlugin(const string& type, const string& fileName):
    _type(type),
    KincFile(fileName)
 {}
