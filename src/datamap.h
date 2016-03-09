@@ -1,6 +1,6 @@
 #ifndef DATAMAP_H
 #define DATAMAP_H
-#include <unordered_map>
+#include <map>
 #include <string>
 #include <memory>
 #include "dataplugin.h"
@@ -42,20 +42,20 @@ public:
    // *
    // * FUNCTIONS
    // *
-   DataPlugin* open(const string&,bool = false);//
+   DataPlugin* open(const string&,const string&,bool = false);//
    void close(const string&);//
-   void select(const string&);
-   void load(GetOpts&,Terminal&);
-   void dump(GetOpts&,Terminal&);
-   void query(GetOpts&,Terminal&);
+   void select(const string&);//
+   void load(GetOpts&,Terminal&);//
+   void dump(GetOpts&,Terminal&);//
+   void query(GetOpts&,Terminal&);//
    DataPlugin* find(const string&);//
-   Iterator begin();
-   Iterator end();
+   Iterator begin();//
+   Iterator end();//
 private:
    // *
    // * DECLERATIONS
    // *
-   using Map = std::unordered_map<std::string,std::unique_ptr<DataPlugin>>;
+   using Map = std::map<std::string,std::unique_ptr<DataPlugin>>;
    // *
    // * FUNCTIONS
    // *
@@ -80,13 +80,13 @@ public:
    // *
    // * FUNCTIONS
    // *
-   inline string file();
-   inline string type();
+   string file();
+   string type();
    // *
    // * OPERATORS
    // *
-   inline void operator++();
-   inline bool operator!=(const Iterator&);
+   void operator++();//
+   bool operator!=(const Iterator&);//
 private:
    // *
    // * DECLERATIONS
@@ -95,7 +95,7 @@ private:
    // *
    // * BASIC METHODS
    // *
-   inline Iterator(Map::iterator);
+   Iterator(Map::iterator);
    // *
    // * VARIABLES
    // *
@@ -113,12 +113,6 @@ inline DataMap::DataMap():
 inline void DataMap::select(const string& file)
 {
    _i = get(file);
-}
-
-
-inline DataPlugin* DataMap::find(const string& file)
-{
-   return get(file)->second.get();
 }
 
 

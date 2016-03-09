@@ -3,16 +3,9 @@
 
 
 
-DataPlugin* DataMap::open(const string& name, bool select)
+DataPlugin* DataMap::open(const string& file, const string& type, bool select)
 {
    using uptr = std::unique_ptr<DataPlugin>;
-   auto n = name.begin();
-   while (n!=name.end()&&*n!=':')
-   {
-      ++n;
-   }
-   string file(name.begin(),n);
-   string type(++n,name.end());
    bool cond = _map.find(file)==_map.end();
    assert<AlreadyExists>(cond,__FILE__,__LINE__);
    uptr nd(KINCPlugins::new_data(type,file));
@@ -89,6 +82,20 @@ void DataMap::query(GetOpts& ops, Terminal& tm)
       _map.erase(_i);
       _i = _map.end();
       throw;
+   }
+}
+
+
+
+DataPlugin* DataMap::find(const string& file)
+{
+   try
+   {
+      return get(file)->second.get();
+   }
+   catch (DoesNotExist)
+   {
+      return nullptr;
    }
 }
 
