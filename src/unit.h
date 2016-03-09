@@ -121,6 +121,17 @@ namespace unit
    namespace datamap
    {
       bool main();
+      bool construct();
+      bool open();
+      bool close();
+      bool select();
+      bool load();
+      bool dump();
+      bool query();
+      bool find();
+      bool iterate();
+      bool iter_file();
+      bool iter_type();
    }
    inline void initiate();
    inline void complete();

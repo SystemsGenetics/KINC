@@ -25,32 +25,37 @@ public:
    // *
    class Iterator;
    using string = std::string;
-   using wptr = std::weak_ptr<DataPlugin>;
    // *
    // * BASIC METHODS
    // *
+   inline DataMap();//
+   // *
+   // * COPY METHODS
+   // *
    DataMap(const DataMap&) = delete;
-   DataMap(DataMap&&) = delete;
    DataMap& operator=(const DataMap&) = delete;
+   // *
+   // * MOVE METHODS
+   // *
+   DataMap(DataMap&&) = delete;
    DataMap& operator=(DataMap&&) = delete;
-   inline DataMap();
    // *
    // * FUNCTIONS
    // *
-   wptr open(const string&,bool = false);
-   void close(const string&);
-   inline void select(const string&);
+   DataPlugin* open(const string&,bool = false);//
+   void close(const string&);//
+   void select(const string&);
    void load(GetOpts&,Terminal&);
    void dump(GetOpts&,Terminal&);
    void query(GetOpts&,Terminal&);
-   inline wptr find(const string&);
-   inline Iterator begin();
-   inline Iterator end();
+   DataPlugin* find(const string&);//
+   Iterator begin();
+   Iterator end();
 private:
    // *
    // * DECLERATIONS
    // *
-   using Map = std::unordered_map<std::string,std::shared_ptr<DataPlugin>>;
+   using Map = std::unordered_map<std::string,std::unique_ptr<DataPlugin>>;
    // *
    // * FUNCTIONS
    // *
@@ -111,9 +116,9 @@ inline void DataMap::select(const string& file)
 }
 
 
-inline DataMap::wptr DataMap::find(const string& file)
+inline DataPlugin* DataMap::find(const string& file)
 {
-   return get(file)->second;
+   return get(file)->second.get();
 }
 
 

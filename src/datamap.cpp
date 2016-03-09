@@ -3,7 +3,7 @@
 
 
 
-DataMap::wptr DataMap::open(const string& name, bool select)
+DataPlugin* DataMap::open(const string& name, bool select)
 {
    using uptr = std::unique_ptr<DataPlugin>;
    auto n = name.begin();
@@ -23,7 +23,7 @@ DataMap::wptr DataMap::open(const string& name, bool select)
    {
       _i = i;
    }
-   return i->second;
+   return i->second.get();
 }
 
 
