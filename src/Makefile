@@ -66,7 +66,7 @@ $(build)%.d: %.cpp
 +@$(CXX) $(acxxflags) -MM $< >> $@
 
 check: test
-+@cd $(run) && ./unit
++@cd $(run)/tmp && ../unit
 
 clean:
 +@echo "Cleaning all."
