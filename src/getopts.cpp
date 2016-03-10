@@ -2,7 +2,8 @@
 
 
 
-GetOpts::GetOpts(const string& raw)
+GetOpts::GetOpts(const string& raw):
+   _orig(raw)
 {
    clist rawList = explode(raw);
    for (auto i:rawList)

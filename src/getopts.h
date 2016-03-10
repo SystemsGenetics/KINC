@@ -28,16 +28,17 @@ public:
    // *
    // * FUNCTIONS
    // *
-   inline int com_size();
-   inline bool com_empty();
+   const string& orig() const;//NOT TESTED!!
+   int com_size();
+   bool com_empty();
    int com_get(std::initializer_list<string>);
-   inline string& com_front();//NOT TESTED!!
-   inline void com_pop();
-   inline int size();
-   inline bool empty();
-   inline Iterator begin();
-   inline Iterator end();
-   inline Iterator erase(Iterator);
+   string& com_front();//NOT TESTED!!
+   void com_pop();
+   int size();
+   bool empty();
+   Iterator begin();
+   Iterator end();
+   Iterator erase(Iterator);
 private:
    // *
    // * DECLERATIONS
@@ -47,10 +48,11 @@ private:
    // *
    // * FUNCTIONS
    // *
-   inline clist explode(const string&);
+   clist explode(const string&);
    // *
    // * VARIABLES
    // *
+   string _orig;
    clist _comms;
    oplist _opts;
 };
@@ -69,8 +71,8 @@ public:
    // *
    // * FUNCTIONS
    // *
-   inline const string& key();
-   inline bool empty();// NOT TESTED
+   const string& key();
+   bool empty();// NOT TESTED
    // *
    // * OPERATORS
    // *
@@ -83,9 +85,9 @@ public:
    Iterator& operator>>(float&);
    Iterator& operator>>(double&);
    Iterator& operator>>(string&);
-   inline void operator++();
-   inline bool operator==(const Iterator&);
-   inline bool operator!=(const Iterator&);
+   void operator++();
+   bool operator==(const Iterator&);
+   bool operator!=(const Iterator&);
 private:
    // *
    // * DECLERATIONS
@@ -94,12 +96,19 @@ private:
    // *
    // * BASIC METHODS
    // *
-   inline Iterator(const oplist::iterator&);
+   Iterator(const oplist::iterator&);
    // *
    // * VARIABLES
    // *
    oplist::iterator _i;
 };
+
+
+
+inline const GetOpts::string& GetOpts::orig() const
+{
+   return _orig;
+}
 
 
 
