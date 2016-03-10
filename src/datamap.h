@@ -43,14 +43,17 @@ public:
    // * FUNCTIONS
    // *
    DataPlugin* open(const string&,const string&,bool = false);//
-   void close(const string&);//
+   bool close(const string&);// RETEST NEEDED!!!
    void select(const string&);//
+   bool unselect();// NOT TESTED!!!
    void load(GetOpts&,Terminal&);//
    void dump(GetOpts&,Terminal&);//
    void query(GetOpts&,Terminal&);//
    DataPlugin* find(const string&);//
+   DataPlugin* current();//NOT TESTED!!!
    Iterator begin();//
    Iterator end();//
+   Iterator selected();//NOT TESTED!!!
 private:
    // *
    // * DECLERATIONS
@@ -87,6 +90,7 @@ public:
    // *
    void operator++();//
    bool operator!=(const Iterator&);//
+   bool operator==(const Iterator&);//NOT TESTED!!!
 private:
    // *
    // * DECLERATIONS
@@ -131,6 +135,13 @@ inline DataMap::Iterator DataMap::end()
 
 
 
+inline DataMap::Iterator DataMap::selected()
+{
+   return _i;
+}
+
+
+
 inline DataMap::Iterator::string DataMap::Iterator::file()
 {
    return _i->first;
@@ -155,6 +166,13 @@ inline void DataMap::Iterator::operator++()
 inline bool DataMap::Iterator::operator!=(const Iterator& cmp)
 {
    return _i!=cmp._i;
+}
+
+
+
+inline bool DataMap::Iterator::operator==(const Iterator& cmp)
+{
+   return _i==cmp._i;
 }
 
 

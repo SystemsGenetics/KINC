@@ -21,14 +21,30 @@ DataPlugin* DataMap::open(const string& file, const string& type, bool select)
 
 
 
-void DataMap::close(const string& file)
+bool DataMap::close(const string& file)
 {
+   bool ret = false;
    auto i = get(file);
    if (_i==i)
    {
+      ret = true;
       _i = _map.end();
    }
    _map.erase(i);
+   return ret;
+}
+
+
+
+bool DataMap::unselect()
+{
+   bool ret = false;
+   if (_i!=_map.end())
+   {
+      ret = true;
+      _i = _map.end();
+   }
+   return ret;
 }
 
 
@@ -97,6 +113,15 @@ DataPlugin* DataMap::find(const string& file)
    {
       return nullptr;
    }
+}
+
+
+
+DataPlugin* DataMap::current()
+{
+   bool cond = _i!=_map.end();
+   assert<NoSelect>(cond,__FILE__,__LINE__);
+   return _i->second.get();
 }
 
 
