@@ -63,8 +63,8 @@ public:
    // *
    // * COPY METHODS
    // *
-   HistItem(const HistItem&) = delete;
-   HistItem& operator=(const HistItem&) = delete;
+   HistItem(const HistItem&);//NOT TESTED!!!
+   HistItem& operator=(const HistItem&);//NOT TESTED!!
    // *
    // * MOVE METHODS
    // *
@@ -89,7 +89,7 @@ public:
    void childHead(FPtr);
    FPtr childHead() const;
    FPtr addr() const;
-   FileMem* mem() const;// NOT TESTED
+   FileMem* mem() const;
    // *
    // * FUNCTIONS
    // *

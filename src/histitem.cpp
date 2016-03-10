@@ -14,6 +14,27 @@ HistItem::HistItem(FileMem* mem, FileMem::Ptr ptr):
 
 
 
+HistItem::HistItem(const HistItem& copy):
+   _mem(copy._mem),
+   _item(copy._item),
+   _fileName(copy._fileName),
+   _object(copy._object),
+   _command(copy._command)
+{}
+
+
+
+HistItem& HistItem::operator=(const HistItem& copy)
+{
+   _mem = copy._mem;
+   _item = copy._item;
+   _fileName = copy._fileName;
+   _object = copy._object;
+   _command = copy._command;
+}
+
+
+
 HistItem::HistItem(HistItem&& tmp):
    _mem(tmp._mem),
    _item(tmp._item),
