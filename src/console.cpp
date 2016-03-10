@@ -8,6 +8,7 @@
 #include <sstream>
 #include <forward_list>
 #include <memory>
+#include <time.h>
 #include "console.h"
 #include "cldevice.h"
 #include "data.h"
@@ -140,25 +141,48 @@ void Console::terminal_loop()
 /// @param list List of user arguments for command.
 void Console::process(GetOpts& ops)
 {
-   enum {Analytic=0,GPU,Open,Load,Dump,Query,Close,List,Quit};
-   switch (ops.com_get({"gpu","open","load","dump","query","close","list",
-                        "quit"}))
+   enum {Analytic=0,GPU,Open,Load,Select,Dump,Query,Close,List,Clear,History,
+         Quit};
+   switch (ops.com_get({"gpu","open","load","select","dump","query","close",
+                        "list","clear","history","quit"}))
    {
    case GPU:
       ops.com_pop();
       gpu_process(ops);
       break;
    case Open:
-      break;
-   case Load:
-      break;
-   case Dump:
-      break;
-   case Query:
+      ops.com_pop();
+      data_open(ops);
       break;
    case Close:
+      ops.com_pop();
+      data_close(ops);
+      break;
+   case Select:
+      ops.com_pop();
+      data_select(ops);
+      break;
+   case Clear:
+      data_clear();
       break;
    case List:
+      data_list();
+      break;
+   case History:
+      ops.com_pop();
+      data_history(ops);
+      break;
+   case Load:
+      ops.com_pop();
+      data_load(ops);
+      break;
+   case Dump:
+      ops.com_pop();
+      data_dump(ops);
+      break;
+   case Query:
+      ops.com_pop();
+      data_query(ops);
       break;
    case Quit:
       throw CommandQuit();
@@ -309,147 +333,144 @@ void Console::gpu_clear()
 }
 
 
-/*
-void Console::data_open(slist& list)
+
+void Console::data_open(GetOpts& ops)
 {
-   if (list.size()<2)
+   if (ops.com_empty())
    {
-      throw CommandError("open","command requires 2 arguments.");
+      throw CommandError("open","command requires 1 argument.");
    }
-   string type = list.front();
-   list.pop_front();
-   if (_dataMap.exist(list.front()))
+   string name = ops.com_front();
+   int count = 0;
+   auto n = name.begin();
+   for (auto i = name.begin();i!=name.end();++i)
+   {
+      if (*i==':')
+      {
+         n = i;
+         ++count;
+      }
+   }
+   if (count!=1)
+   {
+      throw CommandError("open","syntax error detected in first argument.");
+   }
+   string file(name.begin(),n);
+   string type(++n,name.end());
+   if (file.empty()||type.empty())
+   {
+      throw CommandError("open","syntax error detected in first argument.");
+   }
+   bool willSelect {false};
+   string select("select");
+   for (auto i = ops.begin();i!=ops.end();++i)
+   {
+      if (i.key()==select)
+      {
+         willSelect = true;
+      }
+   }
+   KincFile* np;
+   try
+   {
+      np = dynamic_cast<KincFile*>(_dataMap.open(file,type,willSelect));
+   }
+   catch (DataMap::AlreadyExists)
    {
       std::ostringstream buffer;
-      buffer << "data object with name \"" << list.front()
-             << "\" already exists.";
+      buffer << "error: " << file << " already exists.";
       throw CommandError("open",buffer.str());
    }
-   std::unique_ptr<DataPlugin> nd(KINCPlugins::new_data(type,list.front()));
-   if (!nd)
+   catch (DataMap::InvalidType)
    {
       std::ostringstream buffer;
-      buffer << "cannot find data type \"" << type << "\".";
+      buffer << "error: '" << type << "' is not valid data type.";
       throw CommandError("open",buffer.str());
    }
-   _dataMap.add(list.front(),nd.release());
-   _tm << "Added " << list.front() << "(" << type << ") data object."
-       << Terminal::endl;
-}
-
-
-
-void Console::data_load(slist& list)
-{
-   if (list.size()<2)
-   {
-      throw CommandError("load","command requires 2 arguments.");
-   }
-   string textFile = list.front();
-   list.pop_front();
-   DataPlugin* data = find_data(list.front());
-   list.pop_front();
-   try
-   {
-      parse_data_options(data,list);
-      data->load(textFile,_tm);
-   }
-   catch (DataException e)
-   {
-      if (e.level()==DataException::Level::fatal)
-      {
-         _dataMap.del(data);
-      }
-      throw;
-   }
-   catch (...)
-   {
-      _dataMap.del(data);
-      throw;
-   }
-}
-
-
-
-void Console::data_dump(slist& list)
-{
-   if (list.size()<2)
-   {
-      throw CommandError("dump","command requires 2 arguments.");
-   }
-   string textFile = list.front();
-   list.pop_front();
-   DataPlugin* data = find_data(list.front());
-   list.pop_front();
-   try
-   {
-      parse_data_options(data,list);
-      data->dump(textFile,_tm);
-   }
-   catch (DataException e)
-   {
-      if (e.level()==DataException::Level::fatal)
-      {
-         _dataMap.del(data);
-      }
-      throw;
-   }
-   catch (...)
-   {
-      _dataMap.del(data);
-      throw;
-   }
-}
-
-
-
-void Console::data_query(slist& list)
-{
-   if (list.size()<1)
-   {
-      throw CommandError("query","command requires 1 argument.");
-   }
-   DataPlugin* data = find_data(list.front());
-   list.pop_front();
-   try
-   {
-      parse_data_options(data,list);
-      data->query(_tm);
-   }
-   catch (DataException e)
-   {
-      if (e.level()==DataException::Level::fatal)
-      {
-         _dataMap.del(data);
-      }
-      throw;
-   }
-   catch (...)
-   {
-      _dataMap.del(data);
-      throw;
-   }
-}
-
-
-
-void Console::data_close(slist& list)
-{
-   if (list.size()<1)
-   {
-      throw CommandError("close","command requires 1 argument.");
-   }
-   DataPlugin* data = _dataMap.find(list.front());
-   if (!data)
+   if (willSelect)
    {
       std::ostringstream buffer;
-      buffer << "data object \"" << list.front() << "\" not found.";
-      throw CommandError("close",buffer.str());
+      buffer << "KINC[" << file << "]:> ";
+      _tm.header(buffer.str());
+   }
+   if (np->is_new())
+   {
+      time_t t;
+      np->history()->timeStamp(time(&t));
+      np->history()->fileName(file);
+      np->history()->object("__NEW__");
+      np->history()->command(ops.orig());
+      np->history()->sync();
+      _tm << "new file " << file << " opened." << Terminal::endl;
    }
    else
    {
-      _dataMap.del(data);
-      _tm << "data object closed." << Terminal::endl;
+      _tm << "old file " << file << " opened." << Terminal::endl;
+   }
+}
+
+
+
+void Console::data_close(GetOpts& ops)
+{
+   if (ops.com_empty())
+   {
+      throw CommandError("close","command requires 1 argument.");
+   }
+   bool wasSelected;
+   try
+   {
+      wasSelected = _dataMap.close(ops.com_front());
+   }
+   catch (DataMap::DoesNotExist)
+   {
+      std::ostringstream buffer;
+      buffer << ops.com_front() << " cannot be found.";
+      throw CommandError("close",buffer.str());
+   }
+   _tm << ops.com_front() << " data file closed." << Terminal::endl;
+   if (wasSelected)
+   {
+      _tm.header("KINC:> ");
+   }
+}
+
+
+
+void Console::data_select(GetOpts& ops)
+{
+   if (ops.com_empty())
+   {
+      throw CommandError("select","command requires 1 argument.");
+   }
+   try
+   {
+      _dataMap.select(ops.com_front());
+   }
+   catch (DataMap::DoesNotExist)
+   {
+      std::ostringstream buffer;
+      buffer << ops.com_front() << " cannot be found.";
+      throw CommandError("select",buffer.str());
+   }
+   _tm << ops.com_front() << " data file selected." << Terminal::endl;
+   std::ostringstream buffer;
+   buffer << "KINC[" << ops.com_front() << "]:> ";
+   _tm.header(buffer.str());
+}
+
+
+
+void Console::data_clear()
+{
+   if (_dataMap.unselect())
+   {
+      _tm << "data selection cleared." << Terminal::endl;
+      _tm.header("KINC:> ");
+   }
+   else
+   {
+      _tm << "no data object selected." << Terminal::endl;
    }
 }
 
@@ -459,13 +480,99 @@ void Console::data_list()
 {
    for (auto i=_dataMap.begin();i!=_dataMap.end();++i)
    {
-      DataPlugin* data = i->second;
-      _tm << i->first << " [" << data->type() << "]" << Terminal::endl;
+      _tm << i.file() << " [" << i.type() << "]";
+      if (i==_dataMap.selected())
+      {
+         _tm << " ***";
+      }
+      _tm << Terminal::endl;
    }
 }
 
 
 
+void Console::data_history(GetOpts& ops)
+{
+   if (ops.com_empty())
+   {
+      throw CommandError("history","command requires 1 argument.");
+   }
+   KincFile* kp = dynamic_cast<KincFile*>(_dataMap.find(ops.com_front()));
+   if (!kp)
+   {
+      std::ostringstream buffer;
+      buffer << ops.com_front() << " cannot be found.";
+      throw CommandError("history",buffer.str());
+   }
+   time_t t = kp->history()->timeStamp();
+   struct tm* bt = localtime(&t);
+   _tm << "Time Stamp: ";
+   _tm << bt->tm_mday << "-" << (bt->tm_mon+1) << "-" << (bt->tm_year+1900)
+       << " " << bt->tm_hour << ":" << bt->tm_min << Terminal::endl;
+   _tm << "File Name: " << kp->history()->fileName() << Terminal::endl;
+   _tm << "Object: " << kp->history()->object() << Terminal::endl;
+   _tm << "Command: " << kp->history()->command() << Terminal::endl;
+   if (kp->history().begin()!=kp->history().end())
+   {
+      _tm << "{" << Terminal::endl;
+      rec_history(kp->history().begin(),kp->history().end(),1);
+      _tm << "{" << Terminal::endl;
+   }
+}
+
+
+
+void Console::data_load(GetOpts& ops)
+{
+   try
+   {
+      KincFile* k = dynamic_cast<KincFile*>(_dataMap.current());
+      //k->clear();
+      time_t t;
+      k->history()->timeStamp(time(&t));
+      k->history()->fileName(_dataMap.selected().file());
+      k->history()->object("__LOAD__");
+      k->history()->command(ops.orig());
+      k->history()->sync();
+      _dataMap.load(ops,_tm);
+   }
+   catch (DataMap::NoSelect)
+   {
+      throw CommandError("load","no data object selected.");
+   }
+}
+
+
+
+void Console::data_dump(GetOpts& ops)
+{
+   try
+   {
+      _dataMap.dump(ops,_tm);
+   }
+   catch (DataMap::NoSelect)
+   {
+      throw CommandError("dump","no data object selected.");
+   }
+}
+
+
+
+void Console::data_query(GetOpts& ops)
+{
+   try
+   {
+      _dataMap.query(ops,_tm);
+   }
+   catch (DataMap::NoSelect)
+   {
+      throw CommandError("query","no data object selected.");
+   }
+}
+
+
+
+/*
 void Console::analytic(slist& list)
 {
    if (list.size()<3)
@@ -679,3 +786,42 @@ void Console::parse_analytic_options(aptr& a, slist& list)
    }
 }
 */
+
+
+
+inline void Console::rec_history(hiter begin, hiter end, int d)
+{
+   for (auto i = begin;i!=end;++i)
+   {
+      print_pad(d);
+      time_t t = i->timeStamp();
+      struct tm* bt = localtime(&t);
+      _tm << "Time Stamp: ";
+      _tm << bt->tm_mday << "-" << (bt->tm_mon+1) << "-" << (bt->tm_year+1900)
+          << " " << bt->tm_hour << ":" << bt->tm_min << Terminal::endl;
+      print_pad(d);
+      _tm << "File Name: " << i->fileName() << Terminal::endl;
+      print_pad(d);
+      _tm << "Object: " << i->object() << Terminal::endl;
+      print_pad(d);
+      _tm << "Command: " << i->command() << "\n" << Terminal::endl;
+      if (i.childHead()!=end)
+      {
+         print_pad(d);
+         _tm << "{" << Terminal::endl;
+         rec_history(i.childHead(),end,d+1);
+         print_pad(d);
+         _tm << "{" << Terminal::endl;
+      }
+   }
+}
+
+
+
+inline void Console::print_pad(int d)
+{
+   while (d--)
+   {
+      _tm << "  ";
+   }
+}

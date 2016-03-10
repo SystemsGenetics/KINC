@@ -57,6 +57,7 @@ public:
    //Data* find(std::string&);
 private:
    using string = std::string;
+   using hiter = History::Iterator;
    struct CommandError
    {
       CommandError(const char* c, const std::string& m): cmd {c}, msg {m} {}
@@ -74,19 +75,24 @@ private:
    void gpu_info(GetOpts&);
    void gpu_set(GetOpts&);
    void gpu_clear();
-   /*void data_open(slist&);
-   void data_load(slist&);
-   void data_dump(slist&);
-   void data_query(slist&);
-   void data_close(slist&);
+   void data_open(GetOpts&);
+   void data_close(GetOpts&);
+   void data_select(GetOpts&);
+   void data_clear();
    void data_list();
-   void analytic(slist&);
+   void data_history(GetOpts&);
+   void data_load(GetOpts&);
+   void data_dump(GetOpts&);
+   void data_query(GetOpts&);
+   /*void analytic(slist&);
    DataPlugin* find_data(const string&);
    void parse_data_options(DataPlugin*,slist&);
    void parse_analytic_inputs(aptr&,const string&);
    void parse_analytic_outputs(aptr&,const string&,dlist&);
    DataPlugin* parse_analytic_ndata(const string&,string&);
    void parse_analytic_options(aptr&,slist&);*/
+   void rec_history(hiter,hiter,int);
+   void print_pad(int);
    // *
    // * STATIC VARIABLES
    // *
