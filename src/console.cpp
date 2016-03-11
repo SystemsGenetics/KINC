@@ -73,7 +73,7 @@ void Console::terminal_loop()
    {
       string line;
       _tm >> line;
-      _tm << Terminal::endl;
+      _tm << "\n";
       GetOpts ops(line);
       try
       {
@@ -130,6 +130,7 @@ void Console::terminal_loop()
       {
          ;
       }*/
+      _tm << Terminal::endl;
    }
 }
 
@@ -396,11 +397,11 @@ void Console::data_open(GetOpts& ops)
    if (np->is_new())
    {
       time_t t;
-      np->history()->timeStamp(time(&t));
-      np->history()->fileName(file);
-      np->history()->object("__NEW__");
-      np->history()->command(ops.orig());
-      np->history()->sync();
+      np->history().timeStamp(time(&t));
+      np->history().fileName(file);
+      np->history().object("__NEW__");
+      np->history().command(ops.orig());
+      np->history().sync();
       _tm << "new file " << file << " opened." << Terminal::endl;
    }
    else
@@ -504,20 +505,20 @@ void Console::data_history(GetOpts& ops)
       buffer << ops.com_front() << " cannot be found.";
       throw CommandError("history",buffer.str());
    }
-   time_t t = kp->history()->timeStamp();
+   time_t t = kp->history().timeStamp();
    struct tm* bt = localtime(&t);
    _tm << "Time Stamp: ";
    _tm << bt->tm_mday << "-" << (bt->tm_mon+1) << "-" << (bt->tm_year+1900)
        << " " << bt->tm_hour << ":" << bt->tm_min << Terminal::endl;
-   _tm << "File Name: " << kp->history()->fileName() << Terminal::endl;
-   _tm << "Object: " << kp->history()->object() << Terminal::endl;
-   _tm << "Command: " << kp->history()->command() << Terminal::endl;
-   /*if (kp->history().begin()!=kp->history().end())
+   _tm << "File Name: " << kp->history().fileName() << Terminal::endl;
+   _tm << "Object: " << kp->history().object() << Terminal::endl;
+   _tm << "Command: " << kp->history().command() << Terminal::endl;
+   if (kp->history().hasChild())
    {
       _tm << "{" << Terminal::endl;
       rec_history(kp->history().begin(),kp->history().end(),1);
       _tm << "{" << Terminal::endl;
-   }*/
+   }
 }
 
 
@@ -526,14 +527,14 @@ void Console::data_load(GetOpts& ops)
 {
    try
    {
-      KincFile* k = dynamic_cast<KincFile*>(_dataMap.current());
+      KincFile& k = *dynamic_cast<KincFile*>(_dataMap.current());
       //k->clear();
       time_t t;
-      k->history()->timeStamp(time(&t));
-      k->history()->fileName(_dataMap.selected().file());
-      k->history()->object("__LOAD__");
-      k->history()->command(ops.orig());
-      k->history()->sync();
+      k.history().timeStamp(time(&t));
+      k.history().fileName(_dataMap.selected().file());
+      k.history().object("__LOAD__");
+      k.history().command(ops.orig());
+      k.history().sync();
       _dataMap.load(ops,_tm);
    }
    catch (DataMap::NoSelect)
@@ -791,21 +792,27 @@ void Console::parse_analytic_options(aptr& a, slist& list)
 
 inline void Console::rec_history(hiter begin, hiter end, int d)
 {
-/*   for (auto i = begin;i!=end;++i)
+   for (auto i = begin;i!=end;++i)
    {
-      print_pad(d);
-      time_t t = i->timeStamp();
+      HistItem h = i.load();
+      time_t t = h.timeStamp();
       struct tm* bt = localtime(&t);
+      if (i!=begin)
+      {
+         print_pad(d);
+         _tm << Terminal::endl;
+      }
+      print_pad(d);
       _tm << "Time Stamp: ";
       _tm << bt->tm_mday << "-" << (bt->tm_mon+1) << "-" << (bt->tm_year+1900)
           << " " << bt->tm_hour << ":" << bt->tm_min << Terminal::endl;
       print_pad(d);
-      _tm << "File Name: " << i->fileName() << Terminal::endl;
+      _tm << "File Name: " << h.fileName() << Terminal::endl;
       print_pad(d);
-      _tm << "Object: " << i->object() << Terminal::endl;
+      _tm << "Object: " << h.object() << Terminal::endl;
       print_pad(d);
-      _tm << "Command: " << i->command() << "\n" << Terminal::endl;
-      if (i.childHead()!=end)
+      _tm << "Command: " << h.command() << Terminal::endl;
+      if (i.hasChild())
       {
          print_pad(d);
          _tm << "{" << Terminal::endl;
@@ -813,7 +820,7 @@ inline void Console::rec_history(hiter begin, hiter end, int d)
          print_pad(d);
          _tm << "{" << Terminal::endl;
       }
-   }*/
+   }
 }
 
 
