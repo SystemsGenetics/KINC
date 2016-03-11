@@ -2,38 +2,37 @@
 #define HISTITEM_H
 #include <string>
 #include "filemem.h"
+#include "fstring.h"
 #include "exception.h"
 
 
 
 namespace HistItemData
 {
+   struct Skim;
    struct Item;
-   struct String;
-   constexpr FileMem::SizeT nodeSz = 60;
+   constexpr FileMem::SizeT skimSz = 16;
+   constexpr FileMem::SizeT nodeSz = 48;
 }
+
+struct HistItemData::Skim : FileMem::Static<skimSz>
+{
+   using FPtr = FileMem::Ptr;
+   using Static<skimSz>::Static;
+   FPtr& childHead() { get<FPtr>(0); }
+   FPtr& next() { get<FPtr>(8); }
+};
 
 struct HistItemData::Item : FileMem::Static<nodeSz>
 {
    using FPtr = FileMem::Ptr;
    using Static<nodeSz>::Static;
-   int64_t& timeStamp() { get<int64_t>(0); }
-   FPtr& fileNamePtr() { get<FPtr>(8); }
-   int32_t& fileNameSize() { get<int32_t>(16); }
-   FPtr& objectPtr() { get<FPtr>(20); }
-   int32_t& objectSize() { get<int32_t>(28); }
-   FPtr& commandPtr() { get<FPtr>(32); }
-   int32_t& commandSize() { get<int32_t>(40); }
-   FPtr& childHead() { get<FPtr>(44); }
-   FPtr& next() { get<FPtr>(52); }
-};
-
-struct HistItemData::String : FileMem::Object
-{
-   using FSizeT = FileMem::SizeT;
-   using Object::Object;
-   String(FSizeT size): Object(size) {}
-   char* c_str() { &get<char>(0); }
+   FPtr& childHead() { get<FPtr>(0); }
+   FPtr& next() { get<FPtr>(8); }
+   int64_t& timeStamp() { get<int64_t>(16); }
+   FPtr& fileNamePtr() { get<FPtr>(24); }
+   FPtr& objectPtr() { get<FPtr>(32); }
+   FPtr& commandPtr() { get<FPtr>(40); }
 };
 
 
@@ -63,8 +62,8 @@ public:
    // *
    // * COPY METHODS
    // *
-   HistItem(const HistItem&);//NOT TESTED!!!
-   HistItem& operator=(const HistItem&);//NOT TESTED!!
+   HistItem(const HistItem&) = delete;
+   HistItem& operator=(const HistItem&) = delete;
    // *
    // * MOVE METHODS
    // *
@@ -79,11 +78,11 @@ public:
    void timeStamp(TimeT);
    TimeT timeStamp() const;
    void fileName(const string&);
-   string fileName() const;
+   const string& fileName() const;
    void object(const string&);
-   string object() const;
+   const string& object() const;
    void command(const string&);
-   string command() const;
+   const string& command() const;
    void next(FPtr);
    FileMem::Ptr next() const;
    void childHead(FPtr);
@@ -91,7 +90,7 @@ public:
    FPtr addr() const;
    FileMem* mem() const;
    // *
-   // * FUNCTIONS
+   // * OPERATORS
    // *
    void operator=(FPtr);
 private:
@@ -99,23 +98,20 @@ private:
    // * DECLERATIONS
    // *
    using Item = HistItemData::Item;
-   using String = HistItemData::String;
    using FSizeT = FileMem::SizeT;
    // *
    // * FUNCTIONS
    // *
    void load_item();
-   string get_string(FPtr,FSizeT);
-   FPtr set_string(const string&);
    FPtr rec_add_item(FileMem*,FPtr);
    // *
    // * VARIABLES
    // *
    FileMem* _mem;
    mutable Item _item;
-   string _fileName;
-   string _object;
-   string _command;
+   FString _fileName;
+   FString _object;
+   FString _command;
 };
 
 

@@ -512,12 +512,12 @@ void Console::data_history(GetOpts& ops)
    _tm << "File Name: " << kp->history()->fileName() << Terminal::endl;
    _tm << "Object: " << kp->history()->object() << Terminal::endl;
    _tm << "Command: " << kp->history()->command() << Terminal::endl;
-   if (kp->history().begin()!=kp->history().end())
+   /*if (kp->history().begin()!=kp->history().end())
    {
       _tm << "{" << Terminal::endl;
       rec_history(kp->history().begin(),kp->history().end(),1);
       _tm << "{" << Terminal::endl;
-   }
+   }*/
 }
 
 
@@ -791,7 +791,7 @@ void Console::parse_analytic_options(aptr& a, slist& list)
 
 inline void Console::rec_history(hiter begin, hiter end, int d)
 {
-   for (auto i = begin;i!=end;++i)
+/*   for (auto i = begin;i!=end;++i)
    {
       print_pad(d);
       time_t t = i->timeStamp();
@@ -813,7 +813,7 @@ inline void Console::rec_history(hiter begin, hiter end, int d)
          print_pad(d);
          _tm << "{" << Terminal::endl;
       }
-   }
+   }*/
 }
 
 
