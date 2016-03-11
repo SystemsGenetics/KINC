@@ -6,7 +6,7 @@
 
 
 
-class History
+class History : private HistItem
 {
 public:
    // *
@@ -14,10 +14,16 @@ public:
    // *
    class Iterator;
    using FPtr = FileMem::Ptr;
+   using HistItem::sync;
+   using HistItem::timeStamp;
+   using HistItem::fileName;
+   using HistItem::object;
+   using HistItem::command;
+   using HistItem::addr;
    // *
    // * BASIC METHODS
    // *
-   History(FileMem&,FPtr = FileMem::nullPtr);
+   History(FileMem&,FPtr = FileMem::nullPtr);//
    // *
    // * COPY METHODS
    // *
@@ -31,21 +37,10 @@ public:
    // *
    // * FUNCTIONS
    // *
-   FileMem::Ptr addr();
    void add_child(const History&);
+   bool hasChild() const;
    Iterator begin();
    Iterator end();
-   // *
-   // * OPERATORS
-   // *
-   HistItem& operator*();
-   HistItem* operator->();
-private:
-   // *
-   // * VARIABLES
-   // *
-   FileMem& _mem;
-   HistItem _head;
 };
 
 
@@ -62,14 +57,15 @@ public:
    // * FUNCTIONS
    // *
    Iterator childHead();
+   bool hasChild() const;
    // *
    // * OPERATORS
    // *
-   HistItem& operator*();
-   HistItem* operator->();
+   HistItem load();
    void operator++();
    bool operator!=(const Iterator&);
 private:
+   using Skim = HistItemData::Skim;
    // *
    // * BASIC METHODS
    // *
@@ -77,72 +73,63 @@ private:
    // *
    // * VARIABLES
    // *
-   HistItem _item;
+   FileMem* _mem;
+   mutable Skim _skim;
 };
 
 
 
-inline FileMem::Ptr History::addr()
+inline bool History::hasChild() const
 {
-   return _head.addr();
+   return childHead()!=FileMem::nullPtr;
 }
 
 
 
 inline History::Iterator History::begin()
 {
-   return {&_mem,_head.childHead()};
+   return {mem(),childHead()};
 }
 
 
 
 inline History::Iterator History::end()
 {
-   return {&_mem};
-}
-
-
-
-inline HistItem& History::operator*()
-{
-   return _head;
-}
-
-
-
-inline HistItem* History::operator->()
-{
-   return &_head;
+   return {mem()};
 }
 
 
 
 inline History::Iterator History::Iterator::childHead()
 {
-   return {_item.mem(),_item.childHead()};
+   return {_mem,_skim.childHead()};
 }
 
 
 
-inline HistItem& History::Iterator::operator*()
+inline bool History::Iterator::hasChild() const
 {
-   return _item;
+   return _skim.childHead()!=FileMem::nullPtr;
 }
 
 
 
-inline HistItem* History::Iterator::operator->()
+inline HistItem History::Iterator::load()
 {
-   return &_item;
+   return {_mem,_skim.addr()};
 }
 
 
 
 inline void History::Iterator::operator++()
 {
-   if (_item.addr()!=FileMem::nullPtr)
+   if (_skim.addr()!=FileMem::nullPtr)
    {
-      _item = _item.next();
+      _skim = _skim.next();
+      if (_skim.addr()!=FileMem::nullPtr)
+      {
+         _mem->sync(_skim,FileSync::read);
+      }
    }
 }
 
@@ -150,14 +137,20 @@ inline void History::Iterator::operator++()
 
 inline bool History::Iterator::operator!=(const Iterator& cmp)
 {
-   return _item.addr()!=cmp._item.addr();
+   return _skim.addr()!=cmp._skim.addr();
 }
 
 
 
 inline History::Iterator::Iterator(FileMem* mem, FPtr ptr):
-   _item(mem,ptr)
-{}
+   _mem(mem),
+   _skim(ptr)
+{
+   if (ptr!=FileMem::nullPtr)
+   {
+      _mem->sync(_skim,FileSync::read);
+   }
+}
 
 
 

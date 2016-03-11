@@ -3,13 +3,12 @@
 
 
 History::History(FileMem& mem, FPtr ptr):
-   _mem(mem),
-   _head(&mem,ptr)
+   HistItem(mem,ptr)
 {
    if (ptr==FileMem::nullPtr)
    {
-      _head.allocate();
-      _head.sync();
+      allocate();
+      sync();
    }
 }
 
@@ -17,16 +16,16 @@ History::History(FileMem& mem, FPtr ptr):
 
 void History::add_child(const History& child)
 {
-   HistItem nChild(&_mem);
-   nChild.copy_from(child._head);
-   if (_head.childHead()==FileMem::nullPtr)
+   HistItem nChild(mem());
+   nChild.copy_from(child);
+   if (childHead()==FileMem::nullPtr)
    {
-      _head.childHead(nChild.addr());
-      _head.sync();
+      childHead(nChild.addr());
+      sync();
    }
    else
    {
-      HistItem tmp(&_mem,_head.childHead());
+      HistItem tmp(mem(),childHead());
       while (tmp.next()!=FileMem::nullPtr)
       {
          tmp = tmp.next();
