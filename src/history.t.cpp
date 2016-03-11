@@ -56,10 +56,8 @@ bool unit::history::main()
    {
       construct_history_file();
       ret = construct()&&
-            operat_fp()&&
             add_child()&&
             iterate()&&
-            operat_deref()&&
             iter_childhead();
    }
    catch (...)
@@ -98,18 +96,6 @@ bool unit::history::construct()
 
 
 
-bool unit::history::operat_fp()
-{
-   start();
-   FileMem tf(tmpFile);
-   History t(tf,tf.head());
-   t->timeStamp(9999);
-   bool test = t->timeStamp()==9999;
-   return finish(test,"operat_fp1");
-}
-
-
-
 bool unit::history::add_child()
 {
    bool cont = true;
@@ -118,9 +104,10 @@ bool unit::history::add_child()
       FileMem tf(tmpFile2);
       History t(tf,tf.head());
       History cp(tf);
-      cp->timeStamp(9999);
+      cp.timeStamp(9999);
       t.add_child(cp);
-      HistItem th(tf,t->childHead());
+      HistItem th(tf,tf.head());
+      th = th.childHead();
       bool test = th.timeStamp()==9999;
       cont = cont&&finish(test,"add_child1");
    }
@@ -130,9 +117,10 @@ bool unit::history::add_child()
       FileMem tf(tmpFile2);
       History t(tf,tf.head());
       History cp(tf);
-      cp->timeStamp(9999);
+      cp.timeStamp(9999);
       t.add_child(cp);
-      HistItem th(tf,t->childHead());
+      HistItem th(tf,tf.head());
+      th = th.childHead();
       th = th.next();
       bool test = th.timeStamp()==9999;
       cont = cont&&finish(test,"add_child2");
@@ -158,48 +146,14 @@ bool unit::history::iterate()
 
 
 
-bool unit::history::operat_deref()
-{
-   start();
-   FileMem tf(tmpFile);
-   History t(tf,tf.head());
-   bool test = (*t).timeStamp()==headNum;
-   return finish(test,"operat_deref1");
-}
-
-
-
-bool unit::history::iter_operat_deref()
-{
-   start();
-   FileMem tf(tmpFile);
-   History th(tf,tf.head());
-   auto t = th.begin();
-   bool test = (*t).timeStamp()==childNum;
-   return finish(test,"iter_operat_deref1");
-}
-
-
-
-bool unit::history::iter_operat_fp()
-{
-   start();
-   FileMem tf(tmpFile);
-   History th(tf,tf.head());
-   auto t = th.begin();
-   bool test = t->timeStamp()==childNum;
-   return finish(test,"iter_operat_fp1");
-}
-
-
-
 bool unit::history::iter_childhead()
 {
    start();
    FileMem tf(tmpFile);
    History th(tf,tf.head());
-   auto t = th.begin();
-   t = t.childHead();
-   bool test = t->timeStamp()==child2Num;
+   auto i = th.begin();
+   i = i.childHead();
+   auto t = i.load();
+   bool test = t.timeStamp()==child2Num;
    return finish(test,"iter_childhead1");
 }

@@ -34,8 +34,8 @@ void construct_kincfiles()
       KincFileData::Header header;
       tf.allot(header);
       History hist(tf);
-      hist->timeStamp(unit::kincfile::tStamp);
-      hist->sync();
+      hist.timeStamp(unit::kincfile::tStamp);
+      hist.sync();
       header.histHead() = hist.addr();
       header.dataHead() = unit::kincfile::dataPtr;
       FString ident(&tf);
@@ -180,7 +180,7 @@ bool unit::kincfile::history()
 {
    start();
    KincFile t(tmpFile);
-   bool test = t.history()->timeStamp()==tStamp;
+   bool test = t.history().timeStamp()==tStamp;
    return finish(test,"history1");
 }
 
