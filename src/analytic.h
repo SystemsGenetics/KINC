@@ -12,10 +12,9 @@
 class Analytic
 {
 public:
-   using wptr = std::weak_ptr<DataPlugin>;
    virtual ~Analytic() = default;
-   virtual void input(wptr) = 0;
-   virtual void output(wptr) = 0;
+   virtual void input(DataPlugin*) = 0;
+   virtual void output(DataPlugin*) = 0;
    virtual void execute(GetOpts&,Terminal&,cl::Device*) = 0;
 };
 

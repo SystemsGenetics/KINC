@@ -84,13 +84,8 @@ private:
    void data_load(GetOpts&);
    void data_dump(GetOpts&);
    void data_query(GetOpts&);
-   /*void analytic(slist&);
-   DataPlugin* find_data(const string&);
-   void parse_data_options(DataPlugin*,slist&);
-   void parse_analytic_inputs(aptr&,const string&);
-   void parse_analytic_outputs(aptr&,const string&,dlist&);
-   DataPlugin* parse_analytic_ndata(const string&,string&);
-   void parse_analytic_options(aptr&,slist&);*/
+   void analytic(GetOpts&);
+   void seperate(const string&,const string&,string&,string&);
    void rec_history(hiter,hiter,int);
    void print_pad(int);
    // *
