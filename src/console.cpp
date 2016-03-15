@@ -55,7 +55,7 @@ Console::~Console()
 /// Prints welcome message and goes directly to terminal loop.
 void Console::run()
 {
-   _tm << "Welcome to KINC!\nVersion 0.0001 :)\n\n";
+   _tm << "Welcome to KINC.\nAlpha Version 0.1.\n\n";
    terminal_loop();
 }
 
@@ -90,49 +90,61 @@ void Console::terminal_loop()
          {
             alive = false;
          }
-         /*catch (DataException e)
+         catch (DataException e)
          {
-            std::ostringstream buffer;
-            buffer << "Data Exception Caught!" << std::endl;
-            buffer << "Level: ";
+            _tm << "Data Exception Caught!" << Terminal::endl;
+            _tm << "Level: ";
             switch (e.level())
             {
             case DataException::Level::general:
-               buffer << "General" << std::endl;
+               _tm << "General" << Terminal::endl;
                break;
             case DataException::Level::caution:
-               buffer << "Caution" << std::endl;
+               _tm << "Caution" << Terminal::endl;
                break;
             case DataException::Level::warning:
-               buffer << "Warning" << std::endl;
+               _tm << "Warning" << Terminal::endl;
                break;
             case DataException::Level::severe:
-               buffer << "Severe" << std::endl;
+               _tm << "Severe" << Terminal::endl;
                break;
             case DataException::Level::fatal:
-               buffer << "Fatal" << std::endl;
+               _tm << "Fatal" << Terminal::endl;
                break;
             }
-            buffer << "Location: " << e.file() << ":" << e.line() << std::endl;
-            buffer << "What: " << e.what();
-            throw CommandError("data",buffer.str());
+            _tm << "Location: " << e.file() << ":" << e.line()
+                << Terminal::endl;
+            _tm << "What: " << e.what() << Terminal::endl;
          }
          catch (AnalyticException e)
          {
-            ;
+            _tm << "Analytic Exception Caught!" << Terminal::endl;
+            _tm << "Location: " << e.file() << ":" << e.line()
+                << Terminal::endl;
+            _tm << "What: " << e.what() << Terminal::endl;
          }
          catch (Exception e)
          {
-            ;
+            _tm << "GENERAL Exception Caught!" << Terminal::endl;
+            _tm << "Location: " << e.file() << ":" << e.line()
+                << Terminal::endl;
+            _tm << "What: " << e.what() << Terminal::endl;
+            _tm << "It is HIGHLY recommended you immediately close this"
+                   " program." << Terminal::endl;
          }
          catch (std::exception stde)
          {
-            ;
+            _tm << "Standard Library Exception Caught!" << Terminal::endl;
+            _tm << "What: " << stde.what() << Terminal::endl;
+            _tm << "It is HIGHLY recommended you immediately close this"
+                   " program." << Terminal::endl;
          }
          catch (...)
          {
-            ;
-         }*/
+            _tm << "UNKNOWN EXCEPTION CAUGHT!" << Terminal::endl;
+            _tm << "It is HIGHLY recommended you immediately close this"
+                   " program." << Terminal::endl;
+         }
       }
       _tm << Terminal::flush;
    }
