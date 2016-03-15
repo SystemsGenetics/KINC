@@ -6,6 +6,7 @@
 Terminal& Terminal::newline(Terminal& term)
 {
    term.set_ops(Ops::newline);
+   return term;
 }
 
 
@@ -15,6 +16,7 @@ Terminal& Terminal::endl(Terminal& term)
 {
    term.set_ops(Ops::newline);
    term.set_ops(Ops::flush);
+   return term;
 }
 
 
@@ -23,6 +25,7 @@ Terminal& Terminal::endl(Terminal& term)
 Terminal& Terminal::flush(Terminal& term)
 {
    term.set_ops(Ops::flush);
+   return term;
 }
 
 
@@ -31,6 +34,7 @@ Terminal& Terminal::flush(Terminal& term)
 Terminal& Terminal::general(Terminal& term)
 {
    term.set_ops(Ops::general);
+   return term;
 }
 
 
@@ -39,6 +43,7 @@ Terminal& Terminal::general(Terminal& term)
 Terminal& Terminal::warning(Terminal& term)
 {
    term.set_ops(Ops::warning);
+   return term;
 }
 
 
@@ -47,6 +52,7 @@ Terminal& Terminal::warning(Terminal& term)
 Terminal& Terminal::error(Terminal& term)
 {
    term.set_ops(Ops::error);
+   return term;
 }
 
 

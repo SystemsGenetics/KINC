@@ -52,6 +52,33 @@ int GetOpts::com_get(std::initializer_list<string> commands)
 
 
 
+bool GetOpts::has_opt(const string& opt, bool del)
+{
+   bool ret {false};
+   for (auto i = _opts.begin();i!=_opts.end();++i)
+   {
+      if (i->first==opt)
+      {
+         ret = true;
+         if (del)
+         {
+            i = _opts.erase(i);
+         }
+         else
+         {
+            ++i;
+         }
+      }
+      else
+      {
+         ++i;
+      }
+   }
+   return ret;
+}
+
+
+
 inline GetOpts::clist GetOpts::explode(const string& raw)
 {
    clist list;

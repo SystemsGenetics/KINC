@@ -60,6 +60,7 @@ public:
    // *
    // * FUNCTIONS
    // *
+   void clear();
    bool is_new();
    History& history();
 protected:
@@ -76,6 +77,10 @@ private:
    // *
    using Header = KincFileData::Header;
    using hptr = std::unique_ptr<History>;
+   // *
+   // * FUNCTIONS
+   // *
+   void create();
    // *
    // * CONSTANTS
    // *

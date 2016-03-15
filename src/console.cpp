@@ -353,15 +353,7 @@ void Console::data_open(GetOpts& ops)
    {
       throw CommandError("open","syntax error detected in first argument.");
    }
-   bool willSelect {false};
-   string select("select");
-   for (auto i = ops.begin();i!=ops.end();++i)
-   {
-      if (i.key()==select)
-      {
-         willSelect = true;
-      }
-   }
+   bool willSelect {ops.has_opt("select")};
    KincFile* np;
    try
    {
@@ -521,29 +513,12 @@ void Console::data_load(GetOpts& ops)
    try
    {
       DataPlugin& k = *(_dataMap.current());
-      if (!k.empty())
+      bool willForce {ops.has_opt("force",true)};
+      if (!k.empty()&&!willForce)
       {
-         bool force {false};
-         string fStr("force");
-         for (auto i = ops.begin();i!=ops.end();)
-         {
-            if (i.key()==fStr)
-            {
-               force = true;
-               i = ops.erase(i);
-            }
-            else
-            {
-               ++i;
-            }
-         }
-         if (!force)
-         {
-            throw CommandError("load",
-                               "cannot overwrite non-empty data object.");
-         }
+         throw CommandError("load","cannot overwrite non-empty data object.");
       }
-      //k.clear();
+      k.clear();
       History& h = k.history();
       time_t t;
       h.timeStamp(time(&t));
@@ -598,14 +573,13 @@ void Console::analytic(GetOpts& ops)
    {
       std::ostringstream buffer;
       buffer << "cannot find analytic type '" << ops.com_front() << "'.";
-      throw CommandError("open",buffer.str());
+      throw CommandError("analytic",buffer.str());
    }
-   string in("in");
-   string out("out");
+   bool willForce {ops.has_opt("force",true)};
    ilist ins;
    for (auto i = ops.begin();i!=ops.end();)
    {
-      if (i.key()==in)
+      if (i.is_key("in"))
       {
          string raw;
          try
@@ -648,7 +622,7 @@ void Console::analytic(GetOpts& ops)
    }
    for (auto i = ops.begin();i!=ops.end();)
    {
-      if (i.key()==out)
+      if (i.is_key("out"))
       {
          string raw;
          try
@@ -676,30 +650,13 @@ void Console::analytic(GetOpts& ops)
                throw CommandError("analytic",buffer.str());
             }
          }
-         if (!d->empty())
+         if (!d->empty()&&!willForce)
          {
-            bool force {false};
-            string fStr("force");
-            for (auto i = ops.begin();i!=ops.end();)
-            {
-               if (i.key()==fStr)
-               {
-                  force = true;
-                  i = ops.erase(i);
-               }
-               else
-               {
-                  ++i;
-               }
-            }
-            if (!force)
-            {
-               throw CommandError("analytic",
-                                  "cannot overwrite non-empty data object.");
-            }
+            throw CommandError("analytic",
+                               "cannot overwrite non-empty data object.");
          }
          KincFile& k = *dynamic_cast<KincFile*>(d);
-         //k.clear();
+         k.clear();
          History& h = k.history();
          time_t t;
          h.timeStamp(time(&t));

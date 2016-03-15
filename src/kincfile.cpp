@@ -9,13 +9,7 @@ KincFile::KincFile(const std::string& fileName):
 {
    if (_mem.size()==0)
    {
-      _mem.allot(_hdr);
-      _hist = hptr(new History(_mem));
-      _hdr.histHead() = _hist->addr();
-      _hdr.dataHead() = FileMem::nullPtr;
-      _hdr.ident() = FileMem::nullPtr;
-      memcpy(_hdr.idString(),_idString,_idSz);
-      _mem.sync(_hdr,FileSync::write);
+      create();
    }
    else
    {
@@ -31,6 +25,18 @@ KincFile::KincFile(const std::string& fileName):
       _ident.addr(_hdr.ident());
       _new = false;
    }
+}
+
+
+
+void KincFile::clear()
+{
+   _hist.reset();
+   _new = true;
+   _hdr = FileMem::nullPtr;
+   _ident.addr(FileMem::nullPtr);
+   _mem.clear();
+   create();
 }
 
 
@@ -54,5 +60,18 @@ void KincFile::ident(const string& id)
 void KincFile::head(FileMem::Ptr ptr)
 {
    _hdr.dataHead() = ptr;
+   _mem.sync(_hdr,FileSync::write);
+}
+
+
+
+void KincFile::create()
+{
+   _mem.allot(_hdr);
+   _hist = hptr(new History(_mem));
+   _hdr.histHead() = _hist->addr();
+   _hdr.dataHead() = FileMem::nullPtr;
+   _hdr.ident() = FileMem::nullPtr;
+   memcpy(_hdr.idString(),_idString,_idSz);
    _mem.sync(_hdr,FileSync::write);
 }

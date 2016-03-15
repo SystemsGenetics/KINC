@@ -36,6 +36,7 @@ public:
    void com_pop();
    int size();
    bool empty();
+   bool has_opt(const string&,bool = false);//NOT TESTED!!
    Iterator begin();
    Iterator end();
    Iterator erase(Iterator);
@@ -72,7 +73,9 @@ public:
    // * FUNCTIONS
    // *
    const string& key();
+   bool is_key(const string&);//NOT TESTED!
    bool empty();// NOT TESTED
+   template<class T> bool is_type();//NT
    // *
    // * OPERATORS
    // *
@@ -185,9 +188,25 @@ inline const GetOpts::string& GetOpts::Iterator::key()
 
 
 
+inline bool GetOpts::Iterator::is_key(const string& cmp)
+{
+   return _i->first==cmp;
+}
+
+
+
 inline bool GetOpts::Iterator::empty()
 {
    return _i->second.empty();
+}
+
+
+
+template<class T> bool GetOpts::Iterator::is_type()
+{
+   T test;
+   istring buffer(_i->second);
+   return buffer >> test;
 }
 
 
