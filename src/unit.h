@@ -100,6 +100,8 @@ namespace unit
       bool main();
       bool construct();
       bool history();
+      bool clear();
+      bool is_new();
       bool ident();
       bool head();
    }

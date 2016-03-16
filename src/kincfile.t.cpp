@@ -16,6 +16,7 @@ namespace unit
       };
       constexpr auto tmpFile = "kincfile.tmp";
       constexpr auto tmpFile2 = "kincfile2.tmp";
+      constexpr auto tmpFile3 = "kincfile3.tmp";
       constexpr auto invalidFile = "notkincfile.tmp";
       constexpr auto invalidFile2 = "notkincfile2.tmp";
       constexpr auto invalidFile3 = "notkincfile3.tmp";
@@ -75,31 +76,23 @@ bool unit::kincfile::main()
 {
    bool ret = false;
    header("KincFile");
-   std::string rmCmd = "rm -f ";
-   rmCmd += tmpFile;
-   rmCmd += " ";
-   rmCmd += tmpFile2;
-   rmCmd += " ";
-   rmCmd += invalidFile;
-   rmCmd += " ";
-   rmCmd += invalidFile2;
-   rmCmd += " ";
-   rmCmd += invalidFile3;
    try
    {
       construct_kincfiles();
       ret = construct()&&
             history()&&
+            clear()&&
+            is_new()&&
             ident()&&
             head();
    }
    catch (...)
    {
-      system(rmCmd.c_str());
+      system("rm -f *.tmp");
       unit::end();
       throw;
    }
-   system(rmCmd.c_str());
+   system("rm -f *.tmp");
    unit::end();
    return ret;
 }
@@ -182,6 +175,48 @@ bool unit::kincfile::history()
    KincFile t(tmpFile);
    bool test = t.history().timeStamp()==tStamp;
    return finish(test,"history1");
+}
+
+
+
+bool unit::kincfile::clear()
+{
+   start();
+   KincFile t(tmpFile2);
+   t.history().timeStamp(6666);
+   t.history().sync();
+   t.clear();
+   bool test = t.history().timeStamp()==0;
+   return finish(test,"clear1");
+}
+
+
+
+bool unit::kincfile::is_new()
+{
+   bool cont {true};
+   {
+      start();
+      KincFile t(tmpFile3);
+      bool test = t.is_new();
+      cont = cont&&finish(test,"is_new1");
+   }
+   if (cont)
+   {
+      start();
+      KincFile t(tmpFile3);
+      bool test = !t.is_new();
+      cont = cont&&finish(test,"is_new2");
+   }
+   if (cont)
+   {
+      start();
+      KincFile t(tmpFile3);
+      t.clear();
+      bool test = t.is_new();
+      cont = cont&&finish(test,"is_new3");
+   }
+   return cont;
 }
 
 
