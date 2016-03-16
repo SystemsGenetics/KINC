@@ -43,31 +43,17 @@ namespace unit
    namespace filemem
    {
       bool main();
-      bool static1();
-      bool object1();
-      bool object2();
-      bool object3();
-      bool object4();
-      bool object5();
-      bool init1();
-      bool init2();
-      bool init3();
-      bool init4();
-      bool reserve1();
-      bool expand1();
-      bool capacity1();
-      bool allocate1();
-      bool allocate2();
-      bool allocate3();
-      bool allot1();
-      bool clear1();
-      bool addr1();
-      bool sync1();
-      bool sync2();
-      bool sync3();
-      bool sync4();
-      bool sync5();
-      bool sync6();
+      bool static_();
+      bool object();
+      bool construct();
+      bool reserve();
+      bool expand();
+      bool capacity();
+      bool allocate();
+      bool allot();
+      bool clear();
+      bool addr();
+      bool sync();
    }
    namespace fstring
    {
