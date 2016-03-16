@@ -53,8 +53,11 @@ bool unit::history::main()
       construct_history_file();
       ret = construct()&&
             add_child()&&
+            has_child()&&
             iterate()&&
-            iter_childhead();
+            iter_has_child()&&
+            iter_load()&&
+            iter_child();
    }
    catch (...)
    {
@@ -126,6 +129,18 @@ bool unit::history::add_child()
 
 
 
+bool unit::history::has_child()
+{
+   start();
+   FileMem tf(tmpFile2);
+   tf.clear();
+   History t(tf);
+   bool test = !t.has_child();
+   return finish(test,"has_child1");
+}
+
+
+
 bool unit::history::iterate()
 {
    start();
@@ -142,13 +157,38 @@ bool unit::history::iterate()
 
 
 
-bool unit::history::iter_childhead()
+bool unit::history::iter_has_child()
+{
+   start();
+   FileMem tf(tmpFile);
+   History t(tf,tf.head());
+   auto i = t.begin();
+   bool test = i.has_child();
+   return finish(test,"iter_has_child1");
+}
+
+
+
+bool unit::history::iter_load()
 {
    start();
    FileMem tf(tmpFile);
    History th(tf,tf.head());
    auto i = th.begin();
-   i = i.childHead();
+   auto t = i.load();
+   bool test = t.timeStamp()==childNum;
+   return finish(test,"iter_load1");
+}
+
+
+
+bool unit::history::iter_child()
+{
+   start();
+   FileMem tf(tmpFile);
+   History th(tf,tf.head());
+   auto i = th.begin();
+   i = i.child();
    auto t = i.load();
    bool test = t.timeStamp()==child2Num;
    return finish(test,"iter_childhead1");

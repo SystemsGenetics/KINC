@@ -510,7 +510,7 @@ void Console::data_history(GetOpts& ops)
    _tm << "File Name: " << h.fileName() << Terminal::endl;
    _tm << "Object: " << h.object() << Terminal::endl;
    _tm << "Command: " << h.command() << Terminal::endl;
-   if (h.hasChild())
+   if (h.has_child())
    {
       _tm << "{" << Terminal::endl;
       rec_history(h.begin(),h.end(),1);
@@ -744,11 +744,11 @@ inline void Console::rec_history(hiter begin, hiter end, int d)
       _tm << "Object: " << h.object() << Terminal::endl;
       print_pad(d);
       _tm << "Command: " << h.command() << Terminal::endl;
-      if (i.hasChild())
+      if (i.has_child())
       {
          print_pad(d);
          _tm << "{" << Terminal::endl;
-         rec_history(i.childHead(),end,d+1);
+         rec_history(i.child(),end,d+1);
          print_pad(d);
          _tm << "{" << Terminal::endl;
       }

@@ -23,7 +23,7 @@ public:
    // *
    // * BASIC METHODS
    // *
-   History(FileMem&,FPtr = FileMem::nullPtr);//
+   History(FileMem&,FPtr = FileMem::nullPtr);
    // *
    // * COPY METHODS
    // *
@@ -38,7 +38,7 @@ public:
    // * FUNCTIONS
    // *
    void add_child(const History&);
-   bool hasChild() const;
+   bool has_child() const;
    Iterator begin();
    Iterator end();
 };
@@ -56,8 +56,8 @@ public:
    // *
    // * FUNCTIONS
    // *
-   Iterator childHead();
-   bool hasChild() const;
+   Iterator child();
+   bool has_child() const;
    // *
    // * OPERATORS
    // *
@@ -79,7 +79,7 @@ private:
 
 
 
-inline bool History::hasChild() const
+inline bool History::has_child() const
 {
    return childHead()!=FileMem::nullPtr;
 }
@@ -100,14 +100,14 @@ inline History::Iterator History::end()
 
 
 
-inline History::Iterator History::Iterator::childHead()
+inline History::Iterator History::Iterator::child()
 {
    return {_mem,_skim.childHead()};
 }
 
 
 
-inline bool History::Iterator::hasChild() const
+inline bool History::Iterator::has_child() const
 {
    return _skim.childHead()!=FileMem::nullPtr;
 }

@@ -88,13 +88,12 @@ namespace unit
    {
       bool main();
       bool construct();
-      bool operat_fp();
       bool add_child();
+      bool has_child();
       bool iterate();
-      bool operat_deref();
-      bool iter_operat_deref();
-      bool iter_operat_fp();
-      bool iter_childhead();
+      bool iter_load();
+      bool iter_has_child();
+      bool iter_child();
    }
    namespace kincfile
    {
