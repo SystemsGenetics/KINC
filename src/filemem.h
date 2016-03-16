@@ -61,10 +61,9 @@ public:
    // *
    // * CONSTANTS
    // *
-   constexpr static Ptr nullPtr = 0xffffffffffffffffll;
-   constexpr static int PtrSize = sizeof(Ptr);
-   constexpr const static char* _identString = "\0\15\41\102\104\101\124\0\0";
-   constexpr static int _idLen = 9;
+   constexpr static Ptr nullPtr {0xffffffffffffffffll};
+   constexpr static const char* _identString {"\0\15\41\102\104\101\124\0\0"};
+   constexpr static int _idLen {9};
 private:
    // *
    // * FUNCTIONS

@@ -19,7 +19,14 @@ KincFile::KincFile(const std::string& fileName):
       _mem.sync(_hdr,FileSync::read);
       cond = _hdr.histHead()!=FileMem::nullPtr;
       assert<InvalidFile>(cond,__FILE__,__LINE__);
-      cond = strncmp(_hdr.idString(),_idString,_idSz)==0;
+      cond = true;
+      for (int i=0;i<_idSz;++i)
+      {
+         if (_hdr.idString()[i]!=_idString[i])
+         {
+            cond = false;
+         }
+      }
       assert<InvalidFile>(cond,__FILE__,__LINE__);
       _hist = hptr(new History(_mem,_hdr.histHead()));
       _ident.addr(_hdr.ident());

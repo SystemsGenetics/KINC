@@ -20,7 +20,7 @@ namespace unit
          uint16_t& sSize() { get<uint16_t>(1); }
          char* c_str() { &get<char>(3); }
       };
-      constexpr auto tmpFile = "testfiles/strfile.tmp";
+      constexpr auto tmpFile = "strfile.tmp";
    }
 }
 
@@ -30,8 +30,6 @@ bool unit::fstring::main()
 {
    bool ret = false;
    header("FString");
-   std::string rmCmd = "rm -f ";
-   rmCmd += tmpFile;
    try
    {
       ret = construct()&&
@@ -43,11 +41,11 @@ bool unit::fstring::main()
    }
    catch (...)
    {
-      system(rmCmd.c_str());
+      system("rm -f *.tmp");
       end();
       throw;
    }
-   system(rmCmd.c_str());
+   system("rm -f *.tmp");
    end();
    return ret;
 }

@@ -14,11 +14,11 @@ namespace unit
          using KincFile::ident;
          using KincFile::head;
       };
-      constexpr auto tmpFile = "testfiles/kincfile.tmp";
-      constexpr auto tmpFile2 = "testfiles/kincfile2.tmp";
-      constexpr auto invalidFile = "testfiles/notkincfile.tmp";
-      constexpr auto invalidFile2 = "testfiles/notkincfile2.tmp";
-      constexpr auto invalidFile3 = "testfiles/notkincfile3.tmp";
+      constexpr auto tmpFile = "kincfile.tmp";
+      constexpr auto tmpFile2 = "kincfile2.tmp";
+      constexpr auto invalidFile = "notkincfile.tmp";
+      constexpr auto invalidFile2 = "notkincfile2.tmp";
+      constexpr auto invalidFile3 = "notkincfile3.tmp";
       constexpr const char* identStr = "1234567890123456";
       constexpr int dataPtr = 9999;
       constexpr int tStamp = 8888;

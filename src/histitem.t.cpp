@@ -8,8 +8,8 @@ namespace unit
 {
    namespace histitem
    {
-      constexpr auto tmpFile = "testfiles/histfile.tmp";
-      constexpr auto tmpFile2 = "testfiles/histfile2.tmp";
+      constexpr auto tmpFile = "histfile.tmp";
+      constexpr auto tmpFile2 = "histfile2.tmp";
       constexpr auto testStr = "1234567890123456";
    }
 }
@@ -20,10 +20,6 @@ bool unit::histitem::main()
 {
    bool ret = false;
    header("HistItem");
-   std::string rmCmd = "rm -f ";
-   rmCmd += tmpFile;
-   rmCmd += " ";
-   rmCmd += tmpFile2;
    try
    {
       ret = construct()&&
@@ -43,11 +39,11 @@ bool unit::histitem::main()
    }
    catch (...)
    {
-      system(rmCmd.c_str());
+      system("rm -f *.tmp");
       end();
       throw;
    }
-   system(rmCmd.c_str());
+   system("rm -f *.tmp");
    end();
    return ret;
 }

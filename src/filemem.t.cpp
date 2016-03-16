@@ -34,12 +34,37 @@ namespace unit
          uint32_t& val() { get<uint32_t>(0); }
          FileMem::Ptr& next() { get<FileMem::Ptr>(4); }
       };
-      constexpr const char* tmpFile = "testfiles/memfile.tmp";
-      constexpr const char* validFile = "testfiles/memfile";
-      constexpr const char* invalidFile = "testfiles/notmemfile";
-      constexpr const char* invalidFile2 = "testfiles/notmemfile2";
+      constexpr const char* tmpFile = "memfile.tmp";
+      constexpr const char* validFile = "memfile2.tmp";
+      constexpr const char* invalidFile = "notmemfile.tmp";
+      constexpr const char* invalidFile2 = "notmemfile2.tmp";
       constexpr const char* wrtData = "1234567890123456";
    }
+}
+
+
+
+void construct_filemems()
+{
+   constexpr static int flags = O_CREAT|O_RDWR|O_LARGEFILE;
+   constexpr static mode_t modes = S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH;
+   int fd;
+   char identString[10] = "\0\15\41\102\104\101\124\0\0";
+   int idLen = 9;
+   FileMem::Ptr next = 0;
+   fd = open(unit::filemem::validFile,flags,modes);
+   ::write(fd,identString,idLen);
+   ::write(fd,&next,sizeof(FileMem::Ptr));
+   close(fd);
+   fd = open(unit::filemem::invalidFile,flags,modes);
+   ::write(fd,identString,idLen);
+   ::write(fd,&next,sizeof(FileMem::Ptr)-1);
+   close(fd);
+   identString[3] = '\16';
+   fd = open(unit::filemem::invalidFile2,flags,modes);
+   ::write(fd,identString,idLen);
+   ::write(fd,&next,sizeof(FileMem::Ptr));
+   close(fd);
 }
 
 
@@ -50,6 +75,7 @@ bool unit::filemem::main()
    header("FileMem");
    try
    {
+      construct_filemems();
       ret = static1()&&
             object1()&&
             object2()&&
@@ -78,11 +104,11 @@ bool unit::filemem::main()
    }
    catch (...)
    {
-      system("rm -f testfiles/memfile.tmp");
+      system("rm -f *.tmp");
       end();
       throw;
    }
-   system("rm -f testfiles/memfile.tmp");
+   system("rm -f *.tmp");
    end();
    return ret;
 }

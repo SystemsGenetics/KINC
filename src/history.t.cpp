@@ -7,8 +7,8 @@ namespace unit
 {
    namespace history
    {
-      constexpr auto tmpFile = "testfiles/histfile.tmp";
-      constexpr auto tmpFile2 = "testfiles/histfile2.tmp";
+      constexpr auto tmpFile = "histfile.tmp";
+      constexpr auto tmpFile2 = "histfile2.tmp";
       constexpr int headNum = 9999;
       constexpr int childNum = 8888;
       constexpr int child2Num = 7777;
@@ -48,10 +48,6 @@ bool unit::history::main()
 {
    bool ret = false;
    header("History");
-   std::string rmCmd = "rm -f ";
-   rmCmd += tmpFile;
-   rmCmd += " ";
-   rmCmd += tmpFile2;
    try
    {
       construct_history_file();
@@ -62,11 +58,11 @@ bool unit::history::main()
    }
    catch (...)
    {
-      system(rmCmd.c_str());
+      system("rm -f *.tmp");
       unit::end();
       throw;
    }
-   system(rmCmd.c_str());
+   system("rm -f *.tmp");
    unit::end();
    return ret;
 }
