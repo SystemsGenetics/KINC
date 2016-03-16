@@ -28,8 +28,11 @@ struct HistItemData::Item : FileMem::Static<nodeSz>
    using FPtr = FileMem::Ptr;
    using Static<nodeSz>::Static;
    FPtr& childHead() { get<FPtr>(0); }
+   const FPtr& childHead() const { get<FPtr>(0); }
    FPtr& next() { get<FPtr>(8); }
+   const FPtr& next() const { get<FPtr>(8); }
    int64_t& timeStamp() { get<int64_t>(16); }
+   const int64_t& timeStamp() const { get<int64_t>(16); }
    FPtr& fileNamePtr() { get<FPtr>(24); }
    FPtr& objectPtr() { get<FPtr>(32); }
    FPtr& commandPtr() { get<FPtr>(40); }
@@ -108,7 +111,7 @@ private:
    // * VARIABLES
    // *
    FileMem* _mem;
-   mutable Item _item;
+   Item _item;
    FString _fileName;
    FString _object;
    FString _command;
