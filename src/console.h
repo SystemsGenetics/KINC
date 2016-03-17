@@ -23,14 +23,13 @@ class CLDevice;
 /// @brief Main program Console.
 ///
 /// Designed to take over execution of the program and manage commands supplied
-/// by the user and all data and analytic objects. The run() function will take
-/// over execution and release when the user quits the program. Only one
-/// instance of this class is allowed to exist for the entire program.
+/// by the user for all data and analytic objects. Also manages and displays
+/// information about all OpenCL devices attached to the program's machine.
 ///
 /// @warning Only one instance of this class can exist at any one time.
 ///
 /// @author Josh Burns
-/// @date 22 Jan 2016
+/// @date 17 Mar 2016
 class Console
 {
 public:
@@ -40,30 +39,31 @@ public:
    struct Exception;
    struct InvalidUse;
    // *
+   // * DECLERATIONS
+   // *
+   class CommandError;
+   // *
    // * BASIC METHODS
    // *
-   Console(const Console&) = delete;
-   Console(Console&&) = delete;
-   Console& operator=(const Console&) = delete;
-   Console& operator=(Console&&) = delete;
    Console(int,char*[],Terminal&,DataMap&);
    ~Console();
+   // *
+   // * COPY METHODS
+   // *
+   Console(const Console&) = delete;
+   Console& operator=(const Console&) = delete;
+   // *
+   // * MOVE METHODS
+   // *
+   Console(Console&&) = delete;
+   Console& operator=(Console&&) = delete;
    // *
    // * FUNCTIONS
    // *
    void run();
-   //bool add(Data*,std::string&);
-   //bool del(std::string&);
-   //Data* find(std::string&);
 private:
    using string = std::string;
    using hiter = History::Iterator;
-   struct CommandError
-   {
-      CommandError(const char* c, const std::string& m): cmd {c}, msg {m} {}
-      const char* cmd;
-      std::string msg;
-   };
    struct CommandQuit {};
    // *
    // * FUNCTIONS
@@ -110,6 +110,34 @@ private:
    /// is false the run() command will exit and return control.
    bool _alive;
 };
+
+
+
+class Console::CommandError
+{
+public:
+   using string = std::string;
+   CommandError(const string&,const string&);
+   void print(Terminal&);
+private:
+   string _who;
+   string _msg;
+};
+
+
+
+inline Console::CommandError::CommandError(const string& who,
+                                           const string& msg):
+   _who(who),
+   _msg(msg)
+{}
+
+
+
+inline void Console::CommandError::print(Terminal& tm)
+{
+   tm << _who << ": " << _msg << Terminal::endl;
+}
 
 
 

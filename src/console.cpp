@@ -55,7 +55,7 @@ Console::~Console()
 /// Prints welcome message and goes directly to terminal loop.
 void Console::run()
 {
-   _tm << "Welcome to KINC.\nAlpha Version 0.1.\n\n";
+   _tm << "Welcome to KINC\nAlpha Version 0.1\n\n";
    terminal_loop();
 }
 
@@ -84,7 +84,7 @@ void Console::terminal_loop()
          }
          catch (CommandError e)
          {
-            _tm << e.cmd << ": " << e.msg << Terminal::endl;
+            e.print(_tm);
          }
          catch (CommandQuit)
          {
@@ -702,22 +702,17 @@ void Console::analytic(GetOpts& ops)
 void Console::seperate(const string& who, const string& raw, string& file,
                        string& type)
 {
-   int count = 0;
-   auto n = raw.begin();
-   for (auto i = raw.begin();i!=raw.end();++i)
-   {
-      if (*i==':')
-      {
-         n = i;
-         ++count;
-      }
-   }
-   if (count>1)
+   auto n = raw.find(':');
+   if (n!=raw.rfind(':'))
    {
       throw CommandError(who.c_str(),"syntax error detected.");
    }
-   file = string(raw.begin(),n);
-   type = string(++n,raw.end());
+   file = raw.substr(0,n);
+   type.clear();
+   if (n!=string::npos)
+   {
+      type = raw.substr(++n);
+   }
 }
 
 
