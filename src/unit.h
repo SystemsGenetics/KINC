@@ -111,12 +111,12 @@ namespace unit
       bool construct();
       bool open();
       bool close();
-      bool select();
+      bool unselect();
       bool load();
       bool dump();
       bool query();
-      bool find();
       bool iterate();
+      bool selected();
       bool iter_file();
       bool iter_type();
    }

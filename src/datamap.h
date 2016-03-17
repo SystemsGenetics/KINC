@@ -42,18 +42,18 @@ public:
    // *
    // * FUNCTIONS
    // *
-   DataPlugin* open(const string&,const string&,bool = false);//
-   bool close(const string&);// RETEST NEEDED!!!
-   void select(const string&);//
-   bool unselect();// NOT TESTED!!!
-   void load(GetOpts&,Terminal&);//
-   void dump(GetOpts&,Terminal&);//
-   void query(GetOpts&,Terminal&);//
-   DataPlugin* find(const string&);//
-   DataPlugin* current();//NOT TESTED!!!
-   Iterator begin();//
-   Iterator end();//
-   Iterator selected();//NOT TESTED!!!
+   DataPlugin* open(const string&,const string&,bool = false);
+   bool close(const string&);
+   void select(const string&);
+   bool unselect();
+   void load(GetOpts&,Terminal&);
+   void dump(GetOpts&,Terminal&);
+   void query(GetOpts&,Terminal&);
+   DataPlugin* find(const string&);
+   DataPlugin* current();
+   Iterator begin();
+   Iterator end();
+   Iterator selected();
 private:
    // *
    // * DECLERATIONS
@@ -88,9 +88,9 @@ public:
    // *
    // * OPERATORS
    // *
-   void operator++();//
-   bool operator!=(const Iterator&);//
-   bool operator==(const Iterator&);//NOT TESTED!!!
+   void operator++();
+   bool operator!=(const Iterator&);
+   bool operator==(const Iterator&);
 private:
    // *
    // * DECLERATIONS
