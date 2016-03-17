@@ -22,7 +22,7 @@ public:
    virtual ~Analytic() = default;
    /// @brief Input data object.
    ///
-   /// Takes a single input data object that will be used in execution. All
+   /// Must take a single input data object that will be used in execution. All
    /// inputs will be given through this function before execution is called.
    /// The pointer will not be deleted by the analytic object.
    ///
@@ -30,7 +30,7 @@ public:
    virtual void input(DataPlugin* in) = 0;
    /// @brief Output data object.
    ///
-   /// Takes a single output data object that will be used in execution. All
+   /// Must take a single output data object that will be used in execution. All
    /// outputs will be given through this function before execution is called.
    /// The pointer will not be deleted by the analytic object.
    ///
@@ -38,10 +38,10 @@ public:
    virtual void output(DataPlugin* out) = 0;
    /// @brief Executes analytic on data objects.
    ///
-   /// Executes the analytic methods of this class on the given input and output
-   /// data objects given to the object before this function is called. This
-   /// function must not return control until execution of the analytic on all
-   /// data objects are finished and written to.
+   /// Must execute the analytic method of this class on the given input and
+   /// output data objects given to the object before this function is called.
+   /// This function must not return control until execution of the analytic on
+   /// all data objects are finished and written to.
    ///
    /// @param ops Additional arguments and options passed to the analytic from
    /// the user.
