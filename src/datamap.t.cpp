@@ -358,6 +358,7 @@ bool unit::datamap::selected()
       bool test {t.selected()==t.begin()};
       cont = cont&&finish(test,"selected2");
    }
+   return cont;
 }
 
 
