@@ -29,7 +29,7 @@ class CLDevice;
 /// @warning Only one instance of this class can exist at any one time.
 ///
 /// @author Josh Burns
-/// @date 17 Mar 2016
+/// @date 18 March 2016
 class Console
 {
 public:
@@ -97,22 +97,25 @@ private:
    // *
    /// Reference to program's main Terminal interface.
    Terminal& _tm;
-   //
+   /// Reference to program's data list manager.
    DataMap& _dataMap;
-   /// Pointer to OpenCL device that is set for computation acceleration. By
-   /// or if clear command issues this is set to nullptr.
+   /// Pointer to OpenCL device that is set for computation acceleration. Set to
+   /// nullptr if no device is selected.
    CLDevice* _device;
-   /// List of all possible OpenCL devices on program's computer.
+   /// List of all possible OpenCL devices on program's machine.
    CLDevList _devList;
-   //std::list<Data*> _data;
-   /// Boolean variable that is used as state information stating if the console
-   /// is still active and should continue accepting input from user. Once this
-   /// is false the run() command will exit and return control.
-   bool _alive;
 };
 
 
 
+/// @brief Single console error.
+///
+/// This holds a single error that occured and is thrown from somewhere outside
+/// of the console class which the console class is designed to catch and
+/// report to the user.
+///
+/// @author Josh Burns
+/// @date 18 March 2016
 class Console::CommandError
 {
 public:
@@ -120,12 +123,18 @@ public:
    CommandError(const string&,const string&);
    void print(Terminal&);
 private:
+   /// Holds who threw the command error.
    string _who;
+   /// Holds the message of the command error.
    string _msg;
 };
 
 
 
+/// Initializes a new command error and sets who threw it and its message.
+///
+/// @param who Identifies who threw the error message.
+/// @param msg The message describing the error that occured.
 inline Console::CommandError::CommandError(const string& who,
                                            const string& msg):
    _who(who),
@@ -134,6 +143,9 @@ inline Console::CommandError::CommandError(const string& who,
 
 
 
+/// Prints the error message to the terminal.
+///
+/// @param tm The program's terminal that will be printed to.
 inline void Console::CommandError::print(Terminal& tm)
 {
    tm << _who << ": " << _msg << Terminal::endl;
