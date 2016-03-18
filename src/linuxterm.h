@@ -21,7 +21,7 @@
 /// during the lifetime of an instance.
 ///
 /// @author Josh Burns
-/// @date 23 Jan 2016
+/// @date 23 January 2016
 class LinuxTerm : public Terminal
 {
 public:

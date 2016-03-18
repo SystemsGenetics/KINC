@@ -15,7 +15,7 @@
 /// and destroyed once the command has executed.
 ///
 /// @author Josh Burns
-/// @date 17 Mar 2016
+/// @date 17 March 2016
 class Analytic
 {
 public:

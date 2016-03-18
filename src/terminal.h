@@ -12,7 +12,7 @@
 /// direct or indirect wraparounds to virtual functions.
 ///
 /// @author Josh Burns
-/// @date 2 Feb 2016
+/// @date 2 February 2016
 class Terminal
 {
 public:

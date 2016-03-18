@@ -22,7 +22,7 @@
 /// in the platform.
 ///
 /// @author Josh Burns
-/// @date 22 Jan 2016
+/// @date 22 January 2016
 class CLDevice
 {
 public:
