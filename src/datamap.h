@@ -134,6 +134,9 @@ private:
 
 
 
+/// Select a data object ot have focus.
+///
+/// @param file Name of loaded data object to select.
 inline void DataMap::select(const string& file)
 {
    _i = get(file);
@@ -141,6 +144,9 @@ inline void DataMap::select(const string& file)
 
 
 
+/// Get beginning of list iterator.
+///
+/// @return Iterator.
 inline DataMap::Iterator DataMap::begin()
 {
    return _map.begin();
@@ -148,6 +154,9 @@ inline DataMap::Iterator DataMap::begin()
 
 
 
+/// Get end of list iterator.
+///
+/// @return Iterator.
 inline DataMap::Iterator DataMap::end()
 {
    return _map.end();
@@ -155,6 +164,10 @@ inline DataMap::Iterator DataMap::end()
 
 
 
+/// Return iterator of currently selected data object, if any.
+///
+/// @return Iterator of currently selected object, end of list iterator if no
+/// object is selected.
 inline DataMap::Iterator DataMap::selected()
 {
    return _i;
@@ -162,6 +175,9 @@ inline DataMap::Iterator DataMap::selected()
 
 
 
+/// Get file name of iterator's data object.
+///
+/// @return File name of data object.
 inline DataMap::Iterator::string DataMap::Iterator::file()
 {
    return _i->first;
@@ -169,6 +185,9 @@ inline DataMap::Iterator::string DataMap::Iterator::file()
 
 
 
+/// Get iterator's data object type.
+///
+/// @return Data object type.
 inline DataMap::Iterator::string DataMap::Iterator::type()
 {
    return _i->second->type();
@@ -176,6 +195,7 @@ inline DataMap::Iterator::string DataMap::Iterator::type()
 
 
 
+/// Iterate to next data object in list of objects.
 inline void DataMap::Iterator::operator++()
 {
    ++_i;
@@ -183,6 +203,9 @@ inline void DataMap::Iterator::operator++()
 
 
 
+/// Compare between two data object iterators.
+///
+/// @return False if they do not point to the same data object, else true.
 inline bool DataMap::Iterator::operator!=(const Iterator& cmp)
 {
    return _i!=cmp._i;
@@ -190,6 +213,9 @@ inline bool DataMap::Iterator::operator!=(const Iterator& cmp)
 
 
 
+/// Compare between two data object iterators.
+///
+/// @return True if they point to the same data object, else false.
 inline bool DataMap::Iterator::operator==(const Iterator& cmp)
 {
    return _i==cmp._i;
@@ -197,17 +223,22 @@ inline bool DataMap::Iterator::operator==(const Iterator& cmp)
 
 
 
+/// Initializes data object iterator from internal container iterator.
+///
+/// @param i Internal container iterator.
 inline DataMap::Iterator::Iterator(Map::iterator i):
    _i(i)
 {}
 
 
 
+/// Base exception class for any exception thrown from DataMap class.
 struct DataMap::Exception : public ::Exception
 {
    using ::Exception::Exception;
 };
 
+/// Exception thrown if a second instance of the DataMap class is created.
 struct DataMap::InvalidUse : public DataMap::Exception
 {
    InvalidUse(const char* file, int line):
@@ -215,6 +246,8 @@ struct DataMap::InvalidUse : public DataMap::Exception
    {}
 };
 
+/// Exception thrown if a data object is opened with the same file name as
+/// another data object already opened.
 struct DataMap::AlreadyExists : public DataMap::Exception
 {
    AlreadyExists(const char* file, int line):
@@ -222,6 +255,8 @@ struct DataMap::AlreadyExists : public DataMap::Exception
    {}
 };
 
+/// Thrown if attempting to select a data object with a file name is not in
+/// the list of opened data objects.
 struct DataMap::DoesNotExist : public DataMap::Exception
 {
    DoesNotExist(const char* file, int line):
@@ -229,6 +264,8 @@ struct DataMap::DoesNotExist : public DataMap::Exception
    {}
 };
 
+/// Thrown if the commands load, dump, or query are called and no data object
+/// is selected.
 struct DataMap::NoSelect : public DataMap::Exception
 {
    NoSelect(const char* file, int line):
@@ -236,6 +273,8 @@ struct DataMap::NoSelect : public DataMap::Exception
    {}
 };
 
+/// Thrown is the data type given in the open command cannot be found using the
+/// KINCPlugins system.
 struct DataMap::InvalidType : public DataMap::Exception
 {
    InvalidType(const char* file, int line):
