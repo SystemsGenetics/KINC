@@ -31,7 +31,8 @@ bool Console::_lock {false};
 /// @param tm The terminal interface for the program.
 /// @param dmap The data list manager for the program.
 ///
-/// @pre Console must not be locked.
+/// @exception InvalidUse A second instance of this class was being created
+/// which is not allowed.
 Console::Console(int argc, char* argv[], Terminal& tm, DataMap& dmap):
    _tm {tm},
    _dataMap {dmap},

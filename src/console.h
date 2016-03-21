@@ -91,6 +91,7 @@ private:
    // *
    // * STATIC VARIABLES
    // *
+   /// Used to determine if an instance of this class exists or not.
    static bool _lock;
    // *
    // * VARIABLES
