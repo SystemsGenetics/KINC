@@ -3,6 +3,26 @@
 
 
 
+bool DataMap::_lock {false};
+
+
+
+DataMap::DataMap():
+   _i {_map.end()}
+{
+   assert<InvalidUse>(!_lock,__FILE__,__LINE__);
+   _lock = true;
+}
+
+
+
+DataMap::~DataMap()
+{
+   _lock = false;
+}
+
+
+
 DataPlugin* DataMap::open(const string& file, const string& type, bool select)
 {
    using uptr = std::unique_ptr<DataPlugin>;

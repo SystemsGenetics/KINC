@@ -9,6 +9,17 @@
 
 
 
+/// @brief Manages all data objects.
+///
+/// Manages list of all open data objects the program has loaded. Handles
+/// passing user commands to individual data obejcts, along with selecting an
+/// active data object, opening and closing data objects, and listing all loaded
+/// data objects.
+///
+/// @warning There can only be one instance of this class in the program.
+///
+/// @author Josh Burns
+/// @date 21 March 2016
 class DataMap
 {
 public:
@@ -16,6 +27,7 @@ public:
    // * EXCEPTIONS
    // *
    struct Exception;
+   struct InvalidUse;
    struct AlreadyExists;
    struct DoesNotExist;
    struct NoSelect;
@@ -28,7 +40,8 @@ public:
    // *
    // * BASIC METHODS
    // *
-   inline DataMap();//
+   DataMap();
+   ~DataMap();
    // *
    // * COPY METHODS
    // *
@@ -64,14 +77,26 @@ private:
    // *
    Map::iterator get(const string&);
    // *
+   // * STATIC VARIABLES
+   // *
+   /// Used to determine if an instance of this class exists or not.
+   static bool _lock;
+   // *
    // * VARIABLES
    // *
+   /// Contains all loaded data objects.
    Map _map;
+   /// Iterator that points to selected data object, or end of list iterator if
+   /// no object is selected.
    Map::iterator _i;
 };
 
 
 
+/// Forward only iterator for listing all data objects in the DataMap class.
+///
+/// @author Josh Burns
+/// @date 21 March 2016
 class DataMap::Iterator
 {
 public:
@@ -103,14 +128,9 @@ private:
    // *
    // * VARIABLES
    // *
+   /// Points to current data object this iterator points to or end of list.
    Map::iterator _i;
 };
-
-
-
-inline DataMap::DataMap():
-   _i {_map.end()}
-{}
 
 
 
@@ -188,10 +208,17 @@ struct DataMap::Exception : public ::Exception
    using ::Exception::Exception;
 };
 
+struct DataMap::InvalidUse : public DataMap::Exception
+{
+   InvalidUse(const char* file, int line):
+      Exception(file,line,"DataMap::InvalidUse")
+   {}
+};
+
 struct DataMap::AlreadyExists : public DataMap::Exception
 {
    AlreadyExists(const char* file, int line):
-      Exception(file,line,"DataMap::InvalidUse")
+      Exception(file,line,"DataMap::AlreadyExists")
    {}
 };
 

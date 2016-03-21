@@ -89,8 +89,17 @@ bool unit::datamap::main()
 bool unit::datamap::construct()
 {
    start();
-   DataMap t;
-   return finish(true,"construct1");
+   bool test = false;
+   try
+   {
+      DataMap t;
+      DataMap tt;
+   }
+   catch (DataMap::InvalidUse)
+   {
+      test = true;
+   }
+   return finish(test,"construct1");
 }
 
 
