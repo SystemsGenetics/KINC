@@ -11,11 +11,6 @@
 
 
 
-class DataPlugin;
-class Analytic;
-
-
-
 /// Tests assertion and throws basic Exception if it fails.
 ///
 /// @param cond Condition to be tested.
@@ -64,6 +59,9 @@ template<class T> inline void assert(bool cond, const char* file, int line,
 /// Base class for any exception that this program will throw. It provides
 /// information about what file and what line threw an exception along with
 /// a textual field describing what type of exception was thrown.
+///
+/// @author Josh Burns
+/// @date 21 March 2016
 class Exception
 {
 public:
@@ -81,8 +79,11 @@ private:
    // *
    // * VARIABLES
    // *
+   /// Source file where exception was thrown.
    const char* _file;
+   /// Line in source file where exception was thrown.
    const int _line;
+   /// Description of type of exception thrown.
    const char* _what;
 };
 
@@ -92,16 +93,20 @@ private:
 ///
 /// Base exception class that any data implementation throws if an error has
 /// occured within its object.
+///
+/// @author Josh Burns
+/// @date 21 March 2016
 class DataException : public Exception
 {
 public:
+   /// Classifies severity of exception thrown.
    enum class Level
    {
-      general,
-      warning,
-      caution,
-      severe,
-      fatal
+      general, ///< General information, lowest severity.
+      warning, ///< Warning with mild severity.
+      caution, ///< Moderate severity issue.
+      severe, ///< High severity issue.
+      fatal ///< Fatal error occured, highest severity.
    };
    // *
    // * BASIC METHODS
@@ -115,6 +120,7 @@ private:
    // *
    // * VARIABLES
    // *
+   /// Severity level of exception.
    Level _level;
 };
 
@@ -124,6 +130,9 @@ private:
 ///
 /// Base exception class that any analytic implementation throws if an error has
 /// occured within its object.
+///
+/// @author Josh Burns
+/// @date 21 March 2016
 class AnalyticException : public Exception
 {
 public:
@@ -136,6 +145,9 @@ public:
 
 
 /// An error occured after calling a system function.
+///
+/// @author Josh Burns
+/// @date 21 March 2016
 class SystemError : public Exception
 {
 public:
@@ -151,12 +163,16 @@ private:
    // *
    // * VARIABLES
    // *
+   /// Name of system call that failed.
    const char* _system;
 };
 
 
 
 /// An error occured after calling an OpenCL function.
+///
+/// @author Josh Burns
+/// @date 21 March 2016
 class OpenCLError : public Exception
 {
 public:
@@ -174,8 +190,11 @@ private:
    // *
    // * VARIABLES
    // *
+   /// Static C-Style list of strings describing every possible OpenCL error.
    static const char* c_clDescErrors[];
+   /// Name of OpenCL function that failed.
    const char* _clFunc;
+   /// Internal OpenCL error code.
    cl_int _code;
 };
 
