@@ -48,7 +48,6 @@ namespace unit
       bool construct();
       bool reserve();
       bool expand();
-      bool capacity();
       bool allocate();
       bool allot();
       bool clear();
