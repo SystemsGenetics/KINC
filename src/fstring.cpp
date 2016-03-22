@@ -2,6 +2,18 @@
 
 
 
+/// @brief Initialize file string object.
+///
+/// Initializes file string, making sure file memory object pointer is valid and
+/// loading the file string from memory if location of string given is not
+/// nullptr.
+///
+/// @param mem Pointer to file memory object that is used.
+/// @param ptr File pointer location where file string is location, nullptr if
+/// string object is not yet set.
+///
+/// @exception InvalidPtr The pointer given for the file memory object is
+/// nullptr.
 FString::FString(FileMem* mem, FPtr ptr):
    _mem(mem),
    _hdr(ptr)
@@ -16,6 +28,9 @@ FString::FString(FileMem* mem, FPtr ptr):
 
 
 
+/// Move given file string.
+///
+/// @param tmp Object to take data from.
 FString::FString(FString&& tmp):
    _mem(tmp._mem),
    _hdr(tmp._hdr),
@@ -26,6 +41,9 @@ FString::FString(FString&& tmp):
 
 
 
+/// Move given file string, overwriting what this object currently stores.
+///
+/// @param tmp Object to take data from.
 FString& FString::operator=(FString&& tmp)
 {
    _mem = tmp._mem;
@@ -36,6 +54,12 @@ FString& FString::operator=(FString&& tmp)
 
 
 
+/// Set file string to given string.
+///
+/// @param nStr Value to set file string to in file memory.
+/// @return Reference to this object.
+///
+/// @exception AlreadySet This file string object has already been set.
 FString& FString::operator=(const string& nStr)
 {
    bool cond = _hdr.addr()==FileMem::nullPtr;
@@ -53,6 +77,9 @@ FString& FString::operator=(const string& nStr)
 
 
 
+/// Get file pointer where file string is located, nullptr if not set.
+///
+/// @return File pointer location.
 void FString::addr(FPtr ptr)
 {
    _hdr = ptr;
@@ -65,6 +92,12 @@ void FString::addr(FPtr ptr)
 
 
 
+/// @brief Load file string from file.
+///
+/// Load value of file string from file memory object from location stored in
+/// this object.
+///
+/// @exception InvalidPtr The file memory location is not a valid file string.
 inline void FString::load()
 {
    _mem->sync(_hdr,FileSync::read);
