@@ -1,3 +1,4 @@
+#include <regex>
 #include "getopts.h"
 
 
@@ -5,26 +6,35 @@
 GetOpts::GetOpts(const string& raw):
    _orig(raw)
 {
-   clist rawList = explode(raw);
-   for (auto i:rawList)
+   using regex = std::regex;
+   using regtok = std::sregex_token_iterator;
+   regex pat {"[\\s\\t]+"};
+   regtok end {};
+   for (regtok r {raw.begin(),raw.end(),pat,-1};r!=end;++r)
    {
+      const string& i {*r};
       if (i.front()=='-')
       {
-         auto x = i.begin();
-         auto y = i.begin();
-         for (;x!=i.end()&&*x=='-';++x);
-         for (;y!=i.end()&&*y!='=';++y);
-         if (y!=i.end())
+         string val;
+         string key;
+         auto x = i.find_first_not_of('-');
+         auto y = i.find('=');
+         if (y!=string::npos)
          {
-            ++y;
+            bool cond = y==i.rfind('=')&&y>x;
+            assert<InvalidSyntax>(cond,__FILE__,__LINE__);
+            val = i.substr(x,y-x);
+            key = i.substr(++y);
          }
-         string val(y,i.end());
-         string key(x,y);
-         _opts.push_back({key,val});
+         else
+         {
+            val = i.substr(x);
+         }
+         _opts.push_back({std::move(val),std::move(key)});
       }
       else
       {
-         _comms.push_back(std::move(i));
+         _comms.push_back(i);
       }
    }
 }
@@ -55,7 +65,7 @@ int GetOpts::com_get(std::initializer_list<string> commands)
 bool GetOpts::has_opt(const string& opt, bool del)
 {
    bool ret {false};
-   for (auto i = _opts.begin();i!=_opts.end();++i)
+   for (auto i = _opts.begin();i!=_opts.end();)
    {
       if (i->first==opt)
       {
@@ -75,120 +85,4 @@ bool GetOpts::has_opt(const string& opt, bool del)
       }
    }
    return ret;
-}
-
-
-
-inline GetOpts::clist GetOpts::explode(const string& raw)
-{
-   clist list;
-   string buffer;
-   auto i = raw.begin();
-   while (true)
-   {
-      if (*i!=' '&&*i!='\t'&&i!=raw.end())
-      {
-         buffer += *i;
-      }
-      else if ((*i==' '||*i=='\t'||i==raw.end())&&!buffer.empty())
-      {
-         list.push_back(std::move(buffer));
-      }
-      if (i==raw.end())
-      {
-         break;
-      }
-      ++i;
-   }
-   return list;
-}
-
-
-
-GetOpts::Iterator& GetOpts::Iterator::operator>>(short& n)
-{
-   istring buffer(_i->second);
-   bool cond = buffer >> n;
-   assert<InvalidType>(cond,__FILE__,__LINE__);
-   return *this;
-}
-
-
-
-GetOpts::Iterator& GetOpts::Iterator::operator>>(unsigned short& n)
-{
-   istring buffer(_i->second);
-   bool cond = buffer >> n;
-   assert<InvalidType>(cond,__FILE__,__LINE__);
-   return *this;
-}
-
-
-
-GetOpts::Iterator& GetOpts::Iterator::operator>>(int& n)
-{
-   istring buffer(_i->second);
-   bool cond = buffer >> n;
-   assert<InvalidType>(cond,__FILE__,__LINE__);
-   return *this;
-}
-
-
-
-GetOpts::Iterator& GetOpts::Iterator::operator>>(unsigned int& n)
-{
-   istring buffer(_i->second);
-   bool cond = buffer >> n;
-   assert<InvalidType>(cond,__FILE__,__LINE__);
-   return *this;
-}
-
-
-
-GetOpts::Iterator& GetOpts::Iterator::operator>>(long& n)
-{
-   istring buffer(_i->second);
-   bool cond = buffer >> n;
-   assert<InvalidType>(cond,__FILE__,__LINE__);
-   return *this;
-}
-
-
-
-GetOpts::Iterator& GetOpts::Iterator::operator>>(unsigned long& n)
-{
-   istring buffer(_i->second);
-   bool cond = buffer >> n;
-   assert<InvalidType>(cond,__FILE__,__LINE__);
-   return *this;
-}
-
-
-
-GetOpts::Iterator& GetOpts::Iterator::operator>>(float& n)
-{
-   istring buffer(_i->second);
-   bool cond = buffer >> n;
-   assert<InvalidType>(cond,__FILE__,__LINE__);
-   return *this;
-}
-
-
-
-GetOpts::Iterator& GetOpts::Iterator::operator>>(double& n)
-{
-   istring buffer(_i->second);
-   bool cond = buffer >> n;
-   assert<InvalidType>(cond,__FILE__,__LINE__);
-   return *this;
-}
-
-
-
-GetOpts::Iterator& GetOpts::Iterator::operator>>(string& n)
-{
-   istring buffer(_i->second);
-   bool cond = buffer >> n;
-   assert<InvalidType>(cond,__FILE__,__LINE__);
-   return *this;
 }

@@ -16,6 +16,7 @@ public:
    // *
    struct Exception;
    struct InvalidType;
+   struct InvalidSyntax;
    // *
    // * DECLERATIONS
    // *
@@ -28,15 +29,15 @@ public:
    // *
    // * FUNCTIONS
    // *
-   const string& orig() const;//NOT TESTED!!
-   int com_size();
-   bool com_empty();
+   const string& orig() const;
+   int com_size() const;
+   bool com_empty() const;
    int com_get(std::initializer_list<string>);
-   string& com_front();//NOT TESTED!!
+   string& com_front();
    void com_pop();
-   int size();
-   bool empty();
-   bool has_opt(const string&,bool = false);//NOT TESTED!!
+   int size() const;
+   bool empty() const;
+   bool has_opt(const string&,bool = false);
    Iterator begin();
    Iterator end();
    Iterator erase(Iterator);
@@ -46,10 +47,6 @@ private:
    // *
    using clist = std::list<string>;
    using oplist = std::list<std::pair<string,string>>;
-   // *
-   // * FUNCTIONS
-   // *
-   clist explode(const string&);
    // *
    // * VARIABLES
    // *
@@ -72,30 +69,17 @@ public:
    // *
    // * FUNCTIONS
    // *
-   const string& key();
-   bool is_key(const string&);//NOT TESTED!
-   bool empty();// NOT TESTED
-   template<class T> bool is_type();//NT
+   const string& key() const;
+   template<class T> T value() const;
+   bool is_key(const string&) const;
+   bool val_empty() const;
    // *
    // * OPERATORS
    // *
-   Iterator& operator>>(short&);
-   Iterator& operator>>(unsigned short&);
-   Iterator& operator>>(int&);
-   Iterator& operator>>(unsigned int&);
-   Iterator& operator>>(long&);
-   Iterator& operator>>(unsigned long&);
-   Iterator& operator>>(float&);
-   Iterator& operator>>(double&);
-   Iterator& operator>>(string&);
    void operator++();
-   bool operator==(const Iterator&);
    bool operator!=(const Iterator&);
+   bool operator==(const Iterator&);
 private:
-   // *
-   // * DECLERATIONS
-   // *
-   using istring = std::istringstream;
    // *
    // * BASIC METHODS
    // *
@@ -115,14 +99,14 @@ inline const GetOpts::string& GetOpts::orig() const
 
 
 
-inline int GetOpts::com_size()
+inline int GetOpts::com_size() const
 {
    return _comms.size();
 }
 
 
 
-inline bool GetOpts::com_empty()
+inline bool GetOpts::com_empty() const
 {
    return _comms.empty();
 }
@@ -146,14 +130,14 @@ inline void GetOpts::com_pop()
 
 
 
-inline int GetOpts::size()
+inline int GetOpts::size() const
 {
    return _opts.size();
 }
 
 
 
-inline bool GetOpts::empty()
+inline bool GetOpts::empty() const
 {
    return _opts.empty();
 }
@@ -181,32 +165,35 @@ inline GetOpts::Iterator GetOpts::erase(Iterator i)
 
 
 
-inline const GetOpts::string& GetOpts::Iterator::key()
+inline const GetOpts::string& GetOpts::Iterator::key() const
 {
    return _i->first;
 }
 
 
 
-inline bool GetOpts::Iterator::is_key(const string& cmp)
+template<class T> T GetOpts::Iterator::value() const
+{
+   T ret;
+   using istring = std::istringstream;
+   istring buffer(_i->second);
+   bool cond = buffer >> ret;
+   assert<InvalidType>(cond,__FILE__,__LINE__);
+   return ret;
+}
+
+
+
+inline bool GetOpts::Iterator::is_key(const string& cmp) const
 {
    return _i->first==cmp;
 }
 
 
 
-inline bool GetOpts::Iterator::empty()
+inline bool GetOpts::Iterator::val_empty() const
 {
    return _i->second.empty();
-}
-
-
-
-template<class T> bool GetOpts::Iterator::is_type()
-{
-   T test;
-   istring buffer(_i->second);
-   return buffer >> test;
 }
 
 
@@ -218,16 +205,16 @@ inline void GetOpts::Iterator::operator++()
 
 
 
-inline bool GetOpts::Iterator::operator==(const Iterator& cmp)
+inline bool GetOpts::Iterator::operator!=(const Iterator& cmp)
 {
-   return _i==cmp._i;
+   return _i!=cmp._i;
 }
 
 
 
-inline bool GetOpts::Iterator::operator!=(const Iterator& cmp)
+inline bool GetOpts::Iterator::operator==(const Iterator& cmp)
 {
-   return _i!=cmp._i;
+   return _i==cmp._i;
 }
 
 
@@ -246,7 +233,14 @@ struct GetOpts::Exception : public ::Exception
 struct GetOpts::InvalidType : public GetOpts::Exception
 {
    InvalidType(const char* file, int line):
-      Exception(file,line,"Terminal::InvalidType")
+      Exception(file,line,"GetOpts::InvalidType")
+   {}
+};
+
+struct GetOpts::InvalidSyntax : public GetOpts::Exception
+{
+   InvalidSyntax(const char* file, int line):
+      Exception(file,line,"GetOpts::InvalidSyntax")
    {}
 };
 

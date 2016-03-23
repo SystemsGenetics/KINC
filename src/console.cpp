@@ -674,7 +674,7 @@ void Console::analytic(GetOpts& ops)
          string raw;
          try
          {
-            i >> raw;
+            raw = i.value<string>();
          }
          catch (GetOpts::InvalidType)
          {
@@ -717,7 +717,7 @@ void Console::analytic(GetOpts& ops)
          string raw;
          try
          {
-            i >> raw;
+            raw = i.value<string>();
          }
          catch (GetOpts::InvalidType)
          {
