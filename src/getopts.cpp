@@ -3,6 +3,15 @@
 
 
 
+/// @brief Decomposes user line.
+///
+/// Decomposes the raw user input line given into commands and options, adding
+/// them to this new object's lists.
+///
+/// @param raw User input line.
+///
+/// @exception InvalidSyntax An error occured in the syntax of the user line
+/// while attempting to decompose it.
 GetOpts::GetOpts(const string& raw):
    _orig(raw)
 {
@@ -41,7 +50,16 @@ GetOpts::GetOpts(const string& raw):
 
 
 
-int GetOpts::com_get(std::initializer_list<string> commands)
+/// @brief Interrogate front command.
+///
+/// Interrogate the command at front of list for this object, comparing it to
+/// initializer list of strings given seeing if it matches any of them.
+///
+/// @param commands List of values to match front of list command by.
+/// @return 0 if no match is found in list of command values, else increment
+/// into initializer list where match was found starting with 1 for beginning
+/// of list.
+int GetOpts::com_get(initlist commands)
 {
    int ret = 0;
    int count = 0;
@@ -62,6 +80,23 @@ int GetOpts::com_get(std::initializer_list<string> commands)
 
 
 
+/// Remove the command at front of list of commands for this object.
+void GetOpts::com_pop()
+{
+   if (!_comms.empty())
+   {
+      _comms.pop_front();
+   }
+}
+
+
+
+/// Interrogate list of options to see if the key of any option matches the
+/// value given, optionally removing all matches from list of options if found.
+///
+/// @param opt Key value to match against.
+/// @param del True to remove all matching options, else false.
+/// @return True if one or more matches found, else false.
 bool GetOpts::has_opt(const string& opt, bool del)
 {
    bool ret {false};
