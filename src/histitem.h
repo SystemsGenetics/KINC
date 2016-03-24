@@ -40,6 +40,14 @@ struct HistItemData::Item : FileMem::Static<nodeSz>
 
 
 
+/// @brief History item in file memory.
+///
+/// Represents a single history item in file memory. Has ability to create a new
+/// history item or recursively make a copy of a given history item, adding
+/// additional history items of all of the copied items children.
+///
+/// @author Josh Burns
+/// @date 24 March 2016
 class HistItem
 {
 public:
@@ -110,21 +118,34 @@ private:
    // *
    // * VARIABLES
    // *
+   /// File memory object where history item is located.
    FileMem* _mem;
+   /// File memory chunk of history item data.
    Item _item;
+   /// File name of item.
    FString _fileName;
+   /// Object that created item, if any.
    FString _object;
+   /// Command that created item.
    FString _command;
 };
 
 
 
+/// Passes initialization to primary constructor.
+///
+/// @param mem File memory that will be used for item.
+/// @param ptr Location where history item is located or nullptr if item to be
+/// created.
 inline HistItem::HistItem(FileMem& mem, FileMem::Ptr ptr):
    HistItem(&mem,ptr)
 {}
 
 
 
+/// Get file memory location of history item.
+///
+/// @return Location of item.
 inline FileMem::Ptr HistItem::addr() const
 {
    return _item.addr();
@@ -132,6 +153,9 @@ inline FileMem::Ptr HistItem::addr() const
 
 
 
+/// Get pointer to file memory object where item is located.
+///
+/// @return Pointer to file memory instance.
 inline FileMem* HistItem::mem() const
 {
    return _mem;
@@ -139,6 +163,7 @@ inline FileMem* HistItem::mem() const
 
 
 
+/// Generic base exception class for all exceptions thrown in HistItem class.
 struct HistItem::Exception : public ::Exception
 {
    using ::Exception::Exception;
