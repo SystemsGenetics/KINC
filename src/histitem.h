@@ -20,6 +20,7 @@ struct HistItemData::Skim : FileMem::Static<skimSz>
    using FPtr = FileMem::Ptr;
    using Static<skimSz>::Static;
    FPtr& childHead() { get<FPtr>(0); }
+   const FPtr& childHead() const { get<FPtr>(0); }
    FPtr& next() { get<FPtr>(8); }
 };
 

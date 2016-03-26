@@ -6,6 +6,13 @@
 
 
 
+/// @brief Provides history of file.
+///
+/// Provides entire history for one file, including all children of inputs that
+/// were involved in the creation of this file.
+///
+/// @author Josh Burns
+/// @date 25 March 2016
 class History : private HistItem
 {
 public:
@@ -45,6 +52,14 @@ public:
 
 
 
+/// @brief Iterates through all children of history.
+///
+/// Iterates through all children of history file, also allowing iteration
+/// through all children of each child recursively until end of all children
+/// reached.
+///
+/// @author Josh Burns
+/// @date 25 March 2016
 class History::Iterator
 {
 public:
@@ -73,12 +88,17 @@ private:
    // *
    // * VARIABLES
    // *
+   /// Pointer to file memory object.
    FileMem* _mem;
-   mutable Skim _skim;
+   /// Compact version of history item chunk for navigating.
+   Skim _skim;
 };
 
 
 
+/// Test if this object has any children.
+///
+/// @return True if there are children, else false.
 inline bool History::has_child() const
 {
    return childHead()!=FileMem::nullPtr;
@@ -86,6 +106,9 @@ inline bool History::has_child() const
 
 
 
+/// Get beginning iterator of children list, if any.
+///
+/// @return Beginning of list iterator.
 inline History::Iterator History::begin()
 {
    return {mem(),childHead()};
@@ -93,6 +116,9 @@ inline History::Iterator History::begin()
 
 
 
+/// Get one past end of list iterator for any child list.
+///
+/// @return One past end of list iterator.
 inline History::Iterator History::end()
 {
    return {mem()};
@@ -100,6 +126,9 @@ inline History::Iterator History::end()
 
 
 
+/// Get beginning iterator of this iterator's children, if any.
+///
+/// @return Beginning of list iterator.
 inline History::Iterator History::Iterator::child()
 {
    return {_mem,_skim.childHead()};
@@ -107,6 +136,9 @@ inline History::Iterator History::Iterator::child()
 
 
 
+/// Test if this iterator has any children.
+///
+/// @return True if there are children, else false.
 inline bool History::Iterator::has_child() const
 {
    return _skim.childHead()!=FileMem::nullPtr;
@@ -114,6 +146,9 @@ inline bool History::Iterator::has_child() const
 
 
 
+/// Load actual history item that iterator points to, returning the new item.
+///
+/// @return New history item that iterator points to in file memory.
 inline HistItem History::Iterator::load()
 {
    return {_mem,_skim.addr()};
@@ -121,35 +156,12 @@ inline HistItem History::Iterator::load()
 
 
 
-inline void History::Iterator::operator++()
-{
-   if (_skim.addr()!=FileMem::nullPtr)
-   {
-      _skim = _skim.next();
-      if (_skim.addr()!=FileMem::nullPtr)
-      {
-         _mem->sync(_skim,FileSync::read);
-      }
-   }
-}
-
-
-
+/// Test to see if this iterator and one given are not equal.
+///
+/// @return True if iterators are not equal, else false.
 inline bool History::Iterator::operator!=(const Iterator& cmp)
 {
    return _skim.addr()!=cmp._skim.addr();
-}
-
-
-
-inline History::Iterator::Iterator(FileMem* mem, FPtr ptr):
-   _mem(mem),
-   _skim(ptr)
-{
-   if (ptr!=FileMem::nullPtr)
-   {
-      _mem->sync(_skim,FileSync::read);
-   }
 }
 
 
