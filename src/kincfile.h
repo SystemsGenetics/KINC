@@ -11,9 +11,9 @@
 namespace KincFileData
 {
    struct Header;
-   constexpr FileMem::SizeT idSz = 10;
+   constexpr FileMem::SizeT idSz = 4;
    constexpr FileMem::SizeT hdrSz = idSz+24;
-   constexpr auto idString = "\030\031\032\113\111\116\103\032\031\030";
+   constexpr auto idString = "\113\111\116\103";
 }
 
 struct KincFileData::Header : FileMem::Static<hdrSz>
@@ -24,11 +24,20 @@ struct KincFileData::Header : FileMem::Static<hdrSz>
    char* idString() { &get<char>(0); }
    FPtr& histHead() { get<FPtr>(idSz); }
    FPtr& dataHead() { get<FPtr>(idSz+8); }
+   const FPtr& dataHead() const { get<FPtr>(idSz+8); }
    FPtr& ident() { get<FPtr>(idSz+16); }
 };
 
 
 
+/// @brief Base file utility class for data plugin.
+///
+/// Opens and manages a file memory object for a data plugin object. Provides
+/// functions for the data plugin to interface with the file memory object. Also
+/// provides a history object that is stored within the same file.
+///
+/// @author Josh Burns
+/// @date 26 March 2016
 class KincFile
 {
 public:
@@ -71,6 +80,7 @@ protected:
    void ident(const string&);
    FPtr head() const;
    void head(FPtr);
+   FileMem* mem();//NOT TESTED.
 private:
    // *
    // * DECLERATIONS
@@ -90,15 +100,23 @@ private:
    // *
    // * VARIABLES
    // *
+   /// File memory object.
    FileMem _mem;
+   /// Remembers if the file opened is new or not.
    bool _new {true};
+   /// Pointer to history object of file.
    hptr _hist {nullptr};
-   mutable Header _hdr;
+   /// Header for KINC file.
+   Header _hdr;
+   /// Custom data plugin ident value.
    FString _ident;
 };
 
 
 
+/// Tests to see if this object created a new KINC file when constructed.
+///
+/// @return True if this is a new file, else false.
 inline bool KincFile::is_new()
 {
    return _new;
@@ -106,6 +124,9 @@ inline bool KincFile::is_new()
 
 
 
+/// Get reference of history object for this object.
+///
+/// @return History object.
 inline History& KincFile::history()
 {
    return *_hist;
@@ -113,6 +134,9 @@ inline History& KincFile::history()
 
 
 
+/// Get data plugin ident value for this object.
+///
+/// @return data plugin ident.
 inline KincFile::string KincFile::ident() const
 {
    return *_ident;
@@ -120,6 +144,12 @@ inline KincFile::string KincFile::ident() const
 
 
 
+/// @brief Get data plugin memory head.
+///
+/// Get file memory location for the beginning or head of data plugin memory for
+/// this object.
+///
+/// @return Location to beginning of data plugin memory.
 inline FileMem::Ptr KincFile::head() const
 {
    return _hdr.dataHead();
@@ -127,11 +157,23 @@ inline FileMem::Ptr KincFile::head() const
 
 
 
+/// Get pointer of file memory object for this object.
+///
+/// @return File memory object.
+inline FileMem* KincFile::mem()
+{
+   return &_mem;
+}
+
+
+
+/// Generic base exception class for all exceptions thrown in KincFile class.
 struct KincFile::Exception : public ::Exception
 {
    using ::Exception::Exception;
 };
 
+/// The file being opened is not a valid KINC file.
 struct KincFile::InvalidFile : public KincFile::Exception
 {
    InvalidFile(const char* file, int line):
@@ -139,6 +181,7 @@ struct KincFile::InvalidFile : public KincFile::Exception
    {}
 };
 
+/// The data plugin ident value has already been set.
 struct KincFile::AlreadySet : public KincFile::Exception
 {
    AlreadySet(const char* file, int line):

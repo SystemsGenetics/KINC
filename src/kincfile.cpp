@@ -3,6 +3,15 @@
 
 
 
+/// @brief Open KINC file object.
+///
+/// Open file memory object from file given. If the size of the file memory
+/// object is zero then create a new KINC file from it, else attempt to load
+/// KINC file from head location of file memory object.
+///
+/// @param fileName Location of file for memory object.
+///
+/// @exception InvalidFile The file being opened is not a valid KINC file.
 KincFile::KincFile(const std::string& fileName):
    _mem(fileName),
    _ident(&_mem)
@@ -36,6 +45,10 @@ KincFile::KincFile(const std::string& fileName):
 
 
 
+/// @brief Clear this object.
+///
+/// Clear all data in this object, including all data plugin memory, making this
+/// object a new KINC file with no information.
 void KincFile::clear()
 {
    _hist.reset();
@@ -48,6 +61,11 @@ void KincFile::clear()
 
 
 
+/// Set value for data plugin ident.
+///
+/// @param id Value for ident.
+///
+/// @exception AlreadySet The ident value for data plugin has already been set.
 void KincFile::ident(const string& id)
 {
    try
@@ -64,6 +82,9 @@ void KincFile::ident(const string& id)
 
 
 
+/// Set value of file memory location for beginning of data plugin memory.
+///
+/// @param ptr Location of data plugin memory.
 void KincFile::head(FileMem::Ptr ptr)
 {
    _hdr.dataHead() = ptr;
@@ -72,6 +93,10 @@ void KincFile::head(FileMem::Ptr ptr)
 
 
 
+/// @brief Create new KINC file.
+///
+/// Create a new KINC file for this object, writing to this object's file memory
+/// object.
 void KincFile::create()
 {
    _mem.allot(_hdr);
