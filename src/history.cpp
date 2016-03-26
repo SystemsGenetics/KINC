@@ -74,7 +74,7 @@ void History::Iterator::operator++()
 ///
 /// @param mem Pointer to file memory object.
 /// @param ptr File location of history item iterator will point to.
-inline History::Iterator::Iterator(FileMem* mem, FPtr ptr):
+History::Iterator::Iterator(FileMem* mem, FPtr ptr):
    _mem(mem),
    _skim(ptr)
 {
