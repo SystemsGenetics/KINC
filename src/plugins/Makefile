@@ -49,7 +49,7 @@ data/plugin.cpp: analytic/gen.sh
 
 %.o:%.cpp
 +@echo "Building binder $@"
-+$(CXX) $(acxxflags) -c $< -o $@
++@$(CXX) $(acxxflags) -c $< -o $@
 
 clean:
 +@echo "Cleaning all plugins."

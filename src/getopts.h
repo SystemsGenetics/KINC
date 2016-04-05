@@ -8,6 +8,7 @@
 
 
 
+/// @ingroup dataplugin
 /// @brief Decomposes line of user input.
 ///
 /// Takes a single line from the user and seperates it into commands and
@@ -17,9 +18,6 @@
 /// are seperated using the '=' character. For example, 'one two --option=val'
 /// has two commands(one and two) and one option(with a key of option and a
 /// value of val).
-///
-/// @author Josh Burns
-/// @date 24 March 2016
 class GetOpts
 {
 public:

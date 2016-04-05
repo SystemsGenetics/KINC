@@ -30,14 +30,12 @@ struct KincFileData::Header : FileMem::Static<hdrSz>
 
 
 
+/// @ingroup dataplugin
 /// @brief Base file utility class for data plugin.
 ///
 /// Opens and manages a file memory object for a data plugin object. Provides
 /// functions for the data plugin to interface with the file memory object. Also
 /// provides a history object that is stored within the same file.
-///
-/// @author Josh Burns
-/// @date 26 March 2016
 class KincFile
 {
 public:

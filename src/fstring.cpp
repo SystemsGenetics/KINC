@@ -77,9 +77,12 @@ FString& FString::operator=(const string& nStr)
 
 
 
-/// Get file pointer where file string is located, nullptr if not set.
+/// @brief Set new location for this object.
 ///
-/// @return File pointer location.
+/// Set new location in file memory where there is an FString to read or set
+/// the adress to nullptr so a new string can be allocated.
+///
+/// @param ptr New location of FString for nullptr if unset.
 void FString::addr(FPtr ptr)
 {
    _hdr = ptr;

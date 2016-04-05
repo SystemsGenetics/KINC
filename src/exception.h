@@ -89,6 +89,7 @@ private:
 
 
 
+/// @ingroup dataplugin
 /// @brief Base exception class for Data objects.
 ///
 /// Base exception class that any data implementation throws if an error has

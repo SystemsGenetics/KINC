@@ -8,6 +8,7 @@
 
 
 
+/// @ingroup dataplugin
 /// Defines what type of file syncing to be done.
 enum class FileSync {
    read, ///< Read data from file to buffer.
@@ -16,6 +17,7 @@ enum class FileSync {
 
 
 
+/// @ingroup dataplugin
 /// @brief Binary file interface.
 ///
 /// Provides interface to use a given binary file as a swap like memory device

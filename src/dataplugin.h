@@ -6,15 +6,13 @@
 
 
 
+/// @ingroup dataplugin
 /// @brief Base class for data plugins.
 ///
 /// Base class that all data plugin implementations must inherit. It brings it
 /// the interface Data class that defines the virtual functions data plugins
 /// must implement along with the KincFile helper class for manipulating the
 /// associated binary file.
-///
-/// @author Josh Burns
-/// @date 21 March 2016
 class DataPlugin : public Data, public KincFile
 {
 public:

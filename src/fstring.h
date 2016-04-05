@@ -30,15 +30,13 @@ struct FStringData::String : FileMem::Object
 
 
 
+/// @ingroup dataplugin
 /// @brief File memory string.
 ///
 /// String object that stores a string in file memory. You can set the object
 /// once, which will then write the string to file memory and get a file pointer
 /// where it is stored. After the string has been written, or if loading a
 /// string, access to the string is read only.
-///
-/// @author Josh Burns
-/// @date 22 March 2016
 class FString
 {
 public:
