@@ -222,12 +222,12 @@ RunQuery::RunQuery(int argc, char *argv[]) {
   }
 
   // Make sure the output directory exists.
-  struct stat st = {0};
-  sprintf(indexdir, "./clusters-%s", method);
-  if (stat(indexdir, &st) == -1) {
-    fprintf(stderr, "The specified indexes directory ,'%s', is missing. Please check the value of the --indexes argument.\n", indexdir);
-    exit(-1);
-  }
+//  struct stat st = {0};
+//  sprintf(indexdir, "./clusters-%s", method);
+//  if (stat(indexdir, &st) == -1) {
+//    fprintf(stderr, "The specified indexes directory ,'%s', is missing. Please check the value of the --indexes argument.\n", indexdir);
+//    exit(-1);
+//  }
 }
 /**
  * Destructor
@@ -241,6 +241,6 @@ RunQuery::~RunQuery() {
  */
 void RunQuery::execute() {
 //  CLuceneQuery query(indexdir);
-  SQLiteQuery query(indexdir, ematrix);
-  query.run(x_coord, y_coord, score);
+//  SQLiteQuery query(indexdir, ematrix);
+//  query.run(x_coord, y_coord, score);
 }

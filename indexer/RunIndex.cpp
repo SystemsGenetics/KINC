@@ -225,8 +225,8 @@ RunIndex::RunIndex(int argc, char *argv[]) {
  */
 RunIndex::~RunIndex() {
   //CLuceneIndexer indexer(indexdir);
-  SQLiteIndexer indexer(ematrix, indexdir);
-  indexer.run(nsamples, job_index, job_start);
+  //SQLiteIndexer indexer(ematrix, indexdir);
+  //indexer.run(nsamples, job_index, job_start);
 }
 
 /**
