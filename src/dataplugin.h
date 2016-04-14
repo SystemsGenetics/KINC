@@ -3,6 +3,7 @@
 #include <string>
 #include "data.h"
 #include "kincfile.h"
+#include "exception.h"
 
 
 
