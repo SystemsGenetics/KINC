@@ -3,7 +3,7 @@
 
 
 //#include "clucene/CLuceneQuery.h"
-#include "sqlite/SQLiteQuery.h"
+//#include "sqlite/SQLiteQuery.h"
 #include "../ematrix/EMatrix.h"
 
 class RunQuery {
