@@ -23,14 +23,13 @@ class CLDevice;
 /// @brief Main program Console.
 ///
 /// Designed to take over execution of the program and manage commands supplied
-/// by the user and all data and analytic objects. The run() function will take
-/// over execution and release when the user quits the program. Only one
-/// instance of this class is allowed to exist for the entire program.
+/// by the user for all data and analytic objects. Also manages and displays
+/// information about all OpenCL devices attached to the program's machine.
 ///
 /// @warning Only one instance of this class can exist at any one time.
 ///
 /// @author Josh Burns
-/// @date 22 Jan 2016
+/// @date 18 March 2016
 class Console
 {
 public:
@@ -40,30 +39,31 @@ public:
    struct Exception;
    struct InvalidUse;
    // *
+   // * DECLERATIONS
+   // *
+   class CommandError;
+   // *
    // * BASIC METHODS
    // *
-   Console(const Console&) = delete;
-   Console(Console&&) = delete;
-   Console& operator=(const Console&) = delete;
-   Console& operator=(Console&&) = delete;
    Console(int,char*[],Terminal&,DataMap&);
    ~Console();
+   // *
+   // * COPY METHODS
+   // *
+   Console(const Console&) = delete;
+   Console& operator=(const Console&) = delete;
+   // *
+   // * MOVE METHODS
+   // *
+   Console(Console&&) = delete;
+   Console& operator=(Console&&) = delete;
    // *
    // * FUNCTIONS
    // *
    void run();
-   //bool add(Data*,std::string&);
-   //bool del(std::string&);
-   //Data* find(std::string&);
 private:
    using string = std::string;
    using hiter = History::Iterator;
-   struct CommandError
-   {
-      CommandError(const char* c, const std::string& m): cmd {c}, msg {m} {}
-      const char* cmd;
-      std::string msg;
-   };
    struct CommandQuit {};
    // *
    // * FUNCTIONS
@@ -91,25 +91,66 @@ private:
    // *
    // * STATIC VARIABLES
    // *
+   /// Used to determine if an instance of this class exists or not.
    static bool _lock;
    // *
    // * VARIABLES
    // *
    /// Reference to program's main Terminal interface.
    Terminal& _tm;
-   //
+   /// Reference to program's data list manager.
    DataMap& _dataMap;
-   /// Pointer to OpenCL device that is set for computation acceleration. By
-   /// or if clear command issues this is set to nullptr.
+   /// Pointer to OpenCL device that is set for computation acceleration. Set to
+   /// nullptr if no device is selected.
    CLDevice* _device;
-   /// List of all possible OpenCL devices on program's computer.
+   /// List of all possible OpenCL devices on program's machine.
    CLDevList _devList;
-   //std::list<Data*> _data;
-   /// Boolean variable that is used as state information stating if the console
-   /// is still active and should continue accepting input from user. Once this
-   /// is false the run() command will exit and return control.
-   bool _alive;
 };
+
+
+
+/// @brief Single console error.
+///
+/// This holds a single error that occured and is thrown from somewhere outside
+/// of the console class which the console class is designed to catch and
+/// report to the user.
+///
+/// @author Josh Burns
+/// @date 18 March 2016
+class Console::CommandError
+{
+public:
+   using string = std::string;
+   CommandError(const string&,const string&);
+   void print(Terminal&);
+private:
+   /// Holds who threw the command error.
+   string _who;
+   /// Holds the message of the command error.
+   string _msg;
+};
+
+
+
+/// Initializes a new command error and sets who threw it and its message.
+///
+/// @param who Identifies who threw the error message.
+/// @param msg The message describing the error that occured.
+inline Console::CommandError::CommandError(const string& who,
+                                           const string& msg):
+   _who(who),
+   _msg(msg)
+{}
+
+
+
+/// Prints the error message to the terminal.
+///
+/// @param tm The program's terminal that will be printed to.
+inline void Console::CommandError::print(Terminal& tm)
+{
+   tm << _who << ": " << _msg << Terminal::endl;
+}
 
 
 

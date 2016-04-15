@@ -26,11 +26,16 @@ bool Console::_lock {false};
 /// Initializes internal variables, locks console interface, and sets terminal
 /// header.
 ///
-/// @pre Console must not be locked.
-Console::Console(int argc, char* argv[], Terminal& terminal, DataMap& datamap):
-   _alive {false},
-   _tm {terminal},
-   _dataMap {datamap},
+/// @param argc The argc argument from the main function.
+/// @param argv The argv argument from the main function.
+/// @param tm The terminal interface for the program.
+/// @param dmap The data list manager for the program.
+///
+/// @exception InvalidUse A second instance of this class was being created
+/// which is not allowed.
+Console::Console(int argc, char* argv[], Terminal& tm, DataMap& dmap):
+   _tm {tm},
+   _dataMap {dmap},
    _device {nullptr}
 {
    assert<InvalidUse>(!_lock,__FILE__,__LINE__);
@@ -55,7 +60,7 @@ Console::~Console()
 /// Prints welcome message and goes directly to terminal loop.
 void Console::run()
 {
-   _tm << "Welcome to KINC.\nAlpha Version 0.1.\n\n";
+   _tm << "Welcome to KINC\nAlpha Version 0.1\n\n";
    terminal_loop();
 }
 
@@ -65,8 +70,9 @@ void Console::run()
 ///
 /// This is the main function loop of the program. This loop will continue to
 /// grab one input from the Terminal interface until the quit command has been
-/// processed. Each user line is processed by calling parse. The _alive state
-/// of the program is set to false in a subfunction if quit is given.
+/// processed. Each user line is processed by calling process. Any exception
+/// thrown is also caught here and caught to prevent the program from crashing;
+/// printing output to the user about what type of exception.
 void Console::terminal_loop()
 {
    bool alive = true;
@@ -84,7 +90,9 @@ void Console::terminal_loop()
          }
          catch (CommandError e)
          {
-            _tm << e.cmd << ": " << e.msg << Terminal::endl;
+            _tm << Terminal::warning;
+            e.print(_tm);
+            _tm << Terminal::general;
          }
          catch (CommandQuit)
          {
@@ -92,6 +100,7 @@ void Console::terminal_loop()
          }
          catch (DataException e)
          {
+            _tm << Terminal::error;
             _tm << "Data Exception Caught!" << Terminal::endl;
             _tm << "Level: ";
             switch (e.level())
@@ -115,35 +124,44 @@ void Console::terminal_loop()
             _tm << "Location: " << e.file() << ":" << e.line()
                 << Terminal::endl;
             _tm << "What: " << e.what() << Terminal::endl;
+            _tm << Terminal::general;
          }
          catch (AnalyticException e)
          {
+            _tm << Terminal::error;
             _tm << "Analytic Exception Caught!" << Terminal::endl;
             _tm << "Location: " << e.file() << ":" << e.line()
                 << Terminal::endl;
             _tm << "What: " << e.what() << Terminal::endl;
+            _tm << Terminal::general;
          }
          catch (Exception e)
          {
+            _tm << Terminal::error;
             _tm << "GENERAL Exception Caught!" << Terminal::endl;
             _tm << "Location: " << e.file() << ":" << e.line()
                 << Terminal::endl;
             _tm << "What: " << e.what() << Terminal::endl;
             _tm << "It is HIGHLY recommended you immediately close this"
                    " program." << Terminal::endl;
+            _tm << Terminal::general;
          }
          catch (std::exception stde)
          {
+            _tm << Terminal::error;
             _tm << "Standard Library Exception Caught!" << Terminal::endl;
             _tm << "What: " << stde.what() << Terminal::endl;
             _tm << "It is HIGHLY recommended you immediately close this"
                    " program." << Terminal::endl;
+            _tm << Terminal::general;
          }
          catch (...)
          {
+            _tm << Terminal::error;
             _tm << "UNKNOWN EXCEPTION CAUGHT!" << Terminal::endl;
             _tm << "It is HIGHLY recommended you immediately close this"
                    " program." << Terminal::endl;
+            _tm << Terminal::general;
          }
       }
       _tm << Terminal::flush;
@@ -152,10 +170,12 @@ void Console::terminal_loop()
 
 
 
-/// Processes decoded user command and routes to specific command.
+/// Processes user command and routes to specific command.
 ///
-/// @param comm Enumerated command to be processed.
-/// @param list List of user arguments for command.
+/// @param ops Command line object with options.
+///
+/// @exception CommandQuit Signals the user has inputed the quit command to exit
+/// the program.
 void Console::process(GetOpts& ops)
 {
    enum {Analytic=0,GPU,Open,Load,Select,Dump,Query,Close,List,Clear,History,
@@ -211,10 +231,11 @@ void Console::process(GetOpts& ops)
 
 
 
-/// Processes decoded OpenCL command and routes to specific command given.
+/// Processes OpenCL command and routes to specific command given.
 ///
-/// @param comm The OpenCL command to be processed.
-/// @param list List of arguments for this command.
+/// @param ops Command line object with options.
+///
+/// @exception CommandError OpenCL subcommand given not found.
 void Console::gpu_process(GetOpts& ops)
 {
    if (ops.com_empty())
@@ -268,7 +289,9 @@ void Console::gpu_list()
 
 /// Executes command to print basic info of of given OpenCL device.
 ///
-/// @param list List of arguments for this command.
+/// @param ops Command line object with options.
+///
+/// @exception CommandError Syntax error in command detected.
 void Console::gpu_info(GetOpts& ops)
 {
    if (ops.com_empty())
@@ -305,7 +328,9 @@ void Console::gpu_info(GetOpts& ops)
 
 /// Executes command that sets OpenCL device for analytic computation.
 ///
-/// @param list List of arguments for this command.
+/// @param ops Command line object with options.
+///
+/// @exception CommandError Syntax error in command detected.
 void Console::gpu_set(GetOpts& ops)
 {
    if (ops.com_empty())
@@ -352,6 +377,13 @@ void Console::gpu_clear()
 
 
 
+/// Executes command to open a data object.
+///
+/// @param ops Command line object with options.
+///
+/// @exception CommandError Syntax error in command detected, data object is
+/// already loaded, or data type given in invalid. Exception specifying which
+/// error occured.
 void Console::data_open(GetOpts& ops)
 {
    if (ops.com_empty())
@@ -408,6 +440,12 @@ void Console::data_open(GetOpts& ops)
 
 
 
+/// Executes command to close data object.
+///
+/// @param ops Command line object with options.
+///
+/// @exception CommandError Syntax error in command detected or data object
+/// cannot be find, exception specifying which one.
 void Console::data_close(GetOpts& ops)
 {
    if (ops.com_empty())
@@ -434,6 +472,12 @@ void Console::data_close(GetOpts& ops)
 
 
 
+/// Executes command to select a loaded data object.
+///
+/// @param ops Command line object with options.
+///
+/// @exception CommandError Syntax error in command detected or data object
+/// cannot be find, exception specifying which one.
 void Console::data_select(GetOpts& ops)
 {
    if (ops.com_empty())
@@ -458,6 +502,7 @@ void Console::data_select(GetOpts& ops)
 
 
 
+/// Executes command to clear any selected data object.
 void Console::data_clear()
 {
    if (_dataMap.unselect())
@@ -473,6 +518,7 @@ void Console::data_clear()
 
 
 
+/// Executes command to list all loaded data objects.
 void Console::data_list()
 {
    for (auto i=_dataMap.begin();i!=_dataMap.end();++i)
@@ -488,6 +534,12 @@ void Console::data_list()
 
 
 
+/// Executes command to print the history of a data object.
+///
+/// @param ops Command line object with options.
+///
+/// @exception CommandError Syntax error in command detected or data object
+/// cannot be find, exception specifying which one.
 void Console::data_history(GetOpts& ops)
 {
    if (ops.com_empty())
@@ -520,6 +572,13 @@ void Console::data_history(GetOpts& ops)
 
 
 
+/// Executes command to call the load function of a data object.
+///
+/// @param ops Command line object with options.
+///
+/// @exception CommandError No data object is currently selected or attempting
+/// to overwrite existing data object with force option, exception specifying
+/// which one.
 void Console::data_load(GetOpts& ops)
 {
    try
@@ -548,6 +607,11 @@ void Console::data_load(GetOpts& ops)
 
 
 
+/// Executes command to call the dump function of a data object.
+///
+/// @param ops Command line object with options.
+///
+/// @exception CommandError No data object is currently selected.
 void Console::data_dump(GetOpts& ops)
 {
    try
@@ -562,6 +626,11 @@ void Console::data_dump(GetOpts& ops)
 
 
 
+/// Executes command to call the query function of a data object.
+///
+/// @param ops Command line object with options.
+///
+/// @exception CommandError No data object is currently selected.
 void Console::data_query(GetOpts& ops)
 {
    try
@@ -576,6 +645,15 @@ void Console::data_query(GetOpts& ops)
 
 
 
+/// @brief Executes analytic.
+///
+/// Executes the catch all analytic command, using the first argument as the
+/// name of the analytic.
+///
+/// @param ops Command line object with options.
+///
+/// @exception CommandError Something has happened which prevents completion of
+/// the analytic, such as a parsing error. Exception specifies error detected.
 void Console::analytic(GetOpts& ops)
 {
    using aptr = std::unique_ptr<Analytic>;
@@ -596,7 +674,7 @@ void Console::analytic(GetOpts& ops)
          string raw;
          try
          {
-            i >> raw;
+            raw = i.value<string>();
          }
          catch (GetOpts::InvalidType)
          {
@@ -639,7 +717,7 @@ void Console::analytic(GetOpts& ops)
          string raw;
          try
          {
-            i >> raw;
+            raw = i.value<string>();
          }
          catch (GetOpts::InvalidType)
          {
@@ -699,29 +777,45 @@ void Console::analytic(GetOpts& ops)
 
 
 
+/// Takes a single input string and seperates it into two substrings using :
+/// as the delimiter. Will also work with no delimiter, setting the first
+/// substring as the whole input string and the second as empty.
+///
+/// @param who Name of what is using this function for if it throws a command
+/// error.
+/// @param raw Input string that will be seperated.
+/// @param file Output string that will have first substring set to it.
+/// @param type Output string that will have second substring set to it.
+///
+/// @exception CommandError There is more than one delimiter character in the
+/// raw string.
 void Console::seperate(const string& who, const string& raw, string& file,
                        string& type)
 {
-   int count = 0;
-   auto n = raw.begin();
-   for (auto i = raw.begin();i!=raw.end();++i)
-   {
-      if (*i==':')
-      {
-         n = i;
-         ++count;
-      }
-   }
-   if (count>1)
+   auto n = raw.find(':');
+   if (n!=raw.rfind(':'))
    {
       throw CommandError(who.c_str(),"syntax error detected.");
    }
-   file = string(raw.begin(),n);
-   type = string(++n,raw.end());
+   file = raw.substr(0,n);
+   type.clear();
+   if (n!=string::npos)
+   {
+      type = raw.substr(++n);
+   }
 }
 
 
 
+/// @brief Recursively prints history list.
+///
+/// Recursively lists the history of the given history list iterators, starting
+/// with begin and ending with end. Will also recusively call itself for each
+/// iterator if that iterator has a child iterator.
+///
+/// @param begin First iterator that will be listed.
+/// @param end End of list iterator that marks end of iterator list.
+/// @param d Recursive depth of current list being printed.
 inline void Console::rec_history(hiter begin, hiter end, int d)
 {
    for (auto i = begin;i!=end;++i)
@@ -757,6 +851,9 @@ inline void Console::rec_history(hiter begin, hiter end, int d)
 
 
 
+/// Prints a certain number of spaces as padding for a line of text.
+///
+/// @param d How many levels of padding that will be printed.
 inline void Console::print_pad(int d)
 {
    while (d--)

@@ -20,6 +20,7 @@ struct HistItemData::Skim : FileMem::Static<skimSz>
    using FPtr = FileMem::Ptr;
    using Static<skimSz>::Static;
    FPtr& childHead() { get<FPtr>(0); }
+   const FPtr& childHead() const { get<FPtr>(0); }
    FPtr& next() { get<FPtr>(8); }
 };
 
@@ -40,6 +41,25 @@ struct HistItemData::Item : FileMem::Static<nodeSz>
 
 
 
+/// @brief History item in file memory.
+///
+/// Represents a single history item in file memory. Has ability to create a new
+/// history item or recursively make a copy of a given history item, adding
+/// additional history items of all of the copied items children. History items
+/// hold four values representing the history of a single item. The first is a
+/// time stamp that represents the time this item was created. The second is a
+/// file name that respresents the file name this file was given. The third is
+/// called the object which represents what analytic type created this object,
+/// if any. The fourth is called the command which represents the full command
+/// line used to create the item. Each item can also have a child item,
+/// representing the beginning of a list of children which are all the input
+/// items that made this item, if any. Each item also has a next pointer, which
+/// is used to make forward only lists of items if they are children of another
+/// item. Because this is a file memory object, all of these values except the
+/// time stamp can only be set once after which point they are read only.
+///
+/// @author Josh Burns
+/// @date 24 March 2016
 class HistItem
 {
 public:
@@ -110,21 +130,34 @@ private:
    // *
    // * VARIABLES
    // *
+   /// File memory object where history item is located.
    FileMem* _mem;
+   /// File memory chunk of history item data.
    Item _item;
+   /// File name of item.
    FString _fileName;
+   /// Object that created item, if any.
    FString _object;
+   /// Command that created item.
    FString _command;
 };
 
 
 
+/// Passes initialization to primary constructor.
+///
+/// @param mem File memory that will be used for item.
+/// @param ptr Location where history item is located or nullptr if item to be
+/// created.
 inline HistItem::HistItem(FileMem& mem, FileMem::Ptr ptr):
    HistItem(&mem,ptr)
 {}
 
 
 
+/// Get file memory location of history item, if any.
+///
+/// @return Location of item or nullptr if not set.
 inline FileMem::Ptr HistItem::addr() const
 {
    return _item.addr();
@@ -132,6 +165,9 @@ inline FileMem::Ptr HistItem::addr() const
 
 
 
+/// Get pointer to file memory object where item is located.
+///
+/// @return Pointer to file memory instance.
 inline FileMem* HistItem::mem() const
 {
    return _mem;
@@ -139,11 +175,13 @@ inline FileMem* HistItem::mem() const
 
 
 
+/// Generic base exception class for all exceptions thrown in HistItem class.
 struct HistItem::Exception : public ::Exception
 {
    using ::Exception::Exception;
 };
 
+/// A value that can only be set once is attempting to be set again.
 struct HistItem::AlreadySet : public HistItem::Exception
 {
    AlreadySet(const char* file, int line):
@@ -151,6 +189,8 @@ struct HistItem::AlreadySet : public HistItem::Exception
    {}
 };
 
+/// A history item object that has already been set or loaded is attempting to
+/// be allocated as a new history item.
 struct HistItem::IsAllocated : public HistItem::Exception
 {
    IsAllocated(const char* file, int line):
@@ -158,17 +198,12 @@ struct HistItem::IsAllocated : public HistItem::Exception
    {}
 };
 
+/// A history item object that is not set or loaded is trying to query or set
+/// its values.
 struct HistItem::IsNullPtr : public HistItem::Exception
 {
    IsNullPtr(const char* file, int line):
       Exception(file,line,"HistItem::IsNullPtr")
-   {}
-};
-
-struct HistItem::InvalidItem : public HistItem::Exception
-{
-   InvalidItem(const char* file, int line):
-      Exception(file,line,"HistItem::InvalidItem")
    {}
 };
 

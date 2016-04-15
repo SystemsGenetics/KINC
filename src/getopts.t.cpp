@@ -11,6 +11,8 @@ namespace unit
       constexpr auto commStr2 = "-first one --second=1 TWO ---third=1.12 three"
                                 " ----fourth=ok -----fifth";
       constexpr auto commStr3 = "no options";
+      constexpr auto commStr4 = "--no --comms";
+      constexpr auto invalidComm = "hello ---test=1=1";
    }
 }
 
@@ -22,36 +24,24 @@ bool unit::getopts::main()
    header("GetOpts");
    try
    {
-      ret = init1()&&
-            com_get1()&&
-            com_get2()&&
-            com_front1()&&
-            com_pop1()&&
-            com_empty1()&&
-            size1()&&
-            empty1()&&
-            iterate1()&&
-            erase1()&&
-            key1()&&
-            iter_empty1()&&
-            operate1()&&
-            operate2()&&
-            operate3()&&
-            operate4()&&
-            operate5()&&
-            operate6()&&
-            operate7()&&
-            operate8()&&
-            operate9()&&
-            operate10()&&
-            operate11()&&
-            operate12()&&
-            operate13()&&
-            operate14()&&
-            operate15()&&
-            operate16()&&
-            operate17()&&
-            operate18();
+      ret = construct()&&
+            orig()&&
+            com_size()&&
+            com_empty()&&
+            com_get()&&
+            com_front()&&
+            com_pop()&&
+            com_empty()&&
+            size()&&
+            empty()&&
+            has_opt()&&
+            iterate()&&
+            erase()&&
+            iter_key()&&
+            iter_value()&&
+            iter_is_key()&&
+            iter_val_empty()&&
+            iter_operat_equal();
    }
    catch (...)
    {
@@ -64,89 +54,149 @@ bool unit::getopts::main()
 
 
 
-bool unit::getopts::init1()
+bool unit::getopts::construct()
 {
-   start();
-   GetOpts t(commStr1);
-   bool ret = t.com_size()==1;
-   return finish(ret,"init1");
+   bool cont {true};
+   {
+      start();
+      GetOpts t(commStr1);
+      bool test = t.com_size()==1;
+      cont = cont&&finish(test,"construct1");
+   }
+   if (cont)
+   {
+      start();
+      bool test {false};
+      try
+      {
+         GetOpts t(invalidComm);
+      }
+      catch (GetOpts::InvalidSyntax)
+      {
+         test = true;
+      }
+      cont = cont&&finish(test,"construct2");
+   }
+   return cont;
 }
 
 
 
-bool unit::getopts::com_get1()
+bool unit::getopts::orig()
 {
    start();
    GetOpts t(commStr1);
-   bool ret = t.com_get({"wrong"})==0;
-   return finish(ret,"get_com1");
+   bool test {t.orig()==std::string(commStr1)};
+   return finish(test,"orig1");
 }
 
 
 
-bool unit::getopts::com_get2()
+bool unit::getopts::com_size()
 {
    start();
-   GetOpts t(commStr1);
-   bool ret = t.com_get({"one"})==1;
-   return finish(ret,"get_com2");
+   GetOpts t(commStr2);
+   bool test {t.com_size()==3};
+   return finish(test,"com_size1");
 }
 
 
 
-bool unit::getopts::com_front1()
+bool unit::getopts::com_empty()
 {
    start();
-   GetOpts t(commStr1);
-   bool ret = t.com_front()==std::string("one");
-   return finish(ret,"com_front1");
+   GetOpts t(commStr4);
+   bool test {t.com_empty()};
+   return finish(test,"com_empty1");
 }
 
 
 
-bool unit::getopts::com_pop1()
+bool unit::getopts::com_get()
+{
+   bool cont {true};
+   {
+      start();
+      GetOpts t(commStr1);
+      bool test = t.com_get({"wrong"})==0;
+      cont = cont&&finish(test,"get_com1");
+   }
+   if (cont)
+   {
+      start();
+      GetOpts t(commStr1);
+      bool test = t.com_get({"one"})==1;
+      cont = cont&&finish(test,"get_com2");
+   }
+   return cont;
+}
+
+
+
+bool unit::getopts::com_front()
+{
+   start();
+   GetOpts t(commStr1);
+   bool test = t.com_front()==std::string("one");
+   return finish(test,"com_front1");
+}
+
+
+
+bool unit::getopts::com_pop()
 {
    start();
    GetOpts t(commStr2);
    t.com_pop();
-   bool ret = t.com_get({"TWO"})==1;
-   return finish(ret,"pop_com1");
+   bool test = t.com_get({"TWO"})==1;
+   return finish(test,"pop_com1");
 }
 
 
 
-bool unit::getopts::com_empty1()
-{
-   start();
-   GetOpts t(commStr1);
-   t.com_pop();
-   bool ret = t.com_empty();
-   return finish(ret,"com_empty1");
-}
-
-
-
-bool unit::getopts::size1()
+bool unit::getopts::size()
 {
    start();
    GetOpts t(commStr2);
-   bool ret = t.size()==5;
-   return finish(ret,"size1");
+   bool test = t.size()==5;
+   return finish(test,"size1");
 }
 
 
 
-bool unit::getopts::empty1()
+bool unit::getopts::empty()
 {
    start();
    GetOpts t(commStr3);
-   bool ret = t.empty();
-   return finish(ret,"empty1");
+   bool test = t.empty();
+   return finish(test,"empty1");
 }
 
 
 
-bool unit::getopts::iterate1()
+bool unit::getopts::has_opt()
+{
+   bool cont {true};
+   {
+      start();
+      GetOpts t(commStr2);
+      bool test {t.has_opt("third")};
+      cont = cont&&finish(test,"has_opt1");
+   }
+   if (cont)
+   {
+      start();
+      GetOpts t(commStr2);
+      t.has_opt("third",true);
+      bool test {t.size()==4};
+      cont = cont&&finish(test,"has_opt2");
+   }
+   return cont;
+}
+
+
+
+bool unit::getopts::iterate()
 {
    start();
    GetOpts t(commStr2);
@@ -155,359 +205,108 @@ bool unit::getopts::iterate1()
    {
       count++;
    }
-   bool ret = count==5;
-   return finish(ret,"iterate1");
+   bool test {count==5};
+   return finish(test,"iterate1");
 }
 
 
 
-bool unit::getopts::erase1()
+bool unit::getopts::erase()
 {
    start();
    GetOpts t(commStr1);
    t.erase(t.begin());
-   bool ret = t.begin()==t.end();
-   return finish(ret,"erase1");
+   bool test {t.begin()==t.end()};
+   return finish(test,"erase1");
 }
 
 
 
-bool unit::getopts::key1()
+bool unit::getopts::iter_key()
 {
    start();
    GetOpts t(commStr2);
    auto i = t.begin();
-   bool ret = i.key()==std::string("first");
+   bool test = i.key()==std::string("first");
    ++i;
-   ret = i.key()==std::string("second");
+   test = test&&i.key()==std::string("second");
    ++i;
-   ret = i.key()==std::string("third");
+   test = test&&i.key()==std::string("third");
    ++i;
-   ret = i.key()==std::string("fourth");
+   test = test&&i.key()==std::string("fourth");
    ++i;
-   ret = i.key()==std::string("fifth");
-   return finish(ret,"key1");
+   test = test&&i.key()==std::string("fifth");
+   return finish(test,"iter_key1");
 }
 
 
 
-bool unit::getopts::iter_empty1()
+bool unit::getopts::iter_value()
+{
+   bool cont {true};
+   {
+      start();
+      GetOpts t(commStr2);
+      auto i = t.begin();
+      bool test {false};
+      try
+      {
+         i.value<int>();
+      }
+      catch (GetOpts::InvalidType)
+      {
+         test = true;
+      }
+      cont = cont&&finish(test,"iter_value1");
+   }
+   if (cont)
+   {
+      start();
+      GetOpts t(commStr2);
+      auto i = t.begin();
+      ++i;
+      bool test = i.value<int>()==1;
+      ++i;
+      test = test&&i.value<float>()==1.12f;
+      ++i;
+      test = test&&i.value<std::string>()==std::string("ok");
+      cont = cont&&finish(test,"iter_value2");
+   }
+   return cont;
+}
+
+
+
+bool unit::getopts::iter_is_key()
+{
+   start();
+   GetOpts t(commStr1);
+   auto i = t.begin();
+   bool test {i.is_key("test")};
+   return finish(test,"iter_is_key1");
+}
+
+
+
+bool unit::getopts::iter_val_empty()
 {
    start();
    GetOpts t(commStr2);
    auto i = t.begin();
-   bool ret = i.empty();
+   bool test = i.val_empty();
    ++i;
-   ret = ret&&!i.empty();
-   return finish(ret,"iter_empty1");
+   test = test&&!i.val_empty();
+   return finish(test,"iter_val_empty1");
 }
 
 
 
-bool unit::getopts::operate1()
+bool unit::getopts::iter_operat_equal()
 {
    start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   bool ret = false;
-   try
-   {
-      short n;
-      i >> n;
-   }
-   catch (GetOpts::InvalidType)
-   {
-      ret = true;
-   }
-   return finish(ret,"operate1");
-}
-
-
-
-bool unit::getopts::operate2()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   bool ret = false;
-   try
-   {
-      unsigned short n;
-      i >> n;
-   }
-   catch (GetOpts::InvalidType)
-   {
-      ret = true;
-   }
-   return finish(ret,"operate2");
-}
-
-
-
-bool unit::getopts::operate3()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   bool ret = false;
-   try
-   {
-      int n;
-      i >> n;
-   }
-   catch (GetOpts::InvalidType)
-   {
-      ret = true;
-   }
-   return finish(ret,"operate3");
-}
-
-
-
-bool unit::getopts::operate4()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   bool ret = false;
-   try
-   {
-      unsigned int n;
-      i >> n;
-   }
-   catch (GetOpts::InvalidType)
-   {
-      ret = true;
-   }
-   return finish(ret,"operate4");
-}
-
-
-
-bool unit::getopts::operate5()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   bool ret = false;
-   try
-   {
-      long n;
-      i >> n;
-   }
-   catch (GetOpts::InvalidType)
-   {
-      ret = true;
-   }
-   return finish(ret,"operate5");
-}
-
-
-
-bool unit::getopts::operate6()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   bool ret = false;
-   try
-   {
-      unsigned long n;
-      i >> n;
-   }
-   catch (GetOpts::InvalidType)
-   {
-      ret = true;
-   }
-   return finish(ret,"operate6");
-}
-
-
-
-bool unit::getopts::operate7()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   bool ret = false;
-   try
-   {
-      float n;
-      i >> n;
-   }
-   catch (GetOpts::InvalidType)
-   {
-      ret = true;
-   }
-   return finish(ret,"operate7");
-}
-
-
-
-bool unit::getopts::operate8()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   bool ret = false;
-   try
-   {
-      double n;
-      i >> n;
-   }
-   catch (GetOpts::InvalidType)
-   {
-      ret = true;
-   }
-   return finish(ret,"operate8");
-}
-
-
-
-bool unit::getopts::operate9()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   bool ret = false;
-   try
-   {
-      std::string n;
-      i >> n;
-   }
-   catch (GetOpts::InvalidType)
-   {
-      ret = true;
-   }
-   return finish(ret,"operate9");
-}
-
-
-
-bool unit::getopts::operate10()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   ++i;
-   short n;
-   i >> n;
-   bool ret = n==1;
-   return finish(ret,"operate10");
-}
-
-
-
-bool unit::getopts::operate11()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   ++i;
-   unsigned short n;
-   i >> n;
-   bool ret = n==1;
-   return finish(ret,"operate11");
-}
-
-
-
-bool unit::getopts::operate12()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   ++i;
-   int n;
-   i >> n;
-   bool ret = n==1;
-   return finish(ret,"operate12");
-}
-
-
-
-bool unit::getopts::operate13()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   ++i;
-   unsigned int n;
-   i >> n;
-   bool ret = n==1;
-   return finish(ret,"operate13");
-}
-
-
-
-bool unit::getopts::operate14()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   ++i;
-   long n;
-   i >> n;
-   bool ret = n==1;
-   return finish(ret,"operate14");
-}
-
-
-
-bool unit::getopts::operate15()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   ++i;
-   unsigned long n;
-   i >> n;
-   bool ret = n==1;
-   return finish(ret,"operate15");
-}
-
-
-
-bool unit::getopts::operate16()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   ++i;
-   ++i;
-   float n;
-   i >> n;
-   bool ret = n==1.12f;
-   return finish(ret,"operate16");
-}
-
-
-
-bool unit::getopts::operate17()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   ++i;
-   ++i;
-   double n;
-   i >> n;
-   bool ret = n==1.12;
-   return finish(ret,"operate17");
-}
-
-
-
-bool unit::getopts::operate18()
-{
-   start();
-   GetOpts t(commStr2);
-   auto i = t.begin();
-   ++i;
-   ++i;
-   ++i;
-   std::string n;
-   i >> n;
-   bool ret = n==std::string("ok");
-   return finish(ret,"operate18");
+   GetOpts t(commStr1);
+   auto x = t.begin();
+   auto y = t.begin();
+   bool test {x==y};
+   return finish(test,"iter_operat_equal");
 }

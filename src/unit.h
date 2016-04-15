@@ -9,36 +9,24 @@ namespace unit
    namespace getopts
    {
       bool main();
-      bool init1();
-      bool com_get1();
-      bool com_get2();
-      bool com_front1();
-      bool com_pop1();
-      bool com_empty1();
-      bool size1();
-      bool empty1();
-      bool iterate1();
-      bool erase1();
-      bool key1();
-      bool iter_empty1();
-      bool operate1();
-      bool operate2();
-      bool operate3();
-      bool operate4();
-      bool operate5();
-      bool operate6();
-      bool operate7();
-      bool operate8();
-      bool operate9();
-      bool operate10();
-      bool operate11();
-      bool operate12();
-      bool operate13();
-      bool operate14();
-      bool operate15();
-      bool operate16();
-      bool operate17();
-      bool operate18();
+      bool construct();
+      bool orig();
+      bool com_size();
+      bool com_empty();
+      bool com_get();
+      bool com_front();
+      bool com_pop();
+      bool com_empty();
+      bool size();
+      bool empty();
+      bool has_opt();
+      bool iterate();
+      bool erase();
+      bool iter_key();
+      bool iter_value();
+      bool iter_is_key();
+      bool iter_val_empty();
+      bool iter_operat_equal();
    }
    namespace filemem
    {
@@ -48,7 +36,6 @@ namespace unit
       bool construct();
       bool reserve();
       bool expand();
-      bool capacity();
       bool allocate();
       bool allot();
       bool clear();
@@ -111,12 +98,12 @@ namespace unit
       bool construct();
       bool open();
       bool close();
-      bool select();
+      bool unselect();
       bool load();
       bool dump();
       bool query();
-      bool find();
       bool iterate();
+      bool selected();
       bool iter_file();
       bool iter_type();
    }
@@ -135,14 +122,14 @@ namespace unit
 inline void unit::initiate()
 {
    numTestsDone = 0;
-   std::cout << "Initiating Unit Tests >>>" << std::endl;
+   std::cout << "\nInitiating Unit Tests >>>\n\n";
 }
 
 
 
 inline void unit::complete()
 {
-   std::cout << numTestsDone << " unit test(s) passed <<<" << std::endl;
+   std::cout << numTestsDone << " unit test(s) passed <<<\n" << std::endl;
 }
 
 
@@ -150,7 +137,7 @@ inline void unit::complete()
 inline void unit::header(const char* hdr)
 {
    headerStr = hdr;
-   std::cout << headerStr;
+   std::cout << headerStr << "\n";
 }
 
 
@@ -165,13 +152,14 @@ inline void unit::end()
 inline void unit::start()
 {
    numTestsDone++;
-   std::cout << "." << std::flush;
+   std::cout << ".";
 }
 
 
 
 inline bool unit::finish(bool cond, const char* name)
 {
+   std::cout << "  " << name << "\n";
    if (!cond)
    {
       std::cout << std::endl << "unit::" << headerStr << "::" << name

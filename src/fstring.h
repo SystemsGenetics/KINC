@@ -30,6 +30,13 @@ struct FStringData::String : FileMem::Object
 
 
 
+/// @ingroup dataplugin
+/// @brief File memory string.
+///
+/// String object that stores a string in file memory. You can set the object
+/// once, which will then write the string to file memory and get a file pointer
+/// where it is stored. After the string has been written, or if loading a
+/// string, access to the string is read only.
 class FString
 {
 public:
@@ -82,13 +89,19 @@ private:
    // *
    // * VARIABLES
    // *
+   /// File memory object string is associated with.
    FileMem* _mem;
+   /// Header chunk of string.
    Header _hdr;
+   /// Actual string data.
    string _str;
 };
 
 
 
+/// Returns file memory location of string or nullptr if not set.
+///
+/// @return File memory location.
 inline FString::FPtr FString::addr() const
 {
    return _hdr.addr();
@@ -96,6 +109,9 @@ inline FString::FPtr FString::addr() const
 
 
 
+/// Returns read only reference to string, empty if not set.
+///
+/// @return Reference to string.
 inline const FString::string& FString::operator*() const
 {
    return _str;
@@ -103,6 +119,9 @@ inline const FString::string& FString::operator*() const
 
 
 
+/// Returns read only pointer to string object for function calls.
+///
+/// @return Pointer to string.
 inline const FString::string* FString::operator->() const
 {
    return &_str;
@@ -110,11 +129,14 @@ inline const FString::string* FString::operator->() const
 
 
 
+/// Generic base exception class for all exceptions thrown in FString class.
 struct FString::Exception : public ::Exception
 {
    using ::Exception::Exception;
 };
 
+/// The file memory pointer given is either a nullptr or points to a location
+/// in the file memory object that is not a valid file string.
 struct FString::InvalidPtr : public FString::Exception
 {
    InvalidPtr(const char* file, int line):
@@ -122,6 +144,7 @@ struct FString::InvalidPtr : public FString::Exception
    {}
 };
 
+/// Attempting to set the value of a string that has already been set.
 struct FString::AlreadySet : public FString::Exception
 {
    AlreadySet(const char* file, int line):

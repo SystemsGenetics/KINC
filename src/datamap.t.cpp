@@ -62,10 +62,12 @@ bool unit::datamap::main()
       ret = construct()&&
             open()&&
             close()&&
+            unselect()&&
             load()&&
             dump()&&
             query()&&
             iterate()&&
+            selected()&&
             iter_file()&&
             iter_type();
    }
@@ -87,8 +89,17 @@ bool unit::datamap::main()
 bool unit::datamap::construct()
 {
    start();
-   DataMap t;
-   return finish(true,"construct1");
+   bool test = false;
+   try
+   {
+      DataMap t;
+      DataMap tt;
+   }
+   catch (DataMap::InvalidUse)
+   {
+      test = true;
+   }
+   return finish(test,"construct1");
 }
 
 
@@ -100,7 +111,7 @@ bool unit::datamap::open()
    {
       start();
       DataPlugin* n = t.open("test.tmp","FakeData",true);
-      bool test = n==t.find("test.tmp");
+      bool test = n==t.current();
       cont = cont&&finish(test,"open1");
    }
    if (cont)
@@ -138,12 +149,43 @@ bool unit::datamap::open()
 
 bool unit::datamap::close()
 {
-   start();
+   bool cont {true};
    DataMap t;
-   t.open("test.tmp","FakeData");
-   t.close("test.tmp");
-   bool test = t.find("test.tmp")==nullptr;
-   return finish(test,"close1");
+   {
+      start();
+      t.open("test.tmp","FakeData");
+      t.close("test.tmp");
+      bool test = t.find("test.tmp")==nullptr;
+      cont = cont&&finish(test,"close1");
+   }
+   if (cont)
+   {
+      start();
+      t.open("test.tmp","FakeData",true);
+      bool test = t.close("test.tmp");
+      cont = cont&&finish(test,"close2");
+   }
+   return cont;
+}
+
+
+
+bool unit::datamap::unselect()
+{
+   DataMap t;
+   bool cont {true};
+   {
+      start();
+      t.open("test.tmp","FakeData",true);
+      bool test = t.unselect();
+      cont = cont&&finish(test,"unselect1");
+   }
+   if (cont)
+   {
+      start();
+      bool test = !t.unselect();
+      cont = cont&&finish(test,"unselect2");
+   }
 }
 
 
@@ -306,6 +348,26 @@ bool unit::datamap::iterate()
    }
    bool test = count==3;
    return finish(test,"iterate1");
+}
+
+
+
+bool unit::datamap::selected()
+{
+   bool cont {true};
+   DataMap t;
+   {
+      start();
+      bool test {t.selected()==t.end()};
+      cont = cont&&finish(test,"selected1");
+   }
+   {
+      start();
+      t.open("test.tmp","FakeData",true);
+      bool test {t.selected()==t.begin()};
+      cont = cont&&finish(test,"selected2");
+   }
+   return cont;
 }
 
 

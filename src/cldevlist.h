@@ -22,7 +22,7 @@ class CLDevice;
 /// function.
 ///
 /// @author Josh Burns
-/// @date 22 Jan 2016
+/// @date 22 January 2016
 class CLDevList
 {
 public:
@@ -68,7 +68,7 @@ private:
 /// lifetime of an iterator.
 ///
 /// @author Josh Burns
-/// @date 22 Jan 2016
+/// @date 22 January 2016
 class CLDevList::Iterator
 {
 public:
