@@ -37,31 +37,40 @@ public:
    FileMem(const std::string&);
    ~FileMem();
    // *
+   // * COPY METHODS
+   // *
+   FileMem(const FileMem&) = delete;
+   FileMem& operator=(const FileMem&) = delete;
+   // *
+   // * MOVE METHODS
+   // *
+   FileMem(FileMem&&) = delete;
+   FileMem& operator=(FileMem&&) = delete;
+   // *
    // * FUNCTIONS
    // *
    void clear();
-   inline bool reserve(SizeT);
-   template<class T> inline bool expand(T&,SizeT = 1);
-   inline SizeT size() const;
-   inline SizeT capacity() const;
-   template<class T> inline void allocate(T&,SizeT = 1);
-   template<class T> inline void allot(T&,SizeT = 1);
-   template<class T> inline void sync(T&,FileSync,Ptr = 0);
+   bool reserve(SizeT);
+   template<class T> bool expand(T&,SizeT = 1);
+   SizeT size() const;
+   SizeT capacity() const;
+   template<class T> void allocate(T&,SizeT = 1);
+   template<class T> void allot(T&,SizeT = 1);
+   template<class T> void sync(T&,FileSync,Ptr = 0);
    Ptr head();
    // *
    // * CONSTANTS
    // *
-   constexpr static Ptr nullPtr = 0xffffffffffffffffll;
-   constexpr static int PtrSize = sizeof(Ptr);
-   constexpr const static char* _identString = "\0\15\41\102\104\101\124\0\0";
-   constexpr static int _idLen = 9;
+   constexpr static Ptr nullPtr {0xffffffffffffffffll};
+   constexpr static const char* _identString {"\0\15\41\102\104\101\124\0\0"};
+   constexpr static int _idLen {9};
 private:
    // *
    // * FUNCTIONS
    // *
-   inline Ptr fallocate(SizeT);
-   inline void write(const void* data,Ptr,SizeT);
-   inline void read(void*,Ptr,SizeT) const;
+   Ptr fallocate(SizeT);
+   void write(const void* data,Ptr,SizeT);
+   void read(void*,Ptr,SizeT) const;
    // *
    // * VARIABLES
    // *
@@ -84,12 +93,13 @@ template<int S> struct FileMem::Static
    // *
    Static() = default;
    Static(Ptr);
-   inline void operator=(Ptr);
+   void operator=(Ptr);
    // *
    // * FUNCTIONS
    // *
-   template<class T> inline T& get(int);
-   inline Ptr addr();
+   template<class T> T& get(int);
+   template<class T> const T& get(int) const;
+   Ptr addr() const;
 private:
    // *
    // * VARIABLES
@@ -113,18 +123,19 @@ struct FileMem::Object
    // *
    // * BASIC METHODS
    // *
-   inline Object(const Object&);
-   inline Object(Object&&);
-   inline Object& operator=(const Object&);
-   inline Object& operator=(Object&&);
-   inline Object(SizeT,Ptr = nullPtr);
-   inline ~Object();
-   inline void operator=(Ptr);
+   Object(const Object&);
+   Object(Object&&);
+   Object& operator=(const Object&);
+   Object& operator=(Object&&);
+   Object(SizeT,Ptr = nullPtr);
+   ~Object();
+   void operator=(Ptr);
    // *
    // * FUNCTIONS
    // *
-   template<class T> inline T& get(int);
-   inline Ptr addr();
+   template<class T> T& get(int);
+   template<class T> const T& get(int) const;
+   Ptr addr() const;
 private:
    // *
    // * VARIABLES
@@ -280,7 +291,15 @@ template<int S> template<class T> inline T& FileMem::Static<S>::get(int n)
 
 
 
-template<int S> inline FileMem::Ptr FileMem::Static<S>::addr()
+template<int S> template<class T>
+inline const T& FileMem::Static<S>::get(int n) const
+{
+   return *reinterpret_cast<const T*>(&bytes[n]);
+}
+
+
+
+template<int S> inline FileMem::Ptr FileMem::Static<S>::addr() const
 {
    return ptr;
 }
@@ -288,7 +307,8 @@ template<int S> inline FileMem::Ptr FileMem::Static<S>::addr()
 
 
 inline FileMem::Object::Object(const Object& obj):
-   size(obj.size)
+   size(obj.size),
+   ptr(obj.ptr)
 {
    bytes = new char[size];
    memcpy(bytes,obj.bytes,size);
@@ -298,10 +318,12 @@ inline FileMem::Object::Object(const Object& obj):
 
 inline FileMem::Object::Object(Object&& tmp):
    size(tmp.size),
-   bytes(tmp.bytes)
+   bytes(tmp.bytes),
+   ptr(tmp.ptr)
 {
    tmp.bytes = nullptr;
    tmp.size = 0;
+   tmp.ptr = nullPtr;
 }
 
 
@@ -315,6 +337,7 @@ inline FileMem::Object& FileMem::Object::operator=(const Object& obj)
    }
    bytes = new char[size];
    memcpy(bytes,obj.bytes,size);
+   ptr = obj.ptr;
 }
 
 
@@ -323,8 +346,10 @@ inline FileMem::Object& FileMem::Object::operator=(Object&& tmp)
 {
    size = tmp.size;
    bytes = tmp.bytes;
+   ptr = tmp.ptr;
    tmp.bytes = nullptr;
    tmp.size = 0;
+   tmp.ptr = nullPtr;
 }
 
 
@@ -362,7 +387,14 @@ template<class T> inline T& FileMem::Object::get(int n)
 
 
 
-inline FileMem::Ptr FileMem::Object::addr()
+template<class T> inline const T& FileMem::Object::get(int n) const
+{
+   return *reinterpret_cast<const T*>(&bytes[n]);
+}
+
+
+
+inline FileMem::Ptr FileMem::Object::addr() const
 {
    return ptr;
 }

@@ -9,9 +9,9 @@ FILES := KINC.files
 build := ../build/
 run := ../run/
 
-acxxflags := $(CXXFLAGS) -g -std=c++11 $(shell sdl-config --cflags)
+acxxflags := $(CXXFLAGS) -g -std=c++11
 aldflags := $(LDFLAGS)
-aldlibs := $(LDLIBS) -lOpenCL $(shell sdl-config --libs)
+aldlibs := $(LDLIBS) -lOpenCL
 
 progf := $(run)$(NAME)
 
@@ -27,9 +27,7 @@ objs := $(addprefix $(build),$(program:%.cpp=%.o))
 udpds := $(addprefix $(build),$(utest:%.cpp=%.d))
 uobjs := $(addprefix $(build),$(utest:%.cpp=%.o))
 
-plugin := plugins/plugins.a
-datahdr := plugins/data/plugin.h
-analytichdr := plugins/analytic/plugin.h
+plugins := plugins/plugins.a
 
 
 
@@ -39,23 +37,15 @@ all: program test
 program: $(progf)
 test: $(run)unit
 
-$(analytichdr):
-+@echo "Generating analytic plugin header."
-+@cd plugins/analytic && ./gen.sh
-
-$(datahdr):
-+@echo "Generating data plugin header."
-+@cd plugins/data && ./gen.sh
-
 include $(alldpds)
 
-$(progf): $(objs) $(dpds) $(plugin)
+$(progf): $(objs) $(dpds) $(plugins)
 +@echo "Building program."
-+@$(CXX) $(objs) $(plugin) $(aldflags) $(aldlibs) -o $@
++@$(CXX) $(objs) $(plugins) $(aldflags) $(aldlibs) -o $@
 
-$(run)unit: $(uobjs) $(udpds) $(plugin)
+$(run)unit: $(uobjs) $(udpds)
 +@echo "Building unit test."
-+@$(CXX) $(uobjs) $(plugin) $(aldflags) $(aldlibs) -o $@
++@$(CXX) $(uobjs) $(aldflags) $(aldlibs) -o $@
 
 depend: $(alldpds)
 +@echo Done.
@@ -63,21 +53,20 @@ depend: $(alldpds)
 plugins:
 +@cd plugins && $(MAKE)
 
-$(plugin):
+$(plugins):
 +@cd plugins && $(MAKE)
 
 $(build)%.o : %.cpp
 +@echo "Building object $@"
 +@$(CXX) $(acxxflags) -c $< -o $(build)$@
 
-$(build)%.d: %.cpp $(datahdr) $(analytichdr)
+$(build)%.d: %.cpp
 +@echo "Building depend $@"
 +@echo -n "$@ $(build)" > $@
 +@$(CXX) $(acxxflags) -MM $< >> $@
 
 check: test
-+@echo "Running unit tests..."
-+@cd $(run) && ./unit
++@cd $(run)/tmp && ../unit
 
 clean:
 +@echo "Cleaning all."

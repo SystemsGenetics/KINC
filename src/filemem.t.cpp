@@ -34,12 +34,37 @@ namespace unit
          uint32_t& val() { get<uint32_t>(0); }
          FileMem::Ptr& next() { get<FileMem::Ptr>(4); }
       };
-      constexpr const char* tmpFile = "testfiles/memfile.tmp";
-      constexpr const char* validFile = "testfiles/memfile";
-      constexpr const char* invalidFile = "testfiles/notmemfile";
-      constexpr const char* invalidFile2 = "testfiles/notmemfile2";
+      constexpr const char* tmpFile = "memfile.tmp";
+      constexpr const char* validFile = "memfile2.tmp";
+      constexpr const char* invalidFile = "notmemfile.tmp";
+      constexpr const char* invalidFile2 = "notmemfile2.tmp";
       constexpr const char* wrtData = "1234567890123456";
    }
+}
+
+
+
+void construct_filemems()
+{
+   constexpr static int flags = O_CREAT|O_RDWR|O_LARGEFILE;
+   constexpr static mode_t modes = S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH;
+   int fd;
+   char identString[10] = "\0\15\41\102\104\101\124\0\0";
+   int idLen = 9;
+   FileMem::Ptr next = 0;
+   fd = open(unit::filemem::validFile,flags,modes);
+   ::write(fd,identString,idLen);
+   ::write(fd,&next,sizeof(FileMem::Ptr));
+   close(fd);
+   fd = open(unit::filemem::invalidFile,flags,modes);
+   ::write(fd,identString,idLen);
+   ::write(fd,&next,sizeof(FileMem::Ptr)-1);
+   close(fd);
+   identString[3] = '\16';
+   fd = open(unit::filemem::invalidFile2,flags,modes);
+   ::write(fd,identString,idLen);
+   ::write(fd,&next,sizeof(FileMem::Ptr));
+   close(fd);
 }
 
 
@@ -50,254 +75,221 @@ bool unit::filemem::main()
    header("FileMem");
    try
    {
-      ret = static1()&&
-            object1()&&
-            object2()&&
-            object3()&&
-            object4()&&
-            object5()&&
-            init1()&&
-            init2()&&
-            init3()&&
-            init4()&&
-            reserve1()&&
-            expand1()&&
-            capacity1()&&
-            allocate1()&&
-            allocate2()&&
-            allocate3()&&
-            allot1()&&
-            clear1()&&
-            addr1()&&
-            sync1()&&
-            sync2()&&
-            sync3()&&
-            sync4()&&
-            sync5()&&
-            sync6();
+      construct_filemems();
+      ret = static_()&&
+            object()&&
+            construct()&&
+            reserve()&&
+            expand()&&
+            capacity()&&
+            allocate()&&
+            allot()&&
+            clear()&&
+            addr()&&
+            sync();
    }
    catch (...)
    {
-      system("rm -f testfiles/memfile.tmp");
+      system("rm -f *.tmp");
       end();
       throw;
    }
-   system("rm -f testfiles/memfile.tmp");
+   system("rm -f *.tmp");
    end();
    return ret;
 }
 
 
 
-bool unit::filemem::static1()
+bool unit::filemem::static_()
 {
    start();
    Node t;
-   bool ret = t.val()==42;
-   return finish(ret,"static1");
+   bool test = t.val()==42;
+   return finish (test,"static1");
 }
 
 
 
-bool unit::filemem::object1()
+bool unit::filemem::object()
 {
-   start();
-   DNode t;
-   bool ret = t.val()==42;
-   return finish(ret,"object1");
-}
-
-
-
-bool unit::filemem::object2()
-{
-   start();
-   DNode cpy;
-   DNode t(cpy);
-   bool ret = t.val()==42;
-   return finish(ret,"object2");
-}
-
-
-
-bool unit::filemem::object3()
-{
-   start();
-   DNode cpy;
-   DNode t(std::move(cpy));
-   bool ret = t.val()==42;
-   return finish(ret,"object3");
-}
-
-
-
-bool unit::filemem::object4()
-{
-   start();
-   DNode cpy;
-   DNode t;
-   t = cpy;
-   bool ret = t.val()==42;
-   return finish(ret,"object4");
-}
-
-
-
-bool unit::filemem::object5()
-{
-   start();
-   DNode cpy;
-   DNode t;
-   t = std::move(cpy);
-   bool ret = t.val()==42;
-   return finish(ret,"object5");
-}
-
-
-
-bool unit::filemem::init1()
-{
-   start();
-   FileMem tf(tmpFile);
-   bool ret = tf.size()==0;
-   return finish(ret,"init1");
-}
-
-
-
-bool unit::filemem::init2()
-{
-   start();
-   FileMem tf(validFile);
-   bool ret = tf.size()==0;
-   return finish(ret,"init2");
-}
-
-
-
-bool unit::filemem::init3()
-{
-   start();
-   bool ret = false;
-   try
+   bool cont = true;
    {
-      FileMem tf(invalidFile);
-      tf.size();
+      start();
+      DNode t;
+      bool test = t.val()==42;
+      cont = cont&&finish (test,"object1");
    }
-   catch (FileMem::InvalidFile)
+   if (cont)
    {
-      ret = true;
+      start();
+      DNode cpy;
+      DNode t(cpy);
+      bool test = t.val()==42;
+      cont = cont&&finish (test,"object2");
    }
-   return finish(ret,"init3");
+   if (cont)
+   {
+      start();
+      DNode cpy;
+      DNode t(std::move(cpy));
+      bool test = t.val()==42;
+      cont = cont&&finish (test,"object3");
+   }
+   if (cont)
+   {
+      start();
+      DNode cpy;
+      DNode t;
+      t = cpy;
+      bool test = t.val()==42;
+      cont = cont&&finish (test,"object4");
+   }
+   if (cont)
+   {
+      start();
+      DNode cpy;
+      DNode t;
+      t = std::move(cpy);
+      bool test = t.val()==42;
+      cont = cont&&finish (test,"object5");
+   }
+   return cont;
 }
 
 
 
-bool unit::filemem::init4()
+bool unit::filemem::construct()
 {
-   start();
-   bool ret = false;
-   try
+   bool cont = true;
    {
-      FileMem tf(invalidFile2);
-      tf.size();
+      start();
+      FileMem tf(tmpFile);
+      bool test = tf.size()==0;
+      cont = cont&&finish (test,"construct1");
    }
-   catch (FileMem::InvalidFile)
    {
-      ret = true;
+      start();
+      FileMem tf(validFile);
+      bool test = tf.size()==0;
+      cont = cont&&finish (test,"construct2");
    }
-   return finish(ret,"init4");
+   {
+      start();
+      bool test = false;
+      try
+      {
+         FileMem tf(invalidFile);
+         tf.size();
+      }
+      catch (FileMem::InvalidFile)
+      {
+         test = true;
+      }
+      cont = cont&&finish (test,"construct3");
+   }
+   {
+      start();
+      bool test = false;
+      try
+      {
+         FileMem tf(invalidFile2);
+         tf.size();
+      }
+      catch (FileMem::InvalidFile)
+      {
+         test = true;
+      }
+      cont = cont&&finish (test,"construct4");
+   }
+   return cont;
 }
 
 
 
-bool unit::filemem::reserve1()
+bool unit::filemem::reserve()
 {
    start();
    FileMem tf(tmpFile);
    tf.reserve(4096);
-   bool ret = tf.size()==4096;
-   return finish(ret,"reserve1");
+   bool test = tf.size()==4096;
+   return finish (test,"reserve1");
 }
 
 
 
-bool unit::filemem::expand1()
+bool unit::filemem::expand()
 {
    start();
    FileMem tf(tmpFile);
    Node tmp;
    tf.expand(tmp,100);
-   bool ret = tf.size()==5296;
-   return finish(ret,"expand1");
+   bool test = tf.size()==5296;
+   return finish (test,"expand1");
 }
 
 
 
-bool unit::filemem::capacity1()
+bool unit::filemem::capacity()
 {
    start();
    FileMem tf(tmpFile);
-   bool ret = tf.capacity()==5296;
-   return finish(ret,"capacity1");
+   bool test = tf.capacity()==5296;
+   return finish (test,"capacity1");
 }
 
 
 
-bool unit::filemem::allocate1()
+bool unit::filemem::allocate()
 {
-   start();
-   FileMem tf(tmpFile);
-   Node tmp;
-   tf.allocate(tmp);
-   bool ret = tf.capacity()==5284;
-   return finish(ret,"allocate1");
-}
-
-
-
-bool unit::filemem::allocate2()
-{
-   start();
-   bool ret = false;
-   try
+   bool cont = true;
    {
+      start();
       FileMem tf(tmpFile);
-      LNode tmp;
+      Node tmp;
       tf.allocate(tmp);
+      bool test = tf.capacity()==5284;
+      cont = cont&&finish (test,"allocate1");
    }
-   catch (FileMem::OutOfMemory)
    {
-      ret = true;
+      start();
+      bool test = false;
+      try
+      {
+         FileMem tf(tmpFile);
+         LNode tmp;
+         tf.allocate(tmp);
+      }
+      catch (FileMem::OutOfMemory)
+      {
+         test = true;
+      }
+      cont = cont&&finish (test,"allocate2");
    }
-   return finish(ret,"allocate2");
+   {
+      start();
+      bool test = true;
+      try
+      {
+         FileMem tf(tmpFile);
+         LNode tmp;
+         tf.allocate(tmp,0);
+      }
+      catch (FileMem::OutOfMemory)
+      {
+         test = false;
+      }
+      cont = cont&&finish (test,"allocate3");
+   }
+   return cont;
 }
 
 
 
-bool unit::filemem::allocate3()
+bool unit::filemem::allot()
 {
    start();
-   bool ret = true;
-   try
-   {
-      FileMem tf(tmpFile);
-      LNode tmp;
-      tf.allocate(tmp,0);
-   }
-   catch (FileMem::OutOfMemory)
-   {
-      ret = false;
-   }
-   return finish(ret,"allocate3");
-}
-
-
-
-bool unit::filemem::allot1()
-{
-   start();
-   bool ret = true;
+   bool test = true;
    try
    {
       FileMem tf(tmpFile);
@@ -306,151 +298,135 @@ bool unit::filemem::allot1()
    }
    catch (FileMem::OutOfMemory)
    {
-      ret = false;
+      test = false;
    }
-   return finish(ret,"allot1");
+   return finish (test,"allot1");
 }
 
 
 
-bool unit::filemem::clear1()
+bool unit::filemem::clear()
 {
    start();
    FileMem tf(tmpFile);
    tf.clear();
    Node tmp;
    tf.allocate(tmp);
-   bool ret {tmp.addr()==tf.head()};
-   return finish(ret,"clear1");
+   bool test {tmp.addr()==tf.head()};
+   return finish (test,"clear1");
 }
 
 
 
-bool unit::filemem::addr1()
+bool unit::filemem::addr()
 {
    start();
    FileMem tf(tmpFile);
    tf.clear();
    DNode tmp;
    tf.allocate(tmp);
-   bool ret {tmp.addr()==tf.head()};
-   return finish(ret,"addr1");
+   bool test {tmp.addr()==tf.head()};
+   return finish (test,"addr1");
 }
 
 
 
-bool unit::filemem::sync1()
+bool unit::filemem::sync()
 {
-   start();
+   bool cont {true};
    {
+      start();
+      {
+         FileMem tf(tmpFile);
+         tf.clear();
+         Node data;
+         data.val() = 33;
+         tf.allocate(data);
+         tf.sync(data,FileSync::write);
+      }
       FileMem tf(tmpFile);
-      tf.clear();
-      Node data;
-      data.val() = 33;
-      tf.allocate(data);
-      tf.sync(data,FileSync::write);
-   }
-   FileMem tf(tmpFile);
-   Node data = tf.head();
-   tf.sync(data,FileSync::read);
-   bool ret {data.val()==33};
-   return finish(ret,"sync1");
-}
-
-
-
-bool unit::filemem::sync2()
-{
-   start();
-   {
-      FileMem tf(tmpFile);
-      tf.clear();
-      Node data;
-      data.val() = 33;
-      tf.allocate(data,3);
-      tf.sync(data,FileSync::write,2);
-   }
-   FileMem tf(tmpFile);
-   Node data = tf.head();
-   tf.sync(data,FileSync::read,2);
-   bool ret {data.val()==33};
-   return finish(ret,"sync2");
-}
-
-
-
-bool unit::filemem::sync3()
-{
-   start();
-   bool ret = false;
-   try
-   {
-      FileMem tf(tmpFile);
-      Node data;
+      Node data = tf.head();
       tf.sync(data,FileSync::read);
+      bool test {data.val()==33};
+      cont = cont&&finish (test,"sync1");
    }
-   catch (FileMem::FileSegFault)
    {
-      ret = true;
-   }
-   return finish(ret,"sync3");
-}
-
-
-
-bool unit::filemem::sync4()
-{
-   start();
-   {
+      start();
+      {
+         FileMem tf(tmpFile);
+         tf.clear();
+         Node data;
+         data.val() = 33;
+         tf.allocate(data,3);
+         tf.sync(data,FileSync::write,2);
+      }
       FileMem tf(tmpFile);
-      tf.clear();
-      DNode data;
-      data.val() = 33;
-      tf.allocate(data);
-      tf.sync(data,FileSync::write);
+      Node data = tf.head();
+      tf.sync(data,FileSync::read,2);
+      bool test {data.val()==33};
+      cont = cont&&finish (test,"sync2");
    }
-   FileMem tf(tmpFile);
-   Node data = tf.head();
-   tf.sync(data,FileSync::read);
-   bool ret {data.val()==33};
-   return finish(ret,"sync4");
-}
-
-
-
-bool unit::filemem::sync5()
-{
-   start();
    {
-      FileMem tf(tmpFile);
-      tf.clear();
-      DNode data;
-      data.val() = 33;
-      tf.allocate(data,3);
-      tf.sync(data,FileSync::write,2);
+      start();
+      bool test = false;
+      try
+      {
+         FileMem tf(tmpFile);
+         Node data;
+         tf.sync(data,FileSync::read);
+      }
+      catch (FileMem::FileSegFault)
+      {
+         test = true;
+      }
+      cont = cont&&finish (test,"sync3");
    }
-   FileMem tf(tmpFile);
-   DNode data = tf.head();
-   tf.sync(data,FileSync::read,2);
-   bool ret {data.val()==33};
-   return finish(ret,"sync5");
-}
-
-
-
-bool unit::filemem::sync6()
-{
-   start();
-   bool ret = false;
-   try
    {
+      start();
+      {
+         FileMem tf(tmpFile);
+         tf.clear();
+         DNode data;
+         data.val() = 33;
+         tf.allocate(data);
+         tf.sync(data,FileSync::write);
+      }
       FileMem tf(tmpFile);
-      DNode data;
+      Node data = tf.head();
       tf.sync(data,FileSync::read);
+      bool test {data.val()==33};
+      cont = cont&&finish (test,"sync4");
    }
-   catch (FileMem::FileSegFault)
    {
-      ret = true;
+      start();
+      {
+         FileMem tf(tmpFile);
+         tf.clear();
+         DNode data;
+         data.val() = 33;
+         tf.allocate(data,3);
+         tf.sync(data,FileSync::write,2);
+      }
+      FileMem tf(tmpFile);
+      DNode data = tf.head();
+      tf.sync(data,FileSync::read,2);
+      bool test {data.val()==33};
+      cont = cont&&finish (test,"sync5");
    }
-   return finish(ret,"sync6");
+   {
+      start();
+      bool test = false;
+      try
+      {
+         FileMem tf(tmpFile);
+         DNode data;
+         tf.sync(data,FileSync::read);
+      }
+      catch (FileMem::FileSegFault)
+      {
+         test = true;
+      }
+      cont = cont&&finish (test,"sync6");
+   }
+   return cont;
 }

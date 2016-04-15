@@ -11,10 +11,14 @@ cldevice.cpp
 cldevice.h
 cldevlist.cpp
 cldevlist.h
+getopts.cpp
+getopts.h
 data.h
 analytic.h
 filemem.cpp
 filemem.h
+fstring.cpp
+fstring.h
 histitem.cpp
 histitem.h
 history.cpp
@@ -27,7 +31,12 @@ datamap.h
 main.cpp
 unit.h
 unit.t.cpp
+getopts.t.cpp
+datamap.t.cpp
 filemem.t.cpp
+fstring.t.cpp
 histitem.t.cpp
+history.t.cpp
+kincfile.t.cpp
 plugins/plugins.h
 plugins/Makefile

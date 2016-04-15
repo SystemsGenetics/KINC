@@ -2,23 +2,38 @@
 #include "unit.h"
 #include "console.h"
 #include "linuxterm.h"
+#include "plugins/plugins.h"
 
 
 
 const char* unit::headerStr {nullptr};
+int unit::numTestsDone {0};
+
+
+
+Analytic* KINCPlugins::new_analytic(const std::string& type)
+{
+   Analytic* ret = nullptr;
+   return ret;
+}
 
 
 
 int main(int argc, char* argv[])
 {
-   if (unit::filemem::main()&&
-       unit::histitem::main())
+   unit::initiate();
+   if (unit::getopts::main()&&
+       unit::filemem::main()&&
+       unit::fstring::main()&&
+       unit::histitem::main()&&
+       unit::history::main()&&
+       unit::kincfile::main()&&
+       unit::datamap::main())
    {
-      std::cout << "ALL PASSED." << std::endl;
+      unit::complete();
    }
    else
    {
-      std::cout << "FAILURE." << std::endl;
       exit(1);
    }
    try
