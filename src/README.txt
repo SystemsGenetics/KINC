@@ -10,8 +10,6 @@ Dependencies
 ------------
 1) Make 4.1
 2) GCC 4.9
-
-Optional (for accelerated computation):
 3) GPU drivers for your hardware
 4) OpenCL
 
