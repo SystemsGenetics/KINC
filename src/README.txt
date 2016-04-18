@@ -39,7 +39,7 @@ should be executed to update to GCC v4.9:
 recommendations.  For NVidia it is recommended to download and install the
 drivers from the manufacturers site.  
  
-4) To install OpenCL for use:
+4) To install OpenCL:
   
   sudo apt-get install ocl-icd-opencl-dev
 
