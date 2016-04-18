@@ -68,7 +68,7 @@ Running ACE
 -----------
 ACE does not provide any data or analytical plugins but it does have a 
 functioning console and can identify existing accelerated computing 
-infrastructure on the machine.  The ACE binary is in the 'run' directory. T
+infrastructure on the machine.  The ACE binary is in the 'run' directory. To
 run ACE, execute the following
 
   ./run/ace
