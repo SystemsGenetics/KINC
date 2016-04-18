@@ -61,7 +61,7 @@ If all tests passed you should see a message such as:
   
   144 unit test(s) passed <<<
   
-Afte tests are executed you will be at the console prompt of ACE. You can exit
+After tests are executed you will be at the console prompt of ACE. You can exit
 by typing 'quit'.
 
 Running ACE
