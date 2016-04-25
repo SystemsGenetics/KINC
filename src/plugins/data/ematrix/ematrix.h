@@ -61,16 +61,15 @@ public:
    using ifile = std::ifstream;
    struct NotNewFile;
    struct CannotOpen;
+   struct InvalidFile;
    ematrix(const string& type, const string& file);
    void load(GetOpts &ops, Terminal &tm) override final;
    void dump(GetOpts &ops, Terminal &tm) override final {}
    void query(GetOpts &ops, Terminal &tm) override final {}
    bool empty() override final { return true; }
 private:
-   bool load_samples(ifile&);
-   bool load_genes(ifile&);
-   bool load_data(ifile&);
-   bool load_blank();
+   void load_samples(Terminal&,ifile&);
+   void load_genes(Terminal&,ifile&,string);
    Hdr _hdr;
    FileMem& _mem;
 };
@@ -88,6 +87,13 @@ struct ematrix::CannotOpen : public DataException
 {
    CannotOpen(const char* file, int line):
       DataException(file,line,"ematrix::CannotOpen",Level::fatal)
+   {}
+};
+
+struct ematrix::InvalidFile : public DataException
+{
+   InvalidFile(const char* file, int line):
+      DataException(file,line,"ematrix::InvalidFile",Level::fatal)
    {}
 };
 
