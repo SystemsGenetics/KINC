@@ -31,13 +31,39 @@ ematrix::ematrix(const string& type, const string& file):
 
 void ematrix::load(GetOpts &ops, Terminal &tm)
 {
+   bool hasHeaders {true};
+   int sampleSize {0};
+   for (auto i = ops.begin();i!=ops.end();++i)
+   {
+      if (i.is_key("noheader"))
+      {
+         hasHeaders = false;
+      }
+      else if (i.is_key("samples"))
+      {
+         sampleSize = i.value<int>();
+      }
+   }
+   if (!hasHeaders&&sampleSize==0)
+   {
+      tm << "If noheader option is given number of samples must be given.\n";
+      throw InvalidArg(__FILE__,__LINE__);
+   }
    assert<NotNewFile>(head()==FileMem::nullPtr,__FILE__,__LINE__);
    ifile f(ops.com_front());
    assert<CannotOpen>(f.is_open(),__FILE__,__LINE__);
    _mem.allot(_hdr);
    try
    {
-      load_samples(tm,f);
+      if (hasHeaders)
+      {
+         load_samples(tm,f);
+      }
+      else
+      {
+         _hdr.sampleSize() = sampleSize;
+         _hdr.samplePtr() = FileMem::nullPtr;
+      }
       load_genes(tm,f,"NaN");
    }
    catch (...)
@@ -76,7 +102,7 @@ void ematrix::load_samples(Terminal& tm, ifile& f)
    _mem.allot(shdr,vs.size());
    _hdr.sampleSize() = vs.size();
    _hdr.samplePtr() = shdr.addr();
-   for (int i=0;i<vs.size();++i)
+   for (int i = 0;i<vs.size();++i)
    {
       FString tname(&_mem);
       tname = vs[i];
@@ -133,7 +159,7 @@ void ematrix::load_genes(Terminal& tm, ifile& f, string nan)
    _mem.allot(ghdr,gns.size());
    _hdr.geneSize() = gns.size();
    _hdr.genePtr() = ghdr.addr();
-   for (int i=0;i<gns.size();++i)
+   for (int i = 0;i<gns.size();++i)
    {
       FString tname(&_mem);
       tname = gns[i];
@@ -143,9 +169,9 @@ void ematrix::load_genes(Terminal& tm, ifile& f, string nan)
    tm << "Writing expression data...\n";
    Exp exp;
    _mem.allot(exp,exps.size()*exps.back().size());
-   for (int x=0;x<exps.size();++x)
+   for (int x = 0;x<exps.size();++x)
    {
-      for (int y=0;y<exps[x].size();++y)
+      for (int y = 0;y<exps[x].size();++y)
       {
          exp.val() = exps[x][y];
          _mem.sync(exp,FileSync::write,x*_hdr.sampleSize()+y);

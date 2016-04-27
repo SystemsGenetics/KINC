@@ -57,21 +57,31 @@ public:
    using gHdr = ematrixData::GeneHdr;
    using sHdr = ematrixData::SampleHdr;
    using Exp = ematrixData::Expression;
+   using Exps = ematrixData::Expressions;
    using string = std::string;
    using ifile = std::ifstream;
    struct NotNewFile;
    struct CannotOpen;
    struct InvalidFile;
+   struct InvalidArg;
    ematrix(const string& type, const string& file);
    void load(GetOpts &ops, Terminal &tm) override final;
    void dump(GetOpts &ops, Terminal &tm) override final {}
    void query(GetOpts &ops, Terminal &tm) override final {}
    bool empty() override final { return true; }
+   //int sample_size() const;
+   //int gene_size() const;
+   //string sample_name(int) const;
+   //string gene_name(int) const;
+   //void load_buffer();
+   //void clear_buffer();
+   //const float* gene(int) const;
 private:
    void load_samples(Terminal&,ifile&);
    void load_genes(Terminal&,ifile&,string);
    Hdr _hdr;
    FileMem& _mem;
+   Exps* _data;
 };
 
 
@@ -94,6 +104,13 @@ struct ematrix::InvalidFile : public DataException
 {
    InvalidFile(const char* file, int line):
       DataException(file,line,"ematrix::InvalidFile",Level::fatal)
+   {}
+};
+
+struct ematrix::InvalidArg : public DataException
+{
+   InvalidArg(const char* file, int line):
+      DataException(file,line,"ematrix::InvalidArg",Level::warning)
    {}
 };
 
