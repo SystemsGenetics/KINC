@@ -2,6 +2,13 @@
 #define EMATRIX_H
 #include <fstream>
 #include "../../../dataplugin.h"
+#define EMTX_EXCEPTION(X,L) struct X : public DataException\
+                            {\
+                               X(const char* file, int line):\
+                                  DataException(file,line,"ematrix::X",\
+                                                Level::L)\
+                               {}\
+                            };
 
 
 
@@ -60,10 +67,10 @@ public:
    using Exps = ematrixData::Expressions;
    using string = std::string;
    using ifile = std::ifstream;
-   struct NotNewFile;
-   struct CannotOpen;
-   struct InvalidFile;
-   struct InvalidArg;
+   EMTX_EXCEPTION(NotNewFile,fatal)
+   EMTX_EXCEPTION(CannotOpen,fatal)
+   EMTX_EXCEPTION(InvalidFile,fatal)
+   EMTX_EXCEPTION(InvalidArg,warning)
    ematrix(const string& type, const string& file);
    void load(GetOpts &ops, Terminal &tm) override final;
    void dump(GetOpts &ops, Terminal &tm) override final {}
@@ -82,36 +89,6 @@ private:
    Hdr _hdr;
    FileMem& _mem;
    Exps* _data;
-};
-
-
-
-struct ematrix::NotNewFile : public DataException
-{
-   NotNewFile(const char* file, int line):
-      DataException(file,line,"ematrix::NotNewFile",Level::fatal)
-   {}
-};
-
-struct ematrix::CannotOpen : public DataException
-{
-   CannotOpen(const char* file, int line):
-      DataException(file,line,"ematrix::CannotOpen",Level::fatal)
-   {}
-};
-
-struct ematrix::InvalidFile : public DataException
-{
-   InvalidFile(const char* file, int line):
-      DataException(file,line,"ematrix::InvalidFile",Level::fatal)
-   {}
-};
-
-struct ematrix::InvalidArg : public DataException
-{
-   InvalidArg(const char* file, int line):
-      DataException(file,line,"ematrix::InvalidArg",Level::warning)
-   {}
 };
 
 
