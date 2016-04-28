@@ -48,7 +48,8 @@ struct Expression : public FileMem::Static<4>
 
 struct Expressions : public FileMem::Object
 {
-   Expressions(int amt): Object(4*amt) {}
+   using FPtr = FileMem::Ptr;
+   Expressions(int amt, FPtr ptr = FileMem::nullPtr): Object(4*amt,ptr) {}
    float& val(int n) { get<float>(4*n); }
 };
 
@@ -73,9 +74,9 @@ public:
    EMTX_EXCEPTION(InvalidArg,warning)
    ematrix(const string& type, const string& file);
    void load(GetOpts &ops, Terminal &tm) override final;
-   void dump(GetOpts &ops, Terminal &tm) override final {}
-   void query(GetOpts &ops, Terminal &tm) override final {}
-   bool empty() override final { return true; }
+   void dump(GetOpts &ops, Terminal &tm) override final;
+   void query(GetOpts &ops, Terminal &tm) override final;
+   bool empty() override final;
    //int sample_size() const;
    //int gene_size() const;
    //string sample_name(int) const;
@@ -84,6 +85,7 @@ public:
    //void clear_buffer();
    //const float* gene(int) const;
 private:
+   void lookup(GetOpts&,Terminal&);
    void load_samples(Terminal&,ifile&);
    void load_genes(Terminal&,ifile&,string);
    Hdr _hdr;

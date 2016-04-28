@@ -79,6 +79,98 @@ void ematrix::load(GetOpts &ops, Terminal &tm)
 
 
 
+void ematrix::dump(GetOpts &ops, Terminal &tm)
+{
+   tm << "dump command not implemented for ematrix type.\n";
+}
+
+
+
+void ematrix::query(GetOpts &ops, Terminal &tm)
+{
+   enum {Basic=0,Lookup,Dump};
+   switch (ops.com_get({"lookup","dump"}))
+   {
+   case Basic:
+      if (empty())
+      {
+         tm << "No data loaded.\n";
+      }
+      else
+      {
+         tm << _hdr.geneSize() << " gene(s) and " << _hdr.sampleSize()
+            << " sample(s).\n";
+         if (_hdr.samplePtr()==FileMem::nullPtr)
+         {
+            tm << "Sample header data does not exist.\n";
+         }
+         else
+         {
+            tm << "Sample header data exists.\n";
+         }
+      }
+      break;
+   case Lookup:
+      ops.com_pop();
+      lookup(ops,tm);
+      break;
+   case Dump:
+      break;
+   }
+}
+
+
+
+void ematrix::lookup(GetOpts &ops, Terminal &tm)
+{
+   int i;
+   try
+   {
+      i = {std::stoi(ops.com_front())};
+   }
+   catch (std::exception)
+   {
+      i = 0;
+      gHdr ghdr {_hdr.genePtr()};
+      while (i<_hdr.geneSize())
+      {
+         _mem.sync(ghdr,FileSync::read,i++);
+         FString name {&_mem,ghdr.name()};
+         if (*name==ops.com_front())
+         {
+            --i;
+            break;
+         }
+      }
+   }
+   if (i<0||i>=_hdr.geneSize())
+   {
+      tm << "Invalid gene index.\n";
+      return;
+   }
+   gHdr ghdr {_hdr.genePtr()};
+   _mem.sync(ghdr,FileSync::read,i);
+   FString name {&_mem,ghdr.name()};
+   tm << i << ": " << *name << " : ";
+   Exps exps(_hdr.sampleSize(),_hdr.expPtr());
+   _mem.sync(exps,FileSync::read,i);
+   int x = 0;
+   for (;x<(_hdr.sampleSize()-1);++x)
+   {
+      tm << exps.val(x) << ", ";
+   }
+   tm << exps.val(x) << "\n";
+}
+
+
+
+bool ematrix::empty()
+{
+   return _hdr.geneSize()==0;
+}
+
+
+
 void ematrix::load_samples(Terminal& tm, ifile& f)
 {
    while (f.peek()==' '||f.peek()=='\t'||f.peek()=='\n')
@@ -141,7 +233,7 @@ void ematrix::load_genes(Terminal& tm, ifile& f, string nan)
             {
                try
                {
-                  exps.back().push_back(stof(tmp));
+                  exps.back().push_back(std::stof(tmp));
                }
                catch (std::exception)
                {
@@ -169,6 +261,7 @@ void ematrix::load_genes(Terminal& tm, ifile& f, string nan)
    tm << "Writing expression data...\n";
    Exp exp;
    _mem.allot(exp,exps.size()*exps.back().size());
+   _hdr.expPtr() = exp.addr();
    for (int x = 0;x<exps.size();++x)
    {
       for (int y = 0;y<exps[x].size();++y)
