@@ -136,10 +136,7 @@ template<int S> struct FileMem::Static
    template<class T> T& get(int);
    template<class T> const T& get(int) const;
    Ptr addr() const;
-   // *
-   // * OPERATORS
-   // *
-   Ptr operator=(Ptr);
+   Ptr addr(Ptr);
 private:
    // *
    // * VARIABLES
@@ -191,10 +188,7 @@ struct FileMem::Object
    template<class T> T& get(int);
    template<class T> const T& get(int) const;
    Ptr addr() const;
-   // *
-   // * OPERATORS
-   // *
-   Ptr operator=(Ptr);
+   Ptr addr(Ptr);
 private:
    // *
    // * VARIABLES
@@ -473,7 +467,7 @@ template<int S> inline FileMem::Ptr FileMem::Static<S>::addr() const
 /// Sets new location for buffer object in file memory.
 ///
 /// @param p File pointer of new location.
-template<int S> inline FileMem::Ptr FileMem::Static<S>::operator=(Ptr p)
+template<int S> inline FileMem::Ptr FileMem::Static<S>::addr(Ptr p)
 {
    ptr = p;
    return p;
@@ -609,7 +603,7 @@ inline FileMem::Ptr FileMem::Object::addr() const
 /// Sets new location for buffer object in file memory.
 ///
 /// @param p File pointer of new location.
-inline FileMem::Ptr FileMem::Object::operator=(Ptr p)
+inline FileMem::Ptr FileMem::Object::addr(Ptr p)
 {
    ptr = p;
    return p;
