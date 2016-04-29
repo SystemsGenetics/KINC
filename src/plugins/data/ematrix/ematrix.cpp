@@ -6,7 +6,8 @@
 
 ematrix::ematrix(const string& type, const string& file):
    DataPlugin(type,file),
-   _mem(*KincFile::mem())
+   _mem(*KincFile::mem()),
+   _data(nullptr)
 {
    if (KincFile::head()==FileMem::nullPtr)
    {
@@ -117,6 +118,75 @@ void ematrix::query(GetOpts &ops, Terminal &tm)
    case Dump:
       break;
    }
+}
+
+
+
+int ematrix::sample_size() const
+{
+   return _hdr.sampleSize();
+}
+
+
+
+int ematrix::gene_size() const
+{
+   return _hdr.geneSize();
+}
+
+
+
+ematrix::string ematrix::sample_name(int n) const
+{
+   bool cond {_hdr.samplePtr()!=FileMem::nullPtr&&n>=0||n<_hdr.sampleSize()};
+   assert<OutOfRange>(cond,__FILE__,__LINE__);
+   sHdr shdr(_hdr.samplePtr());
+   _mem.sync(shdr,FileSync::read,n);
+   FString name(&_mem,shdr.name());
+   return *name;
+}
+
+
+
+ematrix::string ematrix::gene_name(int n) const
+{
+   bool cond {n>=0||n<_hdr.geneSize()};
+   assert<OutOfRange>(cond,__FILE__,__LINE__);
+   gHdr ghdr(_hdr.genePtr());
+   _mem.sync(ghdr,FileSync::read,n);
+   FString name(&_mem,ghdr.name());
+   return *name;
+}
+
+
+
+void ematrix::load_buffer()
+{
+   if (!_data)
+   {
+      _data = new Exps(_hdr.geneSize()*_hdr.sampleSize(),_hdr.expPtr());
+      _mem.sync(*_data,FileSync::read);
+   }
+}
+
+
+
+void ematrix::clear_buffer()
+{
+   if (_data)
+   {
+      delete _data;
+      _data = nullptr;
+   }
+}
+
+
+
+const float* ematrix::gene(int n) const
+{
+   assert<BufferNotLoaded>(_data,__FILE__,__LINE__);
+   assert<OutOfRange>(n<_hdr.geneSize(),__FILE__,__LINE__);
+   return &(_data->val(n*_hdr.sampleSize()));
 }
 
 
