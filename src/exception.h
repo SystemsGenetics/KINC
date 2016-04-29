@@ -8,6 +8,13 @@
 #define EXCEPTION_H
 #define __CL_ENABLE_EXCEPTIONS
 #include <CL/cl.hpp>
+#define DATA_EXCEPTION(N,X,L) struct X : public DataException\
+                              {\
+                                 X(const char* file, int line):\
+                                    DataException(file,line,"N::X",\
+                                                  Level::L)\
+                                 {}\
+                              };
 
 
 
