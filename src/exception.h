@@ -11,7 +11,7 @@
 #define DATA_EXCEPTION(N,X,L) struct X : public DataException\
                               {\
                                  X(const char* file, int line):\
-                                    DataException(file,line,"N::X",\
+                                    DataException(file,line,#N"::"#X,\
                                                   Level::L)\
                                  {}\
                               };
