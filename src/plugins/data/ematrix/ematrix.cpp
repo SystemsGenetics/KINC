@@ -34,6 +34,7 @@ void ematrix::load(GetOpts &ops, Terminal &tm)
 {
    bool hasHeaders {true};
    int sampleSize {0};
+   Transform tr {none};
    for (auto i = ops.begin();i!=ops.end();++i)
    {
       if (i.is_key("noheader"))
@@ -43,6 +44,26 @@ void ematrix::load(GetOpts &ops, Terminal &tm)
       else if (i.is_key("samples"))
       {
          sampleSize = i.value<int>();
+      }
+      else if (i.is_key("transform"))
+      {
+         string type = i.value<string>();
+         if (type==string("log"))
+         {
+            tr = log;
+         }
+         else if (type==string("log2"))
+         {
+            tr = log2;
+         }
+         else if (type==string("log10"))
+         {
+            tr = log10;
+         }
+         else
+         {
+            throw InvalidArg(__FILE__,__LINE__);
+         }
       }
    }
    if (!hasHeaders&&sampleSize==0)
@@ -65,7 +86,7 @@ void ematrix::load(GetOpts &ops, Terminal &tm)
          _hdr.sampleSize() = sampleSize;
          _hdr.samplePtr() = FileMem::nullPtr;
       }
-      load_genes(tm,f,"NaN");
+      load_genes(tm,f,"NaN",tr);
    }
    catch (...)
    {
@@ -73,6 +94,7 @@ void ematrix::load(GetOpts &ops, Terminal &tm)
       throw;
    }
    KincFile::head(_hdr.addr());
+   _hdr.transform() = tr;
    _mem.sync(_hdr,FileSync::write);
    tm << "Loaded " << _hdr.geneSize() << " gene(s) with " << _hdr.sampleSize()
       << " sample(s) each.\n";
@@ -101,6 +123,22 @@ void ematrix::query(GetOpts &ops, Terminal &tm)
       {
          tm << _hdr.geneSize() << " gene(s) and " << _hdr.sampleSize()
             << " sample(s).\n";
+         tm << "Sample Transformation: ";
+         switch (_hdr.transform())
+         {
+         case none:
+            tm << "none.\n";
+            break;
+         case log:
+            tm << "Natural Logarithm.\n";
+            break;
+         case log2:
+            tm << "Logarithm Base 2.\n";
+            break;
+         case log10:
+            tm << "Logarithm Base 10.\n";
+            break;
+         }
          if (_hdr.samplePtr()==FileMem::nullPtr)
          {
             tm << "Sample header data does not exist.\n";
@@ -275,7 +313,7 @@ void ematrix::load_samples(Terminal& tm, ifile& f)
 
 
 
-void ematrix::load_genes(Terminal& tm, ifile& f, string nan)
+void ematrix::load_genes(Terminal& tm, ifile& f, string nan, Transform t)
 {
    tm << "Loading genes and expression data...\n";
    std::vector<string> gns;
@@ -303,7 +341,21 @@ void ematrix::load_genes(Terminal& tm, ifile& f, string nan)
             {
                try
                {
-                  exps.back().push_back(std::stof(tmp));
+                  switch (t)
+                  {
+                  case none:
+                     exps.back().push_back(std::stof(tmp));
+                     break;
+                  case log:
+                     exps.back().push_back(logf(std::stof(tmp)));
+                     break;
+                  case log2:
+                     exps.back().push_back(log2f(std::stof(tmp)));
+                     break;
+                  case log10:
+                     exps.back().push_back(log10f(std::stof(tmp)));
+                     break;
+                  }
                }
                catch (std::exception)
                {

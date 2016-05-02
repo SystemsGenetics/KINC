@@ -109,7 +109,7 @@ private:
    // *
    void lookup(GetOpts&,Terminal&);
    void load_samples(Terminal&,ifile&);
-   void load_genes(Terminal&,ifile&,string);
+   void load_genes(Terminal&,ifile&,string,Transform);
    // *
    // * VARIABLES
    // *
