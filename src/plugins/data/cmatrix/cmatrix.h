@@ -41,15 +41,15 @@ struct CorrHdr : public FileMem::Static<8>
    FPtr& name() { get<FPtr>(0); }
 };
 
-struct Correlation : public FileMem::Static<12>
+struct Correlation : public FileMem::Static<9>
 {
    using FPtr = FileMem::Ptr;
-   using FileMem::Static<12>::Static;
-   uint32_t& modeSize() { get<uint32_t>(4); }
-   FPtr& modePtr() { get<FPtr>(4); }
+   using FileMem::Static<9>::Static;
+   uint8_t& modeSize() { get<uint8_t>(0); }
+   FPtr& modePtr() { get<FPtr>(1); }
 };
 
-struct Mode : FileMem::Object
+struct Mode : public FileMem::Object
 {
    using FPtr = FileMem::Ptr;
    Mode(int samples, int corrs, FPtr ptr = FileMem::nullPtr):
@@ -67,14 +67,13 @@ struct Mode : FileMem::Object
    {
       int byte = n/8;
       n%=8;
-      switch (v)
+      if (v==0)
       {
-      case 0:
          get<uint8_t>(byte)&(~(0x1<<n));
-         break;
-      case 1:
+      }
+      else
+      {
          get<uint8_t>(byte)|(0x1<<n);
-         break;
       }
    }
    float& corr(int n) { get<float>(4*n+_sBytes); }
@@ -89,11 +88,56 @@ private:
 class cmatrix : public DataPlugin
 {
 public:
-   cmatrix(const string& type, const string& file): DataPlugin(type,file) {}
-   void load(GetOpts &ops, Terminal &tm) override final {}
-   void dump(GetOpts &ops, Terminal &tm) override final {}
-   void query(GetOpts &ops, Terminal &tm) override final {}
-   bool empty() override final { return true; }
+   // *
+   // * DECLERATIONS
+   // *
+   using Hdr = cmatrixData::Header;
+   using GHdr = cmatrixData::GeneHdr;
+   using SHdr = cmatrixData::SampleHdr;
+   using CHdr = cmatrixData::CorrHdr;
+   using Corr = cmatrixData::Correlation;
+   using Md = cmatrixData::Mode;
+   using string = std::string;
+   class MIterator;
+   // *
+   // * BASIC METHODS
+   // *
+   DATA_EXCEPTION(cmatrix,AlreadySet,fatal)
+   DATA_EXCEPTION(cmatrix,OutOfRange,fatal)
+   // *
+   // * BASIC METHODS
+   // *
+   cmatrix(const string& type, const string& file);
+   // *
+   // * VIRTUAL FUNCTIONS
+   // *
+   void load(GetOpts &ops, Terminal &tm) override final;
+   void dump(GetOpts &ops, Terminal &tm) override final;
+   void query(GetOpts &ops, Terminal &tm) override final;
+   bool empty() override final;
+   // *
+   // * FUNCTIONS
+   // *
+   void set_gene_size(uint32_t);
+   void set_sample_size(uint32_t);
+   void set_correlation_size(uint32_t);
+   void set_gene_name(uint32_t,const string&);
+   void set_sample_name(uint32_t,const string&);
+   void set_correlation_name(uint32_t,const string&);
+   MIterator set_modes(uint32_t,uint32_t,uint8_t);
+private:
+   // *
+   // * VARIABLES
+   // *
+   Hdr _hdr;
+   FileMem& _mem;
+};
+
+
+
+class cmatrix::MIterator
+{
+   ;
 };
 
 
