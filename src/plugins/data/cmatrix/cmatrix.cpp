@@ -143,7 +143,61 @@ void cmatrix::set_correlation_name(uint32_t n, const string& name)
 
 
 
-cmatrix::MIterator cmatrix::set_modes(uint32_t,uint32_t,uint8_t)
+cmatrix::FPtr cmatrix::set_modes(uint32_t g1, uint32_t g2, uint8_t modes)
 {
-   ;
+   assert<NotInitialized>(_hdr.data()!=FileMem::nullPtr,__FILE__,__LINE__);
+   assert<InvalidGeneCorr>(g1!=g2,__FILE__,__LINE__);
+   if (g1>g2)
+   {
+      uint32_t tmp {g1};
+      g1 = g2;
+      g2 = tmp;
+   }
+   FileMem::SizeT inc {(g1*(g1+1)/2)+g2};
+   Corr corr(_hdr.data());
+   Md md(_hdr.sampleSize(),_hdr.corrSize());
+   _mem.allot(md,modes);
+   corr.modePtr() = md.addr();
+   corr.modeSize() = modes;
+   _mem.sync(corr,FileSync::write,inc);
+   return md.addr();
+}
+
+
+
+cmatrix::FPtr cmatrix::get_modes(uint32_t g1, uint32_t g2)
+{
+   assert<NotInitialized>(_hdr.data()!=FileMem::nullPtr,__FILE__,__LINE__);
+   assert<InvalidGeneCorr>(g1!=g2,__FILE__,__LINE__);
+   if (g1>g2)
+   {
+      uint32_t tmp {g1};
+      g1 = g2;
+      g2 = tmp;
+   }
+   FileMem::SizeT inc {(g1*(g1+1)/2)+g2};
+   Corr corr(_hdr.data());
+   _mem.sync(corr,FileSync::read,inc);
+   return corr.modePtr();
+}
+
+
+
+void cmatrix::write_mode(FPtr ptr, uint8_t inc, const maskv& mask,
+                         const floatv& corrs)
+{
+   assert<InvalidSize>(mask.size()==_hdr.sampleSize(),__FILE__,__LINE__);
+   assert<InvalidSize>(corrs.size()==_hdr.corrSize(),__FILE__,__LINE__);
+   Md md(_hdr.sampleSize(),_hdr.corrSize(),ptr);
+   int x {0};
+   for (auto i:mask)
+   {
+      md.mask(x++,i);
+   }
+   x = 0;
+   for (auto i:corrs)
+   {
+      md.corr(x) = i;
+   }
+   _mem.sync(md,FileSync::write,inc);
 }

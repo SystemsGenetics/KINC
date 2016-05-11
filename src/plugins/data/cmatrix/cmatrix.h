@@ -98,12 +98,17 @@ public:
    using Corr = cmatrixData::Correlation;
    using Md = cmatrixData::Mode;
    using string = std::string;
-   class MIterator;
+   using floatv = std::vector<float>;
+   using maskv = std::vector<uint8_t>;
+   using FPtr = FileMem::Ptr;
    // *
    // * BASIC METHODS
    // *
    DATA_EXCEPTION(cmatrix,AlreadySet,fatal)
    DATA_EXCEPTION(cmatrix,OutOfRange,fatal)
+   DATA_EXCEPTION(cmatrix,NotInitialized,fatal)
+   DATA_EXCEPTION(cmatrix,InvalidGeneCorr,fatal)
+   DATA_EXCEPTION(cmatrix,InvalidSize,fatal)
    // *
    // * BASIC METHODS
    // *
@@ -124,20 +129,15 @@ public:
    void set_gene_name(uint32_t,const string&);
    void set_sample_name(uint32_t,const string&);
    void set_correlation_name(uint32_t,const string&);
-   MIterator set_modes(uint32_t,uint32_t,uint8_t);
+   FPtr set_modes(uint32_t,uint32_t,uint8_t);
+   FPtr get_modes(uint32_t,uint32_t);
+   void write_mode(FPtr,uint8_t,const maskv&,const floatv&);
 private:
    // *
    // * VARIABLES
    // *
    Hdr _hdr;
    FileMem& _mem;
-};
-
-
-
-class cmatrix::MIterator
-{
-   ;
 };
 
 
