@@ -766,13 +766,15 @@ void Console::analytic(GetOpts& ops)
          ++i;
       }
    }
-   cl::Device* clptr {nullptr};
+   ops.com_pop();
    if (_device)
    {
-      clptr = &_device->device();
+      a->execute(ops,_tm,&_device->device());
    }
-   ops.com_pop();
-   a->execute(ops,_tm,clptr);
+   else
+   {
+      a->execute(ops,_tm);
+   }
 }
 
 

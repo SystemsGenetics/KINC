@@ -51,6 +51,7 @@ public:
    /// computation of the analytic method. This can be nullptr if the user has
    /// not selected an OpenCL device in the console.
    virtual void execute(GetOpts& ops, Terminal& tm, cl::Device* dev) = 0;
+   virtual void execute(GetOpts& ops, Terminal& tm) = 0;
 };
 
 
