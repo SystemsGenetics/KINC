@@ -15,6 +15,12 @@
                                                   Level::L)\
                                  {}\
                               };
+#define ALTC_EXCEPTION(N,X) struct X : public AnalyticException\
+                              {\
+                                 X(const char* file, int line):\
+                                    AnalyticException(file,line,#N"::"#X)\
+                                 {}\
+                              };
 
 
 
