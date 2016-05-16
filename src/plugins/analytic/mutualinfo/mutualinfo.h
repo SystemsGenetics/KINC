@@ -1,10 +1,10 @@
-#ifndef PEARSON_H
-#define PEARSON_H
+#ifndef MUTUALINFO_H
+#define MUTUALINFO_H
 #include "../../../analytic.h"
 
 
 
-class pearson : public Analytic
+class mutualinfo : public Analytic
 {
 public:
    ALTC_EXCEPTION(pearson,InvalidInputType)

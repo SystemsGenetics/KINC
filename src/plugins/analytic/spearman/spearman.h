@@ -1,10 +1,10 @@
-#ifndef PEARSON_H
-#define PEARSON_H
+#ifndef SPEARMAN_H
+#define SPEARMAN_H
 #include "../../../analytic.h"
 
 
 
-class pearson : public Analytic
+class spearman : public Analytic
 {
 public:
    ALTC_EXCEPTION(pearson,InvalidInputType)
