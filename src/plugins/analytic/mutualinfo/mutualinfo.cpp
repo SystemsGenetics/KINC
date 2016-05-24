@@ -19,14 +19,14 @@ void mutualinfo::output(DataPlugin* output)
 
 
 
-void mutualinfo::execute(GetOpts& ops, Terminal& tm, cl::Device* dev)
+void mutualinfo::execute_cl(GetOpts& ops, Terminal& tm)
 {
    ;
 }
 
 
 
-void mutualinfo::execute(GetOpts& ops, Terminal& tm)
+void mutualinfo::execute_pn(GetOpts& ops, Terminal& tm)
 {
-   tm << "Non-accelerated pearson not supported yet.\n";
+   ;
 }

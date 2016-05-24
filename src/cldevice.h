@@ -6,8 +6,7 @@
  */
 #ifndef CLDEVICE_H
 #define CLDEVICE_H
-#define __CL_ENABLE_EXCEPTIONS
-#include <CL/cl.hpp>
+#include <CL/cl.h>
 #include <string>
 #include "exception.h"
 
@@ -29,10 +28,11 @@ public:
    // *
    // * EXCEPTIONS
    // *
-   struct OpenCLError;
+   OPENCL_EXCEPTION(InfoErr,clDeviceGetInfo)
    // *
    // * DECLERATIONS
    // *
+   using string = std::string;
    friend class CLDevList;
    // *
    // * ENUMERATIONS
@@ -43,6 +43,7 @@ public:
    {
       ident, ///< The two identifying numbers of device.
       name, ///< The name of the device.
+      pname,
       type, ///< The OpenCL device type.
       online, ///< Is the device online or not.
       unified_mem, ///< Does the device have unified memory.
@@ -58,25 +59,26 @@ public:
       float_dp ///< Floating point operations supported for double precision.
    };
    // *
+   // * BASIC METHODS
+   // *
+   CLDevice(int,int,cl_platform_id,cl_device_id);
+   // *
    // * FUNCTIONS
    // *
-   cl::Platform& platform();
-   cl::Device& device();
-   std::string info(CLInfo) const;
+   cl_platform_id platform();
+   cl_device_id device();
+   string info(CLInfo) const;
    // *
    // * OPERATORS
    // *
    bool operator==(const CLDevice&);
 private:
    // *
-   // * BASIC METHODS
-   // *
-   CLDevice(int,int,const cl::Platform&,const cl::Device&);
-   // *
    // * FUNCTIONS
    // *
    void yes_no(std::ostringstream&,bool) const;
    void size_it(std::ostringstream&,long) const;
+   template<class T> T get_info(cl_device_info) const;
    // *
    // * CONSTANTS
    // *
@@ -84,24 +86,37 @@ private:
    // *
    // * VARIABLES
    // *
-   /// The increment into list of Platforms this device belongs to.
    int _pinc;
-   /// The increment into list of devices of given platform that corresponds to
-   /// this device.
    int _dinc;
-   /// OpenCL platform of device.
-   cl::Platform _platform;
-   /// OpenCL object of actual device.
-   cl::Device _device;
+   cl_platform_id _pid;
+   cl_device_id _did;
 };
 
 
 
-/// Exception is thrown when an OpenCL error occurs.
-struct CLDevice::OpenCLError : public ::OpenCLError
+template<class T> T CLDevice::get_info(cl_device_info infoType) const
 {
-   using ::OpenCLError::OpenCLError;
-};
+   T ret;
+   cl_int err;
+   err = clGetDeviceInfo(_did,infoType,sizeof(T),&ret,NULL);
+   assert<InfoErr>(err==CL_SUCCESS,__FILE__,__LINE__,err);
+   return ret;
+}
+
+
+
+template<>
+inline CLDevice::string CLDevice::get_info(cl_device_info infoType) const
+{
+   size_t strSize;
+   cl_int err;
+   err = clGetDeviceInfo(_did,infoType,0,NULL,&strSize);
+   assert<InfoErr>(err==CL_SUCCESS,__FILE__,__LINE__,err);
+   char buffer[strSize];
+   err = clGetDeviceInfo(_did,infoType,strSize,buffer,NULL);
+   assert<InfoErr>(err==CL_SUCCESS,__FILE__,__LINE__,err);
+   return buffer;
+}
 
 
 

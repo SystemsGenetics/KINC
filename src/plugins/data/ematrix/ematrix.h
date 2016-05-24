@@ -1,6 +1,7 @@
 #ifndef EMATRIX_H
 #define EMATRIX_H
 #include <fstream>
+#include <vector>
 #include "../../../dataplugin.h"
 
 

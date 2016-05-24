@@ -11,10 +11,14 @@ cldevice.cpp
 cldevice.h
 cldevlist.cpp
 cldevlist.h
+clprogram.cpp
+clprogram.h
 getopts.cpp
 getopts.h
 data.h
 analytic.h
+analyticplugin.cpp
+analyticplugin.h
 filemem.cpp
 filemem.h
 fstring.cpp

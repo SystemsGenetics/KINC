@@ -1,6 +1,7 @@
 #ifndef FILEMEM_H
 #define FILEMEM_H
 #include <string>
+#include <cstring>
 #include <cstdint>
 #include <unistd.h>
 #include <fcntl.h>

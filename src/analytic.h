@@ -1,11 +1,12 @@
 #ifndef ANALYTIC_H
 #define ANALYTIC_H
-#define __CL_ENABLE_EXCEPTIONS
 #include <CL/cl.hpp>
 #include <string>
 #include <memory>
 #include "dataplugin.h"
 #include "terminal.h"
+#include "cldevice.h"
+#include "clprogram.h"
 
 
 /// @brief Analytic interface class
@@ -36,22 +37,9 @@ public:
    ///
    /// @param out Pointer to the data object to be used as output.
    virtual void output(DataPlugin* out) = 0;
-   /// @brief Executes analytic on data objects.
-   ///
-   /// Must execute the analytic method of this class on the given input and
-   /// output data objects given to the object before this function is called.
-   /// This function must not return control until execution of the analytic on
-   /// all data objects are finished and written to.
-   ///
-   /// @param ops Additional arguments and options passed to the analytic from
-   /// the user.
-   /// @param tm The terminal interface that can be used by the analytic to
-   /// output information about processing.
-   /// @param dev An optional OpenCL device that can be used for accelerated
-   /// computation of the analytic method. This can be nullptr if the user has
-   /// not selected an OpenCL device in the console.
-   virtual void execute(GetOpts& ops, Terminal& tm, cl::Device* dev) = 0;
-   virtual void execute(GetOpts& ops, Terminal& tm) = 0;
+protected:
+   virtual void execute_cl(GetOpts& ops, Terminal& tm) = 0;
+   virtual void execute_pn(GetOpts& ops, Terminal& tm) = 0;
 };
 
 

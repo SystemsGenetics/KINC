@@ -1,5 +1,6 @@
 #ifndef CMATRIX_HH
 #define CMATRIX_HH
+#include <vector>
 #include "../../../dataplugin.h"
 
 

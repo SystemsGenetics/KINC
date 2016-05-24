@@ -9,12 +9,34 @@
 
 
 
+/// @brief Constructs new CLDevice based off info given.
+///
+/// This is the only constructor for this class which is private and should only
+/// be used by the CLDevList class. The parameters given for the device are NOT
+/// checked for validity.
+///
+/// @param p The increment into list of platforms.
+/// @param d The increment into list of devices for given platform.
+/// @param pl The OpenCL platform object for the device.
+/// @param de The OpenCL device object for the device.
+///
+/// @pre p must not exceed the last platform.
+/// @pre d must not exceed the last device in given platform.
+CLDevice::CLDevice(int pinc, int dinc, cl_platform_id pid, cl_device_id did):
+   _pinc(pinc),
+   _dinc(dinc),
+   _pid(pid),
+   _did(did)
+{}
+
+
+
 /// Return OpenCL platform of device.
 ///
 /// @return OpenCL platform.
-cl::Platform& CLDevice::platform()
+cl_platform_id CLDevice::platform()
 {
-   return _platform;
+   return _pid;
 }
 
 
@@ -22,9 +44,9 @@ cl::Platform& CLDevice::platform()
 /// Return OpenCL device of CLDevice object.
 ///
 /// @return OpenCL device.
-cl::Device& CLDevice::device()
+cl_device_id CLDevice::device()
 {
-   return _device;
+   return _did;
 }
 
 
@@ -39,69 +61,64 @@ cl::Device& CLDevice::device()
 std::string CLDevice::info(CLInfo which) const
 {
    std::ostringstream buffer;
-   try
+   switch (which)
    {
-      switch (which)
+   case CLInfo::ident:
+      buffer << _pinc << ":" << _dinc;
+      break;
+   case CLInfo::name:
+      buffer << get_info<string>(CL_DEVICE_NAME);
+      break;
+   case CLInfo::pname:
+      break;
+   case CLInfo::type:
+      switch (get_info<cl_device_type>(CL_DEVICE_TYPE))
       {
-      case CLInfo::ident:
-         buffer << _pinc << ":" << _dinc;
+      case CL_DEVICE_TYPE_CPU:
+         buffer << "CPU";
          break;
-      case CLInfo::name:
-         buffer << _device.getInfo<CL_DEVICE_NAME>();
+      case CL_DEVICE_TYPE_GPU:
+         buffer << "GPU";
          break;
-      case CLInfo::type:
-         switch (_device.getInfo<CL_DEVICE_TYPE>())
-         {
-         case CL_DEVICE_TYPE_CPU:
-            buffer << "CPU";
-            break;
-         case CL_DEVICE_TYPE_GPU:
-            buffer << "GPU";
-            break;
-         case CL_DEVICE_TYPE_ACCELERATOR:
-            buffer << "ACCEL";
-            break;
-         case CL_DEVICE_TYPE_DEFAULT:
-            buffer << "DEFAULT";
-            break;
-         default:
-            buffer << "UNKNOWN";
-            break;
-         }
+      case CL_DEVICE_TYPE_ACCELERATOR:
+         buffer << "ACCEL";
          break;
-      case CLInfo::online:
-         yes_no(buffer,_device.getInfo<CL_DEVICE_AVAILABLE>()&&
-                       _device.getInfo<CL_DEVICE_COMPILER_AVAILABLE>());
+      case CL_DEVICE_TYPE_DEFAULT:
+         buffer << "DEFAULT";
          break;
-      case CLInfo::unified_mem:
-         yes_no(buffer,_device.getInfo<CL_DEVICE_HOST_UNIFIED_MEMORY>());
-         break;
-      case CLInfo::addr_space:
-         buffer << cl_uint(_device.getInfo<CL_DEVICE_ADDRESS_BITS>());
-         break;
-      case CLInfo::clock:
-         buffer << _device.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>();
-         break;
-      case CLInfo::compute_units:
-         buffer << _device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-         break;
-      case CLInfo::work_size:
-         buffer << _device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();
-         break;
-      case CLInfo::global_mem:
-         size_it(buffer,_device.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>());
-         break;
-      case CLInfo::local_mem:
-         size_it(buffer,_device.getInfo<CL_DEVICE_LOCAL_MEM_SIZE>());
-         break;
-      case CLInfo::extensions:
-         buffer << _device.getInfo<CL_DEVICE_EXTENSIONS>();
+      default:
+         buffer << "UNKNOWN";
          break;
       }
-   }
-   catch (cl::Error e)
-   {
-      throw OpenCLError(__FILE__,__LINE__,e);
+      break;
+   case CLInfo::online:
+      yes_no(buffer,get_info<cl_bool>(CL_DEVICE_AVAILABLE)&&
+                    get_info<cl_bool>(CL_DEVICE_COMPILER_AVAILABLE));
+      break;
+   case CLInfo::unified_mem:
+      yes_no(buffer,get_info<cl_bool>(CL_DEVICE_HOST_UNIFIED_MEMORY));
+      break;
+   case CLInfo::addr_space:
+      buffer << get_info<cl_uint>(CL_DEVICE_ADDRESS_BITS);
+      break;
+   case CLInfo::clock:
+      buffer << get_info<cl_uint>(CL_DEVICE_MAX_CLOCK_FREQUENCY);
+      break;
+   case CLInfo::compute_units:
+      buffer << get_info<cl_uint>(CL_DEVICE_MAX_COMPUTE_UNITS);
+      break;
+   case CLInfo::work_size:
+      buffer << get_info<size_t>(CL_DEVICE_MAX_WORK_GROUP_SIZE);
+      break;
+   case CLInfo::global_mem:
+      size_it(buffer,get_info<cl_ulong>(CL_DEVICE_GLOBAL_MEM_SIZE));
+      break;
+   case CLInfo::local_mem:
+      size_it(buffer,get_info<cl_ulong>(CL_DEVICE_LOCAL_MEM_SIZE));
+      break;
+   case CLInfo::extensions:
+      buffer << get_info<string>(CL_DEVICE_EXTENSIONS);
+      break;
    }
    return buffer.str();
 }
@@ -110,30 +127,8 @@ std::string CLDevice::info(CLInfo which) const
 
 bool CLDevice::operator==(const CLDevice& cmp)
 {
-   return (_pinc==cmp._pinc&&_dinc==cmp._dinc);
+   return (_pid==cmp._pid&&_did==cmp._did);
 }
-
-
-
-/// @brief Constructs new CLDevice based off info given.
-///
-/// This is the only constructor for this class which is private and should only
-/// be used by the CLDevList class. The parameters given for the device are NOT
-/// checked for validity.
-///
-/// @param p The increment into list of platforms.
-/// @param d The increment into list of devices for given platform.
-/// @param pl The OpenCL platform object for the device.
-/// @param de The OpenCL device object for the device.
-///
-/// @pre p must not exceed the last platform.
-/// @pre d must not exceed the last device in given platform.
-CLDevice::CLDevice(int p, int d, const cl::Platform& pl, const cl::Device& de)
-   :_pinc(p),
-   _dinc(d),
-   _platform(pl),
-   _device(de)
-{}
 
 
 

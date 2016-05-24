@@ -19,14 +19,14 @@ void spearman::output(DataPlugin* output)
 
 
 
-void spearman::execute(GetOpts& ops, Terminal& tm, cl::Device* dev)
+void spearman::execute_cl(GetOpts& ops, Terminal& tm)
 {
    ;
 }
 
 
 
-void spearman::execute(GetOpts& ops, Terminal& tm)
+void spearman::execute_pn(GetOpts& ops, Terminal& tm)
 {
-   tm << "Non-accelerated pearson not supported yet.\n";
+   ;
 }

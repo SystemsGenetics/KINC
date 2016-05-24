@@ -179,10 +179,11 @@ const char* SystemError::system()
 /// @param file Name of file where exception is thrown.
 /// @param line Line number in file where exception is thrown.
 /// @param e OpenCL error object.
-OpenCLError::OpenCLError(const char* file, int line, cl::Error& e):
+OpenCLError::OpenCLError(const char* file, int line, const char* func,
+                         cl_int e):
    Exception(file,line,"OpenCLError"),
-   _clFunc(e.what()),
-   _code(e.err())
+   _clFunc(func),
+   _code(e)
 {}
 
 

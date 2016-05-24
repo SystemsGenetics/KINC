@@ -12,7 +12,7 @@
 #include "console.h"
 #include "cldevice.h"
 #include "data.h"
-#include "analytic.h"
+#include "analyticplugin.h"
 #include "plugins/plugins.h"
 
 
@@ -347,8 +347,8 @@ void Console::gpu_set(GetOpts& ops)
          delete _device;
       }
       _device = new CLDevice {_devList.at(p,d)};
-      _tm << "OpenCL device set to \"" << ops.com_front() << "\"."
-          << Terminal::endl;
+      _tm << "OpenCL device set to \"" << _device->info(CLDevice::CLInfo::name)
+          << "\".\n";
    }
    else
    {
@@ -656,7 +656,7 @@ void Console::data_query(GetOpts& ops)
 /// the analytic, such as a parsing error. Exception specifies error detected.
 void Console::analytic(GetOpts& ops)
 {
-   using aptr = std::unique_ptr<Analytic>;
+   using aptr = std::unique_ptr<AnalyticPlugin>;
    using ilist = std::forward_list<DataPlugin*>;
    aptr a(KINCPlugins::new_analytic(ops.com_front()));
    if (!a)
@@ -769,7 +769,7 @@ void Console::analytic(GetOpts& ops)
    ops.com_pop();
    if (_device)
    {
-      a->execute(ops,_tm,&_device->device());
+      //a->execute(ops,_tm,&_device->device());
    }
    else
    {

@@ -19,14 +19,14 @@ void pearson::output(DataPlugin* output)
 
 
 
-void pearson::execute(GetOpts& ops, Terminal& tm, cl::Device* dev)
+void pearson::execute_cl(GetOpts& ops, Terminal& tm)
 {
    ;
 }
 
 
 
-void pearson::execute(GetOpts& ops, Terminal& tm)
+void pearson::execute_pn(GetOpts& ops, Terminal& tm)
 {
-   tm << "Non-accelerated pearson not supported yet.\n";
+   ;
 }
