@@ -27,6 +27,12 @@
                                     OpenCLError(file,line,#F,e)\
                                  {}\
                               };
+#define ACE_EXCEPTION(N,X) struct X : public Exception\
+                           {\
+                              X(const char* file, int line):\
+                                 Exception(file,line,#N"::"#X)\
+                              {}\
+                           };
 
 
 
