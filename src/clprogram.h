@@ -4,10 +4,7 @@
 #include <string>
 #include <vector>
 #include "exception.h"
-
-
-
-class CLKernel;
+#include "clkernel.h"
 
 
 
@@ -15,8 +12,10 @@ class CLProgram
 {
 public:
    ACE_EXCEPTION(CLProgram,NoSuchFile)
+   ACE_EXCEPTION(CLProgram,NotCompiled)
    OPENCL_EXCEPTION(CannotBind,clCreateProgramWithSource)
    OPENCL_EXCEPTION(BuildInfoFail,clGetProgramBuildInfo)
+   OPENCL_EXCEPTION(CannotFindKern,clCreateKernel)
    CLProgram() = default;
    ~CLProgram();
    void init(cl_context,cl_device_id);

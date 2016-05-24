@@ -2,6 +2,7 @@
 #define ANALYTICPLUGIN_H
 #include "analytic.h"
 #include "clprogram.h"
+#include "clkernel.h"
 
 
 

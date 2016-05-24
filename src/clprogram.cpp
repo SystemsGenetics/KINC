@@ -88,4 +88,11 @@ CLProgram::string CLProgram::log()
 
 
 
-//CLKernel CLProgram::mkernel(const string& name) {}
+CLKernel CLProgram::mkernel(const string& name)
+{
+   assert<NotCompiled>(_compiled,__FILE__,__LINE__);
+   cl_int err;
+   CLKernel ret(clCreateKernel(_id,name.c_str(),&err),_did);
+   assert<CannotFindKern>(err==CL_SUCCESS,__FILE__,__LINE__,err);
+   return ret;
+}

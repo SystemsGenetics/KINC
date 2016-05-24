@@ -13,6 +13,8 @@ cldevlist.cpp
 cldevlist.h
 clprogram.cpp
 clprogram.h
+clkernel.cpp
+clkernel.h
 getopts.cpp
 getopts.h
 data.h
