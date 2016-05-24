@@ -15,6 +15,8 @@ clprogram.cpp
 clprogram.h
 clkernel.cpp
 clkernel.h
+clbuffer.cpp
+clbuffer.h
 getopts.cpp
 getopts.h
 data.h
