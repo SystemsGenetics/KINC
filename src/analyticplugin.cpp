@@ -34,6 +34,14 @@ void AnalyticPlugin::init_cl(CLDevice& dev)
    cl_int err;
    _cid = clCreateContext(props,1,&device,NULL,NULL,&err);
    assert<CreateContext>(err==CL_SUCCESS,__FILE__,__LINE__,err);
-   CLProgram::init(_cid,dev.device());
+   try
+   {
+      CLProgram::init(_cid,dev.device());
+   }
+   catch (...)
+   {
+      clReleaseContext(_cid);
+      throw;
+   }
    _isCL = true;
 }
