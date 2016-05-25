@@ -52,7 +52,7 @@ template<class T> void CLKernel::set_arg(cl_uint index, T arg)
 template<class... Args> void CLKernel::set_args(Args... args)
 {
    assert<NotAlive>(_isAlive,__FILE__,__LINE__);
-   set_args_int(args...,0);
+   set_args_int(0,args...);
 }
 
 
@@ -68,7 +68,7 @@ template<class T, class... Args>
 void CLKernel::set_args_int(int ind, T arg, Args... args)
 {
    set_arg(ind,arg);
-   set_args(args...,ind+1);
+   set_args(ind+1,args...);
 }
 
 
