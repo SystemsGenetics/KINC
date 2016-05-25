@@ -28,8 +28,8 @@ class CLKernel
    size_t get_wg_multiple();
 private:
    CLKernel(cl_kernel,cl_device_id);
-   template<class T> void set_args_int(T,int);
-   template<class T, class... Args> void set_args_int(T,int,Args...);
+   template<class T> void set_args_int(int,T);
+   template<class T, class... Args> void set_args_int(int,T,Args...);
    bool _isAlive {false};
    cl_device_id _did;
    cl_kernel _id;
@@ -57,7 +57,7 @@ template<class... Args> void CLKernel::set_args(Args... args)
 
 
 
-template<class T> void CLKernel::set_args_int(T arg, int ind)
+template<class T> void CLKernel::set_args_int(int ind, T arg)
 {
    set_arg(ind,arg);
 }
@@ -65,7 +65,7 @@ template<class T> void CLKernel::set_args_int(T arg, int ind)
 
 
 template<class T, class... Args>
-void CLKernel::set_args_int(T arg, int ind, Args... args)
+void CLKernel::set_args_int(int ind, T arg, Args... args)
 {
    set_arg(ind,arg);
    set_args(args...,ind+1);
