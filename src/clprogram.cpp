@@ -18,12 +18,14 @@ void CLProgram::init(cl_context cid, cl_device_id did)
 {
    _cid = cid;
    _did = did;
+   _initd = true;
 }
 
 
 
 void CLProgram::add_source(const string& input, bool file)
 {
+   assert<NotInitialized>(_initd,__FILE__,__LINE__);
    if (file)
    {
       std::ifstream sourceFile(input.c_str());
@@ -42,6 +44,7 @@ void CLProgram::add_source(const string& input, bool file)
 
 bool CLProgram::compile(const string& options)
 {
+   assert<NotInitialized>(_initd,__FILE__,__LINE__);
    bool ret = false;
    cl_uint s = _src.size();
    const char *codes[s];
@@ -70,6 +73,7 @@ bool CLProgram::compile(const string& options)
 
 CLProgram::string CLProgram::log()
 {
+   assert<NotInitialized>(_initd,__FILE__,__LINE__);
    std::string ret {"OpenCL program not yet binded!"};
    if (_binded)
    {
@@ -90,6 +94,7 @@ CLProgram::string CLProgram::log()
 
 CLKernel CLProgram::mkernel(const string& name)
 {
+   assert<NotInitialized>(_initd,__FILE__,__LINE__);
    assert<NotCompiled>(_compiled,__FILE__,__LINE__);
    cl_int err;
    CLKernel ret(clCreateKernel(_id,name.c_str(),&err),_did);

@@ -13,11 +13,17 @@ class CLProgram
 public:
    ACE_EXCEPTION(CLProgram,NoSuchFile)
    ACE_EXCEPTION(CLProgram,NotCompiled)
+   ACE_EXCEPTION(CLProgram,NotInitialized)
    OPENCL_EXCEPTION(CannotBind,clCreateProgramWithSource)
    OPENCL_EXCEPTION(BuildInfoFail,clGetProgramBuildInfo)
    OPENCL_EXCEPTION(CannotFindKern,clCreateKernel)
    CLProgram() = default;
    ~CLProgram();
+   CLProgram(const CLProgram&) = delete;
+   CLProgram& operator=(const CLProgram&) = delete;
+   CLProgram(CLProgram&&) = delete;
+   CLProgram& operator=(CLProgram&&) = delete;
+protected:
    void init(cl_context,cl_device_id);
    using string = std::string;
    void add_source(const string& input, bool file = false);

@@ -13,7 +13,7 @@ class CLKernel
    ACE_EXCEPTION(CLKernel,DimOutOfRange)
    ACE_EXCEPTION(CLKernel,NotAlive)
    constexpr static int _maxDims {16};
-   friend class CLCommadQueue;
+   friend class CLCommandQueue;
    friend class CLProgram;
    ~CLKernel();
    CLKernel(const CLKernel&);
