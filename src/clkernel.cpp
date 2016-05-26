@@ -82,15 +82,6 @@ CLKernel& CLKernel::operator=(CLKernel&& move)
 
 
 
-template<> void CLKernel::set_arg(cl_uint index, size_t lSize)
-{
-   assert<NotAlive>(_isAlive,__FILE__,__LINE__);
-   cl_int err = clSetKernelArg(_id,index,lSize,NULL);
-   assert<CannotSetArg>(err==CL_SUCCESS,__FILE__,__LINE__,err);
-}
-
-
-
 void CLKernel::set_swarm_dims(cl_uint dims)
 {
    assert<NotAlive>(_isAlive,__FILE__,__LINE__);

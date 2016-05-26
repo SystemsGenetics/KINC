@@ -7,11 +7,13 @@
 
 template<class T> class CLBuffer
 {
+public:
    OPENCL_EXCEPTION(NoCreateBuffer,clCreateBuffer)
    ACE_EXCEPTION(CLBuffer,NullBufferUse)
    ACE_EXCEPTION(CLBuffer,OutOfRange)
+   friend class CLContext;
    friend class CLCommandQueue;
-   friend class AnalyticPlugin;
+   friend class CLKernel;
    ~CLBuffer();
    CLBuffer(const CLBuffer<T>&) = delete;
    CLBuffer& operator=(const CLBuffer<T>&) = delete;

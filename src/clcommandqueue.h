@@ -45,7 +45,7 @@ template<class T> CLEvent CLCommandQueue::read_buffer(CLBuffer<T>& buffer)
    cl_int err = clEnqueueReadBuffer(_id,buffer._id,CL_FALSE,0,
                                     buffer._size*sizeof(T),buffer._hostPtr,0,
                                     NULL,&ret);
-   assert<CannotEnqueueRB>(err=CL_SUCCESS,__FILE__,__LINE__,err);
+   assert<CannotEnqueueRB>(err==CL_SUCCESS,__FILE__,__LINE__,err);
    return CLEvent(ret);
 }
 
@@ -59,7 +59,7 @@ template<class T> CLEvent CLCommandQueue::write_buffer(CLBuffer<T>& buffer)
    cl_int err = clEnqueueWriteBuffer(_id,buffer._id,CL_FALSE,0,
                                      buffer._size*sizeof(T),buffer._hostPtr,0,
                                      NULL,&ret);
-   assert<CannotEnqueueWB>(err=CL_SUCCESS,__FILE__,__LINE__,err);
+   assert<CannotEnqueueWB>(err==CL_SUCCESS,__FILE__,__LINE__,err);
    return CLEvent(ret);
 }
 

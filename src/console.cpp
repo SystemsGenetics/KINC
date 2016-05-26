@@ -135,6 +135,14 @@ void Console::terminal_loop()
             _tm << "What: " << e.what() << Terminal::endl;
             _tm << Terminal::general;
          }
+         catch (OpenCLError e)
+         {
+            _tm << Terminal::error;
+            _tm << "OpenCL Exception Caught!" << Terminal::endl;
+            _tm << "Location: " << e.file() << ":" << e.line() << "\n";
+            _tm << "Code: " << e.code_str() << "\n";
+            _tm << Terminal::general;
+         }
          catch (Exception e)
          {
             _tm << Terminal::error;
@@ -766,15 +774,12 @@ void Console::analytic(GetOpts& ops)
          ++i;
       }
    }
-   ops.com_pop();
    if (_device)
    {
-      //a->execute(ops,_tm,&_device->device());
+      a->init_cl(*_device);
    }
-   else
-   {
-      a->execute(ops,_tm);
-   }
+   ops.com_pop();
+   a->execute(ops,_tm);
 }
 
 
