@@ -3,6 +3,7 @@ MAKEFLAGS := $(MAKEFLAGS) --no-print-directory
 CXX := g++
 NAME := kinc
 FILES := spearman.files
+GENCL := ../../../../bin/mkcl.sh
 
 
 
@@ -42,6 +43,10 @@ $(build)%.d: %.cpp
 +@echo "Building depend $@"
 +@echo -n "$@ $(build)" > $@
 +@$(CXX) $(acxxflags) -MM $< >> $@
+
+%.cl.h: %.cl
++@echo "Building kernel $@"
++@$(GENCL) $<
 
 clean:
 +@echo "Cleaning all."
