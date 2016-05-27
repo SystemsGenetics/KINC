@@ -94,8 +94,7 @@ void CLKernel::set_swarm_dims(cl_uint dims)
 void CLKernel::set_swarm_size(int dim, cl_uint gSize, cl_uint lSize)
 {
    assert<NotAlive>(_isAlive,__FILE__,__LINE__);
-   assert<DimOutOfRange>(dim<=_dims,__FILE__,__LINE__);
-   --dim;
+   assert<DimOutOfRange>(dim<_dims,__FILE__,__LINE__);
    _gSizes[dim] = gSize;
    _lSizes[dim] = lSize;
 }

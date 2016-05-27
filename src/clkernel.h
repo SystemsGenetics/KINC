@@ -3,7 +3,6 @@
 #include <CL/cl.h>
 #include "clbuffer.h"
 #include "exception.h"
-#include <iostream>
 
 
 

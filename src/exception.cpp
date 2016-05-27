@@ -219,6 +219,6 @@ const char* OpenCLError::code_str()
    }
    else
    {
-      return nullptr;
+      return c_clDescErrors[15];
    }
 }

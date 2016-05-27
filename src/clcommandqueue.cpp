@@ -39,7 +39,7 @@ CLEvent CLCommandQueue::add_swarm(CLKernel& kernel)
 {
    assert<NotInitialized>(_initd,__FILE__,__LINE__);
    assert<DeadKernelUsed>(kernel._isAlive,__FILE__,__LINE__);
-   cl_event ret = NULL;
+   cl_event ret;
    const size_t offsets[kernel._dims] = {0};
    cl_int err;
    err = clEnqueueNDRangeKernel(_id,kernel._id,kernel._dims,offsets,
