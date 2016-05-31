@@ -19,6 +19,39 @@ void switch_i(__local int* a, __local int* b)
 
 
 
+void build_lists(int aInd, int bInd, int size, __local float* alist,
+                 __local float* blist, __global float* clist, __local int* rank)
+{
+   int ix = get_local_id(0)<<1;
+   if (ix<size)
+   {
+      alist[ix] = clist[ix+aInd];
+      blist[ix] = clist[ix+bInd];
+      rank[ix] = ix+1;
+   }
+   else
+   {
+      alist[ix] = INFINITY;
+      blist[ix] = INFINITY;
+      rank[ix] = 0;
+   }
+   if ((ix+1)<size)
+   {
+      alist[ix+1] = clist[ix+aInd+1];
+      blist[ix+1] = clist[ix+bInd+1];
+      rank[ix+1] = ix+2;
+   }
+   else
+   {
+      alist[ix+1] = INFINITY;
+      blist[ix+1] = INFINITY;
+      rank[ix+1] = 0;
+   }
+   barrier(CLK_LOCAL_MEM_FENCE);
+}
+
+
+
 void bitonic_sort_ff(__local float* sort, __local float* extra)
 {
    int i = get_local_id(0);
@@ -32,7 +65,7 @@ void bitonic_sort_ff(__local float* sort, __local float* extra)
          t = ib>>1;
          a = (i/t)*ib+(i%t);
          b = a + t;
-         if ((sort[a]>sort[b])^dir)
+         if (((sort[a]>sort[b])&&!dir)||((sort[a]<sort[b])&&dir))
          {
             switch_f(&sort[a],&sort[b]);
             switch_f(&extra[a],&extra[b]);
@@ -57,7 +90,7 @@ void bitonic_sort_fi(__local float* sort, __local int* extra)
          t = ib>>1;
          a = (i/t)*ib+(i%t);
          b = a + t;
-         if ((sort[a]>sort[b])^dir)
+         if (((sort[a]>sort[b])&&!dir)||((sort[a]<sort[b])&&dir))
          {
             switch_f(&sort[a],&sort[b]);
             switch_i(&extra[a],&extra[b]);
@@ -69,30 +102,29 @@ void bitonic_sort_fi(__local float* sort, __local int* extra)
 
 
 
-float grab_correlation(__global float* correlations, int i, int size)
+long calc_ranks(int size, __local long* sums, __local int* ranks)
 {
-   if (i<size)
+   int ix = get_local_id(0)<<1;
+   long c;
+   if (ix<size)
    {
-      return correlations[i];
+      c = ranks[ix]-(ix+1);
+      sums[ix] = c*c;
    }
    else
    {
-      return INFINITY;
+      sums[ix] = 0.0;
    }
-}
-
-
-
-long calc_rank_diff(long a, long b, int size)
-{
-   if (b<size)
+   if ((ix+1)<size)
    {
-      return (a-b)*(a-b);
+      c = ranks[ix+1]-(ix+2);
+      sums[ix+1] = c*c;
    }
    else
    {
-      return 0;
+      sums[ix+1] = 0.0;
    }
+   barrier(CLK_LOCAL_MEM_FENCE);
 }
 
 
@@ -127,23 +159,13 @@ __kernel void spearman
       __local long* summation
 )
 {
-   int ix = get_local_id(0)<<1;
-   int nsize = get_local_size(0)<<1;
-   alist[ix] = grab_correlation(correlations,ix+aInd,size);
-   alist[ix+1] = grab_correlation(correlations,ix+aInd+1,size);
-   blist[ix] = grab_correlation(correlations,ix+bInd,size);
-   blist[ix+1] = grab_correlation(correlations,ix+bInd+1,size);
-   rank[ix] = ix+1;
-   rank[ix+1] = ix+2;
-   barrier(CLK_LOCAL_MEM_FENCE);
+   build_lists(aInd,bInd,size,alist,blist,correlations,rank);
    bitonic_sort_ff(alist,blist);
    bitonic_sort_fi(blist,rank);
-   summation[ix] = calc_rank_diff(rank[ix],ix+1,size);
-   summation[ix+1] = calc_rank_diff(rank[ix+1],ix+2,size);
-   barrier(CLK_LOCAL_MEM_FENCE);
+   calc_ranks(size,summation,rank);
    accumulate(summation);
    if (get_local_id(0)==0)
    {
-      *result = 1.0-(6.0*summation[0]/(float)(nsize*(nsize-1)));
+      *result = 1.0-(6.0*summation[0]/((float)(size*(size*size-1))));
    }
 }
