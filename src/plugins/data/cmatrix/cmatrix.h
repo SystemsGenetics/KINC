@@ -130,6 +130,7 @@ public:
    void set_gene_name(uint32_t,const string&);
    void set_sample_name(uint32_t,const string&);
    void set_correlation_name(uint32_t,const string&);
+   void create_data();
    FPtr set_modes(uint32_t,uint32_t,uint8_t);
    FPtr get_modes(uint32_t,uint32_t);
    void write_mode(FPtr,uint8_t,const maskv&,const floatv&);

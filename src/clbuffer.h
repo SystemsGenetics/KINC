@@ -14,6 +14,7 @@ public:
    friend class CLContext;
    friend class CLCommandQueue;
    friend class CLKernel;
+   CLBuffer() = default;
    ~CLBuffer();
    CLBuffer(const CLBuffer<T>&) = delete;
    CLBuffer& operator=(const CLBuffer<T>&) = delete;
