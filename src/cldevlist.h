@@ -29,7 +29,8 @@ public:
    // *
    // * EXCEPTIONS
    // *
-   struct OpenCLError;
+   OPENCL_EXCEPTION(PlatformErr,clGetPlatformIDs)
+   OPENCL_EXCEPTION(DeviceErr,clGetDeviceIDs)
    // *
    // * DECLERATIONS
    // *
@@ -97,14 +98,6 @@ private:
    int _pi;
    /// Current increment into list of devices of given platform.
    int _di;
-};
-
-
-
-/// Exception is thrown when an OpenCL error occurs.
-struct CLDevList::OpenCLError : public ::OpenCLError
-{
-   using ::OpenCLError::OpenCLError;
 };
 
 

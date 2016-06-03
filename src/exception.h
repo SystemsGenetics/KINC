@@ -7,7 +7,32 @@
 #ifndef EXCEPTION_H
 #define EXCEPTION_H
 #define __CL_ENABLE_EXCEPTIONS
-#include <CL/cl.hpp>
+#include <CL/cl.h>
+#define DATA_EXCEPTION(N,X,L) struct X : public DataException\
+                              {\
+                                 X(const char* file, int line):\
+                                    DataException(file,line,#N"::"#X,\
+                                                  Level::L)\
+                                 {}\
+                              };
+#define ANALYTIC_EXCEPTION(N,X) struct X : public AnalyticException\
+                                {\
+                                   X(const char* file, int line):\
+                                      AnalyticException(file,line,#N"::"#X)\
+                                   {}\
+                                };
+#define OPENCL_EXCEPTION(X,F) struct X : public OpenCLError\
+                              {\
+                                 X(const char* file, int line, cl_int e):\
+                                    OpenCLError(file,line,#F,e)\
+                                 {}\
+                              };
+#define ACE_EXCEPTION(N,X) struct X : public Exception\
+                           {\
+                              X(const char* file, int line):\
+                                 Exception(file,line,#N"::"#X)\
+                              {}\
+                           };
 
 
 
@@ -44,7 +69,7 @@ template<class T> inline void assert(bool cond, const char* file, int line,
 /// @param line Line in file where assertion is being tested.
 /// @param e Reference to OpenCL Error.
 template<class T> inline void assert(bool cond, const char* file, int line,
-                                     cl::Error& e)
+                                     cl_int e)
 {
    if (!cond)
    {
@@ -180,7 +205,7 @@ public:
    // *
    // * BASIC METHODS
    // *
-   OpenCLError(const char*,int,cl::Error&);
+   OpenCLError(const char*,int,const char*,cl_int);
    // *
    // * FUNCTIONS
    // *

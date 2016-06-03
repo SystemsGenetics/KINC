@@ -16,9 +16,9 @@ done
 
 echo "$header" > plugin.cpp
 echo >> plugin.cpp
-echo "Analytic* KINCPlugins::new_analytic(const std::string& type)" >> plugin.cpp
+echo "AnalyticPlugin* KINCPlugins::new_analytic(const std::string& type)" >> plugin.cpp
 echo "{" >> plugin.cpp
-echo -n "   Analytic* ret = nullptr;" >> plugin.cpp
+echo -n "   AnalyticPlugin* ret = nullptr;" >> plugin.cpp
 echo "$code" >> plugin.cpp
 echo "   return ret;" >> plugin.cpp
 echo "}" >> plugin.cpp
