@@ -342,7 +342,7 @@ float * RMTThreshold::read_similarity_matrix_bin_file(float th, int * size) {
   // ------------------------------
   // Step #2: Now build the cut matrix by retrieving the correlation values
   // for each of the genes identified previously.
-  for (i = 0; i < z; i++) {
+  for (i = 0; i <= z; i++) {
 
     sprintf(filename, "%s/%s.%s%d.bin", bin_dir, ematrix->getFilePrefix(), th_method, i);
     in = fopen(filename, "rb");

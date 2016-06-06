@@ -18,7 +18,7 @@ Prerequisite Installation for Ubuntu 16.04 LTS
 ----------------------------------------------
 Ubuntu 16.05 has a compatible Make and GCC version. Installation of GPU 
 
-Prerequisite Installation for Ubuntu 16.04 LTS
+Prerequisite Installation for Ubuntu 14.04 LTS
 ----------------------------------------------
 
 1) To upgrade the make utility use the following:
