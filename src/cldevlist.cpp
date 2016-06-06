@@ -1,5 +1,5 @@
-#define __CL_ENABLE_EXCEPTIONS
-#include <CL/cl.hpp>
+#include <CL/cl.h>
+#include <memory>
 #include "cldevlist.h"
 #include "cldevice.h"
 
@@ -21,29 +21,41 @@ CLDevList::CLDevList()
 /// @pre The internal vector list must be empty.
 void CLDevList::build()
 {
+   cl_platform_id* platforms {nullptr};
+   cl_device_id* devices {nullptr};
    try
    {
-      std::vector<cl::Platform> platforms;
-      cl::Platform::get(&platforms);
-      int i {0};
-      for (auto p:platforms)
+      cl_uint ptotal;
+      cl_int err = clGetPlatformIDs(0,NULL,&ptotal);
+      assert<PlatformErr>(err==CL_SUCCESS,__FILE__,__LINE__,err);
+      platforms = new cl_platform_id[ptotal];
+      err = clGetPlatformIDs(ptotal,platforms,NULL);
+      assert<PlatformErr>(err==CL_SUCCESS,__FILE__,__LINE__,err);
+      for (int i=0;i<ptotal;++i)
       {
-         std::vector<cl::Device> devices;
-         p.getDevices(CL_DEVICE_TYPE_ALL,&devices);
+         cl_uint dtotal;
+         err = clGetDeviceIDs(platforms[i],CL_DEVICE_TYPE_ALL,0,NULL,&dtotal);
+         assert<DeviceErr>(err==CL_SUCCESS,__FILE__,__LINE__,err);
+         devices = new cl_device_id[dtotal];
+         err = clGetDeviceIDs(platforms[i],CL_DEVICE_TYPE_ALL,dtotal,devices,
+                              NULL);
+         assert<DeviceErr>(err==CL_SUCCESS,__FILE__,__LINE__,err);
          _list.push_back({});
-         int j {0};
-         for (auto d:devices)
+         for (int j=0;j<dtotal;++j)
          {
-            CLDevice tmp(i,j,p,d);
-            _list.back().push_back(tmp);
-            j++;
+            _list.back().emplace_back(i,j,platforms[i],devices[j]);
          }
-         i++;
+         delete[] devices;
+         devices = nullptr;
       }
+      delete[] platforms;
    }
-   catch (cl::Error e)
+   catch (...)
    {
       _list.clear();
+      if (platforms) delete[] platforms;
+      if (devices) delete[] devices;
+      throw;
    }
 }
 
@@ -106,7 +118,7 @@ bool CLDevList::exist(int p, int d)
 /// @pre d must not exceed the last device in given platform.
 CLDevice& CLDevList::at(int p, int d)
 {
-   return _list[p][d];
+   return _list.at(p).at(d);
 }
 
 

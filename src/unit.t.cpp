@@ -11,9 +11,9 @@ int unit::numTestsDone {0};
 
 
 
-Analytic* KINCPlugins::new_analytic(const std::string& type)
+AnalyticPlugin* KINCPlugins::new_analytic(const std::string& type)
 {
-   Analytic* ret = nullptr;
+   AnalyticPlugin* ret = nullptr;
    return ret;
 }
 

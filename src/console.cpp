@@ -12,7 +12,7 @@
 #include "console.h"
 #include "cldevice.h"
 #include "data.h"
-#include "analytic.h"
+#include "analyticplugin.h"
 #include "plugins/plugins.h"
 
 
@@ -133,6 +133,14 @@ void Console::terminal_loop()
             _tm << "Location: " << e.file() << ":" << e.line()
                 << Terminal::endl;
             _tm << "What: " << e.what() << Terminal::endl;
+            _tm << Terminal::general;
+         }
+         catch (OpenCLError e)
+         {
+            _tm << Terminal::error;
+            _tm << "OpenCL Exception Caught!" << Terminal::endl;
+            _tm << "Location: " << e.file() << ":" << e.line() << "\n";
+            _tm << "Code: " << e.code_str() << "\n";
             _tm << Terminal::general;
          }
          catch (Exception e)
@@ -347,8 +355,8 @@ void Console::gpu_set(GetOpts& ops)
          delete _device;
       }
       _device = new CLDevice {_devList.at(p,d)};
-      _tm << "OpenCL device set to \"" << ops.com_front() << "\"."
-          << Terminal::endl;
+      _tm << "OpenCL device set to \"" << _device->info(CLDevice::CLInfo::name)
+          << "\".\n";
    }
    else
    {
@@ -656,7 +664,7 @@ void Console::data_query(GetOpts& ops)
 /// the analytic, such as a parsing error. Exception specifies error detected.
 void Console::analytic(GetOpts& ops)
 {
-   using aptr = std::unique_ptr<Analytic>;
+   using aptr = std::unique_ptr<AnalyticPlugin>;
    using ilist = std::forward_list<DataPlugin*>;
    aptr a(KINCPlugins::new_analytic(ops.com_front()));
    if (!a)
@@ -766,13 +774,12 @@ void Console::analytic(GetOpts& ops)
          ++i;
       }
    }
-   cl::Device* clptr {nullptr};
    if (_device)
    {
-      clptr = &_device->device();
+      a->init_cl(*_device);
    }
    ops.com_pop();
-   a->execute(ops,_tm,clptr);
+   a->execute(ops,_tm);
 }
 
 

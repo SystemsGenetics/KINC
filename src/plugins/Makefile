@@ -32,11 +32,11 @@ plugins.a: $(binds) $(binding)
 +@ar -M < $(arscript)
 
 %.dat.a: data/%
-+@echo "Building data plugins $*"
++@echo "Building data plugin $*"
 +@cd $< && $(MAKE) TARGET=../../$@
 
 %.alc.a: analytic/%
-+@echo "Building analytic plugins $*"
++@echo "Building analytic plugin $*"
 +@cd $< && $(MAKE) TARGET=../../$@
 
 analytic/plugin.cpp: analytic/gen.sh
