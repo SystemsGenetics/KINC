@@ -143,6 +143,16 @@ void cmatrix::set_correlation_name(uint32_t n, const string& name)
 
 
 
+void cmatrix::create_data()
+{
+   assert<AlreadySet>(_hdr.data()==FileMem::nullPtr,__FILE__,__LINE__);
+   Corr corr;
+   _mem.allot(corr,_hdr.geneSize()*(_hdr.geneSize()-1)/2);
+   _hdr.data() = corr.addr();
+}
+
+
+
 cmatrix::FPtr cmatrix::set_modes(uint32_t g1, uint32_t g2, uint8_t modes)
 {
    assert<NotInitialized>(_hdr.data()!=FileMem::nullPtr,__FILE__,__LINE__);

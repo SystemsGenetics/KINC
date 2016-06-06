@@ -19,23 +19,63 @@ void switch_i(__local int* a, __local int* b)
 
 
 
-void bitonic_sort_ff(__local float* sort, __local float* extra)
+void build_lists(int aInd, int bInd, int size, int chunk, __local float* alist,
+                 __local float* blist, __global float* clist, __local int* rank)
 {
-   int i = get_local_id(0);
-   int bsize = get_local_size(0)<<1;
-   int ob,ib,dir,a,b,t;
-   for (ob=2;ob<=bsize;ob<<=1)
+   int i,ix;
+   for (i=0;i<chunk;++i)
    {
-      dir = -((i/(ob>>1))&0x1);
-      for (ib=ob;ib>=2;ib>>=1)
+      ix = (get_local_id(0)*chunk+i)*2;
+      if (ix<size)
       {
-         t = ib>>1;
-         a = (i/t)*ib+(i%t);
-         b = a + t;
-         if ((sort[a]>sort[b])^dir)
+         alist[ix] = clist[ix+aInd];
+         blist[ix] = clist[ix+bInd];
+         rank[ix] = ix+1;
+      }
+      else
+      {
+         alist[ix] = INFINITY;
+         blist[ix] = INFINITY;
+         rank[ix] = 0;
+      }
+      if ((ix+1)<size)
+      {
+         alist[ix+1] = clist[ix+aInd+1];
+         blist[ix+1] = clist[ix+bInd+1];
+         rank[ix+1] = ix+2;
+      }
+      else
+      {
+         alist[ix+1] = INFINITY;
+         blist[ix+1] = INFINITY;
+         rank[ix+1] = 0;
+      }
+   }
+   barrier(CLK_LOCAL_MEM_FENCE);
+}
+
+
+
+void bitonic_sort_ff(int chunk, __local float* sort, __local float* extra)
+{
+   int bsize = get_local_size(0)*2*chunk;
+   int ob,ib,i,ix,dir,a,b,t;
+   for (ob=2;ob<=bsize;ob*=2)
+   {
+      for (ib=ob;ib>=2;ib/=2)
+      {
+         for (i=0;i<chunk;++i)
          {
-            switch_f(&sort[a],&sort[b]);
-            switch_f(&extra[a],&extra[b]);
+            ix = get_local_id(0)*chunk+i;
+            dir = -((ix/(ob/2))&0x1);
+            t = ib/2;
+            a = (ix/t)*ib+(ix%t);
+            b = a + t;
+            if (((sort[a]>sort[b])&&!dir)||((sort[a]<sort[b])&&dir))
+            {
+               switch_f(&sort[a],&sort[b]);
+               switch_f(&extra[a],&extra[b]);
+            }
          }
          barrier(CLK_LOCAL_MEM_FENCE);
       }
@@ -44,23 +84,26 @@ void bitonic_sort_ff(__local float* sort, __local float* extra)
 
 
 
-void bitonic_sort_fi(__local float* sort, __local int* extra)
+void bitonic_sort_fi(int chunk, __local float* sort, __local int* extra)
 {
-   int i = get_local_id(0);
-   int bsize = get_local_size(0)<<1;
-   int ob,ib,dir,a,b,t;
-   for (ob=2;ob<=bsize;ob<<=1)
+   int bsize = get_local_size(0)*2*chunk;
+   int ob,ib,i,ix,dir,a,b,t;
+   for (ob=2;ob<=bsize;ob*=2)
    {
-      dir = -((i/(ob>>1))&0x1);
-      for (ib=ob;ib>=2;ib>>=1)
+      for (ib=ob;ib>=2;ib/=2)
       {
-         t = ib>>1;
-         a = (i/t)*ib+(i%t);
-         b = a + t;
-         if ((sort[a]>sort[b])^dir)
+         for (i=0;i<chunk;++i)
          {
-            switch_f(&sort[a],&sort[b]);
-            switch_i(&extra[a],&extra[b]);
+            ix = get_local_id(0)*chunk+i;
+            dir = -((ix/(ob/2))&0x1);
+            t = ib/2;
+            a = (ix/t)*ib+(ix%t);
+            b = a + t;
+            if (((sort[a]>sort[b])&&!dir)||((sort[a]<sort[b])&&dir))
+            {
+               switch_f(&sort[a],&sort[b]);
+               switch_i(&extra[a],&extra[b]);
+            }
          }
          barrier(CLK_LOCAL_MEM_FENCE);
       }
@@ -69,44 +112,50 @@ void bitonic_sort_fi(__local float* sort, __local int* extra)
 
 
 
-float grab_correlation(__global float* correlations, int i, int size)
+long calc_ranks(int size, int chunk, __local long* sums, __local int* ranks)
 {
-   if (i<size)
+   long c;
+   int i,ix;
+   for (i=0;i<chunk;++i)
    {
-      return correlations[i];
-   }
-   else
-   {
-      return INFINITY;
-   }
-}
-
-
-
-long calc_rank_diff(long a, long b, int size)
-{
-   if (b<size)
-   {
-      return (a-b)*(a-b);
-   }
-   else
-   {
-      return 0;
-   }
-}
-
-
-
-void accumulate(__local long* summation)
-{
-   int i = get_local_id(0);
-   int hbsize = get_local_size(0);
-   int b;
-   for (b=hbsize;b>=1;b>>=1)
-   {
-      if (i<b)
+      ix = (get_local_id(0)*chunk+i)*2;
+      if (ix<size)
       {
-         summation[i] += summation[i+b];
+         c = ranks[ix]-(ix+1);
+         sums[ix] = c*c;
+      }
+      else
+      {
+         sums[ix] = 0.0;
+      }
+      if ((ix+1)<size)
+      {
+         c = ranks[ix+1]-(ix+2);
+         sums[ix+1] = c*c;
+      }
+      else
+      {
+         sums[ix+1] = 0.0;
+      }
+   }
+   barrier(CLK_LOCAL_MEM_FENCE);
+}
+
+
+
+void accumulate(int chunk, __local long* summation)
+{
+   int hbsize = get_local_size(0)*chunk;
+   int i,ix,b;
+   for (b=hbsize;b>=1;b/=2)
+   {
+      for (i=0;i<chunk;++i)
+      {
+         ix = get_local_id(0)*chunk+i;
+         if (ix<b)
+         {
+            summation[ix] += summation[ix+b];
+         }
       }
       barrier(CLK_LOCAL_MEM_FENCE);
    }
@@ -119,6 +168,7 @@ __kernel void spearman
       int aInd,
       int bInd,
       int size,
+      int chunk,
       __global float* correlations,
       __global float* result,
       __local float* alist,
@@ -127,23 +177,13 @@ __kernel void spearman
       __local long* summation
 )
 {
-   int ix = get_local_id(0)<<1;
-   int nsize = get_local_size(0)<<1;
-   alist[ix] = grab_correlation(correlations,ix+aInd,size);
-   alist[ix+1] = grab_correlation(correlations,ix+aInd+1,size);
-   blist[ix] = grab_correlation(correlations,ix+bInd,size);
-   blist[ix+1] = grab_correlation(correlations,ix+bInd+1,size);
-   rank[ix] = ix+1;
-   rank[ix+1] = ix+2;
-   barrier(CLK_LOCAL_MEM_FENCE);
-   bitonic_sort_ff(alist,blist);
-   bitonic_sort_fi(blist,rank);
-   summation[ix] = calc_rank_diff(rank[ix],ix+1,size);
-   summation[ix+1] = calc_rank_diff(rank[ix+1],ix+2,size);
-   barrier(CLK_LOCAL_MEM_FENCE);
-   accumulate(summation);
+   build_lists(aInd,bInd,size,chunk,alist,blist,correlations,rank);
+   bitonic_sort_ff(chunk,alist,blist);
+   bitonic_sort_fi(chunk,blist,rank);
+   calc_ranks(size,chunk,summation,rank);
+   accumulate(chunk,summation);
    if (get_local_id(0)==0)
    {
-      *result = 1.0-(6.0*summation[0]/(float)(nsize*(nsize-1)));
+      *result = 1.0-(6.0*summation[0]/((float)(size*(size*size-1))));
    }
 }
