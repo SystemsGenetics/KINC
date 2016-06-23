@@ -5,22 +5,23 @@
 
 
 
-namespace cmatrixData
+namespace CMatrixData
 {
 
 using namespace AccelCompEng;
 
-struct Header : public FileMem::Static<44>
+struct Header : public FileMem::Static<52>
 {
    using FPtr = FileMem::Ptr;
-   using FileMem::Static<44>::Static;
+   using FileMem::Static<52>::Static;
    uint32_t& geneSize() { get<uint32_t>(0); }
    uint32_t& sampleSize() { get<uint32_t>(4); }
    uint32_t& corrSize() { get<uint32_t>(8); }
    FPtr& genePtr() { get<FPtr>(12); }
    FPtr& samplePtr() { get<FPtr>(20); }
    FPtr& corrPtr() { get<FPtr>(28); }
-   FPtr& data() { get<FPtr>(36); }
+   FPtr& modeData() { get<FPtr>(36); }
+   FPtr& corrData() { get<FPtr>(44); }
 };
 
 struct GeneHdr : public FileMem::Static<8>
@@ -44,84 +45,79 @@ struct CorrHdr : public FileMem::Static<8>
    FPtr& name() { get<FPtr>(0); }
 };
 
-struct Correlation : public FileMem::Static<9>
+struct Correlation : public FileMem::Static<4>
+{
+   using FileMem::Static<4>::Static;
+   float& val() { get<float>(0); }
+};
+
+struct Correlations : public FileMem::Object
 {
    using FPtr = FileMem::Ptr;
-   using FileMem::Static<9>::Static;
-   uint8_t& modeSize() { get<uint8_t>(0); }
-   FPtr& modePtr() { get<FPtr>(1); }
+   Correlations(int size, FPtr ptr = FileMem::nullPtr):\
+      FileMem::Object(size*4,ptr) {}
+   float& val(int n) { get<float>(4*n); }
 };
 
 struct Mode : public FileMem::Object
 {
    using FPtr = FileMem::Ptr;
-   Mode(int samples, int corrs, FPtr ptr = FileMem::nullPtr):
-      Object((samples/8)+((samples%8)!=0)+4*corrs,ptr),
-      _sBytes((samples/8)+((samples%8)!=0))
-   {}
-   uint8_t mask(int n)
-   {
-      int byte = n/8;
-      n%=8;
-      uint8_t tmp = get<uint8_t>(byte);
-      return (tmp>>n)&0x1;
-   }
-   void mask(int n, uint8_t v)
-   {
-      int byte = n/8;
-      n%=8;
-      if (v==0)
-      {
-         get<uint8_t>(byte)&(~(0x1<<n));
-      }
-      else
-      {
-         get<uint8_t>(byte)|(0x1<<n);
-      }
-   }
-   float& corr(int n) { get<float>(4*n+_sBytes); }
+   Mode(int size, FPtr ptr = FileMem::nullPtr): FileMem::Object(size,ptr) {}
+   uint8_t& mask(int n) { get<uint8_t>(n); }
+};
+
+struct Modes : public FileMem::Object
+{
+   using FPtr = FileMem::Ptr;
+   Modes(int size, int msize, FPtr ptr = FileMem::nullPtr):
+      FileMem::Object(size*msize,ptr),_Size(size) {}
+   uint8_t& mask(int mask, int n) { get<uint8_t>((mask*size)+n); }
 private:
-   int _sBytes;
+   int _Size;
 };
 
 }
 
 
 
-class cmatrix : public AccelCompEng::DataPlugin
+class CMatrix : public AccelCompEng::DataPlugin
 {
 public:
    // *
    // * DECLERATIONS
    // *
-   using Hdr = cmatrixData::Header;
-   using GHdr = cmatrixData::GeneHdr;
-   using SHdr = cmatrixData::SampleHdr;
-   using CHdr = cmatrixData::CorrHdr;
-   using Corr = cmatrixData::Correlation;
-   using Md = cmatrixData::Mode;
+   using string = std::string;
+   using Hdr = CMatrixData::Header;
+   using GHdr = CMatrixData::GeneHdr;
+   using SHdr = CMatrixData::SampleHdr;
+   using CHdr = CMatrixData::CorrHdr;
+   using Corr = CMatrixData::Correlation;
+   using Corrs = CMatrixData::Correlations;
+   using Mode = CMatrixData::Mode;
+   using Modes = CMatrixData::Modes;
    using GetOpts = AccelCompEng::GetOpts;
    using Terminal = AccelCompEng::Terminal;
    using FileMem = AccelCompEng::FileMem;
    using FileSync = AccelCompEng::FileSync;
-   using KincFile = AccelCompEng::File;
+   using File = AccelCompEng::File;
    using FString = AccelCompEng::FString;
-   using string = std::string;
-   using floatv = std::vector<float>;
-   using maskv = std::vector<uint8_t>;
    using FPtr = FileMem::Ptr;
    // *
-   // * BASIC METHODS
+   // * CLASSES
    // *
-   ACE_EXCEPTION(cmatrix,AlreadySet)
-   ACE_EXCEPTION(cmatrix,OutOfRange)
-   ACE_EXCEPTION(cmatrix,NotInitialized)
-   ACE_EXCEPTION(cmatrix,InvalidGeneCorr)
-   ACE_EXCEPTION(cmatrix,InvalidSize)
+   class Mask;
    // *
    // * BASIC METHODS
    // *
-   cmatrix(const string& type, const string& file);
+   //ACE_EXCEPTION(cmatrix,AlreadySet)
+   //ACE_EXCEPTION(cmatrix,OutOfRange)
+   //ACE_EXCEPTION(cmatrix,NotInitialized)
+   //ACE_EXCEPTION(cmatrix,InvalidGeneCorr)
+   //ACE_EXCEPTION(cmatrix,InvalidSize)
+   // *
+   // * BASIC METHODS
+   // *
+   CMatrix(const string& type, const string& file);
    // *
    // * VIRTUAL FUNCTIONS
    // *
@@ -132,22 +128,15 @@ public:
    // *
    // * FUNCTIONS
    // *
-   void set_gene_size(uint32_t);
-   void set_sample_size(uint32_t);
-   void set_correlation_size(uint32_t);
+   void initialize(uint32_t,uint32_t,uint32_t,uint8_t);
    void set_gene_name(uint32_t,const string&);
    void set_sample_name(uint32_t,const string&);
    void set_correlation_name(uint32_t,const string&);
-   void create_data();
-   FPtr set_modes(uint32_t,uint32_t,uint8_t);
-   FPtr get_modes(uint32_t,uint32_t);
-   void write_mode(FPtr,uint8_t,const maskv&,const floatv&);
 private:
    // *
    // * VARIABLES
    // *
    Hdr _hdr;
-   FileMem& _mem;
 };
 
 
