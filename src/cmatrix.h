@@ -23,7 +23,6 @@ struct Header : public FileMem::Static<52>
    FPtr& modeData() { get<FPtr>(36); }
    FPtr& corrData() { get<FPtr>(44); }
 };
-
 struct GeneHdr : public FileMem::Static<8>
 {
    using FPtr = FileMem::Ptr;

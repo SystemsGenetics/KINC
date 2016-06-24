@@ -9,18 +9,27 @@ EMatrix::EMatrix(const string& type, const string& file):
    _mem(*KincFile::mem()),
    _data(nullptr)
 {
+   // Does the KINC file have a header already set. This case would be for
+   // a new file.
    if (KincFile::head()==FileMem::nullPtr)
    {
+      // Allocate space in the file (file memory) for the header.
       _mem.allot(_hdr);
-      KincFile::head(_hdr.addr());
+      AccelCompEng::File::head(_hdr.addr());
+
+      // Set defaults for the ematrix header.
       _hdr.sampleSize() = 0;
       _hdr.geneSize() = 0;
       _hdr.transform() = Transform::none;
       _hdr.samplePtr() = FileMem::nullPtr;
       _hdr.genePtr() = FileMem::nullPtr;
       _hdr.expPtr() = FileMem::nullPtr;
+
+      // Write the header initially to file.
       _mem.sync(_hdr,FileSync::write);
    }
+   // The KINC file already has a header if the file already exists and is
+   // being opened.
    else
    {
       _hdr = KincFile::head();
@@ -29,7 +38,14 @@ EMatrix::EMatrix(const string& type, const string& file):
 }
 
 
-
+/// Imports data from an expression matrix text file.
+///
+///
+///
+/// @param ops
+///   The command-line arguments provided by the user.
+/// @param tm
+///
 void EMatrix::load(GetOpts &ops, Terminal &tm)
 {
    bool hasHeaders {true};
