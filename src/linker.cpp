@@ -6,7 +6,7 @@
 
 ACE_BEGIN_DATA
 ACE_DATA_PLUGIN(emx,EMatrix)
-ACE_DATA_PLUGIN(emx,cmatrix)
+ACE_DATA_PLUGIN(cmx,CMatrix)
 ACE_END_DATA
 
 

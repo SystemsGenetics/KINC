@@ -2,212 +2,321 @@
 
 
 
-cmatrix::cmatrix(const string& type, const string& file):
-   DataPlugin(type,file),
-   _mem(*KincFile::mem())
+CMatrix::CMatrix(const string& type, const string& file):
+   DataPlugin(type,file)
 {
-   if (KincFile::head()==FileMem::nullPtr)
+   if (File::head()==FileMem::nullPtr)
    {
-      _mem.allot(_hdr);
-      KincFile::head(_hdr.addr());
-      _hdr.geneSize() = 0;
-      _hdr.sampleSize() = 0;
-      _hdr.corrSize() = 0;
-      _hdr.genePtr() = FileMem::nullPtr;
-      _hdr.samplePtr() = FileMem::nullPtr;
-      _hdr.corrPtr() = FileMem::nullPtr;
-      _hdr.data() = FileMem::nullPtr;
-      _mem.sync(_hdr,FileSync::write);
+      File::mem().allot(_hdr);
+      File::head(_hdr.addr());
+      _hdr.gSize() = 0;
+      _hdr.sSize() = 0;
+      _hdr.cSize() = 0;
+      _hdr.mdMax() = 0;
+      _hdr.gPtr() = fNullPtr;
+      _hdr.sPtr() = fNullPtr;
+      _hdr.cPtr() = fNullPtr;
+      _hdr.mdData() = fNullPtr;
+      _hdr.crData() = fNullPtr;
+      File::mem().sync(_hdr,FSync::write);
    }
    else
    {
-      _hdr = KincFile::head();
-      _mem.sync(_hdr,FileSync::read);
+      _hdr = File::head();
+      File::mem().sync(_hdr,FSync::read);
    }
 }
 
 
 
-void cmatrix::load(GetOpts&, Terminal &tm)
+void CMatrix::load(GetOpts&, Terminal &tm)
 {
-   tm << "This command is not supported by cmatrix data type.\n";
+   tm << "Not yet implemented.\n";
 }
 
 
 
-void cmatrix::dump(GetOpts&, Terminal &tm)
+void CMatrix::dump(GetOpts&, Terminal &tm)
 {
-   tm << "This command is not supported by cmatrix data type.\n";
+   tm << "Not yet implemented.\n";
 }
 
 
 
-void cmatrix::query(GetOpts &ops, Terminal &tm)
+void CMatrix::query(GetOpts&, Terminal &tm)
 {
-   tm << "To be added.\n";
+   tm << "Not yet implemented.\n";
 }
 
 
 
-bool cmatrix::empty()
+bool CMatrix::empty()
 {
-   return _hdr.geneSize()==0;
+   return _hdr.gSize()==0;
 }
 
 
 
-void cmatrix::set_gene_size(uint32_t size)
+void CMatrix::initialize(uint32_t gSize, uint32_t sSize, uint32_t cSize,
+                         uint8_t mdMax)
 {
-   AccelCompEng::assert<AlreadySet>(_hdr.genePtr()==FileMem::nullPtr,__LINE__);
-   _hdr.geneSize() = size;
-   GHdr ghdr;
-   _mem.allot(ghdr,size);
-   _hdr.genePtr() = ghdr.addr();
-   ghdr.name() = FileMem::nullPtr;
-   for (int i=0;i<size;++i)
-   {
-      _mem.sync(ghdr,FileSync::write,i);
-   }
-   _mem.sync(_hdr,FileSync::write);
+   bool cond {_hdr.gSize()==0};
+   AccelCompEng::assert<AlreadyInitialized>(cond,__LINE__);
+   cond = gSize>0&&sSize>0&&cSize>0&&mdMax>0;
+   AccelCompEng::assert<InvalidSize>(cond,__LINE__);
+   _hdr.gSize() = gSize;
+   _hdr.sSize() = sSize;
+   _hdr.cSize() = cSize;
+   _hdr.mdMax() = mdMax;
+   NmHead nh;
+   File::mem().allot(nh,gSize);
+   _hdr.gPtr() = nh.addr();
+   File::mem().allot(nh,sSize);
+   _hdr.sPtr() = nh.addr();
+   File::mem().allot(nh,cSize);
+   _hdr.cPtr() = nh.addr();
+   _hdr.mdData() = GeneModes::initialize(*this,gSize,sSize,mdMax);
+   _hdr.crData() = GeneCorrs::initialize(*this,gSize,cSize,mdMax);
+   File::mem().sync(_hdr,FSync::write);
 }
 
 
 
-void cmatrix::set_sample_size(uint32_t size)
+void CMatrix::set_gene_name(uint32_t i, const string& name)
 {
-   AccelCompEng::assert<AlreadySet>(_hdr.samplePtr()==FileMem::nullPtr,__LINE__);
-   _hdr.sampleSize() = size;
-   SHdr shdr;
-   _mem.allot(shdr,size);
-   _hdr.samplePtr() = shdr.addr();
-   shdr.name() = FileMem::nullPtr;
-   for (int i=0;i<size;++i)
-   {
-      _mem.sync(shdr,FileSync::write,i);
-   }
-   _mem.sync(_hdr,FileSync::write);
+   set_name(_hdr.gPtr(),i,_hdr.gSize(),name);
 }
 
 
 
-void cmatrix::set_correlation_size(uint32_t size)
+void CMatrix::set_sample_name(uint32_t i, const string& name)
 {
-   AccelCompEng::assert<AlreadySet>(_hdr.corrPtr()==FileMem::nullPtr,__LINE__);
-   _hdr.corrSize() = size;
-   CHdr chdr;
-   _mem.allot(chdr,size);
-   _hdr.corrPtr() = chdr.addr();
-   chdr.name() = FileMem::nullPtr;
-   for (int i=0;i<size;++i)
-   {
-      _mem.sync(chdr,FileSync::write,i);
-   }
-   _mem.sync(_hdr,FileSync::write);
+   set_name(_hdr.sPtr(),i,_hdr.sSize(),name);
 }
 
 
 
-void cmatrix::set_gene_name(uint32_t n, const string& name)
+void CMatrix::set_correlation_name(uint32_t i, const string& name)
 {
-   AccelCompEng::assert<OutOfRange>(n<_hdr.geneSize(),__LINE__);
-   FString newName(KincFile::mem());
-   newName = name;
-   GHdr ghdr(_hdr.genePtr());
-   ghdr.name() = newName.addr();
-   _mem.sync(ghdr,FileSync::write,n);
+   set_name(_hdr.cPtr(),i,_hdr.cSize(),name);
 }
 
 
 
-void cmatrix::set_sample_name(uint32_t n, const string& name)
+CMatrix::GeneModes CMatrix::get_modes(uint32_t g1, uint32_t g2)
 {
-   AccelCompEng::assert<OutOfRange>(n<_hdr.sampleSize(),__LINE__);
-   FString newName(KincFile::mem());
-   newName = name;
-   SHdr shdr(_hdr.samplePtr());
-   shdr.name() = newName.addr();
-   _mem.sync(shdr,FileSync::write,n);
+   bool cond {_hdr.mdData()!=fNullPtr};
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
+   return GeneModes(this,_hdr.mdData()+diagonal(g1,g2));
 }
 
 
 
-void cmatrix::set_correlation_name(uint32_t n, const string& name)
+void CMatrix::get_modes(GeneModes& gm, uint32_t g1, uint32_t g2)
 {
-   AccelCompEng::assert<OutOfRange>(n<_hdr.corrSize(),__LINE__);
-   FString newName(KincFile::mem());
-   newName = name;
-   CHdr chdr(_hdr.corrPtr());
-   chdr.name() = newName.addr();
-   _mem.sync(chdr,FileSync::write,n);
+   bool cond {_hdr.mdData()!=fNullPtr};
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
+   gm.addr(_hdr.mdData()+diagonal(g1,g2));
 }
 
 
 
-void cmatrix::create_data()
+CMatrix::GeneCorrs CMatrix::get_corrs(uint32_t g1, uint32_t g2)
 {
-   AccelCompEng::assert<AlreadySet>(_hdr.data()==FileMem::nullPtr,__LINE__);
-   Corr corr;
-   _mem.allot(corr,_hdr.geneSize()*(_hdr.geneSize()-1)/2);
-   _hdr.data() = corr.addr();
+   bool cond {_hdr.crData()!=fNullPtr};
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
+   return GeneCorrs(this,_hdr.crData()+diagonal(g1,g2));
 }
 
 
 
-cmatrix::FPtr cmatrix::set_modes(uint32_t g1, uint32_t g2, uint8_t modes)
+void CMatrix::get_corrs(GeneCorrs& gc, uint32_t g1, uint32_t g2)
 {
-   AccelCompEng::assert<NotInitialized>(_hdr.data()!=FileMem::nullPtr,__LINE__);
-   AccelCompEng::assert<InvalidGeneCorr>(g1!=g2,__LINE__);
-   if (g1>g2)
+   bool cond {_hdr.crData()!=fNullPtr};
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
+   gc.addr(_hdr.crData()+diagonal(g1,g2));
+}
+
+
+
+void CMatrix::set_name(FPtr ptr, uint32_t i, uint32_t size, const string& name)
+{
+   bool cond {size>0};
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
+   cond = i<size;
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   NmHead nm {ptr};
+   FString str {&File::mem()};
+   str = name;
+   nm.nPtr() = str.addr();
+   File::mem().sync(nm,FSync::write,i);
+}
+
+
+
+CMatrix::SizeT CMatrix::diagonal(uint32_t g1, uint32_t g2)
+{
+   bool cond {g1!=g2};
+   AccelCompEng::assert<InvalidGeneCorr>(cond,__LINE__);
+   cond = g1<_hdr.gSize()&&g2<_hdr.gSize();
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   if (g1<g2)
    {
       uint32_t tmp {g1};
       g1 = g2;
       g2 = tmp;
    }
-   FileMem::SizeT inc {(g1*(g1+1)/2)+g2};
-   Corr corr(_hdr.data());
-   Md md(_hdr.sampleSize(),_hdr.corrSize());
-   _mem.allot(md,modes);
-   corr.modePtr() = md.addr();
-   corr.modeSize() = modes;
-   _mem.sync(corr,FileSync::write,inc);
+   return (g1*(g1+1)/2)+g2;
+}
+
+
+
+CMatrix::SizeT CMatrix::diag_size(uint32_t gNum)
+{
+   return gNum*(gNum-1)/2;
+}
+
+
+
+bool CMatrix::GeneModes::mode(uint8_t md, uint32_t i)
+{
+   bool cond {md<_p->_hdr.mdMax()&&i<md<_p->_hdr.sSize()};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   AccelCompEng::assert<ValueNotRead>(_isRead,__LINE__);
+   return _data.mask(md,i);
+}
+
+
+
+void CMatrix::GeneModes::mode(uint8_t md, uint32_t i, bool val)
+{
+   bool cond {md<_p->_hdr.mdMax()&&i<md<_p->_hdr.sSize()};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   _data.mask(md,i) = val;
+}
+
+
+
+void CMatrix::GeneModes::mode(uint8_t md, bool val)
+{
+   bool cond {md<_p->_hdr.mdMax()};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   for (int i=0;i<_p->_hdr.sSize();++i)
+   {
+      _data.mask(md,i) = val;
+   }
+}
+
+
+
+void CMatrix::GeneModes::mode(bool val)
+{
+   for (int md=0;md<_p->_hdr.mdMax();++md)
+   {
+      for (int i=0;i<_p->_hdr.sSize();++i)
+      {
+         _data.mask(md,i) = val;
+      }
+   }
+}
+
+
+
+void CMatrix::GeneModes::read()
+{
+   _p->File::mem().sync(_data,FSync::read);
+   _isRead = true;
+}
+
+
+
+void CMatrix::GeneModes::write()
+{
+   _p->File::mem().sync(_data,FSync::write);
+}
+
+
+
+CMatrix::GeneModes::GeneModes(CMatrix* p, FPtr ptr):
+   _p(p),
+   _data(p->_hdr.mdMax(),p->_hdr.sSize(),ptr)
+{}
+
+
+
+void CMatrix::GeneModes::addr(FPtr ptr)
+{
+   _data.addr(ptr);
+   _isRead = false;
+}
+
+
+
+CMatrix::FPtr CMatrix::GeneModes::initialize(CMatrix& p, uint32_t gSize,
+                                             uint32_t sSize,
+                                             uint8_t mdMax)
+{
+   Modes md(mdMax,sSize);
+   p.File::mem().allot(md,p.diag_size(gSize));
    return md.addr();
 }
 
 
 
-cmatrix::FPtr cmatrix::get_modes(uint32_t g1, uint32_t g2)
+float CMatrix::GeneCorrs::corr(uint8_t md, uint32_t i)
 {
-   AccelCompEng::assert<NotInitialized>(_hdr.data()!=FileMem::nullPtr,__LINE__);
-   AccelCompEng::assert<InvalidGeneCorr>(g1!=g2,__LINE__);
-   if (g1>g2)
-   {
-      uint32_t tmp {g1};
-      g1 = g2;
-      g2 = tmp;
-   }
-   FileMem::SizeT inc {(g1*(g1+1)/2)+g2};
-   Corr corr(_hdr.data());
-   _mem.sync(corr,FileSync::read,inc);
-   return corr.modePtr();
+   bool cond {md<_p->_hdr.mdMax()&&i<md<_p->_hdr.cSize()};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   AccelCompEng::assert<ValueNotRead>(_isRead,__LINE__);
+   return _data.val(md,i);
 }
 
 
 
-void cmatrix::write_mode(FPtr ptr, uint8_t inc, const maskv& mask,
-                         const floatv& corrs)
+void CMatrix::GeneCorrs::corr(uint8_t md, uint32_t i, float val)
 {
-   AccelCompEng::assert<InvalidSize>(mask.size()==_hdr.sampleSize(),__LINE__);
-   AccelCompEng::assert<InvalidSize>(corrs.size()==_hdr.corrSize(),__LINE__);
-   Md md(_hdr.sampleSize(),_hdr.corrSize(),ptr);
-   int x {0};
-   for (auto i:mask)
-   {
-      md.mask(x++,i);
-   }
-   x = 0;
-   for (auto i:corrs)
-   {
-      md.corr(x) = i;
-   }
-   _mem.sync(md,FileSync::write,inc);
+   bool cond {md<_p->_hdr.mdMax()&&i<md<_p->_hdr.cSize()};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   _data.val(md,i) = val;
+}
+
+
+
+void CMatrix::GeneCorrs::read()
+{
+   _p->File::mem().sync(_data,FSync::read);
+   _isRead = true;
+}
+
+
+
+void CMatrix::GeneCorrs::write()
+{
+   _p->File::mem().sync(_data,FSync::write);
+}
+
+
+
+CMatrix::GeneCorrs::GeneCorrs(CMatrix* p, FPtr ptr):
+   _p(p),
+   _data(p->_hdr.mdMax(),p->_hdr.cSize(),ptr)
+{}
+
+
+
+void CMatrix::GeneCorrs::addr(FPtr ptr)
+{
+   _data.addr(ptr);
+   _isRead = false;
+}
+
+
+
+CMatrix::FPtr CMatrix::GeneCorrs::initialize(CMatrix& p, uint32_t gSize,
+                                             uint32_t cSize,
+                                             uint8_t mdMax)
+{
+   Corrs cr(mdMax,cSize);
+   p.File::mem().allot(cr,p.diag_size(gSize));
+   return cr.addr();
 }
