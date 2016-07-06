@@ -134,7 +134,6 @@ private:
    // * FILEMEM TYPES
    // *
    ACE_FMEM_OBJECT(Corrs)
-      using FPtr = AccelCompEng::FileMem::Ptr;
       Corrs(int mdSz, int crSz, FPtr ptr = fNullPtr):
          Object(mdSz*crSz*4,ptr),
          _mdSz(mdSz)

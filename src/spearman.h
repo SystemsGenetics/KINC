@@ -28,7 +28,7 @@ protected:
    void execute_pn(GetOpts&,Terminal&) override final;
 private:
    std::vector<EMatrix*> _in;
-   cmatrix* _out {nullptr};
+   CMatrix* _out {nullptr};
 };
 
 

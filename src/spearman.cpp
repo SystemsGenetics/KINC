@@ -9,7 +9,7 @@
 
 using namespace AccelCompEng;
 
-
+/*
 
 void spearman::input(DataPlugin* input)
 {
@@ -184,3 +184,4 @@ void spearman::execute_pn(GetOpts& ops, Terminal& tm)
 {
    tm << "Not yet implemented.\n";
 }
+*/
