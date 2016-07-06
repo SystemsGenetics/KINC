@@ -5,8 +5,233 @@
 
 
 EMatrix::EMatrix(const string& type, const string& file):
+   DataPlugin(type,file)
+{
+   // Does the KINC file have a header already set. This case would be for
+   // a new file.
+   if (File::head()==fNullPtr)
+   {
+      // Allocate space in the file (file memory) for the header.
+      File::mem().allot(_hdr);
+      File::head(_hdr.addr());
+      // Set defaults for the ematrix header.
+      _hdr.sSize() = 0;
+      _hdr.gSize() = 0;
+      _hdr.tr() = Transform::none;
+      _hdr.sPtr() = fNullPtr;
+      _hdr.gPtr() = fNullPtr;
+      _hdr.eData() = fNullPtr;
+      // Write the header initially to file.
+      File::mem().sync(_hdr,FSync::write);
+   }
+   // The KINC file already has a header if the file already exists and is
+   // being opened.
+   else
+   {
+      _hdr = File::head();
+      File::mem().sync(_hdr,FSync::read);
+   }
+}
+
+
+
+EMatrix::~EMatrix()
+{
+   if (_iGene)
+   {
+      delete _iGene;
+   }
+}
+
+
+
+int EMatrix::size(Which w) const
+{
+   switch (w)
+   {
+   case Which::gene:
+      return _hdr.gSize();
+   case Which::sample:
+      return _hdr.sSize();
+   }
+}
+
+
+
+EMatrix::string EMatrix::name(Which w, int i)
+{
+   NmHead hd {fNullPtr};
+   switch (w)
+   {
+   case Which::gene:
+      {
+         bool cond {_hdr.gPtr()!=fNullPtr&&i>=0||i<_hdr.gSize()};
+         AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+         hd.addr(_hdr.gPtr());
+         break;
+      }
+   case Which::sample:
+      {
+         bool cond {_hdr.sPtr()!=fNullPtr&&i>=0||i<_hdr.sSize()};
+         AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+         hd.addr(_hdr.sPtr());
+         break;
+      }
+   }
+   File::mem().sync(hd,FSync::read,i);
+   FString name(&File::mem(),hd.nPtr());
+   return *name;
+}
+
+
+
+EMatrix::Gene EMatrix::begin()
+{
+   return Gene(this,0);
+}
+
+
+
+EMatrix::Gene EMatrix::end()
+{
+   return Gene(this,_hdr.gSize());
+}
+
+
+
+EMatrix::Gene& EMatrix::at(int i)
+{
+   bool cond {_hdr.gPtr()!=fNullPtr&&i>=0||i<_hdr.gSize()};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   return (*this)[i];
+}
+
+
+
+EMatrix::Gene& EMatrix::operator[](int i)
+{
+   if (!_iGene)
+   {
+      _iGene = new Gene(this,i);
+   }
+   else
+   {
+      _iGene->set(i);
+   }
+   return *_iGene;
+}
+
+
+
+void EMatrix::Gene::read()
+{
+   _p->File::mem().sync(_head,FSync::read,_i);
+}
+
+
+
+void EMatrix::Gene::write()
+{
+   _p->File::mem().sync(_head,FSync::write,_i);
+}
+
+
+
+EMatrix::Gene::Iterator EMatrix::Gene::begin()
+{
+   return Iterator(this,0);
+}
+
+
+
+EMatrix::Gene::Iterator EMatrix::Gene::end()
+{
+   return Iterator(this,_p->_hdr.sSize());
+}
+
+
+
+float& EMatrix::Gene::at(int i)
+{
+   bool cond {_p->_hdr.gPtr()!=fNullPtr&&i>=0||i<_p->_hdr.sSize()};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   return (*this)[i];
+}
+
+
+
+float& EMatrix::Gene::operator[](int i)
+{
+   return _head.val(i);
+}
+
+
+
+void EMatrix::Gene::operator++()
+{
+   if (_i<_p->_hdr.gSize())
+   {
+      ++_i;
+   }
+}
+
+
+
+bool EMatrix::Gene::operator!=(const Gene& cmp)
+{
+   return _p!=cmp._p||_i!=cmp._i;
+}
+
+
+
+EMatrix::Gene::Gene(EMatrix* p, int i):
+   _p(p),
+   _head(_p->_hdr.eData()),
+   _i(i)
+{}
+
+
+
+void EMatrix::Gene::set(int i)
+{
+   _i = i;
+}
+
+
+
+void EMatrix::Gene::Iterator::operator++()
+{
+   if (_i<_p->_p->_hdr.sSize())
+   {
+      ++_i;
+   }
+}
+
+
+
+float& EMatrix::Gene::Iterator::operator*()
+{
+   return _p->_head.val(_i);
+}
+
+
+
+bool EMatrix::Gene::Iterator::operator!=(const Iterator& cmp)
+{
+   return _p!=cmp._p||_i!=cmp._i;
+}
+
+
+
+EMatrix::Gene::Iterator::Iterator(Gene* p, int i):
+   _p(p),
+   _i(i)
+{}
+
+/*
+EMatrix::EMatrix(const string& type, const string& file):
    DataPlugin(type,file),
-   _mem(*KincFile::mem()),
+   _mem(KincFile::mem()),
    _data(nullptr)
 {
    // Does the KINC file have a header already set. This case would be for
@@ -409,3 +634,4 @@ void EMatrix::load_genes(Terminal& tm, ifile& f, string nan, Transform t)
       }
    }
 }
+*/

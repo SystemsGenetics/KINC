@@ -5,10 +5,11 @@
 #include <vector>
 
 
-
+/*
 namespace ExprMatrixData {
 
 using namespace AccelCompEng;
+
 
 struct Header : public FileMem::Static<33>
 {
@@ -62,6 +63,16 @@ struct Expressions : public FileMem::Object
 class EMatrix : public AccelCompEng::DataPlugin
 {
 public:
+   ACE_DATA_HEADER()
+   ACE_FMEM_STATIC(Hdr,33)
+      using FPtr = FileMem::Ptr;
+      ACE_FMEM_VAL(sampleSize,uint32_t,0)
+      ACE_FMEM_VAL(geneSize,uint32_t,4)
+      ACE_FMEM_VAL(transform,uint32_t,8)
+      ACE_FMEM_VAL(samplePtr,FPtr,9)
+      ACE_FMEM_VAL(genePtr,FPtr,17)
+      ACE_FMEM_VAL(expPtr,FPtr,25)
+   ACE_FMEM_END()
    // *
    // * ENUMERATIONS
    // *
@@ -69,17 +80,13 @@ public:
    // *
    // * DECLERATIONS
    // *
-   using Hdr = ExprMatrixData::Header;
+   //using Hdr = ExprMatrixData::Header;
    using gHdr = ExprMatrixData::GeneHdr;
    using sHdr = ExprMatrixData::SampleHdr;
    using Exp = ExprMatrixData::Expression;
    using Exps = ExprMatrixData::Expressions;
-   using GetOpts = AccelCompEng::GetOpts;
-   using Terminal = AccelCompEng::Terminal;
-   using FileMem = AccelCompEng::FileMem;
    using FileSync = AccelCompEng::FileSync;
    using KincFile = AccelCompEng::File;
-   using FString = AccelCompEng::FString;
    //using ace = AccelCompEng;
    using string = std::string;
    using ifile = std::ifstream;
@@ -126,6 +133,150 @@ private:
    Hdr _hdr;
    FileMem& _mem;
    Exps* _data;
+};
+*/
+
+
+class EMatrix : public AccelCompEng::DataPlugin
+{
+public:
+   ACE_DATA_HEADER()
+   ACE_EXCEPTION(EMatrix,OutOfRange)
+   enum class Which {sample,gene};
+   class Gene;
+   class Mirror;
+   using string = std::string;
+   EMatrix(const string&,const string&);
+   ~EMatrix();
+   void load(GetOpts &ops, Terminal &tm) override final {}
+   void dump(GetOpts &ops, Terminal &tm) override final {}
+   void query(GetOpts &ops, Terminal &tm) override final {}
+   bool empty() override final {}
+   int size(Which) const;
+   string name(Which,int);
+   Gene begin();
+   Gene end();
+   Gene& at(int);
+   Gene& operator[](int);
+private:
+   enum Transform { none=0,log,log2,log10 };
+   ACE_FMEM_STATIC(Header,33)
+      ACE_FMEM_VAL(sSize,uint32_t,0)
+      ACE_FMEM_VAL(gSize,uint32_t,4)
+      ACE_FMEM_VAL(tr,uint32_t,8)
+      ACE_FMEM_VAL(sPtr,FPtr,9)
+      ACE_FMEM_VAL(gPtr,FPtr,17)
+      ACE_FMEM_VAL(eData,FPtr,25)
+   ACE_FMEM_END()
+   ACE_FMEM_STATIC(NmHead,8)
+      ACE_FMEM_VAL(nPtr,FPtr,0)
+   ACE_FMEM_END()
+   Header _hdr {fNullPtr};
+   Gene* _iGene {nullptr};
+};
+
+
+
+class EMatrix::Gene
+{
+public:
+   friend class EMatrix;
+   class Iterator;
+   void read();
+   void write();
+   Iterator begin();
+   Iterator end();
+   float& at(int);
+   float& operator[](int);
+   void operator++();
+   bool operator!=(const Gene&);
+private:
+   Gene(EMatrix*,int);
+   void set(int);
+   ACE_FMEM_OBJECT(Expr)
+      Expr(int cSize, FPtr ptr = fNullPtr): Object(4*cSize,ptr) {}
+      float& val(int i) { get<float>(4*i); }
+   ACE_FMEM_END()
+   EMatrix* _p;
+   Expr _head;
+   int _i;
+};
+
+
+
+class EMatrix::Gene::Iterator
+{
+public:
+   friend class Gene;
+   void operator++();
+   float& operator*();
+   bool operator!=(const Iterator&);
+private:
+   Iterator(Gene*,int);
+   Gene* _p;
+   int _i;
+};
+
+
+
+class EMatrix::Mirror
+{
+public:
+   friend class EMatrix;
+   class Gene;
+   void read();
+   void write();
+   Gene begin();
+   Gene end();
+   Gene& at(int);
+   Gene& operator[](int);
+private:
+   Mirror(EMatrix*);
+   ACE_FMEM_OBJECT(AllExps)
+      AllExps(int gSize, int cSize, FPtr ptr = fNullPtr):
+         Object(4*gSize*cSize,ptr),
+         _cSize(cSize)
+      {}
+      float& val(int gi, int ci) { get<float>((gi*_cSize)+ci); }
+      int _cSize;
+   ACE_FMEM_END()
+   AllExps _data;
+   Gene* _iGene;
+};
+
+
+
+class EMatrix::Mirror::Gene
+{
+public:
+   friend class Mirror;
+   class Iterator;
+   Iterator begin();
+   Iterator end();
+   float& at(int);
+   float& operator[](int);
+   void operator++();
+   Gene& operator!=(const Gene&);
+private:
+   Gene(Mirror*,int);
+   Mirror* _p;
+   int _i;
+};
+
+
+
+class EMatrix::Mirror::Gene::Iterator
+{
+public:
+   friend class Array;
+   float& operator[](int);
+   void operator++();
+   float& operator*();
+   Iterator& operator!=(const Iterator&);
+private:
+   Iterator(Gene*,int);
+   Gene* _p;
+   int _i;
 };
 
 
