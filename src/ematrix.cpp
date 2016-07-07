@@ -30,6 +30,27 @@ EMatrix::EMatrix(const string& type, const string& file):
    {
       _hdr = File::head();
       File::mem().sync(_hdr,FSync::read);
+      NmHead hd {_hdr.gPtr()};
+      for (int i=0;i<_hdr.gSize();++i)
+      {
+         File::mem().sync(hd,FSync::read,i);
+         FString name(&File::mem(),hd.nPtr());
+         _gNames.push_back(*name);
+      }
+      if (_hdr.sPtr()!=fNullPtr)
+      {
+         hd.addr(_hdr.sPtr());
+         for (int i=0;i<_hdr.sSize();++i)
+         {
+            File::mem().sync(hd,FSync::read,i);
+            FString name(&File::mem(),hd.nPtr());
+            _sNames.push_back(*name);
+         }
+      }
+      else
+      {
+         _sNames.resize(_hdr.sSize());
+      }
    }
 }
 
@@ -45,42 +66,116 @@ EMatrix::~EMatrix()
 
 
 
-int EMatrix::size(Which w) const
+void EMatrix::initialize(int gSize, int sSize, bool sHeaders)
 {
-   switch (w)
+   bool cond {_hdr.gPtr()==fNullPtr};
+   AccelCompEng::assert<AlreadyInit>(cond,__LINE__);
+   NmHead hd;
+   File::mem().allot(hd,gSize);
+   _hdr.gPtr() = hd.addr();
+   if (sHeaders)
    {
-   case Which::gene:
-      return _hdr.gSize();
-   case Which::sample:
-      return _hdr.sSize();
+      File::mem().allot(hd,gSize);
+      _hdr.sPtr() = hd.addr();
    }
+   _hdr.gSize() = gSize;
+   _hdr.sSize() = sSize;
+   //_hdr.eData() = Gene::initialize(gSize,sSize);
+   _gNames.resize(gSize);
+   _sNames.resize(sSize);
+   File::mem().sync(_hdr,FSync::write);
 }
 
 
 
-EMatrix::string EMatrix::name(Which w, int i)
+bool EMatrix::sHead() const
 {
-   NmHead hd {fNullPtr};
-   switch (w)
+   return _hdr.sPtr()!=fNullPtr;
+}
+
+
+
+int EMatrix::gSize() const
+{
+   return _hdr.gSize();
+}
+
+
+
+int EMatrix::sSize() const
+{
+   return _hdr.sSize();
+}
+
+
+
+const EMatrix::string& EMatrix::gName(int i) const
+{
+   bool cond {_hdr.gPtr()!=fNullPtr};
+   AccelCompEng::assert<NoData>(cond,__LINE__);
+   cond = {i>=0||i<_hdr.gSize()};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   return _gNames[i];
+}
+
+
+
+void EMatrix::gName(int i, const string& name)
+{
+   bool cond {_hdr.gPtr()!=fNullPtr};
+   AccelCompEng::assert<NotInit>(cond,__LINE__);
+   cond = {i>=0||i<_hdr.gSize()};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   _gNames[i] = name;
+}
+
+
+
+const EMatrix::string& EMatrix::sName(int i) const
+{
+   bool cond {_hdr.gPtr()!=fNullPtr};
+   AccelCompEng::assert<NoData>(cond,__LINE__);
+   cond = {i>=0||i<_hdr.gSize()};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   return _sNames[i];
+}
+
+
+
+void EMatrix::sName(int i, const string& name)
+{
+   bool cond {_hdr.sPtr()!=fNullPtr};
+   AccelCompEng::assert<NotInit>(cond,__LINE__);
+   cond = {i>=0||i<_hdr.sSize()};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   _sNames[i] = name;
+}
+
+
+
+void EMatrix::write()
+{
+   bool cond {_hdr.gPtr()!=fNullPtr};
+   AccelCompEng::assert<NotInit>(cond,__LINE__);
+   NmHead hd {_hdr.gPtr()};
+   for (int i=0;i<_gNames.size();++i)
    {
-   case Which::gene:
+      FString tmp {&File::mem()};
+      tmp = _gNames[i];
+      hd.nPtr() = tmp.addr();
+      File::mem().sync(hd,FSync::write,i);
+   }
+   if (_hdr.sPtr()!=fNullPtr)
+   {
+      hd.addr(_hdr.sPtr());
+      for (int i=0;i<_sNames.size();++i)
       {
-         bool cond {_hdr.gPtr()!=fNullPtr&&i>=0||i<_hdr.gSize()};
-         AccelCompEng::assert<OutOfRange>(cond,__LINE__);
-         hd.addr(_hdr.gPtr());
-         break;
-      }
-   case Which::sample:
-      {
-         bool cond {_hdr.sPtr()!=fNullPtr&&i>=0||i<_hdr.sSize()};
-         AccelCompEng::assert<OutOfRange>(cond,__LINE__);
-         hd.addr(_hdr.sPtr());
-         break;
+         FString tmp {&File::mem()};
+         tmp = _sNames[i];
+         hd.nPtr() = tmp.addr();
+         File::mem().sync(hd,FSync::write,i);
       }
    }
-   File::mem().sync(hd,FSync::read,i);
-   FString name(&File::mem(),hd.nPtr());
-   return *name;
 }
 
 

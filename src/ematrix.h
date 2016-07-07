@@ -142,6 +142,10 @@ class EMatrix : public AccelCompEng::DataPlugin
 public:
    ACE_DATA_HEADER()
    ACE_EXCEPTION(EMatrix,OutOfRange)
+   ACE_EXCEPTION(EMatrix,NoData)
+   ACE_EXCEPTION(EMatrix,AlreadyInit)
+   ACE_EXCEPTION(EMatrix,NotInit)
+   ACE_EXCEPTION(EMatrix,AlreadySet)
    enum class Which {sample,gene};
    class Gene;
    class Mirror;
@@ -152,14 +156,22 @@ public:
    void dump(GetOpts &ops, Terminal &tm) override final {}
    void query(GetOpts &ops, Terminal &tm) override final {}
    bool empty() override final {}
-   int size(Which) const;
-   string name(Which,int);
+   void initialize(int,int,bool);
+   bool sHead() const;
+   int gSize() const;
+   int sSize() const;
+   const string& gName(int) const;
+   void gName(int,const string&);
+   const string& sName(int) const;
+   void sName(int,const string&);
+   void write();
    Gene begin();
    Gene end();
    Gene& at(int);
    Gene& operator[](int);
 private:
    enum Transform { none=0,log,log2,log10 };
+   using svec = std::vector<string>;
    ACE_FMEM_STATIC(Header,33)
       ACE_FMEM_VAL(sSize,uint32_t,0)
       ACE_FMEM_VAL(gSize,uint32_t,4)
@@ -173,6 +185,8 @@ private:
    ACE_FMEM_END()
    Header _hdr {fNullPtr};
    Gene* _iGene {nullptr};
+   svec _gNames;
+   svec _sNames;
 };
 
 
