@@ -69,7 +69,7 @@ EMatrix::~EMatrix()
 void EMatrix::initialize(int gSize, int sSize, bool sHeaders)
 {
    bool cond {_hdr.gPtr()==fNullPtr};
-   AccelCompEng::assert<AlreadyInit>(cond,__LINE__);
+   AccelCompEng::assert<AlreadyInitialized>(cond,__LINE__);
    NmHead hd;
    File::mem().allot(hd,gSize);
    _hdr.gPtr() = hd.addr();
@@ -80,7 +80,7 @@ void EMatrix::initialize(int gSize, int sSize, bool sHeaders)
    }
    _hdr.gSize() = gSize;
    _hdr.sSize() = sSize;
-   //_hdr.eData() = Gene::initialize(gSize,sSize);
+   _hdr.eData() = Gene::initialize(File::mem(),gSize,sSize);
    _gNames.resize(gSize);
    _sNames.resize(sSize);
    File::mem().sync(_hdr,FSync::write);
@@ -123,7 +123,7 @@ const EMatrix::string& EMatrix::gName(int i) const
 void EMatrix::gName(int i, const string& name)
 {
    bool cond {_hdr.gPtr()!=fNullPtr};
-   AccelCompEng::assert<NotInit>(cond,__LINE__);
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
    cond = {i>=0||i<_hdr.gSize()};
    AccelCompEng::assert<OutOfRange>(cond,__LINE__);
    _gNames[i] = name;
@@ -145,7 +145,7 @@ const EMatrix::string& EMatrix::sName(int i) const
 void EMatrix::sName(int i, const string& name)
 {
    bool cond {_hdr.sPtr()!=fNullPtr};
-   AccelCompEng::assert<NotInit>(cond,__LINE__);
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
    cond = {i>=0||i<_hdr.sSize()};
    AccelCompEng::assert<OutOfRange>(cond,__LINE__);
    _sNames[i] = name;
@@ -153,10 +153,24 @@ void EMatrix::sName(int i, const string& name)
 
 
 
+EMatrix::Transform EMatrix::transform() const
+{
+   return (Transform)_hdr.tr();
+}
+
+
+
+void EMatrix::transform(Transform tr)
+{
+   _hdr.tr() = tr;
+}
+
+
+
 void EMatrix::write()
 {
    bool cond {_hdr.gPtr()!=fNullPtr};
-   AccelCompEng::assert<NotInit>(cond,__LINE__);
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
    NmHead hd {_hdr.gPtr()};
    for (int i=0;i<_gNames.size();++i)
    {
@@ -176,6 +190,7 @@ void EMatrix::write()
          File::mem().sync(hd,FSync::write,i);
       }
    }
+   File::mem().sync(_hdr,FSync::write);
 }
 
 
@@ -196,7 +211,9 @@ EMatrix::Gene EMatrix::end()
 
 EMatrix::Gene& EMatrix::at(int i)
 {
-   bool cond {_hdr.gPtr()!=fNullPtr&&i>=0||i<_hdr.gSize()};
+   bool cond {_hdr.gPtr()!=fNullPtr};
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
+   cond = i>=0&&i<_hdr.gSize();
    AccelCompEng::assert<OutOfRange>(cond,__LINE__);
    return (*this)[i];
 }
@@ -248,7 +265,9 @@ EMatrix::Gene::Iterator EMatrix::Gene::end()
 
 float& EMatrix::Gene::at(int i)
 {
-   bool cond {_p->_hdr.gPtr()!=fNullPtr&&i>=0||i<_p->_hdr.sSize()};
+   bool cond {_p->_hdr.sPtr()!=fNullPtr};
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
+   cond = i>=0&&i<_p->_hdr.sSize();
    AccelCompEng::assert<OutOfRange>(cond,__LINE__);
    return (*this)[i];
 }
@@ -294,6 +313,15 @@ void EMatrix::Gene::set(int i)
 
 
 
+EMatrix::FPtr EMatrix::Gene::initialize(FileMem& mem, int gSize, int sSize)
+{
+   Expr newData(sSize);
+   mem.allot(newData,gSize);
+   return newData.addr();
+}
+
+
+
 void EMatrix::Gene::Iterator::operator++()
 {
    if (_i<_p->_p->_hdr.sSize())
@@ -323,39 +351,171 @@ EMatrix::Gene::Iterator::Iterator(Gene* p, int i):
    _i(i)
 {}
 
-/*
-EMatrix::EMatrix(const string& type, const string& file):
-   DataPlugin(type,file),
-   _mem(KincFile::mem()),
-   _data(nullptr)
+
+
+EMatrix::Mirror::Mirror(EMatrix& p):
+   _p(&p),
+   _data(p._hdr.gSize(),p._hdr.sSize(),p._hdr.eData())
 {
-   // Does the KINC file have a header already set. This case would be for
-   // a new file.
-   if (KincFile::head()==FileMem::nullPtr)
-   {
-      // Allocate space in the file (file memory) for the header.
-      _mem.allot(_hdr);
-      AccelCompEng::File::head(_hdr.addr());
+   bool cond {p._hdr.eData()!=fNullPtr};
+   AccelCompEng::assert<NoData>(cond,__LINE__);
+}
 
-      // Set defaults for the ematrix header.
-      _hdr.sampleSize() = 0;
-      _hdr.geneSize() = 0;
-      _hdr.transform() = Transform::none;
-      _hdr.samplePtr() = FileMem::nullPtr;
-      _hdr.genePtr() = FileMem::nullPtr;
-      _hdr.expPtr() = FileMem::nullPtr;
 
-      // Write the header initially to file.
-      _mem.sync(_hdr,FileSync::write);
-   }
-   // The KINC file already has a header if the file already exists and is
-   // being opened.
-   else
+
+EMatrix::Mirror::~Mirror()
+{
+   if (_iGene)
    {
-      _hdr = KincFile::head();
-      _mem.sync(_hdr,FileSync::read);
+      delete _iGene;
    }
 }
+
+
+
+void EMatrix::Mirror::read()
+{
+   _p->File::mem().sync(_data,FSync::read);
+}
+
+
+
+void EMatrix::Mirror::write()
+{
+   _p->File::mem().sync(_data,FSync::write);
+}
+
+
+
+EMatrix::Mirror::Gene EMatrix::Mirror::begin()
+{
+   return Gene(this,0);
+}
+
+
+
+EMatrix::Mirror::Gene EMatrix::Mirror::end()
+{
+   return Gene(this,_p->_hdr.gSize());
+}
+
+
+
+EMatrix::Mirror::Gene& EMatrix::Mirror::at(int i)
+{
+   bool cond {i>=0&&i<_p->_hdr.gSize()};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   return (*this)[i];
+}
+
+
+
+EMatrix::Mirror::Gene& EMatrix::Mirror::operator[](int i)
+{
+   if (!_iGene)
+   {
+      _iGene = new Gene(this,i);
+   }
+   else
+   {
+      _iGene->set(i);
+   }
+   return *_iGene;
+}
+
+
+
+EMatrix::Mirror::Gene::Iterator EMatrix::Mirror::Gene::begin()
+{
+   return Iterator(this,0);
+}
+
+
+
+EMatrix::Mirror::Gene::Iterator EMatrix::Mirror::Gene::end()
+{
+   return Iterator(this,_p->_p->_hdr.sSize());
+}
+
+
+
+float& EMatrix::Mirror::Gene::at(int i)
+{
+   bool cond {i>=0&&i<(_p->_p->_hdr.gSize())};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   return (*this)[i];
+}
+
+
+
+float& EMatrix::Mirror::Gene::operator[](int i)
+{
+   return _p->_data.val(_i,i);
+}
+
+
+
+void EMatrix::Mirror::Gene::operator++()
+{
+   if (_i<(_p->_p->_hdr.gSize()))
+   {
+      ++_i;
+   }
+}
+
+
+
+bool EMatrix::Mirror::Gene::operator!=(const Gene& cmp)
+{
+   return _p!=cmp._p||_i!=cmp._i;
+}
+
+
+
+EMatrix::Mirror::Gene::Gene(Mirror* p, int i):
+   _p(p),
+   _i(i)
+{}
+
+
+
+void EMatrix::Mirror::Gene::set(int i)
+{
+   _i = i;
+}
+
+
+
+float& EMatrix::Mirror::Gene::Iterator::operator*()
+{
+   return _p->_p->_data.val(_p->_i,_i);
+}
+
+
+
+void EMatrix::Mirror::Gene::Iterator::operator++()
+{
+   if (_i<(_p->_p->_p->_hdr.sSize()))
+   {
+      ++_i;
+   }
+}
+
+
+
+bool EMatrix::Mirror::Gene::Iterator::operator!=(const Iterator& cmp)
+{
+   return _p!=cmp._p||_i!=cmp._i;
+}
+
+
+
+EMatrix::Mirror::Gene::Iterator::Iterator(Gene* p, int i):
+   _p(p),
+   _i(i)
+{}
+
+/*
 
 
 /// Imports data from an expression matrix text file.
