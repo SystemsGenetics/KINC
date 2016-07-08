@@ -75,7 +75,7 @@ void EMatrix::initialize(int gSize, int sSize, bool sHeaders)
    _hdr.gPtr() = hd.addr();
    if (sHeaders)
    {
-      File::mem().allot(hd,gSize);
+      File::mem().allot(hd,sSize);
       _hdr.sPtr() = hd.addr();
    }
    _hdr.gSize() = gSize;
