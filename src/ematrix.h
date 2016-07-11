@@ -15,18 +15,22 @@ public:
    ACE_EXCEPTION(EMatrix,AlreadyInitialized)
    ACE_EXCEPTION(EMatrix,NotInitialized)
    ACE_EXCEPTION(EMatrix,AlreadySet)
+   ACE_EXCEPTION(EMatrix,InvalidArg)
+   ACE_EXCEPTION(EMatrix,InvalidFile)
+   ACE_EXCEPTION(EMatrix,NotNewFile)
+   ACE_EXCEPTION(EMatrix,CannotOpen)
    enum Transform { none=0,log,log2,log10 };
    class Gene;
    class Mirror;
    using string = std::string;
    EMatrix(const string&,const string&);
    ~EMatrix();
-   void load(GetOpts &ops, Terminal &tm) override final {}
+   void load(GetOpts &ops, Terminal &tm) override final;
    void dump(GetOpts &ops, Terminal &tm) override final {}
    void query(GetOpts &ops, Terminal &tm) override final {}
-   bool empty() override final {}
+   bool empty() override final;
    void initialize(int,int,bool);
-   bool sHead() const;
+   bool hasSampleHead() const;
    int gSize() const;
    int sSize() const;
    const string& gName(int) const;
@@ -42,17 +46,21 @@ public:
    Gene& operator[](int);
 private:
    using svec = std::vector<string>;
-   ACE_FMEM_STATIC(Header,33)
+   ACE_FMEM_STATIC(Header,34)
       ACE_FMEM_VAL(sSize,uint32_t,0)
       ACE_FMEM_VAL(gSize,uint32_t,4)
       ACE_FMEM_VAL(tr,uint8_t,8)
-      ACE_FMEM_VAL(sPtr,FPtr,9)
-      ACE_FMEM_VAL(gPtr,FPtr,17)
-      ACE_FMEM_VAL(eData,FPtr,25)
+      ACE_FMEM_VAL(wr,uint8_t,9)
+      ACE_FMEM_VAL(sPtr,FPtr,10)
+      ACE_FMEM_VAL(gPtr,FPtr,18)
+      ACE_FMEM_VAL(eData,FPtr,26)
    ACE_FMEM_END()
    ACE_FMEM_STATIC(NmHead,8)
       ACE_FMEM_VAL(nPtr,FPtr,0)
    ACE_FMEM_END()
+   void read_sizes(std::ifstream&,int);
+   void read_header(std::ifstream&);
+   void read_gene_expressions(std::ifstream&,const string&);
    Header _hdr {fNullPtr};
    Gene* _iGene {nullptr};
    svec _gNames;
@@ -74,6 +82,7 @@ public:
    float& operator[](int);
    void operator++();
    bool operator!=(const Gene&);
+   bool operator==(const Gene&);
 private:
    Gene(EMatrix*,int);
    void set(int);
@@ -96,6 +105,7 @@ public:
    void operator++();
    float& operator*();
    bool operator!=(const Iterator&);
+   bool operator==(const Iterator&);
 private:
    Iterator(Gene*,int);
    Gene* _p;
@@ -148,6 +158,7 @@ public:
    float& operator[](int);
    void operator++();
    bool operator!=(const Gene&);
+   bool operator==(const Gene&);
 private:
    Gene(Mirror*,int);
    void set(int);
@@ -164,6 +175,7 @@ public:
    float& operator*();
    void operator++();
    bool operator!=(const Iterator&);
+   bool operator==(const Iterator&);
 private:
    Iterator(Gene*,int);
    Gene* _p;

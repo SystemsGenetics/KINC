@@ -1,6 +1,7 @@
 #include "ematrix.h"
 #include <sstream>
 #include <cmath>
+#include <iostream>
 
 
 
@@ -18,6 +19,7 @@ EMatrix::EMatrix(const string& type, const string& file):
       _hdr.sSize() = 0;
       _hdr.gSize() = 0;
       _hdr.tr() = Transform::none;
+      _hdr.wr() = 0;
       _hdr.sPtr() = fNullPtr;
       _hdr.gPtr() = fNullPtr;
       _hdr.eData() = fNullPtr;
@@ -66,6 +68,78 @@ EMatrix::~EMatrix()
 
 
 
+void EMatrix::load(GetOpts &ops, Terminal &tm)
+{
+   bool hasHeaders {true};
+   int sampleSize {0};
+   Transform tr {none};
+   for (auto i = ops.begin();i!=ops.end();++i)
+   {
+      if (i.is_key("noheader"))
+      {
+         hasHeaders = false;
+      }
+      else if (i.is_key("samples"))
+      {
+         sampleSize = i.value<int>();
+      }
+      else if (i.is_key("transform"))
+      {
+         string type = i.value<string>();
+         if (type==string("log"))
+         {
+            tr = log;
+         }
+         else if (type==string("log2"))
+         {
+            tr = log2;
+         }
+         else if (type==string("log10"))
+         {
+            tr = log10;
+         }
+         else
+         {
+            throw InvalidArg(__LINE__);
+         }
+      }
+   }
+   if (!hasHeaders&&sampleSize==0)
+   {
+      tm << "If noheader option is given number of samples must be given.\n";
+      throw InvalidArg(__LINE__);
+   }
+   AccelCompEng::assert<NotNewFile>(File::head()==fNullPtr,__LINE__);
+   std::ifstream f(ops.com_front());
+   AccelCompEng::assert<CannotOpen>(f.is_open(),__LINE__);
+   transform(tr);
+   read_sizes(f,sampleSize);
+   f.clear();
+   f.seekg(0,std::ios_base::beg);
+   while (f.peek()==' '||f.peek()=='\t'||std::iscntrl(f.peek()))
+   {
+      AccelCompEng::assert<InvalidFile>(f,__LINE__);
+      f.get();
+   }
+   if (hasHeaders)
+   {
+      read_header(f);
+   }
+   read_gene_expressions(f,"NaN");
+   write();
+   tm << gSize() << "\n";
+   tm << sSize() << "\n";
+}
+
+
+
+bool EMatrix::empty()
+{
+   return _hdr.gSize()==0;
+}
+
+
+
 void EMatrix::initialize(int gSize, int sSize, bool sHeaders)
 {
    bool cond {_hdr.gPtr()==fNullPtr};
@@ -84,11 +158,12 @@ void EMatrix::initialize(int gSize, int sSize, bool sHeaders)
    _gNames.resize(gSize);
    _sNames.resize(sSize);
    File::mem().sync(_hdr,FSync::write);
+   File::head(_hdr.addr());
 }
 
 
 
-bool EMatrix::sHead() const
+bool EMatrix::hasSampleHead() const
 {
    return _hdr.sPtr()!=fNullPtr;
 }
@@ -172,6 +247,9 @@ void EMatrix::write()
    bool cond {_hdr.gPtr()!=fNullPtr};
    AccelCompEng::assert<NotInitialized>(cond,__LINE__);
    NmHead hd {_hdr.gPtr()};
+   cond = _hdr.wr()==0;
+   AccelCompEng::assert<AlreadySet>(cond,__LINE__);
+   _hdr.wr() = 1;
    for (int i=0;i<_gNames.size();++i)
    {
       FString tmp {&File::mem()};
@@ -298,6 +376,13 @@ bool EMatrix::Gene::operator!=(const Gene& cmp)
 
 
 
+bool EMatrix::Gene::operator==(const Gene& cmp)
+{
+   return _p==cmp._p&&_i==cmp._i;
+}
+
+
+
 EMatrix::Gene::Gene(EMatrix* p, int i):
    _p(p),
    _head(_p->_hdr.eData()),
@@ -342,6 +427,13 @@ float& EMatrix::Gene::Iterator::operator*()
 bool EMatrix::Gene::Iterator::operator!=(const Iterator& cmp)
 {
    return _p!=cmp._p||_i!=cmp._i;
+}
+
+
+
+bool EMatrix::Gene::Iterator::operator==(const Iterator& cmp)
+{
+   return _p==cmp._p&&_i==cmp._i;
 }
 
 
@@ -472,6 +564,13 @@ bool EMatrix::Mirror::Gene::operator!=(const Gene& cmp)
 
 
 
+bool EMatrix::Mirror::Gene::operator==(const Gene& cmp)
+{
+   return _p==cmp._p&&_i==cmp._i;
+}
+
+
+
 EMatrix::Mirror::Gene::Gene(Mirror* p, int i):
    _p(p),
    _i(i)
@@ -510,91 +609,173 @@ bool EMatrix::Mirror::Gene::Iterator::operator!=(const Iterator& cmp)
 
 
 
+bool EMatrix::Mirror::Gene::Iterator::operator==(const Iterator& cmp)
+{
+   return _p==cmp._p&&_i==cmp._i;
+}
+
+
+
 EMatrix::Mirror::Gene::Iterator::Iterator(Gene* p, int i):
    _p(p),
    _i(i)
 {}
 
-/*
 
 
-/// Imports data from an expression matrix text file.
-///
-///
-///
-/// @param ops
-///   The command-line arguments provided by the user.
-/// @param tm
-///
-void EMatrix::load(GetOpts &ops, Terminal &tm)
+void EMatrix::read_sizes(std::ifstream& f, int sSize)
 {
-   bool hasHeaders {true};
-   int sampleSize {0};
-   Transform tr {none};
-   for (auto i = ops.begin();i!=ops.end();++i)
+   bool hasHeaders {sSize==0};
+   while (f.peek()==' '||f.peek()=='\t'||std::iscntrl(f.peek()))
    {
-      if (i.is_key("noheader"))
-      {
-         hasHeaders = false;
-      }
-      else if (i.is_key("samples"))
-      {
-         sampleSize = i.value<int>();
-      }
-      else if (i.is_key("transform"))
-      {
-         string type = i.value<string>();
-         if (type==string("log"))
-         {
-            tr = log;
-         }
-         else if (type==string("log2"))
-         {
-            tr = log2;
-         }
-         else if (type==string("log10"))
-         {
-            tr = log10;
-         }
-         else
-         {
-            throw InvalidArg(__LINE__);
-         }
-      }
+      AccelCompEng::assert<InvalidFile>(f,__LINE__);
+      f.get();
    }
-   if (!hasHeaders&&sampleSize==0)
+   if (sSize==0)
    {
-      tm << "If noheader option is given number of samples must be given.\n";
-      throw InvalidArg(__LINE__);
-   }
-   AccelCompEng::assert<NotNewFile>(head()==FileMem::nullPtr,__LINE__);
-   ifile f(ops.com_front());
-   AccelCompEng::assert<CannotOpen>(f.is_open(),__LINE__);
-   _mem.allot(_hdr);
-   try
-   {
-      if (hasHeaders)
+      int count {1};
+      enum {newline,chunk} state {chunk};
+      while (std::isprint(f.peek()))
       {
-         load_samples(tm,f);
+         switch (state)
+         {
+         case newline:
+            if (f.peek()!=' '&&f.peek()!='\t')
+            {
+               ++count;
+               state = chunk;
+            }
+            break;
+         case chunk:
+            if (f.peek()==' '||f.peek()=='\t')
+            {
+               state = newline;
+            }
+            break;
+         }
+         f.get();
       }
-      else
-      {
-         _hdr.sampleSize() = sampleSize;
-         _hdr.samplePtr() = FileMem::nullPtr;
-      }
-      load_genes(tm,f,"NaN",tr);
+      sSize = count;
+      AccelCompEng::assert<InvalidFile>(f,__LINE__);
    }
-   catch (...)
+   int gSize {0};
+   enum {newline,chunk} state {newline};
+   while (f)
    {
-      KincFile::clear();
-      throw;
+      switch (state)
+      {
+      case newline:
+         if (std::isprint(f.peek()))
+         {
+            state = chunk;
+         }
+         break;
+      case chunk:
+         if (std::iscntrl(f.peek()))
+         {
+            ++gSize;
+            state = newline;
+         }
+         break;
+      }
+      f.get();
    }
-   KincFile::head(_hdr.addr());
-   _hdr.transform() = tr;
-   _mem.sync(_hdr,FileSync::write);
-   tm << "Loaded " << _hdr.geneSize() << " gene(s) with " << _hdr.sampleSize()
-      << " sample(s) each.\n";
+   if (state==chunk)
+   {
+      ++gSize;
+   }
+   initialize(gSize,sSize,hasHeaders);
 }
+
+
+
+void EMatrix::read_header(std::ifstream& f)
+{
+   string buf;
+   std::getline(f,buf);
+   std::istringstream ibuf(buf);
+   string tmp;
+   int i {0};
+   while (ibuf >> tmp)
+   {
+      sName(i++,tmp);
+   }
+   bool cond {i==_hdr.sSize()};
+   AccelCompEng::assert<InvalidFile>(cond,__LINE__);
+}
+
+
+
+void EMatrix::read_gene_expressions(std::ifstream& f, const string& nan)
+{
+   Mirror m(*this);
+   auto g = m.begin();
+   int gi {0};
+   while (f)
+   {
+      string buf;
+      std::getline(f,buf);
+      if (!buf.empty())
+      {
+         if (g==m.end())
+         {
+            throw InvalidFile(__LINE__);
+         }
+         std::istringstream ibuf(buf);
+         string tmp;
+         if (!(ibuf >> tmp))
+         {
+            std::cout << buf << "\n";
+            throw InvalidFile(__LINE__);
+         }
+         gName(gi++,tmp);
+         for (auto i = g.begin();i!=g.end();++i)
+         {
+            if (!(ibuf >> tmp))
+            {
+               throw InvalidFile(__LINE__);
+            }
+            if (tmp==nan)
+            {
+               *i = NAN;
+            }
+            else
+            {
+               try
+               {
+                  switch (transform())
+                  {
+                  case none:
+                     *i = std::stof(tmp);
+                     break;
+                  case log:
+                     *i = logf(std::stof(tmp));
+                     break;
+                  case log2:
+                     *i = log2f(std::stof(tmp));
+                     break;
+                  case log10:
+                     *i = log10f(std::stof(tmp));
+                     break;
+                  }
+               }
+               catch (std::exception)
+               {
+                  throw InvalidFile(__LINE__);
+               }
+            }
+         }
+         ++g;
+      }
+   }
+   if (g!=m.end())
+   {
+      throw InvalidFile(__LINE__);
+   }
+   m.write();
+}
+
+/*
 
 
 
@@ -670,28 +851,6 @@ int EMatrix::gene_size() const
 
 
 
-EMatrix::string EMatrix::sample_name(int n) const
-{
-   bool cond {_hdr.samplePtr()!=FileMem::nullPtr&&n>=0||n<_hdr.sampleSize()};
-   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
-   sHdr shdr(_hdr.samplePtr());
-   _mem.sync(shdr,FileSync::read,n);
-   FString name(&_mem,shdr.name());
-   return *name;
-}
-
-
-
-EMatrix::string EMatrix::gene_name(int n) const
-{
-   bool cond {n>=0||n<_hdr.geneSize()};
-   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
-   gHdr ghdr(_hdr.genePtr());
-   _mem.sync(ghdr,FileSync::read,n);
-   FString name(&_mem,ghdr.name());
-   return *name;
-}
-
 
 
 void EMatrix::load_buffer()
@@ -712,15 +871,6 @@ void EMatrix::clear_buffer()
       delete _data;
       _data = nullptr;
    }
-}
-
-
-
-const float* EMatrix::gene(int n) const
-{
-   AccelCompEng::assert<BufferNotLoaded>(_data,__LINE__);
-   AccelCompEng::assert<OutOfRange>(n<_hdr.geneSize(),__LINE__);
-   return &(_data->val(n*_hdr.sampleSize()));
 }
 
 
@@ -771,122 +921,5 @@ void EMatrix::lookup(GetOpts &ops, Terminal &tm)
 bool EMatrix::empty()
 {
    return _hdr.geneSize()==0;
-}
-
-
-
-void EMatrix::load_samples(Terminal& tm, ifile& f)
-{
-   while (f.peek()==' '||f.peek()=='\t'||f.peek()=='\n')
-   {
-      AccelCompEng::assert<InvalidFile>(f,__LINE__);
-      f.get();
-   }
-   tm << "Loading sample headers...\n";
-   string buf;
-   std::getline(f,buf);
-   std::istringstream ibuf(buf);
-   string tmp;
-   std::vector<string> vs;
-   while (ibuf >> tmp)
-   {
-      vs.push_back(std::move(tmp));
-   }
-   AccelCompEng::assert<InvalidFile>(vs.size()>0,__LINE__);
-   tm << "Writing sample headers...\n";
-   sHdr shdr;
-   _mem.allot(shdr,vs.size());
-   _hdr.sampleSize() = vs.size();
-   _hdr.samplePtr() = shdr.addr();
-   for (int i = 0;i<vs.size();++i)
-   {
-      FString tname(&_mem);
-      tname = vs[i];
-      shdr.name() = tname.addr();
-      _mem.sync(shdr,FileSync::write,i);
-   }
-}
-
-
-
-void EMatrix::load_genes(Terminal& tm, ifile& f, string nan, Transform t)
-{
-   tm << "Loading genes and expression data...\n";
-   std::vector<string> gns;
-   std::vector<std::vector<float>> exps;
-   while (f)
-   {
-      string buf;
-      std::getline(f,buf);
-      if (!buf.empty())
-      {
-         std::istringstream ibuf(buf);
-         string tmp;
-         bool cond = ibuf >> tmp;
-         AccelCompEng::assert<InvalidFile>(cond,__LINE__);
-         gns.push_back(std::move(tmp));
-         exps.push_back({});
-         int count = 0;
-         while (ibuf >> tmp)
-         {
-            if (tmp==nan)
-            {
-               exps.back().push_back(NAN);
-            }
-            else
-            {
-               try
-               {
-                  switch (t)
-                  {
-                  case none:
-                     exps.back().push_back(std::stof(tmp));
-                     break;
-                  case log:
-                     exps.back().push_back(logf(std::stof(tmp)));
-                     break;
-                  case log2:
-                     exps.back().push_back(log2f(std::stof(tmp)));
-                     break;
-                  case log10:
-                     exps.back().push_back(log10f(std::stof(tmp)));
-                     break;
-                  }
-               }
-               catch (std::exception)
-               {
-                  throw InvalidFile(__LINE__);
-               }
-            }
-            ++count;
-         }
-         AccelCompEng::assert<InvalidFile>(count==_hdr.sampleSize(),__LINE__);
-      }
-   }
-   AccelCompEng::assert<InvalidFile>(gns.size()>0,__LINE__);
-   tm << "Writing gene headers...\n";
-   gHdr ghdr;
-   _mem.allot(ghdr,gns.size());
-   _hdr.geneSize() = gns.size();
-   _hdr.genePtr() = ghdr.addr();
-   for (int i = 0;i<gns.size();++i)
-   {
-      FString tname(&_mem);
-      tname = gns[i];
-      ghdr.name() = tname.addr();
-      _mem.sync(ghdr,FileSync::write,i);
-   }
-   tm << "Writing expression data...\n";
-   Exp exp;
-   _mem.allot(exp,exps.size()*exps.back().size());
-   _hdr.expPtr() = exp.addr();
-   for (int x = 0;x<exps.size();++x)
-   {
-      for (int y = 0;y<exps[x].size();++y)
-      {
-         exp.val() = exps[x][y];
-         _mem.sync(exp,FileSync::write,x*_hdr.sampleSize()+y);
-      }
-   }
 }
 */
