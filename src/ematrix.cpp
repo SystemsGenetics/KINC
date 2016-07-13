@@ -1,58 +1,65 @@
 #include "ematrix.h"
 #include <sstream>
 #include <cmath>
-#include <iostream>
 
 
 
 EMatrix::EMatrix(const string& type, const string& file):
    DataPlugin(type,file)
 {
-   // Does the KINC file have a header already set. This case would be for
-   // a new file.
-   if (File::head()==fNullPtr)
+   try
    {
-      // Allocate space in the file (file memory) for the header.
-      File::mem().allot(_hdr);
-      File::head(_hdr.addr());
-      // Set defaults for the ematrix header.
-      _hdr.sSize() = 0;
-      _hdr.gSize() = 0;
-      _hdr.tr() = Transform::none;
-      _hdr.wr() = 0;
-      _hdr.sPtr() = fNullPtr;
-      _hdr.gPtr() = fNullPtr;
-      _hdr.eData() = fNullPtr;
-      // Write the header initially to file.
-      File::mem().sync(_hdr,FSync::write);
-   }
-   // The KINC file already has a header if the file already exists and is
-   // being opened.
-   else
-   {
-      _hdr = File::head();
-      File::mem().sync(_hdr,FSync::read);
-      NmHead hd {_hdr.gPtr()};
-      for (int i=0;i<_hdr.gSize();++i)
+      // Does the KINC file have a header already set. This case would be for
+      // a new file.
+      if (File::head()==fNullPtr)
       {
-         File::mem().sync(hd,FSync::read,i);
-         FString name(&File::mem(),hd.nPtr());
-         _gNames.push_back(*name);
+         // Allocate space in the file (file memory) for the header.
+         File::mem().allot(_hdr);
+         File::head(_hdr.addr());
+         // Set defaults for the ematrix header.
+         _hdr.sSize() = 0;
+         _hdr.gSize() = 0;
+         _hdr.tr() = Transform::none;
+         _hdr.wr() = 0;
+         _hdr.sPtr() = fNullPtr;
+         _hdr.gPtr() = fNullPtr;
+         _hdr.eData() = fNullPtr;
+         // Write the header initially to file.
+         File::mem().sync(_hdr,FSync::write);
       }
-      if (_hdr.sPtr()!=fNullPtr)
+      // The KINC file already has a header if the file already exists and is
+      // being opened.
+      else
       {
-         hd.addr(_hdr.sPtr());
-         for (int i=0;i<_hdr.sSize();++i)
+         _hdr.addr(File::head());
+         File::mem().sync(_hdr,FSync::read);
+         NmHead hd {_hdr.gPtr()};
+         for (int i=0;i<_hdr.gSize();++i)
          {
             File::mem().sync(hd,FSync::read,i);
             FString name(&File::mem(),hd.nPtr());
-            _sNames.push_back(*name);
+            _gNames.push_back(*name);
+         }
+         if (_hdr.sPtr()!=fNullPtr)
+         {
+            hd.addr(_hdr.sPtr());
+            for (int i=0;i<_hdr.sSize();++i)
+            {
+               File::mem().sync(hd,FSync::read,i);
+               FString name(&File::mem(),hd.nPtr());
+               _sNames.push_back(*name);
+            }
+         }
+         else
+         {
+            _sNames.resize(_hdr.sSize());
          }
       }
-      else
-      {
-         _sNames.resize(_hdr.sSize());
-      }
+   }
+   catch (...)
+   {
+      File::clear();
+      throw;
    }
 }
 
@@ -112,23 +119,87 @@ void EMatrix::load(GetOpts &ops, Terminal &tm)
    AccelCompEng::assert<NotNewFile>(File::head()==fNullPtr,__LINE__);
    std::ifstream f(ops.com_front());
    AccelCompEng::assert<CannotOpen>(f.is_open(),__LINE__);
-   transform(tr);
    read_sizes(f,sampleSize);
-   f.clear();
-   f.seekg(0,std::ios_base::beg);
-   while (f.peek()==' '||f.peek()=='\t'||std::iscntrl(f.peek()))
+   transform(tr);
+   try
    {
-      AccelCompEng::assert<InvalidFile>(f,__LINE__);
-      f.get();
+      f.clear();
+      f.seekg(0,std::ios_base::beg);
+      while (f.peek()==' '||f.peek()=='\t'||std::iscntrl(f.peek()))
+      {
+         AccelCompEng::assert<InvalidFile>(f,__LINE__);
+         f.get();
+      }
+      if (hasHeaders)
+      {
+         read_header(f);
+      }
+      read_gene_expressions(f,"NaN");
+      write();
+      tm << gSize() << "\n";
+      tm << sSize() << "\n";
    }
-   if (hasHeaders)
+   catch (...)
    {
-      read_header(f);
+      File::clear();
+      throw;
    }
-   read_gene_expressions(f,"NaN");
-   write();
-   tm << gSize() << "\n";
-   tm << sSize() << "\n";
+}
+
+
+
+void EMatrix::dump(GetOpts &ops, Terminal &tm)
+{
+   tm << "dump command not implemented for EMatrix type.\n";
+}
+
+
+
+void EMatrix::query(GetOpts &ops, Terminal &tm)
+{
+   enum {Basic=0,Lookup};
+   if (empty())
+   {
+      tm << "No data loaded.\n";
+   }
+   else
+   {
+      switch (ops.com_get({"lookup","dump"}))
+      {
+      case Basic:
+         tm << _hdr.gSize() << " gene(s) and " << _hdr.sSize()
+            << " sample(s).\n";
+         tm << "Sample Transformation: ";
+         switch (_hdr.tr())
+         {
+         case none:
+            tm << "none.\n";
+            break;
+         case log:
+            tm << "Natural Logarithm.\n";
+            break;
+         case log2:
+            tm << "Logarithm Base 2.\n";
+            break;
+         case log10:
+            tm << "Logarithm Base 10.\n";
+            break;
+         }
+         if (hasSampleHead())
+         {
+            tm << "Sample header data exists.\n";
+         }
+         else
+         {
+            tm << "Sample header data does not exist.\n";
+         }
+         break;
+      case Lookup:
+         ops.com_pop();
+         lookup(ops,tm);
+         break;
+      }
+   }
 }
 
 
@@ -142,8 +213,16 @@ bool EMatrix::empty()
 
 void EMatrix::initialize(int gSize, int sSize, bool sHeaders)
 {
-   bool cond {_hdr.gPtr()==fNullPtr};
-   AccelCompEng::assert<AlreadyInitialized>(cond,__LINE__);
+   if (File::head()==fNullPtr)
+   {
+      File::mem().allot(_hdr);
+      File::head(_hdr.addr());
+   }
+   else
+   {
+      bool cond {_hdr.gPtr()==fNullPtr};
+      AccelCompEng::assert<AlreadyInitialized>(cond,__LINE__);
+   }
    NmHead hd;
    File::mem().allot(hd,gSize);
    _hdr.gPtr() = hd.addr();
@@ -287,6 +366,32 @@ EMatrix::Gene EMatrix::end()
 
 
 
+EMatrix::Gene EMatrix::find(int i)
+{
+   bool cond {_hdr.gPtr()!=fNullPtr};
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
+   cond = i>=0&&i<_hdr.gSize();
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   return Gene(this,i);
+}
+
+
+
+EMatrix::Gene EMatrix::find(const string& nm)
+{
+   int i {0};
+   for (;i<_hdr.gSize();++i)
+   {
+      if (gName(i)==nm)
+      {
+         break;
+      }
+   }
+   return Gene(this,i);
+}
+
+
+
 EMatrix::Gene& EMatrix::at(int i)
 {
    bool cond {_hdr.gPtr()!=fNullPtr};
@@ -309,6 +414,13 @@ EMatrix::Gene& EMatrix::operator[](int i)
       _iGene->set(i);
    }
    return *_iGene;
+}
+
+
+
+const EMatrix::Gene::string& EMatrix::Gene::name() const
+{
+   return _p->gName(_i);
 }
 
 
@@ -385,7 +497,7 @@ bool EMatrix::Gene::operator==(const Gene& cmp)
 
 EMatrix::Gene::Gene(EMatrix* p, int i):
    _p(p),
-   _head(_p->_hdr.eData()),
+   _head(p->_hdr.sSize(),p->_hdr.eData()),
    _i(i)
 {}
 
@@ -631,7 +743,7 @@ void EMatrix::read_sizes(std::ifstream& f, int sSize)
       AccelCompEng::assert<InvalidFile>(f,__LINE__);
       f.get();
    }
-   if (sSize==0)
+   if (hasHeaders)
    {
       int count {1};
       enum {newline,chunk} state {chunk};
@@ -725,7 +837,6 @@ void EMatrix::read_gene_expressions(std::ifstream& f, const string& nan)
          string tmp;
          if (!(ibuf >> tmp))
          {
-            std::cout << buf << "\n";
             throw InvalidFile(__LINE__);
          }
          gName(gi++,tmp);
@@ -775,151 +886,37 @@ void EMatrix::read_gene_expressions(std::ifstream& f, const string& nan)
    m.write();
 }
 
-/*
-
-
-
-void EMatrix::dump(GetOpts &ops, Terminal &tm)
-{
-   tm << "dump command not implemented for EMatrix type.\n";
-}
-
-
-
-void EMatrix::query(GetOpts &ops, Terminal &tm)
-{
-   enum {Basic=0,Lookup,Dump};
-   switch (ops.com_get({"lookup","dump"}))
-   {
-   case Basic:
-      if (empty())
-      {
-         tm << "No data loaded.\n";
-      }
-      else
-      {
-         tm << _hdr.geneSize() << " gene(s) and " << _hdr.sampleSize()
-            << " sample(s).\n";
-         tm << "Sample Transformation: ";
-         switch (_hdr.transform())
-         {
-         case none:
-            tm << "none.\n";
-            break;
-         case log:
-            tm << "Natural Logarithm.\n";
-            break;
-         case log2:
-            tm << "Logarithm Base 2.\n";
-            break;
-         case log10:
-            tm << "Logarithm Base 10.\n";
-            break;
-         }
-         if (_hdr.samplePtr()==FileMem::nullPtr)
-         {
-            tm << "Sample header data does not exist.\n";
-         }
-         else
-         {
-            tm << "Sample header data exists.\n";
-         }
-      }
-      break;
-   case Lookup:
-      ops.com_pop();
-      lookup(ops,tm);
-      break;
-   case Dump:
-      break;
-   }
-}
-
-
-
-int EMatrix::sample_size() const
-{
-   return _hdr.sampleSize();
-}
-
-
-
-int EMatrix::gene_size() const
-{
-   return _hdr.geneSize();
-}
-
-
-
-
-
-void EMatrix::load_buffer()
-{
-   if (!_data)
-   {
-      _data = new Exps(_hdr.geneSize()*_hdr.sampleSize(),_hdr.expPtr());
-      _mem.sync(*_data,FileSync::read);
-   }
-}
-
-
-
-void EMatrix::clear_buffer()
-{
-   if (_data)
-   {
-      delete _data;
-      _data = nullptr;
-   }
-}
-
 
 
 void EMatrix::lookup(GetOpts &ops, Terminal &tm)
 {
-   int i;
+   Gene l {end()};
    try
    {
-      i = {std::stoi(ops.com_front())};
+      int i = std::stoi(ops.com_front());
+      if (i<0||i>=gSize())
+      {
+         tm << "Gene index is out of range.\n";
+         return;
+      }
+      l = find(i);
    }
    catch (std::exception)
    {
-      i = 0;
-      gHdr ghdr {_hdr.genePtr()};
-      while (i<_hdr.geneSize())
+      l = find(ops.com_front());
+   }
+   if (l!=end())
+   {
+      l.read();
+      tm << l.name() << ": ";
+      for (auto i = l.begin();i!=l.end();++i)
       {
-         _mem.sync(ghdr,FileSync::read,i++);
-         FString name {&_mem,ghdr.name()};
-         if (*name==ops.com_front())
-         {
-            --i;
-            break;
-         }
+         tm << *i << " ";
       }
+      tm << "\n";
    }
-   if (i<0||i>=_hdr.geneSize())
+   else
    {
-      tm << "Invalid gene index.\n";
-      return;
+      tm << "No such gene found.\n";
    }
-   gHdr ghdr {_hdr.genePtr()};
-   _mem.sync(ghdr,FileSync::read,i);
-   FString name {&_mem,ghdr.name()};
-   tm << i << ": " << *name << " : ";
-   Exps exps(_hdr.sampleSize(),_hdr.expPtr());
-   _mem.sync(exps,FileSync::read,i);
-   int x = 0;
-   for (;x<(_hdr.sampleSize()-1);++x)
-   {
-      tm << exps.val(x) << ", ";
-   }
-   tm << exps.val(x) << "\n";
 }
-
-
-
-bool EMatrix::empty()
-{
-   return _hdr.geneSize()==0;
-}
-*/

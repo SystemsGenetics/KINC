@@ -26,8 +26,8 @@ public:
    EMatrix(const string&,const string&);
    ~EMatrix();
    void load(GetOpts &ops, Terminal &tm) override final;
-   void dump(GetOpts &ops, Terminal &tm) override final {}
-   void query(GetOpts &ops, Terminal &tm) override final {}
+   void dump(GetOpts &ops, Terminal &tm) override final;
+   void query(GetOpts &ops, Terminal &tm) override final;
    bool empty() override final;
    void initialize(int,int,bool);
    bool hasSampleHead() const;
@@ -42,6 +42,8 @@ public:
    void write();
    Gene begin();
    Gene end();
+   Gene find(int);
+   Gene find(const string&);
    Gene& at(int);
    Gene& operator[](int);
 private:
@@ -61,6 +63,7 @@ private:
    void read_sizes(std::ifstream&,int);
    void read_header(std::ifstream&);
    void read_gene_expressions(std::ifstream&,const string&);
+   void lookup(GetOpts&,Terminal&);
    Header _hdr {fNullPtr};
    Gene* _iGene {nullptr};
    svec _gNames;
@@ -74,6 +77,8 @@ class EMatrix::Gene
 public:
    friend class EMatrix;
    class Iterator;
+   using string = std::string;
+   const string& name() const;
    void read();
    void write();
    Iterator begin();
@@ -137,7 +142,7 @@ private:
          Object(4*gSize*sSize,ptr),
          _sSize(sSize)
       {}
-      float& val(int gi, int si) { get<float>((gi*_sSize)+si); }
+      float& val(int gi, int si) { get<float>(4*((gi*_sSize)+si)); }
       int _sSize;
    ACE_FMEM_END()
    EMatrix* _p;
