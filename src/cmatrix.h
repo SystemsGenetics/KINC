@@ -8,83 +8,185 @@
 class CMatrix : public AccelCompEng::DataPlugin
 {
 public:
-   // *
-   // * DECLERATIONS
-   // *
-   ACE_DATA_HEADER()
    using string = std::string;
-   // *
-   // * CLASSES
-   // *
-   class GeneModes;
-   class GeneCorrs;
-   // *
-   // * EXCEPTIONS
-   // *
+   ACE_DATA_HEADER()
    ACE_EXCEPTION(CMatrix,AlreadyInitialized)
    ACE_EXCEPTION(CMatrix,InvalidSize)
    ACE_EXCEPTION(CMatrix,OutOfRange)
    ACE_EXCEPTION(CMatrix,NotInitialized)
    ACE_EXCEPTION(CMatrix,InvalidGeneCorr)
    ACE_EXCEPTION(CMatrix,ValueNotRead)
-   // *
-   // * BASIC METHODS
-   // *
+   //class GeneModes;
+   //class GeneCorrs;
+   class GRelation;
    CMatrix(const string& type, const string& file);
-   // *
-   // * VIRTUAL FUNCTIONS
-   // *
    void load(GetOpts&,Terminal&) override final;
    void dump(GetOpts&,Terminal&) override final;
    void query(GetOpts&,Terminal&) override final;
    bool empty() override final;
-   // *
-   // * FUNCTIONS
-   // *
-   void initialize(uint32_t,uint32_t,uint32_t,uint8_t);
-   void set_gene_name(uint32_t,const string&);
-   void set_sample_name(uint32_t,const string&);
-   void set_correlation_name(uint32_t,const string&);
-   GeneModes get_modes(uint32_t,uint32_t);
-   void get_modes(GeneModes&,uint32_t,uint32_t);
-   GeneCorrs get_corrs(uint32_t,uint32_t);
-   void get_corrs(GeneCorrs&,uint32_t,uint32_t);
+   //void initialize(uint32_t,uint32_t,uint32_t,uint8_t);
+   //void set_gene_name(uint32_t,const string&);
+   //void set_sample_name(uint32_t,const string&);
+   //void set_correlation_name(uint32_t,const string&);
+   //GeneModes get_modes(uint32_t,uint32_t);
+   //void get_modes(GeneModes&,uint32_t,uint32_t);
+   //GeneCorrs get_corrs(uint32_t,uint32_t);
+   //void get_corrs(GeneCorrs&,uint32_t,uint32_t);
+   GRelation begin();
+   GRelation end();
+   GRelation& at(int,int);
 private:
-   // *
-   // * DECLERATIONS
-   // *
-   using SizeT = AccelCompEng::FileMem::SizeT;
-   // *
-   // * FILEMEM TYPES
-   // *
-   ACE_FMEM_STATIC(Header,53)
-      ACE_FMEM_VAL(gSize,uint32_t,0)
-      ACE_FMEM_VAL(sSize,uint32_t,4)
-      ACE_FMEM_VAL(cSize,uint32_t,8)
-      ACE_FMEM_VAL(mdMax,uint8_t,12)
+   ACE_FMEM_STATIC(Header,45)
+      ACE_FMEM_VAL(gSize,int32_t,0)
+      ACE_FMEM_VAL(sSize,int32_t,4)
+      ACE_FMEM_VAL(cSize,int32_t,8)
+      ACE_FMEM_VAL(mSize,int8_t,12)
       ACE_FMEM_VAL(gPtr,FPtr,13)
       ACE_FMEM_VAL(sPtr,FPtr,21)
       ACE_FMEM_VAL(cPtr,FPtr,29)
-      ACE_FMEM_VAL(mdData,FPtr,37)
-      ACE_FMEM_VAL(crData,FPtr,45)
+      ACE_FMEM_VAL(eData,FPtr,37)
    ACE_FMEM_END()
    ACE_FMEM_STATIC(NmHead,8)
       ACE_FMEM_VAL(nPtr,FPtr,0)
    ACE_FMEM_END()
-   // *
-   // * FUNCTIONS
-   // *
-   void set_name(FPtr,uint32_t,uint32_t,const string&);
-   SizeT diagonal(uint32_t,uint32_t);
-   SizeT diag_size(uint32_t);
-   // *
-   // * VARIABLES
-   // *
+   //void set_name(FPtr,uint32_t,uint32_t,const string&);
+   long long diagonal(int,int);
+   long long diag_size(int);
    Header _hdr;
+   GRelation* _iRelation {nullptr};
 };
 
 
 
+class CMatrix::GRelation
+{
+   friend class CMatrix;
+   class Modes;
+   class Correlations;
+   ~GRelation();
+   void read();
+   void write();
+   Modes& modes();
+   Correlations& correlations();
+   void operator++();
+   bool operator!=(const GRelation&);
+private:
+   ACE_FMEM_OBJECT(Relation)
+      Relation(int mSize, int sSize, int cSize, Fptr ptr = fNullPtr):
+         Object((mSize*sSize)+(4*cSize*sSize),ptr),
+         _mSize(mSize),
+         _sSize(sSize),
+         _cSize(cSize)
+      {}
+      int _mSize;
+      int _sSize;
+      int _cSize;
+      int8_t& mVal(int mi, int i) { get<int8_t>((_sSize*mi)+i); }
+      float& cVal(int ci, int i) { get<float>((_mSize*_sSize)+(4*((_sSize*ci)+i))); }
+   ACE_FMEM_END()
+   CMatrix* _p;
+   Relation _data;
+   Modes* _iModes {nullptr};
+   Correlations* _iCorrelations {nullptr};
+};
+
+
+
+class CMatrix::GRelation::Modes
+{
+   class Mode;
+   ~Mode();
+   Mode begin();
+   Mode end();
+   Mode& at(int);
+   Mode& operator[](int);
+private:
+   Modes(GRelation*);
+   GRelation* _p;
+   Mode* _iMode {nullptr};
+};
+
+
+
+class CMatrix::GRelation::Modes::Mode
+{
+   class Iterator;
+   Iterator begin();
+   Iterator end();
+   int8_t& at(int);
+   int8_t& operator[](int);
+   void operator++();
+   bool operator!=(const Mode&);
+private:
+   Mode(Modes*,int);
+   void set(int);
+   Modes* _p;
+   int _i;
+};
+
+
+
+class CMatrix::GRelation::Modes::Mode::Iterator
+{
+   int8_t& operator*();
+   void operator++();
+   bool operator!=(const Iterator&);
+private:
+   Iterator(Mode*,int);
+   Mode* _p;
+   int _i;
+};
+
+
+
+class CMatrix::GRelation::Relations
+{
+   class Relation;
+   ~Relations();
+   Relation begin();
+   Relation end();
+   Relation& at(int);
+   Relation& operator[](int);
+private:
+   Relations(GRelation*);
+   GRelation* _p;
+   Relation* _iRelation {nullptr};
+};
+
+
+
+class CMatrix::GRelation::Relations::Relation
+{
+   class Iterator;
+   Iterator begin();
+   Iterator end();
+   float& at(int);
+   float& operator[](int);
+   void operator++();
+   bool operator!=(const Mode&);
+private:
+   Relation(Relations*,int);
+   void set(int);
+   Relations* _p;
+   int _i;
+};
+
+
+
+class CMatrix::GRelation::Relations::Relation::Iterator
+{
+   float& operator*();
+   void operator++();
+   bool operator!=(const Iterator&);
+private:
+   Iterator(Relation*,int);
+   Relation* _p;
+   int _i;
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////
 class CMatrix::GeneModes
 {
 public:
