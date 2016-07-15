@@ -158,7 +158,7 @@ void SimMatrixTabCluster::writeNetwork() {
            }
            fprintf(edges, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
 
-           // if the method id 'pc' (Pearson's correlation) then we will have
+           // if the method is 'pc' (Pearson's correlation) then we will have
            // negative and positive values, and we'll write those to separate files
            if (strcmp(th_method, "pc") == 0 || strcmp(th_method, "sc") == 0) {
              if(cv >= 0){

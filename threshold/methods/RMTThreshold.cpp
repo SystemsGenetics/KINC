@@ -105,12 +105,12 @@ double RMTThreshold::findThreshold() {
       E = calculateEigen(newM, size);
       free(newM);
 
-      // print out eigenvalues to file
-      fprintf(eigenF, "%f\t", th);
-      for (int i = 0; i < size ; i++) {
-        fprintf(eigenF, "%f\t", E[i]);
-      }
-      fprintf(eigenF,"\n");
+//      // print out eigenvalues to file
+//      fprintf(eigenF, "%f\t", th);
+//      for (int i = 0; i < size ; i++) {
+//        fprintf(eigenF, "%f\t", E[i]);
+//      }
+//      fprintf(eigenF,"\n");
 
       printf("  testing similarity of NNSD with Poisson...\n");
       chi = getNNSDChiSquare(E, size);
@@ -144,7 +144,7 @@ double RMTThreshold::findThreshold() {
     // matrix that contains only the threshold and higher
     th = th - thresholdStep;
   }
-  while(maxChi < chiSoughtValue || size == ematrix->getNumGenes());
+  while(maxChi < chiSoughtValue);
 
 
   // If finalChi is still greater than threshold, check the small scale
@@ -403,7 +403,7 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
   float * cutM;
 
   // The maximum number of clusters that any gene pair is allowed to have.
-  int max_clusters = 100;
+  int max_clusters = 15;
 
   // Initialize vector for holding which gene clusters will be used. This will
   // tell us how big the cut matrix needs to be.
@@ -411,6 +411,7 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
   int num_samples = ematrix->getNumSamples();
   int * usedFlag = (int *) malloc(num_genes * max_clusters * sizeof(int));
   int * cutM_index = (int *) malloc(num_genes * max_clusters * sizeof(int));
+  const char * filename;
 
   memset(cutM_index, -1, sizeof(int) * (num_genes * max_clusters));
   memset(usedFlag, 0, sizeof(int) * (num_genes * max_clusters));
@@ -438,7 +439,7 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
     if (dir) {
       struct dirent * entry;
       while ((entry = readdir(dir)) != NULL) {
-        const char * filename = entry->d_name;
+        filename = entry->d_name;
 
         // Skip the . and .. files.
         if (strcmp(filename, ".") == 0 || strcmp(filename, "..") == 0) {
@@ -495,12 +496,13 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
           // filter the record.
           if (fabs(cv) >= th && cluster_samples >= min_cluster_size  &&
               num_missing <= max_missing && num_clusters <= max_modes) {
+
             if (cluster_num > max_clusters) {
               fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
               exit(-1);
             }
-            usedFlag[j * max_clusters + (cluster_num - 1)] = 1;
-            usedFlag[k * max_clusters + (cluster_num - 1)] = 1;
+            usedFlag[(j - 1) * max_clusters + (cluster_num - 1)] = 1;
+            usedFlag[(k - 1) * max_clusters + (cluster_num - 1)] = 1;
           }
 
           for (int l = 0; l < num_methods; l++) {
@@ -612,8 +614,8 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
             fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
             exit(-1);
           }
-          int index_j = cutM_index[j * max_clusters + (cluster_num - 1)];
-          int index_k = cutM_index[k * max_clusters + (cluster_num - 1)];
+          int index_j = cutM_index[(j - 1) * max_clusters + (cluster_num - 1)];
+          int index_k = cutM_index[(k - 1) * max_clusters + (cluster_num - 1)];
           int ci = index_k + (used * index_j);
           cutM[ci] = cv;
         }

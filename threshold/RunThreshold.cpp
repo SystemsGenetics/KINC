@@ -23,7 +23,8 @@ void RunThreshold::printUsage() {
   printf("                   column that contains gene names\n");
   printf("\n");
   printf("Optional expression matrix arguments:\n");
-  printf("  --omit_na        Provide this flag to ignore missing values.\n");
+  printf("  --omit_na         Provide this flag to ignore missing values. Use this option for\n");
+  printf("                    RNA-seq expression matricies where counts are zero.\n");
   printf("  --na_val|-n      A string representing the missing values in the input file\n");
   printf("                   (e.g. NA or 0.000)\n");
   printf("  --func|-f        A transformation function to apply to elements of the ematrix.\n");
@@ -254,8 +255,8 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
 
   // TODO: make sure the th_method is in the method array.
 
-  if (headers) {
-    printf("  Skipping header lines\n");
+  if (headers == 1) {
+    printf("  Reading header line\n");
   }
   printf("  Performing transformation: %s \n", func);
   if (omit_na) {
