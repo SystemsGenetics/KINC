@@ -2,6 +2,286 @@
 
 
 
+
+
+
+
+
+
+
+
+CMatrix::GPair::~GPair()
+{
+   if (_iModes)
+   {
+      delete _iModes;
+   }
+   if (_iCorrelations)
+   {
+      delete _iCorrelations;
+   }
+}
+
+
+
+void CMatrix::GPair::read()
+{
+   _p->File::mem().sync(_data,FSync::read,diagonal(_x,_y));
+}
+
+
+
+void CMatrix::GPair::write()
+{
+   _p->File::mem().sync(_data,FSync::write,diagonal(_x,_y));
+}
+
+
+
+CMatrix::GPair::Modes& CMatrix::GPair::modes()
+{
+   if (!_iModes)
+   {
+      _iModes = new Modes(this);
+   }
+   return *_iModes;
+}
+
+
+
+CMatrix::GPair::Correlations& CMatrix::GPair::correlations()
+{
+   if (_iCorrelations)
+   {
+      _iCorrelations = new Correlations(this);
+   }
+   return *_iCorrelations;
+}
+
+
+
+void CMatrix::GPair::operator++()
+{
+   if ((_y+1)<_x)
+   {
+      _y++;
+   }
+   else if (_x<_p->_hdr.gSize())
+   {
+      _y = 0;
+      ++_x;
+   }
+}
+
+
+
+bool CMatrix::GPair::operator!=(const GPair& cmp)
+{
+   return _p!=cmp._p||_x!=cmp._x||_y!=cmp._y;
+}
+
+
+
+CMatrix::GPair::GPair(CMatrix* p, int x, int y):
+   _p(p),
+   _data(p->_hdr.mSize(),p->_hdr.sSize(),p->_hdr.cSize(),p->_hdr.eData()),
+   _x(x),
+   _y(y)
+{}
+
+
+
+void CMatrix::GPair::set(int x, int y)
+{
+   _x = x;
+   _y = y;
+}
+
+
+
+CMatrix::GPair::Modes::~Modes()
+{
+   if (_iMode)
+   {
+      delete _iMode;
+   }
+}
+
+
+
+CMatrix::GPair::Modes::Mode CMatrix::GPair::Modes::begin()
+{
+   return Mode(this,0);
+}
+
+
+
+CMatrix::GPair::Modes::Mode CMatrix::GPair::Modes::end()
+{
+   return Mode(this,_p->_p->_hdr.mSize());
+}
+
+
+
+CMatrix::GPair::Modes::Mode& CMatrix::GPair::Modes::at(int i)
+{
+   bool cond {i>=0&&i<(_p->_p->_hdr.mSize())};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   return (*this)[i];
+}
+
+
+
+CMatrix::GPair::Modes::Mode& CMatrix::GPair::Modes::operator[](int i)
+{
+   if (!_iMode)
+   {
+      _iMode = new Mode(this,i);
+   }
+   else
+   {
+      _iMode->set(i);
+   }
+   return *_iMode;
+}
+
+
+
+CMatrix::GPair::Modes::Modes(GPair* p):
+   _p(p)
+{}
+
+
+
+CMatrix::GPair::Modes::Mode::Iterator CMatrix::GPair::Modes::Mode::begin()
+{
+   return Iterator(this,0);
+}
+
+
+
+CMatrix::GPair::Modes::Mode::Iterator CMatrix::GPair::Modes::Mode::end()
+{
+   return Iterator(this,_p->_p->_p->_hdr.sSize());
+}
+
+
+
+int8_t& CMatrix::GPair::Modes::Mode::at(int i)
+{
+   bool cond {i>=0&&i<(_p->_p->_p->_hdr.sSize())};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   return (*this)[i];
+}
+
+
+
+int8_t& CMatrix::GPair::Modes::Mode::operator[](int i)
+{
+   return _p->_p->_data.mVal(_i,i);
+}
+
+
+
+void CMatrix::GPair::Modes::Mode::operator++()
+{
+   if (_i<(_p->_p->_p->_hdr.sSize()))
+   {
+      ++_i;
+   }
+}
+
+
+
+bool CMatrix::GPair::Modes::Mode::operator!=(const Mode& cmp)
+{
+   return _p!=cmp._p||_i!=cmp._i;
+}
+
+
+
+CMatrix::GPair::Modes::Mode::Mode(Modes* p, int i):
+   _p(p),
+   _i(i)
+{}
+
+
+
+void CMatrix::GPair::Modes::Mode::set(int i)
+{
+   _i = i;
+}
+
+
+
+int8_t& CMatrix::GPair::Modes::Mode::Iterator::operator*()
+{
+   return _p->_p->_p->_data.mVal(_p->_i,_i);
+}
+
+
+
+void CMatrix::GPair::Modes::Mode::Iterator::operator++()
+{
+   if (_i<(_p->_p->_p->_p->_hdr.sSize()))
+   {
+      ++_i;
+   }
+}
+
+
+
+bool CMatrix::GPair::Modes::Mode::Iterator::operator!=(const Iterator& cmp)
+{
+   return _p!=cmp._p||_i!=cmp._i;
+}
+
+
+
+CMatrix::GPair::Modes::Mode::Iterator::Iterator(Mode* p, int i):
+   _p(p),
+   _i(i)
+{}
+
+
+
+CMatrix::GPair::Corrs::~Corrs()
+{
+   if (_iCorr)
+   {
+      delete _iCorr;
+   }
+}
+
+
+
+CMatrix::GPair::Corrs::Corr CMatrix::GPair::Corrs::begin()
+{
+   return Corr(this,0);
+}
+
+
+
+CMatrix::GPair::Corrs::Corr CMatrix::GPair::Corrs::end()
+{
+   return Corr(this,BLASH)
+}
+CMatrix::GPair::Corrs::Corr& CMatrix::GPair::Corrs::at(int) {}
+CMatrix::GPair::Corrs::Corr& CMatrix::GPair::Corrs::operator[](int) {}
+CMatrix::GPair::Corrs::Corrs(GPair*) {}
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////
 CMatrix::CMatrix(const string& type, const string& file):
    DataPlugin(type,file)
 {

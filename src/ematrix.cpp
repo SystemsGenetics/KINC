@@ -455,9 +455,7 @@ EMatrix::Gene::Iterator EMatrix::Gene::end()
 
 float& EMatrix::Gene::at(int i)
 {
-   bool cond {_p->_hdr.sPtr()!=fNullPtr};
-   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
-   cond = i>=0&&i<_p->_hdr.sSize();
+   bool cond {i>=0&&i<_p->_hdr.sSize()};
    AccelCompEng::assert<OutOfRange>(cond,__LINE__);
    return (*this)[i];
 }

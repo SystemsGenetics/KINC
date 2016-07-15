@@ -10,15 +10,15 @@ class CMatrix : public AccelCompEng::DataPlugin
 public:
    using string = std::string;
    ACE_DATA_HEADER()
-   ACE_EXCEPTION(CMatrix,AlreadyInitialized)
-   ACE_EXCEPTION(CMatrix,InvalidSize)
+   //ACE_EXCEPTION(CMatrix,AlreadyInitialized)
+   //ACE_EXCEPTION(CMatrix,InvalidSize)
    ACE_EXCEPTION(CMatrix,OutOfRange)
-   ACE_EXCEPTION(CMatrix,NotInitialized)
-   ACE_EXCEPTION(CMatrix,InvalidGeneCorr)
-   ACE_EXCEPTION(CMatrix,ValueNotRead)
+   //ACE_EXCEPTION(CMatrix,NotInitialized)
+   //ACE_EXCEPTION(CMatrix,InvalidGeneCorr)
+   //ACE_EXCEPTION(CMatrix,ValueNotRead)
    //class GeneModes;
    //class GeneCorrs;
-   class GRelation;
+   class GPair;
    CMatrix(const string& type, const string& file);
    void load(GetOpts&,Terminal&) override final;
    void dump(GetOpts&,Terminal&) override final;
@@ -32,9 +32,10 @@ public:
    //void get_modes(GeneModes&,uint32_t,uint32_t);
    //GeneCorrs get_corrs(uint32_t,uint32_t);
    //void get_corrs(GeneCorrs&,uint32_t,uint32_t);
-   GRelation begin();
-   GRelation end();
-   GRelation& at(int,int);
+   GPair begin();
+   GPair end();
+   GPair& at(int,int);
+   GPair& ref(int,int);
 private:
    ACE_FMEM_STATIC(Header,45)
       ACE_FMEM_VAL(gSize,int32_t,0)
@@ -50,30 +51,32 @@ private:
       ACE_FMEM_VAL(nPtr,FPtr,0)
    ACE_FMEM_END()
    //void set_name(FPtr,uint32_t,uint32_t,const string&);
-   long long diagonal(int,int);
-   long long diag_size(int);
+   static long long diagonal(int,int);
+   static long long diag_size(int);
    Header _hdr;
-   GRelation* _iRelation {nullptr};
+   GPair* _iRelation {nullptr};
 };
 
 
 
-class CMatrix::GRelation
+class CMatrix::GPair//
 {
    friend class CMatrix;
    class Modes;
-   class Correlations;
-   ~GRelation();
+   class Corrs;
+   ~GPair();
    void read();
    void write();
    Modes& modes();
    Correlations& correlations();
    void operator++();
-   bool operator!=(const GRelation&);
+   bool operator!=(const GPair&);
 private:
+   GPair(CMatrix*,int,int);
+   void set(int,int);
    ACE_FMEM_OBJECT(Relation)
       Relation(int mSize, int sSize, int cSize, Fptr ptr = fNullPtr):
-         Object((mSize*sSize)+(4*cSize*sSize),ptr),
+         Object((mSize*sSize)+(4*cSize*mSize),ptr),
          _mSize(mSize),
          _sSize(sSize),
          _cSize(cSize)
@@ -82,33 +85,39 @@ private:
       int _sSize;
       int _cSize;
       int8_t& mVal(int mi, int i) { get<int8_t>((_sSize*mi)+i); }
-      float& cVal(int ci, int i) { get<float>((_mSize*_sSize)+(4*((_sSize*ci)+i))); }
+      float& cVal(int mi, int ci) { get<float>((_mSize*_sSize)+(4*((_cSize*mi)+ci))); }
    ACE_FMEM_END()
    CMatrix* _p;
    Relation _data;
+   int _x;
+   int _y;
    Modes* _iModes {nullptr};
-   Correlations* _iCorrelations {nullptr};
+   Corrs* _iCorrs {nullptr};
 };
 
 
 
-class CMatrix::GRelation::Modes
+class CMatrix::GPair::Modes//
 {
    class Mode;
-   ~Mode();
+   ~Modes();
+   Modes(const Modes&) = delete;
+   Modes& operator=(const Modes&) = delete;
+   Modes(Modes&&) = delete;
+   Modes& operator=(Modes&&) = delete;
    Mode begin();
    Mode end();
    Mode& at(int);
    Mode& operator[](int);
 private:
-   Modes(GRelation*);
-   GRelation* _p;
+   Modes(GPair*);
+   GPair* _p;
    Mode* _iMode {nullptr};
 };
 
 
 
-class CMatrix::GRelation::Modes::Mode
+class CMatrix::GPair::Modes::Mode//
 {
    class Iterator;
    Iterator begin();
@@ -126,7 +135,7 @@ private:
 
 
 
-class CMatrix::GRelation::Modes::Mode::Iterator
+class CMatrix::GPair::Modes::Mode::Iterator//
 {
    int8_t& operator*();
    void operator++();
@@ -139,23 +148,27 @@ private:
 
 
 
-class CMatrix::GRelation::Relations
+class CMatrix::GPair::Corrs
 {
-   class Relation;
-   ~Relations();
-   Relation begin();
-   Relation end();
-   Relation& at(int);
-   Relation& operator[](int);
+   class Corr;
+   ~Corrs();
+   Corrs(const Corrs&) = delete;
+   Corrs& operator=(const Corrs&) = delete;
+   Corrs(Corrs&&) = delete;
+   Corrs& operator=(Corrs&&) = delete;
+   Corr begin();
+   Corr end();
+   Corr& at(int);
+   Corr& operator[](int);
 private:
-   Relations(GRelation*);
-   GRelation* _p;
-   Relation* _iRelation {nullptr};
+   Corrs(GPair*);
+   GPair* _p;
+   Corr* _iCorr {nullptr};
 };
 
 
 
-class CMatrix::GRelation::Relations::Relation
+class CMatrix::GPair::Corrs::Corr
 {
    class Iterator;
    Iterator begin();
@@ -165,22 +178,22 @@ class CMatrix::GRelation::Relations::Relation
    void operator++();
    bool operator!=(const Mode&);
 private:
-   Relation(Relations*,int);
+   Corr(Corrs*,int);
    void set(int);
-   Relations* _p;
+   Corrs* _p;
    int _i;
 };
 
 
 
-class CMatrix::GRelation::Relations::Relation::Iterator
+class CMatrix::GPair::Corrs::Corr::Iterator
 {
    float& operator*();
    void operator++();
    bool operator!=(const Iterator&);
 private:
-   Iterator(Relation*,int);
-   Relation* _p;
+   Iterator(Corr*,int);
+   Corr* _p;
    int _i;
 };
 
