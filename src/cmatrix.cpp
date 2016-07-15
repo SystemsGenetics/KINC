@@ -2,11 +2,55 @@
 
 
 
+CMatrix::GPair CMatrix::begin()
+{
+   return GPair(this,1,0);
+}
 
 
 
+CMatrix::GPair CMatrix::end()
+{
+   return GPair(this,_hdr.gSize(),0);
+}
 
 
+
+CMatrix::GPair& CMatrix::at(int x, int y)
+{
+   bool cond {x>=0&&y>=0&&y<x&&x<_hdr.gSize()};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   return ref(x,y);
+}
+
+
+
+CMatrix::GPair& CMatrix::ref(int x, int y)
+{
+   if (!_iGPair)
+   {
+      _iGPair = new GPair(this,x,y);
+   }
+   else
+   {
+      _iGPair->set(x,y);
+   }
+   return *_iGPair;
+}
+
+
+
+long long CMatrix::diagonal(int x, int y)
+{
+   return (x*(x-1)/2)+y;
+}
+
+
+
+long long CMatrix::diag_size(int x)
+{
+   return x*(x+1)/2;
+}
 
 
 
@@ -16,9 +60,9 @@ CMatrix::GPair::~GPair()
    {
       delete _iModes;
    }
-   if (_iCorrelations)
+   if (_iCorrs)
    {
-      delete _iCorrelations;
+      delete _iCorrs;
    }
 }
 
@@ -38,6 +82,22 @@ void CMatrix::GPair::write()
 
 
 
+int CMatrix::GPair::size()
+{
+   return _data.mAmt();
+}
+
+
+
+void CMatrix::GPair::size(int size)
+{
+   bool cond {size>=0&&size<(_p->_hdr.mSize())};
+   AccelCompEng::assert<GreaterThanMax>(cond,__LINE__);
+   _data.mAmt() = size;
+}
+
+
+
 CMatrix::GPair::Modes& CMatrix::GPair::modes()
 {
    if (!_iModes)
@@ -49,13 +109,13 @@ CMatrix::GPair::Modes& CMatrix::GPair::modes()
 
 
 
-CMatrix::GPair::Correlations& CMatrix::GPair::correlations()
+CMatrix::GPair::Corrs& CMatrix::GPair::corrs()
 {
-   if (_iCorrelations)
+   if (_iCorrs)
    {
-      _iCorrelations = new Correlations(this);
+      _iCorrs = new Corrs(this);
    }
-   return *_iCorrelations;
+   return *_iCorrs;
 }
 
 
@@ -118,14 +178,14 @@ CMatrix::GPair::Modes::Mode CMatrix::GPair::Modes::begin()
 
 CMatrix::GPair::Modes::Mode CMatrix::GPair::Modes::end()
 {
-   return Mode(this,_p->_p->_hdr.mSize());
+   return Mode(this,_p->_data.mAmt());
 }
 
 
 
 CMatrix::GPair::Modes::Mode& CMatrix::GPair::Modes::at(int i)
 {
-   bool cond {i>=0&&i<(_p->_p->_hdr.mSize())};
+   bool cond {i>=0&&i<(_p->_data.mAmt())};
    AccelCompEng::assert<OutOfRange>(cond,__LINE__);
    return (*this)[i];
 }
@@ -185,7 +245,7 @@ int8_t& CMatrix::GPair::Modes::Mode::operator[](int i)
 
 void CMatrix::GPair::Modes::Mode::operator++()
 {
-   if (_i<(_p->_p->_p->_hdr.sSize()))
+   if (_i<(_p->_p->_data.mAmt()))
    {
       ++_i;
    }
@@ -264,17 +324,130 @@ CMatrix::GPair::Corrs::Corr CMatrix::GPair::Corrs::begin()
 
 CMatrix::GPair::Corrs::Corr CMatrix::GPair::Corrs::end()
 {
-   return Corr(this,BLASH)
+   return Corr(this,_p->_data.mAmt());
 }
-CMatrix::GPair::Corrs::Corr& CMatrix::GPair::Corrs::at(int) {}
-CMatrix::GPair::Corrs::Corr& CMatrix::GPair::Corrs::operator[](int) {}
-CMatrix::GPair::Corrs::Corrs(GPair*) {}
 
 
 
+CMatrix::GPair::Corrs::Corr& CMatrix::GPair::Corrs::at(int i)
+{
+   bool cond {i>=0&&i<(_p->_data.mAmt())};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   return (*this)[i];
+}
 
 
 
+CMatrix::GPair::Corrs::Corr& CMatrix::GPair::Corrs::operator[](int i)
+{
+   if (!_iCorr)
+   {
+      _iCorr = new Corr(this,i);
+   }
+   else
+   {
+      _iCorr->set(i);
+   }
+   return *_iCorr;
+}
+
+
+
+CMatrix::GPair::Corrs::Corrs(GPair* p):
+   _p(p)
+{}
+
+
+
+CMatrix::GPair::Corrs::Corr::Iterator CMatrix::GPair::Corrs::Corr::begin()
+{
+   return Iterator(this,0);
+}
+
+
+
+CMatrix::GPair::Corrs::Corr::Iterator CMatrix::GPair::Corrs::Corr::end()
+{
+   return Iterator(this,_p->_p->_p->_hdr.cSize());
+}
+
+
+
+float& CMatrix::GPair::Corrs::Corr::at(int i)
+{
+   bool cond {i>=0&&i<(_p->_p->_p->_hdr.cSize())};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   return (*this)[i];
+}
+
+
+
+float& CMatrix::GPair::Corrs::Corr::operator[](int i)
+{
+   return _p->_p->_data.cVal(_i,i);
+}
+
+
+
+void CMatrix::GPair::Corrs::Corr::operator++()
+{
+   if (_i<(_p->_p->_data.mAmt()))
+   {
+      ++_i;
+   }
+}
+
+
+
+bool CMatrix::GPair::Corrs::Corr::operator!=(const Corr& cmp)
+{
+   return _p!=cmp._p||_i!=cmp._i;
+}
+
+
+
+CMatrix::GPair::Corrs::Corr::Corr(Corrs* p, int i):
+   _p(p),
+   _i(i)
+{}
+
+
+
+void CMatrix::GPair::Corrs::Corr::set(int i)
+{
+   _i = i;
+}
+
+
+
+float& CMatrix::GPair::Corrs::Corr::Iterator::operator*()
+{
+   return _p->_p->_p->_data.cVal(_p->_i,_i);
+}
+
+
+
+void CMatrix::GPair::Corrs::Corr::Iterator::operator++()
+{
+   if (_i<(_p->_p->_p->_p->_hdr.cSize()))
+   {
+      ++_i;
+   }
+}
+
+
+
+bool CMatrix::GPair::Corrs::Corr::Iterator::operator!=(const Iterator& cmp)
+{
+   return _p!=cmp._p||_i!=cmp._i;
+}
+
+
+
+CMatrix::GPair::Corrs::Corr::Iterator::Iterator(Corr* p, int i):
+   _p(p),
+   _i(i)
+{}
 
 
 
@@ -282,7 +455,7 @@ CMatrix::GPair::Corrs::Corrs(GPair*) {}
 
 
 ///////////////////////////////////////////////////////////////////////////////////
-CMatrix::CMatrix(const string& type, const string& file):
+/*CMatrix::CMatrix(const string& type, const string& file):
    DataPlugin(type,file)
 {
    if (File::head()==FileMem::nullPtr)
@@ -600,3 +773,4 @@ CMatrix::FPtr CMatrix::GeneCorrs::initialize(CMatrix& p, uint32_t gSize,
    p.File::mem().allot(cr,p.diag_size(gSize));
    return cr.addr();
 }
+*/
