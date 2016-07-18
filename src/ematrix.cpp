@@ -231,13 +231,17 @@ void EMatrix::initialize(int gSize, int sSize, bool sHeaders)
       File::mem().allot(hd,sSize);
       _hdr.sPtr() = hd.addr();
    }
+   else
+   {
+      _hdr.sPtr() = fNullPtr;
+   }
+   _hdr.wr() = 0;
    _hdr.gSize() = gSize;
    _hdr.sSize() = sSize;
    _hdr.eData() = Gene::initialize(File::mem(),gSize,sSize);
    _gNames.resize(gSize);
    _sNames.resize(sSize);
    File::mem().sync(_hdr,FSync::write);
-   File::head(_hdr.addr());
 }
 
 
@@ -289,7 +293,7 @@ const EMatrix::string& EMatrix::sName(int i) const
 {
    bool cond {_hdr.gPtr()!=fNullPtr};
    AccelCompEng::assert<NoData>(cond,__LINE__);
-   cond = {i>=0||i<_hdr.gSize()};
+   cond = {i>=0||i<_hdr.sSize()};
    AccelCompEng::assert<OutOfRange>(cond,__LINE__);
    return _sNames[i];
 }
