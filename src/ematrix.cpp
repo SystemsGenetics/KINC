@@ -267,10 +267,10 @@ int EMatrix::sSize() const
 
 
 
-const EMatrix::string& EMatrix::gName(int i) const
+EMatrix::string& EMatrix::gName(int i)
 {
    bool cond {_hdr.gPtr()!=fNullPtr};
-   AccelCompEng::assert<NoData>(cond,__LINE__);
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
    cond = {i>=0||i<_hdr.gSize()};
    AccelCompEng::assert<OutOfRange>(cond,__LINE__);
    return _gNames[i];
@@ -278,35 +278,13 @@ const EMatrix::string& EMatrix::gName(int i) const
 
 
 
-void EMatrix::gName(int i, const string& name)
+EMatrix::string& EMatrix::sName(int i)
 {
    bool cond {_hdr.gPtr()!=fNullPtr};
    AccelCompEng::assert<NotInitialized>(cond,__LINE__);
-   cond = {i>=0||i<_hdr.gSize()};
-   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
-   _gNames[i] = name;
-}
-
-
-
-const EMatrix::string& EMatrix::sName(int i) const
-{
-   bool cond {_hdr.gPtr()!=fNullPtr};
-   AccelCompEng::assert<NoData>(cond,__LINE__);
    cond = {i>=0||i<_hdr.sSize()};
    AccelCompEng::assert<OutOfRange>(cond,__LINE__);
    return _sNames[i];
-}
-
-
-
-void EMatrix::sName(int i, const string& name)
-{
-   bool cond {_hdr.sPtr()!=fNullPtr};
-   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
-   cond = {i>=0||i<_hdr.sSize()};
-   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
-   _sNames[i] = name;
 }
 
 
@@ -329,10 +307,10 @@ void EMatrix::write()
 {
    bool cond {_hdr.gPtr()!=fNullPtr};
    AccelCompEng::assert<NotInitialized>(cond,__LINE__);
-   NmHead hd {_hdr.gPtr()};
    cond = _hdr.wr()==0;
    AccelCompEng::assert<AlreadySet>(cond,__LINE__);
    _hdr.wr() = 1;
+   NmHead hd {_hdr.gPtr()};
    for (int i=0;i<_gNames.size();++i)
    {
       FString tmp {&File::mem()};
@@ -564,7 +542,7 @@ EMatrix::Mirror::Mirror(EMatrix& p):
    _data(p._hdr.gSize(),p._hdr.sSize(),p._hdr.eData())
 {
    bool cond {p._hdr.eData()!=fNullPtr};
-   AccelCompEng::assert<NoData>(cond,__LINE__);
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
 }
 
 
@@ -812,7 +790,7 @@ void EMatrix::read_header(std::ifstream& f)
    int i {0};
    while (ibuf >> tmp)
    {
-      sName(i++,tmp);
+      sName(i++) = tmp;
    }
    bool cond {i==_hdr.sSize()};
    AccelCompEng::assert<InvalidFile>(cond,__LINE__);
@@ -841,7 +819,7 @@ void EMatrix::read_gene_expressions(std::ifstream& f, const string& nan)
          {
             throw InvalidFile(__LINE__);
          }
-         gName(gi++,tmp);
+         gName(gi++) = tmp;
          for (auto i = g.begin();i!=g.end();++i)
          {
             if (!(ibuf >> tmp))

@@ -11,7 +11,6 @@ class EMatrix : public AccelCompEng::DataPlugin
 public:
    ACE_DATA_HEADER()
    ACE_EXCEPTION(EMatrix,OutOfRange)
-   ACE_EXCEPTION(EMatrix,NoData)
    ACE_EXCEPTION(EMatrix,AlreadyInitialized)
    ACE_EXCEPTION(EMatrix,NotInitialized)
    ACE_EXCEPTION(EMatrix,AlreadySet)
@@ -33,10 +32,8 @@ public:
    bool hasSampleHead() const;
    int gSize() const;
    int sSize() const;
-   const string& gName(int) const;
-   void gName(int,const string&);
-   const string& sName(int) const;
-   void sName(int,const string&);
+   string& gName(int);
+   string& sName(int);
    Transform transform() const;
    void transform(Transform);
    void write();
