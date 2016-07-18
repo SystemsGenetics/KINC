@@ -10,10 +10,10 @@ class CMatrix : public AccelCompEng::DataPlugin
 public:
    using string = std::string;
    ACE_DATA_HEADER()
-   //ACE_EXCEPTION(CMatrix,AlreadyInitialized)
+   ACE_EXCEPTION(CMatrix,AlreadyInitialized)
    //ACE_EXCEPTION(CMatrix,InvalidSize)
    ACE_EXCEPTION(CMatrix,OutOfRange)
-   //ACE_EXCEPTION(CMatrix,NotInitialized)
+   ACE_EXCEPTION(CMatrix,NotInitialized)
    //ACE_EXCEPTION(CMatrix,InvalidGeneCorr)
    //ACE_EXCEPTION(CMatrix,ValueNotRead)
    ACE_EXCEPTION(CMatrix,GreaterThanMax)
@@ -23,20 +23,34 @@ public:
    void dump(GetOpts&,Terminal&) override final {}
    void query(GetOpts&,Terminal&) override final {}
    bool empty() override final {}
+   void initialize(int,int,int,int,bool);
+   int gSize() const;
+   int sSize() const;
+   int mSize() const;
+   int cSize() const;
+   const string& gName(int) const;//
+   void gName(int,const string&);//
+   const string& sName(int) const;//
+   void sName(int,const string&);//
+   const string& cName(int) const;//
+   void cName(int,const string&);//
+   void write();//
    GPair begin();
    GPair end();
    GPair& at(int,int);
    GPair& ref(int,int);
 private:
-   ACE_FMEM_STATIC(Header,45)
+   using svec = std::vector<string>;
+   ACE_FMEM_STATIC(Header,46)
       ACE_FMEM_VAL(gSize,int32_t,0)
       ACE_FMEM_VAL(sSize,int32_t,4)
       ACE_FMEM_VAL(cSize,int32_t,8)
       ACE_FMEM_VAL(mSize,int8_t,12)
-      ACE_FMEM_VAL(gPtr,FPtr,13)
-      ACE_FMEM_VAL(sPtr,FPtr,21)
-      ACE_FMEM_VAL(cPtr,FPtr,29)
-      ACE_FMEM_VAL(eData,FPtr,37)
+      ACE_FMEM_VAL(wr,int8_t,13)
+      ACE_FMEM_VAL(gPtr,FPtr,14)
+      ACE_FMEM_VAL(sPtr,FPtr,22)
+      ACE_FMEM_VAL(cPtr,FPtr,30)
+      ACE_FMEM_VAL(eData,FPtr,38)
    ACE_FMEM_END()
    ACE_FMEM_STATIC(NmHead,8)
       ACE_FMEM_VAL(nPtr,FPtr,0)
@@ -45,6 +59,9 @@ private:
    static long long diag_size(int);
    Header _hdr;
    GPair* _iGPair {nullptr};
+   svec _gNames;
+   svec _sNames;
+   svec _cNames;
 };
 
 
@@ -67,6 +84,7 @@ public:
 private:
    GPair(CMatrix*,int,int);
    void set(int,int);
+   static FPtr initialize(int,int,int,int);
    ACE_FMEM_OBJECT(Pair)
       Pair(int mSize, int sSize, int cSize, FPtr ptr = fNullPtr):
          Object(1+(mSize*sSize)+(4*cSize*mSize),ptr),

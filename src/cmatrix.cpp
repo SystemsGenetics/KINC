@@ -2,6 +2,139 @@
 
 
 
+CMatrix::CMatrix(const string& type, const string& file):
+   DataPlugin(type,file)
+{
+   if (File::head()==FileMem::nullPtr)
+   {
+      File::mem().allot(_hdr);
+      File::head(_hdr.addr());
+      _hdr.gSize() = 0;
+      _hdr.sSize() = 0;
+      _hdr.cSize() = 0;
+      _hdr.mSize() = 0;
+      _hdr.wr() = 0;
+      _hdr.gPtr() = fNullPtr;
+      _hdr.sPtr() = fNullPtr;
+      _hdr.cPtr() = fNullPtr;
+      _hdr.eData() = fNullPtr;
+      File::mem().sync(_hdr,FSync::write);
+   }
+   else
+   {
+      _hdr = File::head();
+      File::mem().sync(_hdr,FSync::read);
+      NmHead nm {_hdr.gPtr()};
+      for (int i = 0;i<_hdr.gSize();++i)
+      {
+         File::mem().sync(nm,FSync::read,i);
+         FString tmp(&File::mem(),nm.nPtr());
+         _gNames.push_back(*tmp);
+      }
+      nm.addr(_hdr.cPtr());
+      for (int i = 0;i<_hdr.cSize();++i)
+      {
+         File::mem().sync(nm,FSync::read,i);
+         FString tmp(&File::mem(),nm.nPtr());
+         _cNames.push_back(*tmp);
+      }
+      if (_hdr.sPtr()!=fNullPtr)
+      {
+         nm.addr(_hdr.sPtr());
+         for (int i = 0;i<_hdr.sSize();++i)
+         {
+            File::mem().sync(nm,FSync::read,i);
+            FString tmp(&File::mem(),nm.nPtr());
+            _sNames.push_back(*tmp);
+         }
+      }
+      else
+      {
+         _sNames.resize(_hdr.sSize());
+      }
+   }
+}
+
+
+
+void CMatrix::initialize(int gSize, int sSize, int mSize, int cSize, bool sHdrs)
+{
+   if (File::head()==fNullPtr)
+   {
+      File::mem().allot(_hdr);
+      File::head(_hdr.addr());
+   }
+   else
+   {
+      bool cond {_hdr.gPtr()==fNullPtr};
+      AccelCompEng::assert<AlreadyInitialized>(cond,__LINE__);
+   }
+   NmHead hd;
+   File::mem().allot(hd,gSize);
+   _hdr.gPtr() = hd.addr();
+   File::mem().allot(hd,cSize);
+   _hdr.cPtr() = hd.addr();
+   if (sHdrs)
+   {
+      File::mem().allot(hd,sSize);
+      _hdr.sPtr() = hd.addr();
+   }
+   else
+   {
+      _hdr.sPtr() = fNullPtr;
+   }
+   _hdr.wr() = 0;
+   _hdr.gSize() = gSize;
+   _hdr.sSize() = sSize;
+   _hdr.mSize() = mSize;
+   _hdr.cSize() = cSize;
+   _hdr.eData() = GPair::initialize(gSize,sSize,mSize,cSize);
+   _gNames.resize(gSize);
+   _sNames.resize(sSize);
+   _cNames.resize(cSize);
+   File::mem().sync(_hdr,FSync::write);
+}
+
+
+
+int CMatrix::gSize() const
+{
+   return _hdr.gSize();
+}
+
+
+
+int CMatrix::sSize() const
+{
+   return _hdr.sSize();
+}
+
+
+
+int CMatrix::mSize() const
+{
+   return _hdr.mSize();
+}
+
+
+
+int CMatrix::cSize() const
+{
+   return _hdr.cSize();
+}
+
+
+
+const CMatrix::string& CMatrix::gName(int) const {}
+void CMatrix::gName(int,const string&) {}
+const CMatrix::string& CMatrix::sName(int) const {}
+void CMatrix::sName(int,const string&) {}
+const CMatrix::string& CMatrix::cName(int) const {}
+void CMatrix::cName(int,const string&) {}
+void CMatrix::write() {}
+
+
+
 CMatrix::GPair CMatrix::begin()
 {
    return GPair(this,1,0);
@@ -18,7 +151,9 @@ CMatrix::GPair CMatrix::end()
 
 CMatrix::GPair& CMatrix::at(int x, int y)
 {
-   bool cond {x>=0&&y>=0&&y<x&&x<_hdr.gSize()};
+   bool cond {_hdr.gPtr()!=fNullPtr};
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
+   cond = x>=0&&y>=0&&y<x&&x<_hdr.gSize();
    AccelCompEng::assert<OutOfRange>(cond,__LINE__);
    return ref(x,y);
 }
@@ -155,6 +290,15 @@ void CMatrix::GPair::set(int x, int y)
 {
    _x = x;
    _y = y;
+}
+
+
+
+CMatrix::FPtr CMatrix::GPair::initialize(int gSize, int sSize, int mSize, int cSize)
+{
+   Pair ndat(mSize,sSize,cSize);
+   File::mem().allot(ndat,diag_size(gSize));
+   return ndat.addr();
 }
 
 
@@ -455,31 +599,7 @@ CMatrix::GPair::Corrs::Corr::Iterator::Iterator(Corr* p, int i):
 
 
 ///////////////////////////////////////////////////////////////////////////////////
-/*CMatrix::CMatrix(const string& type, const string& file):
-   DataPlugin(type,file)
-{
-   if (File::head()==FileMem::nullPtr)
-   {
-      File::mem().allot(_hdr);
-      File::head(_hdr.addr());
-      _hdr.gSize() = 0;
-      _hdr.sSize() = 0;
-      _hdr.cSize() = 0;
-      _hdr.mdMax() = 0;
-      _hdr.gPtr() = fNullPtr;
-      _hdr.sPtr() = fNullPtr;
-      _hdr.cPtr() = fNullPtr;
-      _hdr.mdData() = fNullPtr;
-      _hdr.crData() = fNullPtr;
-      File::mem().sync(_hdr,FSync::write);
-   }
-   else
-   {
-      _hdr = File::head();
-      File::mem().sync(_hdr,FSync::read);
-   }
-}
-
+/*
 
 
 void CMatrix::load(GetOpts&, Terminal &tm)
