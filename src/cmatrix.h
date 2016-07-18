@@ -11,12 +11,10 @@ public:
    using string = std::string;
    ACE_DATA_HEADER()
    ACE_EXCEPTION(CMatrix,AlreadyInitialized)
-   //ACE_EXCEPTION(CMatrix,InvalidSize)
    ACE_EXCEPTION(CMatrix,OutOfRange)
    ACE_EXCEPTION(CMatrix,NotInitialized)
-   //ACE_EXCEPTION(CMatrix,InvalidGeneCorr)
-   //ACE_EXCEPTION(CMatrix,ValueNotRead)
    ACE_EXCEPTION(CMatrix,GreaterThanMax)
+   ACE_EXCEPTION(CMatrix,AlreadySet)
    class GPair;
    CMatrix(const string& type, const string& file);
    void load(GetOpts&,Terminal&) override final {}
@@ -28,13 +26,10 @@ public:
    int sSize() const;
    int mSize() const;
    int cSize() const;
-   const string& gName(int) const;//
-   void gName(int,const string&);//
-   const string& sName(int) const;//
-   void sName(int,const string&);//
-   const string& cName(int) const;//
-   void cName(int,const string&);//
-   void write();//
+   string& gName(int);
+   string& sName(int);
+   string& cName(int);
+   void write();
    GPair begin();
    GPair end();
    GPair& at(int,int);
@@ -55,6 +50,8 @@ private:
    ACE_FMEM_STATIC(NmHead,8)
       ACE_FMEM_VAL(nPtr,FPtr,0)
    ACE_FMEM_END()
+   string& get_name(int,svec&,FPtr,int);
+   void write_names(svec&,FPtr);
    static long long diagonal(int,int);
    static long long diag_size(int);
    Header _hdr;
@@ -84,7 +81,7 @@ public:
 private:
    GPair(CMatrix*,int,int);
    void set(int,int);
-   static FPtr initialize(int,int,int,int);
+   static FPtr initialize(FileMem&,int,int,int,int);
    ACE_FMEM_OBJECT(Pair)
       Pair(int mSize, int sSize, int cSize, FPtr ptr = fNullPtr):
          Object(1+(mSize*sSize)+(4*cSize*mSize),ptr),

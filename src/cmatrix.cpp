@@ -88,7 +88,7 @@ void CMatrix::initialize(int gSize, int sSize, int mSize, int cSize, bool sHdrs)
    _hdr.sSize() = sSize;
    _hdr.mSize() = mSize;
    _hdr.cSize() = cSize;
-   _hdr.eData() = GPair::initialize(gSize,sSize,mSize,cSize);
+   _hdr.eData() = GPair::initialize(File::mem(),gSize,sSize,mSize,cSize);
    _gNames.resize(gSize);
    _sNames.resize(sSize);
    _cNames.resize(cSize);
@@ -125,13 +125,42 @@ int CMatrix::cSize() const
 
 
 
-const CMatrix::string& CMatrix::gName(int) const {}
-void CMatrix::gName(int,const string&) {}
-const CMatrix::string& CMatrix::sName(int) const {}
-void CMatrix::sName(int,const string&) {}
-const CMatrix::string& CMatrix::cName(int) const {}
-void CMatrix::cName(int,const string&) {}
-void CMatrix::write() {}
+CMatrix::string& CMatrix::gName(int i)
+{
+   return get_name(i,_gNames,_hdr.gPtr(),_hdr.gSize());
+}
+
+
+
+CMatrix::string& CMatrix::sName(int i)
+{
+   return get_name(i,_sNames,_hdr.sPtr(),_hdr.sSize());
+}
+
+
+
+CMatrix::string& CMatrix::cName(int i)
+{
+   return get_name(i,_cNames,_hdr.cPtr(),_hdr.cSize());
+}
+
+
+
+void CMatrix::write()
+{
+   bool cond {_hdr.gPtr()!=fNullPtr};
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
+   cond = _hdr.wr()==0;
+   AccelCompEng::assert<AlreadySet>(cond,__LINE__);
+   _hdr.wr() = 1;
+   write_names(_gNames,_hdr.gPtr());
+   write_names(_cNames,_hdr.cPtr());
+   if (_hdr.sPtr()!=fNullPtr)
+   {
+      write_names(_sNames,_hdr.sPtr());
+   }
+   File::mem().sync(_hdr,FSync::write);
+}
 
 
 
@@ -171,6 +200,31 @@ CMatrix::GPair& CMatrix::ref(int x, int y)
       _iGPair->set(x,y);
    }
    return *_iGPair;
+}
+
+
+
+CMatrix::string& CMatrix::get_name(int i, svec& names, FPtr ptr, int size)
+{
+   bool cond {ptr!=fNullPtr};
+   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
+   cond = {i>=0||i<size};
+   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   return names[i];
+}
+
+
+
+void CMatrix::write_names(svec& names, FPtr ptr)
+{
+   NmHead hd {ptr};
+   for (int i=0;i<names.size();++i)
+   {
+      FString tmp {&File::mem()};
+      tmp = names[i];
+      hd.nPtr() = tmp.addr();
+      File::mem().sync(hd,FSync::write,i);
+   }
 }
 
 
@@ -294,10 +348,10 @@ void CMatrix::GPair::set(int x, int y)
 
 
 
-CMatrix::FPtr CMatrix::GPair::initialize(int gSize, int sSize, int mSize, int cSize)
+CMatrix::FPtr CMatrix::GPair::initialize(FileMem& mem, int gSize, int sSize, int mSize, int cSize)
 {
    Pair ndat(mSize,sSize,cSize);
-   File::mem().allot(ndat,diag_size(gSize));
+   mem.allot(ndat,diag_size(gSize));
    return ndat.addr();
 }
 
