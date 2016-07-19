@@ -37,15 +37,15 @@ depend: $(dpds)
 +@echo Done.
 
 $(build)%.o : %.cpp
-+@echo "Building object $@"
++@echo "Building object $(*F)."
 +@$(CXX) $(acxxflags) -c $< -o $@
 
 %.cl.h: %.cl
-+@echo "Building kernel $@"
++@echo "Building kernel $(*F)."
 +@$(GENCL) $<
 
 $(build)%.d: %.cpp
-+@echo "Building depend $@"
++@echo "Building depend $(*F)."
 +@echo -n "$@ $(build)" > $@
 +@$(CXX) $(acxxflags) -MM $< >> $@
 
