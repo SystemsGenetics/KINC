@@ -7,26 +7,89 @@
 #include <ctime>
 
 
-using namespace AccelCompEng;
+
+void Spearman::input(DataPlugin* input)
+{
+   AccelCompEng::assert<TooManyInputs>(!_in,__LINE__);
+   bool cond {input->type()==string("emx")};
+   AccelCompEng::assert<InvalidDataType>(cond,__LINE__);
+   _in = dynamic_cast<EMatrix*>(input);
+}
+
+
+
+void Spearman::output(DataPlugin* output)
+{
+   AccelCompEng::assert<TooManyOutputs>(!_out,__LINE__);
+   bool cond {output->type()==string("cmx")};
+   AccelCompEng::assert<InvalidDataType>(cond,__LINE__);
+   _out = dynamic_cast<CMatrix*>(output);
+}
+
+
+
+void Spearman::execute_cl(GetOpts&, Terminal& tm)
+{
+   AccelCompEng::assert<NoDataInput>(_in,__LINE__);
+   AccelCompEng::assert<NoDataOutput>(_out,__LINE__);
+   int gSize {_in->gSize()};
+   int sSize {_in->sSize()};
+   tm << "Loading kernel program into OpenCL device...\n";
+   CLProgram::add_source(spearman_cl);
+   if (!CLProgram::compile(""))
+   {
+      tm << CLProgram::log();
+      return;
+   }
+   auto kern = CLProgram::mkernel("spearman");
+   tm << "Loading expression data into OpenCL device...\n";
+   auto expList = CLContext::buffer<cl_float>(sSize*gSize);
+   int inc {0};
+   for (auto g = _in->begin();g!=_in->end();++g)
+   {
+      for (auto i = g.begin();i!=g.end();++i)
+      {
+         expList[inc++] = *i;
+      }
+   }
+   CLEvent ev = CLCommandQueue::write_buffer(expList);
+   ev.wait();
+   int bSize {pow2_wall(sSize)};
+   bool cond {bSize>0};
+   AccelCompEng::assert<TooManySamples>(cond,__LINE__);
+   int wSize {1024};
+   int chunk {1};
+   if ((2*wSize)<bSize)
+   {
+      chunk = bSize/(2*wSize);
+   }
+   tm << chunk << "\n";
+}
+
+
+
+void Spearman::execute_pn(GetOpts&, Terminal& tm)
+{
+   tm << "Not yet implemented.\n";
+}
+
+
+
+int Spearman::pow2_wall(int i)
+{
+   int ret = 1;
+   while (ret<i)
+   {
+      ret<<=1;
+      if (ret<=0)
+      {
+         break;
+      }
+   }
+   return ret;
+}
 
 /*
-
-void spearman::input(DataPlugin* input)
-{
-   bool cond {input->type()==std::string("emx")};
-   assert<InvalidInputType>(cond,__LINE__);
-   _in.push_back(dynamic_cast<EMatrix*>(input));
-}
-
-
-
-void spearman::output(DataPlugin* output)
-{
-   assert<TooManyOutputs>(_out==nullptr,__LINE__);
-   _out = dynamic_cast<cmatrix*>(output);
-}
-
-
 
 void spearman::execute_cl(GetOpts& ops, Terminal& tm)
 {
@@ -180,8 +243,4 @@ void spearman::execute_cl(GetOpts& ops, Terminal& tm)
 
 
 
-void spearman::execute_pn(GetOpts& ops, Terminal& tm)
-{
-   tm << "Not yet implemented.\n";
-}
 */
