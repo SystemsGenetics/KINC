@@ -57,6 +57,34 @@ CMatrix::CMatrix(const string& type, const string& file):
 
 
 
+void CMatrix::load(GetOpts&, Terminal& tm)
+{
+   tm << "Not yet implemented.\n";
+}
+
+
+
+void CMatrix::dump(GetOpts&,Terminal& tm)
+{
+   tm << "Not yet implemented.\n";
+}
+
+
+
+void CMatrix::query(GetOpts&,Terminal& tm)
+{
+   tm << "Not yet implemented.\n";
+}
+
+
+
+bool CMatrix::empty()
+{
+   return _hdr.gPtr()==fNullPtr;
+}
+
+
+
 void CMatrix::initialize(int gSize, int sSize, int mSize, int cSize, bool sHdrs)
 {
    if (File::head()==fNullPtr)

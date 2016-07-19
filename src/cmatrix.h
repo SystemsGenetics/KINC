@@ -17,10 +17,10 @@ public:
    ACE_EXCEPTION(CMatrix,AlreadySet)
    class GPair;
    CMatrix(const string& type, const string& file);
-   void load(GetOpts&,Terminal&) override final {}
-   void dump(GetOpts&,Terminal&) override final {}
-   void query(GetOpts&,Terminal&) override final {}
-   bool empty() override final {}
+   void load(GetOpts&,Terminal&) override final;
+   void dump(GetOpts&,Terminal&) override final;
+   void query(GetOpts&,Terminal&) override final;
+   bool empty() override final;
    void initialize(int,int,int,int,bool);
    int gSize() const;
    int sSize() const;
