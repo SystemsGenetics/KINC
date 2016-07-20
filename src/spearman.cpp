@@ -30,10 +30,6 @@ void Spearman::output(DataPlugin* output)
 
 void Spearman::execute_cl(GetOpts&, Terminal& tm)
 {
-   AccelCompEng::assert<NoDataInput>(_in,__LINE__);
-   AccelCompEng::assert<NoDataOutput>(_out,__LINE__);
-   int gSize {_in->gSize()};
-   int sSize {_in->sSize()};
    tm << "Loading kernel program into OpenCL device...\n";
    CLProgram::add_source(spearman_cl);
    if (!CLProgram::compile(""))
@@ -42,6 +38,10 @@ void Spearman::execute_cl(GetOpts&, Terminal& tm)
       return;
    }
    auto kern = CLProgram::mkernel("spearman");
+   AccelCompEng::assert<NoDataInput>(_in,__LINE__);
+   AccelCompEng::assert<NoDataOutput>(_out,__LINE__);
+   int gSize {_in->gSize()};
+   int sSize {_in->sSize()};
    tm << "Loading expression data into OpenCL device...\n";
    auto expList = CLContext::buffer<cl_float>(sSize*gSize);
    int inc {0};
@@ -54,6 +54,7 @@ void Spearman::execute_cl(GetOpts&, Terminal& tm)
    }
    CLEvent ev = CLCommandQueue::write_buffer(expList);
    ev.wait();
+   //////////////////////////////////////////////
    int bSize {pow2_wall(sSize)};
    bool cond {bSize>0};
    AccelCompEng::assert<TooManySamples>(cond,__LINE__);
