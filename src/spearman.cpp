@@ -54,17 +54,36 @@ void Spearman::execute_cl(GetOpts&, Terminal& tm)
    }
    CLEvent ev = CLCommandQueue::write_buffer(expList);
    ev.wait();
+   tm << "Formating and copying header information to output file...\n";
+   _out->initialize(gSize,sSize,1,1,_in->hasSampleHead());
+   for (int i = 0;i<_in->gSize();++i)
+   {
+      _out->gName(i) =
+      _in->gName(i);
+   }
+   if (_in->hasSampleHead())
+   {
+      for (int i = 0;i<_in->sSize();++i)
+      {
+         _out->sName(i) =
+               _in->sName(i);
+      }
+   }
+   _out->sName(0) = "spearman";
+   _out->write();
    //////////////////////////////////////////////
-   int bSize {pow2_wall(sSize)};
+   int bSize {pow2_ceil(sSize)};
    bool cond {bSize>0};
    AccelCompEng::assert<TooManySamples>(cond,__LINE__);
-   int wSize {1024};
+   int wSize {pow2_floor(kern.get_wg_size())};
    int chunk {1};
    if ((2*wSize)<bSize)
    {
       chunk = bSize/(2*wSize);
    }
-   tm << chunk << "\n";
+   tm << "size: " << sSize << "\n";
+   tm << "chunk: " << chunk << "\n";
+   tm << "wSize: " << wSize << "\n";
 }
 
 
@@ -76,7 +95,7 @@ void Spearman::execute_pn(GetOpts&, Terminal& tm)
 
 
 
-int Spearman::pow2_wall(int i)
+int Spearman::pow2_ceil(int i)
 {
    int ret = 1;
    while (ret<i)
@@ -88,6 +107,25 @@ int Spearman::pow2_wall(int i)
       }
    }
    return ret;
+}
+
+
+
+int Spearman::pow2_floor(int i)
+{
+   int ret = pow2_ceil(i);
+   if (ret>i)
+   {
+      ret>>=1;
+   }
+   return ret;
+}
+
+
+
+void Spearman::calculate(CLKernel& kern, elist& expList, int size, int wSize, int chunk)
+{
+   ;
 }
 
 /*

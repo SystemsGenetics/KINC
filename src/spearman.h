@@ -29,13 +29,17 @@ public:
    using CLCommandQueue = AccelCompEng::CLCommandQueue;
    using CLEvent = AccelCompEng::CLEvent;
    using CLProgram = AccelCompEng::CLProgram;
+   using CLKernel = AccelCompEng::CLKernel;
    void input(DataPlugin*) override final;
    void output(DataPlugin*) override final;
 protected:
    void execute_cl(GetOpts&,Terminal&) override final;
    void execute_pn(GetOpts&,Terminal&) override final;
 private:
-   int pow2_wall(int);
+   using elist = AccelCompEng::CLBuffer<cl_float>;
+   int pow2_ceil(int);
+   int pow2_floor(int);
+   void calculate(CLKernel&,elist&,int,int,int);
    EMatrix* _in {nullptr};
    CMatrix* _out {nullptr};
 };
