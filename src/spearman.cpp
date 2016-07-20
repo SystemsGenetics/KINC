@@ -71,6 +71,7 @@ void Spearman::execute_cl(GetOpts&, Terminal& tm)
    }
    _out->sName(0) = "spearman";
    _out->write();
+   tm << "Calculating spearman values and saving to output file...\n";
    //////////////////////////////////////////////
    int bSize {pow2_ceil(sSize)};
    bool cond {bSize>0};
@@ -125,7 +126,40 @@ int Spearman::pow2_floor(int i)
 
 void Spearman::calculate(CLKernel& kern, elist& expList, int size, int wSize, int chunk)
 {
-   ;
+   static constexpr int blSize {8192};
+   enum class State {start,in,exec,out,end};
+   struct
+   {
+      State st;
+      int x;
+      int y;
+      AccelCompEng::CLBuffer<int> ld;
+      AccelCompEng::CLBuffer<cl_float> ans;
+   } state[4] {State::start,0,0,CLContext::buffer<int>(blSize),CLContext::buffer<cl_float>(blSize)};
+   int alive {4};
+   int si {0};
+   auto i = _out->begin();
+   i.size(1);
+   for (auto m = i.modes().at(0).begin();m!=i.modes().at(0).end();++m)
+   {
+      *m = 1;
+   }
+   while (alive>0)
+   {
+      switch (state[si].st)
+      {
+      case State::start:
+         break;
+      case State::in:
+         break;
+      case State::exec:
+         break;
+      case State::out:
+         break;
+      case State::end:
+         break;
+      }
+   }
 }
 
 /*
