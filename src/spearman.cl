@@ -20,7 +20,7 @@ void switch_i(__local int* a, __local int* b)
 
 
 void build_lists(int aInd, int bInd, int size, int chunk, __local float* alist,
-                 __local float* blist, __global float* clist, __local int* rank)
+                 __local float* blist, __global float* exprs, __local int* rank)
 {
    int i,ix;
    for (i=0;i<chunk;++i)
@@ -28,8 +28,8 @@ void build_lists(int aInd, int bInd, int size, int chunk, __local float* alist,
       ix = (get_local_id(0)*chunk+i)*2;
       if (ix<size)
       {
-         alist[ix] = clist[ix+aInd];
-         blist[ix] = clist[ix+bInd];
+         alist[ix] = exprs[ix+aInd];
+         blist[ix] = exprs[ix+bInd];
          rank[ix] = ix+1;
       }
       else
@@ -40,8 +40,8 @@ void build_lists(int aInd, int bInd, int size, int chunk, __local float* alist,
       }
       if ((ix+1)<size)
       {
-         alist[ix+1] = clist[ix+aInd+1];
-         blist[ix+1] = clist[ix+bInd+1];
+         alist[ix+1] = exprs[ix+aInd+1];
+         blist[ix+1] = exprs[ix+bInd+1];
          rank[ix+1] = ix+2;
       }
       else
@@ -163,21 +163,12 @@ void accumulate(int chunk, __local long* summation)
 
 
 
-__kernel void spearman
-(
-      int aInd,
-      int bInd,
-      int size,
-      int chunk,
-      __global float* correlations,
-      __global float* result,
-      __local float* alist,
-      __local float* blist,
-      __local int* rank,
-      __local long* summation
-)
+__kernel void spearman(int size, int chunk, __global int* insts, __global float* exprs,
+                       __global float* result, __local float* alist, __local float* blist,
+                       __local int* rank, __local long* summation)
 {
-   build_lists(aInd,bInd,size,chunk,alist,blist,correlations,rank);
+   int i = get_group_id(0)*2;
+   build_lists(insts[i],insts[i+1],size,chunk,alist,blist,exprs,rank);
    bitonic_sort_ff(chunk,alist,blist);
    bitonic_sort_fi(chunk,blist,rank);
    calc_ranks(size,chunk,summation,rank);
