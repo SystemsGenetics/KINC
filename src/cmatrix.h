@@ -72,7 +72,9 @@ public:
    ~GPair();
    void read();
    void write();
-   int size();
+   int x() const;
+   int y() const;
+   int size() const;
    void size(int);
    Modes& modes();
    Corrs& corrs();

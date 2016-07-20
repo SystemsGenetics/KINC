@@ -299,7 +299,21 @@ void CMatrix::GPair::write()
 
 
 
-int CMatrix::GPair::size()
+int CMatrix::GPair::x() const
+{
+   return _x;
+}
+
+
+
+int CMatrix::GPair::y() const
+{
+   return _y;
+}
+
+
+
+int CMatrix::GPair::size() const
 {
    return _data.mAmt();
 }
