@@ -72,7 +72,6 @@ void Spearman::execute_cl(GetOpts&, Terminal& tm)
    _out->sName(0) = "spearman";
    _out->write();
    tm << "Calculating spearman values and saving to output file...\n";
-   //////////////////////////////////////////////
    int bSize {pow2_ceil(sSize)};
    bool cond {bSize>0};
    AccelCompEng::assert<TooManySamples>(cond,__LINE__);
@@ -85,6 +84,8 @@ void Spearman::execute_cl(GetOpts&, Terminal& tm)
    tm << "size: " << sSize << "\n";
    tm << "chunk: " << chunk << "\n";
    tm << "wSize: " << wSize << "\n";
+   calculate(kern,expList,sSize,wSize,chunk);
+   tm << "Finished.\n";
 }
 
 
@@ -127,16 +128,28 @@ int Spearman::pow2_floor(int i)
 void Spearman::calculate(CLKernel& kern, elist& expList, int size, int wSize, int chunk)
 {
    static constexpr int blSize {8192};
+   static constexpr int smSize {4};
    enum class State {start,in,exec,out,end};
+   kern.set_arg(0,size);
+   kern.set_arg(1,chunk);
+   kern.set_arg(3,&expList);
+   kern.set_arg(5,sizeof(cl_float)*wSize*chunk*2);
+   kern.set_arg(6,sizeof(cl_float)*wSize*chunk*2);
+   kern.set_arg(7,sizeof(cl_int)*wSize*chunk*2);
+   kern.set_arg(8,sizeof(cl_long)*wSize*chunk*2);
+   kern.set_swarm_dims(1);
+   kern.set_swarm_size(0,blSize*wSize,wSize);
    struct
    {
       State st;
       int x;
       int y;
+      CLEvent ev;
       AccelCompEng::CLBuffer<int> ld;
       AccelCompEng::CLBuffer<cl_float> ans;
-   } state[4] {State::start,0,0,CLContext::buffer<int>(blSize),CLContext::buffer<cl_float>(blSize)};
-   int alive {4};
+   } state[smSize] {State::start,0,0,CLEvent(),CLContext::buffer<int>(2*blSize),
+               CLContext::buffer<cl_float>(blSize)};
+   int alive {smSize};
    int si {0};
    auto i = _out->begin();
    i.size(1);
@@ -149,15 +162,70 @@ void Spearman::calculate(CLKernel& kern, elist& expList, int size, int wSize, in
       switch (state[si].st)
       {
       case State::start:
+         if (i!=_out->end())
+         {
+            state[si].x = i.x();
+            state[si].y = i.y();
+            int count {0};
+            while (i!=_out->end()&&count<blSize)
+            {
+               state[si].ld[2*count] = i.x();
+               state[si].ld[(2*count)+1] = i.y();
+               ++count;
+               ++i;
+            }
+            while (count<blSize)
+            {
+               state[si].ld[2*count] = 0;
+               state[si].ld[(2*count)+1] = 0;
+               ++count;
+            }
+            state[si].ev = CLCommandQueue::write_buffer(state[si].ld);
+            state[si].st = State::in;
+         }
+         else
+         {
+            --alive;
+            state[si].st = State::end;
+         }
          break;
       case State::in:
+         if (state[si].ev.is_done())
+         {
+            kern.set_arg(2,&(state[si].ld));
+            kern.set_arg(4,&(state[si].ans));
+            state[si].ev = CLCommandQueue::add_swarm(kern);
+            state[si].st = State::exec;
+         }
          break;
       case State::exec:
+         if (state[si].ev.is_done())
+         {
+            state[si].ev = CLCommandQueue::read_buffer(state[si].ans);
+            state[si].st = State::out;
+         }
          break;
       case State::out:
+         if (state[si].ev.is_done())
+         {
+            auto i = _out->ref(state[si].x,state[si].y);
+            int count {0};
+            while (i!=_out->end()&&count<blSize)
+            {
+               i.corrs().at(0).at(0) = state[si].ans[count];
+               ++count;
+               ++i;
+            }
+            state[si].st = State::start;
+         }
          break;
       case State::end:
          break;
+      }
+      ++si;
+      if (si>=smSize)
+      {
+         si = 0;
       }
    }
 }
