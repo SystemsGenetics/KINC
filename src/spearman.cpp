@@ -71,7 +71,7 @@ void Spearman::execute_cl(GetOpts&, Terminal& tm)
    }
    _out->sName(0) = "spearman";
    _out->write();
-   tm << "Calculating spearman values and saving to output file...\n";
+   tm << "Calculating spearman values and saving to output file[0%]...";
    int bSize {pow2_ceil(sSize)};
    bool cond {bSize>0};
    AccelCompEng::assert<TooManySamples>(cond,__LINE__);
@@ -81,10 +81,7 @@ void Spearman::execute_cl(GetOpts&, Terminal& tm)
    {
       chunk = bSize/(2*wSize);
    }
-   tm << "size: " << sSize << "\n";
-   tm << "chunk: " << chunk << "\n";
-   tm << "wSize: " << wSize << "\n";
-   calculate(kern,expList,sSize,wSize,chunk);
+   calculate(tm,kern,expList,sSize,wSize,chunk);
    tm << "Finished.\n";
 }
 
@@ -125,11 +122,13 @@ int Spearman::pow2_floor(int i)
 
 
 
-void Spearman::calculate(CLKernel& kern, elist& expList, int size, int wSize, int chunk)
+void Spearman::calculate(Terminal& tm, CLKernel& kern, elist& expList, int size, int wSize,
+                         int chunk)
 {
    static constexpr int blSize {8192};
    static constexpr int smSize {4};
    enum class State {start,in,exec,out,end};
+   double total = CMatrix::diag_size(_in->gSize());
    kern.set_arg(0,size);
    kern.set_arg(1,chunk);
    kern.set_arg(3,&expList);
@@ -147,16 +146,20 @@ void Spearman::calculate(CLKernel& kern, elist& expList, int size, int wSize, in
       CLEvent ev;
       AccelCompEng::CLBuffer<int> ld;
       AccelCompEng::CLBuffer<cl_float> ans;
-   } state[smSize] {State::start,0,0,CLEvent(),CLContext::buffer<int>(2*blSize),
-               CLContext::buffer<cl_float>(blSize)};
+   } state[smSize];
+   for (int i = 0;i<smSize;++i)
+   {
+      state[i].st = State::start;
+      state[i].x = 0;
+      state[i].y = 0;
+      state[i].ev = CLEvent();
+      state[i].ld = CLContext::buffer<int>(2*blSize);
+      state[i].ans = CLContext::buffer<cl_float>(blSize);
+   }
    int alive {smSize};
    int si {0};
    auto i = _out->begin();
-   i.size(1);
-   for (auto m = i.modes().at(0).begin();m!=i.modes().at(0).end();++m)
-   {
-      *m = 1;
-   }
+   double done {0};
    while (alive>0)
    {
       switch (state[si].st)
@@ -208,13 +211,20 @@ void Spearman::calculate(CLKernel& kern, elist& expList, int size, int wSize, in
       case State::out:
          if (state[si].ev.is_done())
          {
-            auto i = _out->ref(state[si].x,state[si].y);
-            int count {0};
-            while (i!=_out->end()&&count<blSize)
+            auto wi = _out->ref(state[si].x,state[si].y);
+            wi.size(1);
+            for (auto m = wi.modes().at(0).begin();m!=wi.modes().at(0).end();++m)
             {
-               i.corrs().at(0).at(0) = state[si].ans[count];
+               *m = 1;
+            }
+            int count {0};
+            while (wi!=_out->end()&&count<blSize)
+            {
+               wi.corrs().at(0).at(0) = state[si].ans[count];
                ++count;
-               ++i;
+               wi.write();
+               ++wi;
+               ++done;
             }
             state[si].st = State::start;
          }
@@ -227,161 +237,9 @@ void Spearman::calculate(CLKernel& kern, elist& expList, int size, int wSize, in
       {
          si = 0;
       }
+      tm << "\rCalculating spearman values and saving to output file["
+         << (int)((done/total*100)+0.5) << "%]..." << Terminal::flush;
+      usleep(100);
    }
+   tm << "\n";
 }
-
-/*
-
-void spearman::execute_cl(GetOpts& ops, Terminal& tm)
-{
-   assert<NotEnoughInputs>(_in.size()>0,__LINE__);
-   assert<NoOutput>(_out,__LINE__);
-   tm << "Writing header information..." << Terminal::flush;
-   int geneSize {_in[0]->gene_size()};
-   int sampleSize {_in[0]->sample_size()};
-   if (_in.size()>1)
-   {
-      for (int i=1;i<_in.size();++i)
-      {
-         if (sampleSize!=_in[i]->sample_size())
-         {
-            throw DifferentSampleSizes(__LINE__);
-         }
-         geneSize += _in[i]->gene_size();
-      }
-   }
-   _out->set_gene_size(geneSize);
-   _out->set_sample_size(sampleSize);
-   _out->set_correlation_size(1);
-   _out->set_correlation_name(0,"spearman");
-   for (int y=0;y<_in[0]->sample_size();++y)
-   {
-      tm << y << Terminal::endl;
-      _out->set_sample_name(y,"");
-   }
-   auto glist = CLContext::buffer<cl_float>(geneSize*sampleSize);
-   int x {0};
-   int is {0};
-   for (auto i:_in)
-   {
-      i->load_buffer();
-      for (int y=0;y<i->gene_size();++y)
-      {
-         _out->set_gene_name(x++,i->gene_name(y));
-         const float* corrs = i->gene(y);
-         for (int z=0;z<sampleSize;++z)
-         {
-            glist[is++] = corrs[z];
-         }
-      }
-   }
-   _out->create_data();
-   tm << "Done.\n";
-   bool alive {true};
-   int g1 {1};
-   int g2 {0};
-   long c {0};
-   long t {geneSize*(geneSize-1)/2};
-   std::vector<uint8_t> masks(sampleSize,1);
-   std::vector<float> corr(1,0);
-   CLProgram::add_source(spearman_cl);
-   if (!CLProgram::compile(""))
-   {
-      tm << CLProgram::log();
-      return;
-   }
-   auto ans = CLContext::buffer<cl_float>(1);
-   auto kern = CLProgram::mkernel("spearman");
-   kern.set_arg(2,sampleSize);
-   kern.set_arg(3,1);
-   kern.set_arg(4,&glist);
-   kern.set_arg(5,&ans);
-   kern.set_arg(6,sizeof(cl_float)*1024*2);
-   kern.set_arg(7,sizeof(cl_float)*1024*2);
-   kern.set_arg(8,sizeof(cl_int)*1024*2);
-   kern.set_arg(9,sizeof(cl_long)*1024*2);
-   kern.set_swarm_dims(1);
-   kern.set_swarm_size(0,1024,1024);
-   struct cac
-   {
-      int g1,g2;
-      CLEvent ev;
-      CLBuffer<cl_float> buf;
-      int which {0};
-      // 0 = launch new correlation
-      // 1 = read result
-      // 2 = write to file
-   };
-   cac channels[100];
-   for (int i=0;i<100;++i)
-   {
-      channels[i].buf = CLContext::buffer<cl_float>(1);
-   }
-   CLEvent ev = CLCommandQueue::write_buffer(glist);
-   ev.wait();
-   kern.set_arg(0,g1*sampleSize);
-   kern.set_arg(1,g2*sampleSize);
-   ev = CLCommandQueue::add_swarm(kern);
-   int chi {0};
-   int HAHA {0};
-   time_t START = time(NULL);
-   while (alive||HAHA>0)
-   {
-      float perc = (float)c++/(float)t;
-      float time_left = (float)(time(NULL)-START)/perc*(1-perc);
-      tm << "\r                                                               ";
-      tm << "\r[ML=" << (int)time_left/60 << "]Computing... ["
-         << perc*100.0
-         << "%](" << HAHA << ")" << Terminal::flush;
-      switch(channels[chi].which)
-      {
-      case 0:
-         if (alive)
-         {
-            channels[chi].g1 = g1;
-            channels[chi].g2 = g2;
-            kern.set_arg(5,&(channels[chi].buf));
-            kern.set_arg(0,g1*sampleSize);
-            kern.set_arg(1,g2++*sampleSize);
-            channels[chi].ev = CLCommandQueue::add_swarm(kern);
-            channels[chi].which = 1;
-            HAHA++;
-         }
-         break;
-      case 1:
-         if (ev.is_done())
-         {
-            channels[chi].ev = CLCommandQueue::read_buffer(channels[chi].buf);
-            channels[chi].which = 2;
-         }
-         break;
-      case 2:
-         if (ev.is_done())
-         {
-            corr[0] = channels[chi].buf[0];
-            auto ptr = _out->set_modes(channels[chi].g2,channels[chi].g1,1);
-            _out->write_mode(ptr,0,masks,corr);
-            channels[chi].which = 0;
-            HAHA--;
-         }
-         break;
-      }
-      if (g2>=g1)
-      {
-         g2 = 0;
-         g1++;
-         if (g1>=geneSize)
-         {
-            alive = false;
-         }
-      }
-      chi++;
-      if (chi>=100) chi = 0;
-   }
-   tm << "\r                                                               ";
-   tm << "\rComputing... Done.\n";
-}
-
-
-
-*/
