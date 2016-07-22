@@ -322,7 +322,7 @@ int CMatrix::GPair::size() const
 
 void CMatrix::GPair::size(int size)
 {
-   bool cond {size>=0&&size<(_p->_hdr.mSize())};
+   bool cond {size>=0&&size<=(_p->_hdr.mSize())};
    AccelCompEng::assert<GreaterThanMax>(cond,__LINE__);
    _data.mAmt() = size;
 }
@@ -342,7 +342,7 @@ CMatrix::GPair::Modes& CMatrix::GPair::modes()
 
 CMatrix::GPair::Corrs& CMatrix::GPair::corrs()
 {
-   if (_iCorrs)
+   if (!_iCorrs)
    {
       _iCorrs = new Corrs(this);
    }
@@ -353,14 +353,17 @@ CMatrix::GPair::Corrs& CMatrix::GPair::corrs()
 
 void CMatrix::GPair::operator++()
 {
-   if ((_y+1)<_x)
+   if (_x<(_p->_hdr.gSize()))
    {
-      _y++;
-   }
-   else if (_x<_p->_hdr.gSize())
-   {
-      _y = 0;
-      ++_x;
+      if ((_y+1)<_x)
+      {
+         _y++;
+      }
+      else
+      {
+         _y = 0;
+         ++_x;
+      }
    }
 }
 

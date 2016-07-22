@@ -21,6 +21,8 @@ public:
    void dump(GetOpts&,Terminal&) override final;
    void query(GetOpts&,Terminal&) override final;
    bool empty() override final;
+   static long long diagonal(int,int);
+   static long long diag_size(int);
    void initialize(int,int,int,int,bool);
    int gSize() const;
    int sSize() const;
@@ -52,8 +54,6 @@ private:
    ACE_FMEM_END()
    string& get_name(int,svec&,FPtr,int);
    void write_names(svec&,FPtr);
-   static long long diagonal(int,int);
-   static long long diag_size(int);
    Header _hdr;
    GPair* _iGPair {nullptr};
    svec _gNames;
