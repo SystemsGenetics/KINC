@@ -39,7 +39,7 @@ private:
    using elist = AccelCompEng::CLBuffer<cl_float>;
    int pow2_ceil(int);
    int pow2_floor(int);
-   void calculate(Terminal&,CLKernel&,elist&,int,int,int);
+   void calculate(Terminal&,CLKernel&,elist&,int,int,int,int,int);
    EMatrix* _in {nullptr};
    CMatrix* _out {nullptr};
 };

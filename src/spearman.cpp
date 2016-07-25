@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <ctime>
+#include <chrono>
 
 
 
@@ -28,8 +29,23 @@ void Spearman::output(DataPlugin* output)
 
 
 
-void Spearman::execute_cl(GetOpts&, Terminal& tm)
+void Spearman::execute_cl(GetOpts& ops, Terminal& tm)
 {
+   using namespace std::chrono;
+   auto t1 = system_clock::now();
+   int blSize {8192};
+   int smSize {4};
+   for (auto i = ops.begin();i!=ops.end();++i)
+   {
+      if (i.is_key("slots"))
+      {
+         smSize = i.value<int>();
+      }
+      else if (i.is_key("bsize"))
+      {
+         blSize = i.value<int>();
+      }
+   }
    tm << "Loading kernel program into OpenCL device...\n";
    CLProgram::add_source(spearman_cl);
    if (!CLProgram::compile(""))
@@ -81,8 +97,26 @@ void Spearman::execute_cl(GetOpts&, Terminal& tm)
    {
       chunk = bSize/(2*wSize);
    }
-   calculate(tm,kern,expList,sSize,wSize,chunk);
-   tm << "Finished.\n";
+   calculate(tm,kern,expList,sSize,wSize,chunk,blSize,smSize);
+   auto t2 = system_clock::now();
+   int s = duration_cast<seconds>(t2-t1).count();
+   int m = s/60;
+   int h = m/60;
+   s %= 60;
+   tm << "Finished in";
+   if (h>0)
+   {
+      tm << " " << h << " hour(s)";
+   }
+   if (m>0)
+   {
+      tm << " " << m << " minute(s)";
+   }
+   if (s>0)
+   {
+      tm << " " << s << " second(s)";
+   }
+   tm << ".\n";
 }
 
 
@@ -123,10 +157,8 @@ int Spearman::pow2_floor(int i)
 
 
 void Spearman::calculate(Terminal& tm, CLKernel& kern, elist& expList, int size, int wSize,
-                         int chunk)
+                         int chunk, int blSize, int smSize)
 {
-   static constexpr int blSize {8192};
-   static constexpr int smSize {4};
    enum class State {start,in,exec,out,end};
    double total = CMatrix::diag_size(_in->gSize());
    kern.set_arg(0,size);
