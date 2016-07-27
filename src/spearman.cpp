@@ -102,6 +102,7 @@ void Spearman::execute_cl(GetOpts& ops, Terminal& tm)
    int s = duration_cast<seconds>(t2-t1).count();
    int m = s/60;
    int h = m/60;
+   m %= 60;
    s %= 60;
    tm << "Finished in";
    if (h>0)
@@ -179,6 +180,7 @@ void Spearman::execute_pn(GetOpts&, Terminal& tm)
    int s = duration_cast<seconds>(t2-t1).count();
    int m = s/60;
    int h = m/60;
+   m %= 60;
    s %= 60;
    tm << "Finished in";
    if (h>0)
