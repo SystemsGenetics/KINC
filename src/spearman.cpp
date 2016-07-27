@@ -1,5 +1,6 @@
 #include "spearman.h"
 #include "spearman.cl.h"
+#include <gsl/gsl_statistics.h>
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
@@ -74,8 +75,7 @@ void Spearman::execute_cl(GetOpts& ops, Terminal& tm)
    _out->initialize(gSize,sSize,1,1,_in->hasSampleHead());
    for (int i = 0;i<_in->gSize();++i)
    {
-      _out->gName(i) =
-      _in->gName(i);
+      _out->gName(i) = _in->gName(i);
    }
    if (_in->hasSampleHead())
    {
@@ -123,7 +123,77 @@ void Spearman::execute_cl(GetOpts& ops, Terminal& tm)
 
 void Spearman::execute_pn(GetOpts&, Terminal& tm)
 {
-   tm << "Not yet implemented.\n";
+   using namespace std::chrono;
+   auto t1 = system_clock::now();
+   AccelCompEng::assert<NoDataInput>(_in,__LINE__);
+   AccelCompEng::assert<NoDataOutput>(_out,__LINE__);
+   int gSize {_in->gSize()};
+   int sSize {_in->sSize()};
+   tm << "Formating and copying header information to output file...\n";
+   _out->initialize(gSize,sSize,1,1,_in->hasSampleHead());
+   for (int i = 0;i<_in->gSize();++i)
+   {
+      _out->gName(i) = _in->gName(i);
+   }
+   if (_in->hasSampleHead())
+   {
+      for (int i = 0;i<_in->sSize();++i)
+      {
+         _out->sName(i) =
+               _in->sName(i);
+      }
+   }
+   _out->sName(0) = "spearman";
+   _out->write();
+   tm << "Calculating spearman values and saving to output file[0%]...";
+   auto i = _out->begin();
+   i.size(1);
+   for (auto m = i.modes().at(0).begin();m!=i.modes().at(0).end();++m)
+   {
+      *m = 1;
+   }
+   double total  = CMatrix::diag_size(gSize);
+   double count {0};
+   double a[gSize];
+   double b[gSize];
+   double work[2*gSize];
+   int delay {0};
+   for (;i!=_out->end();++i)
+   {
+      for (int x = 0;x<sSize;++x)
+      {
+         a[x] = _in->at(i.x()).at(x);
+         b[x] = _in->at(i.y()).at(x);
+      }
+      i.corrs().at(0).at(0) = gsl_stats_spearman(a,1,b,1,gSize,work);
+      ++count;
+      ++delay;
+      if (delay==16384)
+      {
+         tm << "\rCalculating spearman values and saving to output file["
+            << (int)((count/total*100)+0.5) << "%]..." << Terminal::flush;
+         delay = 0;
+      }
+   }
+   auto t2 = system_clock::now();
+   int s = duration_cast<seconds>(t2-t1).count();
+   int m = s/60;
+   int h = m/60;
+   s %= 60;
+   tm << "Finished in";
+   if (h>0)
+   {
+      tm << " " << h << " hour(s)";
+   }
+   if (m>0)
+   {
+      tm << " " << m << " minute(s)";
+   }
+   if (s>0)
+   {
+      tm << " " << s << " second(s)";
+   }
+   tm << ".\n";
 }
 
 
