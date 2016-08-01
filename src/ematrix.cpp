@@ -127,7 +127,7 @@ void EMatrix::load(GetOpts &ops, Terminal &tm)
       f.seekg(0,std::ios_base::beg);
       while (f.peek()==' '||f.peek()=='\t'||std::iscntrl(f.peek()))
       {
-         AccelCompEng::assert<InvalidFile>(f,__LINE__);
+         AccelCompEng::assert<InvalidFile>(f.good(),__LINE__);
          f.get();
       }
       if (hasHeaders)
@@ -720,7 +720,7 @@ void EMatrix::read_sizes(std::ifstream& f, int sSize)
    bool hasHeaders {sSize==0};
    while (f.peek()==' '||f.peek()=='\t'||std::iscntrl(f.peek()))
    {
-      AccelCompEng::assert<InvalidFile>(f,__LINE__);
+      AccelCompEng::assert<InvalidFile>(f.good(),__LINE__);
       f.get();
    }
    if (hasHeaders)
@@ -748,7 +748,7 @@ void EMatrix::read_sizes(std::ifstream& f, int sSize)
          f.get();
       }
       sSize = count;
-      AccelCompEng::assert<InvalidFile>(f,__LINE__);
+      AccelCompEng::assert<InvalidFile>(f.good(),__LINE__);
    }
    int gSize {0};
    enum {newline,chunk} state {newline};
