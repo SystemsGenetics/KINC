@@ -91,7 +91,7 @@ private:
          flip(25,8);
       }
    };
-   //void read_sizes(std::ifstream&,int);
+   void read_sizes(std::ifstream& file, int& geneSize, int& sampleSize);
    //void read_header(std::ifstream&);
    //void read_gene_expressions(std::ifstream&,const string&);
    //void lookup(Ace::GetOpts&,Ace::Terminal&);

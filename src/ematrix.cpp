@@ -58,6 +58,7 @@ void EMatrix::init()
    catch (...)
    {
       File::clear();
+      _isNew = true;
       throw;
    }
 }
@@ -66,7 +67,7 @@ void EMatrix::init()
 
 void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
 {
-/*   static const char* f = __PRETTY_FUNCTION__;
+   static const char* f = __PRETTY_FUNCTION__;
    bool hasHeaders {true};
    int sampleSize {0};
    Transform tr {none};
@@ -82,58 +83,51 @@ void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
       }
       else if (i.is_key("transform"))
       {
-         string type = i.value<string>();
-         if (type==string("log"))
+         std::string type = i.value<std::string>();
+         if (type==std::string("log"))
          {
             tr = log;
          }
-         else if (type==string("log2"))
+         else if (type==std::string("log2"))
          {
             tr = log2;
          }
-         else if (type==string("log10"))
+         else if (type==std::string("log10"))
          {
             tr = log10;
          }
          else
          {
-            throw InvalidArg(__LINE__);
+            Ace::assert<InvalidArg>(false,f,__LINE__);
          }
       }
    }
    if (!hasHeaders&&sampleSize==0)
    {
       tm << "If noheader option is given number of samples must be given.\n";
-      throw InvalidArg(__LINE__);
+      Ace::assert<InvalidArg>(false,f,__LINE__);
    }
-   Ace::assert<NotNewFile>(File::head()==fNullPtr,f,__LINE__);
-   std::ifstream f(ops.com_front());
-   Ace::assert<CannotOpen>(f.is_open(),f,__LINE__);
-   read_sizes(f,sampleSize);
-   transform(tr);
+   Ace::assert<NotNewFile>(Ace::File::head()==fnullptr,f,__LINE__);
+   std::ifstream file(ops.com_front());
+   Ace::assert<CannotOpen>(file.is_open(),f,__LINE__);
    try
    {
-      f.clear();
-      f.seekg(0,std::ios_base::beg);
-      while (f.peek()==' '||f.peek()=='\t'||std::iscntrl(f.peek()))
-      {
-         Ace::assert<InvalidFile>(f.good(),f,__LINE__);
-         f.get();
-      }
-      if (hasHeaders)
-      {
-         read_header(f);
-      }
-      read_gene_expressions(f,"NaN");
-      write();
-      tm << gSize() << "\n";
-      tm << sSize() << "\n";
+      int geneSize {0};
+      read_sizes(file,geneSize,sampleSize);
+      file.clear();
+      file.seekg(0,std::ios_base::beg);
+      //read_headers(file,geneSize,sampleSize,tr,hasHeaders);
+      //file.clear();
+      //file.seekg(0,std::ios_base::beg);
+      //read_gene_expressions(file,geneSize,sampleSize);
+      _isNew = false;
    }
    catch (...)
    {
-      File::clear();
+      Ace::File::clear();
+      _isNew = true;
       throw;
-   }*/
+   }
 }
 
 
@@ -517,7 +511,7 @@ EMatrix::Gene::Iterator::Iterator(Gene* p, int i):
 {}
 
 
-/////////////////
+
 EMatrix::Mirror::Mirror(EMatrix& p):
    Node(sizeof(float)*p._header.data()._geneSize*p._header.data()._sampleSize,p.Ace::File::mem(),
         p._header.data()._expData),
@@ -708,73 +702,74 @@ EMatrix::Mirror::Gene::Iterator::Iterator(Gene* p, int i):
 {}
 
 
-/*
-void EMatrix::read_sizes(std::ifstream& f, int sSize)
+
+void EMatrix::read_sizes(std::ifstream& file, int& geneSize, int& sampleSize)
 {
-   bool hasHeaders {sSize==0};
-   while (f.peek()==' '||f.peek()=='\t'||std::iscntrl(f.peek()))
+   static const char* f = __PRETTY_FUNCTION__;
+   bool hasHeaders {sampleSize==0};
+   while (file.peek()==' '||file.peek()=='\t'||std::iscntrl(file.peek()))
    {
-      AccelCompEng::assert<InvalidFile>(f.good(),__LINE__);
-      f.get();
+      Ace::assert<InvalidFile>(file.good(),f,__LINE__);
+      file.get();
    }
    if (hasHeaders)
    {
       int count {1};
       enum {newline,chunk} state {chunk};
-      while (std::isprint(f.peek()))
+      while (std::isprint(file.peek()))
       {
          switch (state)
          {
          case newline:
-            if (f.peek()!=' '&&f.peek()!='\t')
+            if (file.peek()!=' '&&file.peek()!='\t')
             {
                ++count;
                state = chunk;
             }
             break;
          case chunk:
-            if (f.peek()==' '||f.peek()=='\t')
+            if (file.peek()==' '||file.peek()=='\t')
             {
                state = newline;
             }
             break;
          }
-         f.get();
+         file.get();
       }
-      sSize = count;
-      AccelCompEng::assert<InvalidFile>(f.good(),__LINE__);
+      sampleSize = count;
+      Ace::assert<InvalidFile>(file.good(),f,__LINE__);
    }
-   int gSize {0};
+   int count {0};
    enum {newline,chunk} state {newline};
-   while (f)
+   while (file)
    {
       switch (state)
       {
       case newline:
-         if (std::isprint(f.peek()))
+         if (std::isprint(file.peek()))
          {
             state = chunk;
          }
          break;
       case chunk:
-         if (std::iscntrl(f.peek()))
+         if (std::iscntrl(file.peek()))
          {
-            ++gSize;
+            ++count;
             state = newline;
          }
          break;
       }
-      f.get();
+      file.get();
    }
    if (state==chunk)
    {
-      ++gSize;
+      ++count;
    }
-   initialize(gSize,sSize,hasHeaders);
+   geneSize = count;
 }
 
 
-
+/*
 void EMatrix::read_header(std::ifstream& f)
 {
    string buf;
