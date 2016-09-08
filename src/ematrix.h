@@ -92,9 +92,12 @@ private:
       }
    };
    void read_sizes(std::ifstream& file, int& geneSize, int& sampleSize);
-   //void read_header(std::ifstream&);
-   //void read_gene_expressions(std::ifstream&,const string&);
-   //void lookup(Ace::GetOpts&,Ace::Terminal&);
+   void read_headers(std::ifstream& file, int geneSize, int sampleSize, Transform transform,
+                     bool hasHeaders);
+   void read_gene_expressions(std::ifstream& file, const std::string& nanStr);
+   void lookup(Ace::GetOpts&,Ace::Terminal&);
+   void skip_blanks(std::ifstream& file);
+   bool is_blank_line(const std::string& line);
    Header _header;
    bool _isNew {true};
    Gene* _iGene {nullptr};
@@ -167,6 +170,8 @@ public:
    Gene& at(int);
    Gene& operator[](int);
 private:
+   void null_data() override final {}
+   void flip_endian() override final;
    EMatrix* _p;
    Gene* _iGene {nullptr};
 };

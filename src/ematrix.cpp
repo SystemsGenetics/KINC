@@ -116,10 +116,10 @@ void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
       read_sizes(file,geneSize,sampleSize);
       file.clear();
       file.seekg(0,std::ios_base::beg);
-      //read_headers(file,geneSize,sampleSize,tr,hasHeaders);
-      //file.clear();
-      //file.seekg(0,std::ios_base::beg);
-      //read_gene_expressions(file,geneSize,sampleSize);
+      read_headers(file,geneSize,sampleSize,tr,hasHeaders);
+      file.clear();
+      file.seekg(0,std::ios_base::beg);
+      read_gene_expressions(file,"NaN");
       _isNew = false;
    }
    catch (...)
@@ -141,7 +141,7 @@ void EMatrix::dump(Ace::GetOpts &ops, Ace::Terminal &tm)
 
 void EMatrix::query(Ace::GetOpts &ops, Ace::Terminal &tm)
 {
-/*   enum {Basic=0,Lookup};
+   enum {Basic=0,Lookup};
    if (empty())
    {
       tm << "No data loaded.\n";
@@ -151,10 +151,9 @@ void EMatrix::query(Ace::GetOpts &ops, Ace::Terminal &tm)
       switch (ops.com_get({"lookup","dump"}))
       {
       case Basic:
-         tm << _hdr.gSize() << " gene(s) and " << _hdr.sSize()
-            << " sample(s).\n";
+         tm << gene_size() << " gene(s) and " << sample_size() << " sample(s).\n";
          tm << "Sample Transformation: ";
-         switch (_hdr.tr())
+         switch (transform())
          {
          case none:
             tm << "none.\n";
@@ -169,21 +168,13 @@ void EMatrix::query(Ace::GetOpts &ops, Ace::Terminal &tm)
             tm << "Logarithm Base 10.\n";
             break;
          }
-         if (hasSampleHead())
-         {
-            tm << "Sample header data exists.\n";
-         }
-         else
-         {
-            tm << "Sample header data does not exist.\n";
-         }
          break;
       case Lookup:
          ops.com_pop();
          lookup(ops,tm);
          break;
       }
-   }*/
+   }
 }
 
 
@@ -356,6 +347,235 @@ EMatrix::Gene& EMatrix::operator[](int i)
    return *_iGene;
 }
 
+
+
+void EMatrix::read_sizes(std::ifstream& file, int& geneSize, int& sampleSize)
+{
+   static const char* f = __PRETTY_FUNCTION__;
+   bool hasHeaders {sampleSize==0};
+   skip_blanks(file);
+   if (hasHeaders)
+   {
+      int count {1};
+      enum {newline,chunk} state {chunk};
+      while (std::isprint(file.peek()))
+      {
+         switch (state)
+         {
+         case newline:
+            if (file.peek()!=' '&&file.peek()!='\t')
+            {
+               ++count;
+               state = chunk;
+            }
+            break;
+         case chunk:
+            if (file.peek()==' '||file.peek()=='\t')
+            {
+               state = newline;
+            }
+            break;
+         }
+         file.get();
+      }
+      sampleSize = count;
+      Ace::assert<InvalidFile>(file.good(),f,__LINE__);
+   }
+   int count {0};
+   enum {newline,chunk} state {newline};
+   while (file)
+   {
+      switch (state)
+      {
+      case newline:
+         if (std::isprint(file.peek()))
+         {
+            state = chunk;
+         }
+         break;
+      case chunk:
+         if (std::iscntrl(file.peek()))
+         {
+            ++count;
+            state = newline;
+         }
+         break;
+      }
+      file.get();
+   }
+   if (state==chunk)
+   {
+      ++count;
+   }
+   geneSize = count;
+}
+
+
+void EMatrix::read_headers(std::ifstream& file, int geneSize, int sampleSize, Transform transform,
+                           bool hasHeaders)
+{
+   static const char* f = __PRETTY_FUNCTION__;
+   std::vector<std::string> sampleNames;
+   std::vector<std::string> geneNames;
+   skip_blanks(file);
+   if (hasHeaders)
+   {
+      std::string buf;
+      std::getline(file,buf);
+      std::istringstream ibuf(buf);
+      std::string tmp;
+      while (ibuf >> tmp)
+      {
+         sampleNames.push_back(tmp);
+      }
+      Ace::assert<InvalidFile>(sampleNames.size()==sampleSize,f,__LINE__);
+   }
+   else
+   {
+      sampleNames.resize(sampleSize);
+   }
+   file.seekg(0,std::ios_base::end);
+   skip_blanks(file);
+   while (file)
+   {
+      std::string buf;
+      std::getline(file,buf);
+      if (!is_blank_line(buf))
+      {
+         std::string tmp;
+         std::istringstream ibuf(buf);
+         ibuf >> tmp;
+         geneNames.push_back(tmp);
+      }
+   }
+   Ace::assert<InvalidFile>(geneNames.size()==geneSize,f,__LINE__);
+   initialize(std::move(geneNames),std::move(sampleNames),transform);
+}
+
+
+
+void EMatrix::read_gene_expressions(std::ifstream& file, const std::string& nanStr)
+{
+   static const char* f = __PRETTY_FUNCTION__;
+   Mirror m(*this);
+   skip_blanks(file);
+   auto g = m.begin();
+   while (file)
+   {
+      std::string buf;
+      std::getline(file,buf);
+      if (!is_blank_line(buf))
+      {
+         Ace::assert<InvalidFile>(g!=m.end(),f,__LINE__);
+         std::istringstream ibuf(buf);
+         std::string tmp;
+         Ace::assert<InvalidFile>(ibuf >> tmp,f,__LINE__);
+         for (auto i = g.begin();i!=g.end();++i)
+         {
+            Ace::assert<InvalidFile>(ibuf >> tmp,f,__LINE__);
+            if (tmp==nanStr)
+            {
+               *i = NAN;
+            }
+            else
+            {
+               try
+               {
+                  switch (transform())
+                  {
+                  case none:
+                     *i = std::stof(tmp);
+                     break;
+                  case log:
+                     *i = logf(std::stof(tmp));
+                     break;
+                  case log2:
+                     *i = log2f(std::stof(tmp));
+                     break;
+                  case log10:
+                     *i = log10f(std::stof(tmp));
+                     break;
+                  }
+               }
+               catch (std::exception)
+               {
+                  Ace::assert<InvalidFile>(false,f,__LINE__);
+               }
+            }
+         }
+         ++g;
+      }
+   }
+   Ace::assert<InvalidFile>(g==m.end(),f,__LINE__);
+   m.write();
+}
+
+
+
+void EMatrix::lookup(Ace::GetOpts &ops, Ace::Terminal &tm)
+{
+   Gene l {end()};
+   try
+   {
+      int i = std::stoi(ops.com_front());
+      if (i<0||i>=gene_size())
+      {
+         tm << "Gene index is out of range.\n";
+         return;
+      }
+      l = (*this)[i];
+   }
+   catch (std::exception)
+   {
+      l = find(ops.com_front());
+   }
+   if (l!=end())
+   {
+      l.read();
+      tm << l.name() << ": ";
+      for (auto i = l.begin();i!=l.end();++i)
+      {
+         tm << *i << " ";
+      }
+      tm << "\n";
+   }
+   else
+   {
+      tm << "No such gene found.\n";
+   }
+}
+
+
+
+void EMatrix::skip_blanks(std::ifstream& file)
+{
+   static const char* f = __PRETTY_FUNCTION__;
+   while (std::isspace(file.peek(),std::locale("")))
+   {
+      Ace::assert<InvalidFile>(file.good(),f,__LINE__);
+      file.get();
+   }
+}
+
+
+
+bool EMatrix::is_blank_line(const std::string& line)
+{
+   bool ret {true};
+   for (auto i = line.begin();i!=line.end();++i)
+   {
+      if (*i=='#')
+      {
+         break;
+      }
+      else if (!std::isspace(*i,std::locale("")))
+      {
+         ret = false;
+         break;
+      }
+   }
+   return ret;
+}
 
 
 const std::string& EMatrix::Gene::name() const
@@ -596,6 +816,15 @@ EMatrix::Mirror::Gene& EMatrix::Mirror::operator[](int i)
 
 
 
+void EMatrix::Mirror::flip_endian()
+{
+   for (int i = 0;i<((_p->_header.data()._sampleSize)*(_p->_header.data()._geneSize));++i)
+   {
+      flip(i*4,4);
+   }
+}
+
+
 
 EMatrix::Mirror::Gene::Iterator EMatrix::Mirror::Gene::begin()
 {
@@ -700,193 +929,3 @@ EMatrix::Mirror::Gene::Iterator::Iterator(Gene* p, int i):
    _p(p),
    _i(i)
 {}
-
-
-
-void EMatrix::read_sizes(std::ifstream& file, int& geneSize, int& sampleSize)
-{
-   static const char* f = __PRETTY_FUNCTION__;
-   bool hasHeaders {sampleSize==0};
-   while (file.peek()==' '||file.peek()=='\t'||std::iscntrl(file.peek()))
-   {
-      Ace::assert<InvalidFile>(file.good(),f,__LINE__);
-      file.get();
-   }
-   if (hasHeaders)
-   {
-      int count {1};
-      enum {newline,chunk} state {chunk};
-      while (std::isprint(file.peek()))
-      {
-         switch (state)
-         {
-         case newline:
-            if (file.peek()!=' '&&file.peek()!='\t')
-            {
-               ++count;
-               state = chunk;
-            }
-            break;
-         case chunk:
-            if (file.peek()==' '||file.peek()=='\t')
-            {
-               state = newline;
-            }
-            break;
-         }
-         file.get();
-      }
-      sampleSize = count;
-      Ace::assert<InvalidFile>(file.good(),f,__LINE__);
-   }
-   int count {0};
-   enum {newline,chunk} state {newline};
-   while (file)
-   {
-      switch (state)
-      {
-      case newline:
-         if (std::isprint(file.peek()))
-         {
-            state = chunk;
-         }
-         break;
-      case chunk:
-         if (std::iscntrl(file.peek()))
-         {
-            ++count;
-            state = newline;
-         }
-         break;
-      }
-      file.get();
-   }
-   if (state==chunk)
-   {
-      ++count;
-   }
-   geneSize = count;
-}
-
-
-/*
-void EMatrix::read_header(std::ifstream& f)
-{
-   string buf;
-   std::getline(f,buf);
-   std::istringstream ibuf(buf);
-   string tmp;
-   int i {0};
-   while (ibuf >> tmp)
-   {
-      sName(i++) = tmp;
-   }
-   bool cond {i==_hdr.sSize()};
-   AccelCompEng::assert<InvalidFile>(cond,__LINE__);
-}
-
-
-
-void EMatrix::read_gene_expressions(std::ifstream& f, const string& nan)
-{
-   Mirror m(*this);
-   auto g = m.begin();
-   int gi {0};
-   while (f)
-   {
-      string buf;
-      std::getline(f,buf);
-      if (!buf.empty())
-      {
-         if (g==m.end())
-         {
-            throw InvalidFile(__LINE__);
-         }
-         std::istringstream ibuf(buf);
-         string tmp;
-         if (!(ibuf >> tmp))
-         {
-            throw InvalidFile(__LINE__);
-         }
-         gName(gi++) = tmp;
-         for (auto i = g.begin();i!=g.end();++i)
-         {
-            if (!(ibuf >> tmp))
-            {
-               throw InvalidFile(__LINE__);
-            }
-            if (tmp==nan)
-            {
-               *i = NAN;
-            }
-            else
-            {
-               try
-               {
-                  switch (transform())
-                  {
-                  case none:
-                     *i = std::stof(tmp);
-                     break;
-                  case log:
-                     *i = logf(std::stof(tmp));
-                     break;
-                  case log2:
-                     *i = log2f(std::stof(tmp));
-                     break;
-                  case log10:
-                     *i = log10f(std::stof(tmp));
-                     break;
-                  }
-               }
-               catch (std::exception)
-               {
-                  throw InvalidFile(__LINE__);
-               }
-            }
-         }
-         ++g;
-      }
-   }
-   if (g!=m.end())
-   {
-      throw InvalidFile(__LINE__);
-   }
-   m.write();
-}
-
-
-
-void EMatrix::lookup(GetOpts &ops, Terminal &tm)
-{
-   Gene l {end()};
-   try
-   {
-      int i = std::stoi(ops.com_front());
-      if (i<0||i>=gSize())
-      {
-         tm << "Gene index is out of range.\n";
-         return;
-      }
-      l = find(i);
-   }
-   catch (std::exception)
-   {
-      l = find(ops.com_front());
-   }
-   if (l!=end())
-   {
-      l.read();
-      tm << l.name() << ": ";
-      for (auto i = l.begin();i!=l.end();++i)
-      {
-         tm << *i << " ";
-      }
-      tm << "\n";
-   }
-   else
-   {
-      tm << "No such gene found.\n";
-   }
-}
-*/
