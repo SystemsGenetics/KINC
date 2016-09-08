@@ -1,6 +1,6 @@
 #include "spearman.h"
 #include "spearman.cl.h"
-#include <gsl/gsl_statistics.h>
+//#include <gsl/gsl_statistics.h>
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
@@ -9,7 +9,7 @@
 #include <chrono>
 
 
-
+/*
 void Spearman::input(DataPlugin* input)
 {
    AccelCompEng::assert<TooManyInputs>(!_in,__LINE__);
@@ -346,4 +346,4 @@ void Spearman::calculate(Terminal& tm, CLKernel& kern, elist& expList, int size,
       usleep(100);
    }
    tm << "\n";
-}
+}*/

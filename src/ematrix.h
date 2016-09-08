@@ -6,76 +6,111 @@
 
 
 
-class EMatrix : public AccelCompEng::DataPlugin
+namespace Ace = AccelCompEng;
+
+
+
+class EMatrix : public Ace::Data
 {
 public:
-   ACE_DATA_HEADER()
-   ACE_EXCEPTION(EMatrix,OutOfRange)
-   ACE_EXCEPTION(EMatrix,AlreadyInitialized)
-   ACE_EXCEPTION(EMatrix,NotInitialized)
-   ACE_EXCEPTION(EMatrix,AlreadySet)
-   ACE_EXCEPTION(EMatrix,InvalidArg)
-   ACE_EXCEPTION(EMatrix,InvalidFile)
-   ACE_EXCEPTION(EMatrix,NotNewFile)
-   ACE_EXCEPTION(EMatrix,CannotOpen)
+   struct OutOfRange : public Ace::Exception { using Ace::Exception::Exception; };
+   struct NotInitialized : public Ace::Exception { using Ace::Exception::Exception; };
+   struct AlreadySet : public Ace::Exception { using Ace::Exception::Exception; };
+   struct InvalidArg : public Ace::Exception { using Ace::Exception::Exception; };
+   struct InvalidFile : public Ace::Exception { using Ace::Exception::Exception; };
+   struct NotNewFile : public Ace::Exception { using Ace::Exception::Exception; };
+   struct CannotOpen : public Ace::Exception { using Ace::Exception::Exception; };
+   struct NullMatrix : public Ace::Exception { using Ace::Exception::Exception; };
+   struct InvalidSize : public Ace::Exception { using Ace::Exception::Exception; };
    enum Transform { none=0,log,log2,log10 };
    class Gene;
    class Mirror;
-   using string = std::string;
-   EMatrix(const string&,const string&);
+   EMatrix() = default;
    ~EMatrix();
-   void load(GetOpts &ops, Terminal &tm) override final;
-   void dump(GetOpts &ops, Terminal &tm) override final;
-   void query(GetOpts &ops, Terminal &tm) override final;
+   void init() override final;
+   void load(Ace::GetOpts &ops, Ace::Terminal &tm) override final;
+   void dump(Ace::GetOpts &ops, Ace::Terminal &tm) override final;
+   void query(Ace::GetOpts &ops, Ace::Terminal &tm) override final;
    bool empty() override final;
-   void initialize(int,int,bool);
-   bool hasSampleHead() const;
-   int gSize() const;
-   int sSize() const;
-   string& gName(int);
-   string& sName(int);
+   void initialize(std::vector<std::string>&& geneNames,std::vector<std::string>&& sampleNames,
+                   Transform transform);
+   int gene_size() const;
+   int sample_size() const;
+   const std::string& gene_name(int i) const;
+   const std::string& sample_name(int i) const;
    Transform transform() const;
-   void transform(Transform);
-   void write();
    Gene begin();
    Gene end();
-   Gene find(int);
-   Gene find(const string&);
-   Gene& at(int);
+   Gene find(const std::string& geneName);
+   Gene& at(int i);
    Gene& operator[](int);
 private:
-   using svec = std::vector<string>;
-   ACE_FMEM_STATIC(Header,34)
-      ACE_FMEM_VAL(sSize,uint32_t,0)
-      ACE_FMEM_VAL(gSize,uint32_t,4)
-      ACE_FMEM_VAL(tr,uint8_t,8)
-      ACE_FMEM_VAL(wr,uint8_t,9)
-      ACE_FMEM_VAL(sPtr,FPtr,10)
-      ACE_FMEM_VAL(gPtr,FPtr,18)
-      ACE_FMEM_VAL(eData,FPtr,26)
-   ACE_FMEM_END()
-   ACE_FMEM_STATIC(NmHead,8)
-      ACE_FMEM_VAL(nPtr,FPtr,0)
-   ACE_FMEM_END()
-   void read_sizes(std::ifstream&,int);
-   void read_header(std::ifstream&);
-   void read_gene_expressions(std::ifstream&,const string&);
-   void lookup(GetOpts&,Terminal&);
-   Header _hdr {fNullPtr};
+   struct Header : public Ace::NVMemory::Node
+   {
+      Header():
+         Node(sizeof(HData))
+      {
+         init_data<HData>();
+      }
+      Header(const std::shared_ptr<Ace::NVMemory>& mem):
+         Node(sizeof(HData),mem)
+      {
+         init_data<HData>();
+      }
+      Header(const std::shared_ptr<Ace::NVMemory>& mem, int64_t ptr):
+         Node(sizeof(HData),mem,ptr)
+      {
+         init_data<HData>();
+      }
+      struct __attribute__ ((__packed__)) HData
+      {
+         int32_t _sampleSize {0};
+         int32_t _geneSize {0};
+         uint8_t _transform {none};
+         int64_t _samplePtr {fnullptr};
+         int64_t _genePtr {fnullptr};
+         int64_t _expData {fnullptr};
+      };
+      HData& data() { return get<HData>(); }
+      const HData& data() const { return get<HData>(); }
+      void null_data()
+      {
+         get<HData>()._sampleSize = 0;
+         get<HData>()._geneSize = 0;
+         get<HData>()._transform = none;
+         get<HData>()._samplePtr = fnullptr;
+         get<HData>()._genePtr = fnullptr;
+         get<HData>()._expData = fnullptr;
+      }
+      void flip_endian()
+      {
+         flip(0,4);
+         flip(4,4);
+         flip(9,8);
+         flip(17,8);
+         flip(25,8);
+      }
+   };
+   //void read_sizes(std::ifstream&,int);
+   //void read_header(std::ifstream&);
+   //void read_gene_expressions(std::ifstream&,const string&);
+   //void lookup(Ace::GetOpts&,Ace::Terminal&);
+   Header _header;
+   bool _isNew {true};
    Gene* _iGene {nullptr};
-   svec _gNames;
-   svec _sNames;
+   std::vector<std::string> _geneNames;
+   std::vector<std::string> _sampleNames;
+   constexpr static int _strSize {1024};
 };
 
 
 
-class EMatrix::Gene
+class EMatrix::Gene : private Ace::NVMemory::Node
 {
 public:
    friend class EMatrix;
    class Iterator;
-   using string = std::string;
-   const string& name() const;
+   const std::string& name() const;
    void read();
    void write();
    Iterator begin();
@@ -88,13 +123,10 @@ public:
 private:
    Gene(EMatrix*,int);
    void set(int);
-   static FPtr initialize(FileMem&,int,int);
-   ACE_FMEM_OBJECT(Expr)
-      Expr(int sSize, FPtr ptr = fNullPtr): Object(4*sSize,ptr) {}
-      float& val(int i) { get<float>(4*i); }
-   ACE_FMEM_END()
+   void null_data() override final {}
+   void flip_endian() override final;
+   static int64_t initialize(Ace::NVMemory&,int,int);
    EMatrix* _p;
-   Expr _head;
    int _i;
 };
 
@@ -116,7 +148,7 @@ private:
 
 
 
-class EMatrix::Mirror
+class EMatrix::Mirror : private Ace::NVMemory::Node
 {
 public:
    friend class EMatrix;
@@ -129,21 +161,13 @@ public:
    Mirror& operator=(Mirror&&) = delete;
    void read();
    void write();
+   float& value(int gene, int i);
    Gene begin();
    Gene end();
    Gene& at(int);
    Gene& operator[](int);
 private:
-   ACE_FMEM_OBJECT(AllExps)
-      AllExps(int gSize, int sSize, FPtr ptr = fNullPtr):
-         Object(4*gSize*sSize,ptr),
-         _sSize(sSize)
-      {}
-      float& val(int gi, int si) { get<float>(4*((gi*_sSize)+si)); }
-      int _sSize;
-   ACE_FMEM_END()
    EMatrix* _p;
-   AllExps _data;
    Gene* _iGene {nullptr};
 };
 

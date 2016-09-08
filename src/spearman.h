@@ -4,7 +4,7 @@
 #include "ematrix.h"
 #include "cmatrix.h"
 
-
+/*
 
 class Spearman : public AccelCompEng::AnalyticPlugin
 {
@@ -44,6 +44,6 @@ private:
    CMatrix* _out {nullptr};
 };
 
-
+*/
 
 #endif

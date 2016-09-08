@@ -13,7 +13,7 @@ run := ../run/
 
 acxxflags := $(CXXFLAGS) -g -std=c++11 -I../../ACE/src
 aldflags := $(LDFLAGS)
-aldlibs := $(LDLIBS) -lOpenCL -L../../ACE/lib -lace -lgsl
+aldlibs := $(LDLIBS) -lOpenCL -L../../ACE/lib -lace
 
 progf := $(run)$(NAME)
 

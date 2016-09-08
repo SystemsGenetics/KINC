@@ -5,13 +5,16 @@
 
 
 
-ACE_BEGIN_DATA
-ACE_DATA_PLUGIN(emx,EMatrix)
-ACE_DATA_PLUGIN(cmx,CMatrix)
-ACE_END_DATA
-
-
-
-ACE_BEGIN_ANALYTIC
-ACE_ANALYTIC_PLUGIN(spearman,Spearman)
-ACE_END_ANALYTIC
+class KINCFactory : public Ace::Factory
+{
+   Ace::Analytic* build_analytic(const std::string&) override final { return nullptr; }
+   Ace::Data* build_data(const std::string& type) override final
+   {
+      Ace::Data* ret {nullptr};
+      if (type==std::string("emx"))
+      {
+         ret = new EMatrix;
+      }
+      return ret;
+   }
+};

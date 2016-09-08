@@ -1,7 +1,7 @@
 #include "cmatrix.h"
 
 
-
+/*
 CMatrix::CMatrix(const string& type, const string& file):
    DataPlugin(type,file)
 {

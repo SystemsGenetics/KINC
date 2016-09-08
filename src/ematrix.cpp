@@ -4,56 +4,55 @@
 
 
 
-EMatrix::EMatrix(const string& type, const string& file):
-   DataPlugin(type,file)
+EMatrix::~EMatrix()
+{
+   if (_iGene)
+   {
+      delete _iGene;
+   }
+}
+
+
+
+void EMatrix::init()
 {
    try
    {
-      // Does the KINC file have a header already set. This case would be for
-      // a new file.
-      if (File::head()==fNullPtr)
+      _header.mem(Ace::File::mem());
+      if (Ace::File::head()==fnullptr)
       {
-         // Allocate space in the file (file memory) for the header.
-         File::mem().allot(_hdr);
-         File::head(_hdr.addr());
-         // Set defaults for the ematrix header.
-         _hdr.sSize() = 0;
-         _hdr.gSize() = 0;
-         _hdr.tr() = Transform::none;
-         _hdr.wr() = 0;
-         _hdr.sPtr() = fNullPtr;
-         _hdr.gPtr() = fNullPtr;
-         _hdr.eData() = fNullPtr;
-         // Write the header initially to file.
-         File::mem().sync(_hdr,FSync::write);
+         _header.allocate();
+         Ace::File::head(_header.addr());
+         _header.null_data();
+         _header.write();
       }
-      // The KINC file already has a header if the file already exists and is
-      // being opened.
       else
       {
-         _hdr.addr(File::head());
-         File::mem().sync(_hdr,FSync::read);
-         NmHead hd {_hdr.gPtr()};
-         for (int i=0;i<_hdr.gSize();++i)
+         _header.addr(Ace::File::head());
+         _header.read();
+         Ace::FString fstr(Ace::File::mem(),_header.data()._genePtr);
+         fstr.static_buffer(_strSize);
+         _geneNames.push_back(fstr.str());
+         for (int i=1;i<_header.data()._geneSize;++i)
          {
-            File::mem().sync(hd,FSync::read,i);
-            FString name(&File::mem(),hd.nPtr());
-            _gNames.push_back(*name);
+            fstr.bump();
+            _geneNames.push_back(fstr.str());
          }
-         if (_hdr.sPtr()!=fNullPtr)
+         if (_header.data()._samplePtr!=fnullptr)
          {
-            hd.addr(_hdr.sPtr());
-            for (int i=0;i<_hdr.sSize();++i)
+            fstr.load(_header.data()._samplePtr);
+            _sampleNames.push_back(fstr.str());
+            for (int i=1;i<_header.data()._sampleSize;++i)
             {
-               File::mem().sync(hd,FSync::read,i);
-               FString name(&File::mem(),hd.nPtr());
-               _sNames.push_back(*name);
+               fstr.bump();
+               _sampleNames.push_back(fstr.str());
             }
          }
          else
          {
-            _sNames.resize(_hdr.sSize());
+            _sampleNames.resize(_header.data()._sampleSize);
          }
+         _isNew = false;
       }
    }
    catch (...)
@@ -65,18 +64,9 @@ EMatrix::EMatrix(const string& type, const string& file):
 
 
 
-EMatrix::~EMatrix()
+void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
 {
-   if (_iGene)
-   {
-      delete _iGene;
-   }
-}
-
-
-
-void EMatrix::load(GetOpts &ops, Terminal &tm)
-{
+/*   static const char* f = __PRETTY_FUNCTION__;
    bool hasHeaders {true};
    int sampleSize {0};
    Transform tr {none};
@@ -116,9 +106,9 @@ void EMatrix::load(GetOpts &ops, Terminal &tm)
       tm << "If noheader option is given number of samples must be given.\n";
       throw InvalidArg(__LINE__);
    }
-   AccelCompEng::assert<NotNewFile>(File::head()==fNullPtr,__LINE__);
+   Ace::assert<NotNewFile>(File::head()==fNullPtr,f,__LINE__);
    std::ifstream f(ops.com_front());
-   AccelCompEng::assert<CannotOpen>(f.is_open(),__LINE__);
+   Ace::assert<CannotOpen>(f.is_open(),f,__LINE__);
    read_sizes(f,sampleSize);
    transform(tr);
    try
@@ -127,7 +117,7 @@ void EMatrix::load(GetOpts &ops, Terminal &tm)
       f.seekg(0,std::ios_base::beg);
       while (f.peek()==' '||f.peek()=='\t'||std::iscntrl(f.peek()))
       {
-         AccelCompEng::assert<InvalidFile>(f.good(),__LINE__);
+         Ace::assert<InvalidFile>(f.good(),f,__LINE__);
          f.get();
       }
       if (hasHeaders)
@@ -143,21 +133,21 @@ void EMatrix::load(GetOpts &ops, Terminal &tm)
    {
       File::clear();
       throw;
-   }
+   }*/
 }
 
 
 
-void EMatrix::dump(GetOpts &ops, Terminal &tm)
+void EMatrix::dump(Ace::GetOpts &ops, Ace::Terminal &tm)
 {
    tm << "dump command not implemented for EMatrix type.\n";
 }
 
 
 
-void EMatrix::query(GetOpts &ops, Terminal &tm)
+void EMatrix::query(Ace::GetOpts &ops, Ace::Terminal &tm)
 {
-   enum {Basic=0,Lookup};
+/*   enum {Basic=0,Lookup};
    if (empty())
    {
       tm << "No data loaded.\n";
@@ -199,143 +189,125 @@ void EMatrix::query(GetOpts &ops, Terminal &tm)
          lookup(ops,tm);
          break;
       }
-   }
+   }*/
 }
 
 
 
 bool EMatrix::empty()
 {
-   return _hdr.gSize()==0;
+   return _isNew;
 }
 
 
 
-void EMatrix::initialize(int gSize, int sSize, bool sHeaders)
+void EMatrix::initialize(std::vector<std::string>&& geneNames,
+                         std::vector<std::string>&& sampleNames, Transform transform)
 {
-   if (File::head()==fNullPtr)
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<InvalidSize>(geneNames.size()>0&&sampleNames.size()>0,f,__LINE__);
+   if (File::head()==fnullptr)
    {
-      File::mem().allot(_hdr);
-      File::head(_hdr.addr());
+      _header.addr(fnullptr);
+      _header.allocate();
+      Ace::File::head(_header.addr());
    }
    else
    {
-      bool cond {_hdr.gPtr()==fNullPtr};
-      AccelCompEng::assert<AlreadyInitialized>(cond,__LINE__);
+      Ace::assert<AlreadySet>(_isNew,f,__LINE__);
    }
-   NmHead hd;
-   File::mem().allot(hd,gSize);
-   _hdr.gPtr() = hd.addr();
-   if (sHeaders)
+   try
    {
-      File::mem().allot(hd,sSize);
-      _hdr.sPtr() = hd.addr();
+      _header.data()._geneSize = geneNames.size();
+      _header.data()._sampleSize = sampleNames.size();
+      Ace::FString fstr(Ace::File::mem());
+      auto i = geneNames.begin();
+      _header.data()._genePtr = fstr.write(*i);
+      ++i;
+      while (i!=geneNames.end())
+      {
+         fstr.reset();
+         fstr.write(*i);
+         ++i;
+      }
+      fstr.reset();
+      i = sampleNames.begin();
+      _header.data()._samplePtr = fstr.write(*i);
+      ++i;
+      while (i!=sampleNames.end())
+      {
+         fstr.reset();
+         fstr.write(*i);
+         ++i;
+      }
+      _header.data()._expData = Gene::initialize(Ace::File::rmem(),geneNames.size(),
+                                                 sampleNames.size());
+      _header.data()._transform = transform;
+      _header.write();
+      _geneNames = std::move(geneNames);
+      _sampleNames = std::move(sampleNames);
+      _isNew = false;
    }
-   else
+   catch (...)
    {
-      _hdr.sPtr() = fNullPtr;
+      Ace::File::head(fnullptr);
+      _isNew = true;
    }
-   _hdr.wr() = 0;
-   _hdr.gSize() = gSize;
-   _hdr.sSize() = sSize;
-   _hdr.eData() = Gene::initialize(File::mem(),gSize,sSize);
-   _gNames.resize(gSize);
-   _sNames.resize(sSize);
-   File::mem().sync(_hdr,FSync::write);
 }
 
 
 
-bool EMatrix::hasSampleHead() const
+int EMatrix::gene_size() const
 {
-   return _hdr.sPtr()!=fNullPtr;
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
+   return _header.data()._geneSize;
 }
 
 
 
-int EMatrix::gSize() const
+int EMatrix::sample_size() const
 {
-   return _hdr.gSize();
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
+   return _header.data()._sampleSize;
 }
 
 
 
-int EMatrix::sSize() const
+const std::string& EMatrix::gene_name(int i) const
 {
-   return _hdr.sSize();
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
+   Ace::assert<OutOfRange>(i>=0&&i<_header.data()._geneSize,f,__LINE__);
+   return _geneNames[i];
 }
 
 
 
-EMatrix::string& EMatrix::gName(int i)
+const std::string& EMatrix::sample_name(int i) const
 {
-   bool cond {_hdr.gPtr()!=fNullPtr};
-   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
-   cond = {i>=0||i<_hdr.gSize()};
-   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
-   return _gNames[i];
-}
-
-
-
-EMatrix::string& EMatrix::sName(int i)
-{
-   bool cond {_hdr.gPtr()!=fNullPtr};
-   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
-   cond = {i>=0||i<_hdr.sSize()};
-   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
-   return _sNames[i];
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
+   Ace::assert<OutOfRange>(i>=0&&i<_header.data()._sampleSize,f,__LINE__);
+   return _sampleNames[i];
 }
 
 
 
 EMatrix::Transform EMatrix::transform() const
 {
-   return (Transform)_hdr.tr();
-}
-
-
-
-void EMatrix::transform(Transform tr)
-{
-   _hdr.tr() = tr;
-}
-
-
-
-void EMatrix::write()
-{
-   bool cond {_hdr.gPtr()!=fNullPtr};
-   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
-   cond = _hdr.wr()==0;
-   AccelCompEng::assert<AlreadySet>(cond,__LINE__);
-   _hdr.wr() = 1;
-   NmHead hd {_hdr.gPtr()};
-   for (int i=0;i<_gNames.size();++i)
-   {
-      FString tmp {&File::mem()};
-      tmp = _gNames[i];
-      hd.nPtr() = tmp.addr();
-      File::mem().sync(hd,FSync::write,i);
-   }
-   if (_hdr.sPtr()!=fNullPtr)
-   {
-      hd.addr(_hdr.sPtr());
-      for (int i=0;i<_sNames.size();++i)
-      {
-         FString tmp {&File::mem()};
-         tmp = _sNames[i];
-         hd.nPtr() = tmp.addr();
-         File::mem().sync(hd,FSync::write,i);
-      }
-   }
-   File::mem().sync(_hdr,FSync::write);
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
+   return (Transform)_header.data()._transform;
 }
 
 
 
 EMatrix::Gene EMatrix::begin()
 {
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
    return Gene(this,0);
 }
 
@@ -343,28 +315,21 @@ EMatrix::Gene EMatrix::begin()
 
 EMatrix::Gene EMatrix::end()
 {
-   return Gene(this,_hdr.gSize());
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
+   return Gene(this,_header.data()._geneSize);
 }
 
 
 
-EMatrix::Gene EMatrix::find(int i)
+EMatrix::Gene EMatrix::find(const std::string& name)
 {
-   bool cond {_hdr.gPtr()!=fNullPtr};
-   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
-   cond = i>=0&&i<_hdr.gSize();
-   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
-   return Gene(this,i);
-}
-
-
-
-EMatrix::Gene EMatrix::find(const string& nm)
-{
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
    int i {0};
-   for (;i<_hdr.gSize();++i)
+   for (;i<_geneNames.size();++i)
    {
-      if (gName(i)==nm)
+      if (_geneNames[i]==name)
       {
          break;
       }
@@ -376,10 +341,9 @@ EMatrix::Gene EMatrix::find(const string& nm)
 
 EMatrix::Gene& EMatrix::at(int i)
 {
-   bool cond {_hdr.gPtr()!=fNullPtr};
-   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
-   cond = i>=0&&i<_hdr.gSize();
-   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
+   Ace::assert<OutOfRange>(i>=0&&i<_header.data()._geneSize,f,__LINE__);
    return (*this)[i];
 }
 
@@ -400,23 +364,23 @@ EMatrix::Gene& EMatrix::operator[](int i)
 
 
 
-const EMatrix::Gene::string& EMatrix::Gene::name() const
+const std::string& EMatrix::Gene::name() const
 {
-   return _p->gName(_i);
+   return _p->gene_name(_i);
 }
 
 
 
 void EMatrix::Gene::read()
 {
-   _p->File::mem().sync(_head,FSync::read,_i);
+   Node::read(_i);
 }
 
 
 
 void EMatrix::Gene::write()
 {
-   _p->File::mem().sync(_head,FSync::write,_i);
+   Node::write(_i);
 }
 
 
@@ -430,15 +394,15 @@ EMatrix::Gene::Iterator EMatrix::Gene::begin()
 
 EMatrix::Gene::Iterator EMatrix::Gene::end()
 {
-   return Iterator(this,_p->_hdr.sSize());
+   return Iterator(this,_p->_header.data()._sampleSize);
 }
 
 
 
 float& EMatrix::Gene::at(int i)
 {
-   bool cond {i>=0&&i<_p->_hdr.sSize()};
-   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<OutOfRange>(i>=0&&i<_p->_header.data()._sampleSize,f,__LINE__);
    return (*this)[i];
 }
 
@@ -446,14 +410,14 @@ float& EMatrix::Gene::at(int i)
 
 float& EMatrix::Gene::operator[](int i)
 {
-   return _head.val(i);
+   return pget<float>()[i];
 }
 
 
 
 void EMatrix::Gene::operator++()
 {
-   if (_i<_p->_hdr.gSize())
+   if (_i<(_p->_header.data()._geneSize))
    {
       ++_i;
    }
@@ -476,32 +440,49 @@ bool EMatrix::Gene::operator==(const Gene& cmp)
 
 
 EMatrix::Gene::Gene(EMatrix* p, int i):
+   Node(sizeof(float)*(p->_header.data()._sampleSize),p->Ace::File::mem(),
+        p->_header.data()._expData),
    _p(p),
-   _head(p->_hdr.sSize(),p->_hdr.eData()),
    _i(i)
-{}
+{
+   init_data<float>(p->_header.data()._sampleSize);
+   read();
+}
 
 
 
 void EMatrix::Gene::set(int i)
 {
+   bool change {_i!=i};
    _i = i;
+   if (change)
+   {
+      read();
+   }
 }
 
 
 
-EMatrix::FPtr EMatrix::Gene::initialize(FileMem& mem, int gSize, int sSize)
+void EMatrix::Gene::flip_endian()
 {
-   Expr newData(sSize);
-   mem.allot(newData,gSize);
-   return newData.addr();
+   for (int i = 0;i<(_p->_header.data()._sampleSize);++i)
+   {
+      flip(i*4,4);
+   }
+}
+
+
+
+int64_t EMatrix::Gene::initialize(Ace::NVMemory& mem, int geneSize, int sampleSize)
+{
+   return mem.allocate(sizeof(float)*geneSize*sampleSize);
 }
 
 
 
 void EMatrix::Gene::Iterator::operator++()
 {
-   if (_i<_p->_p->_hdr.sSize())
+   if (_i<(_p->_p->_header.data()._sampleSize))
    {
       ++_i;
    }
@@ -511,7 +492,7 @@ void EMatrix::Gene::Iterator::operator++()
 
 float& EMatrix::Gene::Iterator::operator*()
 {
-   return _p->_head.val(_i);
+   return (_p->pget<float>())[_i];;
 }
 
 
@@ -536,13 +517,15 @@ EMatrix::Gene::Iterator::Iterator(Gene* p, int i):
 {}
 
 
-
+/////////////////
 EMatrix::Mirror::Mirror(EMatrix& p):
-   _p(&p),
-   _data(p._hdr.gSize(),p._hdr.sSize(),p._hdr.eData())
+   Node(sizeof(float)*p._header.data()._geneSize*p._header.data()._sampleSize,p.Ace::File::mem(),
+        p._header.data()._expData),
+   _p(&p)
 {
-   bool cond {p._hdr.eData()!=fNullPtr};
-   AccelCompEng::assert<NotInitialized>(cond,__LINE__);
+   static const char* f = __PRETTY_FUNCTION__;
+   AccelCompEng::assert<NullMatrix>(!(p._isNew),f,__LINE__);
+   init_data<float>(p._header.data()._geneSize*p._header.data()._sampleSize);
 }
 
 
@@ -559,14 +542,24 @@ EMatrix::Mirror::~Mirror()
 
 void EMatrix::Mirror::read()
 {
-   _p->File::mem().sync(_data,FSync::read);
+   Node::read();
 }
 
 
 
 void EMatrix::Mirror::write()
 {
-   _p->File::mem().sync(_data,FSync::write);
+   Node::write();
+}
+
+
+
+float& EMatrix::Mirror::value(int gene, int i)
+{
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<OutOfRange>(gene>=0&&gene<(_p->_header.data()._geneSize)&&i>=0&&
+                           i<(_p->_header.data()._sampleSize),f,__LINE__);
+   return pget<float>()[(gene*(_p->_header.data()._sampleSize))+i];
 }
 
 
@@ -580,15 +573,15 @@ EMatrix::Mirror::Gene EMatrix::Mirror::begin()
 
 EMatrix::Mirror::Gene EMatrix::Mirror::end()
 {
-   return Gene(this,_p->_hdr.gSize());
+   return Gene(this,_p->_header.data()._geneSize);
 }
 
 
 
 EMatrix::Mirror::Gene& EMatrix::Mirror::at(int i)
 {
-   bool cond {i>=0&&i<_p->_hdr.gSize()};
-   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<OutOfRange>(i>=0&&i<(_p->_header.data()._geneSize),f,__LINE__);
    return (*this)[i];
 }
 
@@ -609,6 +602,7 @@ EMatrix::Mirror::Gene& EMatrix::Mirror::operator[](int i)
 
 
 
+
 EMatrix::Mirror::Gene::Iterator EMatrix::Mirror::Gene::begin()
 {
    return Iterator(this,0);
@@ -618,15 +612,15 @@ EMatrix::Mirror::Gene::Iterator EMatrix::Mirror::Gene::begin()
 
 EMatrix::Mirror::Gene::Iterator EMatrix::Mirror::Gene::end()
 {
-   return Iterator(this,_p->_p->_hdr.sSize());
+   return Iterator(this,_p->_p->_header.data()._sampleSize);
 }
 
 
 
 float& EMatrix::Mirror::Gene::at(int i)
 {
-   bool cond {i>=0&&i<(_p->_p->_hdr.gSize())};
-   AccelCompEng::assert<OutOfRange>(cond,__LINE__);
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<OutOfRange>(i>=0&&i<(_p->_p->_header.data()._geneSize),f,__LINE__);
    return (*this)[i];
 }
 
@@ -634,14 +628,14 @@ float& EMatrix::Mirror::Gene::at(int i)
 
 float& EMatrix::Mirror::Gene::operator[](int i)
 {
-   return _p->_data.val(_i,i);
+   return _p->value(_i,i);
 }
 
 
 
 void EMatrix::Mirror::Gene::operator++()
 {
-   if (_i<(_p->_p->_hdr.gSize()))
+   if (_i<(_p->_p->_header.data()._geneSize))
    {
       ++_i;
    }
@@ -679,14 +673,14 @@ void EMatrix::Mirror::Gene::set(int i)
 
 float& EMatrix::Mirror::Gene::Iterator::operator*()
 {
-   return _p->_p->_data.val(_p->_i,_i);
+   return _p->_p->value(_p->_i,_i);
 }
 
 
 
 void EMatrix::Mirror::Gene::Iterator::operator++()
 {
-   if (_i<(_p->_p->_p->_hdr.sSize()))
+   if (_i<(_p->_p->_p->_header.data()._sampleSize))
    {
       ++_i;
    }
@@ -714,7 +708,7 @@ EMatrix::Mirror::Gene::Iterator::Iterator(Gene* p, int i):
 {}
 
 
-
+/*
 void EMatrix::read_sizes(std::ifstream& f, int sSize)
 {
    bool hasHeaders {sSize==0};
@@ -900,3 +894,4 @@ void EMatrix::lookup(GetOpts &ops, Terminal &tm)
       tm << "No such gene found.\n";
    }
 }
+*/

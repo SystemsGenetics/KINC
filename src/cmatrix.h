@@ -4,7 +4,7 @@
 #include <vector>
 
 
-
+/*
 class CMatrix : public AccelCompEng::DataPlugin
 {
 public:
@@ -220,6 +220,6 @@ private:
    int _i;
 };
 
-
+*/
 
 #endif

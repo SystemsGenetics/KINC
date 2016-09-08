@@ -1,8 +1,9 @@
-#include <ace.h>
+#include "linker.cpp"
 
 
 
 int main(int argc, char* argv[])
 {
-   return AccelCompEng::run("KINC",argc,argv);
+   KINCFactory factory;
+   return Ace::run("KINC",factory,argc,argv);
 }
