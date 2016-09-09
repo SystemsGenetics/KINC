@@ -10,11 +10,10 @@ namespace Ace = AccelCompEng;
 
 
 
-class EMatrix : public Ace::Data
+class EMatrix : public Ace::Data, private Ace::NVMemory::Node
 {
 public:
    struct OutOfRange : public Ace::Exception { using Ace::Exception::Exception; };
-   struct NotInitialized : public Ace::Exception { using Ace::Exception::Exception; };
    struct AlreadySet : public Ace::Exception { using Ace::Exception::Exception; };
    struct InvalidArg : public Ace::Exception { using Ace::Exception::Exception; };
    struct InvalidFile : public Ace::Exception { using Ace::Exception::Exception; };
@@ -25,7 +24,7 @@ public:
    enum Transform { none=0,log,log2,log10 };
    class Gene;
    class Mirror;
-   EMatrix() = default;
+   EMatrix();
    ~EMatrix();
    void init() override final;
    void load(Ace::GetOpts &ops, Ace::Terminal &tm) override final;
@@ -45,52 +44,17 @@ public:
    Gene& at(int i);
    Gene& operator[](int);
 private:
-   struct Header : public Ace::NVMemory::Node
+   struct __attribute__ ((__packed__)) Header
    {
-      Header():
-         Node(sizeof(HData))
-      {
-         init_data<HData>();
-      }
-      Header(const std::shared_ptr<Ace::NVMemory>& mem):
-         Node(sizeof(HData),mem)
-      {
-         init_data<HData>();
-      }
-      Header(const std::shared_ptr<Ace::NVMemory>& mem, int64_t ptr):
-         Node(sizeof(HData),mem,ptr)
-      {
-         init_data<HData>();
-      }
-      struct __attribute__ ((__packed__)) HData
-      {
-         int32_t _sampleSize {0};
-         int32_t _geneSize {0};
-         uint8_t _transform {none};
-         int64_t _samplePtr {fnullptr};
-         int64_t _genePtr {fnullptr};
-         int64_t _expData {fnullptr};
-      };
-      HData& data() { return get<HData>(); }
-      const HData& data() const { return get<HData>(); }
-      void null_data()
-      {
-         get<HData>()._sampleSize = 0;
-         get<HData>()._geneSize = 0;
-         get<HData>()._transform = none;
-         get<HData>()._samplePtr = fnullptr;
-         get<HData>()._genePtr = fnullptr;
-         get<HData>()._expData = fnullptr;
-      }
-      void flip_endian()
-      {
-         flip(0,4);
-         flip(4,4);
-         flip(9,8);
-         flip(17,8);
-         flip(25,8);
-      }
+      int32_t _sampleSize {0};
+      int32_t _geneSize {0};
+      uint8_t _transform {none};
+      int64_t _samplePtr {fnullptr};
+      int64_t _genePtr {fnullptr};
+      int64_t _expData {fnullptr};
    };
+   Header& data() { return get<Header>(); }
+   const Header& data() const { return get<Header>(); }
    void read_sizes(std::ifstream& file, int& geneSize, int& sampleSize);
    void read_headers(std::ifstream& file, int geneSize, int sampleSize, Transform transform,
                      bool hasHeaders);
@@ -98,6 +62,8 @@ private:
    void lookup(Ace::GetOpts&,Ace::Terminal&);
    void skip_blanks(std::ifstream& file);
    bool is_blank_line(const std::string& line);
+   void null_data() override final;
+   void flip_endian() override final;
    Header _header;
    bool _isNew {true};
    Gene* _iGene {nullptr};

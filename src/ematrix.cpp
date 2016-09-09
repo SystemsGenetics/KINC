@@ -4,6 +4,14 @@
 
 
 
+EMatrix::EMatrix():
+   Node(sizeof(Header))
+{
+   init_data<Header>();
+}
+
+
+
 EMatrix::~EMatrix()
 {
    if (_iGene)
@@ -18,31 +26,31 @@ void EMatrix::init()
 {
    try
    {
-      _header.mem(Ace::File::mem());
-      if (Ace::File::head()==fnullptr)
+      Node::mem(File::mem());
+      if (File::head()==fnullptr)
       {
-         _header.allocate();
-         Ace::File::head(_header.addr());
-         _header.null_data();
-         _header.write();
+         allocate();
+         File::head(addr());
+         null_data();
+         write();
       }
       else
       {
-         _header.addr(Ace::File::head());
-         _header.read();
-         Ace::FString fstr(Ace::File::mem(),_header.data()._genePtr);
+         addr(File::head());
+         read();
+         Ace::FString fstr(File::mem(),data()._genePtr);
          fstr.static_buffer(_strSize);
          _geneNames.push_back(fstr.str());
-         for (int i=1;i<_header.data()._geneSize;++i)
+         for (int i=1;i<data()._geneSize;++i)
          {
             fstr.bump();
             _geneNames.push_back(fstr.str());
          }
-         if (_header.data()._samplePtr!=fnullptr)
+         if (data()._samplePtr!=fnullptr)
          {
-            fstr.load(_header.data()._samplePtr);
+            fstr.load(data()._samplePtr);
             _sampleNames.push_back(fstr.str());
-            for (int i=1;i<_header.data()._sampleSize;++i)
+            for (int i=1;i<data()._sampleSize;++i)
             {
                fstr.bump();
                _sampleNames.push_back(fstr.str());
@@ -50,7 +58,7 @@ void EMatrix::init()
          }
          else
          {
-            _sampleNames.resize(_header.data()._sampleSize);
+            _sampleNames.resize(data()._sampleSize);
          }
          _isNew = false;
       }
@@ -107,7 +115,7 @@ void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
       tm << "If noheader option is given number of samples must be given.\n";
       Ace::assert<InvalidArg>(false,f,__LINE__);
    }
-   Ace::assert<NotNewFile>(Ace::File::head()==fnullptr,f,__LINE__);
+   Ace::assert<NotNewFile>(File::head()==fnullptr,f,__LINE__);
    std::ifstream file(ops.com_front());
    Ace::assert<CannotOpen>(file.is_open(),f,__LINE__);
    try
@@ -124,7 +132,8 @@ void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
    }
    catch (...)
    {
-      Ace::File::clear();
+      File::clear();
+      null_data();
       _isNew = true;
       throw;
    }
@@ -193,9 +202,9 @@ void EMatrix::initialize(std::vector<std::string>&& geneNames,
    Ace::assert<InvalidSize>(geneNames.size()>0&&sampleNames.size()>0,f,__LINE__);
    if (File::head()==fnullptr)
    {
-      _header.addr(fnullptr);
-      _header.allocate();
-      Ace::File::head(_header.addr());
+      addr(fnullptr);
+      allocate();
+      File::head(addr());
    }
    else
    {
@@ -203,11 +212,11 @@ void EMatrix::initialize(std::vector<std::string>&& geneNames,
    }
    try
    {
-      _header.data()._geneSize = geneNames.size();
-      _header.data()._sampleSize = sampleNames.size();
-      Ace::FString fstr(Ace::File::mem());
+      data()._geneSize = geneNames.size();
+      data()._sampleSize = sampleNames.size();
+      Ace::FString fstr(File::mem());
       auto i = geneNames.begin();
-      _header.data()._genePtr = fstr.write(*i);
+      data()._genePtr = fstr.write(*i);
       ++i;
       while (i!=geneNames.end())
       {
@@ -217,7 +226,7 @@ void EMatrix::initialize(std::vector<std::string>&& geneNames,
       }
       fstr.reset();
       i = sampleNames.begin();
-      _header.data()._samplePtr = fstr.write(*i);
+      data()._samplePtr = fstr.write(*i);
       ++i;
       while (i!=sampleNames.end())
       {
@@ -225,17 +234,17 @@ void EMatrix::initialize(std::vector<std::string>&& geneNames,
          fstr.write(*i);
          ++i;
       }
-      _header.data()._expData = Gene::initialize(Ace::File::rmem(),geneNames.size(),
-                                                 sampleNames.size());
-      _header.data()._transform = transform;
-      _header.write();
+      data()._expData = Gene::initialize(File::rmem(),geneNames.size(),sampleNames.size());
+      data()._transform = transform;
+      write();
       _geneNames = std::move(geneNames);
       _sampleNames = std::move(sampleNames);
       _isNew = false;
    }
    catch (...)
    {
-      Ace::File::head(fnullptr);
+      File::head(fnullptr);
+      null_data();
       _isNew = true;
    }
 }
@@ -246,7 +255,7 @@ int EMatrix::gene_size() const
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
-   return _header.data()._geneSize;
+   return data()._geneSize;
 }
 
 
@@ -255,7 +264,7 @@ int EMatrix::sample_size() const
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
-   return _header.data()._sampleSize;
+   return data()._sampleSize;
 }
 
 
@@ -264,7 +273,7 @@ const std::string& EMatrix::gene_name(int i) const
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
-   Ace::assert<OutOfRange>(i>=0&&i<_header.data()._geneSize,f,__LINE__);
+   Ace::assert<OutOfRange>(i>=0&&i<data()._geneSize,f,__LINE__);
    return _geneNames[i];
 }
 
@@ -274,7 +283,7 @@ const std::string& EMatrix::sample_name(int i) const
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
-   Ace::assert<OutOfRange>(i>=0&&i<_header.data()._sampleSize,f,__LINE__);
+   Ace::assert<OutOfRange>(i>=0&&i<data()._sampleSize,f,__LINE__);
    return _sampleNames[i];
 }
 
@@ -284,7 +293,7 @@ EMatrix::Transform EMatrix::transform() const
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
-   return (Transform)_header.data()._transform;
+   return (Transform)data()._transform;
 }
 
 
@@ -302,7 +311,7 @@ EMatrix::Gene EMatrix::end()
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
-   return Gene(this,_header.data()._geneSize);
+   return Gene(this,data()._geneSize);
 }
 
 
@@ -328,7 +337,7 @@ EMatrix::Gene& EMatrix::at(int i)
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
-   Ace::assert<OutOfRange>(i>=0&&i<_header.data()._geneSize,f,__LINE__);
+   Ace::assert<OutOfRange>(i>=0&&i<data()._geneSize,f,__LINE__);
    return (*this)[i];
 }
 
@@ -550,7 +559,7 @@ void EMatrix::lookup(Ace::GetOpts &ops, Ace::Terminal &tm)
 void EMatrix::skip_blanks(std::ifstream& file)
 {
    static const char* f = __PRETTY_FUNCTION__;
-   while (std::isspace(file.peek(),std::locale("")))
+   while (std::isspace(file.peek()))
    {
       Ace::assert<InvalidFile>(file.good(),f,__LINE__);
       file.get();
@@ -568,7 +577,7 @@ bool EMatrix::is_blank_line(const std::string& line)
       {
          break;
       }
-      else if (!std::isspace(*i,std::locale("")))
+      else if (!std::isspace(*i))
       {
          ret = false;
          break;
@@ -576,6 +585,30 @@ bool EMatrix::is_blank_line(const std::string& line)
    }
    return ret;
 }
+
+
+
+void EMatrix::null_data()
+{
+   data()._sampleSize = 0;
+   data()._geneSize = 0;
+   data()._transform = none;
+   data()._samplePtr = fnullptr;
+   data()._genePtr = fnullptr;
+   data()._expData = fnullptr;
+}
+
+
+
+void EMatrix::flip_endian()
+{
+   flip(0,4);
+   flip(4,4);
+   flip(9,8);
+   flip(17,8);
+   flip(25,8);
+}
+
 
 
 const std::string& EMatrix::Gene::name() const
@@ -608,7 +641,7 @@ EMatrix::Gene::Iterator EMatrix::Gene::begin()
 
 EMatrix::Gene::Iterator EMatrix::Gene::end()
 {
-   return Iterator(this,_p->_header.data()._sampleSize);
+   return Iterator(this,_p->data()._sampleSize);
 }
 
 
@@ -616,7 +649,7 @@ EMatrix::Gene::Iterator EMatrix::Gene::end()
 float& EMatrix::Gene::at(int i)
 {
    static const char* f = __PRETTY_FUNCTION__;
-   Ace::assert<OutOfRange>(i>=0&&i<_p->_header.data()._sampleSize,f,__LINE__);
+   Ace::assert<OutOfRange>(i>=0&&i<_p->data()._sampleSize,f,__LINE__);
    return (*this)[i];
 }
 
@@ -631,7 +664,7 @@ float& EMatrix::Gene::operator[](int i)
 
 void EMatrix::Gene::operator++()
 {
-   if (_i<(_p->_header.data()._geneSize))
+   if (_i<(_p->data()._geneSize))
    {
       ++_i;
    }
@@ -654,12 +687,11 @@ bool EMatrix::Gene::operator==(const Gene& cmp)
 
 
 EMatrix::Gene::Gene(EMatrix* p, int i):
-   Node(sizeof(float)*(p->_header.data()._sampleSize),p->Ace::File::mem(),
-        p->_header.data()._expData),
+   Node(sizeof(float)*(p->data()._sampleSize),p->File::mem(),p->data()._expData),
    _p(p),
    _i(i)
 {
-   init_data<float>(p->_header.data()._sampleSize);
+   init_data<float>(p->data()._sampleSize);
    read();
 }
 
@@ -679,7 +711,7 @@ void EMatrix::Gene::set(int i)
 
 void EMatrix::Gene::flip_endian()
 {
-   for (int i = 0;i<(_p->_header.data()._sampleSize);++i)
+   for (int i = 0;i<(_p->data()._sampleSize);++i)
    {
       flip(i*4,4);
    }
@@ -696,7 +728,7 @@ int64_t EMatrix::Gene::initialize(Ace::NVMemory& mem, int geneSize, int sampleSi
 
 void EMatrix::Gene::Iterator::operator++()
 {
-   if (_i<(_p->_p->_header.data()._sampleSize))
+   if (_i<(_p->_p->data()._sampleSize))
    {
       ++_i;
    }
@@ -733,13 +765,12 @@ EMatrix::Gene::Iterator::Iterator(Gene* p, int i):
 
 
 EMatrix::Mirror::Mirror(EMatrix& p):
-   Node(sizeof(float)*p._header.data()._geneSize*p._header.data()._sampleSize,p.Ace::File::mem(),
-        p._header.data()._expData),
+   Node(sizeof(float)*p.data()._geneSize*p.data()._sampleSize,p.File::mem(),p.data()._expData),
    _p(&p)
 {
    static const char* f = __PRETTY_FUNCTION__;
    AccelCompEng::assert<NullMatrix>(!(p._isNew),f,__LINE__);
-   init_data<float>(p._header.data()._geneSize*p._header.data()._sampleSize);
+   init_data<float>(p.data()._geneSize*p.data()._sampleSize);
 }
 
 
@@ -771,9 +802,9 @@ void EMatrix::Mirror::write()
 float& EMatrix::Mirror::value(int gene, int i)
 {
    static const char* f = __PRETTY_FUNCTION__;
-   Ace::assert<OutOfRange>(gene>=0&&gene<(_p->_header.data()._geneSize)&&i>=0&&
-                           i<(_p->_header.data()._sampleSize),f,__LINE__);
-   return pget<float>()[(gene*(_p->_header.data()._sampleSize))+i];
+   Ace::assert<OutOfRange>(gene>=0&&gene<(_p->data()._geneSize)&&i>=0&&
+                           i<(_p->data()._sampleSize),f,__LINE__);
+   return pget<float>()[(gene*(_p->data()._sampleSize))+i];
 }
 
 
@@ -787,7 +818,7 @@ EMatrix::Mirror::Gene EMatrix::Mirror::begin()
 
 EMatrix::Mirror::Gene EMatrix::Mirror::end()
 {
-   return Gene(this,_p->_header.data()._geneSize);
+   return Gene(this,_p->data()._geneSize);
 }
 
 
@@ -795,7 +826,7 @@ EMatrix::Mirror::Gene EMatrix::Mirror::end()
 EMatrix::Mirror::Gene& EMatrix::Mirror::at(int i)
 {
    static const char* f = __PRETTY_FUNCTION__;
-   Ace::assert<OutOfRange>(i>=0&&i<(_p->_header.data()._geneSize),f,__LINE__);
+   Ace::assert<OutOfRange>(i>=0&&i<(_p->data()._geneSize),f,__LINE__);
    return (*this)[i];
 }
 
@@ -818,7 +849,7 @@ EMatrix::Mirror::Gene& EMatrix::Mirror::operator[](int i)
 
 void EMatrix::Mirror::flip_endian()
 {
-   for (int i = 0;i<((_p->_header.data()._sampleSize)*(_p->_header.data()._geneSize));++i)
+   for (int i = 0;i<((_p->data()._sampleSize)*(_p->data()._geneSize));++i)
    {
       flip(i*4,4);
    }
@@ -835,7 +866,7 @@ EMatrix::Mirror::Gene::Iterator EMatrix::Mirror::Gene::begin()
 
 EMatrix::Mirror::Gene::Iterator EMatrix::Mirror::Gene::end()
 {
-   return Iterator(this,_p->_p->_header.data()._sampleSize);
+   return Iterator(this,_p->_p->data()._sampleSize);
 }
 
 
@@ -843,7 +874,7 @@ EMatrix::Mirror::Gene::Iterator EMatrix::Mirror::Gene::end()
 float& EMatrix::Mirror::Gene::at(int i)
 {
    static const char* f = __PRETTY_FUNCTION__;
-   Ace::assert<OutOfRange>(i>=0&&i<(_p->_p->_header.data()._geneSize),f,__LINE__);
+   Ace::assert<OutOfRange>(i>=0&&i<(_p->_p->data()._geneSize),f,__LINE__);
    return (*this)[i];
 }
 
@@ -858,7 +889,7 @@ float& EMatrix::Mirror::Gene::operator[](int i)
 
 void EMatrix::Mirror::Gene::operator++()
 {
-   if (_i<(_p->_p->_header.data()._geneSize))
+   if (_i<(_p->_p->data()._geneSize))
    {
       ++_i;
    }
@@ -903,7 +934,7 @@ float& EMatrix::Mirror::Gene::Iterator::operator*()
 
 void EMatrix::Mirror::Gene::Iterator::operator++()
 {
-   if (_i<(_p->_p->_p->_header.data()._sampleSize))
+   if (_i<(_p->_p->_p->data()._sampleSize))
    {
       ++_i;
    }
