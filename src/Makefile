@@ -27,7 +27,9 @@ objs := $(addprefix $(build),$(src:%.cpp=%.o))
 
 all: $(progf)
 
+ifndef DIGNORE
 include $(dpds)
+endif
 
 $(progf): $(objs) $(dpds)
 +@echo "Building program."
