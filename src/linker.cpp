@@ -15,6 +15,10 @@ class KINCFactory : public Ace::Factory
       {
          ret = new EMatrix;
       }
+      else if (type==std::string("cmx"))
+      {
+         ret = new CMatrix;
+      }
       return ret;
    }
 };
