@@ -79,7 +79,7 @@ bool AMatrix::empty()
 void AMatrix::initialize(std::vector<std::string>&& geneNames)
 {
    static const char* f = __PRETTY_FUNCTION__;
-   Ace::assert<InvalidSize>(geneNames.size()>0&&sampleNames.size()>0,f,__LINE__);
+   Ace::assert<InvalidSize>(geneNames.size()>0,f,__LINE__);
    if (File::head()==fnullptr)
    {
       addr(fnullptr);
@@ -198,9 +198,9 @@ int AMatrix::Iterator::y() const
 
 
 
-bool& AMatrix::Iterator::operator*()
+uint8_t& AMatrix::Iterator::operator*()
 {
-   return (bool)get<uint8_t>();
+   return get<uint8_t>();
 }
 
 
@@ -241,8 +241,13 @@ AMatrix::Iterator::Iterator(AMatrix* p, int x, int y):
 
 void AMatrix::Iterator::set(int x, int y)
 {
+   bool change {_x!=x||_y!=y};
    _x = x;
    _y = y;
+   if (change)
+   {
+      read();
+   }
 }
 
 

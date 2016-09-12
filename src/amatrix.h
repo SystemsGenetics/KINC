@@ -14,6 +14,7 @@ public:
    struct AlreadySet : public Ace::Exception { using Ace::Exception::Exception; };
    struct NullMatrix : public Ace::Exception { using Ace::Exception::Exception; };
    struct OutOfRange : public Ace::Exception { using Ace::Exception::Exception; };
+   struct InvalidSize : public Ace::Exception { using Ace::Exception::Exception; };
    class Iterator;
    AMatrix();
    void init() override final;
@@ -40,6 +41,7 @@ private:
    bool _isNew {true};
    std::vector<std::string> _geneNames;
    std::unique_ptr<Iterator> _iterator {nullptr};
+   constexpr static int _strSize {1024};
 };
 
 
@@ -47,11 +49,12 @@ private:
 class AMatrix::Iterator : private Ace::NVMemory::Node
 {
 public:
+   friend class AMatrix;
    void read();
    void write();
    int x() const;
    int y() const;
-   bool& operator*();
+   uint8_t& operator*();
    bool operator!=(const Iterator&);
    void operator++();
 private:
