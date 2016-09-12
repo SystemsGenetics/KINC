@@ -4,6 +4,8 @@ ematrix.cpp
 ematrix.h
 cmatrix.cpp
 cmatrix.h
+amatrix.cpp
+amatrix.h
 spearman.cpp
 spearman.h
 spearman.cl
