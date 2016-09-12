@@ -46,19 +46,12 @@ void EMatrix::init()
             fstr.bump();
             _geneNames.push_back(fstr.str());
          }
-         if (data()._samplePtr!=fnullptr)
+         fstr.load(data()._samplePtr);
+         _sampleNames.push_back(fstr.str());
+         for (int i=1;i<data()._sampleSize;++i)
          {
-            fstr.load(data()._samplePtr);
+            fstr.bump();
             _sampleNames.push_back(fstr.str());
-            for (int i=1;i<data()._sampleSize;++i)
-            {
-               fstr.bump();
-               _sampleNames.push_back(fstr.str());
-            }
-         }
-         else
-         {
-            _sampleNames.resize(data()._sampleSize);
          }
          _isNew = false;
       }
