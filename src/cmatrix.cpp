@@ -412,8 +412,13 @@ CMatrix::GPair::GPair(CMatrix* p, int x, int y):
 
 void CMatrix::GPair::set(int x, int y)
 {
+   bool change {_x!=x||_y!=y};
    _x = x;
    _y = y;
+   if (change)
+   {
+      read();
+   }
 }
 
 
