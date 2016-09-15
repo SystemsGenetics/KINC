@@ -1,37 +1,39 @@
 #include "spearman.h"
 #include "spearman.cl.h"
-//#include <gsl/gsl_statistics.h>
+#include <gsl/gsl_statistics.h>
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
 #include <cmath>
 #include <ctime>
 #include <chrono>
+#include <unistd.h>
 
 
-/*
-void Spearman::input(DataPlugin* input)
+
+void Spearman::input(Ace::Data* input)
 {
-   AccelCompEng::assert<TooManyInputs>(!_in,__LINE__);
-   bool cond {input->type()==string("emx")};
-   AccelCompEng::assert<InvalidDataType>(cond,__LINE__);
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<TooManyInputs>(!_in,f,__LINE__);
+   Ace::assert<InvalidDataType>(input->type()==string("emx"),f,__LINE__);
    _in = dynamic_cast<EMatrix*>(input);
 }
 
 
 
-void Spearman::output(DataPlugin* output)
+void Spearman::output(Ace::Data* output)
 {
-   AccelCompEng::assert<TooManyOutputs>(!_out,__LINE__);
-   bool cond {output->type()==string("cmx")};
-   AccelCompEng::assert<InvalidDataType>(cond,__LINE__);
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<TooManyOutputs>(!_out,f,__LINE__);
+   Ace::assert<InvalidDataType>(output->type()==string("cmx"),f,__LINE__);
    _out = dynamic_cast<CMatrix*>(output);
 }
 
 
 
-void Spearman::execute_cl(GetOpts& ops, Terminal& tm)
+void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
 {
+   static const char* f = __PRETTY_FUNCTION__;
    using namespace std::chrono;
    auto t1 = system_clock::now();
    int blSize {8192};
@@ -55,10 +57,10 @@ void Spearman::execute_cl(GetOpts& ops, Terminal& tm)
       return;
    }
    auto kern = CLProgram::mkernel("spearman");
-   AccelCompEng::assert<NoDataInput>(_in,__LINE__);
-   AccelCompEng::assert<NoDataOutput>(_out,__LINE__);
-   int gSize {_in->gSize()};
-   int sSize {_in->sSize()};
+   Ace::assert<NoDataInput>(_in,f,__LINE__);
+   Ace::assert<NoDataOutput>(_out,f,__LINE__);
+   int gSize {_in->gene_size()};
+   int sSize {_in->sample_size()};
    tm << "Loading expression data into OpenCL device...\n";
    auto expList = CLContext::buffer<cl_float>(sSize*gSize);
    int inc {0};
@@ -69,28 +71,24 @@ void Spearman::execute_cl(GetOpts& ops, Terminal& tm)
          expList[inc++] = *i;
       }
    }
-   CLEvent ev = CLCommandQueue::write_buffer(expList);
+   auto ev = CLCommandQueue::write_buffer(expList);
    ev.wait();
    tm << "Formating and copying header information to output file...\n";
-   _out->initialize(gSize,sSize,1,1,_in->hasSampleHead());
-   for (int i = 0;i<_in->gSize();++i)
+   std::vector<std::string> geneNames;
+   for (int i = 0;i<_in->gene_size();++i)
    {
-      _out->gName(i) = _in->gName(i);
+      geneNames.push_back(_in->gene_name(i));
    }
-   if (_in->hasSampleHead())
+   std::vector<std::string> sampleNames;
+   for (int i = 0;i<_in->sample_size();++i)
    {
-      for (int i = 0;i<_in->sSize();++i)
-      {
-         _out->sName(i) =
-               _in->sName(i);
-      }
+      sampleNames.push_back(_in->sample_name(i));
    }
-   _out->sName(0) = "spearman";
-   _out->write();
+   std::vector<std::string> correlations {"spearman"};
+   _out->initialize(std::move(geneNames),std::move(sampleNames),std::move(correlations),1);
    tm << "Calculating spearman values and saving to output file[0%]...";
    int bSize {pow2_ceil(sSize)};
-   bool cond {bSize>0};
-   AccelCompEng::assert<TooManySamples>(cond,__LINE__);
+   Ace::assert<TooManySamples>(bSize>0,f,__LINE__);
    int wSize {pow2_floor(kern.get_wg_size())};
    int chunk {1};
    if ((2*wSize)<bSize)
@@ -122,30 +120,28 @@ void Spearman::execute_cl(GetOpts& ops, Terminal& tm)
 
 
 
-void Spearman::execute_pn(GetOpts&, Terminal& tm)
+void Spearman::execute_pn(Ace::GetOpts&, Ace::Terminal& tm)
 {
+   static const char* f = __PRETTY_FUNCTION__;
    using namespace std::chrono;
    auto t1 = system_clock::now();
-   AccelCompEng::assert<NoDataInput>(_in,__LINE__);
-   AccelCompEng::assert<NoDataOutput>(_out,__LINE__);
-   int gSize {_in->gSize()};
-   int sSize {_in->sSize()};
+   Ace::assert<NoDataInput>(_in,f,__LINE__);
+   Ace::assert<NoDataOutput>(_out,f,__LINE__);
+   int gSize {_in->gene_size()};
+   int sSize {_in->sample_size()};
    tm << "Formating and copying header information to output file...\n";
-   _out->initialize(gSize,sSize,1,1,_in->hasSampleHead());
-   for (int i = 0;i<_in->gSize();++i)
+   std::vector<std::string> geneNames;
+   for (int i = 0;i<_in->gene_size();++i)
    {
-      _out->gName(i) = _in->gName(i);
+      geneNames.push_back(_in->gene_name(i));
    }
-   if (_in->hasSampleHead())
+   std::vector<std::string> sampleNames;
+   for (int i = 0;i<_in->sample_size();++i)
    {
-      for (int i = 0;i<_in->sSize();++i)
-      {
-         _out->sName(i) =
-               _in->sName(i);
-      }
+      sampleNames.push_back(_in->sample_name(i));
    }
-   _out->sName(0) = "spearman";
-   _out->write();
+   std::vector<std::string> correlations {"spearman"};
+   _out->initialize(std::move(geneNames),std::move(sampleNames),std::move(correlations),1);
    tm << "Calculating spearman values and saving to output file[0%]...";
    auto i = _out->begin();
    i.size(1);
@@ -172,7 +168,7 @@ void Spearman::execute_pn(GetOpts&, Terminal& tm)
       if (delay==16384)
       {
          tm << "\rCalculating spearman values and saving to output file["
-            << (int)((count/total*100)+0.5) << "%]..." << Terminal::flush;
+            << (int)((count/total*100)+0.5) << "%]..." << Ace::Terminal::flush;
          delay = 0;
       }
    }
@@ -228,11 +224,11 @@ int Spearman::pow2_floor(int i)
 
 
 
-void Spearman::calculate(Terminal& tm, CLKernel& kern, elist& expList, int size, int wSize,
-                         int chunk, int blSize, int smSize)
+void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList, int size,
+                         int wSize, int chunk, int blSize, int smSize)
 {
    enum class State {start,in,exec,out,end};
-   double total = CMatrix::diag_size(_in->gSize());
+   double total = CMatrix::diag_size(_in->gene_size());
    kern.set_arg(0,size);
    kern.set_arg(1,chunk);
    kern.set_arg(3,&expList);
@@ -247,7 +243,7 @@ void Spearman::calculate(Terminal& tm, CLKernel& kern, elist& expList, int size,
       State st;
       int x;
       int y;
-      CLEvent ev;
+      Ace::CLEvent ev;
       AccelCompEng::CLBuffer<int> ld;
       AccelCompEng::CLBuffer<cl_float> ans;
    } state[smSize];
@@ -256,7 +252,7 @@ void Spearman::calculate(Terminal& tm, CLKernel& kern, elist& expList, int size,
       state[i].st = State::start;
       state[i].x = 0;
       state[i].y = 0;
-      state[i].ev = CLEvent();
+      state[i].ev = Ace::CLEvent();
       state[i].ld = CLContext::buffer<int>(2*blSize);
       state[i].ans = CLContext::buffer<cl_float>(blSize);
    }
@@ -342,8 +338,8 @@ void Spearman::calculate(Terminal& tm, CLKernel& kern, elist& expList, int size,
          si = 0;
       }
       tm << "\rCalculating spearman values and saving to output file["
-         << (int)((done/total*100)+0.5) << "%]..." << Terminal::flush;
+         << (int)((done/total*100)+0.5) << "%]..." << Ace::Terminal::flush;
       usleep(100);
    }
    tm << "\n";
-}*/
+}
