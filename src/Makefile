@@ -1,6 +1,8 @@
 .RECIPEPREFIX := +
 MAKEFLAGS := $(MAKEFLAGS) --no-print-directory
 CXX := g++
+AR := ar
+GENCL := ../../ACE/bin/mkcl.sh
 NAME := kinc
 FILES := KINC.files
 
@@ -9,72 +11,50 @@ FILES := KINC.files
 build := ../build/
 run := ../run/
 
-acxxflags := $(CXXFLAGS) -g -std=c++11
+acxxflags := $(CXXFLAGS) -g -std=c++11 -I../../ACE/src
 aldflags := $(LDFLAGS)
-aldlibs := $(LDLIBS) -lOpenCL
+aldlibs := $(LDLIBS) -lOpenCL -L../../ACE/lib -lace
 
 progf := $(run)$(NAME)
 
-allsrc := $(filter %.cpp,$(shell cat $(FILES)))
-utest := $(filter-out main.cpp,$(allsrc))
-program := $(filter-out %.t.cpp,$(allsrc))
+src := $(filter %.cpp,$(shell cat $(FILES)))
+dpds := $(addprefix $(build),$(src:%.cpp=%.d))
+objs := $(addprefix $(build),$(src:%.cpp=%.o))
 
-alldpds := $(addprefix $(build),$(allsrc:%.cpp=%.d))
-
-dpds := $(addprefix $(build),$(program:%.cpp=%.d))
-objs := $(addprefix $(build),$(program:%.cpp=%.o))
-
-udpds := $(addprefix $(build),$(utest:%.cpp=%.d))
-uobjs := $(addprefix $(build),$(utest:%.cpp=%.o))
-
-plugins := plugins/plugins.a
+.PHONY: clean depclean all
 
 
 
-.PHONY: clean all program test check plugins pclean
+all: $(progf)
 
-all: program test
-program: $(progf)
-test: $(run)unit
+ifndef DIGNORE
+include $(dpds)
+endif
 
-include $(alldpds)
-
-$(progf): $(objs) $(dpds) $(plugins)
+$(progf): $(objs) $(dpds)
 +@echo "Building program."
-+@$(CXX) $(objs) $(plugins) $(aldflags) $(aldlibs) -o $@
++@$(CXX) $(objs) $(aldflags) $(aldlibs) -o $@
 
-$(run)unit: $(uobjs) $(udpds)
-+@echo "Building unit test."
-+@$(CXX) $(uobjs) $(aldflags) $(aldlibs) -o $@
-
-depend: $(alldpds)
+depend: $(dpds)
 +@echo Done.
 
-plugins:
-+@cd plugins && $(MAKE)
-
-$(plugins):
-+@cd plugins && $(MAKE)
-
 $(build)%.o : %.cpp
-+@echo "Building object $@"
-+@$(CXX) $(acxxflags) -c $< -o $(build)$@
++@echo "Building object $(*F)."
++@$(CXX) $(acxxflags) -c $< -o $@
+
+%.cl.h: %.cl
++@echo "Building kernel $(*F)."
++@$(GENCL) $<
 
 $(build)%.d: %.cpp
-+@echo "Building depend $@"
++@echo "Building depend $(*F)."
 +@echo -n "$@ $(build)" > $@
 +@$(CXX) $(acxxflags) -MM $< >> $@
 
-check: test
-+@cd $(run)/tmp && ../unit
-
 clean:
 +@echo "Cleaning all."
-+@rm -f $(build)*.o $(progf)
++@rm -f $(build)*.o $(unitf)
 
 depclean:
 +@echo "Cleaning all dependency files."
 +@rm -f $(build)*.d
-
-pclean:
-+@cd plugins && $(MAKE) clean
