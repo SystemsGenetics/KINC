@@ -477,7 +477,7 @@ void EMatrix::read_gene_expressions(std::ifstream& file, const std::string& nanS
             Ace::assert<InvalidFile>(ibuf >> tmp,f,__LINE__);
             if (tmp==nanStr)
             {
-               *i = INFINITY;
+               *i = NAN;
             }
             else
             {
