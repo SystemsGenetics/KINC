@@ -2,6 +2,7 @@
 #include "ematrix.h"
 #include "cmatrix.h"
 #include "spearman.h"
+#include "rmt.h"
 
 
 
@@ -12,6 +13,10 @@ class KINCFactory : public Ace::Factory
       if (type==std::string("spearman"))
       {
          ret = new Spearman;
+      }
+      else if (type==std::string("rmt"))
+      {
+         ret = new RMT;
       }
       return ret;
    }

@@ -9,4 +9,6 @@ amatrix.h
 spearman.cpp
 spearman.h
 spearman.cl
+rmt.cpp
+rmt.h
 Makefile
