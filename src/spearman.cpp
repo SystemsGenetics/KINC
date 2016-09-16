@@ -318,8 +318,8 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
       case State::in:
          if (state[si].ev.is_done())
          {
-            kern.set_arg(2,&(state[si].ld));
-            kern.set_arg(4,&(state[si].ans));
+            kern.set_arg(3,&(state[si].ld));
+            kern.set_arg(5,&(state[si].ans));
             state[si].ev = CLCommandQueue::add_swarm(kern);
             state[si].st = State::exec;
          }
