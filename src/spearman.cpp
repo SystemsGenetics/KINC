@@ -126,6 +126,7 @@ void Spearman::execute_pn(Ace::GetOpts&, Ace::Terminal& tm)
    static const char* f = __PRETTY_FUNCTION__;
    using namespace std::chrono;
    auto t1 = system_clock::now();
+   int minSize {30};
    Ace::assert<NoDataInput>(_in,f,__LINE__);
    Ace::assert<NoDataOutput>(_out,f,__LINE__);
    int gSize {_in->gene_size()};
@@ -152,18 +153,30 @@ void Spearman::execute_pn(Ace::GetOpts&, Ace::Terminal& tm)
    }
    double total  = CMatrix::diag_size(gSize);
    double count {0};
-   double a[gSize];
-   double b[gSize];
-   double work[2*gSize];
+   double a[sSize];
+   double b[sSize];
+   double work[2*sSize];
    int delay {0};
    for (;i!=_out->end();++i)
    {
+      int size {0};
       for (int x = 0;x<sSize;++x)
       {
-         a[x] = _in->at(i.x()).at(x);
-         b[x] = _in->at(i.y()).at(x);
+         if (!std::isnan(_in->at(i.x()).at(x))&&!std::isnan(_in->at(i.y()).at(x)))
+         {
+            a[size] = _in->at(i.x()).at(x);
+            b[size] = _in->at(i.y()).at(x);
+            ++size;
+         }
       }
-      i.corrs().at(0).at(0) = gsl_stats_spearman(a,1,b,1,gSize,work);
+      if (size<minSize)
+      {
+         i.corrs().at(0).at(0) = NAN;
+      }
+      else
+      {
+         i.corrs().at(0).at(0) = gsl_stats_spearman(a,1,b,1,size,work);
+      }
       ++count;
       ++delay;
       if (delay==16384)
