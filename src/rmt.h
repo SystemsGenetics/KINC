@@ -23,6 +23,8 @@ private:
    float* degenerate(float* eigens, int size, int* newSize);
    double getNNSDChiSquare(float* eigens, int size);
    double getNNSDPaceChiSquare(float* eigens, int size, double bin, int pace);
+   static void swapD(double* l, int idx1, int idx2);
+   static void quickSortD(double* l, int size);
    CMatrix* _in {nullptr};
    constexpr static int minEigenVectorSize {100};
    constexpr static float nnsdHistogramBin {0.05};
