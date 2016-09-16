@@ -28,7 +28,8 @@ private:
    using elist = Ace::CLBuffer<cl_float>;
    int pow2_ceil(int);
    int pow2_floor(int);
-   void calculate(Ace::Terminal&,Ace::CLKernel&,elist&,int,int,int,int,int);
+   void calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList, int size, int wSize,
+                  int chunk, int blSize, int smSize, int minSize);
    EMatrix* _in {nullptr};
    CMatrix* _out {nullptr};
 };

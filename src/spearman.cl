@@ -270,7 +270,7 @@ void make_debug(int chunk, __local int* alist, __local int* blist, __global floa
 
 
 
-__kernel void spearman(int size, int chunk, __global int* insts, __global float* exprs,
+__kernel void spearman(int size, int chunk, int minSize, __global int* insts, __global float* exprs,
                        __global float* result, __local float* alist, __local float* blist,
                        __local int* rank, __local int* iRank, __local long* summation,
                        __local float* aTmpList, __local float* bTmpList, __local int* aWork,
@@ -288,6 +288,13 @@ __kernel void spearman(int size, int chunk, __global int* insts, __global float*
    if (get_local_id(0)==0)
    {
       size = iRank[0];
-      *result = 1.0-(6.0*summation[0]/((float)(size*(size*size-1))));
+      if (size<minSize)
+      {
+         *result = NAN;
+      }
+      else
+      {
+         *result = 1.0-(6.0*summation[0]/((float)(size*(size*size-1))));
+      }
    }
 }

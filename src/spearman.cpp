@@ -33,83 +33,12 @@ void Spearman::output(Ace::Data* output)
 
 void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
 {
-   CLProgram::add_source(spearman_cl);
-   if (!CLProgram::compile(""))
-   {
-      tm << CLProgram::log();
-      return;
-   }
-   Ace::CLBuffer<cl_float> list {CLContext::buffer<cl_float>(16)};
-   Ace::CLBuffer<cl_int> exp {CLContext::buffer<cl_int>(2)};
-   Ace::CLBuffer<cl_float> ans {CLContext::buffer<cl_float>(1)};
-   //Ace::CLBuffer<cl_float> alist {CLContext::buffer<cl_float>(8)};
-   //Ace::CLBuffer<cl_float> blist {CLContext::buffer<cl_float>(8)};
-   list[0] = 0.1;
-   list[1] = 1.1;
-   list[2] = 2.1;
-   list[3] = NAN;
-   list[4] = 4.1;
-   list[5] = 5.1;
-   list[6] = 6.1;
-   list[7] = 7.1;
-   //
-   list[8] = NAN;
-   list[9] = 8.1;
-   list[10] = 9.1;
-   list[11] = 10.1;
-   list[12] = NAN;
-   list[13] = 12.1;
-   list[14] = 13.1;
-   list[15] = 14.1;
-   exp[0] = 0;
-   exp[1] = 8;
-   auto kern = CLProgram::mkernel("spearman");
-   kern.set_arg(0,8);
-   kern.set_arg(1,2);
-   kern.set_arg(2,&exp);
-   kern.set_arg(3,&list);
-   kern.set_arg(4,&ans);
-   kern.set_arg(5,sizeof(cl_float)*8);
-   kern.set_arg(6,sizeof(cl_float)*8);
-   kern.set_arg(7,sizeof(cl_int)*8);
-   kern.set_arg(8,sizeof(cl_int)*8);
-   kern.set_arg(9,sizeof(cl_long)*8);
-   kern.set_arg(10,sizeof(cl_float)*8);
-   kern.set_arg(11,sizeof(cl_float)*8);
-   kern.set_arg(12,sizeof(cl_int)*8);
-   kern.set_arg(13,sizeof(cl_int)*8);
-   kern.set_arg(14,sizeof(cl_int)*8);
-   kern.set_arg(15,sizeof(cl_int)*8);
-   kern.set_swarm_dims(1);
-   kern.set_swarm_size(0,2,2);
-   Ace::CLEvent ev = CLCommandQueue::write_buffer(list);
-   ev.wait();
-   ev = CLCommandQueue::write_buffer(exp);
-   ev.wait();
-   ev = CLCommandQueue::add_swarm(kern);
-   ev.wait();
-   /*ev = CLCommandQueue::read_buffer(alist);
-   ev.wait();
-   ev = CLCommandQueue::read_buffer(blist);
-   ev.wait();*/
-   ev = CLCommandQueue::read_buffer(ans);
-   ev.wait();
-   /*for (int i=0;i<8;++i)
-   {
-      tm << alist[i] << "\n";
-   }
-   tm << "\n";
-   for (int i=0;i<8;++i)
-   {
-      tm << blist[i] << "\n";
-   }*/
-   tm << "\n" << ans[0] << "\n";
-   //////////////////////////////
-   /*static const char* f = __PRETTY_FUNCTION__;
+   static const char* f = __PRETTY_FUNCTION__;
    using namespace std::chrono;
    auto t1 = system_clock::now();
    int blSize {8192};
    int smSize {4};
+   int minSize {30};
    for (auto i = ops.begin();i!=ops.end();++i)
    {
       if (i.is_key("slots"))
@@ -167,7 +96,7 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
    {
       chunk = bSize/(2*wSize);
    }
-   calculate(tm,kern,expList,sSize,wSize,chunk,blSize,smSize);
+   calculate(tm,kern,expList,sSize,wSize,chunk,blSize,smSize,minSize);
    auto t2 = system_clock::now();
    int s = duration_cast<seconds>(t2-t1).count();
    int m = s/60;
@@ -187,7 +116,7 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
    {
       tm << " " << s << " second(s)";
    }
-   tm << ".\n";*/
+   tm << ".\n";
 }
 
 
@@ -297,25 +226,26 @@ int Spearman::pow2_floor(int i)
 
 
 void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList, int size,
-                         int wSize, int chunk, int blSize, int smSize)
+                         int wSize, int chunk, int blSize, int smSize, int minSize)
 {
    enum class State {start,in,exec,out,end};
    double total = CMatrix::diag_size(_in->gene_size());
    int bufferSize {wSize*chunk*2};
    kern.set_arg(0,size);
    kern.set_arg(1,chunk);
-   kern.set_arg(3,&expList);
-   kern.set_arg(5,sizeof(cl_float)*bufferSize);
+   kern.set_arg(2,minSize);
+   kern.set_arg(4,&expList);
    kern.set_arg(6,sizeof(cl_float)*bufferSize);
-   kern.set_arg(7,sizeof(cl_int)*bufferSize);
+   kern.set_arg(7,sizeof(cl_float)*bufferSize);
    kern.set_arg(8,sizeof(cl_int)*bufferSize);
-   kern.set_arg(9,sizeof(cl_long)*bufferSize);
-   kern.set_arg(10,sizeof(cl_float)*bufferSize);
+   kern.set_arg(9,sizeof(cl_int)*bufferSize);
+   kern.set_arg(10,sizeof(cl_long)*bufferSize);
    kern.set_arg(11,sizeof(cl_float)*bufferSize);
-   kern.set_arg(12,sizeof(cl_int)*bufferSize);
+   kern.set_arg(12,sizeof(cl_float)*bufferSize);
    kern.set_arg(13,sizeof(cl_int)*bufferSize);
    kern.set_arg(14,sizeof(cl_int)*bufferSize);
    kern.set_arg(15,sizeof(cl_int)*bufferSize);
+   kern.set_arg(16,sizeof(cl_int)*bufferSize);
    kern.set_swarm_dims(1);
    kern.set_swarm_size(0,blSize*wSize,wSize);
    struct
