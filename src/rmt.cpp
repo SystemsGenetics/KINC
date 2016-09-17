@@ -7,6 +7,159 @@
 
 
 
+void RMT::input(Ace::Data* in)
+{
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<TooManyInputs>(!_in,f,__LINE__);
+   Ace::assert<InvalidDataType>(in->type()==string("cmx"),f,__LINE__);
+   _in = dynamic_cast<CMatrix*>(in);
+}
+
+
+
+void RMT::output(Ace::Data*)
+{
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<TooManyOutputs>(false,f,__LINE__);
+}
+
+
+
+void RMT::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
+{
+   tm << "OpenCL accelerated not implemented, routing to serial processing...\n";
+   execute_pn(ops,tm);
+}
+
+
+
+void RMT::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
+{
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<NoDataInput>(_in,f,__LINE__);
+   // Initialize all values and prepare vectors that will hold the history of chi and threshold
+   // values.
+   bool pass {true};
+   float chi {0.0};
+   float thresh {_chiStep};
+   std::vector<float> pChi;
+   std::vector<float> pThresh;
+   // Keep getting new matrices and get its chi value from the current threshold, keep doing this,
+   // reducing the threshold by an increment each time until the chi value is 200 or greater. Stop
+   // this if the threshold is reduced below 50.
+   while ( chi < 200.0 )
+   {
+      int size;
+      std::unique_ptr<double> pMatrix {prune_matrix(thresh,size)};
+      std::unique_ptr<float> eigens {matrix_eigens(pMatrix,size)};
+      chi = getNNSDChiSquare(eigens.get(),size);
+      pChi.push_back(chi);
+      pThresh.push_back(thresh);
+      thresh -= _chiStep;
+      if ( thresh < _chiMinimum )
+      {
+         tm << "Error: Could not find acceptable threshold above " << _chiMinimum << ".\n";
+         pass = false;
+         break;
+      }
+   }
+   if ( pass )
+   {
+      // Go back in the history and find the last threshold that had a chi value above 100. This is
+      // done because there can be valleys or bumps while iterating chi values.
+      int i = pChi.size()-1;
+      while ( i > 0 && pChi[i] > 100.0 )
+      {
+         i--;
+      }
+      ++i;
+      tm << "Found threshold! " << pThresh[i] << "\n";
+   }
+}
+
+
+
+std::unique_ptr<float> RMT::matrix_eigens(const std::unique_ptr<double>& matrix, int size)
+{
+   // Use GSL to find the eigenvalues of the given matrix and return a new list of those
+   // eigenvalues.
+   std::unique_ptr<float> eigens {new float[size]};
+   gsl_matrix_view m = gsl_matrix_view_array(matrix.get(),size,size);
+   gsl_vector *eval = gsl_vector_alloc (size);
+   gsl_matrix *evec = gsl_matrix_alloc (size,size);
+   gsl_eigen_symmv_workspace* w = gsl_eigen_symmv_alloc(size);
+   gsl_eigen_symmv(&m.matrix, eval, evec, w);
+   gsl_eigen_symmv_free(w);
+   gsl_eigen_symmv_sort(eval,evec,GSL_EIGEN_SORT_ABS_ASC);
+   for (int i = 0; i < size ;i++)
+   {
+      eigens.get()[i] = gsl_vector_get(eval,i);
+   }
+   gsl_vector_free (eval);
+   gsl_matrix_free (evec);
+   return eigens;
+}
+
+
+
+std::unique_ptr<double> RMT::prune_matrix(float threshold, int& size)
+{
+   // Build list of all genes that have at least one match with another gene that meets the
+   // threshold.
+   std::vector<int> genes;
+   for (int i = 0; i < _in->gene_size() ;++i)
+   {
+      if ( gene_has_matches(i,threshold) )
+      {
+         genes.push_back(i);
+      }
+   }
+   // Create a row ordered n by n matrix where n is the number of genes found in previous search.
+   // Populate the matrix with the correlations between the genes.
+   std::unique_ptr<double> pMatrix {new double[genes.size()*genes.size()]};
+   for (int i = 0; i < genes.size() ;++i)
+   {
+      for (int j = 0; j < genes.size() ;++j)
+      {
+         int g1 {genes[i]};
+         int g2 {genes[j]};
+         if ( g1 == g2 )
+         {
+            pMatrix.get()[g1*genes.size()+g2] = 1.0;
+         }
+         else
+         {
+            pMatrix.get()[g1*genes.size()+g2] = _in->at(g1,g2).corrs().at(0).at(0);
+         }
+      }
+   }
+   // Return the size of the matrix n and the matrix itself.
+   size = genes.size();
+   return pMatrix;
+}
+
+
+
+bool RMT::gene_has_matches(int gene, float threshold)
+{
+   // Go through all possible gene combinations until you find a match is meets the threshold. If
+   // a match is found, stop searching and return true. If no match is found return false.
+   bool ret {false};
+   int i {0};
+   while ( i < _in->gene_size() )
+   {
+      if ( gene != i && _in->at(gene,i).corrs().at(0).at(0) >= threshold )
+      {
+         ret = true;
+         break;
+      }
+      ++i;
+   }
+   return ret;
+}
+
+
+
 void RMT::swapD(double* l, int idx1, int idx2)
 {
    double temp = l[idx1];
