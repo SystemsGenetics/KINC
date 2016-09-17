@@ -78,9 +78,43 @@ void CMatrix::load(Ace::GetOpts&, Ace::Terminal& tm)
 
 
 
-void CMatrix::dump(Ace::GetOpts&, Ace::Terminal& tm)
+void CMatrix::dump(Ace::GetOpts& ops, Ace::Terminal& tm)
 {
-   tm << "Not yet implemented.\n";
+   float threshold {99.0};
+   // Check to see if the user specifies a threshold limit for the gene correlations, if so set
+   // internal variable to user value.
+   for (auto i = ops.begin(); i != ops.end() ;++i)
+   {
+      if ( i.is_key("threshold") )
+      {
+         threshold = i.value<float>();
+      }
+   }
+   // Make sure the user has given at least one argument that specifies the output file.
+   if (ops.com_size()<1)
+   {
+      tm << "Error: must specify output file to dump to.";
+      return;
+   }
+   // Open the output file for truncated writing and make sure it was opened successfully.
+   std::ofstream file(ops.com_front());
+   if ( !file.is_open() )
+   {
+      tm << "Error: could not open output file " << ops.com_front() << "\n";
+      return;
+   }
+   // Go through all the gene correlations and output any correlation that meets the threshold.
+   // TODO: Right now this only goes through the first mode and first correlation of all possible
+   // correlations, need to add user input to do more than this eventually.
+   tm << "Writing to output file with correlation list meeting threshold...\n";
+   for (auto i = begin(); i != end() ;++i)
+   {
+      if (i.corrs()[0][0]>=threshold)
+      {
+         file << gene_name(i.x()) << "\t" << gene_name(i.y()) << "\t" << i.corrs()[0][0] << "\n";
+      }
+   }
+   tm << "Dump complete.\n";
 }
 
 

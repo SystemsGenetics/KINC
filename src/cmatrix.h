@@ -24,6 +24,7 @@ public:
    ~CMatrix();
    void init() override final;
    void load(Ace::GetOpts&,Ace::Terminal&) override final;
+   /// Function handler for user dump command.
    void dump(Ace::GetOpts&,Ace::Terminal&) override final;
    void query(Ace::GetOpts&,Ace::Terminal&) override final;
    bool empty() override final;
