@@ -267,7 +267,7 @@ CMatrix::GPair& CMatrix::at(int x, int y)
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
-   Ace::assert<OutOfRange>(x>=0&&y>=0&&y<x&&x<data()._geneSize,f,__LINE__);
+   Ace::assert<OutOfRange>(x>=0&&y>=0&&y<data()._geneSize&&x<data()._geneSize&&x!=y,f,__LINE__);
    return ref(x,y);
 }
 
@@ -275,6 +275,10 @@ CMatrix::GPair& CMatrix::at(int x, int y)
 
 CMatrix::GPair& CMatrix::ref(int x, int y)
 {
+   if ( x < y )
+   {
+      std::swap(x,y);
+   }
    if (!_iGPair)
    {
       _iGPair = new GPair(this,x,y);
