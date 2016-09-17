@@ -79,6 +79,11 @@ void RMT::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
 
 
 
+/// @brief Get eigenvalues of a matrix. The matrix must be square and symmetric.
+///
+/// @param matrix The matrix to get eigenvalues from.
+/// @param size The size, n, of the n by n matrix.
+/// @return New list of eigenvalues.
 std::unique_ptr<float> RMT::matrix_eigens(const std::unique_ptr<double>& matrix, int size)
 {
    // Use GSL to find the eigenvalues of the given matrix and return a new list of those
@@ -102,6 +107,14 @@ std::unique_ptr<float> RMT::matrix_eigens(const std::unique_ptr<double>& matrix,
 
 
 
+/// @brief Generate reduced gene matrix through threshold pruning.
+///
+/// Build a correlation matrix from the input matrix, but cut out any gene that does not have any
+/// matches with another gene equalling or above the given threshold.
+///
+/// @param threshold The threshold a gene must have at least one correlation above or equal to.
+/// @param size The number of genes in the new matrix.
+/// @return A new correlation matrix only containing genes that meet the threshold.
 std::unique_ptr<double> RMT::prune_matrix(float threshold, int& size)
 {
    // Build list of all genes that have at least one match with another gene that meets the
@@ -140,6 +153,14 @@ std::unique_ptr<double> RMT::prune_matrix(float threshold, int& size)
 
 
 
+/// @brief Does gene have given correlation threshold?
+///
+/// Determine if a gene in the input correlation matrix has at least one correlation that meets a
+/// given threshold.
+///
+/// @param gene The indexed gene number to investigate.
+/// @param threshold The threshold value the gene must meet.
+/// @return Does the gene meet the given threshold?
 bool RMT::gene_has_matches(int gene, float threshold)
 {
    // Go through all possible gene combinations until you find a match is meets the threshold. If
