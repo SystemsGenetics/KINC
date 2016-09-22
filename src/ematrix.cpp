@@ -12,16 +12,6 @@ EMatrix::EMatrix():
 
 
 
-EMatrix::~EMatrix()
-{
-   if (_iGene)
-   {
-      delete _iGene;
-   }
-}
-
-
-
 void EMatrix::init()
 {
    try
@@ -113,14 +103,11 @@ void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
    Ace::assert<CannotOpen>(file.is_open(),f,__LINE__);
    try
    {
-      int geneSize {0};
-      read_sizes(file,geneSize,sampleSize);
+      tm << "Importing header information...\n";
+      read_headers(file,sampleSize,tr,hasHeaders);
       file.clear();
       file.seekg(0,std::ios_base::beg);
-      read_headers(file,geneSize,sampleSize,tr,hasHeaders);
-      file.clear();
-      file.seekg(0,std::ios_base::beg);
-      read_gene_expressions(file,"NaN");
+      read_gene_expressions(file,tm,"NA");
       _isNew = false;
    }
    catch (...)
@@ -309,6 +296,15 @@ EMatrix::Gene EMatrix::end()
 
 
 
+EMatrix::Gene EMatrix::find(int i)
+{
+   static const char* f = __PRETTY_FUNCTION__;
+   Ace::assert<OutOfRange>( i >= 0 && i < data()._geneSize ,f,__LINE__);
+   return Gene(this,i);
+}
+
+
+
 EMatrix::Gene EMatrix::find(const std::string& name)
 {
    static const char* f = __PRETTY_FUNCTION__;
@@ -326,94 +322,7 @@ EMatrix::Gene EMatrix::find(const std::string& name)
 
 
 
-EMatrix::Gene& EMatrix::at(int i)
-{
-   static const char* f = __PRETTY_FUNCTION__;
-   Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
-   Ace::assert<OutOfRange>(i>=0&&i<data()._geneSize,f,__LINE__);
-   return (*this)[i];
-}
-
-
-
-EMatrix::Gene& EMatrix::operator[](int i)
-{
-   if (!_iGene)
-   {
-      _iGene = new Gene(this,i);
-   }
-   else
-   {
-      _iGene->set(i);
-   }
-   return *_iGene;
-}
-
-
-
-void EMatrix::read_sizes(std::ifstream& file, int& geneSize, int& sampleSize)
-{
-   static const char* f = __PRETTY_FUNCTION__;
-   bool hasHeaders {sampleSize==0};
-   skip_blanks(file);
-   if (hasHeaders)
-   {
-      int count {1};
-      enum {newline,chunk} state {chunk};
-      while (std::isprint(file.peek()))
-      {
-         switch (state)
-         {
-         case newline:
-            if (file.peek()!=' '&&file.peek()!='\t')
-            {
-               ++count;
-               state = chunk;
-            }
-            break;
-         case chunk:
-            if (file.peek()==' '||file.peek()=='\t')
-            {
-               state = newline;
-            }
-            break;
-         }
-         file.get();
-      }
-      sampleSize = count;
-      Ace::assert<InvalidFile>(file.good(),f,__LINE__);
-   }
-   int count {0};
-   enum {newline,chunk} state {newline};
-   while (file)
-   {
-      switch (state)
-      {
-      case newline:
-         if (std::isprint(file.peek()))
-         {
-            state = chunk;
-         }
-         break;
-      case chunk:
-         if (std::iscntrl(file.peek()))
-         {
-            ++count;
-            state = newline;
-         }
-         break;
-      }
-      file.get();
-   }
-   if (state==chunk)
-   {
-      ++count;
-   }
-   geneSize = count;
-}
-
-
-void EMatrix::read_headers(std::ifstream& file, int geneSize, int sampleSize, Transform transform,
+void EMatrix::read_headers(std::ifstream& file, int sampleSize, Transform transform,
                            bool hasHeaders)
 {
    static const char* f = __PRETTY_FUNCTION__;
@@ -430,14 +339,11 @@ void EMatrix::read_headers(std::ifstream& file, int geneSize, int sampleSize, Tr
       {
          sampleNames.push_back(tmp);
       }
-      Ace::assert<InvalidFile>(sampleNames.size()==sampleSize,f,__LINE__);
    }
    else
    {
       sampleNames.resize(sampleSize);
    }
-   file.seekg(0,std::ios_base::end);
-   skip_blanks(file);
    while (file)
    {
       std::string buf;
@@ -450,17 +356,29 @@ void EMatrix::read_headers(std::ifstream& file, int geneSize, int sampleSize, Tr
          geneNames.push_back(tmp);
       }
    }
-   Ace::assert<InvalidFile>(geneNames.size()==geneSize,f,__LINE__);
    initialize(std::move(geneNames),std::move(sampleNames),transform);
 }
 
 
 
-void EMatrix::read_gene_expressions(std::ifstream& file, const std::string& nanStr)
+void EMatrix::read_gene_expressions(std::ifstream& file, Ace::Terminal& tm,
+                                    const std::string& nanStr)
 {
    static const char* f = __PRETTY_FUNCTION__;
+   int totalGSize {data()._geneSize};
+   int totalDone {0};
+   tm << "Importing gene samples[0%]..." << Ace::Terminal::flush;
    Mirror m(*this);
    skip_blanks(file);
+   while (file)
+   {
+      std::string buf;
+      std::getline(file,buf);
+      if (!is_blank_line(buf))
+      {
+         break;
+      }
+   }
    auto g = m.begin();
    while (file)
    {
@@ -506,8 +424,12 @@ void EMatrix::read_gene_expressions(std::ifstream& file, const std::string& nanS
             }
          }
          ++g;
+         ++totalDone;
+         int percentDone {totalDone*100/totalGSize};
+         tm << "\rImporting gene samples[" << percentDone << "%]..." << Ace::Terminal::flush;
       }
    }
+   tm << "\n";
    Ace::assert<InvalidFile>(g==m.end(),f,__LINE__);
    m.write();
 }
@@ -525,7 +447,7 @@ void EMatrix::lookup(Ace::GetOpts &ops, Ace::Terminal &tm)
          tm << "Gene index is out of range.\n";
          return;
       }
-      l = (*this)[i];
+      l = find(i);
    }
    catch (std::exception)
    {
@@ -685,19 +607,6 @@ EMatrix::Gene::Gene(EMatrix* p, int i):
    _i(i)
 {
    init_data<float>(p->data()._sampleSize);
-   read();
-}
-
-
-
-void EMatrix::Gene::set(int i)
-{
-   bool change {_i!=i};
-   _i = i;
-   if (change)
-   {
-      read();
-   }
 }
 
 
@@ -714,7 +623,12 @@ void EMatrix::Gene::flip_endian()
 
 int64_t EMatrix::Gene::initialize(Ace::NVMemory& mem, int geneSize, int sampleSize)
 {
-   return mem.allocate(sizeof(float)*geneSize*sampleSize);
+   size_t nSize {sizeof(float)*geneSize*sampleSize};
+   if ( nSize > mem.available() )
+   {
+      mem.reserve(nSize-mem.available());
+   }
+   return mem.allocate(nSize);
 }
 
 
@@ -768,16 +682,6 @@ EMatrix::Mirror::Mirror(EMatrix& p):
 
 
 
-EMatrix::Mirror::~Mirror()
-{
-   if (_iGene)
-   {
-      delete _iGene;
-   }
-}
-
-
-
 void EMatrix::Mirror::read()
 {
    Node::read();
@@ -816,26 +720,11 @@ EMatrix::Mirror::Gene EMatrix::Mirror::end()
 
 
 
-EMatrix::Mirror::Gene& EMatrix::Mirror::at(int i)
+EMatrix::Mirror::Gene EMatrix::Mirror::find(int i)
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<OutOfRange>(i>=0&&i<(_p->data()._geneSize),f,__LINE__);
-   return (*this)[i];
-}
-
-
-
-EMatrix::Mirror::Gene& EMatrix::Mirror::operator[](int i)
-{
-   if (!_iGene)
-   {
-      _iGene = new Gene(this,i);
-   }
-   else
-   {
-      _iGene->set(i);
-   }
-   return *_iGene;
+   return Gene(this,i);
 }
 
 
@@ -908,13 +797,6 @@ EMatrix::Mirror::Gene::Gene(Mirror* p, int i):
    _p(p),
    _i(i)
 {}
-
-
-
-void EMatrix::Mirror::Gene::set(int i)
-{
-   _i = i;
-}
 
 
 

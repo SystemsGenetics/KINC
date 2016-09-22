@@ -11,7 +11,7 @@ void RMT::input(Ace::Data* in)
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<TooManyInputs>(!_in,f,__LINE__);
-   Ace::assert<InvalidDataType>(in->type()==string("cmx"),f,__LINE__);
+   Ace::assert<InvalidDataType>(in->type()==std::string("cmx"),f,__LINE__);
    _in = dynamic_cast<CMatrix*>(in);
 }
 

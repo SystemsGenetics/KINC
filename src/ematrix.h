@@ -25,7 +25,6 @@ public:
    class Gene;
    class Mirror;
    EMatrix();
-   ~EMatrix();
    void init() override final;
    void load(Ace::GetOpts &ops, Ace::Terminal &tm) override final;
    void dump(Ace::GetOpts &ops, Ace::Terminal &tm) override final;
@@ -40,9 +39,8 @@ public:
    Transform transform() const;
    Gene begin();
    Gene end();
+   Gene find(int);
    Gene find(const std::string& geneName);
-   Gene& at(int i);
-   Gene& operator[](int);
 private:
    struct __attribute__ ((__packed__)) Header
    {
@@ -55,10 +53,8 @@ private:
    };
    Header& data() { return get<Header>(); }
    const Header& data() const { return get<Header>(); }
-   void read_sizes(std::ifstream& file, int& geneSize, int& sampleSize);
-   void read_headers(std::ifstream& file, int geneSize, int sampleSize, Transform transform,
-                     bool hasHeaders);
-   void read_gene_expressions(std::ifstream& file, const std::string& nanStr);
+   void read_headers(std::ifstream& file, int sampleSize, Transform transform, bool hasHeaders);
+   void read_gene_expressions(std::ifstream& file, Ace::Terminal& tm, const std::string& nanStr);
    void lookup(Ace::GetOpts&,Ace::Terminal&);
    void skip_blanks(std::ifstream& file);
    bool is_blank_line(const std::string& line);
@@ -66,7 +62,6 @@ private:
    void flip_endian() override final;
    Header _header;
    bool _isNew {true};
-   Gene* _iGene {nullptr};
    std::vector<std::string> _geneNames;
    std::vector<std::string> _sampleNames;
    constexpr static int _strSize {1024};
@@ -91,7 +86,6 @@ public:
    bool operator==(const Gene&);
 private:
    Gene(EMatrix*,int);
-   void set(int);
    void null_data() override final {}
    void flip_endian() override final;
    static int64_t initialize(Ace::NVMemory&,int,int);
@@ -123,7 +117,6 @@ public:
    friend class EMatrix;
    class Gene;
    Mirror(EMatrix&);
-   ~Mirror();
    Mirror(const Mirror&) = delete;
    Mirror& operator=(const Mirror&) = delete;
    Mirror(Mirror&&) = delete;
@@ -133,13 +126,11 @@ public:
    float& value(int gene, int i);
    Gene begin();
    Gene end();
-   Gene& at(int);
-   Gene& operator[](int);
+   Gene find(int);
 private:
    void null_data() override final {}
    void flip_endian() override final;
    EMatrix* _p;
-   Gene* _iGene {nullptr};
 };
 
 
@@ -158,7 +149,6 @@ public:
    bool operator==(const Gene&);
 private:
    Gene(Mirror*,int);
-   void set(int);
    Mirror* _p;
    int _i;
 };

@@ -15,7 +15,7 @@ void Spearman::input(Ace::Data* input)
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<TooManyInputs>(!_in,f,__LINE__);
-   Ace::assert<InvalidDataType>(input->type()==string("emx"),f,__LINE__);
+   Ace::assert<InvalidDataType>(input->type()==std::string("emx"),f,__LINE__);
    _in = dynamic_cast<EMatrix*>(input);
 }
 
@@ -25,7 +25,7 @@ void Spearman::output(Ace::Data* output)
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<TooManyOutputs>(!_out,f,__LINE__);
-   Ace::assert<InvalidDataType>(output->type()==string("cmx"),f,__LINE__);
+   Ace::assert<InvalidDataType>(output->type()==std::string("cmx"),f,__LINE__);
    _out = dynamic_cast<CMatrix*>(output);
 }
 
@@ -160,12 +160,14 @@ void Spearman::execute_pn(Ace::GetOpts&, Ace::Terminal& tm)
    for (;i!=_out->end();++i)
    {
       int size {0};
-      for (int x = 0;x<sSize;++x)
+      auto gX = _in->find(i.x());
+      auto gY = _in->find(i.y());
+      for (auto x = 0;x<sSize;++x)
       {
-         if (!std::isnan(_in->at(i.x()).at(x))&&!std::isnan(_in->at(i.y()).at(x)))
+         if ( !std::isnan(gX[x]) && !std::isnan(gY[x]) )
          {
-            a[size] = _in->at(i.x()).at(x);
-            b[size] = _in->at(i.y()).at(x);
+            a[size] = gX[x];
+            b[size] = gY[x];
             ++size;
          }
       }
