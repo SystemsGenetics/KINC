@@ -142,8 +142,9 @@ long long CMatrix::diagonal(int x, int y)
 
 long long CMatrix::diag_size(int x)
 {
-   return x*(x+1)/2;
+   return x*(x-1)/2;
 }
+
 
 
 void CMatrix::initialize(std::vector<std::string>&& geneNames,
