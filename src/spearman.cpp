@@ -164,8 +164,8 @@ void Spearman::execute_pn(Ace::GetOpts&, Ace::Terminal& tm)
    {
       *m = 1;
    }
-   double total  = CMatrix::diag_size(gSize-1);
-   double count {0};
+   unsigned long total  = CMatrix::diag_size(gSize);
+   unsigned long count {0};
    double a[sSize];
    double b[sSize];
    double work[2*sSize];
@@ -269,7 +269,7 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
                          int wSize, int chunk, int blSize, int smSize, int minSize)
 {
    enum class State {start,in,exec,out,end};
-   double total = CMatrix::diag_size(_in->gene_size()-1);
+   unsigned long total = CMatrix::diag_size(_in->gene_size());
    int bufferSize {wSize*chunk*2};
    kern.set_arg(0,size);
    kern.set_arg(1,chunk);
@@ -320,7 +320,7 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
    int alive {smSize};
    int si {0};
    auto i = _out->begin();
-   double done {0};
+   unsigned long done {0};
    while (alive>0)
    {
       switch (state[si].st)
