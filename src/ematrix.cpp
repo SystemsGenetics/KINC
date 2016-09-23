@@ -61,6 +61,7 @@ void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
    static const char* f = __PRETTY_FUNCTION__;
    bool hasHeaders {true};
    int sampleSize {0};
+   std::string nan {"NaN"};
    Transform tr {none};
    for (auto i = ops.begin();i!=ops.end();++i)
    {
@@ -91,6 +92,9 @@ void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
          {
             Ace::assert<InvalidArg>(false,f,__LINE__);
          }
+      } else if (i.is_key("nosample"))
+      {
+         nan = i.value<std::string>();
       }
    }
    if (!hasHeaders&&sampleSize==0)
@@ -107,7 +111,7 @@ void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
       read_headers(file,sampleSize,tr,hasHeaders);
       file.clear();
       file.seekg(0,std::ios_base::beg);
-      read_gene_expressions(file,tm,"NA");
+      read_gene_expressions(file,tm,nan);
       _isNew = false;
    }
    catch (...)
