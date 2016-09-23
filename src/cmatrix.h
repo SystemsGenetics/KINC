@@ -41,8 +41,7 @@ public:
    const std::string& correlation_name(int) const;
    GPair begin();
    GPair end();
-   GPair& at(int,int);
-   GPair& ref(int,int);
+   GPair find(int,int);
 private:
    struct __attribute__ ((__packed__)) Header
    {
@@ -84,8 +83,7 @@ public:
       Modes& operator=(Modes&&) = default;
       Mode begin();
       Mode end();
-      Mode& at(int);
-      Mode& operator[](int);
+      Mode find(int);
    private:
       Modes(GPair*);
       GPair* _p;
@@ -102,8 +100,7 @@ public:
       Corrs& operator=(Corrs&&) = default;
       Corr begin();
       Corr end();
-      Corr& at(int);
-      Corr& operator[](int);
+      Corr find(int);
    private:
       Corrs(GPair*);
       GPair* _p;

@@ -81,8 +81,6 @@ void CMatrix::load(Ace::GetOpts&, Ace::Terminal& tm)
 void CMatrix::dump(Ace::GetOpts& ops, Ace::Terminal& tm)
 {
    float threshold {99.0};
-   // Check to see if the user specifies a threshold limit for the gene correlations, if so set
-   // internal variable to user value.
    for (auto i = ops.begin(); i != ops.end() ;++i)
    {
       if ( i.is_key("threshold") )
@@ -90,28 +88,24 @@ void CMatrix::dump(Ace::GetOpts& ops, Ace::Terminal& tm)
          threshold = i.value<float>();
       }
    }
-   // Make sure the user has given at least one argument that specifies the output file.
    if (ops.com_size()<1)
    {
       tm << "Error: must specify output file to dump to.";
       return;
    }
-   // Open the output file for truncated writing and make sure it was opened successfully.
    std::ofstream file(ops.com_front());
    if ( !file.is_open() )
    {
       tm << "Error: could not open output file " << ops.com_front() << "\n";
       return;
    }
-   // Go through all the gene correlations and output any correlation that meets the threshold.
-   // TODO: Right now this only goes through the first mode and first correlation of all possible
-   // correlations, need to add user input to do more than this eventually.
    tm << "Writing to output file with correlation list meeting threshold...\n";
    for (auto i = begin(); i != end() ;++i)
    {
-      if (i.corrs()[0][0]>=threshold)
+      auto bcorr = i.corrs().find(0);
+      if ( bcorr[0] >= threshold )
       {
-         file << gene_name(i.x()) << "\t" << gene_name(i.y()) << "\t" << i.corrs()[0][0] << "\n";
+         file << gene_name(i.x()) << "\t" << gene_name(i.y()) << "\t" << bcorr[0] << "\n";
       }
    }
    tm << "Dump complete.\n";
@@ -297,31 +291,12 @@ CMatrix::GPair CMatrix::end()
 
 
 
-CMatrix::GPair& CMatrix::at(int x, int y)
+CMatrix::GPair CMatrix::find(int x, int y)
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
    Ace::assert<OutOfRange>(x>=0&&y>=0&&y<data()._geneSize&&x<data()._geneSize&&x!=y,f,__LINE__);
-   return ref(x,y);
-}
-
-
-
-CMatrix::GPair& CMatrix::ref(int x, int y)
-{
-   if ( x < y )
-   {
-      std::swap(x,y);
-   }
-   if (!_iGPair)
-   {
-      _iGPair = new GPair(this,x,y);
-   }
-   else
-   {
-      _iGPair->set(x,y);
-   }
-   return *_iGPair;
+   return GPair(this,x,y);
 }
 
 
@@ -542,26 +517,11 @@ CMatrix::GPair::Modes::Mode CMatrix::GPair::Modes::end()
 
 
 
-CMatrix::GPair::Modes::Mode& CMatrix::GPair::Modes::at(int i)
+CMatrix::GPair::Modes::Mode CMatrix::GPair::Modes::find(int i)
 {
    static const char* f = __PRETTY_FUNCTION__;
    AccelCompEng::assert<OutOfRange>(i>=0&&i<(_p->size()),f,__LINE__);
-   return (*this)[i];
-}
-
-
-
-CMatrix::GPair::Modes::Mode& CMatrix::GPair::Modes::operator[](int i)
-{
-   if (!_mode.get())
-   {
-      _mode.reset(new Mode(this,i));
-   }
-   else
-   {
-      _mode->set(i);
-   }
-   return *_mode;
+   return Mode(this,i);
 }
 
 
@@ -700,26 +660,11 @@ CMatrix::GPair::Corrs::Corr CMatrix::GPair::Corrs::end()
 
 
 
-CMatrix::GPair::Corrs::Corr& CMatrix::GPair::Corrs::at(int i)
+CMatrix::GPair::Corrs::Corr CMatrix::GPair::Corrs::find(int i)
 {
    static const char* f = __PRETTY_FUNCTION__;
    AccelCompEng::assert<OutOfRange>(i>=0&&i<(_p->size()),f,__LINE__);
-   return (*this)[i];
-}
-
-
-
-CMatrix::GPair::Corrs::Corr& CMatrix::GPair::Corrs::operator[](int i)
-{
-   if (!_corr.get())
-   {
-      _corr.reset(new Corr(this,i));
-   }
-   else
-   {
-      _corr->set(i);
-   }
-   return *_corr;
+   return Corr(this,i);
 }
 
 

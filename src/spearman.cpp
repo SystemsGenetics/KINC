@@ -147,7 +147,7 @@ void Spearman::execute_pn(Ace::GetOpts&, Ace::Terminal& tm)
    tm << "Calculating spearman values and saving to output file[0%]...";
    auto i = _out->begin();
    i.size(1);
-   for (auto m = i.modes().at(0).begin();m!=i.modes().at(0).end();++m)
+   for (auto m = i.modes().find(0).begin();m!=i.modes().find(0).end();++m)
    {
       *m = 1;
    }
@@ -173,11 +173,13 @@ void Spearman::execute_pn(Ace::GetOpts&, Ace::Terminal& tm)
       }
       if (size<minSize)
       {
-         i.corrs().at(0).at(0) = NAN;
+         auto t = i.corrs().find(0);
+         t.at(0) = NAN;
       }
       else
       {
-         i.corrs().at(0).at(0) = gsl_stats_spearman(a,1,b,1,size,work);
+         auto t = i.corrs().find(0);
+         t.at(0) = gsl_stats_spearman(a,1,b,1,size,work);
       }
       ++count;
       ++delay;
@@ -336,16 +338,16 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
       case State::out:
          if (state[si].ev.is_done())
          {
-            auto wi = _out->ref(state[si].x,state[si].y);
+            auto wi = _out->find(state[si].x,state[si].y);
             wi.size(1);
-            for (auto m = wi.modes().at(0).begin();m!=wi.modes().at(0).end();++m)
+            for (auto m = wi.modes().find(0).begin();m!=wi.modes().find(0).end();++m)
             {
                *m = 1;
             }
             int count {0};
             while (wi!=_out->end()&&count<blSize)
             {
-               wi.corrs().at(0).at(0) = state[si].ans[count];
+               wi.corrs().find(0)[0] = state[si].ans[count];
                ++count;
                wi.write();
                ++wi;

@@ -142,7 +142,7 @@ std::unique_ptr<double> RMT::prune_matrix(float threshold, int& size)
          }
          else
          {
-            pMatrix.get()[g1*genes.size()+g2] = _in->at(g1,g2).corrs().at(0).at(0);
+            pMatrix.get()[g1*genes.size()+g2] = _in->find(g1,g2).corrs().find(0)[0];
          }
       }
    }
@@ -169,7 +169,7 @@ bool RMT::gene_has_matches(int gene, float threshold)
    int i {0};
    while ( i < _in->gene_size() )
    {
-      if ( gene != i && _in->at(gene,i).corrs().at(0).at(0) >= threshold )
+      if ( gene != i && _in->find(gene,i).corrs().find(0)[0] >= threshold )
       {
          ret = true;
          break;
