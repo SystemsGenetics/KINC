@@ -49,6 +49,10 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
       {
          blSize = i.value<int>();
       }
+      else if (i.is_key("minsize"))
+      {
+         minSize = i.value<int>();
+      }
    }
    tm << "Loading kernel program into OpenCL device...\n";
    CLProgram::add_source(spearman_cl);
@@ -67,6 +71,7 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
    int inc {0};
    for (auto g = _in->begin();g!=_in->end();++g)
    {
+      g.read();
       for (auto i = g.begin();i!=g.end();++i)
       {
          expList[inc++] = *i;
@@ -99,24 +104,31 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
    calculate(tm,kern,expList,sSize,wSize,chunk,blSize,smSize,minSize);
    auto t2 = system_clock::now();
    int s = duration_cast<seconds>(t2-t1).count();
-   int m = s/60;
-   int h = m/60;
-   m %= 60;
-   s %= 60;
-   tm << "Finished in";
-   if (h>0)
+   if (s==0)
    {
-      tm << " " << h << " hour(s)";
+      tm << "Finished in less than 1 second.\n";
    }
-   if (m>0)
+   else
    {
-      tm << " " << m << " minute(s)";
+      int m = s/60;
+      int h = m/60;
+      m %= 60;
+      s %= 60;
+      tm << "Finished in";
+      if (h>0)
+      {
+         tm << " " << h << " hour(s)";
+      }
+      if (m>0)
+      {
+         tm << " " << m << " minute(s)";
+      }
+      if (s>0)
+      {
+         tm << " " << s << " second(s)";
+      }
+      tm << ".\n";
    }
-   if (s>0)
-   {
-      tm << " " << s << " second(s)";
-   }
-   tm << ".\n";
 }
 
 
@@ -147,11 +159,12 @@ void Spearman::execute_pn(Ace::GetOpts&, Ace::Terminal& tm)
    tm << "Calculating spearman values and saving to output file[0%]...";
    auto i = _out->begin();
    i.size(1);
-   for (auto m = i.modes().find(0).begin();m!=i.modes().find(0).end();++m)
+   auto bmode = i.modes().begin();
+   for (auto m = bmode.begin();m!=bmode.end();++m)
    {
       *m = 1;
    }
-   double total  = CMatrix::diag_size(gSize);
+   double total  = CMatrix::diag_size(gSize-1);
    double count {0};
    double a[sSize];
    double b[sSize];
@@ -162,6 +175,8 @@ void Spearman::execute_pn(Ace::GetOpts&, Ace::Terminal& tm)
       int size {0};
       auto gX = _in->find(i.x());
       auto gY = _in->find(i.y());
+      gX.read();
+      gY.read();
       for (auto x = 0;x<sSize;++x)
       {
          if ( !std::isnan(gX[x]) && !std::isnan(gY[x]) )
@@ -186,30 +201,38 @@ void Spearman::execute_pn(Ace::GetOpts&, Ace::Terminal& tm)
       if (delay==16384)
       {
          tm << "\rCalculating spearman values and saving to output file["
-            << (int)((count/total*100)+0.5) << "%]..." << Ace::Terminal::flush;
+            << 100*count/total << "%]..." << Ace::Terminal::flush;
          delay = 0;
       }
    }
+   tm << "\rCalculating spearman values and saving to output file[" << 100*count/total << "%]...\n";
    auto t2 = system_clock::now();
    int s = duration_cast<seconds>(t2-t1).count();
-   int m = s/60;
-   int h = m/60;
-   m %= 60;
-   s %= 60;
-   tm << "Finished in";
-   if (h>0)
+   if (s==0)
    {
-      tm << " " << h << " hour(s)";
+      tm << "Finished in less than 1 second.\n";
    }
-   if (m>0)
+   else
    {
-      tm << " " << m << " minute(s)";
+      int m = s/60;
+      int h = m/60;
+      m %= 60;
+      s %= 60;
+      tm << "Finished in";
+      if (h>0)
+      {
+         tm << " " << h << " hour(s)";
+      }
+      if (m>0)
+      {
+         tm << " " << m << " minute(s)";
+      }
+      if (s>0)
+      {
+         tm << " " << s << " second(s)";
+      }
+      tm << ".\n";
    }
-   if (s>0)
-   {
-      tm << " " << s << " second(s)";
-   }
-   tm << ".\n";
 }
 
 
@@ -246,23 +269,34 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
                          int wSize, int chunk, int blSize, int smSize, int minSize)
 {
    enum class State {start,in,exec,out,end};
-   double total = CMatrix::diag_size(_in->gene_size());
+   double total = CMatrix::diag_size(_in->gene_size()-1);
    int bufferSize {wSize*chunk*2};
    kern.set_arg(0,size);
    kern.set_arg(1,chunk);
    kern.set_arg(2,minSize);
    kern.set_arg(4,&expList);
-   kern.set_arg(6,sizeof(cl_float)*bufferSize);
-   kern.set_arg(7,sizeof(cl_float)*bufferSize);
-   kern.set_arg(8,sizeof(cl_int)*bufferSize);
-   kern.set_arg(9,sizeof(cl_int)*bufferSize);
-   kern.set_arg(10,sizeof(cl_long)*bufferSize);
-   kern.set_arg(11,sizeof(cl_float)*bufferSize);
-   kern.set_arg(12,sizeof(cl_float)*bufferSize);
-   kern.set_arg(13,sizeof(cl_int)*bufferSize);
-   kern.set_arg(14,sizeof(cl_int)*bufferSize);
-   kern.set_arg(15,sizeof(cl_int)*bufferSize);
-   kern.set_arg(16,sizeof(cl_int)*bufferSize);
+   auto buf1 = CLContext::buffer<cl_float>(blSize*bufferSize);
+   kern.set_arg(6,&buf1);
+   auto buf2 = CLContext::buffer<cl_float>(blSize*bufferSize);
+   kern.set_arg(7,&buf2);
+   auto buf3 = CLContext::buffer<cl_int>(blSize*bufferSize);
+   kern.set_arg(8,&buf3);
+   auto buf4 = CLContext::buffer<cl_int>(blSize*bufferSize);
+   kern.set_arg(9,&buf4);
+   auto buf5 = CLContext::buffer<cl_long>(blSize*bufferSize);
+   kern.set_arg(10,&buf5);
+   auto buf6 = CLContext::buffer<cl_float>(blSize*bufferSize);
+   kern.set_arg(11,&buf6);
+   auto buf7 = CLContext::buffer<cl_float>(blSize*bufferSize);
+   kern.set_arg(12,&buf7);
+   auto buf8 = CLContext::buffer<cl_int>(blSize*bufferSize);
+   kern.set_arg(13,&buf8);
+   auto buf9 = CLContext::buffer<cl_int>(blSize*bufferSize);
+   kern.set_arg(14,&buf9);
+   auto buf10 = CLContext::buffer<cl_int>(blSize*bufferSize);
+   kern.set_arg(15,&buf10);
+   auto buf11 = CLContext::buffer<cl_int>(blSize*bufferSize);
+   kern.set_arg(16,&buf11);
    kern.set_swarm_dims(1);
    kern.set_swarm_size(0,blSize*wSize,wSize);
    struct
@@ -299,8 +333,8 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
             int count {0};
             while (i!=_out->end()&&count<blSize)
             {
-               state[si].ld[2*count] = i.x();
-               state[si].ld[(2*count)+1] = i.y();
+               state[si].ld[2*count] = i.x()*size;
+               state[si].ld[(2*count)+1] = i.y()*size;
                ++count;
                ++i;
             }
@@ -340,14 +374,16 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
          {
             auto wi = _out->find(state[si].x,state[si].y);
             wi.size(1);
-            for (auto m = wi.modes().find(0).begin();m!=wi.modes().find(0).end();++m)
+            auto bmode = wi.modes().begin();
+            for (auto m = bmode.begin();m!=bmode.end();++m)
             {
                *m = 1;
             }
             int count {0};
             while (wi!=_out->end()&&count<blSize)
             {
-               wi.corrs().find(0)[0] = state[si].ans[count];
+               auto bcorr = wi.corrs().begin();
+               bcorr[0] = state[si].ans[count];
                ++count;
                wi.write();
                ++wi;
@@ -364,8 +400,8 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
       {
          si = 0;
       }
-      tm << "\rCalculating spearman values and saving to output file["
-         << (int)((done/total*100)+0.5) << "%]..." << Ace::Terminal::flush;
+      tm << "\rCalculating spearman values and saving to output file[" << 100*done/total
+         << "%]..." << Ace::Terminal::flush;
       usleep(100);
    }
    tm << "\n";

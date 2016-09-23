@@ -1,7 +1,7 @@
 
 
 
-void switch_f(__local float* a, __local float* b)
+void switch_f(__global float* a, __global float* b)
 {
    float c = *a;
    *a = *b;
@@ -10,7 +10,7 @@ void switch_f(__local float* a, __local float* b)
 
 
 
-void switch_i(__local int* a, __local int* b)
+void switch_i(__global int* a, __global int* b)
 {
    int c = *a;
    *a = *b;
@@ -19,8 +19,8 @@ void switch_i(__local int* a, __local int* b)
 
 
 
-void fetch_lists(int aInd, int bInd, int size, int chunk, __local float* aList,
-                 __local float* bList, __global float* exprs)
+void fetch_lists(int aInd, int bInd, int size, int chunk, __global float* aList,
+                 __global float* bList, __global float* exprs)
 {
    int i,c,ix;
    for (i=0;i<chunk;++i)
@@ -53,8 +53,8 @@ void fetch_lists(int aInd, int bInd, int size, int chunk, __local float* aList,
 
 
 
-void prune_lists(int chunk, __local float* aExprs, __local int* aWork, __local int* aPoint,
-                 __local float* bExprs, __local int* bWork, __local int* bPoint)
+void prune_lists(int chunk, __global float* aExprs, __global int* aWork, __global int* aPoint,
+                 __global float* bExprs, __global int* bWork, __global int* bPoint)
 {
    int i,c,ix;
    for (i=0;i<chunk;++i)
@@ -87,8 +87,8 @@ void prune_lists(int chunk, __local float* aExprs, __local int* aWork, __local i
 
 
 
-void double_bitonic_sort_ii(int chunk, __local int* aSort, __local int* aExtra, __local int* bSort,
-                            __local int* bExtra)
+void double_bitonic_sort_ii(int chunk, __global int* aSort, __global int* aExtra, __global int* bSort,
+                            __global int* bExtra)
 {
    int bsize = get_local_size(0)*2*chunk;
    int ob,ib,i,ix,dir,a,b,t;
@@ -121,9 +121,9 @@ void double_bitonic_sort_ii(int chunk, __local int* aSort, __local int* aExtra, 
 
 
 
-void construct_lists(int chunk, __local float* aExprs, __local float* aList, __local int* aPoint,
-                     __local float* bExprs, __local float* bList, __local int* bPoint,
-                     __local int* rank, __local int* iRank)
+void construct_lists(int chunk, __global float* aExprs, __global float* aList, __global int* aPoint,
+                     __global float* bExprs, __global float* bList, __global int* bPoint,
+                     __global int* rank, __global int* iRank)
 {
    int i,c,ix;
    for (i=0;i<chunk;++i)
@@ -150,7 +150,7 @@ void construct_lists(int chunk, __local float* aExprs, __local float* aList, __l
 
 
 
-void bitonic_sort_ff(int chunk, __local float* sort, __local float* extra)
+void bitonic_sort_ff(int chunk, __global float* sort, __global float* extra)
 {
    int bsize = get_local_size(0)*2*chunk;
    int ob,ib,i,ix,dir,a,b,t;
@@ -178,7 +178,7 @@ void bitonic_sort_ff(int chunk, __local float* sort, __local float* extra)
 
 
 
-void bitonic_sort_fi(int chunk, __local float* sort, __local int* extra)
+void bitonic_sort_fi(int chunk, __global float* sort, __global int* extra)
 {
    int bsize = get_local_size(0)*2*chunk;
    int ob,ib,i,ix,dir,a,b,t;
@@ -206,7 +206,7 @@ void bitonic_sort_fi(int chunk, __local float* sort, __local int* extra)
 
 
 
-long calc_ranks(int chunk, __local long* sums, __local int* rank, __local int* iRank)
+long calc_ranks(int chunk, __global long* sums, __global int* rank, __global int* iRank)
 {
    long tmp;
    int i,c,ix;
@@ -232,7 +232,7 @@ long calc_ranks(int chunk, __local long* sums, __local int* rank, __local int* i
 
 
 
-void accumulate(int chunk, __local long* summation, __local int* iRank)
+void accumulate(int chunk, __global long* summation, __global int* iRank)
 {
    int hbsize = get_local_size(0)*chunk;
    int i,ix,b;
@@ -253,30 +253,26 @@ void accumulate(int chunk, __local long* summation, __local int* iRank)
 
 
 
-void make_debug(int chunk, __local int* alist, __local int* blist, __global float* atest,
-                __global float* btest)
-{
-   int i,ix;
-   for (i=0;i<chunk;++i)
-   {
-      ix = (get_local_id(0)*chunk+i)*2;
-      atest[ix] = alist[ix];
-      btest[ix] = blist[ix];
-      atest[ix+1] = alist[ix+1];
-      btest[ix+1] = blist[ix+1];
-   }
-   barrier(CLK_LOCAL_MEM_FENCE);
-}
-
-
-
 __kernel void spearman(int size, int chunk, int minSize, __global int* insts, __global float* exprs,
-                       __global float* result, __local float* alist, __local float* blist,
-                       __local int* rank, __local int* iRank, __local long* summation,
-                       __local float* aTmpList, __local float* bTmpList, __local int* aWork,
-                       __local int* bWork, __local int* aPoint, __local int* bPoint)
+                       __global float* result, __global float* alistF, __global float* blistF,
+                       __global int* rankF, __global int* iRankF, __global long* summationF,
+                       __global float* aTmpListF, __global float* bTmpListF, __global int* aWorkF,
+                       __global int* bWorkF, __global int* aPointF, __global int* bPointF)
 {
    int i = get_group_id(0)*2;
+   int j = get_group_id(0);
+   int wsize = get_local_size(0)*2*chunk;
+   __global float* alist = &alistF[j*wsize];
+   __global float* blist = &blistF[j*wsize];
+   __global int* rank = &rankF[j*wsize];
+   __global int* iRank = &iRankF[j*wsize];
+   __global long* summation = &summationF[j*wsize];
+   __global float* aTmpList = &aTmpListF[j*wsize];
+   __global float* bTmpList = &bTmpListF[j*wsize];
+   __global int* aWork = &aWorkF[j*wsize];
+   __global int* bWork = &bWorkF[j*wsize];
+   __global int* aPoint = &aPointF[j*wsize];
+   __global int* bPoint = &bPointF[j*wsize];
    fetch_lists(insts[i],insts[i+1],size,chunk,aTmpList,bTmpList,exprs);
    prune_lists(chunk,aTmpList,aWork,aPoint,bTmpList,bWork,bPoint);
    double_bitonic_sort_ii(chunk,aWork,aPoint,bWork,bPoint);
@@ -290,11 +286,11 @@ __kernel void spearman(int size, int chunk, int minSize, __global int* insts, __
       size = iRank[0];
       if (size<minSize)
       {
-         *result = NAN;
+         result[j] = NAN;
       }
       else
       {
-         *result = 1.0-(6.0*summation[0]/((float)(size*(size*size-1))));
+         result[j] = 1.0-(6.0*(float)summation[0]/((float)size*(((float)size*(float)size)-1)));
       }
    }
 }
