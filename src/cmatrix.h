@@ -19,6 +19,7 @@ public:
    struct GreaterThanMax : public Ace::Exception { using Ace::Exception::Exception; };
    struct AlreadySet : public Ace::Exception { using Ace::Exception::Exception; };
    struct InvalidSize : public Ace::Exception { using Ace::Exception::Exception; };
+   struct AllocateFail : public Ace::Exception { using Ace::Exception::Exception; };
    class GPair;
    CMatrix();
    ~CMatrix();

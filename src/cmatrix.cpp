@@ -53,7 +53,7 @@ void CMatrix::init()
          }
          fstr.load(data()._correlationPtr);
          _correlationNames.push_back(fstr.str());
-         for (int i=1;i<data()._sampleSize;++i)
+         for (int i=1;i<data()._correlationSize;++i)
          {
             fstr.bump();
             _correlationNames.push_back(fstr.str());
@@ -115,7 +115,13 @@ void CMatrix::dump(Ace::GetOpts& ops, Ace::Terminal& tm)
 
 void CMatrix::query(Ace::GetOpts&, Ace::Terminal& tm)
 {
-   tm << "Not yet implemented.\n";
+   for (auto i = begin(); i != end() ;++i)
+   {
+      i.read();
+      auto bcorr = i.corrs().begin();
+      tm << gene_name(i.x()) << "\t" << gene_name(i.y()) << "\t" << bcorr[0] << "\n";
+   }
+   tm << "Dump complete.\n";
 }
 
 
@@ -419,7 +425,9 @@ CMatrix::GPair::GPair(CMatrix* p, int x, int y):
    _y(y),
    _modes(this),
    _corrs(this)
-{}
+{
+   init_data<char>(calc_size(p->data()._maxModes,p->data()._sampleSize,p->data()._correlationSize));
+}
 
 
 
@@ -456,7 +464,15 @@ float& CMatrix::GPair::correlation_val(int mi, int ci)
 int64_t CMatrix::GPair::initialize(Ace::NVMemory& mem, int geneSize, int maxModes, int sampleSize,
                                    int correlationSize)
 {
-   return mem.allocate(calc_size(maxModes,sampleSize,correlationSize)*diag_size(geneSize));
+   static const char* f = __PRETTY_FUNCTION__;
+   size_t size {calc_size(maxModes,sampleSize,correlationSize)*diag_size(geneSize)};
+   if ( size > mem.available() )
+   {
+      mem.reserve(size-mem.available());
+   }
+   int64_t ret = mem.allocate(size);
+   Ace::assert<AllocateFail>(ret!=fnullptr,f,__LINE__);
+   return ret;
 }
 
 
