@@ -303,6 +303,10 @@ CMatrix::GPair CMatrix::find(int x, int y)
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<NullMatrix>(!_isNew,f,__LINE__);
    Ace::assert<OutOfRange>(x>=0&&y>=0&&y<data()._geneSize&&x<data()._geneSize&&x!=y,f,__LINE__);
+   if ( x > y )
+   {
+      std::swap(x,y);
+   }
    return GPair(this,x,y);
 }
 
