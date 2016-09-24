@@ -4,6 +4,7 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_matrix.h>
+#include <cmath>
 
 
 
@@ -54,7 +55,20 @@ void RMT::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
       if ( size > 0 )
       {
          std::unique_ptr<float> eigens {matrix_eigens(pMatrix,size)};
-         chi = getNNSDChiSquare(eigens.get(),size);
+         for (int i = 0; i < size ;++i)
+         {
+            tm << eigens.get()[i] << ", ";
+         }
+         tm << "\n";
+         float tmp = getNNSDChiSquare(eigens.get(),size);
+         if ( !std::isnan(tmp) && !std::isinf(tmp) )
+         {
+            chi = tmp;
+         }
+         else
+         {
+            chi = 0.0;
+         }
       }
       else
       {
@@ -80,7 +94,10 @@ void RMT::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
       {
          i--;
       }
-      ++i;
+      if ( (i+1) < pThresh.size() )
+      {
+         ++i;
+      }
       tm << "Found threshold! " << pThresh[i] << "\n";
    }
 }
@@ -146,14 +163,14 @@ std::unique_ptr<double> RMT::prune_matrix(float threshold, int& size)
          int g2 {genes[j]};
          if ( g1 == g2 )
          {
-            pMatrix.get()[g1*genes.size()+g2] = 1.0;
+            pMatrix.get()[i*genes.size()+j] = 1.0;
          }
          else
          {
             auto gpair = _in->find(g1,g2);
             gpair.read();
             auto bcorr = gpair.corrs().begin();
-            pMatrix.get()[g1*genes.size()+g2] = bcorr[0];
+            pMatrix.get()[i*genes.size()+j] = bcorr[0];
          }
       }
    }
@@ -170,6 +187,10 @@ void RMT::generate_gene_thresholds(Ace::Terminal& tm)
    unsigned long total = (_in->gene_size())*(_in->gene_size());
    unsigned long done {0};
    _geneThresh.reset(new float[_in->gene_size()]);
+   for (int i = 0; i < _in->gene_size() ;++i)
+   {
+      _geneThresh.get()[i] = -1.0;
+   }
    for (int gene = 0; gene < _in->gene_size() ;++gene)
    {
       for (int i = 0; i < _in->gene_size() ;++i)
@@ -179,7 +200,7 @@ void RMT::generate_gene_thresholds(Ace::Terminal& tm)
             auto gpair = _in->find(gene,i);
             gpair.read();
             auto bcorr = gpair.corrs().begin();
-            if ( bcorr[0] > _geneThresh.get()[gene] )
+            if ( !std::isnan(bcorr[0]) && bcorr[0] > _geneThresh.get()[gene] )
             {
                _geneThresh.get()[gene] = bcorr[0];
             }
@@ -188,6 +209,7 @@ void RMT::generate_gene_thresholds(Ace::Terminal& tm)
       }
       tm << "\rGenerating gene thresholds[" << 100*done/total << "%]..." << Ace::Terminal::flush;
    }
+   tm << "\n";
 }
 
 
