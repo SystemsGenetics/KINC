@@ -41,18 +41,26 @@ void RMT::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
    // values.
    bool pass {true};
    float chi {0.0};
-   float thresh {_chiStep};
+   float thresh {_chiSquareTestThreshold};
    std::vector<float> pChi;
    std::vector<float> pThresh;
-   // Keep getting new matrices and get its chi value from the current threshold, keep doing this,
-   // reducing the threshold by an increment each time until the chi value is 200 or greater. Stop
-   // this if the threshold is reduced below 50.
+   generate_gene_thresholds(tm);
    while ( chi < 200.0 )
    {
       int size;
+      tm << "threshold: " << thresh << "\n";
       std::unique_ptr<double> pMatrix {prune_matrix(thresh,size)};
-      std::unique_ptr<float> eigens {matrix_eigens(pMatrix,size)};
-      chi = getNNSDChiSquare(eigens.get(),size);
+      tm << "size: " << size << "\n";
+      if ( size > 0 )
+      {
+         std::unique_ptr<float> eigens {matrix_eigens(pMatrix,size)};
+         chi = getNNSDChiSquare(eigens.get(),size);
+      }
+      else
+      {
+         chi = 0.0;
+      }
+      tm << "chi: " << chi << "\n\n";
       pChi.push_back(chi);
       pThresh.push_back(thresh);
       thresh -= _chiStep;
@@ -122,7 +130,7 @@ std::unique_ptr<double> RMT::prune_matrix(float threshold, int& size)
    std::vector<int> genes;
    for (int i = 0; i < _in->gene_size() ;++i)
    {
-      if ( gene_has_matches(i,threshold) )
+      if ( _geneThresh.get()[i] >= threshold )
       {
          genes.push_back(i);
       }
@@ -142,7 +150,10 @@ std::unique_ptr<double> RMT::prune_matrix(float threshold, int& size)
          }
          else
          {
-            pMatrix.get()[g1*genes.size()+g2] = _in->find(g1,g2).corrs().find(0)[0];
+            auto gpair = _in->find(g1,g2);
+            gpair.read();
+            auto bcorr = gpair.corrs().begin();
+            pMatrix.get()[g1*genes.size()+g2] = bcorr[0];
          }
       }
    }
@@ -153,30 +164,30 @@ std::unique_ptr<double> RMT::prune_matrix(float threshold, int& size)
 
 
 
-/// @brief Does gene have given correlation threshold?
-///
-/// Determine if a gene in the input correlation matrix has at least one correlation that meets a
-/// given threshold.
-///
-/// @param gene The indexed gene number to investigate.
-/// @param threshold The threshold value the gene must meet.
-/// @return Does the gene meet the given threshold?
-bool RMT::gene_has_matches(int gene, float threshold)
+void RMT::generate_gene_thresholds(Ace::Terminal& tm)
 {
-   // Go through all possible gene combinations until you find a match is meets the threshold. If
-   // a match is found, stop searching and return true. If no match is found return false.
-   bool ret {false};
-   int i {0};
-   while ( i < _in->gene_size() )
+   tm << "Generating gene thresholds[0%]..." << Ace::Terminal::flush;
+   unsigned long total = (_in->gene_size())*(_in->gene_size());
+   unsigned long done {0};
+   _geneThresh.reset(new float[_in->gene_size()]);
+   for (int gene = 0; gene < _in->gene_size() ;++gene)
    {
-      if ( gene != i && _in->find(gene,i).corrs().find(0)[0] >= threshold )
+      for (int i = 0; i < _in->gene_size() ;++i)
       {
-         ret = true;
-         break;
+         if ( i != gene )
+         {
+            auto gpair = _in->find(gene,i);
+            gpair.read();
+            auto bcorr = gpair.corrs().begin();
+            if ( bcorr[0] > _geneThresh.get()[gene] )
+            {
+               _geneThresh.get()[gene] = bcorr[0];
+            }
+         }
+         ++done;
       }
-      ++i;
+      tm << "\rGenerating gene thresholds[" << 100*done/total << "%]..." << Ace::Terminal::flush;
    }
-   return ret;
 }
 
 

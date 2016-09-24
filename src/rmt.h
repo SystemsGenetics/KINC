@@ -24,7 +24,7 @@ protected:
 private:
    std::unique_ptr<float> matrix_eigens(const std::unique_ptr<double>& matrix, int size);
    std::unique_ptr<double> prune_matrix(float threshold, int& size);
-   bool gene_has_matches(int gene, float threshold);
+   void generate_gene_thresholds(Ace::Terminal&);
    double* unfolding(float* e, int size, int m);
    float* degenerate(float* eigens, int size, int* newSize);
    double getNNSDChiSquare(float* eigens, int size);
@@ -39,6 +39,7 @@ private:
    constexpr static float _chiStep {0.1};
    constexpr static int minUnfoldingPace {10};
    constexpr static int maxUnfoldingPace {41};
+   std::unique_ptr<float> _geneThresh;
 };
 
 
