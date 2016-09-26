@@ -102,10 +102,11 @@ void CMatrix::dump(Ace::GetOpts& ops, Ace::Terminal& tm)
    tm << "Writing to output file with correlation list meeting threshold...\n";
    for (auto i = begin(); i != end() ;++i)
    {
+      i.read();
       auto bcorr = i.corrs().find(0);
       if ( bcorr[0] >= threshold )
       {
-         file << gene_name(i.x()) << "\t" << gene_name(i.y()) << "\t" << bcorr[0] << "\n";
+         file << gene_name(i.x()) << "\t" << gene_name(i.y()) << "\tco\t" << bcorr[0] << "\n";
       }
    }
    tm << "Dump complete.\n";
