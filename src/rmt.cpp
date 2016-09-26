@@ -46,20 +46,14 @@ void RMT::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
    std::vector<float> pChi;
    std::vector<float> pThresh;
    generate_gene_thresholds(tm);
+   tm << "threshold   chi   tsize\n";
    while ( chi < 200.0 )
    {
       int size;
-      tm << "threshold: " << thresh << "\n";
       std::unique_ptr<double> pMatrix {prune_matrix(thresh,size)};
-      tm << "size: " << size << "\n";
       if ( size > 0 )
       {
          std::unique_ptr<float> eigens {matrix_eigens(pMatrix,size)};
-         for (int i = 0; i < size ;++i)
-         {
-            tm << eigens.get()[i] << ", ";
-         }
-         tm << "\n";
          float tmp = getNNSDChiSquare(eigens.get(),size);
          if ( !std::isnan(tmp) && !std::isinf(tmp) )
          {
@@ -74,7 +68,7 @@ void RMT::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
       {
          chi = 0.0;
       }
-      tm << "chi: " << chi << "\n\n";
+      tm << thresh << "   " << chi << "   " << size << "\n";
       pChi.push_back(chi);
       pThresh.push_back(thresh);
       thresh -= _chiStep;
@@ -184,32 +178,67 @@ std::unique_ptr<double> RMT::prune_matrix(float threshold, int& size)
 void RMT::generate_gene_thresholds(Ace::Terminal& tm)
 {
    tm << "Generating gene thresholds[0%]..." << Ace::Terminal::flush;
-   unsigned long total = (_in->gene_size())*(_in->gene_size());
+   unsigned long total = CMatrix::diag_size(_in->gene_size());
    unsigned long done {0};
    _geneThresh.reset(new float[_in->gene_size()]);
    for (int i = 0; i < _in->gene_size() ;++i)
    {
       _geneThresh.get()[i] = -1.0;
    }
-   for (int gene = 0; gene < _in->gene_size() ;++gene)
+   for (CMatrix::GPair i = _in->begin(); i != _in->end() ;++i)
    {
-      for (int i = 0; i < _in->gene_size() ;++i)
+      i.read();
+      auto bcorr = i.corrs().begin();
+      if ( !std::isnan(bcorr[0]) )
       {
-         if ( i != gene )
+         if ( bcorr[0] > _geneThresh.get()[i.x()] )
          {
-            auto gpair = _in->find(gene,i);
-            gpair.read();
-            auto bcorr = gpair.corrs().begin();
-            if ( !std::isnan(bcorr[0]) && bcorr[0] > _geneThresh.get()[gene] )
-            {
-               _geneThresh.get()[gene] = bcorr[0];
-            }
+            _geneThresh.get()[i.x()] = bcorr[0];
          }
-         ++done;
+         if ( bcorr[0] > _geneThresh.get()[i.y()] )
+         {
+            _geneThresh.get()[i.y()] = bcorr[0];
+         }
       }
-      tm << "\rGenerating gene thresholds[" << 100*done/total << "%]..." << Ace::Terminal::flush;
+      ++done;
+      if ( done%1000 == 0)
+      {
+         tm << "\rGenerating gene thresholds[" << 100*done/total << "%]..." << Ace::Terminal::flush;
+      }
    }
    tm << "\n";
+}
+
+
+
+void swapF(float* l, int idx1, int idx2) {
+  float temp = l[idx1];
+  l[idx1] = l[idx2];
+  l[idx2] = temp;
+  return;
+}
+
+
+
+void quickSortF(float* l, int size){
+  if (size <= 1) {
+    return;
+  }
+  int pivIdx = (int) size / 1.618; //golden ratio
+  float pivot = l[pivIdx];
+  swapF(l, pivIdx, size-1);
+  int leftPlace = 0;
+  int i;
+  for (i = 0; i < size - 1; i++) {
+    if(l[i] < pivot){
+      swapF(l, i, leftPlace);
+      leftPlace++;
+    }
+  }
+  swapF(l, size - 1, leftPlace);
+  quickSortF(l,leftPlace);
+  quickSortF(&l[leftPlace + 1], size - leftPlace - 1);
+  return;
 }
 
 
@@ -297,6 +326,7 @@ float* RMT::degenerate(float* eigens, int size, int* newSize)
    int count = 1;
    int* flags;
    float* remDups;
+   quickSortF(eigens,size);
    for (i = 0;i<size;++i)
    {
       if (fabs(eigens[i])<0.000001)

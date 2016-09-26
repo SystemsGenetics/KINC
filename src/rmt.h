@@ -34,7 +34,7 @@ private:
    CMatrix* _in {nullptr};
    constexpr static int minEigenVectorSize {100};
    constexpr static float nnsdHistogramBin {0.05};
-   constexpr static float _chiSquareTestThreshold {0.98507};
+   constexpr static float _chiSquareTestThreshold {0.99607};
    constexpr static float _chiMinimum {0.5};
    constexpr static float _chiStep {0.001};
    constexpr static int minUnfoldingPace {10};
