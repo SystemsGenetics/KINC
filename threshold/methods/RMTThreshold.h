@@ -58,7 +58,8 @@ class RMTThreshold : public ThresholdMethod {
   public:
     RMTThreshold(EMatrix * ematrix, char ** method, int num_methods, char * th_method,
         double thresholdStart, double thresholdStep, double chiSoughtValue,
-        char * clustering, int min_cluster_size, int max_missing, int max_modes);
+        char * clustering, int min_cluster_size, int max_missing, int max_modes,
+        int min_range);
     ~RMTThreshold();
 
     double findThreshold();

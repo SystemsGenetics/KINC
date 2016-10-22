@@ -55,8 +55,8 @@ EMatrix::EMatrix(char * infilename, int rows, int cols, int headers, int omit_na
   num_samples = cols;
   if (headers) {
     num_genes--;
-    samples = (char **) malloc(sizeof(char *) * num_samples);
   }
+  samples = (char **) malloc(sizeof(char *) * num_samples);
   genes = (char **) malloc(sizeof(char *) * num_genes);
 
   // Allocate the data array for storing the input expression matrix.

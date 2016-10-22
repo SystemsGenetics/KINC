@@ -2,9 +2,10 @@
 
 RMTThreshold::RMTThreshold(EMatrix * ematrix, char ** method, int num_methods,
     char * th_method, double thresholdStart, double thresholdStep, double chiSoughtValue,
-    char * clustering, int min_cluster_size, int max_missing, int max_modes)
+    char * clustering, int min_cluster_size, int max_missing, int max_modes,
+    int min_range)
   : ThresholdMethod(ematrix, method, num_methods, th_method, clustering,
-      min_cluster_size, max_missing, max_modes) {
+      min_cluster_size, max_missing, max_modes, min_range) {
 
   this->thresholdStart = thresholdStart;
   this->thresholdStep  = thresholdStep;
@@ -497,12 +498,53 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
           if (fabs(cv) >= th && cluster_samples >= min_cluster_size  &&
               num_missing <= max_missing && num_clusters <= max_modes) {
 
+            // Make sure there aren't more clusters than was allowed.
             if (cluster_num > max_clusters) {
               fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
               exit(-1);
             }
-            usedFlag[(j - 1) * max_clusters + (cluster_num - 1)] = 1;
-            usedFlag[(k - 1) * max_clusters + (cluster_num - 1)] = 1;
+
+            // If a range is specified then exclude clusters with a range
+            // less than desired.
+            int range_okay = 1;
+            if (min_range) {
+
+              // Check if the first gene has a range less than the minimum
+              double * je = this->ematrix->getRow(j);
+              double min = INFINITY;
+              double max = 0;
+              for(int e = 0; e < ematrix->getNumSamples(); e++) {
+                if (min < je[e]) {
+                  min = je[e];
+                }
+                if (max > je[e]) {
+                  max = je[e];
+                }
+              }
+              if (max - min > min_range) {
+                 range_okay = 0;
+              }
+
+              // Check if the second gene has a range less than the minimum.
+              double * ke = this->ematrix->getRow(k);
+              min = INFINITY;
+              max = 0;
+              for(int e = 0; e < ematrix->getNumSamples(); e++) {
+                if (min < ke[e]) {
+                  min = ke[e];
+                }
+                if (max > ke[e]) {
+                  max = ke[e];
+                }
+              }
+              if (max - min > min_range) {
+                range_okay = 0;
+              }
+            }
+            if (range_okay == 1) {
+              usedFlag[(j - 1) * max_clusters + (cluster_num - 1)] = 1;
+              usedFlag[(k - 1) * max_clusters + (cluster_num - 1)] = 1;
+            }
           }
 
           for (int l = 0; l < num_methods; l++) {

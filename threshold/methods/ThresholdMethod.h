@@ -40,6 +40,8 @@ class ThresholdMethod {
     int min_cluster_size;
     // The maximum number of clusters a pair-wise comparision can have.
     int max_modes;
+    // The mininum range of expression a cluster must have.
+    int min_range;
 
     float ** parseScores(char * scores_str);
 
@@ -47,7 +49,7 @@ class ThresholdMethod {
   public:
     ThresholdMethod(EMatrix *ematrix, char ** method, int num_methods,
         char * th_method, char * clustering,
-        int min_cluster_size, int max_missing, int max_modes);
+        int min_cluster_size, int max_missing, int max_modes, int min_range);
     ~ThresholdMethod();
 
     // GETTERS

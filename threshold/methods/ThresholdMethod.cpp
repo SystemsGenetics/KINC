@@ -6,7 +6,8 @@
  * DRArgs constructor.
  */
 ThresholdMethod::ThresholdMethod(EMatrix *ematrix, char ** method, int num_methods,
-    char * th_method, char * clustering, int min_cluster_size, int max_missing, int max_modes) {
+    char * th_method, char * clustering, int min_cluster_size, int max_missing,
+    int max_modes, int min_range) {
 
   this->ematrix = ematrix;
   this->method = method;
@@ -14,6 +15,7 @@ ThresholdMethod::ThresholdMethod(EMatrix *ematrix, char ** method, int num_metho
   this->min_cluster_size = min_cluster_size;
   this->max_missing = max_missing;
   this->max_modes = max_modes;
+  this->min_range = min_range;
   this->num_methods = num_methods;
   this->th_method = th_method;
 

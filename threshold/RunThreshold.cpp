@@ -58,6 +58,10 @@ void RunThreshold::printUsage() {
   printf("                   has multiple modes (i.e. multiple clusters) then only clusters from those\n");
   printf("                   comparisions with modes equal to or less than the value specified are\n");
   printf("                   included. Default is 1.\n");
+  printf("  --min_range|-a   The minimum range of expression that a cluster must have \n");
+  printf("                   to be included.  This allows for clusters with very low\n");
+  printf("                   change in expression to be excluded.  Default is 0 which\n");
+  printf("                   indicates no such filter is performed.\n");
   printf("\n");
   printf("For Help:\n");
   printf("  --help|-h     Print these usage instructions\n");
@@ -71,6 +75,7 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
   // initialize some of the program parameters
   max_missing = INFINITY;
   max_modes = 1;
+  min_range = 0;
   min_cluster_size = 30;
 
   thresholdStart = 0.99;
@@ -113,6 +118,7 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
       {"max_missing",  required_argument, 0,  'g' },
       {"min_csize",    required_argument, 0,  'z' },
       {"max_modes",    required_argument, 0,  'd' },
+	  {"min_range",    required_argument, 0,  'a' },
       // RMT Threshold options.
       {"chi",          required_argument, 0,  'i' },
       {"th",           required_argument, 0,  't' },
@@ -153,6 +159,9 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
         break;
       case 'd':
         max_modes = atoi(optarg);
+        break;
+      case 'a':
+        min_range = atoi(optarg);
         break;
       // RMT threshold options.
       case 't':
@@ -217,6 +226,10 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
     }
     if (max_modes < 1) {
       fprintf(stderr, "Please provide a positive integer greater than 1 for the maximum modes values (--max_modes option).\n");
+      exit(-1);
+    }
+    if (min_range < 0) {
+      fprintf(stderr, "Please provide a positive integer greater than 0 for the minimum range (--min_range option).\n");
       exit(-1);
     }
     if (min_cluster_size < 0 || min_cluster_size == 0) {
@@ -329,7 +342,7 @@ void RunThreshold::execute() {
   // Find the RMT threshold.
   RMTThreshold * rmt = new RMTThreshold(ematrix, method, num_methods, th_method, thresholdStart,
       thresholdStep, chiSoughtValue, clustering, min_cluster_size, max_missing,
-      max_modes);
+      max_modes, min_range);
   rmt->findThreshold();
   printf("Done.\n");
 }
