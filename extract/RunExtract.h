@@ -62,6 +62,8 @@ class RunExtract {
     int min_cluster_size;
     // The maximum number of clusters a pair-wise comparision can have.
     int max_modes;
+    // The minimum range a cluster must have
+    float min_range;
 
     void parseMethods(char * methods_str);
 

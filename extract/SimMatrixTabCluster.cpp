@@ -6,13 +6,14 @@
 SimMatrixTabCluster::SimMatrixTabCluster(EMatrix *ematrix, int quiet, char ** method, int num_methods,
     char * th_method, int x_coord,
     int y_coord, char * gene1, char * gene2, float th, int max_missing,
-    int min_cluster_size, int max_modes)
+    int min_cluster_size, int max_modes, float min_range)
   : SimilarityMatrix(ematrix, quiet, method, num_methods, th_method, x_coord, y_coord, gene1, gene2, th) {
 
   // Initialize the class members.
   this->max_missing = max_missing;
   this->min_cluster_size = min_cluster_size;
   this->max_modes = max_modes;
+  this->min_range = min_range;
 }
 /**
  * Destructor
@@ -151,6 +152,51 @@ void SimMatrixTabCluster::writeNetwork() {
          // Filter the records
          if (fabs(cv) >= th && cluster_samples >= min_cluster_size  &&
              num_missing <= max_missing && num_clusters <= max_modes) {
+
+           // If a range is specified then exclude clusters with a range
+           // less than desired.
+           int range_okay = 1;
+           if (min_range) {
+
+             // Check if the first gene has a range less than the minimum
+             double * je = this->ematrix->getRow(j);
+             double min = INFINITY;
+             double max = 0;
+             double range = 0;
+             for(int e = 0; e < ematrix->getNumSamples(); e++) {
+               if (min > je[e]) {
+                 min = je[e];
+               }
+               if (max < je[e]) {
+                 max = je[e];
+               }
+               range = max - min;
+               if (range <= min_range) {
+                range_okay = 0;
+               }
+             }
+
+             // Check if the second gene has a range less than the minimum.
+             double * ke = this->ematrix->getRow(k);
+             min = INFINITY;
+             max = 0;
+             for(int e = 0; e < ematrix->getNumSamples(); e++) {
+               if (min > ke[e]) {
+                 min = ke[e];
+               }
+               if (max < ke[e]) {
+                 max = ke[e];
+               }
+             }
+             range = max - min;
+             if (range <= min_range) {
+               range_okay = 0;
+             }
+             // If the edge doesn't meet the range requirements then skip it.
+             if (range_okay == 0) {
+                continue;
+             }
+           }
 
            fprintf(edges, "%s\t%s\t", genes[j-1], genes[k-1]);
            for (int p = 0; p < num_methods; p++) {

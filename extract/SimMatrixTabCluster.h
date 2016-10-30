@@ -17,7 +17,8 @@ class SimMatrixTabCluster : public SimilarityMatrix {
     int min_cluster_size;
     // The maximum number of modes.
     int max_modes;
-
+    // The minimum range a cluster must have
+    float min_range;
 
 
 
@@ -27,7 +28,7 @@ class SimMatrixTabCluster : public SimilarityMatrix {
     // Constructur.
     SimMatrixTabCluster(EMatrix *ematrix, int quiet, char ** method, int num_methods,
         char * th_method, int x_coord, int y_cood, char * gene1, char * gene2, float th,
-        int max_missing, int min_cluster_size, int max_modes);
+        int max_missing, int min_cluster_size, int max_modes, float min_range);
 
     // Destructor.
     ~SimMatrixTabCluster();

@@ -55,6 +55,10 @@ void RunExtract::printUsage() {
   printf("                   has multiple modes (i.e. multiple clusters) then only clusters from those\n");
   printf("                   comparisions with modes equal to or less than the value specified are\n");
   printf("                   included. Default is 1.\n");
+  printf("  --min_range|-a   The minimum range of expression that a cluster must have \n");
+  printf("                   to be included.  This allows for clusters with very low\n");
+  printf("                   change in expression to be excluded.  Default is 0 which\n");
+  printf("                   indicates no such filter is performed.\n");
   printf("\n");
   printf("For Help:\n");
   printf("  --help|-h        Print these usage instructions\n");
@@ -65,6 +69,7 @@ RunExtract::RunExtract(int argc, char *argv[]) {
   // Set clustering defaults.
   max_missing = INFINITY;
   max_modes = 1;
+  min_range = 0;
   min_cluster_size = 30;
 
   // Set some default values;
@@ -119,6 +124,8 @@ RunExtract::RunExtract(int argc, char *argv[]) {
       {"max_missing",  required_argument, 0,  'g' },
       {"min_csize",    required_argument, 0,  'z' },
       {"max_modes",    required_argument, 0,  'd' },
+	  {"min_range",    required_argument, 0,  'a' },
+
 
       // Last element required to be all zeros.
       {0, 0, 0, 0}
@@ -190,6 +197,9 @@ RunExtract::RunExtract(int argc, char *argv[]) {
       case 'd':
         max_modes = atoi(optarg);
         break;
+      case 'a':
+        min_range = atof(optarg);
+        break;
       case 'h':
         printUsage();
         exit(-1);
@@ -226,6 +236,10 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      }
      if (max_modes < 1) {
        fprintf(stderr, "Please provide a positive integer greater than 1 for the maximum modes values (--max_modes option).\n");
+       exit(-1);
+     }
+     if (min_range < 0) {
+       fprintf(stderr, "Please provide a positive integer greater than 0 for the minimum range (--min_range option).\n");
        exit(-1);
      }
      if (min_cluster_size < 0 || min_cluster_size == 0) {
@@ -366,8 +380,8 @@ void RunExtract::execute() {
   // Get the similarity matrix.
   if (clustering) {
     SimMatrixTabCluster * smatrix = new SimMatrixTabCluster(ematrix, quiet,
-      method, num_methods, th_method, x_coord, y_coord, gene1, gene2, th, max_missing, min_cluster_size,
-      max_modes);
+      method, num_methods, th_method, x_coord, y_coord, gene1, gene2, th, max_missing,
+	  min_cluster_size, max_modes, min_range);
     // If we have a threshold then we want to get the edges of the network.
     // Otherwise the user has asked to print out the similarity value for
     // two genes.
