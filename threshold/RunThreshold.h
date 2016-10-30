@@ -57,7 +57,7 @@ class RunThreshold {
     // The maximum number of modes to consider
     int max_modes;
     // The minimum range a cluster must have
-    int min_range;
+    float min_range;
 
     void parseMethods(char * methods_str);
 

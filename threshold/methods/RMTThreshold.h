@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <regex.h>
+#include <math.h>
 #include "../../general/vector.h"
 
 
@@ -59,7 +60,7 @@ class RMTThreshold : public ThresholdMethod {
     RMTThreshold(EMatrix * ematrix, char ** method, int num_methods, char * th_method,
         double thresholdStart, double thresholdStep, double chiSoughtValue,
         char * clustering, int min_cluster_size, int max_missing, int max_modes,
-        int min_range);
+        float min_range);
     ~RMTThreshold();
 
     double findThreshold();

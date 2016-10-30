@@ -3,7 +3,7 @@
 RMTThreshold::RMTThreshold(EMatrix * ematrix, char ** method, int num_methods,
     char * th_method, double thresholdStart, double thresholdStep, double chiSoughtValue,
     char * clustering, int min_cluster_size, int max_missing, int max_modes,
-    int min_range)
+    float min_range)
   : ThresholdMethod(ematrix, method, num_methods, th_method, clustering,
       min_cluster_size, max_missing, max_modes, min_range) {
 
@@ -513,15 +513,17 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
               double * je = this->ematrix->getRow(j);
               double min = INFINITY;
               double max = 0;
+              double range = 0;
               for(int e = 0; e < ematrix->getNumSamples(); e++) {
-                if (min < je[e]) {
+                if (min > je[e]) {
                   min = je[e];
                 }
-                if (max > je[e]) {
+                if (max < je[e]) {
                   max = je[e];
                 }
               }
-              if (max - min > min_range) {
+              range = max - min;
+              if (range <= min_range) {
                  range_okay = 0;
               }
 
@@ -530,14 +532,15 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
               min = INFINITY;
               max = 0;
               for(int e = 0; e < ematrix->getNumSamples(); e++) {
-                if (min < ke[e]) {
+                if (min > ke[e]) {
                   min = ke[e];
                 }
-                if (max > ke[e]) {
+                if (max < ke[e]) {
                   max = ke[e];
                 }
               }
-              if (max - min > min_range) {
+              range = max - min;
+              if (range <= min_range) {
                 range_okay = 0;
               }
             }

@@ -7,7 +7,7 @@
  */
 ThresholdMethod::ThresholdMethod(EMatrix *ematrix, char ** method, int num_methods,
     char * th_method, char * clustering, int min_cluster_size, int max_missing,
-    int max_modes, int min_range) {
+    int max_modes, float min_range) {
 
   this->ematrix = ematrix;
   this->method = method;
