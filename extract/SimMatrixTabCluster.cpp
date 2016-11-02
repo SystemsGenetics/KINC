@@ -164,10 +164,10 @@ void SimMatrixTabCluster::writeNetwork() {
              double max = 0;
              double range = 0;
              for(int e = 0; e < ematrix->getNumSamples(); e++) {
-               if (min > je[e]) {
+               if (samples[e] == '1' && min > je[e]) {
                  min = je[e];
                }
-               if (max < je[e]) {
+               if (samples[e] == '1' && max < je[e]) {
                  max = je[e];
                }
                range = max - min;
@@ -181,10 +181,10 @@ void SimMatrixTabCluster::writeNetwork() {
              min = INFINITY;
              max = 0;
              for(int e = 0; e < ematrix->getNumSamples(); e++) {
-               if (min > ke[e]) {
+               if (samples[e] == '1' && min > ke[e]) {
                  min = ke[e];
                }
-               if (max < ke[e]) {
+               if (samples[e] == '1' && max < ke[e]) {
                  max = ke[e];
                }
              }
@@ -192,45 +192,43 @@ void SimMatrixTabCluster::writeNetwork() {
              if (range <= min_range) {
                range_okay = 0;
              }
-             // If the edge doesn't meet the range requirements then skip it.
-             if (range_okay == 0) {
-                continue;
+           }
+
+           // Write out the output if the range is okay.
+           if (range_okay) {
+             fprintf(edges, "%s\t%s\t", genes[j-1], genes[k-1]);
+             for (int p = 0; p < num_methods; p++) {
+               fprintf(edges, "%0.8f\t", *scores[p]);
              }
-           }
+             fprintf(edges, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
 
-           fprintf(edges, "%s\t%s\t", genes[j-1], genes[k-1]);
-           for (int p = 0; p < num_methods; p++) {
-             fprintf(edges, "%0.8f\t", *scores[p]);
-           }
-           fprintf(edges, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
-
-           // if the method is 'pc' (Pearson's correlation) then we will have
-           // negative and positive values, and we'll write those to separate files
-           if (strcmp(th_method, "pc") == 0 || strcmp(th_method, "sc") == 0) {
-             if(cv >= 0){
-               fprintf(edgesP, "%s\t%s\t", genes[j-1], genes[k-1]);
-               for (int p = 0; p < num_methods; p++) {
-                 fprintf(edgesP, "%0.8f\t", *scores[p]);
+             // if the method is 'pc' (Pearson's correlation) then we will have
+             // negative and positive values, and we'll write those to separate files
+             if (strcmp(th_method, "pc") == 0 || strcmp(th_method, "sc") == 0) {
+               if (cv >= 0) {
+                 fprintf(edgesP, "%s\t%s\t", genes[j-1], genes[k-1]);
+                 for (int p = 0; p < num_methods; p++) {
+                   fprintf(edgesP, "%0.8f\t", *scores[p]);
+                 }
+                 fprintf(edgesP, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
                }
-               fprintf(edgesP, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
-             }
-             else {
-               fprintf(edgesN, "%s\t%s\t", genes[j-1], genes[k-1]);
-               for (int p = 0; p < num_methods; p++) {
-                 fprintf(edgesN, "%0.8f\t", *scores[p]);
+               else {
+                 fprintf(edgesN, "%s\t%s\t", genes[j-1], genes[k-1]);
+                 for (int p = 0; p < num_methods; p++) {
+                   fprintf(edgesN, "%0.8f\t", *scores[p]);
+                 }
+                 fprintf(edgesN, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
                }
-               fprintf(edgesN, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
-
              }
            }
-         }
+         } // end if (fabs(cv) >= th ...
 
          for (int l = 0; l < num_methods; l++) {
            free(scores[l]);
          }
          free(scores);
 
-       }
+       } // end while (!feof(fp)) { ...
        fclose(fp);
      }
    }
