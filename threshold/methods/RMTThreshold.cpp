@@ -507,7 +507,7 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
             // If a range is specified then exclude clusters with a range
             // less than desired.
             int range_okay = 1;
-            if (min_range) {
+            if (min_range > 0) {
 
               // Check if the first gene has a range less than the minimum
               double * je = this->ematrix->getRow(j);
