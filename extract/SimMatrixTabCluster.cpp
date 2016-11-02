@@ -170,10 +170,10 @@ void SimMatrixTabCluster::writeNetwork() {
                if (samples[e] == '1' && max < je[e]) {
                  max = je[e];
                }
-               range = max - min;
-               if (range <= min_range) {
-                range_okay = 0;
-               }
+             }
+             range = max - min;
+             if (range <= min_range) {
+               range_okay = 0;
              }
 
              // Check if the second gene has a range less than the minimum.
