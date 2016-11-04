@@ -156,11 +156,11 @@ void SimMatrixTabCluster::writeNetwork() {
            // If a range is specified then exclude clusters with a range
            // less than desired.
            int range_okay = 1;
-           if (min_range) {
+           if (min_range > 0) {
 
              // Check if the first gene has a range less than the minimum
-             double * je = this->ematrix->getRow(j);
-             double min = INFINITY;
+             double * je = this->ematrix->getRow(j-1);
+             double min = 99999;
              double max = 0;
              double range = 0;
              for(int e = 0; e < ematrix->getNumSamples(); e++) {
@@ -172,13 +172,13 @@ void SimMatrixTabCluster::writeNetwork() {
                }
                range = max - min;
                if (range <= min_range) {
-                range_okay = 0;
+                 range_okay = 0;
                }
              }
 
              // Check if the second gene has a range less than the minimum.
-             double * ke = this->ematrix->getRow(k);
-             min = INFINITY;
+             double * ke = this->ematrix->getRow(k-1);
+             min = 99999;
              max = 0;
              for(int e = 0; e < ematrix->getNumSamples(); e++) {
                if (samples[e] == '1' && min > ke[e]) {
