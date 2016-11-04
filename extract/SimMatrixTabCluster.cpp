@@ -170,10 +170,10 @@ void SimMatrixTabCluster::writeNetwork() {
                if (samples[e] == '1' && max < je[e]) {
                  max = je[e];
                }
-               range = max - min;
-               if (range <= min_range) {
-                 range_okay = 0;
-               }
+             }
+             range = max - min;
+             if (range <= min_range) {
+               range_okay = 0;
              }
 
              // Check if the second gene has a range less than the minimum.
@@ -195,7 +195,7 @@ void SimMatrixTabCluster::writeNetwork() {
            }
 
            // Write out the output if the range is okay.
-           if (range_okay) {
+           if (range_okay == 1) {
              fprintf(edges, "%s\t%s\t", genes[j-1], genes[k-1]);
              for (int p = 0; p < num_methods; p++) {
                fprintf(edges, "%0.8f\t", *scores[p]);

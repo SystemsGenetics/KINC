@@ -17,7 +17,7 @@ void RunExtract::printUsage() {
   printf("                   Pearson's correlation ('pc'), Spearman's rank ('sc')\n");
   printf("                   and Mutual Information ('mi'). Provide the methods that\n");
   printf("                   were used in the 'similarity' step.  The methods must appear\n");
-  printf("                   in the same order.");
+  printf("                   in the same order.\n");
   printf("  --th_method|-t   The method used for thresholding.  Only one method uses used\n");
   printf("                   for thresholding even if multiple methods are provided\n");
   printf("                   for the --method argument.\n");
