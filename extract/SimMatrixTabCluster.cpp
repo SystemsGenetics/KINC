@@ -149,76 +149,42 @@ void SimMatrixTabCluster::writeNetwork() {
          float ** scores = parseScores((char *) &cscores);
          cv = *(scores[th_method_index]);
 
+         // Get the range of expression for this cluster.
+         double range_j = this->ematrix->getRange(j-1, samples);
+         double range_k = this->ematrix->getRange(k-1, samples);
+         int range_okay = 1;
+         if (min_range > 0 && (range_j <= min_range || range_k <= min_range)) {
+           range_okay = 0;
+         }
+
          // Filter the records
          if (fabs(cv) >= th && cluster_samples >= min_cluster_size  &&
-             num_missing <= max_missing && num_clusters <= max_modes) {
-
-           // If a range is specified then exclude clusters with a range
-           // less than desired.
-           int range_okay = 1;
-           if (min_range > 0) {
-
-             // Check if the first gene has a range less than the minimum
-             double * je = this->ematrix->getRow(j-1);
-             double min = 99999;
-             double max = 0;
-             double range = 0;
-             for(int e = 0; e < ematrix->getNumSamples(); e++) {
-               if (samples[e] == '1' && min > je[e]) {
-                 min = je[e];
-               }
-               if (samples[e] == '1' && max < je[e]) {
-                 max = je[e];
-               }
-             }
-             range = max - min;
-             if (range <= min_range) {
-               range_okay = 0;
-             }
-
-             // Check if the second gene has a range less than the minimum.
-             double * ke = this->ematrix->getRow(k-1);
-             min = 99999;
-             max = 0;
-             for(int e = 0; e < ematrix->getNumSamples(); e++) {
-               if (samples[e] == '1' && min > ke[e]) {
-                 min = ke[e];
-               }
-               if (samples[e] == '1' && max < ke[e]) {
-                 max = ke[e];
-               }
-             }
-             range = max - min;
-             if (range <= min_range) {
-               range_okay = 0;
-             }
-           }
+             num_missing <= max_missing && num_clusters <= max_modes &&
+             range_okay) {
 
            // Write out the output if the range is okay.
-           if (range_okay == 1) {
-             fprintf(edges, "%s\t%s\t", genes[j-1], genes[k-1]);
-             for (int p = 0; p < num_methods; p++) {
-               fprintf(edges, "%0.8f\t", *scores[p]);
-             }
-             fprintf(edges, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
+           fprintf(edges, "%s\t%s\t", genes[j-1], genes[k-1]);
+           for (int p = 0; p < num_methods; p++) {
+             fprintf(edges, "%0.8f\t", *scores[p]);
+           }
+           fprintf(edges, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
 
-             // if the method is 'pc' (Pearson's correlation) then we will have
-             // negative and positive values, and we'll write those to separate files
-             if (strcmp(th_method, "pc") == 0 || strcmp(th_method, "sc") == 0) {
-               if (cv >= 0) {
-                 fprintf(edgesP, "%s\t%s\t", genes[j-1], genes[k-1]);
-                 for (int p = 0; p < num_methods; p++) {
-                   fprintf(edgesP, "%0.8f\t", *scores[p]);
-                 }
-                 fprintf(edgesP, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
+           // if the method is 'pc' (Pearson's correlation) then we will have
+           // negative and positive values, and we'll write those to separate files
+           if (strcmp(th_method, "pc") == 0 || strcmp(th_method, "sc") == 0) {
+             if (cv >= 0) {
+               fprintf(edgesP, "%s\t%s\t", genes[j-1], genes[k-1]);
+               for (int p = 0; p < num_methods; p++) {
+                 fprintf(edgesP, "%0.8f\t", *scores[p]);
                }
-               else {
-                 fprintf(edgesN, "%s\t%s\t", genes[j-1], genes[k-1]);
-                 for (int p = 0; p < num_methods; p++) {
-                   fprintf(edgesN, "%0.8f\t", *scores[p]);
-                 }
-                 fprintf(edgesN, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
+               fprintf(edgesP, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
+             }
+             else {
+               fprintf(edgesN, "%s\t%s\t", genes[j-1], genes[k-1]);
+               for (int p = 0; p < num_methods; p++) {
+                 fprintf(edgesN, "%0.8f\t", *scores[p]);
                }
+               fprintf(edgesN, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
              }
            }
          } // end if (fabs(cv) >= th ...

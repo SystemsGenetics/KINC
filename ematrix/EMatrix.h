@@ -79,6 +79,9 @@ class EMatrix {
     // Indicates if missing values are omitted.
     int isMissingOmitted() { return omit_na; }
 
+    // Returns the range in expression of a set of samples
+    double getRange(int i, char * samples);
+
     // Return the max length of the genes and samples
     int getMaxGeneLen() { return max_gene_len; }
     int getMaxSampleLen() { return max_sample_len; }
