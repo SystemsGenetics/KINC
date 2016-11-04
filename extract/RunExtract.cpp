@@ -290,9 +290,6 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      if (th > 0) {
        printf("  Using threshold of %f\n", th);
      }
-     else {
-       printf("  Using coords (%d, %d)\n", x_coord, y_coord);
-     }
    }
 
    // Load the input expression matrix.
@@ -313,6 +310,7 @@ RunExtract::RunExtract(int argc, char *argv[]) {
        fprintf(stderr, "Could not find gene %s in the genes list file\n", gene2);
        exit(-1);
      }
+     printf("  Using coords (%d, %d)\n", x_coord, y_coord);
    }
 
    // Make sure we have a positive integer for the x and y coordinates.
