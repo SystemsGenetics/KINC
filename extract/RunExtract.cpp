@@ -281,7 +281,22 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      exit(-1);
    }
 
+   // print out some setup details
+   if (!quiet) {
+     for(int i = 0; i < this->num_methods; i++) {
+       printf("  Expecting similarity methods: '%s'\n", method[i]);
+     }
+     printf("  Method for thresholding: %s\n", th_method);
+     if (th > 0) {
+       printf("  Using threshold of %f\n", th);
+     }
+     else {
+       printf("  Using coords (%d, %d)\n", x_coord, y_coord);
+     }
+   }
+
    // Load the input expression matrix.
+   printf("  Reading expression matrix...\n");
    ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
 
    // if the user supplied gene
@@ -308,20 +323,6 @@ RunExtract::RunExtract(int argc, char *argv[]) {
    }
 
    // TODO: make sure the th_method is in the method array.
-
-   // print out some setup details
-   if (!quiet) {
-     for(int i = 0; i < this->num_methods; i++) {
-       printf("  Expecting similarity methods: '%s'\n", method[i]);
-     }
-     printf("  Method for thresholding: %s\n", th_method);
-     if (th > 0) {
-       printf("  Using threshold of %f\n", th);
-     }
-     else {
-       printf("  Using coords (%d, %d)\n", x_coord, y_coord);
-     }
-   }
 }
 /**
  *
