@@ -494,60 +494,27 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
           float ** scores = parseScores((char *) &cscores);
           cv = *(scores[th_method_index]);
 
+          // Make sure there aren't more clusters than was allowed.
+          if (cluster_num > max_clusters) {
+            fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
+            exit(-1);
+          }
+
+          // Get the range of expression for this cluster.
+          double range_j = this->ematrix->getRange(j-1, samples);
+          double range_k = this->ematrix->getRange(k-1, samples);
+          int range_okay = 1;
+          if (min_range > 0 && (range_j <= min_range || range_k <= min_range)) {
+            range_okay = 0;
+          }
+
           // filter the record.
           if (fabs(cv) >= th && cluster_samples >= min_cluster_size  &&
-              num_missing <= max_missing && num_clusters <= max_modes) {
+              num_missing <= max_missing && num_clusters <= max_modes &&
+              range_okay == 1) {
 
-            // Make sure there aren't more clusters than was allowed.
-            if (cluster_num > max_clusters) {
-              fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
-              exit(-1);
-            }
-
-            // If a range is specified then exclude clusters with a range
-            // less than desired.
-            int range_okay = 1;
-            if (min_range > 0) {
-
-              // Check if the first gene has a range less than the minimum
-              double * je = this->ematrix->getRow(j-1);
-              double min = 99999;
-              double max = 0;
-              double range = 0;
-              for(int e = 0; e < ematrix->getNumSamples(); e++) {
-                if (samples[e] == '1' && min > je[e]) {
-                  min = je[e];
-                }
-                if (samples[e] == '1' && max < je[e]) {
-                  max = je[e];
-                }
-              }
-              range = max - min;
-              if (range <= min_range) {
-                 range_okay = 0;
-              }
-
-              // Check if the second gene has a range less than the minimum.
-              double * ke = this->ematrix->getRow(k-1);
-              min = 99999;
-              max = 0;
-              for(int e = 0; e < ematrix->getNumSamples(); e++) {
-                if (samples[e] == '1' && min > ke[e]) {
-                  min = ke[e];
-                }
-                if (samples[e] == '1' && max < ke[e]) {
-                  max = ke[e];
-                }
-              }
-              range = max - min;
-              if (range <= min_range) {
-                range_okay = 0;
-              }
-            }
-            if (range_okay == 1) {
-              usedFlag[(j - 1) * max_clusters + (cluster_num - 1)] = 1;
-              usedFlag[(k - 1) * max_clusters + (cluster_num - 1)] = 1;
-            }
+            usedFlag[(j - 1) * max_clusters + (cluster_num - 1)] = 1;
+            usedFlag[(k - 1) * max_clusters + (cluster_num - 1)] = 1;
           }
 
           for (int l = 0; l < num_methods; l++) {
@@ -653,59 +620,27 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
           continue;
         }
 
+        if (cluster_num > max_clusters) {
+          fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
+          exit(-1);
+        }
+
+        // Get the range of expression for this cluster.
+        double range_j = this->ematrix->getRange(j-1, samples);
+        double range_k = this->ematrix->getRange(k-1, samples);
+        int range_okay = 1;
+        if (min_range > 0 && (range_j <= min_range || range_k <= min_range)) {
+          range_okay = 0;
+        }
+
         if (fabs(cv) >= th && cluster_samples >= min_cluster_size  &&
-            num_missing <= max_missing && num_clusters <= max_modes) {
-          if (cluster_num > max_clusters) {
-            fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
-            exit(-1);
-          }
+            num_missing <= max_missing && num_clusters <= max_modes &&
+            range_okay) {
 
-          // If a range is specified then exclude clusters with a range
-          // less than desired.
-          int range_okay = 1;
-          if (min_range > 0) {
-
-            // Check if the first gene has a range less than the minimum
-            double * je = this->ematrix->getRow(j-1);
-            double min = 99999;
-            double max = 0;
-            double range = 0;
-            for(int e = 0; e < ematrix->getNumSamples(); e++) {
-              if (samples[e] == '1' && min > je[e]) {
-                min = je[e];
-              }
-              if (samples[e] == '1' && max < je[e]) {
-                max = je[e];
-              }
-            }
-            range = max - min;
-            if (range <= min_range) {
-               range_okay = 0;
-            }
-
-            // Check if the second gene has a range less than the minimum.
-            double * ke = this->ematrix->getRow(k-1);
-            min = 99999;
-            max = 0;
-            for(int e = 0; e < ematrix->getNumSamples(); e++) {
-              if (samples[e] == '1' && min > ke[e]) {
-                min = ke[e];
-              }
-              if (samples[e] == '1' && max < ke[e]) {
-                max = ke[e];
-              }
-            }
-            range = max - min;
-            if (range <= min_range) {
-              range_okay = 0;
-            }
-          }
-          if (range_okay == 1) {
-            int index_j = cutM_index[(j - 1) * max_clusters + (cluster_num - 1)];
-            int index_k = cutM_index[(k - 1) * max_clusters + (cluster_num - 1)];
-            int ci = index_k + (used * index_j);
-            cutM[ci] = cv;
-          }
+          int index_j = cutM_index[(j - 1) * max_clusters + (cluster_num - 1)];
+          int index_k = cutM_index[(k - 1) * max_clusters + (cluster_num - 1)];
+          int ci = index_k + (used * index_j);
+          cutM[ci] = cv;
         }
       }
       fclose(fp);
