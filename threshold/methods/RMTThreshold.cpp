@@ -12,7 +12,8 @@ RMTThreshold::RMTThreshold(EMatrix * ematrix, char ** method, int num_methods,
   this->chiSoughtValue = chiSoughtValue;
   this->clustering = clustering;
 
-  minEigenVectorSize = 100;
+  //
+  minEigenVectorSize = 50;
 
   // TODO: perhaps the user should have a bit more control over what these
   // values should be? 99.607 (Chi-square df = 60 (number of bins in NNSD
@@ -106,12 +107,13 @@ double RMTThreshold::findThreshold() {
       E = calculateEigen(newM, size);
       free(newM);
 
-//      // print out eigenvalues to file
-//      fprintf(eigenF, "%f\t", th);
-//      for (int i = 0; i < size ; i++) {
-//        fprintf(eigenF, "%f\t", E[i]);
-//      }
-//      fprintf(eigenF,"\n");
+      // print out eigenvalues to file
+      fprintf(eigenF, "%f\t", th);
+      for (int i = 0; i < size ; i++) {
+        fprintf(eigenF, "%f\t", E[i]);
+      }
+      fprintf(eigenF,"\n");
+      fflush(eigenF);
 
       printf("  testing similarity of NNSD with Poisson...\n");
       chi = getNNSDChiSquare(E, size);
@@ -161,11 +163,11 @@ double RMTThreshold::findThreshold() {
         free(newM);
 
         // print out eigenvalues to file
-       /* fprintf(eigenF, "%f\t", th);
+        fprintf(eigenF, "%f\t", th);
         for (int j = 0 ; j < size ; j++) {
           fprintf(eigenF, "%f\t", E[j]);
         }
-        fprintf(eigenF, "\n");*/
+        fprintf(eigenF, "\n");
         chi = getNNSDChiSquare(E, size);
         fprintf(chiF, "%f\t%f\t%d\n", th, chi, size);
         fflush(chiF);
@@ -188,7 +190,7 @@ double RMTThreshold::findThreshold() {
 
   // close the chi and eigen files now that results are written
   fclose(chiF);
-  //fclose(eigenF);
+  fclose(eigenF);
 
   // Set the Properties file according to success or failure
   if(finalChi < chiSquareTestThreshold){
@@ -745,15 +747,17 @@ double * RMTThreshold::unfolding(float * e, int size, int m) {
   // chapter 27: cspline is a natural spline.
   // Changed to akima spline (2/25/2016) -- spf
   gsl_interp_accel *acc = gsl_interp_accel_alloc();
-  gsl_spline *spline = gsl_spline_alloc(gsl_interp_akima, count);
+//  gsl_spline *spline = gsl_spline_alloc(gsl_interp_akima, count);
+//  gsl_spline *spline = gsl_spline_alloc(gsl_interp_cspline, count);
+  gsl_spline *spline = gsl_spline_alloc(gsl_interp_akima_periodic, count);
   gsl_spline_init(spline, oX, oY, count);
 
   // Estimate new eigenvalues along the spline curve.  We provide the
   // eigenvalues and the interplolation function gives us new y values
   // in the range of 0 to 1.
   double * yy = (double*) malloc(sizeof(double) * size);
-  for (i = 0; i < size - 2; i++) {
-    yy[i+1] = gsl_spline_eval(spline, e[i+1], acc);
+  for (i = 1; i < size - 1; i++) {
+    yy[i] = gsl_spline_eval(spline, e[i], acc);
   }
 
   // Calculate the spacing array.
@@ -824,6 +828,7 @@ float * RMTThreshold::degenerate(float* eigens, int size, int* newSize) {
     }
   }
   free(flags);
+ 
 
   // Set the newSize argument.
   *newSize = count;
@@ -853,20 +858,20 @@ double RMTThreshold::getNNSDChiSquare(float* eigens, int size) {
   // The new size of the eigenvalue array after duplicates removed
   int newSize;
 
+  // Remove duplicates from the list of eigenvalues.
+  newE = degenerate(eigens, size, &newSize);
+
+  // Make sure our vector of eigenvalues is still large enough after
+  // duplicates have been removed. If not, return a -1.
+  if (newSize < minEigenVectorSize) {
+    printf("    Chi-square test failed: eigenvalue array too small after duplicate removal. See the eigenvector output file.\n");
+    return -1;
+  }
+
   // We want to generate an average Chi-square value across various levels of
   // unfolding. Therefore, we iterate through the min and max unfolding pace
   // and then average the Chi-square values returned
   for (m = minUnfoldingPace; m < maxUnfoldingPace; m++) {
-
-    // Remove duplicates from the list of eigenvalues.
-    newE = degenerate(eigens, size, &newSize);
-
-    // Make sure our vector of eigenvalues is still large enough after
-    // duplicates have been removed. If not, return a -1.
-    if (newSize < minEigenVectorSize) {
-      printf("    Chi-square test failed: eigenvalue array too small after duplicate removal. See the eigenvector output file.\n");
-      continue;
-    }
 
     // If the size / pace is fewer than 5 then skip this test
     if (newSize / m < 5) {
@@ -878,8 +883,9 @@ double RMTThreshold::getNNSDChiSquare(float* eigens, int size) {
     avg_chiTest += chiTest;
     i++;
 
-    free(newE);
   }
+
+  free(newE);
 
   // return the average Chi-square value
   return avg_chiTest / i;

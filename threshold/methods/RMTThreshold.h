@@ -50,6 +50,7 @@ class RMTThreshold : public ThresholdMethod {
     float * calculateEigen(float * smatrix, int size);
     //
     double * unfolding(float * e, int size, int m);
+    double * unfoldingByCDF(float * e, int size, int m);
     // Removes duplicate eigenvalues from an array of eigenvalues.
     float * degenerate(float* eigens, int size, int* newSize);
 
