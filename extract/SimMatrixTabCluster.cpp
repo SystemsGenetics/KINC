@@ -6,13 +6,14 @@
 SimMatrixTabCluster::SimMatrixTabCluster(EMatrix *ematrix, int quiet, char ** method, int num_methods,
     char * th_method, int x_coord,
     int y_coord, char * gene1, char * gene2, float th, int max_missing,
-    int min_cluster_size, int max_modes)
+    int min_cluster_size, int max_modes, float min_range)
   : SimilarityMatrix(ematrix, quiet, method, num_methods, th_method, x_coord, y_coord, gene1, gene2, th) {
 
   // Initialize the class members.
   this->max_missing = max_missing;
   this->min_cluster_size = min_cluster_size;
   this->max_modes = max_modes;
+  this->min_range = min_range;
 }
 /**
  * Destructor
@@ -148,10 +149,21 @@ void SimMatrixTabCluster::writeNetwork() {
          float ** scores = parseScores((char *) &cscores);
          cv = *(scores[th_method_index]);
 
+         // Get the range of expression for this cluster.
+         double range_j = this->ematrix->getRange(j-1, samples);
+         double range_k = this->ematrix->getRange(k-1, samples);
+         int range_okay = 1;
+
+         if (min_range > 0 && (range_j <= min_range || range_k <= min_range)) {
+           range_okay = 0;
+         }
+
          // Filter the records
          if (fabs(cv) >= th && cluster_samples >= min_cluster_size  &&
-             num_missing <= max_missing && num_clusters <= max_modes) {
+             num_missing <= max_missing && num_clusters <= max_modes &&
+             range_okay) {
 
+           // Write out the output if the range is okay.
            fprintf(edges, "%s\t%s\t", genes[j-1], genes[k-1]);
            for (int p = 0; p < num_methods; p++) {
              fprintf(edges, "%0.8f\t", *scores[p]);
@@ -161,7 +173,7 @@ void SimMatrixTabCluster::writeNetwork() {
            // if the method is 'pc' (Pearson's correlation) then we will have
            // negative and positive values, and we'll write those to separate files
            if (strcmp(th_method, "pc") == 0 || strcmp(th_method, "sc") == 0) {
-             if(cv >= 0){
+             if (cv >= 0) {
                fprintf(edgesP, "%s\t%s\t", genes[j-1], genes[k-1]);
                for (int p = 0; p < num_methods; p++) {
                  fprintf(edgesP, "%0.8f\t", *scores[p]);
@@ -174,17 +186,16 @@ void SimMatrixTabCluster::writeNetwork() {
                  fprintf(edgesN, "%0.8f\t", *scores[p]);
                }
                fprintf(edgesN, "co\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n", cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold, samples);
-
              }
            }
-         }
+         } // end if (fabs(cv) >= th ...
 
          for (int l = 0; l < num_methods; l++) {
            free(scores[l]);
          }
          free(scores);
 
-       }
+       } // end while (!feof(fp)) { ...
        fclose(fp);
      }
    }

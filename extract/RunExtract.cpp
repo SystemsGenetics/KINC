@@ -17,7 +17,7 @@ void RunExtract::printUsage() {
   printf("                   Pearson's correlation ('pc'), Spearman's rank ('sc')\n");
   printf("                   and Mutual Information ('mi'). Provide the methods that\n");
   printf("                   were used in the 'similarity' step.  The methods must appear\n");
-  printf("                   in the same order.");
+  printf("                   in the same order.\n");
   printf("  --th_method|-t   The method used for thresholding.  Only one method uses used\n");
   printf("                   for thresholding even if multiple methods are provided\n");
   printf("                   for the --method argument.\n");
@@ -55,6 +55,10 @@ void RunExtract::printUsage() {
   printf("                   has multiple modes (i.e. multiple clusters) then only clusters from those\n");
   printf("                   comparisions with modes equal to or less than the value specified are\n");
   printf("                   included. Default is 1.\n");
+  printf("  --min_range|-a   The minimum range of expression that a cluster must have \n");
+  printf("                   to be included.  This allows for clusters with very low\n");
+  printf("                   change in expression to be excluded.  Default is 0 which\n");
+  printf("                   indicates no such filter is performed.\n");
   printf("\n");
   printf("For Help:\n");
   printf("  --help|-h        Print these usage instructions\n");
@@ -65,6 +69,7 @@ RunExtract::RunExtract(int argc, char *argv[]) {
   // Set clustering defaults.
   max_missing = INFINITY;
   max_modes = 1;
+  min_range = 0;
   min_cluster_size = 30;
 
   // Set some default values;
@@ -119,6 +124,8 @@ RunExtract::RunExtract(int argc, char *argv[]) {
       {"max_missing",  required_argument, 0,  'g' },
       {"min_csize",    required_argument, 0,  'z' },
       {"max_modes",    required_argument, 0,  'd' },
+	  {"min_range",    required_argument, 0,  'a' },
+
 
       // Last element required to be all zeros.
       {0, 0, 0, 0}
@@ -190,6 +197,9 @@ RunExtract::RunExtract(int argc, char *argv[]) {
       case 'd':
         max_modes = atoi(optarg);
         break;
+      case 'a':
+        min_range = atof(optarg);
+        break;
       case 'h':
         printUsage();
         exit(-1);
@@ -226,6 +236,10 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      }
      if (max_modes < 1) {
        fprintf(stderr, "Please provide a positive integer greater than 1 for the maximum modes values (--max_modes option).\n");
+       exit(-1);
+     }
+     if (min_range < 0) {
+       fprintf(stderr, "Please provide a positive integer greater than 0 for the minimum range (--min_range option).\n");
        exit(-1);
      }
      if (min_cluster_size < 0 || min_cluster_size == 0) {
@@ -267,7 +281,19 @@ RunExtract::RunExtract(int argc, char *argv[]) {
      exit(-1);
    }
 
+   // print out some setup details
+   if (!quiet) {
+     for(int i = 0; i < this->num_methods; i++) {
+       printf("  Expecting similarity methods: '%s'\n", method[i]);
+     }
+     printf("  Method for thresholding: %s\n", th_method);
+     if (th > 0) {
+       printf("  Using threshold of %f\n", th);
+     }
+   }
+
    // Load the input expression matrix.
+   printf("  Reading expression matrix...\n");
    ematrix = new EMatrix(infilename, rows, cols, headers, omit_na, na_val, func);
 
    // if the user supplied gene
@@ -284,6 +310,7 @@ RunExtract::RunExtract(int argc, char *argv[]) {
        fprintf(stderr, "Could not find gene %s in the genes list file\n", gene2);
        exit(-1);
      }
+     printf("  Using coords (%d, %d)\n", x_coord, y_coord);
    }
 
    // Make sure we have a positive integer for the x and y coordinates.
@@ -294,20 +321,6 @@ RunExtract::RunExtract(int argc, char *argv[]) {
    }
 
    // TODO: make sure the th_method is in the method array.
-
-   // print out some setup details
-   if (!quiet) {
-     for(int i = 0; i < this->num_methods; i++) {
-       printf("  Expecting similarity methods: '%s'\n", method[i]);
-     }
-     printf("  Method for thresholding: %s\n", th_method);
-     if (th > 0) {
-       printf("  Using threshold of %f\n", th);
-     }
-     else {
-       printf("  Using coords (%d, %d)\n", x_coord, y_coord);
-     }
-   }
 }
 /**
  *
@@ -366,8 +379,8 @@ void RunExtract::execute() {
   // Get the similarity matrix.
   if (clustering) {
     SimMatrixTabCluster * smatrix = new SimMatrixTabCluster(ematrix, quiet,
-      method, num_methods, th_method, x_coord, y_coord, gene1, gene2, th, max_missing, min_cluster_size,
-      max_modes);
+      method, num_methods, th_method, x_coord, y_coord, gene1, gene2, th, max_missing,
+	  min_cluster_size, max_modes, min_range);
     // If we have a threshold then we want to get the edges of the network.
     // Otherwise the user has asked to print out the similarity value for
     // two genes.

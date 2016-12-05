@@ -193,3 +193,24 @@ void EMatrix::log10Transform(){
   }
 }
 
+/**
+ *
+ */
+double EMatrix::getRange(int i, char * samples) {
+
+  double * je = this->getRow(i);
+  double min = 99999;
+  double max = -99999;
+  double range = 0;
+  for(int e = 0; e < this->getNumSamples(); e++) {
+    if (samples[e] == '1' && min > je[e]) {
+      min = je[e];
+    }
+    if (samples[e] == '1' && max < je[e]) {
+      max = je[e];
+    }
+  }
+  range = max - min;
+  return range;
+}
+

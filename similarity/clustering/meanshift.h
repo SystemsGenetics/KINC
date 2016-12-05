@@ -13,6 +13,7 @@
 #include <string.h>
 #include "../stats/stats.h"
 #include "../vector.h"
+#include "PairWiseClusters.h"
 
 typedef struct {
   // Maps the points in the 2D vector with the cluster number they belong to.

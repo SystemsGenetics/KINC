@@ -161,7 +161,7 @@ RunThreshold::RunThreshold(int argc, char *argv[]) {
         max_modes = atoi(optarg);
         break;
       case 'a':
-        min_range = atoi(optarg);
+        min_range = atof(optarg);
         break;
       // RMT threshold options.
       case 't':

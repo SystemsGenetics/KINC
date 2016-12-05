@@ -11,7 +11,7 @@ MPI_LDLINK =
 CFLAGS = -g -Wall -fno-inline
 # Non-debugging CFLAGS
 #CFLAGS = -Wall 
-INCLUDES = -I/usr/local/include 
+INCLUDES = 
 LDFLAGS = -Wall -O3 -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -lmixmod_newmat -g
 
 OBJS = \
