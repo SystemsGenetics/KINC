@@ -568,7 +568,6 @@ void RunSimilarity::executeTraditional() {
 
   total_comps = ((long long int)num_genes * ((long long int)num_genes - 1)) / 2;
   n_comps = 0;
-  int set1_index = 0;
 
   // each iteration of m is a new output file
   printf("Calculating correlations...\n");
@@ -602,7 +601,6 @@ void RunSimilarity::executeTraditional() {
     for (int j = curr_bin * ROWS_PER_OUTPUT_FILE; j < bin_rows; j++) {
       // iterate through all the genes up to j (only need lower triangle)
 
-      int set2_index = 0;
       for (int k = 0; k <= j; k++) {
         n_comps++;
         if (n_comps % 1000 == 0) {
@@ -621,23 +619,29 @@ void RunSimilarity::executeTraditional() {
         // If the user provided a gene set and this isn't in our set
         // then skip it.
         if (set1.num_genes > 0) {
-          if (j != set1.indicies[set1_index]) {
+          int skip = 1;
+          for (int m = 0; m < set1.num_genes; m++) {
+            if (j == set1.indicies[m]) {
+              skip = 0;
+            }
+          }
+          if (skip == 1) {
             float zero = NAN;
             fwrite(&zero, sizeof(float), 1, outfiles[0]);
             continue;
           }
-          else {
-            set1_index++;
-          }
         }
         if (set2.num_genes > 0) {
-          if (k != set1.indicies[set2_index]) {
-             float zero = NAN;
-             fwrite(&zero, sizeof(float), 1, outfiles[0]);
-             continue;
+          int skip = 1;
+          for (int m = 0; m < set2.num_genes; m++) {
+            if (k == set2.indicies[m]) {
+              skip = 0;
+            }
           }
-          else {
-            set2_index++;
+          if (skip == 1) {
+            float zero = NAN;
+            fwrite(&zero, sizeof(float), 1, outfiles[0]);
+            continue;
           }
         }
 
