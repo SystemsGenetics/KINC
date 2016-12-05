@@ -130,7 +130,7 @@ void MixtureModelClustering::run() {
     // If the user has requested that we filter the genes, then we will
     // skip any genes that are not in the index.
     if (set1->num_genes > 0) {
-      if (i != set1->indicies[set1_index]) {
+      if (i+1 != set1->indicies[set1_index]) {
         continue;
       }
       else {
@@ -144,7 +144,7 @@ void MixtureModelClustering::run() {
       // If the user has requested that we filter the genes, then we will
       // skip any genes that are not in the index.
       if (set2->num_genes > 0) {
-        if (j != set2->indicies[set2_index]) {
+        if (j+1 != set2->indicies[set2_index]) {
           continue;
         }
         else {

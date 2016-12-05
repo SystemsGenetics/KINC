@@ -621,7 +621,7 @@ void RunSimilarity::executeTraditional() {
         if (set1.num_genes > 0) {
           int skip = 1;
           for (int m = 0; m < set1.num_genes; m++) {
-            if (j == set1.indicies[m]) {
+            if (j+1 == set1.indicies[m]) {
               skip = 0;
             }
           }
@@ -634,7 +634,7 @@ void RunSimilarity::executeTraditional() {
         if (set2.num_genes > 0) {
           int skip = 1;
           for (int m = 0; m < set2.num_genes; m++) {
-            if (k == set2.indicies[m]) {
+            if (k+1 == set2.indicies[m]) {
               skip = 0;
             }
           }
