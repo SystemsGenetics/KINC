@@ -602,17 +602,6 @@ void RunSimilarity::executeTraditional() {
     for (int j = curr_bin * ROWS_PER_OUTPUT_FILE; j < bin_rows; j++) {
       // iterate through all the genes up to j (only need lower triangle)
 
-      // If the user provided a gene set and this isn't in our set
-      // then skip it.
-      if (set1.num_genes > 0) {
-        if (j != set1.indicies[set1_index]) {
-          continue;
-        }
-        else {
-          set1_index++;
-        }
-      }
-
       int set2_index = 0;
       for (int k = 0; k <= j; k++) {
         n_comps++;
@@ -629,8 +618,22 @@ void RunSimilarity::executeTraditional() {
           continue;
         }
 
+        // If the user provided a gene set and this isn't in our set
+        // then skip it.
+        if (set1.num_genes > 0) {
+          if (j != set1.indicies[set1_index]) {
+            float zero = NAN;
+            fwrite(&zero, sizeof(float), 1, outfiles[0]);
+            continue;
+          }
+          else {
+            set1_index++;
+          }
+        }
         if (set2.num_genes > 0) {
           if (k != set1.indicies[set2_index]) {
+             float zero = NAN;
+             fwrite(&zero, sizeof(float), 1, outfiles[0]);
              continue;
           }
           else {
@@ -640,8 +643,6 @@ void RunSimilarity::executeTraditional() {
 
         float score;
         PairWiseSet * pwset = new PairWiseSet(ematrix, j, k);
-
-
 
         // Perform the appropriate calculation based on the method
         for (int i = 0; i < this->num_methods; i++) {
