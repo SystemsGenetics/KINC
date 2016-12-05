@@ -568,6 +568,7 @@ void RunSimilarity::executeTraditional() {
 
   total_comps = ((long long int)num_genes * ((long long int)num_genes - 1)) / 2;
   n_comps = 0;
+  int set1_index = 0;
 
   // each iteration of m is a new output file
   printf("Calculating correlations...\n");
@@ -600,6 +601,19 @@ void RunSimilarity::executeTraditional() {
     // iterate through the genes that belong in this file
     for (int j = curr_bin * ROWS_PER_OUTPUT_FILE; j < bin_rows; j++) {
       // iterate through all the genes up to j (only need lower triangle)
+
+      // If the user provided a gene set and this isn't in our set
+      // then skip it.
+      if (set1.num_genes > 0) {
+        if (j != set1.indicies[set1_index]) {
+          continue;
+        }
+        else {
+          set1_index++;
+        }
+      }
+
+      int set2_index = 0;
       for (int k = 0; k <= j; k++) {
         n_comps++;
         if (n_comps % 1000 == 0) {
@@ -615,8 +629,19 @@ void RunSimilarity::executeTraditional() {
           continue;
         }
 
+        if (set2.num_genes > 0) {
+          if (k != set1.indicies[set2_index]) {
+             continue;
+          }
+          else {
+            set2_index++;
+          }
+        }
+
         float score;
         PairWiseSet * pwset = new PairWiseSet(ematrix, j, k);
+
+
 
         // Perform the appropriate calculation based on the method
         for (int i = 0; i < this->num_methods; i++) {

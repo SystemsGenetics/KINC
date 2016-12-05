@@ -1,17 +1,11 @@
 #ifndef _MIXMODPWCLUSTERING_
 #define _MIXMODPWCLUSTERING_
 
+#include "../GeneFilter.h"
 #include "PairWiseCluster.h"
 #include "PairWiseClusterList.h"
 #include "PairWiseClusterWriter.h"
 #include "MixtureModelPWClusters.h"
-
-// This structure is used for containing the set of genes for filtering.
-struct geneFilter {
-  char * filename;
-  int * indicies;
-  int num_genes;
-};
 
 /**
  * A class for performing mixuture models for an entire ematrix.

@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include <sys/stat.h>
 #include <string.h>
+#include "GeneFilter.h"
 #include "./methods/SpearmanSimilarity.h"
 #include "./methods/PearsonSimilarity.h"
 #include "./methods/MISimilarity.h"
@@ -15,7 +16,6 @@
 #define ROWS_PER_OUTPUT_FILE 10000
 // the number of bins in the correlation value histogram
 #define HIST_BINS 100
-
 
 class RunSimilarity {
 
