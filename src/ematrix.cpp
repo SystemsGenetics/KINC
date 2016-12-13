@@ -393,10 +393,12 @@ void EMatrix::read_gene_expressions(std::ifstream& file, Ace::Terminal& tm,
          Ace::assert<InvalidFile>(g!=m.end(),f,__LINE__);
          std::istringstream ibuf(buf);
          std::string tmp;
-         Ace::assert<InvalidFile>(ibuf.good(),f,__LINE__);
+         ibuf >> tmp;
+         Ace::assert<InvalidFile>(!ibuf.fail(),f,__LINE__);
          for (auto i = g.begin();i!=g.end();++i)
          {
-            Ace::assert<InvalidFile>(ibuf.good(),f,__LINE__);
+            ibuf >> tmp;
+            Ace::assert<InvalidFile>(!ibuf.fail(),f,__LINE__);
             if (tmp==nanStr)
             {
                *i = NAN;
