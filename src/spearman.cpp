@@ -10,7 +10,9 @@
 #include <unistd.h>
 
 
-
+/**
+ * @brief Implements ACE's Analytic::input.
+ */
 void Spearman::input(Ace::Data* input)
 {
    static const char* f = __PRETTY_FUNCTION__;
@@ -20,7 +22,9 @@ void Spearman::input(Ace::Data* input)
 }
 
 
-
+/**
+ * @brief Implements ACE's Analytic::output.
+ */
 void Spearman::output(Ace::Data* output)
 {
    static const char* f = __PRETTY_FUNCTION__;
@@ -30,7 +34,13 @@ void Spearman::output(Ace::Data* output)
 }
 
 
-
+/**
+ * @brief
+ *
+ * @param ops
+ * @param tm
+ *
+ */
 void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
 {
    static const char* f = __PRETTY_FUNCTION__;
@@ -93,9 +103,13 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
    std::vector<std::string> correlations {"spearman"};
    _out->initialize(std::move(geneNames),std::move(sampleNames),std::move(correlations),1);
    tm << "Calculating spearman values and saving to output file[0%]...";
+
+   // bSize is the sample size rounded to the nearest higer power of 2.
    int bSize {pow2_ceil(sSize)};
    Ace::assert<TooManySamples>(bSize>0,f,__LINE__);
+   // wSize is the work group size rounded to the nearest lower power of 2.
    int wSize {pow2_floor(kern.get_wg_size())};
+   // TODO: what is the chunk size????
    int chunk {1};
    if ((2*wSize)<bSize)
    {
@@ -131,9 +145,14 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
    }
 }
 
-
-
-void Spearman::execute_pn(Ace::GetOpts&, Ace::Terminal& tm)
+/**
+ * @brief
+ *
+ * @param ops
+ * @param tm
+ *
+ */
+void Spearman::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
 {
    static const char* f = __PRETTY_FUNCTION__;
    using namespace std::chrono;
@@ -236,7 +255,12 @@ void Spearman::execute_pn(Ace::GetOpts&, Ace::Terminal& tm)
 }
 
 
-
+/**
+ * @brief Calculates the nearest power of 2  above the value provided.
+ *
+ * @param i
+ *   The value for finding the newarest power of 2.
+ */
 int Spearman::pow2_ceil(int i)
 {
    int ret = 1;
@@ -252,7 +276,12 @@ int Spearman::pow2_ceil(int i)
 }
 
 
-
+/**
+ * @brief Calculates the nearest power of 2  below the value provided.
+ *
+ * @param i
+ *   The value for finding the newarest power of 2.
+ */
 int Spearman::pow2_floor(int i)
 {
    int ret = pow2_ceil(i);
@@ -264,6 +293,30 @@ int Spearman::pow2_floor(int i)
 }
 
 
+/**
+ * @brief Executes the spearman correlation algorithm on the GPU.
+ *
+ * Divides the data into chunks that can be analyzed one chuck at a time
+ * by an OpenCL kernel.
+ *
+ * @param tm
+ *   A pointer to the ACE terminal console.
+ * @param kern
+ *   A pointer to the CLProgram::mkernel object of "type" spearman.
+ * @param expList
+ *   A pointer to an CLContext::buffer that has been pre populated with data
+ *   from the expression matrix.
+ * @param size
+ *   The number of samples in the expression matrix.
+ * @param wSize
+ *   The work group size (i.e. the number of kernels a work group can hold).
+ * @param chunk
+ *  // TODO: what is the chunk size
+ * @param smSize
+ *  // TODO: what is the smSize
+ * @param minSize
+ *  // TODO: what is the minSize
+ */
 
 void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList, int size,
                          int wSize, int chunk, int blSize, int smSize, int minSize)
