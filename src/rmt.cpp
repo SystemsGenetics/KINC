@@ -5,6 +5,7 @@
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_matrix.h>
 #include <cmath>
+#include <string.h>
 
 
 
