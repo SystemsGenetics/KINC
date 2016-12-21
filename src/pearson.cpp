@@ -1,5 +1,10 @@
-#include "spearman.h"
-#include "spearman.cl.h"
+
+/*****************************************************************************/
+#include "pearson.h"
+// generate this with mkcl once pearson.cl is done
+#include "pearson.cl.h"
+/*****************************************************************************/
+
 #include <gsl/gsl_statistics.h>
 #include <iostream>
 #include <sstream>
@@ -13,7 +18,7 @@
 /**
  * @brief Implements ACE's Analytic::input.
  */
-void Spearman::input(Ace::Data* input)
+void Pearson::input(Ace::Data* input)
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<TooManyInputs>(!_in,f,__LINE__);
@@ -25,7 +30,7 @@ void Spearman::input(Ace::Data* input)
 /**
  * @brief Implements ACE's Analytic::output.
  */
-void Spearman::output(Ace::Data* output)
+void Pearson::output(Ace::Data* output)
 {
    static const char* f = __PRETTY_FUNCTION__;
    Ace::assert<TooManyOutputs>(!_out,f,__LINE__);
@@ -41,7 +46,7 @@ void Spearman::output(Ace::Data* output)
  * @param tm
  *
  */
-void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
+void Pearson::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
 {
    static const char* f = __PRETTY_FUNCTION__;
    using namespace std::chrono;
@@ -65,19 +70,22 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
       }
    }
    tm << "Loading kernel program into OpenCL device...\n";
-   CLProgram::add_source(spearman_cl);
+   CLProgram::add_source(pearson_cl);
    if (!CLProgram::compile(""))
    {
       tm << CLProgram::log();
       return;
    }
-   auto kern = CLProgram::mkernel("spearman");
+   auto kern = CLProgram::mkernel("pearson");
    Ace::assert<NoDataInput>(_in,f,__LINE__);
    Ace::assert<NoDataOutput>(_out,f,__LINE__);
    int gSize {_in->gene_size()};
    int sSize {_in->sample_size()};
    tm << "Loading expression data into OpenCL device...\n";
+
+   // A linear list of all the sample scores (sample # size * gene # size)
    auto expList = CLContext::buffer<cl_float>(sSize*gSize);
+
    int inc {0};
    for (auto g = _in->begin();g!=_in->end();++g)
    {
@@ -100,11 +108,12 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
    {
       sampleNames.push_back(_in->sample_name(i));
    }
-   std::vector<std::string> correlations {"spearman"};
+   std::vector<std::string> correlations {"pearson"};
    _out->initialize(std::move(geneNames),std::move(sampleNames),std::move(correlations),1);
-   tm << "Calculating spearman values and saving to output file[0%]...";
+   tm << "Calculating pearson values and saving to output file[0%]...";
 
    // bSize is the sample size rounded to the nearest higer power of 2.
+   // TODO: but what is it?
    int bSize {pow2_ceil(sSize)};
    Ace::assert<TooManySamples>(bSize>0,f,__LINE__);
    // wSize is the work group size rounded to the nearest lower power of 2.
@@ -116,6 +125,7 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
       chunk = bSize/(2*wSize);
    }
    calculate(tm,kern,expList,sSize,wSize,chunk,blSize,smSize,minSize);
+
    auto t2 = system_clock::now();
    int s = duration_cast<seconds>(t2-t1).count();
    if (s==0)
@@ -152,7 +162,7 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
  * @param tm
  *
  */
-void Spearman::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
+void Pearson::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
 {
    static const char* f = __PRETTY_FUNCTION__;
    using namespace std::chrono;
@@ -173,9 +183,9 @@ void Spearman::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
    {
       sampleNames.push_back(_in->sample_name(i));
    }
-   std::vector<std::string> correlations {"spearman"};
+   std::vector<std::string> correlations {"pearson"};
    _out->initialize(std::move(geneNames),std::move(sampleNames),std::move(correlations),1);
-   tm << "Calculating spearman (pn) values and saving to output file[0%]...";
+   tm << "Calculating pearson values and saving to output file[0%]...";
    auto i = _out->begin();
    i.size(1);
    auto bmode = i.modes().begin();
@@ -213,18 +223,22 @@ void Spearman::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
       else
       {
          auto t = i.corrs().find(0);
+
+
+         // TODO: find gsl_stats_spearman()
+         // Only found in pn ... why?
          t.at(0) = gsl_stats_spearman(a,1,b,1,size,work);
       }
       ++count;
       ++delay;
       if (delay==16384)
       {
-         tm << "\rCalculating spearman values and saving to output file["
+         tm << "\rCalculating pearson values and saving to output file["
             << 100*count/total << "%]..." << Ace::Terminal::flush;
          delay = 0;
       }
    }
-   tm << "\rCalculating spearman values and saving to output file[" << 100*count/total << "%]...\n";
+   tm << "\rCalculating pearson values and saving to output file[" << 100*count/total << "%]...\n";
    auto t2 = system_clock::now();
    int s = duration_cast<seconds>(t2-t1).count();
    if (s==0)
@@ -261,7 +275,7 @@ void Spearman::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
  * @param i
  *   The value for finding the newarest power of 2.
  */
-int Spearman::pow2_ceil(int i)
+int Pearson::pow2_ceil(int i)
 {
    int ret = 1;
    while (ret<i)
@@ -282,7 +296,7 @@ int Spearman::pow2_ceil(int i)
  * @param i
  *   The value for finding the newarest power of 2.
  */
-int Spearman::pow2_floor(int i)
+int Pearson::pow2_floor(int i)
 {
    int ret = pow2_ceil(i);
    if (ret>i)
@@ -294,7 +308,7 @@ int Spearman::pow2_floor(int i)
 
 
 /**
- * @brief Executes the spearman correlation algorithm on the GPU.
+ * @brief Executes the pearson correlation algorithm on the GPU.
  *
  * Divides the data into chunks that can be analyzed one chuck at a time
  * by an OpenCL kernel.
@@ -302,7 +316,7 @@ int Spearman::pow2_floor(int i)
  * @param tm
  *   A pointer to the ACE terminal console.
  * @param kern
- *   A pointer to the CLProgram::mkernel object of "type" spearman.
+ *   A pointer to the CLProgram::mkernel object of "type" pearson.
  * @param expList
  *   A pointer to an CLContext::buffer that has been pre populated with data
  *   from the expression matrix.
@@ -318,8 +332,10 @@ int Spearman::pow2_floor(int i)
  *  // TODO: what is the minSize
  */
 
-void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList, int size,
-                         int wSize, int chunk, int blSize, int smSize, int minSize)
+void Pearson::calculate(Ace::Terminal& tm, Ace::CLKernel& kern,
+                        /* the giant linear list*/elist& expList, int size,
+                        int wSize, int chunk, /*What is blsize?*/int blSize,
+                        int smSize, int minSize)
 {
    enum class State {start,in,exec,out,end};
    unsigned long total = CMatrix::diag_size(_in->gene_size());
@@ -331,44 +347,57 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
    auto buf1 = CLContext::buffer<cl_float>(blSize*bufferSize);
    kern.set_arg(6,&buf1);
    auto buf2 = CLContext::buffer<cl_float>(blSize*bufferSize);
-   kern.set_arg(7,&buf2);
-   auto buf3 = CLContext::buffer<cl_int>(blSize*bufferSize);
-   kern.set_arg(8,&buf3);
-   auto buf4 = CLContext::buffer<cl_int>(blSize*bufferSize);
-   kern.set_arg(9,&buf4);
-   auto buf5 = CLContext::buffer<cl_long>(blSize*bufferSize);
-   kern.set_arg(10,&buf5);
+
+   //kern.set_arg(7,&buf2);
+   //auto buf3 = CLContext::buffer<cl_int>(blSize*bufferSize);
+   //kern.set_arg(8,&buf3);
+   //auto buf4 = CLContext::buffer<cl_int>(blSize*bufferSize);
+   //kern.set_arg(9,&buf4);
+   //auto buf5 = CLContext::buffer<cl_long>(blSize*bufferSize);
+   kern.set_arg(7,&buf5);
    auto buf6 = CLContext::buffer<cl_float>(blSize*bufferSize);
-   kern.set_arg(11,&buf6);
+   kern.set_arg(8,&buf6);
    auto buf7 = CLContext::buffer<cl_float>(blSize*bufferSize);
-   kern.set_arg(12,&buf7);
+   kern.set_arg(9,&buf7);
    auto buf8 = CLContext::buffer<cl_int>(blSize*bufferSize);
-   kern.set_arg(13,&buf8);
+   kern.set_arg(10,&buf8);
    auto buf9 = CLContext::buffer<cl_int>(blSize*bufferSize);
-   kern.set_arg(14,&buf9);
+   kern.set_arg(11,&buf9);
    auto buf10 = CLContext::buffer<cl_int>(blSize*bufferSize);
-   kern.set_arg(15,&buf10);
+   kern.set_arg(12,&buf10);
    auto buf11 = CLContext::buffer<cl_int>(blSize*bufferSize);
-   kern.set_arg(16,&buf11);
+   kern.set_arg(13,&buf11);
    kern.set_swarm_dims(1);
    kern.set_swarm_size(0,blSize*wSize,wSize);
    struct
    {
       State st;
+      // x and y are the two chosen rows that will be compared to get the ans
+      // Row '0'
       int x;
+      // Row +1
       int y;
+      /* Part of event looping yo
+       * Part of the open CL listening to see when the kernel is done being
+       * crunched
+       * TODO: describe more
+      */
       Ace::CLEvent ev;
+      // an int (is this the offset in the list)?... TODO: what is this?
       AccelCompEng::CLBuffer<int> ld;
+      // The OUT data
       AccelCompEng::CLBuffer<cl_float> ans;
    } state[smSize];
-   for (int i = 0;i<smSize;++i)
+
+   for (int index = 0;index<smSize;++index)
    {
-      state[i].st = State::start;
-      state[i].x = 0;
-      state[i].y = 0;
-      state[i].ev = Ace::CLEvent();
-      state[i].ld = CLContext::buffer<int>(2*blSize);
-      state[i].ans = CLContext::buffer<cl_float>(blSize);
+      state[index].st = State::start;
+      state[index].x = 0;
+      state[index].y = 0;
+      state[index].ev = Ace::CLEvent();
+
+      state[index].ld = CLContext::buffer<int>(2*blSize);
+      state[index].ans = CLContext::buffer<cl_float>(blSize);
    }
    int alive {smSize};
    int si {0};
@@ -409,19 +438,27 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
       case State::in:
          if (state[si].ev.is_done())
          {
+            // An index to a portion of the explist ...
+            // fetch list in the cl code actually populates the portion
+            // of the 'two' lists
             kern.set_arg(3,&(state[si].ld));
+            // The 'answer' the correlation score?
+            //TODO: what's the formal term?
             kern.set_arg(5,&(state[si].ans));
             state[si].ev = CLCommandQueue::add_swarm(kern);
             state[si].st = State::exec;
          }
          break;
       case State::exec:
+         // Is this polling? spin waiting for the event to be done?
+         // Or is there an event firer?
          if (state[si].ev.is_done())
          {
             state[si].ev = CLCommandQueue::read_buffer(state[si].ans);
             state[si].st = State::out;
          }
          break;
+         // Placeholder
       case State::out:
          if (state[si].ev.is_done())
          {
@@ -453,7 +490,7 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
       {
          si = 0;
       }
-      tm << "\rCalculating spearman values and saving to output file[" << 100*done/total
+      tm << "\rCalculating pearson values and saving to output file[" << 100*done/total
          << "%]..." << Ace::Terminal::flush;
       usleep(100);
    }

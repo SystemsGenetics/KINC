@@ -32,11 +32,14 @@ void fetch_lists(int aInd, int bInd, int size, int chunk, __global float* aList,
          {
             if (isnan(exprs[aInd+ix])||isnan(exprs[bInd+ix]))
             {
+              // If either entry is invalid (or both) invalidate that pair
                aList[ix] = INFINITY;
                bList[ix] = INFINITY;
             }
             else
             {
+               // Populate aList and bList with the particular row data from the giant
+               // 1-D list in global mem
                aList[ix] = exprs[aInd+ix];
                bList[ix] = exprs[bInd+ix];
             }
@@ -52,7 +55,9 @@ void fetch_lists(int aInd, int bInd, int size, int chunk, __global float* aList,
 }
 
 
+/*
 
+*/
 void prune_lists(int chunk, __global float* aExprs, __global int* aWork, __global int* aPoint,
                  __global float* bExprs, __global int* bWork, __global int* bPoint)
 {
@@ -66,6 +71,7 @@ void prune_lists(int chunk, __global float* aExprs, __global int* aWork, __globa
          bPoint[ix] = ix;
          if (isinf(aExprs[ix]))
          {
+           // TODO: What does this do?
             aWork[ix] = get_local_size(0)*4;
          }
          else
@@ -126,6 +132,7 @@ void construct_lists(int chunk, __global float* aExprs, __global float* aList, _
                      __global int* rank, __global int* iRank)
 {
    int i,c,ix;
+   // The two for loops are the basic way of accessing the two 'rows'
    for (i=0;i<chunk;++i)
    {
       for (c=0;c<2;++c)
@@ -133,6 +140,7 @@ void construct_lists(int chunk, __global float* aExprs, __global float* aList, _
          ix = (get_local_id(0)*chunk+i)*2+c;
          aList[ix] = aExprs[aPoint[ix]];
          bList[ix] = bExprs[bPoint[ix]];
+         // check if the score is NAN
          if (isinf(aList[ix]))
          {
             rank[ix] = 0;
