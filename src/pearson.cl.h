@@ -1,4 +1,4 @@
-const char* __/__/KINC/src/pearson_cl =
+const char* pearson_cl =
 "// http://www.stat.wmich.edu/s216/book/node122.html\n"
 "\n"
 "// Precondition: File data will have to be read in\n"

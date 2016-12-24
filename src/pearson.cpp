@@ -353,7 +353,7 @@ void Pearson::calculate(Ace::Terminal& tm, Ace::CLKernel& kern,
    //kern.set_arg(8,&buf3);
    //auto buf4 = CLContext::buffer<cl_int>(blSize*bufferSize);
    //kern.set_arg(9,&buf4);
-   //auto buf5 = CLContext::buffer<cl_long>(blSize*bufferSize);
+   auto buf5 = CLContext::buffer<cl_long>(blSize*bufferSize);
    kern.set_arg(7,&buf5);
    auto buf6 = CLContext::buffer<cl_float>(blSize*bufferSize);
    kern.set_arg(8,&buf6);
