@@ -16,9 +16,13 @@ void EMatrix::init()
 {
    try
    {
+      /// Copy file object from File
       Node::mem(File::mem());
+      /// If this is an empty and new file object...
       if (File::head()==fnullptr)
       {
+         /// Allocate space for headers, set File memory address, initialize header data to a null
+         /// state, and lastly write to file memory.
          allocate();
          File::head(addr());
          null_data();
@@ -26,8 +30,10 @@ void EMatrix::init()
       }
       else
       {
+         /// Grab header address of file memory and read it.
          addr(File::head());
          read();
+         /// Read in all gene and sample names.
          Ace::FString fstr(File::mem(),data()._genePtr);
          fstr.static_buffer(_strSize);
          _geneNames.push_back(fstr.str());
@@ -43,11 +49,14 @@ void EMatrix::init()
             fstr.bump();
             _sampleNames.push_back(fstr.str());
          }
+         /// Set this object as NOT new.
          _isNew = false;
       }
    }
    catch (...)
    {
+      /// If any exception occurs while trying to load from file memory, clear all file memory and
+      /// set object to new.
       File::clear();
       _isNew = true;
       throw;
@@ -107,18 +116,58 @@ void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
    Ace::assert<CannotOpen>(file.is_open(),f,__LINE__);
    try
    {
-      tm << "Importing header information...\n";
-      read_headers(file,sampleSize,tr,hasHeaders);
-      file.clear();
-      file.seekg(0,std::ios_base::beg);
-      read_gene_expressions(file,tm,nan);
-      _isNew = false;
+      try
+      {
+         tm << "Importing header information...\n";
+         read_headers(file,sampleSize,tr,hasHeaders);
+         file.clear();
+         file.seekg(0,std::ios_base::beg);
+         read_gene_expressions(file,tm,nan);
+         _isNew = false;
+      }
+      catch (...)
+      {
+         File::clear();
+         null_data();
+         _isNew = true;
+         throw;
+      }
    }
-   catch (...)
+   catch (InvalidFileGOverflow)
    {
-      File::clear();
-      null_data();
-      _isNew = true;
+      tm << Ace::Terminal::warning;
+      tm << "Error loading file: Encountered too many genes than expected.\n";
+      tm << Ace::Terminal::general;
+   }
+   catch (InvalidFileGUnderflow)
+   {
+      tm << Ace::Terminal::warning;
+      tm << "Error loading file: Could not read enough genes than expected.\n";
+      tm << Ace::Terminal::general;
+   }
+   catch (InvalidFileSUnderflow)
+   {
+      tm << Ace::Terminal::warning;
+      tm << "Error loading file: Could not read enough samples than expected.\n";
+      tm << Ace::Terminal::general;
+   }
+   catch (InvalidFileSInvalid)
+   {
+      tm << Ace::Terminal::warning;
+      tm << "Error loading file: Invalid sample entry.\n";
+      tm << Ace::Terminal::general;
+   }
+   catch (InvalidFileBlank)
+   {
+      tm << Ace::Terminal::warning;
+      tm << "Error loading file: It is blank.\n";
+      tm << Ace::Terminal::general;
+   }
+   catch (InvalidSize)
+   {
+      tm << Ace::Terminal::warning;
+      tm << "Error loading file: Could not read any sample or gene data.\n";
+      tm << Ace::Terminal::general;
       throw;
    }
 }
@@ -390,15 +439,24 @@ void EMatrix::read_gene_expressions(std::ifstream& file, Ace::Terminal& tm,
       std::getline(file,buf);
       if (!is_blank_line(buf))
       {
-         Ace::assert<InvalidFile>(g!=m.end(),f,__LINE__);
+         if (g==m.end())
+         {
+            throw InvalidFileGOverflow();
+         }
          std::istringstream ibuf(buf);
          std::string tmp;
          ibuf >> tmp;
-         Ace::assert<InvalidFile>(!ibuf.fail(),f,__LINE__);
+         if (ibuf.fail())
+         {
+            throw InvalidFileSUnderflow();
+         }
          for (auto i = g.begin();i!=g.end();++i)
          {
             ibuf >> tmp;
-            Ace::assert<InvalidFile>(!ibuf.fail(),f,__LINE__);
+            if (ibuf.fail())
+            {
+               throw InvalidFileSUnderflow();
+            }
             if (tmp==nanStr)
             {
                *i = NAN;
@@ -425,7 +483,7 @@ void EMatrix::read_gene_expressions(std::ifstream& file, Ace::Terminal& tm,
                }
                catch (std::exception)
                {
-                  Ace::assert<InvalidFile>(false,f,__LINE__);
+                  throw InvalidFileSInvalid();
                }
             }
          }
@@ -436,7 +494,10 @@ void EMatrix::read_gene_expressions(std::ifstream& file, Ace::Terminal& tm,
       }
    }
    tm << "\n";
-   Ace::assert<InvalidFile>(g==m.end(),f,__LINE__);
+   if (g!=m.end())
+   {
+      throw InvalidFileGUnderflow();
+   }
    m.write();
 }
 
@@ -482,7 +543,10 @@ void EMatrix::skip_blanks(std::ifstream& file)
    static const char* f = __PRETTY_FUNCTION__;
    while (std::isspace(file.peek()))
    {
-      Ace::assert<InvalidFile>(file.good(),f,__LINE__);
+      if (!file.good())
+      {
+         throw InvalidFileBlank();
+      }
       file.get();
    }
 }

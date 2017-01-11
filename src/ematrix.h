@@ -10,13 +10,13 @@ namespace Ace = AccelCompEng;
 
 
 
+/// Main class for expression matrix.
 class EMatrix : public Ace::Data, private Ace::NVMemory::Node
 {
 public:
    struct OutOfRange : public Ace::Exception { using Ace::Exception::Exception; };
    struct AlreadySet : public Ace::Exception { using Ace::Exception::Exception; };
    struct InvalidArg : public Ace::Exception { using Ace::Exception::Exception; };
-   struct InvalidFile : public Ace::Exception { using Ace::Exception::Exception; };
    struct NotNewFile : public Ace::Exception { using Ace::Exception::Exception; };
    struct CannotOpen : public Ace::Exception { using Ace::Exception::Exception; };
    struct NullMatrix : public Ace::Exception { using Ace::Exception::Exception; };
@@ -42,6 +42,11 @@ public:
    Gene find(int);
    Gene find(const std::string& geneName);
 private:
+   struct InvalidFileGOverflow {};
+   struct InvalidFileGUnderflow {};
+   struct InvalidFileSUnderflow {};
+   struct InvalidFileSInvalid {};
+   struct InvalidFileBlank {};
    struct __attribute__ ((__packed__)) Header
    {
       int32_t _sampleSize {0};
@@ -69,6 +74,8 @@ private:
 
 
 
+/// Iterator class for expression matrix that represents a single gene, containing all the gene's
+/// samples.
 class EMatrix::Gene : private Ace::NVMemory::Node
 {
 public:
@@ -95,6 +102,7 @@ private:
 
 
 
+/// Iterator class for EMatrix::Gene that represents a single sample of a gene.
 class EMatrix::Gene::Iterator
 {
 public:
@@ -111,6 +119,8 @@ private:
 
 
 
+/// Maps entire expression matrix into system memory for quick access. A mirror of a file expression
+/// matrix stored in system memory.
 class EMatrix::Mirror : private Ace::NVMemory::Node
 {
 public:
@@ -135,6 +145,8 @@ private:
 
 
 
+/// Iterator class for EMatrix::Mirror that represents a single gene, containing all the gene's
+/// samples.
 class EMatrix::Mirror::Gene
 {
 public:
@@ -155,6 +167,7 @@ private:
 
 
 
+/// Iterator class for EMatrix::Mirror::Gene that represents a single sample of a gene.
 class EMatrix::Mirror::Gene::Iterator
 {
 public:
