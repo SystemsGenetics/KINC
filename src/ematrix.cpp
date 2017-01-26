@@ -16,13 +16,13 @@ void EMatrix::init()
 {
    try
    {
-      /// Copy file object from File
+      // Copy file object from File
       Node::mem(File::mem());
-      /// If this is an empty and new file object...
+      // If this is an empty and new file object...
       if (File::head()==fnullptr)
       {
-         /// Allocate space for headers, set File memory address, initialize header data to a null
-         /// state, and lastly write to file memory.
+         // Allocate space for headers, set File memory address, initialize header data to a null
+         // state, and lastly write to file memory.
          allocate();
          File::head(addr());
          null_data();
@@ -30,10 +30,10 @@ void EMatrix::init()
       }
       else
       {
-         /// Grab header address of file memory and read it.
+         // Grab header address of file memory and read it.
          addr(File::head());
          read();
-         /// Read in all gene and sample names.
+         // Read in all gene and sample names.
          Ace::FString fstr(File::mem(),data()._genePtr);
          fstr.static_buffer(_strSize);
          _geneNames.push_back(fstr.str());
@@ -49,14 +49,14 @@ void EMatrix::init()
             fstr.bump();
             _sampleNames.push_back(fstr.str());
          }
-         /// Set this object as NOT new.
+         // Set this object as NOT new.
          _isNew = false;
       }
    }
    catch (...)
    {
-      /// If any exception occurs while trying to load from file memory, clear all file memory and
-      /// set object to new.
+      // If any exception occurs while trying to load from file memory, clear all file memory and
+      // set object to new.
       File::clear();
       _isNew = true;
       throw;
@@ -67,6 +67,7 @@ void EMatrix::init()
 
 void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
 {
+   // Initialize arguments and get any arguments from user.
    static const char* f = __PRETTY_FUNCTION__;
    bool hasHeaders {true};
    int sampleSize {0};
@@ -106,11 +107,13 @@ void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
          nan = i.value<std::string>();
       }
    }
+   // Make sure arguments given are valid.
    if (!hasHeaders&&sampleSize==0)
    {
       tm << "If noheader option is given number of samples must be given.\n";
       Ace::assert<InvalidArg>(false,f,__LINE__);
    }
+   // Open the load file, make sure it is ok.
    Ace::assert<NotNewFile>(File::head()==fnullptr,f,__LINE__);
    std::ifstream file(ops.com_front());
    Ace::assert<CannotOpen>(file.is_open(),f,__LINE__);
@@ -118,6 +121,7 @@ void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
    {
       try
       {
+         // Load actual data.
          tm << "Importing header information...\n";
          read_headers(file,sampleSize,tr,hasHeaders);
          file.clear();
@@ -127,12 +131,14 @@ void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
       }
       catch (...)
       {
+         // If any exception occurs while loading data, clear data object and rethrow.
          File::clear();
          null_data();
          _isNew = true;
          throw;
       }
    }
+   // Process any exceptions that can be reported.
    catch (InvalidFileGOverflow)
    {
       tm << Ace::Terminal::warning;
@@ -183,6 +189,7 @@ void EMatrix::dump(Ace::GetOpts &ops, Ace::Terminal &tm)
 
 void EMatrix::query(Ace::GetOpts &ops, Ace::Terminal &tm)
 {
+   // Make sure object is not empty.
    enum {Basic=0,Lookup};
    if (empty())
    {
@@ -190,6 +197,7 @@ void EMatrix::query(Ace::GetOpts &ops, Ace::Terminal &tm)
    }
    else
    {
+      // Figure out what query command was given and process.
       switch (ops.com_get({"lookup","dump"}))
       {
       case Basic:
@@ -231,7 +239,9 @@ bool EMatrix::empty()
 void EMatrix::initialize(std::vector<std::string>&& geneNames,
                          std::vector<std::string>&& sampleNames, Transform transform)
 {
+   // initialize.
    static const char* f = __PRETTY_FUNCTION__;
+   // make sure sizes of vectors are valid and data object is empty.
    Ace::assert<InvalidSize>(geneNames.size()>0&&sampleNames.size()>0,f,__LINE__);
    if (File::head()==fnullptr)
    {
@@ -245,9 +255,11 @@ void EMatrix::initialize(std::vector<std::string>&& geneNames,
    }
    try
    {
+      // initialize header info.
       data()._geneSize = geneNames.size();
       data()._sampleSize = sampleNames.size();
       Ace::FString fstr(File::mem());
+      // initialize gene and sample names.
       auto i = geneNames.begin();
       data()._genePtr = fstr.write(*i);
       ++i;
@@ -267,15 +279,19 @@ void EMatrix::initialize(std::vector<std::string>&& geneNames,
          fstr.write(*i);
          ++i;
       }
+      // initialize expression data.
       data()._expData = Gene::initialize(File::rmem(),geneNames.size(),sampleNames.size());
       data()._transform = transform;
+      // write header info to file.
       write();
+      // move vectors of gene and sample names to internal objects.
       _geneNames = std::move(geneNames);
       _sampleNames = std::move(sampleNames);
       _isNew = false;
    }
    catch (...)
    {
+      // If any exception is thrown while initializing, make object empty.
       File::head(fnullptr);
       null_data();
       _isNew = true;
@@ -378,12 +394,14 @@ EMatrix::Gene EMatrix::find(const std::string& name)
 void EMatrix::read_headers(std::ifstream& file, int sampleSize, Transform transform,
                            bool hasHeaders)
 {
+   // initialize data object to be read in.
    static const char* f = __PRETTY_FUNCTION__;
    std::vector<std::string> sampleNames;
    std::vector<std::string> geneNames;
    skip_blanks(file);
    if (hasHeaders)
    {
+      // if has sample headers, read in sample names.
       std::string buf;
       std::getline(file,buf);
       std::istringstream ibuf(buf);
@@ -395,10 +413,12 @@ void EMatrix::read_headers(std::ifstream& file, int sampleSize, Transform transf
    }
    else
    {
+      // no headers, simply make list of empty sample names.
       sampleNames.resize(sampleSize);
    }
    while (file)
    {
+      // Now read entire file and get first word in each line that represents gene name.
       std::string buf;
       std::getline(file,buf);
       if (!is_blank_line(buf))
@@ -409,6 +429,7 @@ void EMatrix::read_headers(std::ifstream& file, int sampleSize, Transform transf
          geneNames.push_back(tmp);
       }
    }
+   // Initialize the data object with gene names and sample names collected.
    initialize(std::move(geneNames),std::move(sampleNames),transform);
 }
 
@@ -417,11 +438,14 @@ void EMatrix::read_headers(std::ifstream& file, int sampleSize, Transform transf
 void EMatrix::read_gene_expressions(std::ifstream& file, Ace::Terminal& tm,
                                     const std::string& nanStr)
 {
+   // initialize all variables.
    static const char* f = __PRETTY_FUNCTION__;
    int totalGSize {data()._geneSize};
    int totalDone {0};
    tm << "Importing gene samples[0%]..." << Ace::Terminal::flush;
+   // Make mirror of expression data in system memory for quicker write speeds.
    Mirror m(*this);
+   // Sktip all blank lines of file.
    skip_blanks(file);
    while (file)
    {
@@ -435,16 +459,19 @@ void EMatrix::read_gene_expressions(std::ifstream& file, Ace::Terminal& tm,
    auto g = m.begin();
    while (file)
    {
+      // initialize variables used for single line input.
       std::string buf;
       std::getline(file,buf);
       if (!is_blank_line(buf))
       {
+         // make sure we have no gone too far.
          if (g==m.end())
          {
             throw InvalidFileGOverflow();
          }
          std::istringstream ibuf(buf);
          std::string tmp;
+         // skip first word in line that is gene name.
          ibuf >> tmp;
          if (ibuf.fail())
          {
@@ -452,11 +479,13 @@ void EMatrix::read_gene_expressions(std::ifstream& file, Ace::Terminal& tm,
          }
          for (auto i = g.begin();i!=g.end();++i)
          {
+            // read in all expression values for given gene.
             ibuf >> tmp;
             if (ibuf.fail())
             {
                throw InvalidFileSUnderflow();
             }
+            // If expression has no value with given keyword, fill accordingly.
             if (tmp==nanStr)
             {
                *i = NAN;
@@ -465,6 +494,7 @@ void EMatrix::read_gene_expressions(std::ifstream& file, Ace::Terminal& tm,
             {
                try
                {
+                  // make transformation of expression value, if any.
                   switch (transform())
                   {
                   case none:
@@ -487,6 +517,7 @@ void EMatrix::read_gene_expressions(std::ifstream& file, Ace::Terminal& tm,
                }
             }
          }
+         // increment counters, report progress.
          ++g;
          ++totalDone;
          int percentDone {totalDone*100/totalGSize};
@@ -494,6 +525,7 @@ void EMatrix::read_gene_expressions(std::ifstream& file, Ace::Terminal& tm,
       }
    }
    tm << "\n";
+   // make sure we have populated all gene expressions.
    if (g!=m.end())
    {
       throw InvalidFileGUnderflow();
@@ -508,6 +540,7 @@ void EMatrix::lookup(Ace::GetOpts &ops, Ace::Terminal &tm)
    Gene l {end()};
    try
    {
+      // try to get gene index assuming user input is a number.
       int i = std::stoi(ops.com_front());
       if (i<0||i>=gene_size())
       {
@@ -518,10 +551,12 @@ void EMatrix::lookup(Ace::GetOpts &ops, Ace::Terminal &tm)
    }
    catch (std::exception)
    {
+      // if it was not a number look for gene index by name.
       l = find(ops.com_front());
    }
    if (l!=end())
    {
+      // if we found an index, output gene name and expression data.
       l.read();
       tm << l.name() << ": ";
       for (auto i = l.begin();i!=l.end();++i)
@@ -693,6 +728,8 @@ void EMatrix::Gene::flip_endian()
 
 int64_t EMatrix::Gene::initialize(Ace::NVMemory& mem, int geneSize, int sampleSize)
 {
+   // calculate size required to hold all expression data for all genes and allocate it in file
+   // memory.
    size_t nSize {sizeof(float)*geneSize*sampleSize};
    if ( nSize > mem.available() )
    {
