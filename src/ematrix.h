@@ -25,22 +25,49 @@ public:
    class Gene;
    class Mirror;
    EMatrix();
+   /// ACE initialize call.
    void init() override final;
+   /// ACE load call.
    void load(Ace::GetOpts &ops, Ace::Terminal &tm) override final;
+   /// ACE dump call.
    void dump(Ace::GetOpts &ops, Ace::Terminal &tm) override final;
+   /// ACE query call.
    void query(Ace::GetOpts &ops, Ace::Terminal &tm) override final;
+   /// ACE empty call.
    bool empty() override final;
+   /// Initialize a new expression matrix for this object.
+   /// @param geneNames List of gene names.
+   /// @param sampleNames List of samples names, if there are no sample names provide a list of
+   /// empty strings that totals the number of samples per gene.
+   /// @param transform The transform, if any, to be done on samples.
    void initialize(std::vector<std::string>&& geneNames,std::vector<std::string>&& sampleNames,
                    Transform transform);
+   /// Get number of genes in expression matrix.
    int gene_size() const;
+   /// Get number of samples per gene in expression matrix.
    int sample_size() const;
+   /// Get gene name.
+   /// @param i The increment in the list of gene names to get the name from.
+   /// @return Name of gene.
    const std::string& gene_name(int i) const;
+   /// Get sample name.
+   /// @param i The increment in the list of sample names to get the name from.
+   /// @return Name of sample.
    const std::string& sample_name(int i) const;
+   /// Get the transform of this expression matrix.
    Transform transform() const;
+   /// Get first gene iterator.
    Gene begin();
+   /// Get end of list iterator for genes.
    Gene end();
-   Gene find(int);
-   Gene find(const std::string& geneName);
+   /// Find gene iterator.
+   /// @param i Increment of gene to find within gene list.
+   /// @return Gene iterator if found, else end of list iterator if not found.
+   Gene find(int i);
+   /// Find gene iterator.
+   /// @param name Name of gene to find.
+   /// @return Gene iterator if found, else end of list iterator if not found.
+   Gene find(const std::string& name);
 private:
    struct InvalidFileGOverflow {};
    struct InvalidFileGUnderflow {};
