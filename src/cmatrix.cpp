@@ -219,12 +219,12 @@ void CMatrix::initialize(std::vector<std::string>&& geneNames,
          fstr.write(*i);
          ++i;
       }
-      // initialize expression data.
+      // initialize correlation data.
       data()._expData = GPair::initialize(File::rmem(),geneNames.size(),sampleNames.size(),
                                           correlationNames.size(),maxModes);
       // write header info to file.
       write();
-      // move vectors of gene and sample names to internal objects.
+      // move vectors of gene, sample, and correlation names to internal objects.
       _geneNames = std::move(geneNames);
       _sampleNames = std::move(sampleNames);
       _correlationNames = std::move(correlationNames);

@@ -8,6 +8,7 @@ namespace Ace = AccelCompEng;
 
 
 
+/// Data plugin class that holds adjacency data for gene statistics.
 class AMatrix : public Ace::Data, private Ace::NVMemory::Node
 {
 public:
@@ -17,15 +18,32 @@ public:
    struct InvalidSize : public Ace::Exception { using Ace::Exception::Exception; };
    class Iterator;
    AMatrix();
+   /// ACE initialize call.
    void init() override final;
+   /// ACE load call.
    void load(Ace::GetOpts &ops, Ace::Terminal &tm) override final;
+   /// ACE dump call.
    void dump(Ace::GetOpts &ops, Ace::Terminal &tm) override final;
+   /// ACE query call.
    void query(Ace::GetOpts &ops, Ace::Terminal &tm) override final;
+   /// ACE empty call.
    bool empty() override final;
+   /// Initialize a new adjacency matrix for this object.
+   /// @param geneNames List of all gene names.
    void initialize(std::vector<std::string>&& geneNames);
+   /// First gene edge iterator.
    Iterator begin();
+   /// End of list gene edge iterator.
    Iterator end();
+   /// Get gene edge.
+   /// @param x Index of first gene.
+   /// @param y Index of second gene.
+   /// @return Gene edge iterator.
    Iterator& at(int x, int y);
+   /// Get reference to gene edge.
+   /// @param x Index of first gene.
+   /// @param y Index of second gene.
+   /// @return Gene edge reference.
    Iterator& ref(int x, int y);
 private:
    struct __attribute__ ((__packed__)) Header

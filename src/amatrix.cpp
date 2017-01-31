@@ -15,9 +15,13 @@ void AMatrix::init()
 {
    try
    {
+      // Copy file object from File
       Node::mem(File::mem());
+      // If this is an empty and new file object...
       if (File::head()==fnullptr)
       {
+         // Allocate space for headers, set File memory address, initialize header data to a null
+         // state, and lastly write to file memory.
          allocate();
          File::head(addr());
          null_data();
@@ -25,8 +29,10 @@ void AMatrix::init()
       }
       else
       {
+         // Grab header address of file memory and read it.
          addr(File::head());
          read();
+         // Read in all gene names.
          Ace::FString fstr(File::mem(),data()._genePtr);
          fstr.static_buffer(_strSize);
          _geneNames.push_back(fstr.str());
@@ -35,11 +41,14 @@ void AMatrix::init()
             fstr.bump();
             _geneNames.push_back(fstr.str());
          }
+         // Set this object as NOT new.
          _isNew = false;
       }
    }
    catch (...)
    {
+      // If any exception occurs while trying to load from file memory, clear all file memory and
+      // set object to new.
       File::clear();
       _isNew = true;
       throw;
@@ -78,7 +87,9 @@ bool AMatrix::empty()
 
 void AMatrix::initialize(std::vector<std::string>&& geneNames)
 {
+   // initialize.
    static const char* f = __PRETTY_FUNCTION__;
+   // make sure sizes of vectors are valid and data object is empty.
    Ace::assert<InvalidSize>(geneNames.size()>0,f,__LINE__);
    if (File::head()==fnullptr)
    {
@@ -92,8 +103,10 @@ void AMatrix::initialize(std::vector<std::string>&& geneNames)
    }
    try
    {
+      // initialize header info.
       data()._geneSize = geneNames.size();
       Ace::FString fstr(File::mem());
+      // initialize gene names.
       auto i = geneNames.begin();
       data()._genePtr = fstr.write(*i);
       ++i;
@@ -103,13 +116,17 @@ void AMatrix::initialize(std::vector<std::string>&& geneNames)
          fstr.write(*i);
          ++i;
       }
+      // initialize edge data.
       data()._netData = Iterator::initialize(File::rmem(),geneNames.size());
+      // write header info to file.
       write();
+      // move vectors of gene names to internal objects.
       _geneNames = std::move(geneNames);
       _isNew = false;
    }
    catch (...)
    {
+      // If any exception is thrown while initializing, make object empty.
       File::head(fnullptr);
       null_data();
       _isNew = true;
