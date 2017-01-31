@@ -10,6 +10,7 @@ namespace Ace = AccelCompEng;
 
 
 
+/// Data plugin class that holds correlation data for gene statistics.
 class CMatrix : public Ace::Data, private Ace::NVMemory::Node
 {
 public:
@@ -23,26 +24,60 @@ public:
    class GPair;
    CMatrix();
    ~CMatrix();
+   /// ACE initialize call.
    void init() override final;
+   /// ACE load call.
    void load(Ace::GetOpts&,Ace::Terminal&) override final;
-   /// Function handler for user dump command.
+   /// ACE dump call.
    void dump(Ace::GetOpts&,Ace::Terminal&) override final;
+   /// ACE query call.
    void query(Ace::GetOpts&,Ace::Terminal&) override final;
+   /// ACE empty call.
    bool empty() override final;
-   static long long diagonal(int,int);
-   static long long diag_size(int);
+   /// Get one dimensional position of diagonal gene correlation.
+   /// @param x Index of first gene.
+   /// @param y Index of second gene.
+   /// @return One dimensional position of gene correlation.
+   static long long diagonal(int x, int y);
+   /// Get total size of diagonal matrix.
+   /// @param x Total number of genes.
+   /// @return Total number of correlations between all genes.
+   static long long diag_size(int x);
+   /// Initialize a new correlation matrix for this object.
+   /// @param geneNames List of all gene names.
+   /// @param sampleNames List of all sample names.
+   /// @param correlationNames List of all correlation names.
+   /// @param maxModes Maximum number of modes each correlation can hold.
    void initialize(std::vector<std::string>&& geneNames, std::vector<std::string>&& sampleNames,
                    std::vector<std::string>&& correlationNames, int maxModes);
+   /// Get total number of genes.
    int gene_size() const;
+   /// Get total number of samples per gene.
    int sample_size() const;
+   /// Get maximum allowed number of modes per gene.
    int max_modes() const;
+   /// Get number of correlations per gene.
    int correlation_size() const;
-   const std::string& gene_name(int) const;
-   const std::string& sample_name(int) const;
-   const std::string& correlation_name(int) const;
+   /// Get name of specific gene.
+   /// @param i Index of gene to lookup.
+   /// Name of gene.
+   const std::string& gene_name(int i) const;
+   /// Get name of specific sample column.
+   /// @param i Index of sample column to lookup.
+   /// Name of sample column.
+   const std::string& sample_name(int i) const;
+   /// Get name of correlation column.
+   /// @param i Index of correlation column.
+   /// Name of correlation column.
+   const std::string& correlation_name(int i) const;
+   /// First gene pair iterator.
    GPair begin();
+   /// End of list gene pair iterator.
    GPair end();
-   GPair find(int,int);
+   /// Find gene pair iterator.
+   /// @param x Index of first gene.
+   /// @param y Index of second gene.
+   GPair find(int x, int y);
 private:
    struct __attribute__ ((__packed__)) Header
    {
@@ -69,6 +104,7 @@ private:
 
 
 
+/// Iterator that holds correlation data for a single gene pair.
 class CMatrix::GPair: private Ace::NVMemory::Node
 {
 public:
@@ -140,6 +176,7 @@ private:
 
 
 
+/// Iterator that holds a single mode mask for a single mode.
 class CMatrix::GPair::Modes::Mode
 {
 public:
@@ -160,6 +197,7 @@ private:
 
 
 
+/// Iterator for a single bit of a mode mask.
 class CMatrix::GPair::Modes::Mode::Iterator
 {
 public:
@@ -175,6 +213,7 @@ private:
 
 
 
+/// Iterator for a single correlation of a single mode of a gene pair.
 class CMatrix::GPair::Corrs::Corr
 {
 public:
@@ -195,6 +234,8 @@ private:
 
 
 
+/// Iterator for a single correlation value of a single correlation of a single mode of a single
+/// gene pair.
 class CMatrix::GPair::Corrs::Corr::Iterator
 {
 public:

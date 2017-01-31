@@ -311,11 +311,11 @@ int Spearman::pow2_floor(int i)
  * @param wSize
  *   The work group size (i.e. the number of kernels a work group can hold).
  * @param chunk
- *  // TODO: what is the chunk size
+ *  Number of samples a single processing unit works on.
  * @param smSize
- *  // TODO: what is the smSize
+ *  Number of kernels executed in parallel on the opencl device.
  * @param minSize
- *  // TODO: what is the minSize
+ *  Minimum number of samples genes must share to have a correlation value.
  */
 
 void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList, int size,

@@ -24,9 +24,13 @@ void CMatrix::init()
 {
    try
    {
+      // Copy file object from File
       Node::mem(File::mem());
+      // If this is an empty and new file object...
       if (File::head()==fnullptr)
       {
+         // Allocate space for headers, set File memory address, initialize header data to a null
+         // state, and lastly write to file memory.
          allocate();
          File::head(addr());
          null_data();
@@ -34,8 +38,10 @@ void CMatrix::init()
       }
       else
       {
+         // Grab header address of file memory and read it.
          addr(File::head());
          read();
+         // Read in all gene, sample, and correlation names.
          Ace::FString fstr(File::mem(),data()._genePtr);
          fstr.static_buffer(_strSize);
          _geneNames.push_back(fstr.str());
@@ -58,11 +64,14 @@ void CMatrix::init()
             fstr.bump();
             _correlationNames.push_back(fstr.str());
          }
+         // Set this object as NOT new.
          _isNew = false;
       }
    }
    catch (...)
    {
+      // If any exception occurs while trying to load from file memory, clear all file memory and
+      // set object to new.
       File::clear();
       _isNew = true;
       throw;
@@ -80,6 +89,7 @@ void CMatrix::load(Ace::GetOpts&, Ace::Terminal& tm)
 
 void CMatrix::dump(Ace::GetOpts& ops, Ace::Terminal& tm)
 {
+   // Initialize arguments and adjust them based off user given options.
    float threshold {99.0};
    for (auto i = ops.begin(); i != ops.end() ;++i)
    {
@@ -88,17 +98,21 @@ void CMatrix::dump(Ace::GetOpts& ops, Ace::Terminal& tm)
          threshold = i.value<float>();
       }
    }
+   // Make sure output file argument is given.
    if (ops.com_size()<1)
    {
       tm << "Error: must specify output file to dump to.";
       return;
    }
+   // Open output file and check for errors.
    std::ofstream file(ops.com_front());
    if ( !file.is_open() )
    {
       tm << "Error: could not open output file " << ops.com_front() << "\n";
       return;
    }
+   // Go through all gene pairs and output any with correlations higher or equal to the given
+   // threshold argument.
    tm << "Writing to output file with correlation list meeting threshold...\n";
    for (auto i = begin(); i != end() ;++i)
    {
@@ -152,7 +166,9 @@ void CMatrix::initialize(std::vector<std::string>&& geneNames,
                          std::vector<std::string>&& sampleNames,
                          std::vector<std::string>&& correlationNames, int maxModes)
 {
+   // initialize.
    static const char* f = __PRETTY_FUNCTION__;
+   // make sure sizes of vectors are valid and data object is empty.
    Ace::assert<InvalidSize>(geneNames.size()>0&&sampleNames.size()>0&&
                             correlationNames.size()>0,f,__LINE__);
    if (File::head()==fnullptr)
@@ -167,11 +183,13 @@ void CMatrix::initialize(std::vector<std::string>&& geneNames,
    }
    try
    {
+      // initialize header info.
       data()._geneSize = geneNames.size();
       data()._sampleSize = sampleNames.size();
       data()._correlationSize = correlationNames.size();
       data()._maxModes = maxModes;
       Ace::FString fstr(File::mem());
+      // initialize gene, sample, and correlation names.
       auto i = geneNames.begin();
       data()._genePtr = fstr.write(*i);
       ++i;
@@ -201,9 +219,12 @@ void CMatrix::initialize(std::vector<std::string>&& geneNames,
          fstr.write(*i);
          ++i;
       }
+      // initialize expression data.
       data()._expData = GPair::initialize(File::rmem(),geneNames.size(),sampleNames.size(),
                                           correlationNames.size(),maxModes);
+      // write header info to file.
       write();
+      // move vectors of gene and sample names to internal objects.
       _geneNames = std::move(geneNames);
       _sampleNames = std::move(sampleNames);
       _correlationNames = std::move(correlationNames);
@@ -211,6 +232,7 @@ void CMatrix::initialize(std::vector<std::string>&& geneNames,
    }
    catch (...)
    {
+      // If any exception is thrown while initializing, make object empty.
       File::head(fnullptr);
       null_data();
       _isNew = true;
@@ -470,6 +492,8 @@ float& CMatrix::GPair::correlation_val(int mi, int ci)
 int64_t CMatrix::GPair::initialize(Ace::NVMemory& mem, int geneSize, int maxModes, int sampleSize,
                                    int correlationSize)
 {
+   // Calculate size of memory required for all gene pairs with given number of genes, max modes,
+   // samples, and correlations.
    static const char* f = __PRETTY_FUNCTION__;
    size_t size {calc_size(maxModes,sampleSize,correlationSize)*diag_size(geneSize)};
    if ( size > mem.available() )
@@ -485,6 +509,7 @@ int64_t CMatrix::GPair::initialize(Ace::NVMemory& mem, int geneSize, int maxMode
 
 size_t CMatrix::GPair::calc_size(int maxModes, int sampleSize, int correlationSize)
 {
+   // Calculate size of gene pairs without considering bytes required per correlation.
    return sizeof(int8_t)+
           (sizeof(int8_t)*maxModes*sampleSize)+
           (sizeof(float)*maxModes*correlationSize);
