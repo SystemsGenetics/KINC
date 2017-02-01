@@ -176,6 +176,8 @@ std::unique_ptr<double> RMT::prune_matrix(float threshold, int& size)
 
 
 
+/// Pre-generate all thresholds for all gene pairs ahead of time to save time.
+/// @param tm ACE terminal object.
 void RMT::generate_gene_thresholds(Ace::Terminal& tm)
 {
    tm << "Generating gene thresholds[0%]..." << Ace::Terminal::flush;
@@ -209,6 +211,11 @@ void RMT::generate_gene_thresholds(Ace::Terminal& tm)
    }
    tm << "\n";
 }
+
+
+
+// FOR ALL FUNCTIONS BELOW:
+// These were all pulled from KINC version 1
 
 
 

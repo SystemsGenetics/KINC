@@ -10,6 +10,7 @@ namespace Ace = AccelCompEng;
 
 
 
+/// Spearman plugin class that uses spearman analysis to generate correlations between genes.
 class Spearman : public Ace::Analytic
 {
 public:
@@ -19,10 +20,14 @@ public:
    struct NoDataInput : public Ace::Exception { using Ace::Exception::Exception; };
    struct NoDataOutput : public Ace::Exception { using Ace::Exception::Exception; };
    struct TooManySamples : public Ace::Exception { using Ace::Exception::Exception; };
+   /// ACE load input data object call.
    void input(Ace::Data*) override final;
+   /// ACE load output data object call.
    void output(Ace::Data*) override final;
 protected:
+   /// ACE OpenCL accelerated execution call.
    void execute_cl(Ace::GetOpts&,Ace::Terminal&) override final;
+   /// ACE CPU non-accelerated execution call.
    void execute_pn(Ace::GetOpts&,Ace::Terminal&) override final;
 private:
    using elist = Ace::CLBuffer<cl_float>;

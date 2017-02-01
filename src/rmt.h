@@ -9,6 +9,7 @@ namespace Ace = AccelCompEng;
 
 
 
+/// Analytic plugin class that uses Random Matrix Theory to generate a correlation threshold.
 class RMT : public Ace::Analytic
 {
 public:
@@ -16,10 +17,14 @@ public:
    struct TooManyInputs : public Ace::Exception { using Ace::Exception::Exception; };
    struct TooManyOutputs : public Ace::Exception { using Ace::Exception::Exception; };
    struct NoDataInput : public Ace::Exception { using Ace::Exception::Exception; };
+   /// ACE load input data object call.
    void input(Ace::Data*) override final;
+   /// ACE load output data object call.
    void output(Ace::Data*) override final;
 protected:
+   /// ACE OpenCL accelerated execution call.
    void execute_cl(Ace::GetOpts&,Ace::Terminal&) override final;
+   /// ACE CPU non-accelerated execution call.
    void execute_pn(Ace::GetOpts&,Ace::Terminal&) override final;
 private:
    std::unique_ptr<float> matrix_eigens(const std::unique_ptr<double>& matrix, int size);

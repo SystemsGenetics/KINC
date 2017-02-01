@@ -35,14 +35,15 @@ void Spearman::output(Ace::Data* output)
 
 
 /**
- * @brief
+ * @brief Implements ACE's Analytic::execute_cl.
  *
- * @param ops
- * @param tm
+ * @param ops User arguments ACE object.
+ * @param tm ACE terminal object.
  *
  */
 void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
 {
+   // Get all user arguments.
    static const char* f = __PRETTY_FUNCTION__;
    using namespace std::chrono;
    auto t1 = system_clock::now();
@@ -64,6 +65,7 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
          minSize = i.value<int>();
       }
    }
+   // Compile opencl kernel code and load into memory.
    tm << "Loading kernel program into OpenCL device...\n";
    CLProgram::add_source(spearman_cl);
    if (!CLProgram::compile(""))
@@ -76,6 +78,7 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
    Ace::assert<NoDataOutput>(_out,f,__LINE__);
    int gSize {_in->gene_size()};
    int sSize {_in->sample_size()};
+   // Load expression data into memory and then transfer to opencl device global memory.
    tm << "Loading expression data into OpenCL device...\n";
    auto expList = CLContext::buffer<cl_float>(sSize*gSize);
    int inc {0};
@@ -89,6 +92,7 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
    }
    auto ev = CLCommandQueue::write_buffer(expList);
    ev.wait();
+   // Pre-populate the header of the output correlation matrix data object.
    tm << "Formating and copying header information to output file...\n";
    std::vector<std::string> geneNames;
    for (int i = 0;i<_in->gene_size();++i)
@@ -115,7 +119,9 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
    {
       chunk = bSize/(2*wSize);
    }
+   // Begin OpenCL processing engine, this is where all the magic happens.
    calculate(tm,kern,expList,sSize,wSize,chunk,blSize,smSize,minSize);
+   // Calculates the time it took for total execution.
    auto t2 = system_clock::now();
    int s = duration_cast<seconds>(t2-t1).count();
    if (s==0)
@@ -146,10 +152,10 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
 }
 
 /**
- * @brief
+ * @brief Implements ACE's Analytic::execute_pn.
  *
- * @param ops
- * @param tm
+ * @param ops User arguments ACE object.
+ * @param tm ACE terminal object.
  *
  */
 void Spearman::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
@@ -162,6 +168,7 @@ void Spearman::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
    Ace::assert<NoDataOutput>(_out,f,__LINE__);
    int gSize {_in->gene_size()};
    int sSize {_in->sample_size()};
+   // Pre-populate header information of correlation matrix object.
    tm << "Formating and copying header information to output file...\n";
    std::vector<std::string> geneNames;
    for (int i = 0;i<_in->gene_size();++i)
@@ -174,6 +181,7 @@ void Spearman::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
       sampleNames.push_back(_in->sample_name(i));
    }
    std::vector<std::string> correlations {"spearman"};
+   // Begin huge loop to calculate all spearman coefficients.
    _out->initialize(std::move(geneNames),std::move(sampleNames),std::move(correlations),1);
    tm << "Calculating spearman (pn) values and saving to output file[0%]...";
    auto i = _out->begin();
@@ -225,6 +233,7 @@ void Spearman::execute_pn(Ace::GetOpts& ops, Ace::Terminal& tm)
       }
    }
    tm << "\rCalculating spearman values and saving to output file[" << 100*count/total << "%]...\n";
+   // Calculate time taken to run all gene pairs.
    auto t2 = system_clock::now();
    int s = duration_cast<seconds>(t2-t1).count();
    if (s==0)
@@ -321,6 +330,7 @@ int Spearman::pow2_floor(int i)
 void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList, int size,
                          int wSize, int chunk, int blSize, int smSize, int minSize)
 {
+   // Initialize the kernel with all arguments that never change.
    enum class State {start,in,exec,out,end};
    unsigned long total = CMatrix::diag_size(_in->gene_size());
    int bufferSize {wSize*chunk*2};
@@ -352,6 +362,8 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
    kern.set_arg(16,&buf11);
    kern.set_swarm_dims(1);
    kern.set_swarm_size(0,blSize*wSize,wSize);
+   // Define a structure that defines a single kernel execution then make array of them that equal
+   // smSize.
    struct
    {
       State st;
@@ -370,6 +382,8 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
       state[i].ld = CLContext::buffer<int>(2*blSize);
       state[i].ans = CLContext::buffer<cl_float>(blSize);
    }
+   // Begin huge loop that continues running until all kernel execution pathways are no longer
+   // alive.
    int alive {smSize};
    int si {0};
    auto i = _out->begin();
@@ -379,6 +393,8 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
       switch (state[si].st)
       {
       case State::start:
+         // Kernel is in START state, load new array targets to the kernel. If there are
+         // no gene pairs left to calculate move state to END and decrement alive count.
          if (i!=_out->end())
          {
             state[si].x = i.x();
@@ -407,6 +423,8 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
          }
          break;
       case State::in:
+         // Kernel is in IN state, once targets have been loaded begin execution of actual
+         // kernel.
          if (state[si].ev.is_done())
          {
             kern.set_arg(3,&(state[si].ld));
@@ -416,6 +434,8 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
          }
          break;
       case State::exec:
+         // Kernel is in EXEC state, once kernel is done begin loading results back to system
+         // memory.
          if (state[si].ev.is_done())
          {
             state[si].ev = CLCommandQueue::read_buffer(state[si].ans);
@@ -423,6 +443,9 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
          }
          break;
       case State::out:
+         // Kernel is in OUT state, once kernel is done loading results back system read those
+         // results and load them into new correlation matrix object. Lastly, move back to the
+         // START state.
          if (state[si].ev.is_done())
          {
             auto wi = _out->find(state[si].x,state[si].y);
@@ -446,8 +469,10 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
          }
          break;
       case State::end:
+         // Kernel is in END state, do nothing like zombie.
          break;
       }
+      // Increment to next kernel branch, if reached end of array go back to beginning.
       ++si;
       if (si>=smSize)
       {
