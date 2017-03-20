@@ -484,3 +484,23 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
    }
    tm << "\n";
 }
+
+
+
+#ifdef UNIT_TEST
+
+
+
+void Spearman::runUnitTests(Ace::Console& console)
+{
+   console.command("cl set 0:0");
+   console.command("open simple:emx --select");
+   console.command("load samples.txt");
+   console.command("spearman --in=simple --out=simple_spearman:cmx --minsize=0");
+   console.command("select simple_spearman");
+   console.command("query");
+}
+
+
+
+#endif

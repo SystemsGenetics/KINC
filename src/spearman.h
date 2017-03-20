@@ -14,6 +14,9 @@ namespace Ace = AccelCompEng;
 class Spearman : public Ace::Analytic
 {
 public:
+#ifdef UNIT_TEST
+   static void runUnitTests(Ace::Console& console);
+#endif
    struct InvalidDataType : public Ace::Exception { using Ace::Exception::Exception; };
    struct TooManyInputs : public Ace::Exception { using Ace::Exception::Exception; };
    struct TooManyOutputs : public Ace::Exception { using Ace::Exception::Exception; };

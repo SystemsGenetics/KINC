@@ -1,3 +1,4 @@
+KINC.config
 main.cpp
 linker.cpp
 ematrix.cpp
