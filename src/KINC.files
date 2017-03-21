@@ -10,6 +10,7 @@ amatrix.h
 spearman.cpp
 spearman.h
 spearman.cl
+spearman2.cl
 pearson.cpp
 pearson.h
 pearson.cl
