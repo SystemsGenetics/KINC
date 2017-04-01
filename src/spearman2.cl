@@ -162,3 +162,29 @@ void bitonicSortFI(int size, __global float* sortList, __global int* extraList)
       }
    }
 }
+
+
+
+// Make the final calculation of the spearman coefficient with the given presorted spearman ranking
+// list.
+//
+// @param size Size of the ranking list.
+// @param rankList Presorted spearman ranking list.
+// @return Returns floating point spearman coefficient.
+float calculateSpearman(int size, __global int* rankList)
+{
+   // declare and initialize all variables
+   int i;
+   long tmp;
+   long difference = 0;
+
+   // go through spearman sorted rank list and calculate difference from 1,2,3,... list
+   for (i = 0; i < size ;++i)
+   {
+      tmp = (i+1)-rankList[i];
+      difference += tmp*tmp;
+   }
+
+   // calculate and return spearman coefficient
+   return 1.0-(6.0*(float)difference/((float)size*(((float)size*(float)size)-1.0)));
+}
