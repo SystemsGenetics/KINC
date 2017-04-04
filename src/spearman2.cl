@@ -18,6 +18,9 @@ so size = ( 2*sizeof(float) + sizeof(int) )*thread_size
 
 
 
+
+
+
 // Fetch and build array of expressions for both genes, skipping any expressions that are missing
 // for either gene. Also builds ordered rank list used for spearman algorithm.
 //
@@ -43,7 +46,7 @@ int fetchLists(int indexA, int indexB, int size, __global float* listA, __global
    {
       if ( !isnan(expressions[indexA+i]) && !isnan(expressions[indexB+i]) )
       {
-         // if both expressions exist add expressions to new lists, add next rank, and increment
+         // if both expressions exist add expressions to new lists, next rank, and increment
          listA[j] = expressions[indexA+i];
          listB[j] = expressions[indexB+i];
          rankList[j] = ++j;
@@ -65,6 +68,9 @@ int fetchLists(int indexA, int indexB, int size, __global float* listA, __global
 
 
 
+
+
+
 // Swap two floating point values.
 //
 // @param a First floating point value.
@@ -75,6 +81,9 @@ void swapF(__global float* a, __global float* b)
    *a = *b;
    *b = c;
 }
+
+
+
 
 
 
@@ -115,6 +124,9 @@ void bitonicSortFF(int size, __global float* sortList, __global float* extraList
 
 
 
+
+
+
 // Swap two integer values.
 //
 // @param a First integer value.
@@ -125,6 +137,9 @@ void swapI(__global int* a, __global int* b)
    *a = *b;
    *b = c;
 }
+
+
+
 
 
 
@@ -165,6 +180,9 @@ void bitonicSortFI(int size, __global float* sortList, __global int* extraList)
 
 
 
+
+
+
 // Make the final calculation of the spearman coefficient with the given presorted spearman ranking
 // list.
 //
@@ -187,4 +205,47 @@ float calculateSpearman(int size, __global int* rankList)
 
    // calculate and return spearman coefficient
    return 1.0-(6.0*(float)difference/((float)size*(((float)size*(float)size)-1.0)));
+}
+
+
+
+
+
+
+// Calculate a bulk selection of spearman coefficients with different genes.
+//
+// @param size The size of the expressions/samples per gene.
+// @param targetList Array containing all gene targets to sort.
+// @param expressions Row first 2 dimensional array of all gene expressions.
+// @param workLists Work space to be used for spearman calculations.
+// @param rankLists Work space to be used for spearman calculations.
+// @param resultList Array that will contain all completed spearman coefficients of all gene
+// correlations specified in target list.
+__kernel void calculateSpearmanBlock(int size, __global int targetList, __global float expressions
+                                     , __global float workLists, __global int rankLists
+                                     , __global resultList)
+{
+   // initialize all variables and get global id
+   int newSize,newPow2Size;
+   int i = get_global_id(0);
+   float* listA = &workLists[i*size];
+   float* listB = &workLists[(i+1)*size];
+   int* rankList = &rankLists[i*size];
+
+   // fetch gene expressions lists for both genes from target list
+   newSize = fetchLists(targetList[i],targetList[i+1],listA,listB,rankList,expressions);
+
+   // determine smallest power of 2 size that is equal to or greater than trimmed size
+   newPow2Size = 2;
+   while ( newPow2Size < newSize )
+   {
+      newPow2Size *= 2;
+   }
+
+   // execute two bitonic sorts that is beginning of spearman algorithm
+   bitonicSortFF(newPow2Size,listA,listB);
+   bitonicSortFI(newPow2Size,listB,rankList);
+
+   // calculate spearman coefficient from rearranged rank list and save to result list
+   resultList[i] = calculateSpearman(newSize,rankList);
 }
