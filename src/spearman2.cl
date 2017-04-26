@@ -230,32 +230,41 @@ float calculateSpearman(int size, __global int* rankList)
 // @param rankLists Work space to be used for spearman calculations.
 // @param resultList Array that will contain all completed spearman coefficients of all gene
 // correlations specified in target list.
-__kernel void calculateSpearmanBlock(int size, int workSize, __global int* targetList
-                                     , __global float* expressions, __global float* workLists
-                                     , __global int* rankLists, __global float* resultList)
+__kernel void calculateSpearmanBlock(int size, int workSize, int minimumSize
+                                     , __global int* targetList, __global float* expressions
+                                     , __global float* workLists, __global int* rankLists
+                                     , __global float* resultList)
 {
    // initialize all variables and get global id
    int newSize,pow2Size;
    int i = get_global_id(0);
-   __global float* listA = &workLists[i*workSize];
-   __global float* listB = &workLists[(i+1)*workSize];
+   __global float* listA = &workLists[2*i*workSize];
+   __global float* listB = &workLists[(2*i+1)*workSize];
    __global int* rankList = &rankLists[i*workSize];
 
    // fetch gene expressions lists for both genes from target list
-   newSize = fetchLists(targetList[i],targetList[i+1],size,workSize,listA,listB,rankList
+   newSize = fetchLists(targetList[2*i],targetList[2*i+1],size,workSize,listA,listB,rankList
                         ,expressions);
 
-   // get new power of 2 floor size
-   pow2Size = 2;
-   while ( pow2Size < newSize )
+   // make sure minimum number of related samples is reached
+   if ( newSize >= minimumSize )
    {
-      pow2Size *= 2;
+      // get new power of 2 floor size
+      pow2Size = 2;
+      while ( pow2Size < newSize )
+      {
+         pow2Size *= 2;
+      }
+
+      // execute two bitonic sorts that is beginning of spearman algorithm
+      bitonicSortFF(pow2Size,listA,listB);
+      bitonicSortFI(pow2Size,listB,rankList);
+
+      // calculate spearman coefficient from rearranged rank list and save to result list
+      resultList[i] = calculateSpearman(newSize,rankList);
    }
-
-   // execute two bitonic sorts that is beginning of spearman algorithm
-   bitonicSortFF(pow2Size,listA,listB);
-   bitonicSortFI(pow2Size,listB,rankList);
-
-   // calculate spearman coefficient from rearranged rank list and save to result list
-   resultList[i] = calculateSpearman(newSize,rankList);
+   else
+   {
+      resultList[i] = NAN;
+   }
 }

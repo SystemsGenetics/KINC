@@ -33,11 +33,13 @@ protected:
    /// ACE CPU non-accelerated execution call.
    void execute_pn(Ace::GetOpts&,Ace::Terminal&) override final;
 private:
+   void theMaddening();
+   void theMaddening2();
    using elist = Ace::CLBuffer<cl_float>;
    int pow2_ceil(int);
    int pow2_floor(int);
-   void calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList, int size, int wSize,
-                  int chunk, int blSize, int smSize, int minSize);
+   void calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList, int size, int blSize
+                  , int smSize, int minSize);
    EMatrix* _in {nullptr};
    CMatrix* _out {nullptr};
 };

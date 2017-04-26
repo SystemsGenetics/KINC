@@ -1,5 +1,6 @@
 #include "spearman.h"
 #include "spearman.cl.h"
+#include "spearman2.cl.h"
 #include <gsl/gsl_statistics.h>
 #include <iostream>
 #include <sstream>
@@ -34,6 +35,204 @@ void Spearman::output(Ace::Data* output)
 }
 
 
+
+void Spearman::theMaddening()
+{
+   // Compile opencl kernel code and load into memory.
+   std::cout << "Loading kernel program into OpenCL device...\n";
+   CLProgram::add_source(spearman2_cl);
+   if (!CLProgram::compile(""))
+   {
+      std::cout << CLProgram::log();
+      return;
+   }
+   auto kern = CLProgram::mkernel("calculateSpearmanBlock");
+   auto expList = CLContext::buffer<cl_float>(28);
+   int i=0;
+   expList[i++] = 106;
+   expList[i++] = 86;
+   expList[i++] = 100;
+   expList[i++] = NAN;
+   expList[i++] = 101;
+   expList[i++] = 99;
+   expList[i++] = 103;
+   expList[i++] = 97;
+   expList[i++] = 113;
+   expList[i++] = 1000000;
+   expList[i++] = 112;
+   expList[i++] = 1000000;
+   expList[i++] = 1000000;
+   expList[i++] = 110;
+   //
+   expList[i++] = 7;
+   expList[i++] = 0;
+   expList[i++] = 27;
+   expList[i++] = 100000;
+   expList[i++] = 50;
+   expList[i++] = 28;
+   expList[i++] = 29;
+   expList[i++] = 20;
+   expList[i++] = 12;
+   expList[i++] = NAN;
+   expList[i++] = 6;
+   expList[i++] = NAN;
+   expList[i++] = NAN;
+   expList[i++] = 17;
+   std::cout << "Loading kernel program into OpenCL device...\n";
+   auto ev = CLCommandQueue::write_buffer(expList);
+   ev.wait();
+   kern.set_arg(0,14);
+   kern.set_arg(1,16);
+   kern.set_arg(2,1);
+   kern.set_arg(4,&expList);
+   auto buf1 = CLContext::buffer<cl_float>(2*16);
+   kern.set_arg(5,&buf1);
+   auto buf2 = CLContext::buffer<cl_int>(16);
+   kern.set_arg(6,&buf2);
+   auto ld = CLContext::buffer<int>(2);
+   ld[0] = 0;
+   ld[1] = 14;
+   ev = CLCommandQueue::write_buffer(ld);
+   ev.wait();
+   auto ans = CLContext::buffer<cl_float>(1);
+   kern.set_arg(3,&ld);
+   kern.set_arg(7,&ans);
+   kern.set_swarm_dims(1);
+   kern.set_swarm_size(0,1,1);
+   std::cout << "Loading kernel program into OpenCL device...\n";
+   ev = CLCommandQueue::add_swarm(kern);
+   ev.wait();
+   ev = CLCommandQueue::read_buffer(buf1);
+   ev.wait();
+   ev = CLCommandQueue::read_buffer(buf2);
+   ev.wait();
+   for (int i = 0; i < 16 ;++i)
+   {
+      std::cout << buf1[i] << " ";
+   }
+   std::cout << "\n";
+   for (int i = 16; i < 32 ;++i)
+   {
+      std::cout << buf1[i] << " ";
+   }
+   std::cout << "\n";
+   for (int i = 0; i < 16 ;++i)
+   {
+      std::cout << buf2[i] << " ";
+   }
+   std::cout << "\n";
+   std::cout << "Loading kernel program into OpenCL device...\n";
+   ev = CLCommandQueue::read_buffer(ans);
+   ev.wait();
+   std::cout << ans[0] << "\n";
+}
+
+
+
+void Spearman::theMaddening2()
+{
+   // Compile opencl kernel code and load into memory.
+   std::cout << "Loading kernel program into OpenCL device...\n";
+   CLProgram::add_source(spearman2_cl);
+   if (!CLProgram::compile(""))
+   {
+      std::cout << CLProgram::log();
+      return;
+   }
+   auto kern = CLProgram::mkernel("calculateSpearmanBlock");
+   auto expList = CLContext::buffer<cl_float>(40);
+   int i=0;
+   expList[i++] = 106;
+   expList[i++] = 86;
+   expList[i++] = 100;
+   expList[i++] = 101;
+   expList[i++] = 99;
+   expList[i++] = 103;
+   expList[i++] = 97;
+   expList[i++] = 113;
+   expList[i++] = 112;
+   expList[i++] = 110;
+   expList[i++] = 7;
+   expList[i++] = 0;
+   expList[i++] = 27;
+   expList[i++] = 50;
+   expList[i++] = 28;
+   expList[i++] = 29;
+   expList[i++] = 20;
+   expList[i++] = 12;
+   expList[i++] = 6;
+   expList[i++] = 17;
+   expList[i++] = 7;
+   expList[i++] = 0;
+   expList[i++] = 27;
+   expList[i++] = 50;
+   expList[i++] = 28;
+   expList[i++] = 29;
+   expList[i++] = 20;
+   expList[i++] = 12;
+   expList[i++] = 6;
+   expList[i++] = 17;
+   std::cout << "Loading kernel program into OpenCL device...\n";
+   auto ev = CLCommandQueue::write_buffer(expList);
+   ev.wait();
+   kern.set_arg(0,10);
+   kern.set_arg(1,16);
+   kern.set_arg(2,1);
+   kern.set_arg(4,&expList);
+   auto buf1 = CLContext::buffer<cl_float>(2*16*4);
+   kern.set_arg(5,&buf1);
+   auto buf2 = CLContext::buffer<cl_int>(16*4);
+   kern.set_arg(6,&buf2);
+   auto ld = CLContext::buffer<int>(2*4);
+   ld[0] = 10;
+   ld[1] = 0;
+   ld[2] = 20;
+   ld[3] = 0;
+   ld[4] = 20;
+   ld[5] = 10;
+   ld[6] = 0;
+   ld[7] = 0;
+   ev = CLCommandQueue::write_buffer(ld);
+   ev.wait();
+   auto ans = CLContext::buffer<cl_float>(4);
+   kern.set_arg(3,&ld);
+   kern.set_arg(7,&ans);
+   kern.set_swarm_dims(1);
+   kern.set_swarm_size(0,4,4);
+   std::cout << "Loading kernel program into OpenCL device...\n";
+   ev = CLCommandQueue::add_swarm(kern);
+   ev.wait();
+   ev = CLCommandQueue::read_buffer(buf1);
+   ev.wait();
+   ev = CLCommandQueue::read_buffer(buf2);
+   ev.wait();
+   for (int i = 0+64; i < 16+64 ;++i)
+   {
+      std::cout << buf1[i] << " ";
+   }
+   std::cout << "\n";
+   for (int i = 16+64; i < 32+64 ;++i)
+   {
+      std::cout << buf1[i] << " ";
+   }
+   std::cout << "\n";
+   for (int i = 0+32; i < 16+32 ;++i)
+   {
+      std::cout << buf2[i] << " ";
+   }
+   std::cout << "\n";
+   std::cout << "Loading kernel program into OpenCL device...\n";
+   ev = CLCommandQueue::read_buffer(ans);
+   ev.wait();
+   for (int i = 0; i < 3 ;++i)
+   {
+      std::cout << ans[i] << " ";
+   }
+   std::cout << "\n";
+}
+
+
+
 /**
  * @brief Implements ACE's Analytic::execute_cl.
  *
@@ -43,6 +242,8 @@ void Spearman::output(Ace::Data* output)
  */
 void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
 {
+   //theMaddening();
+   //theMaddening2();
    // Get all user arguments.
    static const char* f = __PRETTY_FUNCTION__;
    using namespace std::chrono;
@@ -67,13 +268,13 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
    }
    // Compile opencl kernel code and load into memory.
    tm << "Loading kernel program into OpenCL device...\n";
-   CLProgram::add_source(spearman_cl);
+   CLProgram::add_source(spearman2_cl);
    if (!CLProgram::compile(""))
    {
       tm << CLProgram::log();
       return;
    }
-   auto kern = CLProgram::mkernel("spearman");
+   auto kern = CLProgram::mkernel("calculateSpearmanBlock");
    Ace::assert<NoDataInput>(_in,f,__LINE__);
    Ace::assert<NoDataOutput>(_out,f,__LINE__);
    int gSize {_in->gene_size()};
@@ -107,20 +308,8 @@ void Spearman::execute_cl(Ace::GetOpts& ops, Ace::Terminal& tm)
    std::vector<std::string> correlations {"spearman"};
    _out->initialize(std::move(geneNames),std::move(sampleNames),std::move(correlations),1);
    tm << "Calculating spearman values and saving to output file[0%]...";
-
-   // bSize is the sample size rounded to the nearest higer power of 2.
-   int bSize {pow2_ceil(sSize)};
-   Ace::assert<TooManySamples>(bSize>0,f,__LINE__);
-   // wSize is the work group size rounded to the nearest lower power of 2.
-   int wSize {pow2_floor(kern.get_wg_size())};
-   // TODO: what is the chunk size????
-   int chunk {1};
-   if ((2*wSize)<bSize)
-   {
-      chunk = bSize/(2*wSize);
-   }
    // Begin OpenCL processing engine, this is where all the magic happens.
-   calculate(tm,kern,expList,sSize,wSize,chunk,blSize,smSize,minSize);
+   calculate(tm,kern,expList,sSize,blSize,smSize,minSize);
    // Calculates the time it took for total execution.
    auto t2 = system_clock::now();
    int s = duration_cast<seconds>(t2-t1).count();
@@ -302,66 +491,25 @@ int Spearman::pow2_floor(int i)
 }
 
 
-/**
- * @brief Executes the spearman correlation algorithm on the GPU.
- *
- * Divides the data into chunks that can be analyzed one chuck at a time
- * by an OpenCL kernel.
- *
- * @param tm
- *   A pointer to the ACE terminal console.
- * @param kern
- *   A pointer to the CLProgram::mkernel object of "type" spearman.
- * @param expList
- *   A pointer to an CLContext::buffer that has been pre populated with data
- *   from the expression matrix.
- * @param size
- *   The number of samples in the expression matrix.
- * @param wSize
- *   The work group size (i.e. the number of kernels a work group can hold).
- * @param chunk
- *  Number of samples a single processing unit works on.
- * @param smSize
- *  Number of kernels executed in parallel on the opencl device.
- * @param minSize
- *  Minimum number of samples genes must share to have a correlation value.
- */
 
 void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList, int size,
-                         int wSize, int chunk, int blSize, int smSize, int minSize)
+                         int blSize, int smSize, int minSize)
 {
    // Initialize the kernel with all arguments that never change.
    enum class State {start,in,exec,out,end};
    unsigned long total = CMatrix::diag_size(_in->gene_size());
-   int bufferSize {wSize*chunk*2};
+   int workSize {pow2_ceil(size)};
    kern.set_arg(0,size);
-   kern.set_arg(1,chunk);
+   kern.set_arg(1,workSize);
    kern.set_arg(2,minSize);
    kern.set_arg(4,&expList);
-   auto buf1 = CLContext::buffer<cl_float>(blSize*bufferSize);
-   kern.set_arg(6,&buf1);
-   auto buf2 = CLContext::buffer<cl_float>(blSize*bufferSize);
-   kern.set_arg(7,&buf2);
-   auto buf3 = CLContext::buffer<cl_int>(blSize*bufferSize);
-   kern.set_arg(8,&buf3);
-   auto buf4 = CLContext::buffer<cl_int>(blSize*bufferSize);
-   kern.set_arg(9,&buf4);
-   auto buf5 = CLContext::buffer<cl_long>(blSize*bufferSize);
-   kern.set_arg(10,&buf5);
-   auto buf6 = CLContext::buffer<cl_float>(blSize*bufferSize);
-   kern.set_arg(11,&buf6);
-   auto buf7 = CLContext::buffer<cl_float>(blSize*bufferSize);
-   kern.set_arg(12,&buf7);
-   auto buf8 = CLContext::buffer<cl_int>(blSize*bufferSize);
-   kern.set_arg(13,&buf8);
-   auto buf9 = CLContext::buffer<cl_int>(blSize*bufferSize);
-   kern.set_arg(14,&buf9);
-   auto buf10 = CLContext::buffer<cl_int>(blSize*bufferSize);
-   kern.set_arg(15,&buf10);
-   auto buf11 = CLContext::buffer<cl_int>(blSize*bufferSize);
-   kern.set_arg(16,&buf11);
+   auto buf1 = CLContext::buffer<cl_float>(2*workSize*blSize);
+   kern.set_arg(5,&buf1);
+   auto buf2 = CLContext::buffer<cl_int>(workSize*blSize);
+   kern.set_arg(6,&buf2);
+
    kern.set_swarm_dims(1);
-   kern.set_swarm_size(0,blSize*wSize,wSize);
+   //kern.set_swarm_size(0,blSize,1024);
    // Define a structure that defines a single kernel execution then make array of them that equal
    // smSize.
    struct
@@ -369,6 +517,7 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
       State st;
       int x;
       int y;
+      int size;
       Ace::CLEvent ev;
       AccelCompEng::CLBuffer<int> ld;
       AccelCompEng::CLBuffer<cl_float> ans;
@@ -407,6 +556,7 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
                ++count;
                ++i;
             }
+            state[si].size = count;
             while (count<blSize)
             {
                state[si].ld[2*count] = 0;
@@ -427,8 +577,19 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
          // kernel.
          if (state[si].ev.is_done())
          {
+            int size {pow2_ceil(state[si].size)};
+            int wgsize {1};
+            if ( size > 1 )
+            {
+               wgsize = 2;
+               while ( wgsize < size && wgsize <= 1024 )
+               {
+                  wgsize *= 2;
+               }
+            }
+            kern.set_swarm_size(0,size,wgsize);
             kern.set_arg(3,&(state[si].ld));
-            kern.set_arg(5,&(state[si].ans));
+            kern.set_arg(7,&(state[si].ans));
             state[si].ev = CLCommandQueue::add_swarm(kern);
             state[si].st = State::exec;
          }
