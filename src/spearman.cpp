@@ -582,7 +582,7 @@ void Spearman::calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList,
             if ( size > 1 )
             {
                wgsize = 2;
-               while ( wgsize < size && wgsize <= 1024 )
+               while ( wgsize < size && wgsize < 1024 )
                {
                   wgsize *= 2;
                }
