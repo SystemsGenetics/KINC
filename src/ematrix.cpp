@@ -102,7 +102,7 @@ void EMatrix::load(Ace::GetOpts &ops, Ace::Terminal &tm)
          {
             Ace::assert<InvalidArg>(false,f,__LINE__);
          }
-      } else if (i.is_key("nosample"))
+      } else if (i.is_key("missing"))
       {
          nan = i.value<std::string>();
       }
