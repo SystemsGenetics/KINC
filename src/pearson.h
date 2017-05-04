@@ -36,4 +36,28 @@ private:
 
 
 
+class PearsonHelpItem : public AbstractHelpItem
+{
+public:
+   std::string getName() const override final
+   {
+      return "pearson";
+   }
+   std::string getDescription() const override final
+   {
+      return "pearson Analytic\n"
+            "\n"
+            "This analytic conducts pearson analysis on emx data and outputs cmx data.\n"
+             "\n"
+             "pearson --in=[inname] --out=[outname]:cmx (--slots|--bsize|--minsize)\n"
+             "\n"
+             "Takes data object [inname] that must be emx and outputs new file [outname] that is"
+             " a cmx data object. --slots specifies how many parallel slots are processed at the"
+             " same time. --bsize specifies how many kernels are ran in parallel per slot."
+             " --minsize specifies he minimum number of samples a gene pair must share to be given"
+             " a pearson coefficient.\n";
+   }
+};
+
+
 #endif

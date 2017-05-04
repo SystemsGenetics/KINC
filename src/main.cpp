@@ -9,6 +9,11 @@
 
 int main(int argc, char* argv[])
 {
+   HelpFactory::getInstance().addItem(std::unique_ptr<AbstractHelpItem>(new EMatrixHelpItem));
+   HelpFactory::getInstance().addItem(std::unique_ptr<AbstractHelpItem>(new CMatrixHelpItem));
+   HelpFactory::getInstance().addItem(std::unique_ptr<AbstractHelpItem>(new SpearmanHelpItem));
+   HelpFactory::getInstance().addItem(std::unique_ptr<AbstractHelpItem>(new RMTHelpItem));
+   HelpFactory::getInstance().addItem(std::unique_ptr<AbstractHelpItem>(new PearsonHelpItem));
    KINCFactory factory;
    return Ace::run("KINC",factory,argc,argv);
 }

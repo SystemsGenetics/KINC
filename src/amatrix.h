@@ -88,4 +88,26 @@ private:
 
 
 
+class AMatrixHelpItem : public AbstractHelpItem
+{
+public:
+   std::string getName() const override final
+   {
+      return "amx";
+   }
+   std::string getDescription() const override final
+   {
+      return "amx Data Object\n"
+            "\n"
+            "This data object holds adjacency matrix data.\n"
+             "\n"
+             "dump command is not implemented\n"
+             "\n"
+             "load command is not implemented\n"
+             "\n"
+             "query command is not implemented.\n";
+   }
+};
+
+
 #endif

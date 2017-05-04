@@ -251,4 +251,28 @@ private:
 
 
 
+class CMatrixHelpItem : public AbstractHelpItem
+{
+public:
+   std::string getName() const override final
+   {
+      return "cmx";
+   }
+   std::string getDescription() const override final
+   {
+      return "cmx Data Object\n"
+            "\n"
+            "This data object holds correlation matrix data.\n"
+             "\n"
+             "dump [file] (--threshold)\n"
+             "dumps gene correlation data that is above a given threshold to flat file [file]."
+             " Default threshold is 99.0 unless otherwise specified by --threshold.\n"
+             "\n"
+             "load command is not implemented\n"
+             "\n"
+             "query outputs basic information.\n";
+   }
+};
+
+
 #endif

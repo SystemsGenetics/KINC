@@ -46,4 +46,28 @@ private:
 
 
 
+class SpearmanHelpItem : public AbstractHelpItem
+{
+public:
+   std::string getName() const override final
+   {
+      return "spearman";
+   }
+   std::string getDescription() const override final
+   {
+      return "spearman Analytic\n"
+            "\n"
+            "This analytic conducts spearman analysis on emx data and outputs cmx data.\n"
+             "\n"
+             "spearman --in=[inname] --out=[outname]:cmx (--slots|--bsize|--minsize)\n"
+             "\n"
+             "Takes data object [inname] that must be emx and outputs new file [outname] that is"
+             " a cmx data object. --slots specifies how many parallel slots are processed at the"
+             " same time. --bsize specifies how many kernels are ran in parallel per slot."
+             " --minsize specifies he minimum number of samples a gene pair must share to be given"
+             " a spearman coefficient.\n";
+   }
+};
+
+
 #endif

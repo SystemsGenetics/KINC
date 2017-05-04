@@ -49,4 +49,23 @@ private:
 
 
 
+class RMTHelpItem : public AbstractHelpItem
+{
+public:
+   std::string getName() const override final
+   {
+      return "rmt";
+   }
+   std::string getDescription() const override final
+   {
+      return "rmt Analytic\n"
+            "\n"
+            "rmt --in=[inname].\n"
+             "\n"
+             "[inname] must be a cmx data object. the RMT threshold is calculated for the"
+             " correlation matrix.\n";
+   }
+};
+
+
 #endif

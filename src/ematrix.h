@@ -211,4 +211,31 @@ private:
 
 
 
+
+class EMatrixHelpItem : public AbstractHelpItem
+{
+public:
+   std::string getName() const override final
+   {
+      return "emx";
+   }
+   std::string getDescription() const override final
+   {
+      return "emx Data Object\n"
+            "\n"
+            "This data object holds expression matrix data.\n"
+             "\n"
+             "dump command is not implemented.\n"
+             "\n"
+             "load (--noheader|--samples|--transform|--missing)\n"
+             "--noheader specifies the flat file has no sample names. --samples=n states the flat"
+             " file has n samples per gene. --transform=log|log2|log10 will cause all sample values"
+             " to be transformed by log, log2, or log10. --missing=T states the flat file uses the"
+             " string token T for missing sample values.\n"
+             "\n"
+             "query outputs basic information.\n";
+   }
+};
+
+
 #endif
