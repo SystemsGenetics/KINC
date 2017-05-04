@@ -9,7 +9,7 @@ FILES := KINC.files
 
 
 build := ../build/
-run := ../run/
+run := ../bin/
 
 acxxflags := $(CXXFLAGS) -g -std=c++11 -I../../ACE
 aldflags := $(LDFLAGS)
