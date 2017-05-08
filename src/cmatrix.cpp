@@ -148,14 +148,14 @@ bool CMatrix::empty()
 
 
 
-long long CMatrix::diagonal(int x, int y)
+uint64_t CMatrix::diagonal(uint64_t x, uint64_t y)
 {
    return (x*(x-1)/2)+y;
 }
 
 
 
-long long CMatrix::diag_size(int x)
+uint64_t CMatrix::diag_size(uint64_t x)
 {
    return x*(x-1)/2;
 }

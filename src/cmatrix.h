@@ -38,11 +38,11 @@ public:
    /// @param x Index of first gene.
    /// @param y Index of second gene.
    /// @return One dimensional position of gene correlation.
-   static long long diagonal(int x, int y);
+   static uint64_t diagonal(uint64_t x, uint64_t y);
    /// Get total size of diagonal matrix.
    /// @param x Total number of genes.
    /// @return Total number of correlations between all genes.
-   static long long diag_size(int x);
+   static uint64_t diag_size(uint64_t x);
    /// Initialize a new correlation matrix for this object.
    /// @param geneNames List of all gene names.
    /// @param sampleNames List of all sample names.
