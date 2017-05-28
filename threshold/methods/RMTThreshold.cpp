@@ -483,7 +483,7 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
         float cv;
         while (!feof(fp)) {
 
-          // Read in the fields for this line. We must read in 8 fields or
+          // Read in the fields for this line. We must read in 11 fields or
           // we will skip the line.
           int matches = fscanf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\t%s", &j, &k, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &num_outliers, &num_goutliers, &num_threshold, (char *) &cscores, (char *) &samples);
           if (matches < 11) {
@@ -498,7 +498,7 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
 
           // Make sure there aren't more clusters than was allowed.
           if (cluster_num > max_clusters) {
-            fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
+            fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) has %d clusters.\n", max_clusters, j, k, cluster_num);
             exit(-1);
           }
 
@@ -610,20 +610,25 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
       }
       int j, k, cluster_num, num_clusters, cluster_samples, num_missing, num_outliers, num_goutliers, num_threshold;
       char samples[num_samples];
+      char cscores[255];
       float cv;
       while (!feof(fp)) {
 
-        // Read in the fields for this line. We must read in 8 fields or
+        // Read in the fields for this line. We must read in 11 fields or
         // we will skip the line.
-        int matches = fscanf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%f\t%s", &j, &k, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &num_outliers, &num_goutliers, &num_threshold, &cv, (char *) &samples);
+        int matches = fscanf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%s\t%s", &j, &k, &cluster_num, &num_clusters, &cluster_samples, &num_missing, &num_outliers, &num_goutliers, &num_threshold, (char *) &cscores, (char *) &samples);
         if (matches < 11) {
           char tmp[num_samples*2];
           matches = fscanf(fp, "%s\n", (char *)&tmp);
           continue;
         }
 
+        // Get the score for the selected method.
+        float ** scores = parseScores((char *) &cscores);
+        cv = *(scores[th_method_index]);
+
         if (cluster_num > max_clusters) {
-          fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) as %d clusters.\n", max_clusters, j, k, cluster_num);
+          fprintf(stderr, "Currently, only %d clusters are supported. Gene pair (%i, %i) has %d clusters.\n", max_clusters, j, k, cluster_num);
           exit(-1);
         }
 
@@ -637,7 +642,7 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
 
         if (fabs(cv) >= th && cluster_samples >= min_cluster_size  &&
             num_missing <= max_missing && num_clusters <= max_modes &&
-            range_okay) {
+            range_okay == 1) {
 
           int index_j = cutM_index[(j - 1) * max_clusters + (cluster_num - 1)];
           int index_k = cutM_index[(k - 1) * max_clusters + (cluster_num - 1)];
