@@ -19,7 +19,19 @@ KINC is offered under a GPL v2.0 license agreement.
 
 INSTALLATION
 ------------
-For installation instructions see the INSTALL.txt file.
+To Install KINC the following dependencies must first be met:
+
+* GNU Scientific Library (http://www.gnu.org/software/gsl/)
+* libmixmod (http://www.mixmod.org/article.php3?id_article=55)
+* LAPACK (http://www.netlib.org/lapack/)
+* BLAS (http://www.netlib.org/blas/)
+
+To build and install:
+
+```
+make
+make install PREFIX=[path]
+```
 
 
 BUILD A NETWORK
