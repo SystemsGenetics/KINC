@@ -18,7 +18,7 @@ public:
       void readGene(int index);
       void writeGene(int index) const;
       float& at(int index);
-      const float& at(int index) const;
+      const float& at(int index) const { return at(index); }
       float& operator[](int index) { return _expressions[index]; }
    private:
       float* _expressions;
@@ -42,7 +42,6 @@ private:
    bool _newData {true};
    qint32 _geneSize {0};
    qint32 _sampleSize {0};
-   qint64 _dataEnd {0};
 };
 
 
