@@ -29,6 +29,7 @@ public:
    virtual void newData() override final;
    virtual void prepare(bool preAllocate) override final;
    virtual void finish() override final;
+   virtual QAbstractTableModel* getModel() override final { return this; }
    void initialize(QStringList geneNames, QStringList sampleNames);
    qint32 getGeneSize() { return _geneSize; }
    qint32 getSampleSize() { return _sampleSize; }

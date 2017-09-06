@@ -125,6 +125,30 @@ void ExpressionMatrix::initialize(QStringList geneNames, QStringList sampleNames
 
 QVariant ExpressionMatrix::headerData(int section, Qt::Orientation orientation, int role) const
 {
+   if ( role != Qt::DisplayRole )
+   {
+      return QVariant();
+   }
+   EMetadata::Map* map {meta().toObject()};
+   switch (orientation)
+   {
+   case Qt::Vertical:
+      if ( map->contains("genes") )
+      {
+         EMetadata* genes {(*map)["genes"]};
+         if ( genes->isArray() )
+         {
+            if ( section >= 0 && section < genes->toArray()->size() )
+            {
+               return genes->toArray()->at(section)->toVariant();
+            }
+         }
+      }
+   case Qt::Horizontal:
+      break;
+   default:
+      return QVariant();
+   }
 }
 
 
