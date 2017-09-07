@@ -129,7 +129,7 @@ QVariant ExpressionMatrix::headerData(int section, Qt::Orientation orientation, 
    {
       return QVariant();
    }
-   EMetadata::Map* map {meta().toObject()};
+   const EMetadata::Map* map {meta().toObject()};
    switch (orientation)
    {
    case Qt::Vertical:
@@ -158,6 +158,8 @@ QVariant ExpressionMatrix::headerData(int section, Qt::Orientation orientation, 
 
 int ExpressionMatrix::rowCount(const QModelIndex& parent) const
 {
+   Q_UNUSED(parent);
+   return _geneSize;
 }
 
 
@@ -167,6 +169,8 @@ int ExpressionMatrix::rowCount(const QModelIndex& parent) const
 
 int ExpressionMatrix::columnCount(const QModelIndex& parent) const
 {
+   Q_UNUSED(parent);
+   return _sampleSize;
 }
 
 
@@ -176,6 +180,13 @@ int ExpressionMatrix::columnCount(const QModelIndex& parent) const
 
 QVariant ExpressionMatrix::data(const QModelIndex& index, int role) const
 {
+   if ( role != Qt::DisplayRole )
+   {
+      return QVariant();
+   }
+   float value;
+   stream() >> value;
+   return value;
 }
 
 
