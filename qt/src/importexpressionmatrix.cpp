@@ -23,6 +23,8 @@ EAbstractAnalytic::ArgumentType ImportExpressionMatrix::getArgumentData(int argu
       return Type::FileIn;
    case OutputData:
       return Type::DataOut;
+   case NoSampleToken:
+      return Type::String;
    case SampleSize:
       return Type::Integer;
    case TransformArg:
@@ -47,6 +49,7 @@ QVariant ImportExpressionMatrix::getArgumentData(int argument, EAbstractAnalytic
       {
       case InputFile: return QString("input");
       case OutputData: return QString("output");
+      case NoSampleToken: return QString("nan");
       case SampleSize: return QString("size");
       case TransformArg: return QString("transform");
       default: return QString();
@@ -56,6 +59,7 @@ QVariant ImportExpressionMatrix::getArgumentData(int argument, EAbstractAnalytic
       {
       case InputFile: return tr("Input:");
       case OutputData: return tr("Output:");
+      case NoSampleToken: return tr("No Sample Token:");
       case SampleSize: return tr("Sample Size:");
       case TransformArg: return tr("Transform:");
       default: return QString();
@@ -66,6 +70,7 @@ QVariant ImportExpressionMatrix::getArgumentData(int argument, EAbstractAnalytic
       case InputFile: return tr("Raw input text file containing space/tab divided gene expression"
                                 " data.");
       case OutputData: return tr("Output expression matrix that will contain expression data.");
+      case NoSampleToken: return tr("Expected token for expressions that have no value.");
       case SampleSize: return tr("Total number of samples per gene. 0 indicates the text file "
                                  "contains a header of sample names to be read to determine size.");
       case TransformArg: return tr("What type of transformation, if any, should be done to the raw"
@@ -87,7 +92,7 @@ QVariant ImportExpressionMatrix::getArgumentData(int argument, EAbstractAnalytic
    case Role::FileFilters:
       switch (argument)
       {
-      case InputFile: tr("Raw text file %1").arg("(*.txt)");
+      case InputFile: return tr("Raw text file %1").arg("(*.txt)");
       default: return QString();
       }
    case Role::DataType:
@@ -111,6 +116,7 @@ void ImportExpressionMatrix::setArgument(int argument, QVariant value)
    switch (argument)
    {
    case SampleSize: _sampleSize = value.toInt();
+   case NoSampleToken: _noSampleToken = value.toString();
    case TransformArg:
       {
          const QString option = value.toString();
@@ -288,7 +294,7 @@ bool ImportExpressionMatrix::runBlock(int block)
    }
    geneTail = geneRoot.get();
    _output->initialize(geneNames,sampleNames);
-   ExpressionMatrix::Gene egene(_output);
+   ExpressionMatrix::Gene gene(_output);
    for (int i = 0; i < _output->getGeneSize() ;++i)
    {
       if ( !geneTail )
@@ -300,9 +306,9 @@ bool ImportExpressionMatrix::runBlock(int block)
       }
       for (int x = 0; x < _output->getSampleSize() ;++x)
       {
-         egene[x] = geneTail->expressions[x];
+         gene[x] = geneTail->expressions[x];
       }
-      egene.writeGene(i);
+      gene.writeGene(i);
       geneTail = geneTail->next;
    }
    return false;

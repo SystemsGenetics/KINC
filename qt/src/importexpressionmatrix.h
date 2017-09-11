@@ -15,6 +15,7 @@ public:
    {
       InputFile = 0
       ,OutputData
+      ,NoSampleToken
       ,SampleSize
       ,TransformArg
       ,Total
