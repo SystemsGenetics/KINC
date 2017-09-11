@@ -29,10 +29,12 @@ SOURCES += \
     main.cpp \
     analyticfactory.cpp \
     datafactory.cpp \
-    expressionmatrix.cpp
+    expressionmatrix.cpp \
+    importexpressionmatrix.cpp
 
 HEADERS += \
     analyticfactory.h \
     datafactory.h \
-    expressionmatrix.h
+    expressionmatrix.h \
+    importexpressionmatrix.h
 
