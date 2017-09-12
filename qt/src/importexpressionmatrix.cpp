@@ -18,18 +18,12 @@ EAbstractAnalytic::ArgumentType ImportExpressionMatrix::getArgumentData(int argu
    using Type = EAbstractAnalytic::ArgumentType;
    switch (argument)
    {
-   case InputFile:
-      return Type::FileIn;
-   case OutputData:
-      return Type::DataOut;
-   case NoSampleToken:
-      return Type::String;
-   case SampleSize:
-      return Type::Integer;
-   case TransformArg:
-      return Type::Combo;
-   default:
-      return Type::Bool;
+   case InputFile: return Type::FileIn;
+   case OutputData: return Type::DataOut;
+   case NoSampleToken: return Type::String;
+   case SampleSize: return Type::Integer;
+   case TransformArg: return Type::Combo;
+   default: return Type::Bool;
    }
 }
 
