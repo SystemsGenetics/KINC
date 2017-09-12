@@ -2,9 +2,7 @@
 #define IMPORTEXPRESSIONMATRIX_H
 #include <ace/core/AceCore.h>
 
-
-
-class ExpressionMatrix;
+#include "expressionmatrix.h"
 
 
 
@@ -31,13 +29,7 @@ public:
    virtual bool runBlock(int block) override final;
    virtual void finish() override final {}
 private:
-   enum class Transform
-   {
-      None
-      ,NLog
-      ,Log2
-      ,Log10
-   };
+   using Transform = ExpressionMatrix::Transform;
    static const char* NONE;
    static const char* NLOG;
    static const char* LOG2;

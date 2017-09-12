@@ -1,5 +1,4 @@
 #include "importexpressionmatrix.h"
-#include "expressionmatrix.h"
 #include "datafactory.h"
 
 
@@ -273,6 +272,7 @@ bool ImportExpressionMatrix::runBlock(int block)
                else
                {
                   bool ok;
+                  Expression value = words.at(i).toDouble(&ok);
                   gene->expressions[i-1] = words.at(i).toDouble(&ok);
                   if ( !ok )
                   {
@@ -281,6 +281,21 @@ bool ImportExpressionMatrix::runBlock(int block)
                      e.setDetails(tr("Failed reading in expression value for gene %1.")
                                   .arg(words.at(0).toString()));
                      throw e;
+                  }
+                  switch (_transform)
+                  {
+                  case Transform::None:
+                     gene->expressions[i-1] = value;
+                     break;
+                  case Transform::NLog:
+                     gene->expressions[i-1] = log(value);
+                     break;
+                  case Transform::Log2:
+                     gene->expressions[i-1] = log2(value);
+                     break;
+                  case Transform::Log10:
+                     gene->expressions[i-1] = log10(value);
+                     break;
                   }
                }
             }
@@ -313,5 +328,6 @@ bool ImportExpressionMatrix::runBlock(int block)
       gene.writeGene(i);
       geneTail = geneTail->next;
    }
+   _output->setTransform(_transform);
    return false;
 }
