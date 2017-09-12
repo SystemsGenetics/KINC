@@ -41,7 +41,7 @@ quint64 ExpressionMatrix::getDataEnd() const
    // calculate and return end of data
    qint64 geneSize {_geneSize};
    qint64 sampleSize {_sampleSize};
-   return DATA_OFFSET+(geneSize*sampleSize*sizeof(float));
+   return DATA_OFFSET+(geneSize*sampleSize*sizeof(Expression));
 }
 
 
@@ -91,7 +91,7 @@ void ExpressionMatrix::prepare(bool preAllocate)
       }
 
       // allocate total size needed for data
-      if ( !allocate(DATA_OFFSET+(_geneSize*_sampleSize*sizeof(float))) )
+      if ( !allocate(DATA_OFFSET+(_geneSize*_sampleSize*sizeof(Expression))) )
       {
          E_MAKE_EXCEPTION(e);
          e.setTitle(tr("File IO Error"));
@@ -221,7 +221,7 @@ qint64 ExpressionMatrix::getRawSize() const
 
 
 
-float* ExpressionMatrix::dumpRawData() const
+ExpressionMatrix::Expression* ExpressionMatrix::dumpRawData() const
 {
    // if there are no genes do nothing
    if ( _geneSize == 0 )
@@ -230,7 +230,7 @@ float* ExpressionMatrix::dumpRawData() const
    }
 
    // create new floating point array and populate with all gene expressions
-   float* ret {new float[getRawSize()]};
+   Expression* ret {new Expression[getRawSize()]};
    for (int i = 0; i < _geneSize ;++i)
    {
       readGene(i,&ret[i*_sampleSize]);
@@ -345,8 +345,8 @@ QVariant ExpressionMatrix::data(const QModelIndex& index, int role) const
    }
 
    // make input variable and seek to position of queried expression
-   float value;
-   if ( !seek(DATA_OFFSET+(index.row()*_sampleSize)+index.column()) )
+   Expression value;
+   if ( !seek(DATA_OFFSET+(((index.row()*_sampleSize)+index.column())*sizeof(Expression))) )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("File IO Error"));
@@ -373,10 +373,10 @@ QVariant ExpressionMatrix::data(const QModelIndex& index, int role) const
 
 
 
-void ExpressionMatrix::readGene(int index, float* expressions) const
+void ExpressionMatrix::readGene(int index, Expression* expressions) const
 {
    // seek to position of beginning of gene's expressions
-   if ( !seek(DATA_OFFSET+(index*_sampleSize)) )
+   if ( !seek(DATA_OFFSET+(index*_sampleSize*sizeof(Expression))) )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("File IO Error"));
@@ -400,10 +400,10 @@ void ExpressionMatrix::readGene(int index, float* expressions) const
 
 
 
-void ExpressionMatrix::writeGene(int index, const float* expressions)
+void ExpressionMatrix::writeGene(int index, const Expression* expressions)
 {
    // seek to position of beginning of gene's expressions
-   if ( !seek(DATA_OFFSET+(index*_sampleSize)) )
+   if ( !seek(DATA_OFFSET+(index*_sampleSize*sizeof(Expression))) )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("File IO Error"));
@@ -469,7 +469,7 @@ void ExpressionMatrix::Gene::writeGene(int index)
 
 
 
-float& ExpressionMatrix::Gene::at(int index)
+ExpressionMatrix::Expression& ExpressionMatrix::Gene::at(int index)
 {
    // make sure given sample index is within range
    if ( index < 0 || index >= _matrix->_sampleSize )

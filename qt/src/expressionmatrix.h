@@ -8,6 +8,7 @@ class ExpressionMatrix : public QAbstractTableModel, public EAbstractData
 {
    Q_OBJECT
 public:
+   using Expression = float;
    enum class Transform
    {
       None
@@ -18,17 +19,19 @@ public:
    class Gene
    {
    public:
-      Gene(ExpressionMatrix* matrix): _expressions(new float[matrix->_sampleSize]), _matrix(matrix)
+      Gene(ExpressionMatrix* matrix):
+         _expressions(new Expression[matrix->_sampleSize]),
+         _matrix(matrix)
          {}
       Gene(const Gene&) = delete;
       ~Gene() { delete _expressions; }
       void readGene(int index) const;
       void writeGene(int index);
-      float& at(int index);
-      const float& at(int index) const { return at(index); }
-      float& operator[](int index) { return _expressions[index]; }
+      Expression& at(int index);
+      const Expression& at(int index) const;
+      Expression& operator[](int index) { return _expressions[index]; }
    private:
-      float* _expressions;
+      Expression* _expressions;
       ExpressionMatrix* _matrix;
    };
    virtual void readData() override final;
@@ -42,14 +45,14 @@ public:
    qint32 getGeneSize() const { return _geneSize; }
    qint32 getSampleSize() const { return _sampleSize; }
    qint64 getRawSize() const;
-   float* dumpRawData() const;
+   Expression* dumpRawData() const;
    QVariant headerData(int section, Qt::Orientation orientation, int role) const;
    int rowCount(const QModelIndex& parent) const override final;
    int columnCount(const QModelIndex& parent) const override final;
    QVariant data(const QModelIndex& index, int role) const override final;
 private:
-   void readGene(int index, float* _expressions) const;
-   void writeGene(int index, const float* _expressions);
+   void readGene(int index, Expression* _expressions) const;
+   void writeGene(int index, const Expression* _expressions);
    qint32 _geneSize {0};
    qint32 _sampleSize {0};
 };

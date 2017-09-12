@@ -197,11 +197,13 @@ bool ImportExpressionMatrix::initialize()
 
 bool ImportExpressionMatrix::runBlock(int block)
 {
+   using Expression = ExpressionMatrix::Expression;
+   using EGene = ExpressionMatrix::Gene;
    struct Gene
    {
       Gene(int size)
       {
-         expressions = new float[size];
+         expressions = new Expression[size];
       }
       ~Gene()
       {
@@ -209,7 +211,7 @@ bool ImportExpressionMatrix::runBlock(int block)
          delete[] expressions;
       }
 
-      float* expressions;
+      Expression* expressions;
       Gene* next {nullptr};
    };
    Q_UNUSED(block);
@@ -271,13 +273,13 @@ bool ImportExpressionMatrix::runBlock(int block)
                else
                {
                   bool ok;
-                  gene->expressions[i-1] = words.at(i).toFloat(&ok);
+                  gene->expressions[i-1] = words.at(i).toDouble(&ok);
                   if ( !ok )
                   {
                      E_MAKE_EXCEPTION(e);
                      e.setTitle(tr("Parsing Error"));
-                     e.setDetails(tr("Failed reading in floating point expression value for gene "
-                                     "%1.").arg(words.at(0).toString()));
+                     e.setDetails(tr("Failed reading in expression value for gene %1.")
+                                  .arg(words.at(0).toString()));
                      throw e;
                   }
                }
@@ -294,7 +296,7 @@ bool ImportExpressionMatrix::runBlock(int block)
    }
    geneTail = geneRoot.get();
    _output->initialize(geneNames,sampleNames);
-   ExpressionMatrix::Gene gene(_output);
+   EGene gene(_output);
    for (int i = 0; i < _output->getGeneSize() ;++i)
    {
       if ( !geneTail )

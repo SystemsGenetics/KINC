@@ -44,7 +44,7 @@ private:
    static const char* LOG10;
    QFile* _input {nullptr};
    ExpressionMatrix* _output {nullptr};
-   QString _noSampleToken;//TODO: ADD ARGUMENT!
+   QString _noSampleToken;
    qint32 _sampleSize {0};
    Transform _transform {Transform::None};
 };
