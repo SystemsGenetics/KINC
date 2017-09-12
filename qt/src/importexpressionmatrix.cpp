@@ -114,8 +114,12 @@ void ImportExpressionMatrix::setArgument(int argument, QVariant value)
 {
    switch (argument)
    {
-   case SampleSize: _sampleSize = value.toInt();
-   case NoSampleToken: _noSampleToken = value.toString();
+   case SampleSize:
+      _sampleSize = value.toInt();
+      break;
+   case NoSampleToken:
+      _noSampleToken = value.toString();
+      break;
    case TransformArg:
       {
          const QString option = value.toString();
@@ -136,6 +140,7 @@ void ImportExpressionMatrix::setArgument(int argument, QVariant value)
             _transform = Transform::Log10;
          }
       }
+      break;
    }
 }
 
@@ -273,13 +278,12 @@ bool ImportExpressionMatrix::runBlock(int block)
                {
                   bool ok;
                   Expression value = words.at(i).toDouble(&ok);
-                  gene->expressions[i-1] = words.at(i).toDouble(&ok);
                   if ( !ok )
                   {
                      E_MAKE_EXCEPTION(e);
                      e.setTitle(tr("Parsing Error"));
-                     e.setDetails(tr("Failed reading in expression value for gene %1.")
-                                  .arg(words.at(0).toString()));
+                     e.setDetails(tr("Failed reading in expression value \"%1\" for gene %2.")
+                                  .arg(words.at(i).toString()).arg(words.at(0).toString()));
                      throw e;
                   }
                   switch (_transform)
