@@ -30,11 +30,13 @@ SOURCES += \
     analyticfactory.cpp \
     datafactory.cpp \
     expressionmatrix.cpp \
-    importexpressionmatrix.cpp
+    importexpressionmatrix.cpp \
+    correlationmatrix.cpp
 
 HEADERS += \
     analyticfactory.h \
     datafactory.h \
     expressionmatrix.h \
-    importexpressionmatrix.h
+    importexpressionmatrix.h \
+    correlationmatrix.h
 
