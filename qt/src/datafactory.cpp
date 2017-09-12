@@ -10,7 +10,7 @@ using namespace std;
 
 
 
-QString DataFactory::getName(quint16 type) noexcept
+QString DataFactory::getName(quint16 type)
 {
    // figure out what data type is being queried and return name
    switch (type)
@@ -25,7 +25,7 @@ QString DataFactory::getName(quint16 type) noexcept
 
 
 
-QString DataFactory::getFileExtension(quint16 type) noexcept
+QString DataFactory::getFileExtension(quint16 type)
 {
    // figure out what data type is being queried and return extension
    switch (type)
@@ -40,7 +40,7 @@ QString DataFactory::getFileExtension(quint16 type) noexcept
 
 
 
-unique_ptr<EAbstractData> DataFactory::make(quint16 type) noexcept
+unique_ptr<EAbstractData> DataFactory::make(quint16 type)
 {
    // figure out which data type is being requested and return new object
    switch (type)
