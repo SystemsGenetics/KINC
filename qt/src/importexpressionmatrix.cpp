@@ -323,7 +323,7 @@ bool ImportExpressionMatrix::runBlock(int block)
       {
          gene[x] = geneTail->expressions[x];
       }
-      gene.writeGene(i);
+      gene.write(i);
       geneTail = geneTail->next;
    }
    _output->setTransform(_transform);

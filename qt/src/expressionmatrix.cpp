@@ -2,8 +2,6 @@
 
 #include "expressionmatrix.h"
 
-#define DATA_OFFSET 8
-
 
 
 
@@ -91,7 +89,7 @@ void ExpressionMatrix::prepare(bool preAllocate)
       }
 
       // allocate total size needed for data
-      if ( !allocate(DATA_OFFSET+(_geneSize*_sampleSize*sizeof(Expression))) )
+      if ( !allocate(getDataEnd()) )
       {
          E_MAKE_EXCEPTION(e);
          e.setTitle(tr("File IO Error"));
@@ -99,145 +97,6 @@ void ExpressionMatrix::prepare(bool preAllocate)
          throw e;
       }
    }
-}
-
-
-
-
-
-
-void ExpressionMatrix::finish()
-{
-   // seek to beginning of data
-   if ( !seek(0) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed calling seek() on data object file."));
-      throw e;
-   }
-
-   // write header information with new sizes
-   stream() << _geneSize << _sampleSize;
-   if ( !stream() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed writing to data object file."));
-      throw e;
-   }
-}
-
-
-
-
-
-
-void ExpressionMatrix::initialize(QStringList geneNames, QStringList sampleNames)
-{
-   // get metadata root of data object
-   EMetadata::Map* map {meta().toObject()};
-
-   // create new metadata array that stores gene names and populate it
-   EMetadata* metaGeneNames {new EMetadata(EMetadata::Array)};
-   for (auto i = geneNames.constBegin(); i != geneNames.constEnd() ;++i)
-   {
-      EMetadata* name {new EMetadata(EMetadata::String)};
-      *(name->toString()) = *i;
-      metaGeneNames->toArray()->append(name);
-   }
-
-   // create new metadata array that stores sample names and populate it
-   EMetadata* metaSampleNames {new EMetadata(EMetadata::Array)};
-   for (auto i = sampleNames.constBegin(); i != sampleNames.constEnd() ;++i)
-   {
-      EMetadata* name {new EMetadata(EMetadata::String)};
-      *(name->toString()) = *i;
-      metaSampleNames->toArray()->append(name);
-   }
-
-   // insert both gene and sample names to data object's metadata
-   map->insert("genes",metaGeneNames);
-   map->insert("samples",metaSampleNames);
-
-   // set gene and sample size from size of name lists
-   _geneSize = geneNames.size();
-   _sampleSize = sampleNames.size();
-}
-
-
-
-
-
-
-void ExpressionMatrix::setTransform(ExpressionMatrix::Transform transform)
-{
-   // get metadata root of data object and create new string
-   EMetadata::Map* map {meta().toObject()};
-   EMetadata* meta {new EMetadata(EMetadata::String)};
-
-   // set new transform string according to transform type
-   switch (transform)
-   {
-   case Transform::None:
-      *(meta->toString()) = tr("none");
-      break;
-   case Transform::NLog:
-      *(meta->toString()) = tr("natural logarithm");
-      break;
-   case Transform::Log2:
-      *(meta->toString()) = tr("logarithm base 2");
-      break;
-   case Transform::Log10:
-      *(meta->toString()) = tr("logarithm base 10");
-      break;
-   }
-
-   // if transform key already exists in metadata remove it
-   if ( map->contains("transform") )
-   {
-      delete map->take("transform");
-   }
-
-   // add new transform key to metadata
-   map->insert("transform",meta);
-}
-
-
-
-
-
-
-qint64 ExpressionMatrix::getRawSize() const
-{
-   // calculate total number of floating point epxressions and return it
-   qint64 geneSize {_geneSize};
-   qint64 sampleSize {_sampleSize};
-   return geneSize*sampleSize;
-}
-
-
-
-
-
-
-ExpressionMatrix::Expression* ExpressionMatrix::dumpRawData() const
-{
-   // if there are no genes do nothing
-   if ( _geneSize == 0 )
-   {
-      return nullptr;
-   }
-
-   // create new floating point array and populate with all gene expressions
-   Expression* ret {new Expression[getRawSize()]};
-   for (int i = 0; i < _geneSize ;++i)
-   {
-      readGene(i,&ret[i*_sampleSize]);
-   }
-
-   // return new float array
-   return ret;
 }
 
 
@@ -373,6 +232,118 @@ QVariant ExpressionMatrix::data(const QModelIndex& index, int role) const
 
 
 
+void ExpressionMatrix::initialize(QStringList geneNames, QStringList sampleNames)
+{
+   // get metadata root of data object
+   EMetadata::Map* map {meta().toObject()};
+
+   // create new metadata array that stores gene names and populate it
+   EMetadata* metaGeneNames {new EMetadata(EMetadata::Array)};
+   for (auto i = geneNames.constBegin(); i != geneNames.constEnd() ;++i)
+   {
+      EMetadata* name {new EMetadata(EMetadata::String)};
+      *(name->toString()) = *i;
+      metaGeneNames->toArray()->append(name);
+   }
+
+   // create new metadata array that stores sample names and populate it
+   EMetadata* metaSampleNames {new EMetadata(EMetadata::Array)};
+   for (auto i = sampleNames.constBegin(); i != sampleNames.constEnd() ;++i)
+   {
+      EMetadata* name {new EMetadata(EMetadata::String)};
+      *(name->toString()) = *i;
+      metaSampleNames->toArray()->append(name);
+   }
+
+   // insert both gene and sample names to data object's metadata
+   map->insert("genes",metaGeneNames);
+   map->insert("samples",metaSampleNames);
+
+   // set gene and sample size from size of name lists
+   _geneSize = geneNames.size();
+   _sampleSize = sampleNames.size();
+}
+
+
+
+
+
+
+void ExpressionMatrix::setTransform(ExpressionMatrix::Transform transform)
+{
+   // get metadata root of data object and create new string
+   EMetadata::Map* map {meta().toObject()};
+   EMetadata* meta {new EMetadata(EMetadata::String)};
+
+   // set new transform string according to transform type
+   switch (transform)
+   {
+   case Transform::None:
+      *(meta->toString()) = tr("none");
+      break;
+   case Transform::NLog:
+      *(meta->toString()) = tr("natural logarithm");
+      break;
+   case Transform::Log2:
+      *(meta->toString()) = tr("logarithm base 2");
+      break;
+   case Transform::Log10:
+      *(meta->toString()) = tr("logarithm base 10");
+      break;
+   }
+
+   // if transform key already exists in metadata remove it
+   if ( map->contains("transform") )
+   {
+      delete map->take("transform");
+   }
+
+   // add new transform key to metadata
+   map->insert("transform",meta);
+}
+
+
+
+
+
+
+qint64 ExpressionMatrix::getRawSize() const
+{
+   // calculate total number of floating point epxressions and return it
+   qint64 geneSize {_geneSize};
+   qint64 sampleSize {_sampleSize};
+   return geneSize*sampleSize;
+}
+
+
+
+
+
+
+ExpressionMatrix::Expression* ExpressionMatrix::dumpRawData() const
+{
+   // if there are no genes do nothing
+   if ( _geneSize == 0 )
+   {
+      return nullptr;
+   }
+
+   // create new floating point array and populate with all gene expressions
+   Expression* ret {new Expression[getRawSize()]};
+   for (int i = 0; i < _geneSize ;++i)
+   {
+      readGene(i,&ret[i*_sampleSize]);
+   }
+
+   // return new float array
+   return ret;
+}
+
+
+
+
+
+
 void ExpressionMatrix::readGene(int index, Expression* expressions) const
 {
    // seek to position of beginning of gene's expressions
@@ -427,7 +398,7 @@ void ExpressionMatrix::writeGene(int index, const Expression* expressions)
 
 
 
-void ExpressionMatrix::Gene::readGene(int index) const
+void ExpressionMatrix::Gene::read(int index) const
 {
    // make sure given gene index is within range
    if ( index < 0 || index >= _matrix->_geneSize )
@@ -448,7 +419,7 @@ void ExpressionMatrix::Gene::readGene(int index) const
 
 
 
-void ExpressionMatrix::Gene::writeGene(int index)
+void ExpressionMatrix::Gene::write(int index)
 {
    // make sure given gene index is within range
    if ( index < 0 || index >= _matrix->_geneSize )
