@@ -16,7 +16,7 @@ public:
       Pair(const CorrelationMatrix* matrix);
       void write(int x, int y);
       void read(int x, int y) const;
-      qint8 getModeSize() const;
+      qint8 getModeSize() const { return _modeSize; }
       Correlation& at(int mode, int index);
       const Correlation& at(int mode, int index) const;
       qint8& mode(int mode, int index);
@@ -45,10 +45,9 @@ public:
    qint8 getMaxModes() const { return _maxModes; }
    static void increment(int& x, int& y);
 private:
-   void readCorrelation(int x, int y, Correlation* correlations, qint8* modes
-                        , qint8& modeSize) const;
-   void writeCorrelation(int x, int y, const Correlation* correlations, const qint8* modes
-                         , qint8 modeSize);
+   void readPair(int x, int y, Correlation* correlations, qint8* modes, qint8& modeSize) const;
+   void writePair(int x, int y, const Correlation* correlations, const qint8* modes
+                  , qint8 modeSize);
    static const int DATA_OFFSET {10};
    qint32 _geneSize {0};
    qint32 _sampleSize {0};
