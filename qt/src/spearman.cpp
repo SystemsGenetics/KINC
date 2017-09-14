@@ -1,3 +1,5 @@
+#include <ace/core/metadata.h>
+
 #include "spearman.h"
 #include "datafactory.h"
 #include "expressionmatrix.h"
@@ -174,6 +176,8 @@ void Spearman::setArgument(int argument, EAbstractData *data)
 
 bool Spearman::initialize()
 {
+   _output->initialize(_input->getGeneNames(),_input->getSampleSize(),1,1);
+   return _allocate;
 }
 
 
@@ -194,14 +198,20 @@ int Spearman::getBlockSize()
 {
    if ( _blockSize < 1 || _kernelSize < 1 )
    {
-      ;//ERROR!
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Invalid Argument"));
+      e.setDetails((tr("Block size and/or kernel size are set to values less than 1.")));
+      throw e;
    }
    EOpenCLDevice& device {EOpenCLDevice::getInstance()};
    _program = device.makeProgram().release();
    _program->addFile(":/opencl/spearman.cl");
    if ( !_program->compile() )
    {
-      ;//ERROR!
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("OpenCL Compile Error"));
+      e.setDetails(tr("OpenCL program failed to compile:\n\n%1").arg(_program->getBuildError()));
+      throw e;
    }
    _kernel = _program->makeKernel("calculateSpearmanBlock").release();
    _expressions = device.makeBuffer<cl_float>(_input->getRawSize()).release();

@@ -1,6 +1,7 @@
 #ifndef EXPRESSIONMATRIX_H
 #define EXPRESSIONMATRIX_H
 #include <ace/core/AceCore.h>
+#include <ace/core/metadata.h>
 
 
 
@@ -50,6 +51,7 @@ public:
    qint32 getSampleSize() const { return _sampleSize; }
    qint64 getRawSize() const;
    Expression* dumpRawData() const;
+   const EMetadata& getGeneNames() const;
 private:
    void readGene(int index, Expression* _expressions) const;
    void writeGene(int index, const Expression* _expressions);

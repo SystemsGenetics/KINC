@@ -12,6 +12,7 @@ class CorrelationMatrix;
 
 class Spearman : public EAbstractAnalytic
 {
+   Q_OBJECT
 public:
    ~Spearman();
    enum Arguments

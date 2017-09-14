@@ -221,11 +221,11 @@ QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
 
 
 
-void CorrelationMatrix::initialize(EMetadata* geneNames, qint32 sampleSize, qint8 correlationSize
-                                   , qint8 maxModes)
+void CorrelationMatrix::initialize(const EMetadata& geneNames, qint32 sampleSize
+                                   , qint8 correlationSize, qint8 maxModes)
 {
    // make sure gene names metadata is an array
-   if ( !geneNames->isArray() )
+   if ( !geneNames.isArray() )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Domain Error"));
@@ -235,10 +235,10 @@ void CorrelationMatrix::initialize(EMetadata* geneNames, qint32 sampleSize, qint
 
    // get map of metadata root and make copy of gene names
    EMetadata::Map* map {meta().toObject()};
-   map->insert("genes",new EMetadata(*geneNames));
+   map->insert("genes",new EMetadata(geneNames));
 
    // save gene, sample, correlation sizes and max modes
-   _geneSize = geneNames->toArray()->size();
+   _geneSize = geneNames.toArray()->size();
    _sampleSize = sampleSize;
    _correlationSize = correlationSize;
    _maxModes = maxModes;

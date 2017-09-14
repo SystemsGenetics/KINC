@@ -39,7 +39,8 @@ public:
    virtual int rowCount(const QModelIndex& parent) const override final;
    virtual int columnCount(const QModelIndex& parent) const override final;
    virtual QVariant data(const QModelIndex& index, int role) const override final;
-   void initialize(EMetadata* geneNames, qint32 sampleSize, qint8 correlationSize, qint8 maxModes);
+   void initialize(const EMetadata& geneNames, qint32 sampleSize, qint8 correlationSize
+                   , qint8 maxModes);
    qint32 getGeneSize() const { return _geneSize; }
    qint32 getSampleSize() const { return _sampleSize; }
    qint8 getCorrelationSize() const { return _correlationSize; }

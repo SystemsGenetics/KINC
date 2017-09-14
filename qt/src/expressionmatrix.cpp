@@ -1,5 +1,3 @@
-#include <ace/core/metadata.h>
-
 #include "expressionmatrix.h"
 
 
@@ -337,6 +335,27 @@ ExpressionMatrix::Expression* ExpressionMatrix::dumpRawData() const
 
    // return new float array
    return ret;
+}
+
+
+
+
+
+
+const EMetadata& ExpressionMatrix::getGeneNames() const
+{
+   // get metadata root and make sure genes key exist
+   const EMetadata::Map* map {meta().toObject()};
+   if ( !map->contains("genes") )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Null Return Reference"));
+      e.setDetails(tr("Requesting reference to gene names when none exists."));
+      throw e;
+   }
+
+   // return gene names list
+   return *(*map)["genes"];
 }
 
 

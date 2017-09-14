@@ -8,6 +8,7 @@
 
 class ImportExpressionMatrix : public EAbstractAnalytic
 {
+   Q_OBJECT
 public:
    enum Arguments
    {

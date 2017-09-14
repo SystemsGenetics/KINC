@@ -10,6 +10,7 @@ public:
    enum Types
    {
       ImportExpressionMatrixType = 0
+      ,SpearmanType
       ,Total
    };
    virtual quint16 getCount() override final { return Total; }
