@@ -35,7 +35,7 @@ EAbstractAnalytic::ArgumentType ImportExpressionMatrix::getArgumentData(int argu
 
 
 
-QVariant ImportExpressionMatrix::getArgumentData(int argument, EAbstractAnalytic::Role role)
+QVariant ImportExpressionMatrix::getArgumentData(int argument, Role role)
 {
    // use role declaration
    using Role = EAbstractAnalytic::Role;
@@ -215,10 +215,9 @@ bool ImportExpressionMatrix::initialize()
 
 
 
-bool ImportExpressionMatrix::runBlock(int block)
+void ImportExpressionMatrix::runSerial()
 {
-   // do not use block and use expression and gene declarations
-   Q_UNUSED(block);
+   // use expression and gene declarations
    using Expression = ExpressionMatrix::Expression;
    using EGene = ExpressionMatrix::Gene;
 
@@ -422,7 +421,6 @@ bool ImportExpressionMatrix::runBlock(int block)
       }
    }
 
-   // set transform used in expression matrix and return block finished
+   // set transform used in expression matrix
    _output->setTransform(_transform);
-   return false;
 }
