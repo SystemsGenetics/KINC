@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>opencl/spearman.cl</file>
+    </qresource>
+</RCC>

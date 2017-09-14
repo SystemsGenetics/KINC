@@ -31,12 +31,17 @@ SOURCES += \
     datafactory.cpp \
     expressionmatrix.cpp \
     importexpressionmatrix.cpp \
-    correlationmatrix.cpp
+    correlationmatrix.cpp \
+    spearman.cpp
 
 HEADERS += \
     analyticfactory.h \
     datafactory.h \
     expressionmatrix.h \
     importexpressionmatrix.h \
-    correlationmatrix.h
+    correlationmatrix.h \
+    spearman.h
+
+RESOURCES += \
+    opencl.qrc
 
