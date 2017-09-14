@@ -16,6 +16,7 @@ public:
       Pair(const CorrelationMatrix* matrix);
       void write(int x, int y);
       void read(int x, int y) const;
+      void setModeSize(qint8 size) { _modeSize = size; }
       qint8 getModeSize() const { return _modeSize; }
       Correlation& at(int mode, int index);
       const Correlation& at(int mode, int index) const;

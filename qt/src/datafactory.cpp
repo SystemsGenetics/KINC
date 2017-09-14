@@ -1,5 +1,6 @@
 #include "datafactory.h"
 #include "expressionmatrix.h"
+#include "correlationmatrix.h"
 
 
 
@@ -16,6 +17,7 @@ QString DataFactory::getName(quint16 type)
    switch (type)
    {
    case ExpressionMatrixType: return QObject::tr("Expression Matrix");
+   case CorrelationMatrixType: return QObject::tr("Correlation Matrix");
    default: return QString();
    }
 }
@@ -31,6 +33,7 @@ QString DataFactory::getFileExtension(quint16 type)
    switch (type)
    {
    case ExpressionMatrixType: return QString("emx");
+   case CorrelationMatrixType: return QString("cmx");
    default: return QString();
    }
 }
@@ -46,6 +49,7 @@ unique_ptr<EAbstractData> DataFactory::make(quint16 type)
    switch (type)
    {
    case ExpressionMatrixType: return unique_ptr<EAbstractData>(new ExpressionMatrix);
+   case CorrelationMatrixType: return unique_ptr<EAbstractData>(new CorrelationMatrix);
    default: return nullptr;
    }
 }

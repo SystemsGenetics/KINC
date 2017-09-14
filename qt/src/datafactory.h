@@ -10,6 +10,7 @@ public:
    enum Types
    {
       ExpressionMatrixType = 0
+      ,CorrelationMatrixType
       ,Total
    };
    virtual quint16 getCount() override final { return Total; }
