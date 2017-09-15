@@ -106,7 +106,7 @@ void PearsonSimilarity::run() {
       for (k = 0; k <= j; k++) {
         n_comps++;
         if (n_comps % 1000 == 0) {
-          printf("Percent complete: %.2f%%\r", (n_comps/(float)total_comps)*100);
+          printf("Percent complete: %.2f%%\n", (n_comps/(float)total_comps)*100);
         }
         if (j == k) {
           // correlation of an element with itself is 1

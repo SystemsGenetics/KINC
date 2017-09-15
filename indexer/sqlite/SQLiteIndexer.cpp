@@ -148,7 +148,7 @@ void SQLiteIndexer::run(int nsamples, int job_index, int job_start) {
        statm_t * memory = memory_get_usage();
        char filepath[1024];
        sprintf(filepath, "%s/%s", dirname, filename);
-       printf("Indexing file %s.  Mem: %ldb.\r", filename, memory->size);
+       printf("Indexing file %s.  Mem: %ldb.\n", filename, memory->size);
        free(memory);
 
        // Index the file.

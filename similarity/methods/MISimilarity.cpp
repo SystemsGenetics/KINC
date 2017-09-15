@@ -140,7 +140,7 @@ void MISimilarity::run() {
 
         n_comps++;
         if (n_comps % 100 == 0) {
-          printf("Percent complete: %.2f%%\r", (n_comps/(float)total_comps)*100);
+          printf("Percent complete: %.2f%%\n", (n_comps/(float)total_comps)*100);
         }
 
         // build the vectors for calculating MI

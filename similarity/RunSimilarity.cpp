@@ -605,7 +605,7 @@ void RunSimilarity::executeTraditional() {
         n_comps++;
         if (n_comps % 1000 == 0) {
           statm_t * memory = memory_get_usage();
-          printf("Percent complete: %.2f%%. Mem: %ldb. \r", (n_comps / (float) total_comps) * 100, memory->size);
+          printf("Percent complete: %.2f%%. Mem: %ldb. \n", (n_comps / (float) total_comps) * 100, memory->size);
           free(memory);
         }
         if (j == k) {

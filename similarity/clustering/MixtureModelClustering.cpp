@@ -207,7 +207,7 @@ void MixtureModelClustering::run() {
 
         // Write progress report.
         //if (!isnan(seconds_passed)) {
-          printf("%d. Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd; %.2fy. Coords: %d, %d.        \r",
+          printf("%d. Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd; %.2fy. Coords: %d, %d.        \n",
             job_index, (float) percent_complete, memory->size, (float) hours_left, (float) days_left, (float) years_left, i, j);
         //}
         free(memory);
