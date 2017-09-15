@@ -4,7 +4,8 @@ CXX    ?= g++
 PREFIX ?= .
 
 # compiler flags
-GSLDIR ?= /software/gsl/1.16
+GSLDIR    ?= /software/gsl/1.16
+MIXMODDIR ?= $(HOME)/software/libmixmod
 
 CXXFLAGS = -I $(GSLDIR)/include \
            -I $(MIXMODDIR)/include \
@@ -13,7 +14,7 @@ CXXFLAGS = -I $(GSLDIR)/include \
 ifeq ($(DEBUG), 1)
 CXXFLAGS += -g -Wall -fno-inline
 else
-CXXFLAGS += -O3
+CXXFLAGS += -O3 -Wno-unused-result
 endif
 
 # linker flags
