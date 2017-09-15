@@ -30,7 +30,6 @@ To build and install:
 
 ```
 make
-make install PREFIX=[path]
 ```
 
 

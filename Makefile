@@ -1,10 +1,9 @@
 # build parameters
 DEBUG  ?= 0
 CXX    ?= g++
-PREFIX ?= .
 
 # compiler flags
-GSLDIR    ?= /software/gsl/1.16
+GSLDIR    ?= /software/gsl/2.3
 MIXMODDIR ?= $(HOME)/software/libmixmod
 
 CXXFLAGS = -I $(GSLDIR)/include \
@@ -69,6 +68,3 @@ all: $(OBJS)
 
 clean:
 	rm -f $(OBJS) $(BIN)
-
-install: all
-	install -m 0755 $(BIN) $(PREFIX)
