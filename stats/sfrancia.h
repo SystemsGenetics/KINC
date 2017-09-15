@@ -2,13 +2,13 @@
 #define _SFRANCIA_
 
 #include <math.h>
-#include <gsl/gsl_statistics.h>
+#include <gsl/gsl_statistics_float.h>
 #include <stdio.h>
 #include <string.h>
 #include "stats.h"
 #include "../general/vector.h"
 #include "../general/error.h"
 
-void sfrancia(double *vector, int n, double *w, double *pw, int *ifault);
+void sfrancia(float *vector, int n, float *w, float *pw, int *ifault);
 
 #endif

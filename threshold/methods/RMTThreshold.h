@@ -29,28 +29,28 @@ class RMTThreshold : public ThresholdMethod {
 
   private:
     // Variables for RMT
-    double thresholdStart;
-    double thresholdStep;
-    double chiSoughtValue;
+    float thresholdStart;
+    float thresholdStep;
+    float chiSoughtValue;
     int minEigenVectorSize;
-    double finalTH;
-    double finalChi;
-    double minTH;
-    double minChi;
-    double maxChi;
+    float finalTH;
+    float finalChi;
+    float minTH;
+    float minChi;
+    float maxChi;
 
-    double nnsdHistogramBin;
-    double chiSquareTestThreshold;
+    float nnsdHistogramBin;
+    float chiSquareTestThreshold;
     int minUnfoldingPace;
     int maxUnfoldingPace;
 
-    double getNNSDChiSquare(float* eigens, int size);
-    double getNNSDPaceChiSquare(float* eigens, int size, double bin, int pace);
+    float getNNSDChiSquare(float* eigens, int size);
+    float getNNSDPaceChiSquare(float* eigens, int size, float bin, int pace);
     // Calculates the eigenvalues of the given matrix.
     float * calculateEigen(float * smatrix, int size);
     //
-    double * unfolding(float * e, int size, int m);
-    double * unfoldingByCDF(float * e, int size, int m);
+    float * unfolding(float * e, int size, int m);
+    float * unfoldingByCDF(float * e, int size, int m);
     // Removes duplicate eigenvalues from an array of eigenvalues.
     float * degenerate(float* eigens, int size, int* newSize);
 
@@ -59,12 +59,12 @@ class RMTThreshold : public ThresholdMethod {
 
   public:
     RMTThreshold(EMatrix * ematrix, char ** method, int num_methods, char * th_method,
-        double thresholdStart, double thresholdStep, double chiSoughtValue,
+        float thresholdStart, float thresholdStep, float chiSoughtValue,
         char * clustering, int min_cluster_size, int max_missing, int max_modes,
         float min_range);
     ~RMTThreshold();
 
-    double findThreshold();
+    float findThreshold();
 
 };
 

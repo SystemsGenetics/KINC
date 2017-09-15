@@ -1,11 +1,11 @@
 #include "mean_shift.h"
 
 /**
- * @param double * a2
+ * @param float * a2
  *   A row from the ematrix with missing values removed
  * @param int x
  *   The index of a2 in the ematrix
- * @param double * b2
+ * @param float * b2
  *   A row from the ematrix with missing values removed.
  * @param in y
  *   The index of b2 in the ematrix
@@ -21,7 +21,7 @@
  *   An integer indicating the recursion level. It should always be set to
  *   zero by the caller of this function.
  */
-PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
+PairWiseClusters * clustering(float *a2, int x, float *b2, int y, int n2,
     EMatrix * ematrix, CCMParameters params, float bw, int level) {
 
   // Variables used for looping.
@@ -32,7 +32,7 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
   PairWiseClusters * result = new_pairwise_cluster_list();
 
   // Perform bandwidth selection
-  double * selected = meanshift_coverage2D(a2, b2, n2);
+  float * selected = meanshift_coverage2D(a2, b2, n2);
 
   // Perform mean shift clustering (MSC)
   MeanShiftClusters * clusters;
@@ -53,8 +53,8 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
     int size = clusters->sizes[k];
 
     // Create separate vectors for the x and y coordinates.
-    double *cx = (double *) malloc(sizeof(double) * size);
-    double *cy = (double *) malloc(sizeof(double) * size);
+    float *cx = (float *) malloc(sizeof(float) * size);
+    float *cy = (float *) malloc(sizeof(float) * size);
     for (j = 0; j < size; j++) {
       cx[j] = 0;
       cy[j] = 0;
@@ -144,10 +144,10 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
         if (strcmp(params.method, "sc") == 0) {
           // Initialize the workspace needed for Spearman's calculation.
           double workspace[2 * params.rows];
-          corr = gsl_stats_spearman(cx, 1, cy, 1, nkept, workspace);
+          corr = gsl_stats_float_spearman(cx, 1, cy, 1, nkept, workspace);
         }
         if (strcmp(params.method, "pc") == 0) {
-          corr = gsl_stats_correlation(cx, 1, cy, 1, nkept);
+          corr = gsl_stats_float_correlation(cx, 1, cy, 1, nkept);
         }
         PairWiseClusters * newc = new_pairwise_cluster_list();
         newc->gene1 = x;
@@ -196,5 +196,3 @@ PairWiseClusters * clustering(double *a2, int x, double *b2, int y, int n2,
 
   return result;
 }
-
-

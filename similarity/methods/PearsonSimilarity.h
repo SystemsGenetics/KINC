@@ -1,7 +1,7 @@
 #ifndef _PEARSON_
 #define _PEARSON_
 
-#include <gsl/gsl_statistics.h>
+#include <gsl/gsl_statistics_float.h>
 #include "PairWiseSimilarity.h"
 
 /**

@@ -42,11 +42,11 @@ class RunThreshold {
     // RMT Threshold options
     // ---------------------
     // The starting threshold value.
-    double thresholdStart;
+    float thresholdStart;
     // The step size for decreasing threshold value.
-    double thresholdStep;
+    float thresholdStep;
     // The Chi-square value being sought.
-    double chiSoughtValue;
+    float chiSoughtValue;
 
     // Data filters for clustered similarity data.
     // ------------------------------------------

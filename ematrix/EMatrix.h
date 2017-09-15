@@ -17,7 +17,7 @@ class EMatrix {
     int max_gene_len;
 
     // The expression matrix rows and columns.
-    double ** data;
+    float ** data;
     // An array of gene names.
     char ** genes;
     // An array of sample names
@@ -59,11 +59,11 @@ class EMatrix {
 
     // GETTERS
     // Retrieves the expression matrix data array.
-    double ** getMatrix() { return data; }
+    float ** getMatrix() { return data; }
     // Retrieves a single row of the expression matrix.
-    double * getRow(int i) { return data[i]; }
+    float * getRow(int i) { return data[i]; }
     // Retrieves the value of a single cell in the expression matrix.
-    double getCell(int i, int j) { return data[i][j]; }
+    float getCell(int i, int j) { return data[i][j]; }
     // Retrieves the number of samples in the expression matrix.
     int getNumSamples() { return num_samples; }
     // Retrieves the number of genes in the expression matrix.
@@ -80,7 +80,7 @@ class EMatrix {
     int isMissingOmitted() { return omit_na; }
 
     // Returns the range in expression of a set of samples
-    double getRange(int i, char * samples);
+    float getRange(int i, char * samples);
 
     // Return the max length of the genes and samples
     int getMaxGeneLen() { return max_gene_len; }

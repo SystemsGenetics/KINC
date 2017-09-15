@@ -4,7 +4,7 @@
 /**
  *
  */
-int R_finite(double x) {
+int R_finite(float x) {
 #ifdef HAVE_WORKING_ISFINITE
     return isfinite(x);
 #else
@@ -15,7 +15,7 @@ int R_finite(double x) {
 /**
  * This function computes the  'signum(.)' function:
  */
-double sign(double x) {
+float sign(float x) {
   if (isnan(x)) {
     return x;
   }
@@ -25,8 +25,8 @@ double sign(double x) {
 /**
  * Compute the quantile function for the normal distribution.
  */
-double qnorm(double p, double mu, double sigma, int lower_tail, int log_p) {
-  double p_, q, r, val;
+float qnorm(float p, float mu, float sigma, int lower_tail, int log_p) {
+  float p_, q, r, val;
 
 #ifdef IEEE_754
     if (isnan(p) || isnan(mu) || isnan(sigma))
@@ -39,7 +39,7 @@ double qnorm(double p, double mu, double sigma, int lower_tail, int log_p) {
   q = p_ - 0.5;
 
   /*-- use AS 241 --- *
-   * double ppnd16_(double *p, long *ifault)*
+   * float ppnd16_(float *p, long *ifault)*
    * ALGORITHM AS241  APPL. STATIST. (1988) VOL. 37, NO. 3
    *
    * Produces the normal deviate Z corresponding to a given lower
@@ -115,8 +115,8 @@ double qnorm(double p, double mu, double sigma, int lower_tail, int log_p) {
 /**
  *
  */
-double pnorm(double x, double mu, double sigma, int lower_tail, int log_p) {
-    double p, cp;
+float pnorm(float x, float mu, float sigma, int lower_tail, int log_p) {
+    float p, cp;
 
   /* Note: The structure of these checks has been carefully thought through.
    * For example, if x == mu and sigma == 0, we get the correct answer 1.
@@ -150,25 +150,25 @@ double pnorm(double x, double mu, double sigma, int lower_tail, int log_p) {
 /**
  *
  */
-void pnorm_both(double x, double *cum, double *ccum, int i_tail, int log_p) {
+void pnorm_both(float x, float *cum, float *ccum, int i_tail, int log_p) {
   /* i_tail in {0,1,2} means: "lower", "upper", or "both" :
      if (lower) return  *cum := P[X <= x]
      if (upper) return *ccum := P[X >  x] = 1 - P[X <= x]
   */
-  const static double a[5] = {
+  const static float a[5] = {
     2.2352520354606839287,
     161.02823106855587881,
     1067.6894854603709582,
     18154.981253343561249,
     0.065682337918207449113
   };
-  const static double b[4] = {
+  const static float b[4] = {
     47.20258190468824187,
     976.09855173777669322,
     10260.932208618978205,
     45507.789335026729956
   };
-  const static double c[9] = {
+  const static float c[9] = {
     0.39894151208813466764,
     8.8831497943883759412,
     93.506656132177855979,
@@ -179,7 +179,7 @@ void pnorm_both(double x, double *cum, double *ccum, int i_tail, int log_p) {
     9842.7148383839780218,
     1.0765576773720192317e-8
   };
-  const static double d[8] = {
+  const static float d[8] = {
     22.266688044328115691,
     235.38790178262499861,
     1519.377599407554805,
@@ -189,7 +189,7 @@ void pnorm_both(double x, double *cum, double *ccum, int i_tail, int log_p) {
     38912.003286093271411,
     19685.429676859990727
   };
-  const static double p[6] = {
+  const static float p[6] = {
     0.21589853405795699,
     0.1274011611602473639,
     0.022235277870649807,
@@ -197,7 +197,7 @@ void pnorm_both(double x, double *cum, double *ccum, int i_tail, int log_p) {
     2.9112874951168792e-5,
     0.02307344176494017303
   };
-  const static double q[5] = {
+  const static float q[5] = {
     1.28426009614491121,
     0.468238212480865118,
     0.0659881378689285515,
@@ -205,9 +205,9 @@ void pnorm_both(double x, double *cum, double *ccum, int i_tail, int log_p) {
     7.29751555083966205e-5
   };
 
-  double xden, xnum, temp, del, eps, xsq, y;
+  float xden, xnum, temp, del, eps, xsq, y;
 #ifdef NO_DENORMS
-  double min = DBL_MIN;
+  float min = DBL_MIN;
 #endif
   int i, lower, upper;
 
@@ -379,8 +379,8 @@ void pnorm_both(double x, double *cum, double *ccum, int i_tail, int log_p) {
  *   The offset fraction to be used; typically in (0,1). Recommend values
  *   are 3/8 if n < 10 and 1/2 otherwise.
  */
-double * ppoints(int n, float a) {
-  double * points = (double *) malloc(sizeof(double) * n);
+float * ppoints(int n, float a) {
+  float * points = (float *) malloc(sizeof(float) * n);
 
   if (n > 0) {
     int i;

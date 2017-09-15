@@ -58,8 +58,8 @@ PairWiseSimilarity::PairWiseSimilarity(PairWiseSet *pws, int min_obs, int * samp
  *
  */
 void PairWiseSimilarity::init() {
-  this->a = (double *) malloc(sizeof(double) * pws->n_orig);
-  this->b = (double *) malloc(sizeof(double) * pws->n_orig);
+  this->a = (float *) malloc(sizeof(float) * pws->n_orig);
+  this->b = (float *) malloc(sizeof(float) * pws->n_orig);
   this->n = 0;
 
   // If a samples list is provided then use that list.

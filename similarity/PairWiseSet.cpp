@@ -23,7 +23,7 @@ PairWiseSet::PairWiseSet(EMatrix * ematrix, int i, int j) {
 /**
  *
  */
-PairWiseSet::PairWiseSet(EMatrix * ematrix, int i, int j, double th) {
+PairWiseSet::PairWiseSet(EMatrix * ematrix, int i, int j, float th) {
   this->gene1 = i;
   this->gene2 = j;
 
@@ -43,13 +43,13 @@ PairWiseSet::PairWiseSet(EMatrix * ematrix, int i, int j, double th) {
 /**
  *
  */
-PairWiseSet::PairWiseSet(double *a, double *b, int n, int i, int j) {
+PairWiseSet::PairWiseSet(float *a, float *b, int n, int i, int j) {
   PairWiseSet(a, b, n, i, j, NAN);
 }
 /**
  *
  */
-PairWiseSet::PairWiseSet(double *a, double *b, int n, int i, int j, double th) {
+PairWiseSet::PairWiseSet(float *a, float *b, int n, int i, int j, float th) {
   this->gene1 = i;
   this->gene2 = j;
 
@@ -86,8 +86,8 @@ PairWiseSet::~PairWiseSet(){
 void PairWiseSet::clean() {
   // Create the vectors that will contain the sample measurements that are
   // not empty (e.g. NAN or INF).
-  this->x_clean = (double *) malloc(sizeof(double) * this->n_orig);
-  this->y_clean = (double *) malloc(sizeof(double) * this->n_orig);
+  this->x_clean = (float *) malloc(sizeof(float) * this->n_orig);
+  this->y_clean = (float *) malloc(sizeof(float) * this->n_orig);
 
   // Create the samples array.
   this->samples = (int *) malloc(sizeof(int) * this->n_orig);
@@ -147,8 +147,8 @@ void PairWiseSet::clean() {
 void PairWiseSet::maskOutliers() {
 
   // Create and initialize vectors for testing outliers.
-  double cx[n_clean];
-  double cy[n_clean];
+  float cx[n_clean];
+  float cy[n_clean];
   for (int j = 0; j < n_clean; j++) {
     cx[j] = x_clean[j];
     cy[j] = y_clean[j];
@@ -183,8 +183,8 @@ void PairWiseSet::maskOutliers() {
   }
 
   // Now recreate the clean arrays but with the outliers missing.
-  double * nx_clean = (double *) malloc(sizeof(double) * this->n_orig);
-  double * ny_clean = (double *) malloc(sizeof(double) * this->n_orig);
+  float * nx_clean = (float *) malloc(sizeof(float) * this->n_orig);
+  float * ny_clean = (float *) malloc(sizeof(float) * this->n_orig);
   int n = 0;
   for (int i = 0; i < n_orig; i++) {
     if (samples[i] == 1) {

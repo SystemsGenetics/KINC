@@ -1,7 +1,7 @@
 #ifndef _SPEARMAN_
 #define _SPEARMAN_
 
-#include <gsl/gsl_statistics.h>
+#include <gsl/gsl_statistics_float.h>
 #include "PairWiseSimilarity.h"
 
 /**

@@ -7,7 +7,7 @@
  */
 
 #include <math.h>
-#include <gsl/gsl_statistics.h>
+#include <gsl/gsl_statistics_float.h>
 #include <gsl/gsl_cdf.h>
 #include "stats.h"
 #include "kurtosis.h"
@@ -15,6 +15,6 @@
 #include "swilk.h"
 #include "../general/error.h"
 
-double roystonH(double* a, double * b, int n, double *pcc);
+float roystonH(float* a, float * b, int n, float *pcc);
 
 #endif

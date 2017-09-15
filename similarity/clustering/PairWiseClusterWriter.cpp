@@ -398,7 +398,7 @@ void PairWiseClusterWriter::closeOutFiles() {
  *
  * @param SampleCluster pws
  */
-void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, int gene2, double * min_sim) {
+void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, int gene2, float * min_sim) {
 
   // The file pointer of the file to write to.
   fstream *fp;
@@ -424,7 +424,7 @@ void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, 
       }
       // If the score is greater than the min similarity filter of  at least
       // one of the methods then write the line.
-      double ascore = fabs(curr->getPWSimilarity(i)->getScore());
+      float ascore = fabs(curr->getPWSimilarity(i)->getScore());
       if (ascore >= min_sim[i]) {
         do_write = 1;
       }
@@ -433,7 +433,7 @@ void PairWiseClusterWriter::writeClusters(PairWiseClusterList *pwcl, int gene1, 
     // Determine which file to write the output into. Use the first similarity
     // method provided for this.
     PairWiseSimilarity * pwsim = curr->getPWSimilarity(0);
-    double score = pwsim->getScore();
+    float score = pwsim->getScore();
     if (!pwsim || isnan(score)) {
       fp = fps[101];
     }

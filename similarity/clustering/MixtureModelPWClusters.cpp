@@ -181,8 +181,8 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
     done = true;
 
     // Prepare arrays for outlier detection and removal.
-    double cx[this->pwset->n_clean];
-    double cy[this->pwset->n_clean];
+    float cx[this->pwset->n_clean];
+    float cy[this->pwset->n_clean];
     for (int j = 0; j < this->pwset->n_clean; j++) {
       cx[j] = 0;
       cy[j] = 0;

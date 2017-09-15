@@ -31,7 +31,7 @@ class RunSimilarity {
     // An array holding the histogram of similarity scores.
     int * histogram;
     // The threshold for expression values.
-    double threshold;
+    float threshold;
 
     // Variables for the expression matrix
     // -----------------------------------
@@ -62,7 +62,7 @@ class RunSimilarity {
     // An array that specifies the set of minimum thresholds to include.
     // All methods must have a minimum value, -1 should be used to exclude
     // a filter for that method.
-    double * min_sim;
+    float * min_sim;
 
     // Variables for mutual information
     // --------------------------------
@@ -80,8 +80,8 @@ class RunSimilarity {
 
     // Variables for mean shift clustering.
     // --------------------------------
-    double msc_bw1;
-    double msc_bw2;
+    float msc_bw1;
+    float msc_bw2;
 
     // Variables to limit pair-wise comparisions to a specific set
     // of genes.

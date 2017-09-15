@@ -10,29 +10,29 @@
  * Unlike the R code, this function has been adapted to only deal with
  * two vectors rather than a matrix, and has fewer arguments.
  *
- * @param double * s
- * @param double * t
+ * @param float * s
+ * @param float * t
  * @param int n
  *   The size of a and b.
  * @param h
  *   The bandwidth: the percentage of the range to use for clustering.
  */
-MeanShiftClusters * meanshift2D(double* s, double * t, int n, double h) {
+MeanShiftClusters * meanshift2D(float* s, float * t, int n, float h) {
   MeanShiftClusters * msc = (MeanShiftClusters *) malloc(sizeof(MeanShiftClusters));
 
   int iter = 200;
-  double thr = 0.0001;
+  float thr = 0.0001;
 
-  double *a = (double *) malloc(sizeof(double) * n);
-  double *b = (double *) malloc(sizeof(double) * n);
+  float *a = (float *) malloc(sizeof(float) * n);
+  float *b = (float *) malloc(sizeof(float) * n);
 
   // First calculate the size of the range for each vector
   int i, j;
-  double si[2];
-  double a_min = INFINITY;
-  double b_min = INFINITY;
-  double a_max = -INFINITY;
-  double b_max = -INFINITY;
+  float si[2];
+  float a_min = INFINITY;
+  float b_min = INFINITY;
+  float a_max = -INFINITY;
+  float b_max = -INFINITY;
 
   for (i = 0; i < n; i++) {
 
@@ -61,17 +61,17 @@ MeanShiftClusters * meanshift2D(double* s, double * t, int n, double h) {
     b[i] = t[i] / si[1];
   }
 
-  double **finals = (double **) malloc (sizeof(double*) * n);
-  double **savecluster = (double **) malloc (sizeof(double*) * n);
+  float **finals = (float **) malloc (sizeof(float*) * n);
+  float **savecluster = (float **) malloc (sizeof(float*) * n);
   int ncluster = 0;
   int * cluster_label = (int *) malloc (sizeof (int) * n);
-  double cluster_dist[n];
+  float cluster_dist[n];
   MeanShiftRep * msr;
-  double min_dist = 0;
-  double which_min = 0;
+  float min_dist = 0;
+  float which_min = 0;
 
   // Iterate through the elements of a & b (i.e the rows of the 2D matrix)
-  double x[2];
+  float x[2];
   for (i = 0; i < n; i++) {
 
     // Create the point, x.
@@ -79,7 +79,7 @@ MeanShiftClusters * meanshift2D(double* s, double * t, int n, double h) {
     x[1] = b[i];
 
     msr = meanshift_rep(a, b, n, x, h, 1e-8, iter);
-    finals[i] = (double *) malloc(sizeof(double) * 2);
+    finals[i] = (float *) malloc(sizeof(float) * 2);
     finals[i][0] = msr->final[0];
     finals[i][1] = msr->final[1];
 
@@ -96,7 +96,7 @@ MeanShiftClusters * meanshift2D(double* s, double * t, int n, double h) {
     if (ncluster >= 1) {
       min_dist = INFINITY;
       for (j = 0; j < ncluster; j++) {
-        double t[2];
+        float t[2];
         t[0] = savecluster[j][0] - finals[i][0];
         t[1] = savecluster[j][1] - finals[i][1];
         cluster_dist[j] = euclidian_norm(t, 2) / euclidian_norm(savecluster[j], 2);
@@ -109,7 +109,7 @@ MeanShiftClusters * meanshift2D(double* s, double * t, int n, double h) {
     // If we have no clusters or the minimum distance is greater than the
     // threshold then perform the following.
     if (ncluster == 0 || min_dist > thr) {
-      savecluster[ncluster] = (double *) malloc(sizeof(double) * 2);
+      savecluster[ncluster] = (float *) malloc(sizeof(float) * 2);
       savecluster[ncluster][0] = finals[i][0];
       savecluster[ncluster][1] = finals[i][1];
       ncluster = ncluster + 1;
@@ -151,15 +151,15 @@ MeanShiftClusters * meanshift2D(double* s, double * t, int n, double h) {
 
   // Organize the points into their corresponding clusters
   int counts[ncluster];
-  msc->clusters = (double ***) malloc(sizeof (double **) * ncluster);
+  msc->clusters = (float ***) malloc(sizeof (float **) * ncluster);
   for (i = 0; i < ncluster; i++) {
-    msc->clusters[i] = (double **) malloc(sizeof(double *) * msc->sizes[i]);
+    msc->clusters[i] = (float **) malloc(sizeof(float *) * msc->sizes[i]);
     counts[i] = 0;
   }
   for (i = 0; i < n; i++) {
     int cluster = cluster_label[i] - 1;
     int index = counts[cluster];
-    msc->clusters[cluster][index] = (double *) malloc(sizeof(double) * 2);
+    msc->clusters[cluster][index] = (float *) malloc(sizeof(float) * 2);
     msc->clusters[cluster][index][0] = s[i];
     msc->clusters[cluster][index][1] = t[i];
     counts[cluster]++;
@@ -222,16 +222,16 @@ void free_msr(MeanShiftRep * msr) {
 /**
  * Mean shift iterative function (until convergence ...)
  */
-MeanShiftRep * meanshift_rep(double* a, double * b, int n, double * x, double h, double thresh, int iter) {
+MeanShiftRep * meanshift_rep(float* a, float * b, int n, float * x, float h, float thresh, int iter) {
   int d = 2;
   int s = -1;
   int j = 0;
-  double *x0 = (double *) malloc(sizeof(double) * 2);
-  double *xt = (double *) malloc(sizeof(double) * 2);
-  double **M;
-  double *th = (double *) malloc(sizeof(double) * iter);
-  double *m;
-  double mx[d];
+  float *x0 = (float *) malloc(sizeof(float) * 2);
+  float *xt = (float *) malloc(sizeof(float) * 2);
+  float **M;
+  float *th = (float *) malloc(sizeof(float) * iter);
+  float *m;
+  float mx[d];
   MeanShiftRep * msr = (MeanShiftRep *) malloc(sizeof(MeanShiftRep));
 
   // Copy the original x into x0 which keeps the start point
@@ -242,7 +242,7 @@ MeanShiftRep * meanshift_rep(double* a, double * b, int n, double * x, double h,
   xt[0] = x[0];
   xt[1] = x[1];
 
-  M = (double **) malloc(sizeof(double *) * iter);
+  M = (float **) malloc(sizeof(float *) * iter);
   for (j = 0; j < iter; j++) {
     m = meanshift_base(a, b, n, xt, h);
     M[j] = m;
@@ -271,7 +271,7 @@ MeanShiftRep * meanshift_rep(double* a, double * b, int n, double * x, double h,
   msr->iterations = s + 1;
   msr->start = x0;
   msr->thresh = th;
-  msr->final = (double *) malloc(sizeof(double) * 2);
+  msr->final = (float *) malloc(sizeof(float) * 2);
   msr->final[0] = m[0];
   msr->final[1] = m[1];
 
@@ -281,9 +281,9 @@ MeanShiftRep * meanshift_rep(double* a, double * b, int n, double * x, double h,
 /**
  * Euclidian norm
  */
-double euclidian_norm(double *x, int d) {
+float euclidian_norm(float *x, int d) {
   int i;
-  double sum = 0;
+  float sum = 0;
   for (i = 0; i < d; i++) {
     sum += pow(x[i], 2);
   }
@@ -293,23 +293,23 @@ double euclidian_norm(double *x, int d) {
 /**
  * Computes the minimal distance between a vector and a set of vectors.
  *
- * @param double **x
+ * @param float **x
  *   A 2D array of doubles, or a list of points.
  * @param int n
  *   The length of x
- * @param double *y
+ * @param float *y
  *
- * @return double *
+ * @return float *
  *   A two dimensional array where the first element is the minimum
  *   distance and the second is the position in the array where the
  *   minimum distance is found.
  */
-double minimal_dist(double **x, int n, double *y) {
+float minimal_dist(float **x, int n, float *y) {
   int d = 2;
   int i;
-  double * dv = distance_vector(x, n, y);
-  double s[n];
-  double min_s = INFINITY;
+  float * dv = distance_vector(x, n, y);
+  float s[n];
+  float min_s = INFINITY;
 
   //int min_i = 0;
 
@@ -323,7 +323,7 @@ double minimal_dist(double **x, int n, double *y) {
   free(dv);
 
   // Return the minimum distance and the position.
-//  double *out = (double *) malloc(sizeof(double) * 2);
+//  float *out = (float *) malloc(sizeof(float) * 2);
 //  out[0] = min_s;
 //  out[1] = min_i;
   return min_s;
@@ -333,7 +333,7 @@ double minimal_dist(double **x, int n, double *y) {
  * Computes all distances between a set of vectors and another vector.
  * (up to the constant sqrt(d))
  */
-double * distance_vector(double **x, int n, double *y) {
+float * distance_vector(float **x, int n, float *y) {
   int i;
   int d = 2;
 
@@ -343,8 +343,8 @@ double * distance_vector(double **x, int n, double *y) {
 
   // Calculate the squared mean of each row in our ab Matrix, and the squared
   // mean of y.
-  double row_means[n];
-  double y_mean = 0;
+  float row_means[n];
+  float y_mean = 0;
   for (i = 0; i < n; i++) {
     row_means[i] = (pow(x[i][0], 2) + pow(x[i][1], 2)) / 2.0;
   }
@@ -352,13 +352,13 @@ double * distance_vector(double **x, int n, double *y) {
 
   // Get a vector by  performing matrix multiplication between ab and y.
   // Multiply the value by 2 and divide by n.
-  double Xy[n];
+  float Xy[n];
   for (i = 0; i < n; i++) {
     Xy[i] = (x[i][0] * y[0] + x[i][1] * y[1]);
   }
 
   // Finish up the distance vector.
-  double * out = (double *) malloc(sizeof(double) * n);
+  float * out = (float *) malloc(sizeof(float) * n);
   for (i = 0; i < n; i++) {
     out[i] = sqrt(row_means[i] + y_mean - 2 * Xy[i] / d);
     if (isnan(out[i])) {
@@ -372,26 +372,26 @@ double * distance_vector(double **x, int n, double *y) {
 /**
  * Mean shift base function
  *
- * @param double *a
- * @param double *b
- * @param double n
+ * @param float *a
+ * @param float *b
+ * @param float n
  *   The size of a and b.
- * @param double *x
+ * @param float *x
  *   An array of only two values containing representing a "row" from
  *   the 2D matrix of a and b.
- * @param double h
+ * @param float h
  *   The bandwidth: the percentage of the range to use for clustering.
  *
- * @return double *
- *   An double array with two elements.
+ * @return float *
+ *   An float array with two elements.
  */
-double * meanshift_base(double *a, double *b, int n, double *x, double h) {
+float * meanshift_base(float *a, float *b, int n, float *x, float h) {
   int i;
-  double * g;
-  double * ms = (double *) malloc(sizeof(double) * 2);
-  double sum_g = 0;
-  double sum_ag = 0;
-  double sum_bg = 0;
+  float * g;
+  float * ms = (float *) malloc(sizeof(float) * 2);
+  float sum_g = 0;
+  float sum_ag = 0;
+  float sum_bg = 0;
   memset(ms, 0, 2);
 
   g = profileMd(a, b, n, x, h);
@@ -410,20 +410,20 @@ double * meanshift_base(double *a, double *b, int n, double *x, double h) {
 /**
  *  Calculate the 1-d profile.
  *
- *  @param double * xi
+ *  @param float * xi
  *  @param int n
- *  @param double x
- *  @param double h
+ *  @param float x
+ *  @param float h
  *
- *  @return double *
+ *  @return float *
  *    An array of length n containing the 1 dimensional profile
  */
-double * profile1d(double *xi, int n, double x, double h) {
-  double *k1 = (double *) malloc(sizeof(double) * n);
+float * profile1d(float *xi, int n, float x, float h) {
+  float *k1 = (float *) malloc(sizeof(float) * n);
   int j;
   for (j = 0; j < n; j++) {
-    double p = pow((x-xi[j]) / h, 2);
-    double e = exp(-0.5 * p);
+    float p = pow((x-xi[j]) / h, 2);
+    float e = exp(-0.5 * p);
     k1[j] = 0.5 * e;
   }
   return k1;
@@ -432,23 +432,23 @@ double * profile1d(double *xi, int n, double x, double h) {
 /**
  * Calculate the Multi-d profile.
  *
- * @param double *a
- * @param double *b
- * @param double n
+ * @param float *a
+ * @param float *b
+ * @param float n
  *   The size of a and b.
- * @param double *x
+ * @param float *x
  *   An array of only two values containing representing a "row" from
  *   the 2D matrix of a and b.
- * @param double h
+ * @param float h
  *   The bandwidth: the percentage of the range to use for clustering.
  *
- * @return double *
+ * @return float *
  *    An array of length n containing the multi-dimensional profile
  */
-double * profileMd(double *a, double *b, int n, double *x, double h) {
+float * profileMd(float *a, float *b, int n, float *x, float h) {
   int i;
-  double *pa, *pb;
-  double *k = (double *) malloc(sizeof(double) * n);
+  float *pa, *pb;
+  float *k = (float *) malloc(sizeof(float) * n);
 
   // Get the 1D profiles for both a and b. We use the corresponding value
   // of x to pass in to the profile1d function (a first, b second).
@@ -469,28 +469,28 @@ double * profileMd(double *a, double *b, int n, double *x, double h) {
 /**
  * Mean shift clustering bandwidth selection.
  *
- * @param double *s
- * @param double *t
+ * @param float *s
+ * @param float *t
  * @param int n
  *   The size of the s and t arrays.
  * @param float taumin
  * @param fload taumax
  * @param int gridsize
  */
-double * meanshift_coverage2D(double *s, double *t, int n) {
+float * meanshift_coverage2D(float *s, float *t, int n) {
   int i, j;
 
   // Set some default parameters. Perhaps these should be passed in?
-  double taumin = 0.02;
-  double taumax = 0.5;
+  float taumin = 0.02;
+  float taumax = 0.5;
   int gridsize = 25;
 
-  double h0 = taumin;
-  double h1 = taumax;
+  float h0 = taumin;
+  float h1 = taumax;
 
   // Create a sequence between the taumin and taumax that are equally spaced.
-  double * h = (double *) malloc(sizeof(double) * gridsize);
-  double step = (h1 - h0) / (gridsize - 1);
+  float * h = (float *) malloc(sizeof(float) * gridsize);
+  float step = (h1 - h0) / (gridsize - 1);
 
   h[0] = h0;
   for (i = 1; i < gridsize - 1; i++) {
@@ -499,7 +499,7 @@ double * meanshift_coverage2D(double *s, double *t, int n) {
   h[i] = h1;
 
   // Initialize the cover matrix
-  double cover[2][gridsize];
+  float cover[2][gridsize];
   for (i = 0; i < 2; i++) {
     for (j = 0; j < gridsize; j++) {
       cover[i][j] = 0;
@@ -507,7 +507,7 @@ double * meanshift_coverage2D(double *s, double *t, int n) {
   }
 
   for (i = 0; i < gridsize; i++) {
-    double new_h0 = h[i];
+    float new_h0 = h[i];
     // fit <- ms(X, new.h0,  thr = thr, scaled = scaled, plotms = 0,  or.labels=or.labels)
     MeanShiftClusters * fit = meanshift2D(s, t, n, new_h0);
 
@@ -526,11 +526,11 @@ double * meanshift_coverage2D(double *s, double *t, int n) {
     }
 
     // Add the center points for clusters with more than 2 elements into an array.
-    double ** Pm = (double **) malloc(sizeof(double *) * num_found);
+    float ** Pm = (float **) malloc(sizeof(float *) * num_found);
     int k = 0;
     for (j = 0; j < fit->num_clusters; j++) {
       if (find[j] == 1) {
-        Pm[k] = (double *) malloc(sizeof(double) * 2);
+        Pm[k] = (float *) malloc(sizeof(float) * 2);
         Pm[k][0] = fit->centers[j][0];
         Pm[k][1] = fit->centers[j][1];
         k++;
@@ -549,8 +549,8 @@ double * meanshift_coverage2D(double *s, double *t, int n) {
   free(h);
 
   // the following code is derived from the select.self.coverage() function.
-  double smin = 1.0/3.0;
-  double diff1[gridsize], diff2[gridsize];
+  float smin = 1.0/3.0;
+  float diff1[gridsize], diff2[gridsize];
 
   // Initialize the diff1 and diff2 arrays.
   for (i = 0; i < gridsize; i++) {
@@ -566,11 +566,11 @@ double * meanshift_coverage2D(double *s, double *t, int n) {
   }
 
   // select <- select.coverage <- select.2diff <- NULL
-  double select[gridsize], select_coverage[gridsize], select_2diff[gridsize];
+  float select[gridsize], select_coverage[gridsize], select_2diff[gridsize];
   int k = 0;
   for (i = 2; i < gridsize - 1; i++) {
     // find the maximum coverage between 0 and i - 1;
-    double max = smin;
+    float max = smin;
     int j;
     for (j = 0; j < i; j++) {
       if (max < cover[1][j]) {
@@ -587,9 +587,9 @@ double * meanshift_coverage2D(double *s, double *t, int n) {
 
   // reorder the select and select_coverage arraays based on the re-ordering
   // of the select_2diff array
-  double * selected = (double *) malloc(sizeof(double) * k);
-  double * covered = (double *) malloc(sizeof(double) * k);
-  int * order = orderArray((double *) &select_2diff, k);
+  float * selected = (float *) malloc(sizeof(float) * k);
+  float * covered = (float *) malloc(sizeof(float) * k);
+  int * order = orderArray((float *) &select_2diff, k);
 
   for (i = 0; i < k; i++) {
     selected[i] = select[order[i]];
@@ -604,29 +604,29 @@ double * meanshift_coverage2D(double *s, double *t, int n) {
 }
 
 /**
- * @param double *a
+ * @param float *a
  *   The first scaled data vector returned from meanshift2D
- * @param double *b
+ * @param float *b
  *   The second scaled data vector returned from meanshift2D
  * @param int n
  *   The size of vectors a and b.
  */
-double coverage_raw(double * a, double *b, int n, double ** centers, int nc, double tau) {
-   double min_distance[n];
+float coverage_raw(float * a, float *b, int n, float ** centers, int nc, float tau) {
+   float min_distance[n];
    int i;
    for (i = 0; i < n; i++) {
      min_distance[i] = 0;
    }
 
    for (i = 0; i < n; i++) {
-     double * point = (double *) malloc(sizeof(double) * 2);
+     float * point = (float *) malloc(sizeof(float) * 2);
      point[0] = a[i];
      point[1] = b[i];
      min_distance[i] = minimal_dist(centers, nc, point);
    }
    // Calculate the mean. R code does a weighted mean but we don't need
    // to use a weight.
-   double ci = 0;
+   float ci = 0;
    //int num_less = 0;
    for (i = 0; i < n; i++) {
      if (min_distance[i] <= tau) {

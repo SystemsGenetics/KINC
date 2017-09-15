@@ -14,13 +14,13 @@ class PairWiseSimilarity {
     // The PairWiseSet containing the two samples for comparision.
     PairWiseSet *pws;
     // The final similarity score.
-    double score;
+    float score;
     // An array of 1's and zeros indicating which samples should be
     // included in the pair-wise comparision.
     int * samples;
     // The expression arrays with non included samples removed and the
     // size of these arrays.
-    double *a, *b;
+    float *a, *b;
     // The number of samples in this pair-wise test.
     int n;
     // The minimum number of observations required to perform the comparision.
@@ -38,7 +38,7 @@ class PairWiseSimilarity {
     ~PairWiseSimilarity();
 
     // Get's the score
-    double getScore() { return score; }
+    float getScore() { return score; }
 
     // Executes the pair-wise similiarity function. This should
     // be implemented by the descendent class.

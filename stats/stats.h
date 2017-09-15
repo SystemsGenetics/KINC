@@ -73,12 +73,12 @@
 #define R_FINITE(x)    R_finite(x)
 #define SIXTEEN  16 /* Cutoff allowing exact "*" and "/" */
 
-int R_finite(double);
+int R_finite(float);
 
-double qnorm(double p, double mu, double sigma, int lower_tail, int log_p);
-double pnorm(double x, double mu, double sigma, int lower_tail, int log_p);
-void pnorm_both(double x, double *cum, double *ccum, int i_tail, int log_p);
-double * ppoints(int n, float a);
-double sign(double x);
+float qnorm(float p, float mu, float sigma, int lower_tail, int log_p);
+float pnorm(float x, float mu, float sigma, int lower_tail, int log_p);
+void pnorm_both(float x, float *cum, float *ccum, int i_tail, int log_p);
+float * ppoints(int n, float a);
+float sign(float x);
 
 #endif

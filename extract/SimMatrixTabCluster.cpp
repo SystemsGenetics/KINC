@@ -150,8 +150,8 @@ void SimMatrixTabCluster::writeNetwork() {
          cv = *(scores[th_method_index]);
 
          // Get the range of expression for this cluster.
-         double range_j = this->ematrix->getRange(j-1, samples);
-         double range_k = this->ematrix->getRange(k-1, samples);
+         float range_j = this->ematrix->getRange(j-1, samples);
+         float range_k = this->ematrix->getRange(k-1, samples);
          int range_okay = 1;
 
          if (min_range > 0 && (range_j <= min_range || range_k <= min_range)) {

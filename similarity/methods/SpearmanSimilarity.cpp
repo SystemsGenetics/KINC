@@ -21,8 +21,8 @@ SpearmanSimilarity::~SpearmanSimilarity() {
 /**
  * Performs Spearman correlation on two arrays.
  *
- * @param double *a
- * @param double *b
+ * @param float *a
+ * @param float *b
  * @param int n
  */
 void SpearmanSimilarity::run() {
@@ -32,7 +32,7 @@ void SpearmanSimilarity::run() {
   if (this->n >= this->min_obs) {
     // Create the workspace needed for Spearman's calculation.
     double workspace[2 * this->n];
-    score = gsl_stats_spearman(this->a, 1, this->b, 1, this->n, workspace);
+    score = gsl_stats_float_spearman(this->a, 1, this->b, 1, this->n, workspace);
   }
   else {
     score = NAN;
@@ -44,7 +44,7 @@ void SpearmanSimilarity::run() {
  *
  * @param CCMParameters params
  *   An instance of the CCM parameters struct
- * @param double ** data
+ * @param float ** data
  *   A pointer to a two dimensional array of doubles containing the
  *   expression values
  * @param int * histogram
@@ -112,8 +112,8 @@ void SpearmanSimilarity::run() {
         }
         else {
           // build the vectors for calculating Spearman's rank coorelation coefficient
-          double x[params.cols];
-          double y[params.cols];
+          float x[params.cols];
+          float y[params.cols];
           int n = 0;
           for (i = 0; i < params.cols; i++) {
             // if either of these elements is missing then don't include the
@@ -134,7 +134,7 @@ void SpearmanSimilarity::run() {
           // actually occurred.
           float rho = NAN;
           if (n >= params.min_obs) {
-            rho = gsl_stats_spearman(x, 1, y, 1, n, workspace);
+            rho = gsl_stats_float_spearman(x, 1, y, 1, n, workspace);
             //printf("(%d, %d) = %f (%d values).\n", j, k, rho, n);
           }
           fwrite(&rho, sizeof(float), 1, outfile);

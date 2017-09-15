@@ -7,12 +7,12 @@
 
 typedef struct {
   // The list of values that are considered outliers.
-  double * outliers;
+  float * outliers;
   // The number of outliers
   int n;
 } Outliers;
 
 
-Outliers * outliers_iqr(double * x, int n, double coef);
+Outliers * outliers_iqr(float * x, int n, float coef);
 
 #endif
