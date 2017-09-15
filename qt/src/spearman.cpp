@@ -16,8 +16,6 @@ using namespace std;
 
 Spearman::~Spearman()
 {
-   delete _workBuffer;
-   delete _rankBuffer;
    if ( _blocks )
    {
       for (int i = 0; i < _blockSize ;++i)
@@ -110,9 +108,17 @@ QVariant Spearman::getArgumentData(int argument, Role role)
    case Role::Minimum:
       switch (argument)
       {
-      case Minimum: return 10;
+      case Minimum: return 1;
       case BlockSize: return 1;
       case KernelSize: return 1;
+      default: return QVariant();
+      }
+   case Role::Maximum:
+      switch (argument)
+      {
+      case Minimum: return INT_MAX;
+      case BlockSize: return INT_MAX;
+      case KernelSize: return INT_MAX;
       default: return QVariant();
       }
    case Role::DataType:
@@ -176,6 +182,10 @@ void Spearman::setArgument(int argument, EAbstractData *data)
 
 bool Spearman::initialize()
 {
+   if ( !_input || !_output )
+   {
+      ;//ERROR!
+   }
    _output->initialize(_input->getGeneNames(),_input->getSampleSize(),1,1);
    return _allocate;
 }
@@ -205,6 +215,11 @@ int Spearman::getBlockSize()
    }
    EOpenCLDevice& device {EOpenCLDevice::getInstance()};
    _program = device.makeProgram().release();
+   if ( !device )
+   {
+      E_MAKE_EXCEPTION(e);
+      throw e;
+   }
    _program->addFile(":/opencl/spearman.cl");
    if ( !_program->compile() )
    {
@@ -214,7 +229,17 @@ int Spearman::getBlockSize()
       throw e;
    }
    _kernel = _program->makeKernel("calculateSpearmanBlock").release();
+   if ( !*_program )
+   {
+      E_MAKE_EXCEPTION(e);
+      throw e;
+   }
    _expressions = device.makeBuffer<cl_float>(_input->getRawSize()).release();
+   if ( !device )
+   {
+      E_MAKE_EXCEPTION(e);
+      throw e;
+   }
    unique_ptr<ExpressionMatrix::Expression> rawData(_input->dumpRawData());
    ExpressionMatrix::Expression* rawDataRef {rawData.get()};
    for (int i = 0; i < _input->getRawSize() ;++i)
@@ -222,33 +247,50 @@ int Spearman::getBlockSize()
       (*_expressions)[i] = rawDataRef[i];
    }
    EOpenCLEvent event = _expressions->write();
-   event.wait();
-   _blocks = new Block*[_blockSize];
-   for (int i = 0; i < _blockSize ;++i)
+   if ( !*_expressions )
    {
-      _blocks[i] = new Block(device,_kernelSize);
+      E_MAKE_EXCEPTION(e);
+      throw e;
+   }
+   event.wait();
+   if ( !event )
+   {
+      E_MAKE_EXCEPTION(e);
+      throw e;
    }
    int pow2Size {2};
    while ( pow2Size < _output->getSampleSize() )
    {
       pow2Size *= 2;
    }
+   int pow2 {2};
+   while ( pow2 < _kernelSize )
+   {
+      pow2 *= 2;
+   }
+   _kernelSize = pow2;
+   _blocks = new Block*[_blockSize];
+   for (int i = 0; i < _blockSize ;++i)
+   {
+      _blocks[i] = new Block(device,pow2Size,_kernelSize);
+   }
    int workgroupSize {2};
-   while ( workgroupSize < pow2Size && workgroupSize < (int)_kernel->getMaxWorkgroupSize() )
+   while ( workgroupSize*2 <= _kernelSize && workgroupSize < (int)_kernel->getMaxWorkgroupSize() )
    {
       workgroupSize *= 2;
    }
-   _workBuffer = device.makeBuffer<cl_float>(2*pow2Size*_blockSize).release();
-   _rankBuffer = device.makeBuffer<cl_int>(2*pow2Size*_blockSize).release();
    _kernel->setArgument(0,(cl_int)_output->getSampleSize());
    _kernel->setArgument(1,(cl_int)pow2Size);
    _kernel->setArgument(2,(cl_int)_minimum);
    _kernel->setBuffer(4,_expressions);
-   _kernel->setBuffer(5,_workBuffer);
-   _kernel->setBuffer(6,_rankBuffer);
    _kernel->setDimensionCount(1);
-   _kernel->setGlobalSize(0,pow2Size);
+   _kernel->setGlobalSize(0,_kernelSize);
    _kernel->setWorkgroupSize(0,workgroupSize);
+   if ( !*_kernel )
+   {
+      E_MAKE_EXCEPTION(e);
+      throw e;
+   }
    qint64 geneSize {_output->getGeneSize()};
    _totalPairs = geneSize*(geneSize-1)/2;
    return _blockSize;
@@ -267,6 +309,8 @@ bool Spearman::runBlock(int index)
    case Block::Start:
       if ( _x < _output->getGeneSize() )
       {
+         block.x = _x;
+         block.y = _y;
          int index {0};
          while ( _x < _output->getGeneSize() && index < _kernelSize )
          {
@@ -282,31 +326,66 @@ bool Spearman::runBlock(int index)
             ++index;
          }
          block.event = block.references->write();
+         if ( !*block.references )
+         {
+            E_MAKE_EXCEPTION(e);
+            throw e;
+         }
          block.state = Block::Load;
       }
       else
       {
          block.state = Block::Done;
       }
-      return true;
+      break;
    case Block::Load:
       if ( block.event.isDone() )
       {
+         if ( !block.event )
+         {
+            E_MAKE_EXCEPTION(e);
+            throw e;
+         }
          _kernel->setBuffer(3,block.references);
+         _kernel->setBuffer(5,block.workBuffer);
+         _kernel->setBuffer(6,block.rankBuffer);
          _kernel->setBuffer(7,block.answers);
          block.event = _kernel->execute();
+         if ( !*_kernel )
+         {
+            E_MAKE_EXCEPTION(e);
+            throw e;
+         }
          block.state = Block::Execute;
       }
-      return true;
+      break;
    case Block::Execute:
       if ( block.event.isDone() )
       {
+         if ( !block.event )
+         {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(block.event.getErrorFunction());
+            e.setDetails(block.event.getErrorCode());
+            throw e;
+         }
          block.event = block.answers->read();
+         if ( !*block.answers )
+         {
+            E_MAKE_EXCEPTION(e);
+            throw e;
+         }
          block.state = Block::Read;
       }
-      return true;
+      break;
    case Block::Read:
+      if ( block.event.isDone() )
       {
+         if ( !block.event )
+         {
+            E_MAKE_EXCEPTION(e);
+            throw e;
+         }
          CorrelationMatrix::Pair pair(_output);
          pair.setModeSize(1);
          for (int i = 0; i < _output->getSampleSize() ;++i)
@@ -322,8 +401,9 @@ bool Spearman::runBlock(int index)
             ++index;
             ++_pairsComplete;
          }
+         block.state = Block::Start;
       }
-      return true;
+      break;
    case Block::Done:
    default:
       return false;
@@ -334,4 +414,5 @@ bool Spearman::runBlock(int index)
       _lastPercent = newPercent;
       emit progressed(_lastPercent);
    }
+   return true;
 }

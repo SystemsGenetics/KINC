@@ -4,6 +4,10 @@
 
 
 
+using namespace std;
+
+
+
 
 
 
@@ -188,7 +192,13 @@ QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
 
    // get constant pair and read in values
    const Pair pair(this);
-   pair.read(index.row(),index.column());
+   int x {index.row()};
+   int y {index.column()};
+   if ( y > x )
+   {
+      swap(x,y);
+   }
+   pair.read(x,y);
 
    // construct pair information string
    QString ret;
@@ -379,8 +389,8 @@ CorrelationMatrix::Pair::Pair(const CorrelationMatrix* matrix):
    }
 
    // create new arrays for correlation values and mode masks
-   _correlations = new Correlation[_matrix->_correlationSize*_matrix->_maxModes];
-   _modes = new qint8[_matrix->_sampleSize*_matrix->_maxModes];
+   _correlations = new Correlation[_cMatrix->_correlationSize*_cMatrix->_maxModes];
+   _modes = new qint8[_cMatrix->_sampleSize*_cMatrix->_maxModes];
 }
 
 
@@ -391,7 +401,7 @@ CorrelationMatrix::Pair::Pair(const CorrelationMatrix* matrix):
 void CorrelationMatrix::Pair::write(int x, int y)
 {
    // make sure xy gene pair is valid
-   if ( x < 0 || y < 0 || x >= y )
+   if ( x < 0 || y < 0 || y >= x )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Domain Error"));
@@ -412,7 +422,7 @@ void CorrelationMatrix::Pair::write(int x, int y)
 void CorrelationMatrix::Pair::read(int x, int y) const
 {
    // make sure xy gene pair is valid
-   if ( x < 0 || y < 0 || x >= y )
+   if ( x < 0 || y < 0 || y >= x )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Domain Error"));

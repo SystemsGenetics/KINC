@@ -49,15 +49,24 @@ private:
          ,Read
          ,Done
       };
-      Block(EOpenCLDevice& device, int kernelSize)
+      Block(EOpenCLDevice& device, int size, int kernelSize)
       {
          references = device.makeBuffer<cl_int>(2*kernelSize).release();
          answers = device.makeBuffer<cl_float>(kernelSize).release();
+         workBuffer = device.makeBuffer<cl_float>(2*size*kernelSize).release();
+         rankBuffer = device.makeBuffer<cl_int>(2*size*kernelSize).release();
+         if ( !device )
+         {
+            E_MAKE_EXCEPTION(e);
+            throw e;
+         }
       }
       ~Block()
       {
          delete references;
          delete answers;
+         delete workBuffer;
+         delete rankBuffer;
       }
       int state {Start};
       int x;
@@ -65,6 +74,8 @@ private:
       EOpenCLEvent event;
       EOpenCLBuffer<cl_int>* references;
       EOpenCLBuffer<cl_float>* answers;
+      EOpenCLBuffer<cl_float>* workBuffer;
+      EOpenCLBuffer<cl_int>* rankBuffer;
    };
    ExpressionMatrix* _input {nullptr};
    CorrelationMatrix* _output {nullptr};
@@ -76,8 +87,6 @@ private:
    EOpenCLProgram* _program {nullptr};
    EOpenCLKernel* _kernel {nullptr};
    EOpenCLBuffer<cl_float>* _expressions {nullptr};
-   EOpenCLBuffer<cl_float>* _workBuffer {nullptr};
-   EOpenCLBuffer<cl_int>* _rankBuffer {nullptr};
    int _x {1};
    int _y {0};
    qint64 _totalPairs;

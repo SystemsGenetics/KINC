@@ -1,20 +1,3 @@
-/* BASIC PLAN FOR NEW SPEARMAN KERNEL..
-
-Prune lists... ignoring infinities
-IF pruned list is big enough... (else just make result NaN)
-use bitonic sort with for loop to do 2 required sorts for spearman
-make summation of rank differences
-compute the spearman coefficient
-
-
-MEMORY REQUIREMENTS...
-will need TWO float arrays of size n
-one int array of size n
-where n is the number of samples per gene
-in turn, this will be multilpied by the total number of threads
-so size = ( 2*sizeof(float) + sizeof(int) )*thread_size
-
-*/
 
 
 
@@ -37,10 +20,12 @@ so size = ( 2*sizeof(float) + sizeof(int) )*thread_size
 int fetchLists(int indexA, int indexB, int size, int workSize, __global float* listA
                , __global float* listB, __global int* rankList, __global float* expressions)
 {
-   // initialize counters
+   // initialize counters and indexes
    int i;
    int j = 0;
    int newSize = 2;
+   indexA *= size;
+   indexB *= size;
 
    // go through expression list with given indexes, generating new lists from it
    for (i = 0; i < size ;++i)
