@@ -77,6 +77,13 @@ private:
       EOpenCLBuffer<cl_float>* workBuffer;
       EOpenCLBuffer<cl_int>* rankBuffer;
    };
+   void initializeKernel();
+   void initializeBlockExpressions();
+   void initializeKernelArguments();
+   void runStartBlock(Block& block);
+   void runLoadBlock(Block& block);
+   void runExecuteBlock(Block& block);
+   void runReadBlock(Block& block);
    ExpressionMatrix* _input {nullptr};
    CorrelationMatrix* _output {nullptr};
    int _minimum {30};
