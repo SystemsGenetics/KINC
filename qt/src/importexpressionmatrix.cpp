@@ -93,6 +93,13 @@ QVariant ImportExpressionMatrix::getArgumentData(int argument, Role role)
       case SampleSize: return 0;
       default: return QVariant();
       }
+   case Role::Maximum:
+      // if this is sample size argument return maximum else return nothing
+      switch (argument)
+      {
+      case SampleSize: return INT_MAX;
+      default: return QVariant();
+      }
    case Role::FileFilters:
       // if this is input file argument return file filter else return nothing
       switch (argument)
@@ -262,6 +269,12 @@ void ImportExpressionMatrix::runSerial()
    QTextStream stream(_input);
    while ( !stream.atEnd() )
    {
+      // if interruption is requested exit immediately
+      if ( isInterruptionRequested() )
+      {
+         return;
+      }
+
       // read a single line from stream and split it into words using any whitespace characters as
       // delimiters
       QString line = stream.readLine();
@@ -391,6 +404,12 @@ void ImportExpressionMatrix::runSerial()
    EGene gene(_output);
    for (int i = 0; i < _output->getGeneSize() ;++i)
    {
+      // if interruption is requested exit immediately
+      if ( isInterruptionRequested() )
+      {
+         return;
+      }
+
       // make sure next gene tail is valid
       if ( !geneTail )
       {
