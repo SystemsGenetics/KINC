@@ -79,6 +79,10 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
   // Create the ClusteringInput object.
   XEM::ClusteringInput cInput(nbCluster, dataDescription);
 
+  // Set the model type
+  cInput.removeModelType(0);
+  cInput.addModel(XEM::Gaussian_pk_Lk_Ck);
+
   // Set the criterion
   cInput.removeCriterion(0);
   if (strcmp(criterion, "BIC") == 0) {
