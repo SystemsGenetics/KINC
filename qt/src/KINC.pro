@@ -10,6 +10,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = KINC
 TEMPLATE = app
+CONFIG += c++11
 
 LIBS += -lOpenCL -L/usr/local/lib64/ -lacecore -lacegui
 
