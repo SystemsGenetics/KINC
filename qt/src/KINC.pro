@@ -12,7 +12,10 @@ TARGET = KINC
 TEMPLATE = app
 CONFIG += c++11
 
-LIBS += -lOpenCL -L/usr/local/lib64/ -lacecore -lacegui
+unix: LIBS += -lOpenCL -L/usr/local/lib64/ -lacecore -lacegui
+win32: LIBS += -L$$(OCL_ROOT)'/lib/x86' -lopencl -L'C:/ACE/lib' -lacecore0 -lacegui0
+win32: INCLUDEPATH += 'C:/ACE/include' $$(OCL_ROOT)'/include'
+win32: DEPENDPATH += $$(OCL_ROOT)'/include'
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
