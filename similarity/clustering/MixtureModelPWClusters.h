@@ -30,12 +30,12 @@ class MixtureModelPWClusters {
     PairWiseClusterList * pwcl;
     // The pair of genes on which the clustering will occur.
     PairWiseSet * pwset;
-    // The MixMod Lib wants the data as an n x 2 array of doubles.  So
+    // The MixMod Lib wants the data as an n x 2 array of floats.  So
     // the construct will extract the data from the pwset object and
     // convert it into this data array.
-    double ** data;
+    float ** data;
     // The vector containing the cluster membership.
-    int64_t * labels;
+    int * labels;
     // The criterion model. E.g.  BIC, ICL, NEC, CV, DCV.
     char criterion[4];
     // The maximum number of clusters to allow per comparision.
@@ -53,7 +53,7 @@ class MixtureModelPWClusters {
     // Returns the criterion used for mixture model.
     char * getCriterion() { return criterion; }
     // Returns the array of numeric cluster labels assigned to each sample.
-    int64_t * getLabels() { return labels; }
+    int * getLabels() { return labels; }
     PairWiseClusterList * getClusterList() { return pwcl; };
 
     // Performs pair-wise clustering and similiarity calculation.
