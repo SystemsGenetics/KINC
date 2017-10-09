@@ -32,7 +32,8 @@ SOURCES += \
     expressionmatrix.cpp \
     importexpressionmatrix.cpp \
     correlationmatrix.cpp \
-    spearman.cpp
+    spearman.cpp \
+    rmt.cpp
 
 HEADERS += \
     analyticfactory.h \
@@ -40,7 +41,8 @@ HEADERS += \
     expressionmatrix.h \
     importexpressionmatrix.h \
     correlationmatrix.h \
-    spearman.h
+    spearman.h \
+    rmt.h
 
 RESOURCES += \
     opencl.qrc
