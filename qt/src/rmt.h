@@ -30,8 +30,17 @@ public:
    virtual bool runBlock(int /*block*/) override final { return false; }
    virtual void finish() override final {}
 private:
+   float determineThreshold();
+   float determineChi(float threshold);
+   void generateGeneThresholds();
+   float* generatePruneMatrix(float threshold, int* size);
+   float* generateMatrixEigens(float* pruneMatrix, int* size);
+   float getNNSDChiSquare(float* eigens, int size);
    CorrelationMatrix* _input;
    QFile* _output;
+   float _initialThreshold;
+   float _thresholdStep;
+   float _thresholdMinimum;
 };
 
 
