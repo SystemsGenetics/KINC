@@ -1,14 +1,15 @@
 # build parameters
 DEBUG  ?= 0
 CXX    ?= g++
+LINK.o = $(LINK.cc)  # use the C++ linker
 
 # compiler flags
 GSLDIR    ?= /software/gsl/2.3
 MIXMODDIR ?= $(HOME)/software/libmixmod
 
-CXXFLAGS = -I $(GSLDIR)/include \
-           -I $(MIXMODDIR)/include \
-           -std=c++11
+CPPFLAGS = -I $(GSLDIR)/include \
+           -I $(MIXMODDIR)/include
+CXXFLAGS = -std=c++11
 
 ifeq ($(DEBUG), 1)
 CXXFLAGS += -g -Wall -fno-inline
@@ -16,11 +17,13 @@ else
 CXXFLAGS += -O3 -Wno-unused-result
 endif
 
-# linker flags
-LDFLAGS = -lm \
-          -L $(GSLDIR) -lgsl -lgslcblas \
-          -llapack -lblas -lpthread \
-          -L $(MIXMODDIR)/lib -lmixmod -lmixmod_newmat
+# linker flags and libraries
+LDFLAGS = -L $(GSLDIR)/lib \
+          -L $(MIXMODDIR)/lib
+LDLIBS = -lm \
+         -lgsl -lgslcblas \
+         -llapack -lblas -lpthread \
+         -lmixmod -lmixmod_newmat
 
 # object files, executables
 OBJS = \
@@ -60,11 +63,12 @@ OBJS = \
   kinc.o
 BIN = kinc
 
-all: $(OBJS)
-	$(CXX) $(OBJS) $(LDFLAGS) -o $(BIN)
+$(BIN): $(OBJS)
 
+# a C++ source file depends on its matching header file
 %.o: %.cpp %.h
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) -o $@ $<
 
+.PHONY: clean
 clean:
 	rm -f $(OBJS) $(BIN)
