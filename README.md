@@ -22,7 +22,7 @@ INSTALLATION
 To Install KINC the following dependencies must first be met:
 
 * GNU Scientific Library (http://www.gnu.org/software/gsl/)
-* libmixmod (http://www.mixmod.org/article.php3?id_article=55)
+* libmixmod (https://github.com/bentsherman/libmixmod)
 * LAPACK (http://www.netlib.org/lapack/)
 * BLAS (http://www.netlib.org/blas/)
 
