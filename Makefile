@@ -18,7 +18,7 @@ endif
 
 # linker flags
 LDFLAGS = -lm \
-          -lgsl -lgslcblas \
+          -L $(GSLDIR) -lgsl -lgslcblas \
           -llapack -lblas -lpthread \
           -L $(MIXMODDIR)/lib -lmixmod -lmixmod_newmat
 
