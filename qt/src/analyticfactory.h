@@ -11,6 +11,7 @@ public:
    {
       ImportExpressionMatrixType = 0
       ,SpearmanType
+      ,RMTType
       ,Total
    };
    virtual quint16 getCount() override final { return Total; }
