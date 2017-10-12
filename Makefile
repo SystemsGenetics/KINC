@@ -1,5 +1,6 @@
 # build parameters
 DEBUG  ?= 0
+SINGLE_PRECISION_MIXMOD ?= 1
 CXX    ?= g++
 LINK.o = $(LINK.cc)  # use the C++ linker
 
@@ -15,6 +16,10 @@ ifeq ($(DEBUG), 1)
 CXXFLAGS += -g -Wall -fno-inline
 else
 CXXFLAGS += -O3 -Wno-unused-result
+endif
+
+ifeq ($(SINGLE_PRECISION_MIXMOD), 1)
+CPPFLAGS += -DSINGLE_PRECISION_MIXMOD=1
 endif
 
 # linker flags and libraries
