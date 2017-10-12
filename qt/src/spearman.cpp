@@ -1,4 +1,5 @@
 #include <ace/core/metadata.h>
+#include <gsl/gsl_statistics.h>
 
 #include "spearman.h"
 #include "datafactory.h"
@@ -216,6 +217,15 @@ bool Spearman::initialize()
       throw e;
    }
 
+   // make sure minimum is a legal value
+   if ( _minimum < 1 )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("Argument Error"));
+      e.setDetails(QObject::tr("Minimum sample size must be at least 1 or greater."));
+      throw e;
+   }
+
    // initialize new correlation matrix and return pre-allocation argument
    _output->initialize(_input->getGeneNames(),_input->getSampleSize(),1,1);
    return _allocate;
@@ -228,6 +238,79 @@ bool Spearman::initialize()
 
 void Spearman::runSerial()
 {
+   // initialize percent complete and steps
+   int lastPercent {0};
+   qint64 steps {0};
+   qint64 totalSteps {_output->getGeneSize()*(_output->getGeneSize() - 1)/2};
+
+   // initialize arrays used for GSL spearman function
+   double a[_input->getSampleSize()];
+   double b[_input->getSampleSize()];
+   double work[_input->getSampleSize()*2];
+
+   // initialize correlation gene pair and expression genes for input/output
+   CorrelationMatrix::Pair pair(_output);
+   pair.setModeSize(1);
+   ExpressionMatrix::Gene gene1(_input);
+   ExpressionMatrix::Gene gene2(_input);
+
+   // initialize xy gene indexes
+   int x {1};
+   int y {0};
+
+   // increment through all gene pairs
+   while ( x < _output->getGeneSize() )
+   {
+      // make sure interruption is not requested
+      if ( isInterruptionRequested() )
+      {
+         return;
+      }
+
+      // initialize sample size and read in gene expressions
+      int size {0};
+      gene1.read(x);
+      gene2.read(y);
+
+      // populate a and b arrays with shared expressions of gene x and y
+      for (auto x = 0; x < _input->getSampleSize() ;++x)
+      {
+         if ( !std::isnan(gene1.at(x)) && !std::isnan(gene2.at(x)) )
+         {
+            a[size] = gene1.at(x);
+            b[size] = gene2.at(x);
+            ++size;
+         }
+      }
+
+      // set to NAN if sample size does not meet the minimum
+      if ( size < _minimum )
+      {
+         pair.at(0,0) = NAN;
+      }
+
+      // else run GSL spearman function and set result to correlation
+      else
+      {
+         pair.at(0,0) = gsl_stats_spearman(a,1,b,1,size,work);
+      }
+
+      // save gene pair and increment to next pair
+      pair.write(x,y);
+      CorrelationMatrix::increment(x,y);
+
+      // increment steps and calculate percent complete
+      ++steps;
+      qint64 newPercent {100*steps/totalSteps};
+
+      // check to see if percent has changed
+      if ( newPercent != lastPercent )
+      {
+         // update percent complete and emit progressed signal
+         lastPercent = newPercent;
+         emit progressed(lastPercent);
+      }
+   }
 }
 
 
