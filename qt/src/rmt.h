@@ -53,11 +53,11 @@ private:
    constexpr static int maxUnfoldingPace {41};
    constexpr static int minEigenVectorSize {100};
    // END OF ALL STATIC VARIABLES
-   CorrelationMatrix* _input;
-   QFile* _output;
-   float _initialThreshold;
-   float _thresholdStep;
-   float _thresholdMinimum;
+   CorrelationMatrix* _input {nullptr};
+   QFile* _output {nullptr};
+   float _initialThreshold {0.99607};
+   float _thresholdStep {0.001};
+   float _thresholdMinimum {0.5};
    std::unique_ptr<float> _geneThresholds;
 };
 

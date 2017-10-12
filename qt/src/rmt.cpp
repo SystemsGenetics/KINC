@@ -3,9 +3,12 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_matrix.h>
+#include <ace/core/metadata.h>
 
 #include "rmt.h"
 #include "correlationmatrix.h"
+#include "datafactory.h"
+#include <iostream>
 
 
 
@@ -18,6 +21,16 @@ using namespace std;
 
 EAbstractAnalytic::ArgumentType RMT::getArgumentData(int argument)
 {
+   // use type declaration
+   using Type = EAbstractAnalytic::ArgumentType;
+
+   // figure out which argument is being queried and return its type
+   switch (argument)
+   {
+   case InputData: return Type::DataIn;
+   case OutputFile: return Type::FileOut;
+   default: return Type::Bool;
+   }
 }
 
 
@@ -27,6 +40,55 @@ EAbstractAnalytic::ArgumentType RMT::getArgumentData(int argument)
 
 QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
 {
+   // use role declaration
+   using Role = EAbstractAnalytic::Role;
+
+   // figure out which role is being queried
+   switch (role)
+   {
+   case Role::CommandLineName:
+      // figure out which argument is being queried and return command line name
+      switch (argument)
+      {
+      case InputData: return QString("input");
+      case OutputFile: return QString("output");
+      default: return QVariant();
+      }
+   case Role::Title:
+      // figure out which argument is being queried and return title
+      switch (argument)
+      {
+      case InputData: return tr("Input:");
+      case OutputFile: return tr("Output:");
+      default: return QVariant();
+      }
+   case Role::WhatsThis:
+      // figure out which argument is being queried and return "What's This?" text
+      switch (argument)
+      {
+      case InputData: return tr("Input correlation matrix that will be used to output correlation"
+                                " above a threshold determined by Random Matrix Theory.");
+      case OutputFile: return tr("Output text file that will hold listing of all gene correlations"
+                                 " above a certain threshold.");
+      default: return QVariant();
+      }
+   case Role::DataType:
+      // see if this is input data and return type else return nothing
+      switch (argument)
+      {
+      case InputData: return DataFactory::CorrelationMatrixType;
+      default: return QVariant();
+      }
+   case Role::FileFilters:
+      // see if this is output file and return filter else return nothing
+      switch (argument)
+      {
+      case OutputFile: return tr("Text File %1").arg("(*.txt)");
+      default: return QVariant();
+      }
+   default:
+      return QVariant();
+   }
 }
 
 
@@ -36,6 +98,9 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
 
 void RMT::setArgument(int argument, QVariant value)
 {
+   // so far does nothing
+   Q_UNUSED(argument);
+   Q_UNUSED(value);
 }
 
 
@@ -45,6 +110,11 @@ void RMT::setArgument(int argument, QVariant value)
 
 void RMT::setArgument(int argument, QFile *file)
 {
+   // set output argument if this is correct argument
+   if ( argument == OutputFile )
+   {
+      _output = file;
+   }
 }
 
 
@@ -54,6 +124,11 @@ void RMT::setArgument(int argument, QFile *file)
 
 void RMT::setArgument(int argument, EAbstractData *data)
 {
+   // set input argument if this is correct argument
+   if ( argument == InputData )
+   {
+      _input = dynamic_cast<CorrelationMatrix*>(data);
+   }
 }
 
 
@@ -63,6 +138,18 @@ void RMT::setArgument(int argument, EAbstractData *data)
 
 bool RMT::initialize()
 {
+   // make sure input and output were set properly
+   if ( !_input || !_output )
+   {
+      // report argument error and fail
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("Argument Error"));
+      e.setDetails(QObject::tr("Did not get valid input and/or output arguments."));
+      throw e;
+   }
+
+   // nothing to pre-allocate
+   return false;
 }
 
 
@@ -72,6 +159,53 @@ bool RMT::initialize()
 
 void RMT::runSerial()
 {
+   // determine threshold using RMT and make sure interruption is not requested
+   float threshold {determineThreshold()};
+   if ( isInterruptionRequested() )
+   {
+      return;
+   }
+
+   // initialize text stream for output and get gene names
+   QTextStream stream(_output);
+   const EMetadata::List* names {_input->getGeneNames().toArray()};
+
+   // initialize pair iterator, xy gene indexes, and last percent complete
+   CorrelationMatrix::Pair pair(_input);
+   int x {1};
+   int y {0};
+   int lastPercent {66};
+
+   // iterate through all gene pairs until end is reached
+   while ( x < _input->getGeneSize() )
+   {
+      // make sure interruption is not requested
+      if ( isInterruptionRequested() )
+      {
+         return;
+      }
+
+      // read gene pair and check if it meets threshold
+      pair.read(x,y);
+      if ( pair.at(0,0) >= threshold )
+      {
+         // write correlation to output
+         stream << *(names->at(x)->toString()) << "\t" << *(names->at(y)->toString()) << "\tco\t"
+                << pair.at(0,0) << "\n";
+      }
+
+      // increment to next gene pair
+      CorrelationMatrix::increment(x,y);
+
+      // determine new percentage complete and check if new
+      int newPercent {66 + 34*x/_input->getGeneSize()};
+      if ( newPercent != lastPercent )
+      {
+         // update to new percentage and emit progressed signal
+         lastPercent = newPercent;
+         emit progressed(lastPercent);
+      }
+   }
 }
 
 
@@ -81,21 +215,58 @@ void RMT::runSerial()
 
 float RMT::determineThreshold()
 {
+   // generate list of maximum threshold for each gene
    generateGeneThresholds();
+
+   // initialize chi, threshold, and history of both
    float chi {0.0};
    float threshold {_initialThreshold};
    QList<float> previousChi;
    QList<float> previousThresholds;
+
+   // initialize last percent, steps, and total steps
+   int lastPercent {33};
+   int steps {0};
+   int totalSteps = (_initialThreshold - _thresholdMinimum)/_thresholdStep;
+
+   // continue while chi is less than 200
    while ( ( chi = determineChi(threshold) ) < 200.0 )
    {
+      // make sure interruption is not requested
+      if ( isInterruptionRequested() )
+      {
+         return 0.0;
+      }
+
+      // record previous chi and threshold
       previousChi.push_back(chi);
       previousThresholds.push_back(threshold);
+
+      // decrement threshold by step and make sure minimum is not reached
       threshold -= _thresholdStep;
       if ( threshold < _thresholdMinimum )
       {
-         ;//ERROR!
+         // report no threshold could be found and fail
+         E_MAKE_EXCEPTION(e);
+         e.setTitle(QObject::tr("RMT Threshold Error"));
+         e.setDetails(QObject::tr("Could not find non-random threshold above minimum."));
+         throw e;
       }
+
+      // determine new percent complete and check if it is new
+      int newPercent {33 + 33*steps/totalSteps};
+      if ( newPercent != lastPercent )
+      {
+         // update new percentage and emit progressed signal
+         lastPercent = newPercent;
+         emit progressed(lastPercent);
+      }
+
+      // increment steps taken
+      ++steps;
    }
+
+   // go back into history of chi values and find first one that was above 100
    int i = previousChi.size()-1;
    while ( i > 0 && previousChi[i] > 100.0 )
    {
@@ -105,6 +276,8 @@ float RMT::determineThreshold()
    {
       ++i;
    }
+
+   // return threshold where chi was first above 100
    return previousThresholds[i];
 }
 
@@ -115,17 +288,35 @@ float RMT::determineThreshold()
 
 float RMT::determineChi(float threshold)
 {
-   int size;
+   // initialize size and generate pruned matrix based off threshold
+   int size {0};
    unique_ptr<double> pruneMatrix {generatePruneMatrix(threshold,&size)};
+
+   // check and make sure matrix is not empty
    if ( size > 0 )
    {
+      // make sure interruption is not requested
+      if ( isInterruptionRequested() )
+      {
+         return 0.0;
+      }
+
+      // generate eigen vector of pruned matrix and make sure interruption is not requested
       unique_ptr<float> eigens {generateMatrixEigens(pruneMatrix.get(),size)};
+      if ( isInterruptionRequested() )
+      {
+         return 0.0;
+      }
+
+      // generate chi from eigen vector and return it if it is a real number
       float chi = getNNSDChiSquare(eigens.get(),size);
       if ( !isnan(chi) && !isinf(chi) )
       {
          return chi;
       }
    }
+
+   // if no real chi was found return zero
    return 0.0;
 }
 
@@ -136,29 +327,61 @@ float RMT::determineChi(float threshold)
 
 void RMT::generateGeneThresholds()
 {
+   // allocate memory for thresholds matrix and initialize all to the minimum
    _geneThresholds.reset(new float[_input->getGeneSize()]);
    for (int i = 0; i < _input->getGeneSize() ;++i)
    {
       _geneThresholds.get()[i] = -1.0;
    }
+
+   // initialize percent complete and steps
+   int lastPercent {0};
+   qint64 steps {0};
+   qint64 totalSteps {_input->getGeneSize()*(_input->getGeneSize() - 1)/2};
+
+   // xy gene indexes and iterator
    int x {1};
    int y {0};
    CorrelationMatrix::Pair pair(_input);
+
+   // iterate through all gene pairs
    while ( x < _input->getGeneSize() )
    {
+      // make sure interruption is not requested
+      if ( isInterruptionRequested() )
+      {
+         return;
+      }
+
+      // read in gene pair and check if it is a real number
       pair.read(x,y);
       if ( !isnan(pair.at(0,0)) )
       {
+         // if value is greater than current max of gene x set it to new max
          if ( pair.at(0,0) > _geneThresholds.get()[x] )
          {
             _geneThresholds.get()[x] = pair.at(0,0);
          }
+
+         // if value is greater than current max of gene y set it to new max
          if ( pair.at(0,0) > _geneThresholds.get()[y] )
          {
             _geneThresholds.get()[y] = pair.at(0,0);
          }
       }
+
+      // increment to next gene pair, steps, and compute new percent complete
       CorrelationMatrix::increment(x,y);
+      ++steps;
+      qint64 newPercent {33*steps/totalSteps};
+
+      // check to see if percent complete changed
+      if ( newPercent != lastPercent )
+      {cout << newPercent << "\n";
+         // update percent complete and emit progressed signal
+         lastPercent = newPercent;
+         emit progressed(lastPercent);
+      }
    }
 }
 
@@ -169,7 +392,8 @@ void RMT::generateGeneThresholds()
 
 double* RMT::generatePruneMatrix(float threshold, int* size)
 {
-   QList<int> genes;
+   // generate vector of gene indexes that have max threshold above given threshold
+   QVector<int> genes;
    for (int i = 0; i < _input->getGeneSize() ;++i)
    {
       if ( _geneThresholds.get()[i] >= threshold )
@@ -177,29 +401,49 @@ double* RMT::generatePruneMatrix(float threshold, int* size)
          genes.push_back(i);
       }
    }
+
+   // allocate new pruned matrix with gene vector size and initialize iterator
    unique_ptr<double> pruneMatrix {new double[genes.size()*genes.size()]};
    CorrelationMatrix::Pair pair(_input);
+
+   // populate the pruned matrix with gene correlation values
    for (int i = 0; i < genes.size() ;++i)
    {
       for (int j = 0; j < genes.size() ;++j)
       {
+         // make sure interruption is not requested
+         if ( isInterruptionRequested() )
+         {
+            return nullptr;
+         }
+
+         // get indexes for both genes
          int g1 {genes[i]};
          int g2 {genes[j]};
+
+         // if genes have same index set ij matrix value to 1
          if ( g1 == g2 )
          {
             pruneMatrix.get()[i*genes.size() + j] = 1.0;
          }
+
+         // else get correlation value
          else
          {
+            // make sure first gene index is bigger
             if ( g2 > g1 )
             {
                swap(g1,g2);
             }
+
+            // read gene pair and set correlation value to pruned matrix
             pair.read(g1,g2);
             pruneMatrix.get()[i*genes.size() + j] = pair.at(0,0);
          }
       }
    }
+
+   // set size to size of pruned matrix and return pointer
    *size = genes.size();
    return pruneMatrix.release();
 }
@@ -211,7 +455,10 @@ double* RMT::generatePruneMatrix(float threshold, int* size)
 
 float* RMT::generateMatrixEigens(double* pruneMatrix, int size)
 {
+   // allocate new array to hold eigen values
    unique_ptr<float> eigens {new float[size]};
+
+   // use GSL library for compute eigen values for pruned matrix
    gsl_matrix_view m = gsl_matrix_view_array(pruneMatrix,size,size);
    gsl_vector* eval = gsl_vector_alloc(size);
    gsl_matrix* evec = gsl_matrix_alloc(size,size);
@@ -219,10 +466,14 @@ float* RMT::generateMatrixEigens(double* pruneMatrix, int size)
    gsl_eigen_symmv(&m.matrix,eval,evec,w);
    gsl_eigen_symmv_free(w);
    gsl_eigen_symmv_sort(eval,evec,GSL_EIGEN_SORT_ABS_ASC);
+
+   // grab eigen values from GSL and set to eigen array
    for (int i = 0; i < size ;i++)
    {
       eigens.get()[i] = gsl_vector_get(eval,i);
    }
+
+   // cleanup rest of GSL resoruces and return eigen array
    gsl_vector_free (eval);
    gsl_matrix_free (evec);
    return eigens.release();
