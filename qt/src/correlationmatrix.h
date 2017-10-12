@@ -45,6 +45,7 @@ public:
    qint32 getSampleSize() const { return _sampleSize; }
    qint8 getCorrelationSize() const { return _correlationSize; }
    qint8 getMaxModes() const { return _maxModes; }
+   const EMetadata& getGeneNames() const;
    static void increment(int& x, int& y);
 private:
    void readPair(int x, int y, Correlation* correlations, qint8* modes, qint8& modeSize) const;

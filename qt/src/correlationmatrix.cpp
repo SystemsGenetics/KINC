@@ -259,6 +259,27 @@ void CorrelationMatrix::initialize(const EMetadata& geneNames, qint32 sampleSize
 
 
 
+const EMetadata& CorrelationMatrix::getGeneNames() const
+{
+   // get metadata root and make sure genes key exist
+   const EMetadata::Map* map {meta().toObject()};
+   if ( !map->contains("genes") )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Null Return Reference"));
+      e.setDetails(tr("Requesting reference to gene names when none exists."));
+      throw e;
+   }
+
+   // return gene names list
+   return *(*map)["genes"];
+}
+
+
+
+
+
+
 void CorrelationMatrix::increment(int &x, int &y)
 {
    // increment y and check if it is equal or bigger than x
