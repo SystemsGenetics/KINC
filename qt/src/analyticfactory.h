@@ -11,6 +11,7 @@ public:
    {
       ImportExpressionMatrixType = 0
       ,SpearmanType
+      ,PearsonType
       ,RMTType
       ,Total
    };
