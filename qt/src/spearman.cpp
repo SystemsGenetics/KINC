@@ -504,10 +504,10 @@ void Spearman::initializeKernelArguments()
    }
 
    // figure out workgroup size for opencl kernels
-   int workgroupSize {2};
-   while ( workgroupSize*2 <= _kernelSize && workgroupSize < (int)_kernel->getMaxWorkgroupSize() )
+   int workgroupSize {_kernelSize};
+   while ( workgroupSize > (int)_kernel->getMaxWorkgroupSize() )
    {
-      workgroupSize *= 2;
+      workgroupSize /= 2;
    }
 
    // set all static kernel arguments
