@@ -32,7 +32,7 @@ public:
    virtual void setArgument(int /*argument*/, QFile* /*file*/) override final {}
    virtual void setArgument(int argument, EAbstractData* data) override final;
    quint32 getCapabilities() const override final
-      { return Capabilities::Serial|Capabilities::OpenCL; }
+      { Capabilities::OpenCL; }
    virtual bool initialize() override final;
    virtual void runSerial() override final;
    virtual int getBlockSize() override;
