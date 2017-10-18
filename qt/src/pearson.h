@@ -29,12 +29,10 @@ public:
    virtual ArgumentType getArgumentData(int argument) override final;
    virtual QVariant getArgumentData(int argument, Role role) override final;
    virtual void setArgument(int argument, QVariant value) override final;
-   virtual void setArgument(int /*argument*/, QFile* /*file*/) override final {}
    virtual void setArgument(int argument, EAbstractData* data) override final;
    quint32 getCapabilities() const override final
-      { Capabilities::OpenCL; }
+      { return Capabilities::OpenCL; }
    virtual bool initialize() override final;
-   virtual void runSerial() override final;
    virtual int getBlockSize() override;
    virtual bool runBlock(int block) override final;
    virtual void finish() override final {}

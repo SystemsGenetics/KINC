@@ -236,16 +236,6 @@ bool Pearson::initialize()
 
 
 
-void Pearson::runSerial()
-{
-   // Connor apparently never did this...
-}
-
-
-
-
-
-
 int Pearson::getBlockSize()
 {
    // make sure block and kernel size are greater than zero

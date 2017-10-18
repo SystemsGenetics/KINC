@@ -28,9 +28,6 @@ public:
    quint32 getCapabilities() const override final { return Capabilities::Serial; }
    virtual bool initialize() override final;
    virtual void runSerial() override final;
-   virtual int getBlockSize() override final { return 0; }
-   virtual bool runBlock(int /*block*/) override final { return false; }
-   virtual void finish() override final {}
 private:
    using Transform = ExpressionMatrix::Transform;
    static const char* NONE;

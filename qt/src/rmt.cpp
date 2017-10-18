@@ -96,18 +96,6 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
 
 
 
-void RMT::setArgument(int argument, QVariant value)
-{
-   // so far does nothing
-   Q_UNUSED(argument);
-   Q_UNUSED(value);
-}
-
-
-
-
-
-
 void RMT::setArgument(int argument, QFile *file)
 {
    // set output argument if this is correct argument
