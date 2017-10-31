@@ -43,7 +43,7 @@ class RunQuery {
     // the user-specified name of gene2
     char * gene2;
 
-    double score;
+    float score;
 
   public:
     RunQuery(int argc, char *argv[]);

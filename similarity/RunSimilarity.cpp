@@ -126,7 +126,7 @@ RunSimilarity::RunSimilarity(int argc, char *argv[]) {
   // Initialize the array of method names. We set it to 10 as max. We'll
   // most likely never have this many of similarity methods available.
   method = (char **) malloc(sizeof(char *) * 10);
-  min_sim = (double *) malloc(sizeof(double *) * 10);
+  min_sim = (float *) malloc(sizeof(float *) * 10);
 
   // The concatenated method.
   char * cmethod = NULL;
@@ -605,7 +605,7 @@ void RunSimilarity::executeTraditional() {
         n_comps++;
         if (n_comps % 1000 == 0) {
           statm_t * memory = memory_get_usage();
-          printf("Percent complete: %.2f%%. Mem: %ldb. \r", (n_comps / (float) total_comps) * 100, memory->size);
+          printf("Percent complete: %.2f%%. Mem: %ldb. \n", (n_comps / (float) total_comps) * 100, memory->size);
           free(memory);
         }
         if (j == k) {

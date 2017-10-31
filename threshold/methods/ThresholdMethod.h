@@ -59,7 +59,7 @@ class ThresholdMethod {
 
     // TO BE IMPLEMENTED BY THE CHILD CLASS
     // ------------------------------------
-    double findThreshold();
+    float findThreshold();
 };
 
 #endif

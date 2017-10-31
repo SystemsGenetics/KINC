@@ -4,10 +4,10 @@
 /**
  * Returns an array indicating the order that the elements should be sorted.
  *
- * @param double *z
+ * @param float *z
  * @param int n
  */
-int * orderArray(double *z, int n) {
+int * orderArray(float *z, int n) {
   int i, j, num_less;
 
   int * order = (int *) malloc(sizeof(int) * n);
@@ -35,19 +35,7 @@ int * orderArray(double *z, int n) {
   return order;
 }
 /*
- * @param double* l
- * @param int idx1
- * @param int idx2
- */
-
-void swapD(double* l, int idx1, int idx2) {
-  double temp = l[idx1];
-  l[idx1] = l[idx2];
-  l[idx2] = temp;
-  return;
-}
-/*
- * @param double* l
+ * @param float* l
  * @param int idx1
  * @param int idx2
  */
@@ -72,7 +60,7 @@ void swapF(float* l, int idx1, int idx2) {
 }
 
 /*
- * @param double* l
+ * @param int* l
  * @param int size
  */
 
@@ -94,31 +82,6 @@ void quickSortI(int* l, int size){
   swapI(l, size-1, leftPlace);
   quickSortI(l, leftPlace);
   quickSortI(&l[leftPlace + 1], size - leftPlace - 1);
-}
-
-/*
- * @param double* l
- * @param int size
- */
-
-void quickSortD(double* l, int size){
-  if (size <= 1) {
-    return;
-  }
-  int pivIdx = (int) size / 1.618; // golden ratio
-  double pivot = l[pivIdx];
-  swapD(l, pivIdx, size-1);
-  int leftPlace = 0;
-  int i;
-  for (i = 0; i < size - 1; i++) {
-    if(l[i] < pivot){
-      swapD(l, i, leftPlace);
-      leftPlace++;
-    }
-  }
-  swapD(l, size-1, leftPlace);
-  quickSortD(l, leftPlace);
-  quickSortD(&l[leftPlace + 1], size - leftPlace - 1);
 }
 
 /*
@@ -150,16 +113,16 @@ void quickSortF(float* l, int size){
 /**
  * Removes values from two arrays when at least one is missing.
  *
- * @param double *a
+ * @param float *a
  *   Vector 1
- * @param double *b
+ * @param float *b
  *   Vector 2
  * @param int n
  *   The size of vectors a and b.
- * @param double *a2
+ * @param float *a2
  *   Vector 1 but with missing values removed. Must be initialized to
  *   at least the size of n.
- * @param double *b2
+ * @param float *b2
  *   Vector 2 but with missing values removed. Must be initialized to
  *   at least the size of n.
  * @param n2
@@ -168,7 +131,7 @@ void quickSortF(float* l, int size){
  *   An array of ones and zeros indicating if the element in a or b were
  *   included in a2 and b2.
  */
-void remove_missing_paired(double *a, double *b, int n, double *a2, double *b2, int *n2, int *kept) {
+void remove_missing_paired(float *a, float *b, int n, float *a2, float *b2, int *n2, int *kept) {
   int i;
   *n2 = 0;
   for (i = 0; i < n; i++) {

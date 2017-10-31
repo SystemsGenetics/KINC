@@ -2,8 +2,8 @@
 
 MixtureModelClustering::MixtureModelClustering(EMatrix *ematrix, int min_obs,
     int num_jobs, int job_index, char **method, int num_methods,
-    char * criterion, int max_clusters, double threshold,
-    geneFilter *set1, geneFilter *set2, double * min_sim)
+    char * criterion, int max_clusters, float threshold,
+    geneFilter *set1, geneFilter *set2, float * min_sim)
   : PairWiseClustering(ematrix, min_obs, num_jobs, job_index) {
 
   // Initialize some values.
@@ -192,22 +192,22 @@ void MixtureModelClustering::run() {
         statm_t * memory = memory_get_usage();
 
         // Get the percent completed.
-        double percent_complete = (my_comps / (float) (comp_stop - comp_start)) * 100;
+        float percent_complete = (my_comps / (float) (comp_stop - comp_start)) * 100;
 
         // Calculate the time left to complete
         now = time(0);
-        double seconds_passed = now - start_time;
-        double seconds_per_comp = seconds_passed / my_comps;
-        double total_seconds = seconds_per_comp * (comp_stop - comp_start);
+        float seconds_passed = now - start_time;
+        float seconds_per_comp = seconds_passed / my_comps;
+        float total_seconds = seconds_per_comp * (comp_stop - comp_start);
 
-        double minutes_left = (total_seconds - seconds_passed) / 60;
-        double hours_left = minutes_left / 60;
-        double days_left = hours_left / 24;
-        double years_left = days_left / 365;
+        float minutes_left = (total_seconds - seconds_passed) / 60;
+        float hours_left = minutes_left / 60;
+        float days_left = hours_left / 24;
+        float years_left = days_left / 365;
 
         // Write progress report.
         //if (!isnan(seconds_passed)) {
-          printf("%d. Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd; %.2fy. Coords: %d, %d.        \r",
+          printf("%d. Complete: %.4f%%. Mem: %ldb. Remaining: %.2fh; %.2fd; %.2fy. Coords: %d, %d.        \n",
             job_index, (float) percent_complete, memory->size, (float) hours_left, (float) days_left, (float) years_left, i, j);
         //}
         free(memory);

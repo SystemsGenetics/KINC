@@ -26,15 +26,15 @@ PearsonSimilarity::~PearsonSimilarity() {
 /**
  * Performs Pearson correlation on two arrays.
  *
- * @param double *a
- * @param double *b
+ * @param float *a
+ * @param float *b
  * @param int n
  */
 void PearsonSimilarity::run() {
   // Make sure we have the correct number of observations before performing
   // the comparision.
   if (this->n >= this->min_obs) {
-    score = gsl_stats_correlation(this->a, 1, this->b, 1, this->n);
+    score = gsl_stats_float_correlation(this->a, 1, this->b, 1, this->n);
   }
   else {
     score = NAN;
@@ -46,7 +46,7 @@ void PearsonSimilarity::run() {
  *
  * @param CCMParameters params
  *   An instance of the CCM parameters struct
- * @param double ** data
+ * @param float ** data
  *   A pointer to a two dimensional array of doubles containing the
  *   expression values
  * @param int * histogram
@@ -54,7 +54,7 @@ void PearsonSimilarity::run() {
  *   used for building the histogram.
  *
  */
-/*void calculatePearson(CCMParameters params, double ** data, int * histogram) {
+/*void calculatePearson(CCMParameters params, float ** data, int * histogram) {
   char outfilename[1024];  // the output file name
 
   int i, j, k;      // integers for looping
@@ -106,7 +106,7 @@ void PearsonSimilarity::run() {
       for (k = 0; k <= j; k++) {
         n_comps++;
         if (n_comps % 1000 == 0) {
-          printf("Percent complete: %.2f%%\r", (n_comps/(float)total_comps)*100);
+          printf("Percent complete: %.2f%%\n", (n_comps/(float)total_comps)*100);
         }
         if (j == k) {
           // correlation of an element with itself is 1
@@ -114,8 +114,8 @@ void PearsonSimilarity::run() {
         }
         else {
           // build the vectors for calculating Pearson's
-          double x[params.cols];
-          double y[params.cols];
+          float x[params.cols];
+          float y[params.cols];
           int n = 0;
           for (i = 0; i < params.cols; i++) {
             // if either of these elements is missing then don't include the
@@ -136,7 +136,7 @@ void PearsonSimilarity::run() {
           // actually occurred.
           float pearson = NAN;
           if (n >= params.min_obs) {
-            pearson = gsl_stats_correlation(x, 1, y, 1, n);
+            pearson = gsl_stats_float_correlation(x, 1, y, 1, n);
             //printf("(%d, %d) = %f (%d values).\n", j, k, pearson, n);
           }
           fwrite(&pearson, sizeof(float), 1, outfile);

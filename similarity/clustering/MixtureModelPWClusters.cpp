@@ -27,9 +27,9 @@ MixtureModelPWClusters::MixtureModelPWClusters(PairWiseSet *pwset, int min_obs,
   }
 
   // Create the Gaussian Data object and set the dataDescription object.
-  this->data = (double **) malloc(sizeof(double *) * pwset->n_clean);
+  this->data = new mixmod_float_type* [pwset->n_clean];
   for (int i = 0; i < pwset->n_clean ; i++) {
-    this->data[i] = (double *) malloc(sizeof(double) * 2);
+    this->data[i] = new mixmod_float_type[2];
     this->data[i][0] = pwset->x_clean[i];
     this->data[i][1] = pwset->y_clean[i];
   }
@@ -43,12 +43,12 @@ MixtureModelPWClusters::~MixtureModelPWClusters() {
   // Free the data array.
   if (data) {
     for (int i = 0; i < pwset->n_clean; i++) {
-      free(data[i]);
+      delete[] data[i];
     }
-    free(data);
+    delete[] data;
   }
   if (labels) {
-    free(labels);
+    delete[] labels;
   }
   delete pwcl;
 }
@@ -57,7 +57,7 @@ MixtureModelPWClusters::~MixtureModelPWClusters() {
  * Executes mixture model clustering.
  */
 void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
-  int64_t lowest_cluster_num = 9;
+  mixmod_int_type lowest_cluster_num = 9;
   int found = 0;
 
   // Make sure we have the correct number of observations before performing
@@ -71,13 +71,17 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
   XEM::DataDescription dataDescription(gdata);
 
   // Set the number of clusters to be tested to 9.
-  vector<int64_t> nbCluster;
+  vector<mixmod_int_type> nbCluster;
   for (int i = 1; i <= max_clusters; i++) {
     nbCluster.push_back(i);
   }
 
   // Create the ClusteringInput object.
   XEM::ClusteringInput cInput(nbCluster, dataDescription);
+
+  // Set the model type
+  cInput.removeModelType(0);
+  cInput.addModel(XEM::Gaussian_pk_Lk_Ck);
 
   // Set the criterion
   cInput.removeCriterion(0);
@@ -137,10 +141,10 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
       XEM::ClusteringModelOutput* cMOutput = cOutput->getClusteringModelOutput().front();
       XEM::LabelDescription * ldescription = cMOutput->getLabelDescription();
       XEM::Label * label = ldescription->getLabel();
-      int64_t * cLabels = label->getTabLabel();
+      mixmod_int_type * cLabels = label->getTabLabel();
 
       // Find the number of clusters
-      int64_t num_clusters = 0;
+      mixmod_int_type num_clusters = 0;
       for (int i = 0; i < this->pwset->n_clean; i++) {
         if (cLabels[i] > num_clusters) {
           num_clusters = cLabels[i];
@@ -152,7 +156,7 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
       if (num_clusters < lowest_cluster_num) {
         lowest_cluster_num = num_clusters;
         if (this->labels == NULL) {
-          this->labels = (int64_t *) malloc(sizeof(int64_t) * this->pwset->n_clean);
+          this->labels = new mixmod_int_type[this->pwset->n_clean];
         }
         for (int i = 0; i < this->pwset->n_clean; i++) {
           this->labels[i] = cLabels[i];
@@ -181,8 +185,8 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
     done = true;
 
     // Prepare arrays for outlier detection and removal.
-    double cx[this->pwset->n_clean];
-    double cy[this->pwset->n_clean];
+    float cx[this->pwset->n_clean];
+    float cy[this->pwset->n_clean];
     for (int j = 0; j < this->pwset->n_clean; j++) {
       cx[j] = 0;
       cy[j] = 0;

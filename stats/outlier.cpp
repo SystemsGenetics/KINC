@@ -7,27 +7,27 @@
  * values that fall outside of that range.  The code for this function
  * has been adapted from the stats::fivenum and boxplot.stats functions of R.
  *
- * @param double * x
+ * @param float * x
  *   A sorted array of doubles.  There must not be any missing values.
  * @param int n
  *   The size of the array 'x'
- * @param double coef
+ * @param float coef
  *   A coefficient to multiply by the IQR. Default should be 1.5.
  *
  * @return Outliers
  *   An Outliers struct.
  */
-Outliers * outliers_iqr(double * x, int n, double coef) {
+Outliers * outliers_iqr(float * x, int n, float coef) {
 
   int i;
   Outliers * outliers = (Outliers *) malloc(sizeof(Outliers));
 
   // Sort x
-  double * sx = (double *) malloc(sizeof(double) * n);
+  float * sx = (float *) malloc(sizeof(float) * n);
   for (i =0; i < n; i++) {
     sx[i] = x[i];
   }
-  quickSortD(sx, n);
+  quickSortF(sx, n);
 
   if (coef < 0) {
     char message[100] = "'coef' must not be negative";
@@ -35,30 +35,30 @@ Outliers * outliers_iqr(double * x, int n, double coef) {
   }
 
   // Initalize the outliers struct
-  outliers->outliers = (double *) malloc(sizeof(double) * n);
+  outliers->outliers = (float *) malloc(sizeof(float) * n);
   outliers->n = 0;
 
   // Calculate the Interquantile range of the values provided.
-  double n4 = ((int)((n + 3)/2.0)) / 2.0;
-  double d[5];
+  float n4 = ((int)((n + 3)/2.0)) / 2.0;
+  float d[5];
   d[0] = 1;
   d[1] = n4;
   d[2] = (n + 1) / 2.0;
   d[3] = n + 1 - n4;
   d[4] = n;
 
-  double stats[5];
+  float stats[5];
   stats[0] = 0.5 * (sx[(int) d[0] - 1] + sx[(int) (d[0] + 0.5) - 1]);
   stats[1] = 0.5 * (sx[(int) d[1] - 1] + sx[(int) (d[1] + 0.5) - 1]);
   stats[2] = 0.5 * (sx[(int) d[2] - 1] + sx[(int) (d[2] + 0.5) - 1]);
   stats[3] = 0.5 * (sx[(int) d[3] - 1] + sx[(int) (d[3] + 0.5) - 1]);
   stats[4] = 0.5 * (sx[(int) d[4] - 1] + sx[(int) (d[4] + 0.5) - 1]);
 
-  double iqr = stats[3] - stats[1];
+  float iqr = stats[3] - stats[1];
 
   // Iterate through the values in sx and look for those that fall outside
   // of the range.
-  double delta = coef * iqr;
+  float delta = coef * iqr;
   for (i = 0; i < n; i++) {
     if (sx[i] < stats[1] - delta || sx[i] > stats[3] + delta) {
       outliers->outliers[outliers->n] = sx[i];

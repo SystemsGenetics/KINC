@@ -10,7 +10,7 @@ MISimilarity::MISimilarity(PairWiseSet * pws, int min_obs, int * samples)
   strcpy(this->type, "mi");
 }
 
-MISimilarity::MISimilarity(PairWiseSet * pws, int min_obs, double mi_bins, double mi_degree)
+MISimilarity::MISimilarity(PairWiseSet * pws, int min_obs, float mi_bins, float mi_degree)
   :PairWiseSimilarity(pws, min_obs) {
 
   this->mi_bins = mi_bins;
@@ -22,7 +22,7 @@ MISimilarity::MISimilarity(PairWiseSet * pws, int min_obs, double mi_bins, doubl
 /**
  * Constructor.
  */
-MISimilarity::MISimilarity(PairWiseSet * pws, int min_obs, int * samples, double mi_bins, double mi_degree)
+MISimilarity::MISimilarity(PairWiseSet * pws, int min_obs, int * samples, float mi_bins, float mi_degree)
   :PairWiseSimilarity(pws, min_obs, samples) {
 
   this->mi_bins = mi_bins;
@@ -37,8 +37,8 @@ MISimilarity::~MISimilarity() {
 /**
  * Performs Mutual Information analysis on two arrays.
  *
- * @param double *a
- * @param double *b
+ * @param float *a
+ * @param float *b
  * @param int n
  */
 void MISimilarity::run() {
@@ -46,10 +46,10 @@ void MISimilarity::run() {
   // the comparison.
   if (this->n >= this->min_obs) {
     // Calculate the min and max
-    double xmin = INFINITY;
-    double ymin = INFINITY;
-    double xmax = -INFINITY;
-    double ymax = -INFINITY;
+    float xmin = INFINITY;
+    float ymin = INFINITY;
+    float xmax = -INFINITY;
+    float ymax = -INFINITY;
     for (int i = 0; i < this->n; i++) {
       // calculate the x and y minimum
       if (this->a[i] < xmin) {
@@ -82,7 +82,7 @@ void MISimilarity::run() {
  *
  * @param CCMParameters params
  *   An instance of the CCM parameters struct
- * @param double ** data
+ * @param float ** data
  *   A pointer to a two dimensional array of doubles containing the
  *   expression values
  * @param int * histogram
@@ -90,7 +90,7 @@ void MISimilarity::run() {
  *   used for building the histogram.
  *
  */
-/*void MISimilarity::calculate_MI(CCMParameters params, double ** data, int * histogram) {
+/*void MISimilarity::calculate_MI(CCMParameters params, float ** data, int * histogram) {
   int j, k, m;             // integers for looping
   char outfilename[1024];  // the output file name
   float max_mi = 0;
@@ -140,16 +140,16 @@ void MISimilarity::run() {
 
         n_comps++;
         if (n_comps % 100 == 0) {
-          printf("Percent complete: %.2f%%\r", (n_comps/(float)total_comps)*100);
+          printf("Percent complete: %.2f%%\n", (n_comps/(float)total_comps)*100);
         }
 
         // build the vectors for calculating MI
-        double x[params.cols + 1];
-        double y[params.cols + 1];
-        double xmin = 9999999;
-        double ymin = 9999999;
-        double xmax = -9999999;
-        double ymax = -9999999;
+        float x[params.cols + 1];
+        float y[params.cols + 1];
+        float xmin = 9999999;
+        float ymin = 9999999;
+        float xmax = -9999999;
+        float ymax = -9999999;
         int n = 0;
         for (i = 0; i < params.cols; i++) {
           // if either of these elements is missing then don't include the
@@ -183,7 +183,7 @@ void MISimilarity::run() {
         // a zero which indicates no correlation.  If we stored zero then
         // we'd be providing a false correlation as no correlation calculation
         // actually occurred.
-        double mi = NAN;
+        float mi = NAN;
 
         // Make sure we have the right number of observations and that the
         // min and max are not the same.
@@ -214,9 +214,9 @@ void MISimilarity::run() {
 }*/
 
 /**
- * @param double *x
+ * @param float *x
  *   A vector of expression values
- * @param double *y
+ * @param float *y
  *   A vector of expression values the same size as x
  * @param int n
  *   The number of data points to fit (or, the size of vectors x and y)
@@ -230,7 +230,7 @@ void MISimilarity::run() {
  * @param int ymax
  *
  */
-double MISimilarity::calculateBSplineMI(double *v1, double *v2, int n, int m, int k, double xmin, double ymin, double xmax, double ymax) {
+float MISimilarity::calculateBSplineMI(float *v1, float *v2, int n, int m, int k, float xmin, float ymin, float xmax, float ymax) {
 
   // used for iterating through loops
   int i, j, q;
@@ -238,7 +238,7 @@ double MISimilarity::calculateBSplineMI(double *v1, double *v2, int n, int m, in
   // probability distribution for each gene
   int ncoeffs;
   // the final Mutual Information value
-  double mi;
+  float mi;
   // the observations (e.g. gene x, gene y)
   gsl_vector *x, *y;
   // the spline coefficent vectors
@@ -303,11 +303,11 @@ double MISimilarity::calculateBSplineMI(double *v1, double *v2, int n, int m, in
   px = gsl_vector_alloc(ncoeffs);  // probability distribution of x
   py = gsl_vector_alloc(ncoeffs);  // probability distribution of y
   for (j = 0; j < ncoeffs; j++) {
-    double px_j = 0;  // the probability of x in bin j
-    double py_j = 0;  // the probability of y in bin j
+    float px_j = 0;  // the probability of x in bin j
+    float py_j = 0;  // the probability of y in bin j
     for (i = 0; i < n; ++i) {
-      double wx = gsl_matrix_get(BX, i, j);
-      double wy = gsl_matrix_get(BY, i, j);
+      float wx = gsl_matrix_get(BX, i, j);
+      float wy = gsl_matrix_get(BY, i, j);
       px_j += wx;
       py_j += wy;
     }
@@ -321,10 +321,10 @@ double MISimilarity::calculateBSplineMI(double *v1, double *v2, int n, int m, in
   pxy = gsl_matrix_alloc(ncoeffs, ncoeffs); // joint probability distribution
   for (j = 0; j < ncoeffs; j++) {
     for (q = 0; q < ncoeffs; ++q) {
-      double pxy_jq =  0;
+      float pxy_jq =  0;
       for (i = 0; i < n; ++i) {
-        double wxj = gsl_matrix_get(BX, i, j);
-        double wyq = gsl_matrix_get(BY, i, q);
+        float wxj = gsl_matrix_get(BX, i, j);
+        float wyq = gsl_matrix_get(BY, i, q);
         pxy_jq += (wxj * wyq);
       }
       pxy_jq /= n;
@@ -333,11 +333,11 @@ double MISimilarity::calculateBSplineMI(double *v1, double *v2, int n, int m, in
   }
 
   // calculate the shannon entropy for x, y
-  double hx = 0; // shannon entropy for x
-  double hy = 0; // shannon entropy for y
+  float hx = 0; // shannon entropy for x
+  float hy = 0; // shannon entropy for y
   for (j = 0; j < ncoeffs; j++) {
-    double px_j = gsl_vector_get(px, j);
-    double py_j = gsl_vector_get(py, j);
+    float px_j = gsl_vector_get(px, j);
+    float py_j = gsl_vector_get(py, j);
     if (px_j != 0) {
       hx += px_j * log2(px_j);
     }
@@ -349,10 +349,10 @@ double MISimilarity::calculateBSplineMI(double *v1, double *v2, int n, int m, in
   hy = - hy;
 
   // calculate the shannon entropy for the joint x,y
-  double hxy = 0;
+  float hxy = 0;
   for (j = 0; j < ncoeffs; j++) {
     for (q = 0; q < ncoeffs; ++q) {
-      double pxy_jq = gsl_matrix_get(pxy, j, q);
+      float pxy_jq = gsl_matrix_get(pxy, j, q);
       if (pxy_jq != 0) {
         hxy += pxy_jq * log2(pxy_jq);
       }

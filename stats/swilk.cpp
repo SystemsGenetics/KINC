@@ -12,19 +12,19 @@
  */
 
 /**
- * @param double *cc
+ * @param float *cc
  * @param int nord
- * @param double x
+ * @param float x
  *
  * @return
  */
-double poly(const double *cc, int nord, double x) {
+float poly(const float *cc, int nord, float x) {
   /*
    *  Algorithm AS 181.2 Appl. Statist.  (1982) Vol. 31, No. 2
    *  Calculates the algebraic polynomial of order nord-1 with
    *  array of coefficients cc.  Zero order coefficient is cc(1) = cc[0]
    */
-  double p, ret_val;
+  float p, ret_val;
 
   ret_val = cc[0];
   if (nord > 1) {
@@ -41,46 +41,46 @@ double poly(const double *cc, int nord, double x) {
 /**
  * Calculates the Shapiro-Wilk univariate normality test.
  *
- * @param double *vector
+ * @param float *vector
  * @param int n
- * @param double *w
- * @param double *pw
+ * @param float *w
+ * @param float *pw
  * @param int *ifault
  */
-void swilk(double *vector, int n, double *w, double *pw, int *ifault) {
+void swilk(float *vector, int n, float *w, float *pw, int *ifault) {
 
   // Create a copy of the vector and sort it.
-  double * x = (double *) malloc(sizeof(double) * n);
-  memcpy(x, vector, sizeof(double) * n);
+  float * x = (float *) malloc(sizeof(float) * n);
+  memcpy(x, vector, sizeof(float) * n);
 
   // Sort the incoming vector
-  quickSortD(x, n);
+  quickSortF(x, n);
 
   int nn2 = n / 2;
-  double a[nn2 + 1]; /* 1-based */
+  float a[nn2 + 1]; /* 1-based */
 
   /*
    * ALGORITHM AS R94 APPL. STATIST. (1995) vol.44, no.4, 547-551.
    * Calculates the Shapiro-Wilk W test and its significance level
    */
 
-  double small = 1e-19;
+  float small = 1e-19;
 
   // Polynomial coefficients.
-  double g[2]  = { -2.273,   0.459 };
-  double c1[6] = {  0.0,     0.221157, -0.147981, -2.07119,  4.434685, -2.706056 };
-  double c2[6] = {  0.0,     0.042981, -0.293762, -1.752461, 5.682633, -3.582633 };
-  double c3[4] = {  0.544,  -0.39978,   0.025054, -6.714e-4 };
-  double c4[4] = {  1.3822, -0.77857,   0.062767, -0.0020322 };
-  double c5[4] = { -1.5861, -0.31082,  -0.083751,  0.0038915 };
-  double c6[3] = { -0.4803, -0.082676,  0.0030302 };
+  float g[2]  = { -2.273,   0.459 };
+  float c1[6] = {  0.0,     0.221157, -0.147981, -2.07119,  4.434685, -2.706056 };
+  float c2[6] = {  0.0,     0.042981, -0.293762, -1.752461, 5.682633, -3.582633 };
+  float c3[4] = {  0.544,  -0.39978,   0.025054, -6.714e-4 };
+  float c4[4] = {  1.3822, -0.77857,   0.062767, -0.0020322 };
+  float c5[4] = { -1.5861, -0.31082,  -0.083751,  0.0038915 };
+  float c6[3] = { -0.4803, -0.082676,  0.0030302 };
 
   // Local variables.
   int i, j, i1;
 
-  double ssassx, summ2, ssumm2, gamma, range;
-  double a1, a2, an, m, s, sa, xi, sx, xx, y, w1;
-  double fac, asa, an25, ssa, sax, rsn, ssx, xsx;
+  float ssassx, summ2, ssumm2, gamma, range;
+  float a1, a2, an, m, s, sa, xi, sx, xx, y, w1;
+  float fac, asa, an25, ssa, sax, rsn, ssx, xsx;
 
   *pw = 1.0;
   if (n < 3) {
@@ -91,7 +91,7 @@ void swilk(double *vector, int n, double *w, double *pw, int *ifault) {
     return;
   }
 
-  an = (double) n;
+  an = (float) n;
 
   if (n == 3) {
     a[1] = 0.70710678; // = sqrt(1/2)
@@ -101,7 +101,7 @@ void swilk(double *vector, int n, double *w, double *pw, int *ifault) {
     summ2 = 0.0;
     for (i = 1; i <= nn2; i++) {
       a[i] = qnorm((i - 0.375) / an25, 0.0, 1.0, 1, 0);
-      double r__1 = a[i];
+      float r__1 = a[i];
       summ2 += r__1 * r__1;
     }
     summ2 *= 2.0;
@@ -192,7 +192,7 @@ void swilk(double *vector, int n, double *w, double *pw, int *ifault) {
 
   // Calculate significance level for W
   if (n == 3) {/* exact P value : */
-    double pi6 = 1.90985931710274, /* = 6/pi */
+    float pi6 = 1.90985931710274, /* = 6/pi */
     stqr = 1.04719755119660; /* = asin(sqrt(3/4)) */
     *pw = pi6 * (asin(sqrt(*w)) - stqr);
     if(*pw < 0.0) {

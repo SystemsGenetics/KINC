@@ -29,41 +29,41 @@ typedef struct {
   // Organizes the points by cluster.  The first element corresponds to
   // the cluster labeled 1, the second to the cluster labeled 2, etc.  Each
   // element is itself an array of points from the 2D vector.
-  double *** clusters;
+  float *** clusters;
   // The center points of each cluster.
-  double ** centers;
+  float ** centers;
 
   // The scaled input data vectors
-  double * a;
-  double * b;
+  float * a;
+  float * b;
 
-  double scaled_by[2];
+  float scaled_by[2];
 
 } MeanShiftClusters;
 
 typedef struct {
-  double ** points;
-  double * thresh;
+  float ** points;
+  float * thresh;
   int iterations;
-  double * start;
-  double * final;
+  float * start;
+  float * final;
 } MeanShiftRep;
 
-MeanShiftClusters * meanshift2D(double* x, double * y, int n, double h);
-MeanShiftRep * meanshift_rep(double* a, double * b, int n, double * x, double h,
-    double thresh, int iter);
+MeanShiftClusters * meanshift2D(float* x, float * y, int n, float h);
+MeanShiftRep * meanshift_rep(float* a, float * b, int n, float * x, float h,
+    float thresh, int iter);
 
 void free_msr(MeanShiftRep * msr);
 void free_msc(MeanShiftClusters * msc);
 
 // Helper functions
-double * profileMd(double *a, double *b, int n, double *x, double h);
-double * profile1d(double *xi, int n, double x, double h);
-double * meanshift_base(double *a, double *b, int n, double *x, double h);
-double euclidian_norm(double *x, int d);
-double minimal_dist(double **x, int n, double *y);
-double * distance_vector(double **x, int n, double *y);
-double * meanshift_coverage2D(double *s, double *t, int n);
-double coverage_raw(double * a, double *b, int n, double ** centers, int nc, double tau);
+float * profileMd(float *a, float *b, int n, float *x, float h);
+float * profile1d(float *xi, int n, float x, float h);
+float * meanshift_base(float *a, float *b, int n, float *x, float h);
+float euclidian_norm(float *x, int d);
+float minimal_dist(float **x, int n, float *y);
+float * distance_vector(float **x, int n, float *y);
+float * meanshift_coverage2D(float *s, float *t, int n);
+float coverage_raw(float * a, float *b, int n, float ** centers, int nc, float tau);
 
 #endif

@@ -1,7 +1,7 @@
 #include "RMTThreshold.h"
 
 RMTThreshold::RMTThreshold(EMatrix * ematrix, char ** method, int num_methods,
-    char * th_method, double thresholdStart, double thresholdStep, double chiSoughtValue,
+    char * th_method, float thresholdStart, float thresholdStep, float chiSoughtValue,
     char * clustering, int min_cluster_size, int max_missing, int max_modes,
     float min_range)
   : ThresholdMethod(ematrix, method, num_methods, th_method, clustering,
@@ -40,7 +40,7 @@ RMTThreshold::~RMTThreshold() {
  *
  *
  */
-double RMTThreshold::findThreshold() {
+float RMTThreshold::findThreshold() {
 
   // A reduced expression matrix containing only gene-paris with
   // correlations >= the test threshold.
@@ -57,7 +57,7 @@ double RMTThreshold::findThreshold() {
   // The threshold currently being tested.
   float th = thresholdStart;
   // The current chi-square value for the threshold being tested.
-  double chi;
+  float chi;
   // Array for eigenvalues.
   float * E;
   // The output file prefix.
@@ -503,8 +503,8 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
           }
 
           // Get the range of expression for this cluster.
-          double range_j = this->ematrix->getRange(j-1, samples);
-          double range_k = this->ematrix->getRange(k-1, samples);
+          float range_j = this->ematrix->getRange(j-1, samples);
+          float range_k = this->ematrix->getRange(k-1, samples);
           int range_okay = 1;
           if (min_range > 0 && (range_j <= min_range || range_k <= min_range)) {
             range_okay = 0;
@@ -633,8 +633,8 @@ float * RMTThreshold::read_similarity_matrix_cluster_file(float th, int * size) 
         }
 
         // Get the range of expression for this cluster.
-        double range_j = this->ematrix->getRange(j-1, samples);
-        double range_k = this->ematrix->getRange(k-1, samples);
+        float range_j = this->ematrix->getRange(j-1, samples);
+        float range_k = this->ematrix->getRange(k-1, samples);
         int range_okay = 1;
         if (min_range > 0 && (range_j <= min_range || range_k <= min_range)) {
           range_okay = 0;
@@ -715,7 +715,7 @@ float * RMTThreshold::calculateEigen(float * smatrix, int size) {
  *  Returned array will always be sorted and of length size-1
  */
 
-double * RMTThreshold::unfolding(float * e, int size, int m) {
+float * RMTThreshold::unfolding(float * e, int size, int m) {
   // Count equals 1 initially because of 2 lines following loop
   // which propagates the arrays.
   int count = 1;
@@ -760,9 +760,9 @@ double * RMTThreshold::unfolding(float * e, int size, int m) {
   // Estimate new eigenvalues along the spline curve.  We provide the
   // eigenvalues and the interplolation function gives us new y values
   // in the range of 0 to 1.
-  double * yy = (double*) malloc(sizeof(double) * size);
+  float * yy = (float*) malloc(sizeof(float) * size);
   for (i = 1; i < size - 1; i++) {
-    yy[i] = gsl_spline_eval(spline, e[i], acc);
+    yy[i] = (float) gsl_spline_eval(spline, e[i], acc);
   }
 
   // Calculate the spacing array.
@@ -771,7 +771,7 @@ double * RMTThreshold::unfolding(float * e, int size, int m) {
   for (i = 0; i < size - 1; i++) {
     yy[i] = (yy[i+1] - yy[i]) * size;
   }
-  quickSortD(yy, size-1);
+  quickSortF(yy, size-1);
 
   // Free up memory.
   gsl_spline_free(spline);
@@ -833,7 +833,7 @@ float * RMTThreshold::degenerate(float* eigens, int size, int* newSize) {
     }
   }
   free(flags);
- 
+
 
   // Set the newSize argument.
   *newSize = count;
@@ -849,13 +849,13 @@ float * RMTThreshold::degenerate(float* eigens, int size, int* newSize) {
  * @param int size
  *   The size of the eigenvalue array
  *
- * @return double
+ * @return float
  *   A Chi-square value or -1 for failure
  */
 
-double RMTThreshold::getNNSDChiSquare(float* eigens, int size) {
-  double chiTest = 0;
-  double avg_chiTest;
+float RMTThreshold::getNNSDChiSquare(float* eigens, int size) {
+  float chiTest = 0;
+  float avg_chiTest;
   int i = 0;
   int m;
   // The new eigenvalue array after duplicates removed
@@ -904,25 +904,25 @@ double RMTThreshold::getNNSDChiSquare(float* eigens, int size) {
  *   The eigenvalue array
  * @param int size
  *   The size of the eigenvalue array
- * @param double bin
+ * @param float bin
  *   The relative histogram bin size
  * @param int pace
  *   The unfolding pace
  * @param RMTParameters
  *
  *
- * @return double
+ * @return float
  *   A Chi-square value, or -1 on failure
  */
 
-double RMTThreshold::getNNSDPaceChiSquare(float* eigens,
-    int size, double bin, int pace) {
+float RMTThreshold::getNNSDPaceChiSquare(float* eigens,
+    int size, float bin, int pace) {
 
   // The nearest neighbor spacing array.
-  double * edif;
-  double obj;
-  double expect;
-  double chi = 0;
+  float * edif;
+  float obj;
+  float expect;
+  float chi = 0;
   int i, j, count;
 
 
@@ -965,7 +965,7 @@ double RMTThreshold::getNNSDPaceChiSquare(float* eigens,
 
     // Perform the summation used for calculating the Chi-square value.
     // When the looping completes we will have the final Chi-square value.
-    obj = (double) count;
+    obj = (float) count;
     chi += (obj - expect) * (obj - expect) / expect;
   }
   free(edif);

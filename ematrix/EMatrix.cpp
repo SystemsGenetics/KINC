@@ -60,9 +60,9 @@ EMatrix::EMatrix(char * infilename, int rows, int cols, int headers, int omit_na
   genes = (char **) malloc(sizeof(char *) * num_genes);
 
   // Allocate the data array for storing the input expression matrix.
-  data = (double**) malloc(sizeof(double *) * num_genes);
+  data = (float**) malloc(sizeof(float *) * num_genes);
   for (i = 0; i < num_genes; i++) {
-    data[i] = (double *) malloc(sizeof(double) * num_samples);
+    data[i] = (float *) malloc(sizeof(float) * num_samples);
   }
 
   // Iterate through the lines of the expression matrix
@@ -196,12 +196,12 @@ void EMatrix::log10Transform(){
 /**
  *
  */
-double EMatrix::getRange(int i, char * samples) {
+float EMatrix::getRange(int i, char * samples) {
 
-  double * je = this->getRow(i);
-  double min = 99999;
-  double max = -99999;
-  double range = 0;
+  float * je = this->getRow(i);
+  float min = 99999;
+  float max = -99999;
+  float range = 0;
   for(int e = 0; e < this->getNumSamples(); e++) {
     if (samples[e] == '1' && min > je[e]) {
       min = je[e];

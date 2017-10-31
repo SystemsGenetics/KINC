@@ -48,7 +48,7 @@ class PairWiseClusterWriter {
     int getRecoveryX() {return recovery_x;}
     int getRecoveryY() {return recovery_y;}
     // Writes a PairWiseCluster to the proper file.
-    void writeClusters(PairWiseClusterList *pwcl, int gene1, int gene2, double *min_sim);
+    void writeClusters(PairWiseClusterList *pwcl, int gene1, int gene2, float *min_sim);
 
 };
 

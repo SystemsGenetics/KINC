@@ -3,6 +3,6 @@
 
 #include <math.h>
 
-double kurtosis(double *x, int n);
+float kurtosis(float *x, int n);
 
 #endif
