@@ -1,3 +1,4 @@
+#include <memory>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_math.h>
@@ -577,6 +578,8 @@ double* RMT::unfolding(float* e, int size, int m)
    }
    oX[count-1] = e[size-1];
    oY[count-1] = 1;
+   unique_ptr<gsl_interp_accel,decltype(&gsl_interp_accel_free)> test(gsl_interp_accel_alloc()
+                                                                      ,&gsl_interp_accel_free);
    gsl_interp_accel* acc = gsl_interp_accel_alloc();
    gsl_spline* spline = gsl_spline_alloc(gsl_interp_akima,count);
    gsl_spline_init(spline,oX,oY,count);
@@ -708,4 +711,38 @@ double RMT::getNNSDPaceChiSquare(float* eigens, int size, double bin, int pace)
    }
    free(edif);
    return chi;
+}
+
+
+void RMT::newDegenerate(QVector<double>& eigens)
+{
+   // iterate through all eigen values
+   for (auto& eigen : eigens)
+   {
+      // if eigen value is less than minimum set it to zero
+      if ( eigen < _minimumEigenValue )
+      {
+         eigen = 0.0;
+      }
+   }
+
+   // sort all eigen values
+   sort(eigens.begin(),eigens.end());
+
+   // iterate through eigen values until second to last is reached
+   int i {0};
+   while ( (i + 1) < eigens.size() )
+   {
+      // if next eigen value equals current eigen value remove current value
+      if ( eigens.at(i) == eigens.at(i + 1) )
+      {
+         eigens.removeAt(i);
+      }
+
+      // else iterate to next value
+      else
+      {
+         ++i;
+      }
+   }
 }

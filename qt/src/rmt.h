@@ -42,6 +42,7 @@ private:
    static double getNNSDChiSquare(float* eigens, int size);
    static double getNNSDPaceChiSquare(float* eigens, int size, double bin, int pace);
    // END OF ALL FUNCTIONS
+   void newDegenerate(QVector<double>& eigens);
    // FOR ALL STATIC VARIABLES BELOW
    // these were all pulled fron KINC version 1 used by its functions
    constexpr static float nnsdHistogramBin {0.05};
@@ -49,6 +50,7 @@ private:
    constexpr static int maxUnfoldingPace {41};
    constexpr static int minEigenVectorSize {100};
    // END OF ALL STATIC VARIABLES
+   constexpr static double _minimumEigenValue {0.000001};
    CorrelationMatrix* _input {nullptr};
    QFile* _output {nullptr};
    float _initialThreshold {0.99607};
