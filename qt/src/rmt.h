@@ -27,32 +27,19 @@ public:
    virtual void runSerial() override final;
 private:
    float determineThreshold();
-   float determineChi(float threshold);
+   float determineChi(float threshold, int* size);
    void generateGeneThresholds();
-   double* generatePruneMatrix(float threshold, int* size);
-   static float* generateMatrixEigens(double* pruneMatrix, int size);
-   // FOR ALL FUNCTIONS BELOW
-   // these were all pulled from KINC version 1
-   static void swapF(float* l, int idx1, int idx2);
-   static void quickSortF(float* l, int size);
-   static void swapD(double* l, int idx1, int idx2);
-   static void quickSortD(double* l, int size);
-   static double* unfolding(float* e, int size, int m);
-   static float* degenerate(float* eigens, int size, int* newSize);
-   static double getNNSDChiSquare(float* eigens, int size);
-   static double getNNSDPaceChiSquare(float* eigens, int size, double bin, int pace);
-   // END OF ALL FUNCTIONS
-   float newGetChiSquare(QVector<double>* eigens);
-   float newGetPaceChiSquare(const QVector<double>& eigens, int pace);
-   QVector<double> newUnfold(const QVector<double>& eigens, int pace);
-   void newDegenerate(QVector<double>* eigens);
-   // FOR ALL STATIC VARIABLES BELOW
-   // these were all pulled fron KINC version 1 used by its functions
-   constexpr static float nnsdHistogramBin {0.05};
-   constexpr static int minUnfoldingPace {10};
-   constexpr static int maxUnfoldingPace {41};
-   constexpr static int minEigenVectorSize {100};
-   // END OF ALL STATIC VARIABLES
+   QVector<double> generatePruneMatrix(float threshold, int* size);
+   QVector<double> generateMatrixEigens(QVector<double>* pruneMatrix, int size);
+   float getChiSquare(QVector<double>* eigens);
+   float getPaceChiSquare(const QVector<double>& eigens, int pace);
+   QVector<double> unfold(const QVector<double>& eigens, int pace);
+   void degenerate(QVector<double>* eigens);
+   constexpr static int _filterSize {10};
+   constexpr static float _nnsdHistogramBin {0.05};
+   constexpr static int _minUnfoldingPace {10};
+   constexpr static int _maxUnfoldingPace {41};
+   constexpr static int _minEigenVectorSize {100};
    constexpr static float _chiSquareBinSize {0.05};
    constexpr static double _minimumEigenValue {0.000001};
    CorrelationMatrix* _input {nullptr};
@@ -60,7 +47,7 @@ private:
    float _initialThreshold {0.99607};
    float _thresholdStep {0.001};
    float _thresholdMinimum {0.5};
-   std::unique_ptr<float> _geneThresholds;
+   QVector<float> _geneThresholds;
 };
 
 

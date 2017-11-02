@@ -210,8 +210,7 @@ float RMT::determineThreshold()
    // initialize chi, threshold, and history of both
    float chi {0.0};
    float threshold {_initialThreshold};
-   QList<float> previousChi;
-   QList<float> previousThresholds;
+   QQueue<float> previousChi;
 
    // initialize last percent, steps, and total steps
    int lastPercent {33};
@@ -219,7 +218,7 @@ float RMT::determineThreshold()
    int totalSteps = (_initialThreshold - _thresholdMinimum)/_thresholdStep;
 
    // continue while chi is less than 200
-   while ( ( chi = determineChi(threshold) ) < 200.0 )
+   while ( chi < 100.0 )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -227,9 +226,19 @@ float RMT::determineThreshold()
          return 0.0;
       }
 
-      // record previous chi and threshold
-      previousChi.push_back(chi);
-      previousThresholds.push_back(threshold);
+      int size;
+      previousChi.enqueue(determineChi(threshold,&size));
+      if ( previousChi.size() > _filterSize )
+      {
+         previousChi.dequeue();
+         float sum {0};
+         for (const auto& chi : previousChi)
+         {
+            sum += chi;
+         }
+         chi = sum/(float)_filterSize;
+      }
+      cout << threshold << "\t" << previousChi.back() << "\t" << chi << "\t" << size <<"\n";
 
       // decrement threshold by step and make sure minimum is not reached
       threshold -= _thresholdStep;
@@ -255,19 +264,8 @@ float RMT::determineThreshold()
       ++steps;
    }
 
-   // go back into history of chi values and find first one that was above 100
-   int i = previousChi.size()-1;
-   while ( i > 0 && previousChi[i] > 100.0 )
-   {
-      --i;
-   }
-   if ( (i+1) < previousChi.size() )
-   {
-      ++i;
-   }
-
    // return threshold where chi was first above 100
-   return previousThresholds[i];
+   return threshold;
 }
 
 
@@ -275,14 +273,13 @@ float RMT::determineThreshold()
 
 
 
-float RMT::determineChi(float threshold)
+float RMT::determineChi(float threshold, int* size)
 {
    // initialize size and generate pruned matrix based off threshold
-   int size {0};
-   unique_ptr<double> pruneMatrix {generatePruneMatrix(threshold,&size)};
+   QVector<double> pruneMatrix {generatePruneMatrix(threshold,size)};
 
    // check and make sure matrix is not empty
-   if ( size > 0 )
+   if ( *size > 0 )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -291,18 +288,14 @@ float RMT::determineChi(float threshold)
       }
 
       // generate eigen vector of pruned matrix and make sure interruption is not requested
-      unique_ptr<float> eigens {generateMatrixEigens(pruneMatrix.get(),size)};
+      QVector<double> eigens {generateMatrixEigens(&pruneMatrix,*size)};
       if ( isInterruptionRequested() )
       {
          return 0.0;
       }
 
-      // generate chi from eigen vector and return it if it is a real number
-      float chi = getNNSDChiSquare(eigens.get(),size);
-      if ( !isnan(chi) && !isinf(chi) )
-      {
-         return chi;
-      }
+      // generate chi from eigen vector and return it
+      return getChiSquare(&eigens);
    }
 
    // if no real chi was found return zero
@@ -316,12 +309,8 @@ float RMT::determineChi(float threshold)
 
 void RMT::generateGeneThresholds()
 {
-   // allocate memory for thresholds matrix and initialize all to the minimum
-   _geneThresholds.reset(new float[_input->getGeneSize()]);
-   for (int i = 0; i < _input->getGeneSize() ;++i)
-   {
-      _geneThresholds.get()[i] = -1.0;
-   }
+   // resize thresholds matrix and initialize all to the minimum
+   _geneThresholds.fill(-1.0,_input->getGeneSize());
 
    // initialize percent complete and steps
    int lastPercent {0};
@@ -347,15 +336,15 @@ void RMT::generateGeneThresholds()
       if ( !isnan(pair.at(0,0)) )
       {
          // if value is greater than current max of gene x set it to new max
-         if ( pair.at(0,0) > _geneThresholds.get()[x] )
+         if ( pair.at(0,0) > _geneThresholds.at(x) )
          {
-            _geneThresholds.get()[x] = pair.at(0,0);
+            _geneThresholds[x] = pair.at(0,0);
          }
 
          // if value is greater than current max of gene y set it to new max
-         if ( pair.at(0,0) > _geneThresholds.get()[y] )
+         if ( pair.at(0,0) > _geneThresholds.at(y) )
          {
-            _geneThresholds.get()[y] = pair.at(0,0);
+            _geneThresholds[y] = pair.at(0,0);
          }
       }
 
@@ -366,7 +355,7 @@ void RMT::generateGeneThresholds()
 
       // check to see if percent complete changed
       if ( newPercent != lastPercent )
-      {cout << newPercent << "\n";
+      {
          // update percent complete and emit progressed signal
          lastPercent = newPercent;
          emit progressed(lastPercent);
@@ -379,20 +368,20 @@ void RMT::generateGeneThresholds()
 
 
 
-double* RMT::generatePruneMatrix(float threshold, int* size)
+QVector<double> RMT::generatePruneMatrix(float threshold, int* size)
 {
    // generate vector of gene indexes that have max threshold above given threshold
    QVector<int> genes;
    for (int i = 0; i < _input->getGeneSize() ;++i)
    {
-      if ( _geneThresholds.get()[i] >= threshold )
+      if ( _geneThresholds.at(i) >= threshold )
       {
          genes.push_back(i);
       }
    }
 
    // allocate new pruned matrix with gene vector size and initialize iterator
-   unique_ptr<double> pruneMatrix {new double[genes.size()*genes.size()]};
+   QVector<double> pruneMatrix(genes.size()*genes.size());
    CorrelationMatrix::Pair pair(_input);
 
    // populate the pruned matrix with gene correlation values
@@ -403,7 +392,7 @@ double* RMT::generatePruneMatrix(float threshold, int* size)
          // make sure interruption is not requested
          if ( isInterruptionRequested() )
          {
-            return nullptr;
+            return QVector<double>();
          }
 
          // get indexes for both genes
@@ -413,28 +402,37 @@ double* RMT::generatePruneMatrix(float threshold, int* size)
          // if genes have same index set ij matrix value to 1
          if ( g1 == g2 )
          {
-            pruneMatrix.get()[i*genes.size() + j] = 1.0;
+            pruneMatrix[i*genes.size() + j] = 1.0;
          }
 
          // else get correlation value
          else
          {
-            // make sure first gene index is bigger
+            // make sure first gene index is bigger and read gene pair
             if ( g2 > g1 )
             {
                swap(g1,g2);
             }
-
-            // read gene pair and set correlation value to pruned matrix
             pair.read(g1,g2);
-            pruneMatrix.get()[i*genes.size() + j] = pair.at(0,0);
+
+            // if the correlation is a real number get value
+            if ( !isnan(pair.at(0,0)) && !isinf(pair.at(0,0)) )
+            {
+               pruneMatrix[i*genes.size() + j] = pair.at(0,0);
+            }
+
+            // else set value to zero
+            else
+            {
+               pruneMatrix[i*genes.size() + j] = 0.0;
+            }
          }
       }
    }
 
    // set size to size of pruned matrix and return pointer
    *size = genes.size();
-   return pruneMatrix.release();
+   return pruneMatrix;
 }
 
 
@@ -442,30 +440,33 @@ double* RMT::generatePruneMatrix(float threshold, int* size)
 
 
 
-float* RMT::generateMatrixEigens(double* pruneMatrix, int size)
+QVector<double> RMT::generateMatrixEigens(QVector<double>* pruneMatrix, int size)
 {
-   // allocate new array to hold eigen values
-   unique_ptr<float> eigens {new float[size]};
+   // using declarations for gsl resources
+   using gsl_vector_ptr = unique_ptr<gsl_vector,decltype(&gsl_vector_free)>;
+   using gsl_matrix_ptr = unique_ptr<gsl_matrix,decltype(&gsl_matrix_free)>;
+   using gsl_eigen_symmv_workspace_ptr = unique_ptr<gsl_eigen_symmv_workspace
+      ,decltype(&gsl_eigen_symmv_free)>;
 
-   // use GSL library for compute eigen values for pruned matrix
-   gsl_matrix_view m = gsl_matrix_view_array(pruneMatrix,size,size);
-   gsl_vector* eval = gsl_vector_alloc(size);
-   gsl_matrix* evec = gsl_matrix_alloc(size,size);
-   gsl_eigen_symmv_workspace* w = gsl_eigen_symmv_alloc(size);
-   gsl_eigen_symmv(&m.matrix,eval,evec,w);
-   gsl_eigen_symmv_free(w);
-   gsl_eigen_symmv_sort(eval,evec,GSL_EIGEN_SORT_ABS_ASC);
+   // make and initialize gsl eigen resources
+   gsl_matrix_view view = gsl_matrix_view_array(pruneMatrix->data(),size,size);
+   gsl_vector_ptr eval (gsl_vector_alloc(size),&gsl_vector_free);
+   gsl_matrix_ptr evec (gsl_matrix_alloc(size,size),&gsl_matrix_free);
+   gsl_eigen_symmv_workspace_ptr work (gsl_eigen_symmv_alloc(size),&gsl_eigen_symmv_free);
 
-   // grab eigen values from GSL and set to eigen array
+   // have gsl compute eigen values for the pruned matrix
+   gsl_eigen_symmv(&view.matrix,eval.get(),evec.get(),work.get());
+   gsl_eigen_symmv_sort(eval.get(),evec.get(),GSL_EIGEN_SORT_ABS_ASC);
+
+   // create return vector and get eigen values from gsl
+   QVector<double> ret(size);
    for (int i = 0; i < size ;i++)
    {
-      eigens.get()[i] = gsl_vector_get(eval,i);
+      ret[i] = gsl_vector_get(eval.get(),i);
    }
 
-   // cleanup rest of GSL resoruces and return eigen array
-   gsl_vector_free (eval);
-   gsl_matrix_free (evec);
-   return eigens.release();
+   // return eigen values vector
+   return ret;
 }
 
 
@@ -473,92 +474,82 @@ float* RMT::generateMatrixEigens(double* pruneMatrix, int size)
 
 
 
-// FOR ALL FUNCTIONS BELOW:
-// These were all pulled from KINC version 1
-
-
-
-
-
-
-void RMT::swapF(float* l, int idx1, int idx2) {
-  float temp = l[idx1];
-  l[idx1] = l[idx2];
-  l[idx2] = temp;
-  return;
-}
-
-
-
-
-
-
-void RMT::quickSortF(float* l, int size){
-  if (size <= 1) {
-    return;
-  }
-  int pivIdx = (int) size / 1.618; //golden ratio
-  float pivot = l[pivIdx];
-  swapF(l, pivIdx, size-1);
-  int leftPlace = 0;
-  int i;
-  for (i = 0; i < size - 1; i++) {
-    if(l[i] < pivot){
-      swapF(l, i, leftPlace);
-      leftPlace++;
-    }
-  }
-  swapF(l, size - 1, leftPlace);
-  quickSortF(l,leftPlace);
-  quickSortF(&l[leftPlace + 1], size - leftPlace - 1);
-  return;
-}
-
-
-
-
-
-
-void RMT::swapD(double* l, int idx1, int idx2)
+float RMT::getChiSquare(QVector<double>* eigens)
 {
-   double temp = l[idx1];
-   l[idx1] = l[idx2];
-   l[idx2] = temp;
-}
+   // initialize chi value and degenerate eigen vector
+   float chi {0.0};
+   degenerate(eigens);
 
-
-
-
-
-
-void RMT::quickSortD(double* l, int size)
-{
-   if (size <= 1)
+   // make sure new size of eigen vector is minimum size
+   if ( eigens->size() >= _minEigenVectorSize )
    {
-      return;
-   }
-   int pivIdx = (int)size/1.618;
-   double pivot = l[pivIdx];
-   swapD(l,pivIdx,size-1);
-   int leftPlace = 0;
-   int i;
-   for (i = 0;i<(size-1);++i)
-   {
-      if(l[i]<pivot)
+      // initialize chi test count and iterate through all paces
+      int chiTestCount {0};
+      for (int pace = _minUnfoldingPace; pace < _maxUnfoldingPace ;++pace)
       {
-         swapD(l,i,leftPlace);
-         ++leftPlace;
+         // if ??? increment chi value with paced chi square value and increment test count
+         if ( (eigens->size()/pace) >= 5 )
+         {
+            chi += getPaceChiSquare(*eigens,pace);
+            ++chiTestCount;
+         }
       }
+
+      // divide chi value by amount of chi tests added to it
+      chi /= chiTestCount;
    }
-   swapD(l,size-1,leftPlace);
-   quickSortD(l,leftPlace);
-   quickSortD(&l[leftPlace+1],size-leftPlace-1);
+
+   // if chi is not a real number set it to zero
+   if ( isnan(chi) || isinf(chi) )
+   {
+      chi = 0.0;
+   }
+
+   // return chi value
+   return chi;
 }
 
 
 
 
-QVector<double> RMT::newUnfold(const QVector<double>& eigens, int pace)
+
+
+float RMT::getPaceChiSquare(const QVector<double>& eigens, int pace)
+{
+   // initialize chi value that will be returned and get unfolded vector
+   float chi {0.0};
+   QVector<double> unfolded {unfold(eigens,pace)};
+
+   // iterate through each bin to count matches
+   for (int i = 0; i < ((int)(3.0/_chiSquareBinSize) + 1) ;++i)
+   {
+      // initialize count and iterate through all unfolded values
+      int count {0};
+      for (const auto& unfold : unfolded)
+      {
+         // if unfold value is within bin range increment count
+         if ( unfold < (i + 1)*_chiSquareBinSize && unfold > i*_chiSquareBinSize )
+         {
+            ++count;
+         }
+      }
+
+      // calculate expected value and add to chi based off difference from expected count and actual
+      float expect {(exp(-1*i*_chiSquareBinSize)
+               - exp(-1*(i + 1)*_chiSquareBinSize))*eigens.size()};
+      chi += ((double)count - expect)*((double)count - expect)/expect;
+   }
+
+   // return chi value
+   return chi;
+}
+
+
+
+
+
+
+QVector<double> RMT::unfold(const QVector<double>& eigens, int pace)
 {
    // using declarations for gsl resource pointers
    using gsl_interp_accel_ptr = unique_ptr<gsl_interp_accel,decltype(&gsl_interp_accel_free)>;
@@ -609,220 +600,10 @@ QVector<double> RMT::newUnfold(const QVector<double>& eigens, int pace)
 
 
 
-double* RMT::unfolding(float* e, int size, int m)
-{
-   int count = 1;
-   int i, j = 0;
-   for(i = 0;i<(size-m);i+=m)
-   {
-      count++;
-   }
-   double* oX = (double*)malloc(sizeof(double)*count);
-   double* oY = (double*)malloc(sizeof(double)*count);
-   for(i = 0;i<(size-m);i+=m)
-   {
-      oX[j] = e[i];
-      oY[j] = (i+1.0)/(double)size;
-      j++;
-   }
-   oX[count-1] = e[size-1];
-   oY[count-1] = 1;
-   unique_ptr<gsl_interp_accel,decltype(&gsl_interp_accel_free)> test(gsl_interp_accel_alloc()
-                                                                      ,&gsl_interp_accel_free);
-   gsl_interp_accel* acc = gsl_interp_accel_alloc();
-   gsl_spline* spline = gsl_spline_alloc(gsl_interp_akima,count);
-   gsl_spline_init(spline,oX,oY,count);
-   double* yy = (double*)malloc(sizeof(double)*size);
-   for (i = 0;i<(size-2);++i)
-   {
-      yy[i+1] = gsl_spline_eval(spline,e[i+1],acc);
-   }
-   yy[0] = 0.0;
-   yy[size-1] = 1.0;
-   for (i = 0;i<(size-1);++i)
-   {
-      yy[i] = (yy[i+1]-yy[i])*size;
-   }
-   quickSortD(yy,size-1);
-   gsl_spline_free(spline);
-   gsl_interp_accel_free(acc);
-   free(oX);
-   free(oY);
-   return yy;
-}
 
 
 
-
-
-
-float* RMT::degenerate(float* eigens, int size, int* newSize)
-{
-   int i, j = 0;
-   int count = 1;
-   int* flags;
-   float* remDups;
-   quickSortF(eigens,size);
-   for (i = 0;i<size;++i)
-   {
-      if (fabs(eigens[i])<0.000001)
-      {
-         eigens[i] = 0.0;
-      }
-   }
-   flags = (int*)malloc(sizeof(int)*size);
-   memset(flags,0,size*sizeof(int));
-   float temp = eigens[0];
-   flags[0] = 1;
-   for(i = 1;i<size;++i)
-   {
-      if(fabs(eigens[i]-temp)>0.000001)
-      {
-         count++;
-         flags[i] = 1;
-         temp = eigens[i];
-      }
-   }
-   remDups = (float*)malloc(sizeof(float)*count);
-   for(i = 0;i<size;++i)
-   {
-      if(flags[i]==1)
-      {
-         remDups[j] = eigens[i];
-         j++;
-      }
-   }
-   free(flags);
-   *newSize = count;
-   return remDups;
-}
-
-
-
-
-
-float RMT::newGetChiSquare(QVector<double>* eigens)
-{
-   // initialize chi value and degenerate eigen vector
-   float chi {0.0};
-   newDegenerate(eigens);
-
-   // make sure new size of eigen vector is minimum size
-   if ( eigens->size() >= minEigenVectorSize )
-   {
-      // initialize chi test count and iterate through all paces
-      int chiTestCount {0};
-      for (int pace = minUnfoldingPace; pace < maxUnfoldingPace ;++pace)
-      {
-         // if ??? increment chi value with paced chi square value and increment test count
-         if ( (eigens->size()/pace) >= 5 )
-         {
-            chi += newGetPaceChiSquare(*eigens,pace);
-            ++chiTestCount;
-         }
-      }
-
-      // divide chi value by amount of chi tests added to it
-      chi /= chiTestCount;
-   }
-
-   // return chi value
-   return chi;
-}
-
-
-double RMT::getNNSDChiSquare(float* eigens, int size)
-{
-   double chiTest = 0;
-   double avg_chiTest {0};
-   int i = 0;
-   int m;
-   float * newE;
-   int newSize;
-   for (m = minUnfoldingPace;m<maxUnfoldingPace;++m)
-   {
-      newE = degenerate(eigens,size,&newSize);
-      if (newSize<minEigenVectorSize)
-      {
-         continue;
-      }
-      if ((newSize/m)<5)
-      {
-         continue;
-      }
-      chiTest = getNNSDPaceChiSquare(newE,newSize,nnsdHistogramBin,m);
-      avg_chiTest += chiTest;
-      i++;
-      free(newE);
-   }
-   return avg_chiTest/i;
-}
-
-
-
-
-float RMT::newGetPaceChiSquare(const QVector<double>& eigens, int pace)
-{
-   // initialize chi value that will be returned and get unfolded vector
-   float chi {0.0};
-   QVector<double> unfolded {newUnfold(eigens,pace)};
-
-   // iterate through each bin to count matches
-   for (int i = 0; i < ((int)(3.0/_chiSquareBinSize) + 1) ;++i)
-   {
-      // initialize count and iterate through all unfolded values
-      int count {0};
-      for (const auto& unfold : unfolded)
-      {
-         // if unfold value is within bin range increment count
-         if ( unfold < (i + 1)*_chiSquareBinSize && unfold > i*_chiSquareBinSize )
-         {
-            ++count;
-         }
-      }
-
-      // calculate expected value and add to chi based off difference from expected count and actual
-      float expect {(exp(-1*i*_chiSquareBinSize)
-               - exp(-1*(i + 1)*_chiSquareBinSize))*eigens.size()};
-      chi += ((double)count - expect)*((double)count - expect)/expect;
-   }
-
-   // return chi value
-   return chi;
-}
-
-
-
-double RMT::getNNSDPaceChiSquare(float* eigens, int size, double bin, int pace)
-{
-   double * edif;
-   double obj;
-   double expect;
-   double chi = 0;
-   int i, j, count;
-   edif = unfolding(eigens,size,pace);
-   --size;
-   int n = (int)(3.0/bin)+1;
-   for (i = 0;i<n;++i)
-   {
-      count = 0;
-      for (j = 0;j<size;j++)
-      {
-         if (edif[j]>(i*bin)&&edif[j]<((i+1)*bin))
-         {
-            count++;
-         }
-      }
-      expect = (exp(-1*i*bin)-exp(-1*(i+1)*bin))*size;
-      obj = (double)count;
-      chi += (obj-expect)*(obj-expect)/expect;
-   }
-   free(edif);
-   return chi;
-}
-
-
-void RMT::newDegenerate(QVector<double>* eigens)
+void RMT::degenerate(QVector<double>* eigens)
 {
    // iterate through all eigen values
    for (auto& eigen : *eigens)
