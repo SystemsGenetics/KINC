@@ -558,6 +558,55 @@ void RMT::quickSortD(double* l, int size)
 
 
 
+QVector<double> RMT::newUnfold(const QVector<double>& eigens, int pace)
+{
+   // using declarations for gsl resource pointers
+   using gsl_interp_accel_ptr = unique_ptr<gsl_interp_accel,decltype(&gsl_interp_accel_free)>;
+   using gsl_spline_ptr = unique_ptr<gsl_spline,decltype(&gsl_spline_free)>;
+
+   // determine pace size and create x and y arrays
+   int paceSize {eigens.size()/pace};
+   unique_ptr<double[]> paceXs(new double[paceSize]);
+   unique_ptr<double[]> paceYs(new double[paceSize]);
+
+   // populate x and y arrays
+   for (int i = 0; i < paceSize ;++i)
+   {
+      paceXs[i] = eigens.at(i*pace);
+      paceYs[i] = (i*pace + 1)/(double)eigens.size();
+   }
+   paceXs[paceSize - 1] = eigens.back();
+   paceYs[paceSize - 1] = 1.0;
+
+   // create resources and initialize gsl spline
+   gsl_interp_accel_ptr interp(gsl_interp_accel_alloc(),&gsl_interp_accel_free);
+   gsl_spline_ptr spline(gsl_spline_alloc(gsl_interp_akima,paceSize),&gsl_spline_free);
+   gsl_spline_init(spline.get(),paceXs.get(),paceYs.get(),paceSize);
+
+   // create unfolding vector
+   QVector<double> ret;
+   ret.reserve(eigens.size());
+   ret.push_back(0.0);
+
+   // populate unfolding vector from gsl spline values
+   for (int i = 1; i < (eigens.size() - 1) ;++i)
+   {
+      ret.push_back(gsl_spline_eval(spline.get(),eigens.at(i),interp.get()));
+   }
+   ret.push_back(1.0);
+
+   // rewrite unfolding vector values as distance between values popping the very last value
+   for (int i = 0; i < (eigens.size() - 1) ;++i)
+   {
+      ret[i] = (ret.at(i + 1) - ret.at(i))*eigens.size();
+   }
+   ret.pop_back();
+
+   // sort unfolding vector and return it
+   sort(ret.begin(),ret.end());
+   return ret;
+}
+
 
 
 double* RMT::unfolding(float* e, int size, int m)
@@ -652,6 +701,35 @@ float* RMT::degenerate(float* eigens, int size, int* newSize)
 
 
 
+float RMT::newGetChiSquare(QVector<double>* eigens)
+{
+   // initialize chi value and degenerate eigen vector
+   float chi {0.0};
+   newDegenerate(eigens);
+
+   // make sure new size of eigen vector is minimum size
+   if ( eigens->size() >= minEigenVectorSize )
+   {
+      // initialize chi test count and iterate through all paces
+      int chiTestCount {0};
+      for (int pace = minUnfoldingPace; pace < maxUnfoldingPace ;++pace)
+      {
+         // if ??? increment chi value with paced chi square value and increment test count
+         if ( (eigens->size()/pace) >= 5 )
+         {
+            chi += newGetPaceChiSquare(*eigens,pace);
+            ++chiTestCount;
+         }
+      }
+
+      // divide chi value by amount of chi tests added to it
+      chi /= chiTestCount;
+   }
+
+   // return chi value
+   return chi;
+}
+
 
 double RMT::getNNSDChiSquare(float* eigens, int size)
 {
@@ -682,6 +760,36 @@ double RMT::getNNSDChiSquare(float* eigens, int size)
 
 
 
+
+float RMT::newGetPaceChiSquare(const QVector<double>& eigens, int pace)
+{
+   // initialize chi value that will be returned and get unfolded vector
+   float chi {0.0};
+   QVector<double> unfolded {newUnfold(eigens,pace)};
+
+   // iterate through each bin to count matches
+   for (int i = 0; i < ((int)(3.0/_chiSquareBinSize) + 1) ;++i)
+   {
+      // initialize count and iterate through all unfolded values
+      int count {0};
+      for (const auto& unfold : unfolded)
+      {
+         // if unfold value is within bin range increment count
+         if ( unfold < (i + 1)*_chiSquareBinSize && unfold > i*_chiSquareBinSize )
+         {
+            ++count;
+         }
+      }
+
+      // calculate expected value and add to chi based off difference from expected count and actual
+      float expect {(exp(-1*i*_chiSquareBinSize)
+               - exp(-1*(i + 1)*_chiSquareBinSize))*eigens.size()};
+      chi += ((double)count - expect)*((double)count - expect)/expect;
+   }
+
+   // return chi value
+   return chi;
+}
 
 
 
@@ -714,10 +822,10 @@ double RMT::getNNSDPaceChiSquare(float* eigens, int size, double bin, int pace)
 }
 
 
-void RMT::newDegenerate(QVector<double>& eigens)
+void RMT::newDegenerate(QVector<double>* eigens)
 {
    // iterate through all eigen values
-   for (auto& eigen : eigens)
+   for (auto& eigen : *eigens)
    {
       // if eigen value is less than minimum set it to zero
       if ( eigen < _minimumEigenValue )
@@ -727,16 +835,16 @@ void RMT::newDegenerate(QVector<double>& eigens)
    }
 
    // sort all eigen values
-   sort(eigens.begin(),eigens.end());
+   sort(eigens->begin(),eigens->end());
 
    // iterate through eigen values until second to last is reached
    int i {0};
-   while ( (i + 1) < eigens.size() )
+   while ( (i + 1) < eigens->size() )
    {
       // if next eigen value equals current eigen value remove current value
-      if ( eigens.at(i) == eigens.at(i + 1) )
+      if ( eigens->at(i) == eigens->at(i + 1) )
       {
-         eigens.removeAt(i);
+         eigens->removeAt(i);
       }
 
       // else iterate to next value
