@@ -391,7 +391,71 @@ void Pearson::initializeBlockExpressions()
 }
 
 
+void::Pearson::runSerial()
+{
+    // Initialize correlation gene pair and expression genes for input/output
+    CorrelationMatrix::Pair pair(_output);
+    pair.setModeSize(1);
+    ExpressionMatrix::Gene gene1(_input);
+    ExpressionMatrix::Gene gene2(_input);
 
+    // Initialize the first gene comparision
+    int x {1};
+    int y {0};
+
+    // Iterate through the gene pairs
+    // _output->getGeneSize() represents all of the possible comparisons that can
+    // be done limited by the gene with the least amount of samples
+    while(x < _output->getGeneSize())
+    {
+        // Initialize the running sum variables
+        double sumx {0.0}, sumy {0.0}, sumx2 {0.0}, sumy2 {0.0}, sumxy {0.0};
+        // A trap to kill this function if there is an interrupt i.e. the user wants to kill
+        // the process
+        if ( isInterruptionRequested() )
+        {
+           return;
+        }
+
+        // Initialize sample size and read in gene expressions
+        // Keep track of the count of viable samples that ARE NOT nans
+        int size {0};
+        gene1.read(x);
+        gene2.read(y);
+
+        // Iterate through the gene1 and gene2 sample row
+        for (auto i = 0; i < _input->getSampleSize(); i++)
+        {
+            if(!std::isnan(gene1.at(i)) && !std::isnan(gene2.at(i)))
+            {
+                // Multiply the current scores together
+                //  - keep a running sum of this
+                sumxy += gene1.at(i) * gene2.at(i);
+                //  - keep a running sum the x and y values
+                sumx += gene1.at(i);
+                sumy += gene2.at(i);
+                //  - keep a running sum of the square of x and y values
+                sumx2 += pow(gene1.at(i), 2.0);
+                sumy2 += pow(gene2.at(i), 2.0);
+                size++;
+            }
+        }
+
+        // Once we're out of this loop we have the summation values needed to
+        // calculate the Pearson Coefficient for the selected gene comparison
+        double numerator {(size * sumxy) - (sumx * sumy)};
+        double denominator {sqrt(((size*sumx2) - pow(sumx, 2.0)))*sqrt(((size*sumy2) - pow(sumy, 2.0)))};
+
+        // Set result to correlation
+        pair.at(0,0) = numerator / denominator;
+
+        // Save this gene pair and increment to the next comparison
+        pair.write(x, y);
+        CorrelationMatrix::increment(x,y);
+
+    }
+
+}
 
 
 

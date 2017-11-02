@@ -31,7 +31,7 @@ public:
    virtual void setArgument(int argument, QVariant value) override final;
    virtual void setArgument(int argument, EAbstractData* data) override final;
    quint32 getCapabilities() const override final
-      { return Capabilities::OpenCL; }
+      { return Capabilities::Serial|Capabilities::OpenCL; }
    virtual bool initialize() override final;
    virtual int getBlockSize() override;
    virtual bool runBlock(int block) override final;
