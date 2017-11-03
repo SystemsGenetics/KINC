@@ -391,7 +391,7 @@ void Pearson::initializeBlockExpressions()
 }
 
 
-void::Pearson::runSerial()
+void Pearson::runSerial()
 {
     // Initialize correlation gene pair and expression genes for input/output
     CorrelationMatrix::Pair pair(_output);
