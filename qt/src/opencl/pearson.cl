@@ -42,20 +42,24 @@ int fetchLists(__global float* expressions, int indexA, int indexB, __global flo
 
 
 
-
+/*
+ *
+ *
+ *
+ */
 __kernel void calculatePearsonBlock(int size, int minimumSize, __global float* expressions
                                     , __global float* workLists , __global int* targetList
                                     , __global float* resultList)
 {
-   // initialize variables used for pearson
+   // Initialize variables used for pearson
    float aSum;
    float bSum;
+   float aaSum;
+   float bbSum;
+   float abSum;
    float a;
    float b;
-   float ba;
-   float bb;
-   float ar;
-   float br;
+
 
    // initialize counters and other variables
    int x;
@@ -66,39 +70,29 @@ __kernel void calculatePearsonBlock(int size, int minimumSize, __global float* e
    __global float* listA = &workLists[2*i*size];
    __global float* listB = &workLists[(2*i+1)*size];
 
-   // populate work lists from expression data and make sure minimum size is reached
+   // Populate work lists from expression data and make sure minimum size is reached
    newSize = fetchLists(expressions,targetList[2*i],targetList[2*i + 1],listA,listB,size);
    if ( newSize >= minimumSize )
    {
-      // calculate summation of both lists
-      aSum = 0.0;
-      bSum = 0.0;
+      // Calculate summation of both lists
+      aSum = aaSum = 0.0;
+      bSum = bbSum = 0.0;
+      abSum = 0.0;
       for (x = 0; x < newSize ;++x)
       {
          aSum += listA[x];
          bSum += listB[x];
+
+         aaSum += (listA[x]*listA[x]);
+         bbSum += (listB[x]*listB[x]);
+
+         abSum += (listA[x]*listB[x]);
       }
 
-      // divide summations by list size and initialize temporary variables
-      aSum /= newSize;
-      bSum /= newSize;
-      a = 0;
-      ba = 0;
-      bb = 0;
-
-      // iterate through both lists
-      for (x = 0; x < newSize ;++x)
-      {
-         // conduct all math required for pearson
-         ar = listA[x] - aSum;
-         br = listB[x] - bSum;
-         a += ar + br;
-         ba += ar*ar;
-         bb += br*br;
-      }
-
-      // calculate denominator of pearson and check to see if it is zero
-      b = sqrt(ba*bb);
+      // Calculate numerator of pearson
+      a = ((newSize)*abSum) - (aSum*bSum);
+      // Calculate denominator of pearson and check to see if it is zero
+      b = sqrt(((newSize*aaSum)-(aSum*aSum))*((newSize*bbSum)-(bSum*bSum)));
       if ( b == 0.0 )
       {
          // set result to zero
