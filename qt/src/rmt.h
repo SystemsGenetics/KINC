@@ -15,11 +15,14 @@ public:
    {
       InputData = 0
       ,OutputFile
+      ,LogFile
+      ,FilterSize
       ,Total
    };
    virtual int getArgumentCount() override final { return Total; }
    virtual ArgumentType getArgumentData(int argument) override final;
    virtual QVariant getArgumentData(int argument, Role role) override final;
+   virtual void setArgument(int argument, QVariant value) override final;
    virtual void setArgument(int argument, QFile* file) override final;
    virtual void setArgument(int argument, EAbstractData* data) override final;
    virtual quint32 getCapabilities() const override final { return Capabilities::Serial; }
@@ -35,7 +38,6 @@ private:
    float getPaceChiSquare(const QVector<double>& eigens, int pace);
    QVector<double> unfold(const QVector<double>& eigens, int pace);
    void degenerate(QVector<double>* eigens);
-   constexpr static int _filterSize {10};
    constexpr static float _nnsdHistogramBin {0.05};
    constexpr static int _minUnfoldingPace {10};
    constexpr static int _maxUnfoldingPace {41};
@@ -44,6 +46,8 @@ private:
    constexpr static double _minimumEigenValue {0.000001};
    CorrelationMatrix* _input {nullptr};
    QFile* _output {nullptr};
+   QFile* _logfile {nullptr};
+   int _filterSize {10};
    float _initialThreshold {0.99607};
    float _thresholdStep {0.001};
    float _thresholdMinimum {0.5};

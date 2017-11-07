@@ -30,6 +30,8 @@ EAbstractAnalytic::ArgumentType RMT::getArgumentData(int argument)
    {
    case InputData: return Type::DataIn;
    case OutputFile: return Type::FileOut;
+   case LogFile: return Type::FileOut;
+   case FilterSize: return Type::Integer;
    default: return Type::Bool;
    }
 }
@@ -53,6 +55,8 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       {
       case InputData: return QString("input");
       case OutputFile: return QString("output");
+      case LogFile: return QString("log");
+      case FilterSize: return QString("filter");
       default: return QVariant();
       }
    case Role::Title:
@@ -61,6 +65,8 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       {
       case InputData: return tr("Input:");
       case OutputFile: return tr("Output:");
+      case LogFile: return tr("Log File:");
+      case FilterSize: return tr("Filter Size:");
       default: return QVariant();
       }
    case Role::WhatsThis:
@@ -71,6 +77,8 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
                                 " above a threshold determined by Random Matrix Theory.");
       case OutputFile: return tr("Output text file that will hold listing of all gene correlations"
                                  " above a certain threshold.");
+      case LogFile: return tr("Output text file that logs all chi trials.");
+      case FilterSize: return tr("Sample size for low pass filter of chi results.");
       default: return QVariant();
       }
    case Role::DataType:
@@ -81,10 +89,32 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       default: return QVariant();
       }
    case Role::FileFilters:
-      // see if this is output file and return filter else return nothing
+      // figure out which argument is being queried and return file filters
       switch (argument)
       {
       case OutputFile: return tr("Text File %1").arg("(*.txt)");
+      case LogFile: return tr("Text File %1").arg("(*.txt)");
+      default: return QVariant();
+      }
+   case Role::DefaultValue:
+      // see if this is filter size and return default else return nothing
+      switch (argument)
+      {
+      case FilterSize: return 10;
+      default: return QVariant();
+      }
+   case Role::Minimum:
+      // see if this is filter size and return minimum else return nothing
+      switch (argument)
+      {
+      case FilterSize: return 5;
+      default: return QVariant();
+      }
+   case Role::Maximum:
+      // see if this is filter size and return maximum else return nothing
+      switch (argument)
+      {
+      case FilterSize: return 200;
       default: return QVariant();
       }
    default:
@@ -97,12 +127,12 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
 
 
 
-void RMT::setArgument(int argument, QFile *file)
+void RMT::setArgument(int argument, QVariant value)
 {
-   // set output argument if this is correct argument
-   if ( argument == OutputFile )
+   // set filter size if this is correct argument
+   if ( argument == FilterSize )
    {
-      _output = file;
+      _filterSize = value.toInt();
    }
 }
 
@@ -111,7 +141,26 @@ void RMT::setArgument(int argument, QFile *file)
 
 
 
-void RMT::setArgument(int argument, EAbstractData *data)
+void RMT::setArgument(int argument, QFile* file)
+{
+   // figure out which argument is being queried and set file pointer
+   switch (argument)
+   {
+   case OutputFile:
+      _output = file;
+      break;
+   case LogFile:
+      _logfile = file;
+      break;
+   }
+}
+
+
+
+
+
+
+void RMT::setArgument(int argument, EAbstractData* data)
 {
    // set input argument if this is correct argument
    if ( argument == InputData )
@@ -128,12 +177,12 @@ void RMT::setArgument(int argument, EAbstractData *data)
 bool RMT::initialize()
 {
    // make sure input and output were set properly
-   if ( !_input || !_output )
+   if ( !_input || !_output || !_logfile )
    {
       // report argument error and fail
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
-      e.setDetails(QObject::tr("Did not get valid input and/or output arguments."));
+      e.setDetails(QObject::tr("Did not get valid input, output, or logfile arguments."));
       throw e;
    }
 
@@ -204,8 +253,9 @@ void RMT::runSerial()
 
 float RMT::determineThreshold()
 {
-   // generate list of maximum threshold for each gene
+   // generate list of maximum threshold for each gene and initialize log text stream
    generateGeneThresholds();
+   QTextStream stream;
 
    // initialize chi, threshold, and history of both
    float chi {0.0};
@@ -226,19 +276,27 @@ float RMT::determineThreshold()
          return 0.0;
       }
 
+      // add new raw chi value to queue
       int size;
       previousChi.enqueue(determineChi(threshold,&size));
+
+      // check if queue has enough samples
       if ( previousChi.size() > _filterSize )
       {
+         // remove last chi in queue and get sum of all chi samples
          previousChi.dequeue();
          float sum {0};
          for (const auto& chi : previousChi)
          {
             sum += chi;
          }
+
+         // divide the sum by total number of samples and set that to filtered chi
          chi = sum/(float)_filterSize;
       }
-      cout << threshold << "\t" << previousChi.back() << "\t" << chi << "\t" << size <<"\n";
+
+      // output to log file
+      stream << threshold << "\t" << previousChi.back() << "\t" << chi << "\t" << size << "\n";
 
       // decrement threshold by step and make sure minimum is not reached
       threshold -= _thresholdStep;
@@ -265,7 +323,7 @@ float RMT::determineThreshold()
    }
 
    // return threshold where chi was first above 100
-   return threshold;
+   return threshold - _thresholdStep;
 }
 
 

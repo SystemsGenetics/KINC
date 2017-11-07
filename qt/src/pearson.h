@@ -36,8 +36,7 @@ public:
    virtual int getBlockSize() override;
    virtual bool runBlock(int block) override final;
    virtual void finish() override final {}
-   virtual void runSerial() override;
-
+   virtual void runSerial() override final;
 private:
    struct Block
    {
