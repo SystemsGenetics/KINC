@@ -1,7 +1,7 @@
 
 ![alt tag](https://raw.githubusercontent.com/SystemsGenetics/KINC/version1/KINClogo.png)
 
-Knowledge Indpendent Network Construction
+Knowledge Independent Network Construction
 ==========
 
 This package provides two binaries. One that generates pearson correlations for
