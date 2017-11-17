@@ -1,42 +1,19 @@
-#include "linker.cpp"
-#include <iostream>
+#include <ace/gui/Application.h>
+#include "analyticfactory.h"
+#include "datafactory.h"
 
 
 
-#ifndef UNIT_TEST
-
-
-
-int main(int argc, char* argv[])
-{
-   HelpFactory::getInstance().addItem(std::unique_ptr<AbstractHelpItem>(new EMatrixHelpItem));
-   HelpFactory::getInstance().addItem(std::unique_ptr<AbstractHelpItem>(new CMatrixHelpItem));
-   HelpFactory::getInstance().addItem(std::unique_ptr<AbstractHelpItem>(new SpearmanHelpItem));
-   HelpFactory::getInstance().addItem(std::unique_ptr<AbstractHelpItem>(new RMTHelpItem));
-   HelpFactory::getInstance().addItem(std::unique_ptr<AbstractHelpItem>(new PearsonHelpItem));
-   KINCFactory factory;
-   return Ace::run("KINC",factory,argc,argv);
-}
-
-
-
-#else
-
-
-
-void unit_test(Ace::Console& console)
-{
-   Spearman::runUnitTests(console);
-}
+using namespace std;
 
 
 
 int main(int argc, char *argv[])
 {
-   KINCFactory factory;
-   return Ace::run("KINC",factory,argc,argv,unit_test);
+   unique_ptr<EAbstractAnalyticFactory> analyticFactory(new AnalyticFactory);
+   unique_ptr<EAbstractDataFactory> dataFactory(new DataFactory);
+   EAbstractAnalyticFactory::setInstance(move(analyticFactory));
+   EAbstractDataFactory::setInstance(move(dataFactory));
+   EApplication a(argc,argv,"KINC","kinc");
+   return a.exec();
 }
-
-
-
-#endif

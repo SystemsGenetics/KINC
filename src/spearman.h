@@ -1,73 +1,105 @@
 #ifndef SPEARMAN_H
 #define SPEARMAN_H
-#include <ace.h>
-#include "ematrix.h"
-#include "cmatrix.h"
+#include <ace/core/AceCore.h>
+#include <ace/core/AceOpenCL.h>
 
 
 
-namespace Ace = AccelCompEng;
+class ExpressionMatrix;
+class CorrelationMatrix;
 
 
 
-/// Spearman plugin class that uses spearman analysis to generate correlations between genes.
-class Spearman : public Ace::Analytic
+class Spearman : public EAbstractAnalytic
 {
+   Q_OBJECT
 public:
-#ifdef UNIT_TEST
-   static void runUnitTests(Ace::Console& console);
-#endif
-   struct InvalidDataType : public Ace::Exception { using Ace::Exception::Exception; };
-   struct TooManyInputs : public Ace::Exception { using Ace::Exception::Exception; };
-   struct TooManyOutputs : public Ace::Exception { using Ace::Exception::Exception; };
-   struct NoDataInput : public Ace::Exception { using Ace::Exception::Exception; };
-   struct NoDataOutput : public Ace::Exception { using Ace::Exception::Exception; };
-   struct TooManySamples : public Ace::Exception { using Ace::Exception::Exception; };
-   /// ACE load input data object call.
-   void input(Ace::Data*) override final;
-   /// ACE load output data object call.
-   void output(Ace::Data*) override final;
-protected:
-   /// ACE OpenCL accelerated execution call.
-   void execute_cl(Ace::GetOpts&,Ace::Terminal&) override final;
-   /// ACE CPU non-accelerated execution call.
-   void execute_pn(Ace::GetOpts&,Ace::Terminal&) override final;
+   ~Spearman();
+   enum Arguments
+   {
+      InputData = 0
+      ,OutputData
+      ,Minimum
+      ,BlockSize
+      ,KernelSize
+      ,PreAllocate
+      ,Total
+   };
+   virtual int getArgumentCount() override final { return Total; }
+   virtual ArgumentType getArgumentData(int argument) override final;
+   virtual QVariant getArgumentData(int argument, Role role) override final;
+   virtual void setArgument(int argument, QVariant value) override final;
+   virtual void setArgument(int argument, EAbstractData* data) override final;
+   quint32 getCapabilities() const override final
+      { return Capabilities::Serial|Capabilities::OpenCL; }
+   virtual bool initialize() override final;
+   virtual void runSerial() override final;
+   virtual int getBlockSize() override;
+   virtual bool runBlock(int block) override final;
+   virtual void finish() override final {}
 private:
-   void theMaddening();
-   void theMaddening2();
-   using elist = Ace::CLBuffer<cl_float>;
-   int pow2_ceil(int);
-   int pow2_floor(int);
-   void calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList, int size, int blSize
-                  , int smSize, int minSize);
-   EMatrix* _in {nullptr};
-   CMatrix* _out {nullptr};
+   struct Block
+   {
+      enum
+      {
+         Start
+         ,Load
+         ,Execute
+         ,Read
+         ,Done
+      };
+      Block(EOpenCLDevice& device, int size, int kernelSize)
+      {
+         references = device.makeBuffer<cl_int>(2*kernelSize).release();
+         answers = device.makeBuffer<cl_float>(kernelSize).release();
+         workBuffer = device.makeBuffer<cl_float>(2*size*kernelSize).release();
+         rankBuffer = device.makeBuffer<cl_int>(2*size*kernelSize).release();
+         if ( !device )
+         {
+            E_MAKE_EXCEPTION(e);
+            throw e;
+         }
+      }
+      ~Block()
+      {
+         delete references;
+         delete answers;
+         delete workBuffer;
+         delete rankBuffer;
+      }
+      int state {Start};
+      int x;
+      int y;
+      EOpenCLEvent event;
+      EOpenCLBuffer<cl_int>* references;
+      EOpenCLBuffer<cl_float>* answers;
+      EOpenCLBuffer<cl_float>* workBuffer;
+      EOpenCLBuffer<cl_int>* rankBuffer;
+   };
+   void initializeKernel();
+   void initializeBlockExpressions();
+   void initializeKernelArguments();
+   void runStartBlock(Block& block);
+   void runLoadBlock(Block& block);
+   void runExecuteBlock(Block& block);
+   void runReadBlock(Block& block);
+   ExpressionMatrix* _input {nullptr};
+   CorrelationMatrix* _output {nullptr};
+   int _minimum {30};
+   int _blockSize {4};
+   int _kernelSize {4096};
+   bool _allocate {false};
+   Block** _blocks {nullptr};
+   EOpenCLProgram* _program {nullptr};
+   EOpenCLKernel* _kernel {nullptr};
+   EOpenCLBuffer<cl_float>* _expressions {nullptr};
+   int _x {1};
+   int _y {0};
+   qint64 _totalPairs;
+   qint64 _pairsComplete {0};
+   int _lastPercent {0};
 };
 
-
-
-class SpearmanHelpItem : public AbstractHelpItem
-{
-public:
-   std::string getName() const override final
-   {
-      return "spearman";
-   }
-   std::string getDescription() const override final
-   {
-      return "spearman Analytic\n"
-            "\n"
-            "This analytic conducts spearman analysis on emx data and outputs cmx data.\n"
-             "\n"
-             "spearman --in=[inname] --out=[outname]:cmx (--slots|--bsize|--minsize)\n"
-             "\n"
-             "Takes data object [inname] that must be emx and outputs new file [outname] that is"
-             " a cmx data object. --slots specifies how many parallel slots are processed at the"
-             " same time. --bsize specifies how many kernels are ran in parallel per slot."
-             " --minsize specifies he minimum number of samples a gene pair must share to be given"
-             " a spearman coefficient.\n";
-   }
-};
 
 
 #endif

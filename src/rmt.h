@@ -1,71 +1,59 @@
 #ifndef RMT_H
 #define RMT_H
-#include <ace.h>
-#include "cmatrix.h"
+#include <ace/core/AceCore.h>
 
 
 
-namespace Ace = AccelCompEng;
+class CorrelationMatrix;
 
 
 
-/// Analytic plugin class that uses Random Matrix Theory to generate a correlation threshold.
-class RMT : public Ace::Analytic
+class RMT : public EAbstractAnalytic
 {
 public:
-   struct InvalidDataType : public Ace::Exception { using Ace::Exception::Exception; };
-   struct TooManyInputs : public Ace::Exception { using Ace::Exception::Exception; };
-   struct TooManyOutputs : public Ace::Exception { using Ace::Exception::Exception; };
-   struct NoDataInput : public Ace::Exception { using Ace::Exception::Exception; };
-   /// ACE load input data object call.
-   void input(Ace::Data*) override final;
-   /// ACE load output data object call.
-   void output(Ace::Data*) override final;
-protected:
-   /// ACE OpenCL accelerated execution call.
-   void execute_cl(Ace::GetOpts&,Ace::Terminal&) override final;
-   /// ACE CPU non-accelerated execution call.
-   void execute_pn(Ace::GetOpts&,Ace::Terminal&) override final;
+   enum Arguments
+   {
+      InputData = 0
+      ,OutputFile
+      ,LogFile
+      ,FilterSize
+      ,Total
+   };
+   virtual int getArgumentCount() override final { return Total; }
+   virtual ArgumentType getArgumentData(int argument) override final;
+   virtual QVariant getArgumentData(int argument, Role role) override final;
+   virtual void setArgument(int argument, QVariant value) override final;
+   virtual void setArgument(int argument, QFile* file) override final;
+   virtual void setArgument(int argument, EAbstractData* data) override final;
+   virtual quint32 getCapabilities() const override final { return Capabilities::Serial; }
+   virtual bool initialize() override final;
+   virtual void runSerial() override final;
 private:
-   std::unique_ptr<float> matrix_eigens(const std::unique_ptr<double>& matrix, int size);
-   std::unique_ptr<double> prune_matrix(float threshold, int& size);
-   void generate_gene_thresholds(Ace::Terminal&);
-   double* unfolding(float* e, int size, int m);
-   float* degenerate(float* eigens, int size, int* newSize);
-   double getNNSDChiSquare(float* eigens, int size);
-   double getNNSDPaceChiSquare(float* eigens, int size, double bin, int pace);
-   static void swapD(double* l, int idx1, int idx2);
-   static void quickSortD(double* l, int size);
-   CMatrix* _in {nullptr};
-   constexpr static int minEigenVectorSize {100};
-   constexpr static float nnsdHistogramBin {0.05};
-   constexpr static float _chiSquareTestThreshold {0.99607};
-   constexpr static float _chiMinimum {0.5};
-   constexpr static float _chiStep {0.001};
-   constexpr static int minUnfoldingPace {10};
-   constexpr static int maxUnfoldingPace {41};
-   std::unique_ptr<float> _geneThresh;
+   float determineThreshold();
+   float determineChi(float threshold, int* size);
+   void generateGeneThresholds();
+   QVector<double> generatePruneMatrix(float threshold, int* size);
+   QVector<double> generateMatrixEigens(QVector<double>* pruneMatrix, int size);
+   float getChiSquare(QVector<double>* eigens);
+   float getPaceChiSquare(const QVector<double>& eigens, int pace);
+   QVector<double> unfold(const QVector<double>& eigens, int pace);
+   void degenerate(QVector<double>* eigens);
+   constexpr static float _nnsdHistogramBin {0.05};
+   constexpr static int _minUnfoldingPace {10};
+   constexpr static int _maxUnfoldingPace {41};
+   constexpr static int _minEigenVectorSize {100};
+   constexpr static float _chiSquareBinSize {0.05};
+   constexpr static double _minimumEigenValue {0.000001};
+   CorrelationMatrix* _input {nullptr};
+   QFile* _output {nullptr};
+   QFile* _logfile {nullptr};
+   int _filterSize {10};
+   float _initialThreshold {0.99607};
+   float _thresholdStep {0.001};
+   float _thresholdMinimum {0.5};
+   QVector<float> _geneThresholds;
 };
 
-
-
-class RMTHelpItem : public AbstractHelpItem
-{
-public:
-   std::string getName() const override final
-   {
-      return "rmt";
-   }
-   std::string getDescription() const override final
-   {
-      return "rmt Analytic\n"
-            "\n"
-            "rmt --in=[inname].\n"
-             "\n"
-             "[inname] must be a cmx data object. the RMT threshold is calculated for the"
-             " correlation matrix.\n";
-   }
-};
 
 
 #endif

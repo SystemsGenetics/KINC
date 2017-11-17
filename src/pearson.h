@@ -1,63 +1,102 @@
 #ifndef PEARSON_H
 #define PEARSON_H
-#include <ace.h>
-#include "ematrix.h"
-#include "cmatrix.h"
+#include <ace/core/AceCore.h>
+#include <ace/core/AceOpenCL.h>
 
 
 
-namespace Ace = AccelCompEng;
+class ExpressionMatrix;
+class CorrelationMatrix;
 
 
 
-class Pearson : public Ace::Analytic
+class Pearson : public EAbstractAnalytic
 {
+   Q_OBJECT
 public:
-   struct InvalidDataType : public Ace::Exception { using Ace::Exception::Exception; };
-   struct TooManyInputs : public Ace::Exception { using Ace::Exception::Exception; };
-   struct TooManyOutputs : public Ace::Exception { using Ace::Exception::Exception; };
-   struct NoDataInput : public Ace::Exception { using Ace::Exception::Exception; };
-   struct NoDataOutput : public Ace::Exception { using Ace::Exception::Exception; };
-   struct TooManySamples : public Ace::Exception { using Ace::Exception::Exception; };
-   void input(Ace::Data*) override final;
-   void output(Ace::Data*) override final;
-protected:
-   void execute_cl(Ace::GetOpts&,Ace::Terminal&) override final;
-   void execute_pn(Ace::GetOpts&,Ace::Terminal&) override final;
+   ~Pearson();
+   enum Arguments
+   {
+      InputData = 0
+      ,OutputData
+      ,Minimum
+      ,BlockSize
+      ,KernelSize
+      ,PreAllocate
+      ,Total
+   };
+   virtual int getArgumentCount() override final { return Total; }
+   virtual ArgumentType getArgumentData(int argument) override final;
+   virtual QVariant getArgumentData(int argument, Role role) override final;
+   virtual void setArgument(int argument, QVariant value) override final;
+   virtual void setArgument(int argument, EAbstractData* data) override final;
+   quint32 getCapabilities() const override final
+      { return Capabilities::Serial|Capabilities::OpenCL; }
+   virtual bool initialize() override final;
+   virtual int getBlockSize() override;
+   virtual bool runBlock(int block) override final;
+   virtual void finish() override final {}
+   virtual void runSerial() override final;
 private:
-   using elist = Ace::CLBuffer<cl_float>;
-   int pow2_ceil(int);
-   int pow2_floor(int);
-   void calculate(Ace::Terminal& tm, Ace::CLKernel& kern, elist& expList, int size, int wSize,
-                  int chunk, int blSize, int smSize, int minSize);
-   EMatrix* _in {nullptr};
-   CMatrix* _out {nullptr};
+   struct Block
+   {
+      enum
+      {
+         Start
+         ,Load
+         ,Execute
+         ,Read
+         ,Done
+      };
+      Block(EOpenCLDevice& device, int size, int kernelSize)
+      {
+         references = device.makeBuffer<cl_int>(2*kernelSize).release();
+         answers = device.makeBuffer<cl_float>(kernelSize).release();
+         workBuffer = device.makeBuffer<cl_float>(2*size*kernelSize).release();
+         if ( !device )
+         {
+            E_MAKE_EXCEPTION(e);
+            throw e;
+         }
+      }
+      ~Block()
+      {
+         delete references;
+         delete answers;
+         delete workBuffer;
+      }
+      int state {Start};
+      int x;
+      int y;
+      EOpenCLEvent event;
+      EOpenCLBuffer<cl_int>* references;
+      EOpenCLBuffer<cl_float>* answers;
+      EOpenCLBuffer<cl_float>* workBuffer;
+   };
+   void initializeKernel();
+   void initializeBlockExpressions();
+   void initializeKernelArguments();
+   void runStartBlock(Block& block);
+   void runLoadBlock(Block& block);
+   void runExecuteBlock(Block& block);
+   void runReadBlock(Block& block);
+   ExpressionMatrix* _input {nullptr};
+   CorrelationMatrix* _output {nullptr};
+   int _minimum {30};
+   int _blockSize {4};
+   int _kernelSize {4096};
+   bool _allocate {false};
+   Block** _blocks {nullptr};
+   EOpenCLProgram* _program {nullptr};
+   EOpenCLKernel* _kernel {nullptr};
+   EOpenCLBuffer<cl_float>* _expressions {nullptr};
+   int _x {1};
+   int _y {0};
+   qint64 _totalPairs;
+   qint64 _pairsComplete {0};
+   int _lastPercent {0};
 };
 
-
-
-class PearsonHelpItem : public AbstractHelpItem
-{
-public:
-   std::string getName() const override final
-   {
-      return "pearson";
-   }
-   std::string getDescription() const override final
-   {
-      return "pearson Analytic\n"
-            "\n"
-            "This analytic conducts pearson analysis on emx data and outputs cmx data.\n"
-             "\n"
-             "pearson --in=[inname] --out=[outname]:cmx (--slots|--bsize|--minsize)\n"
-             "\n"
-             "Takes data object [inname] that must be emx and outputs new file [outname] that is"
-             " a cmx data object. --slots specifies how many parallel slots are processed at the"
-             " same time. --bsize specifies how many kernels are ran in parallel per slot."
-             " --minsize specifies he minimum number of samples a gene pair must share to be given"
-             " a pearson coefficient.\n";
-   }
-};
 
 
 #endif
