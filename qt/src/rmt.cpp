@@ -255,7 +255,7 @@ float RMT::determineThreshold()
 {
    // generate list of maximum threshold for each gene and initialize log text stream
    generateGeneThresholds();
-   QTextStream stream;
+   QTextStream stream(_logfile);
 
    // initialize chi, threshold, and history of both
    float chi {0.0};
