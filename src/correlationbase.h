@@ -19,23 +19,22 @@ public:
       void operator++();
       bool operator!=(const Iterator& object) const { return _x != object._x || _y != object._y; }
       bool operator==(const Iterator& object) const { return _x == object._x && _y == object._y; }
-      bool operator<(const Iterator& object) const { return indent() < object.indent(); }
-      bool operator>(const Iterator& object) const { return indent() > object.indent(); }
-      bool operator<=(const Iterator& object) const { return indent() <= object.indent(); }
-      bool operator>=(const Iterator& object) const { return indent() >= object.indent(); }
    private:
       int _x {1};
       int _y {0};
    };
+   void finish() override final;
 protected:
    void initialize(int geneSize, int dataSize, int offset);
    void write(Iterator correlation);
    void read();
    bool seek(Iterator correlation) const;
 private:
-   int _geneSize {0};
-   int _dataSize {0};
-   int _offset {0};
+   constexpr static int _headerSize {18};
+   qint32 _geneSize {0};
+   qint32 _dataSize {0};
+   qint64 _correlationSize {0};
+   qint16 _offset {0};
    Iterator _lastWrite;
 };
 
