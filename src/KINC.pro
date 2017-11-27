@@ -38,7 +38,8 @@ SOURCES += \
     correlationmatrix.cpp \
     spearman.cpp \
     rmt.cpp \
-    pearson.cpp
+    pearson.cpp \
+    correlationbase.cpp
 
 HEADERS += \
     analyticfactory.h \
@@ -48,7 +49,8 @@ HEADERS += \
     correlationmatrix.h \
     spearman.h \
     rmt.h \
-    pearson.h
+    pearson.h \
+    correlationbase.h
 
 RESOURCES += \
     opencl.qrc
