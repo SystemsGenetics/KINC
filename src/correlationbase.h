@@ -26,10 +26,13 @@ public:
    void finish() override final;
 protected:
    void initialize(int geneSize, int dataSize, int offset);
-   void write(Iterator correlation);
+   void write(Iterator index);
    void read();
-   bool seek(Iterator correlation) const;
+   bool findCorrelation(Iterator index) const
+      { return findCorrelation(index.indent(),0,_correlationSize - 1); }
 private:
+   bool findCorrelation(qint64 indent, int first, int last) const;
+   void seekCorrelation(int index) const;
    constexpr static int _headerSize {18};
    qint32 _geneSize {0};
    qint32 _dataSize {0};

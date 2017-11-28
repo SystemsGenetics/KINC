@@ -8,7 +8,7 @@
 void CorrelationBase::finish()
 {
    // seek to beginning of data object
-   if ( !EAbstractData::seek(0) )
+   if ( !seek(0) )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("File IO Error"));
@@ -67,8 +67,32 @@ void CorrelationBase::initialize(int geneSize, int dataSize, int offset)
 
 
 
-void CorrelationBase::write(Iterator correlation)
+void CorrelationBase::write(Iterator index)
 {
+   // make sure the new correlation has a higher indent than the previous written so the list of
+   // all indents are sorted
+   if ( index.indent() >= _lastWrite.indent() )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("Correlation Base Logical Error"));
+      e.setDetails(QObject::tr("Attempting to write indent %1 when last written is %2.")
+                   .arg(index.indent()).arg(_lastWrite.indent()));
+      throw e;
+   }
+
+   // seek to position for next correlation and write indent value
+   seekCorrelation(_correlationSize++);
+   stream() << index.indent();
+
+   // make sure writing worked and set new last written correlation
+   if ( !stream() )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("File IO Error"));
+      e.setDetails(QObject::tr("Failed writing to data object file."));
+      throw e;
+   }
+   _lastWrite = index;
 }
 
 
@@ -78,6 +102,26 @@ void CorrelationBase::write(Iterator correlation)
 
 void CorrelationBase::read()
 {
+   // seek to beginning of data object
+   if ( !seek(0) )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("File IO Error"));
+      e.setDetails(QObject::tr("Failed calling seek() on data object file."));
+      throw e;
+   }
+
+   // read in all data
+   stream() >> _geneSize >> _dataSize >> _correlationSize >> _offset;
+
+   // make sure reading worked
+   if ( !stream() )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("File IO Error"));
+      e.setDetails(QObject::tr("Failed reading in data object file."));
+      throw e;
+   }
 }
 
 
@@ -85,8 +129,79 @@ void CorrelationBase::read()
 
 
 
-bool CorrelationBase::seek(CorrelationBase::Iterator correlation) const
+bool CorrelationBase::findCorrelation(qint64 indent, int first, int last) const
 {
+   // calculate the midway pivot point and seek to it
+   int pivot {first + (last - first)/2};
+   seekCorrelation(pivot);
+
+   // read in indent value of correlation
+   qint64 readIndent;
+   stream() >> readIndent;
+
+   // make sure reading worked
+   if ( !stream() )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("File IO Error"));
+      e.setDetails(QObject::tr("Failed reading in correlation indent."));
+      throw e;
+   }
+
+   // if indent values match return true
+   if ( readIndent == indent )
+   {
+      return true;
+   }
+
+   // else if first and last are not the same divide and conquer
+   else if ( first != last )
+   {
+      // if indent is less than pivot divide lower half
+      if ( readIndent > indent )
+      {
+         // if pivot is first add one so pivot is not less than first when passed
+         if ( pivot == first )
+         {
+            ++pivot;
+         }
+         return findCorrelation(indent,first,pivot - 1);
+      }
+
+      // else it is greater so divide upper half
+      else
+      {
+         // if pivot is last decrement one so pivot is not greater than last when passed
+         if ( pivot == last )
+         {
+            --pivot;
+         }
+         return findCorrelation(indent,pivot + 1,last);
+      }
+   }
+
+   // else no correlation with given indent exists so return false
+   else
+   {
+      return false;
+   }
+}
+
+
+
+
+
+
+void CorrelationBase::seekCorrelation(int index) const
+{
+   // seek to correlation index requested making sure it worked
+   if ( !seek(_headerSize + _offset + index*(_dataSize + 8)) )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("File IO Error"));
+      e.setDetails(QObject::tr("Failed calling seek() on data object file."));
+      throw e;
+   }
 }
 
 
