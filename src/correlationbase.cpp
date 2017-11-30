@@ -5,7 +5,7 @@
 
 
 
-void CorrelationBase::finish()
+void CorrelationBase::readData()
 {
    // seek to beginning of data object
    if ( !seek(0) )
@@ -16,7 +16,36 @@ void CorrelationBase::finish()
       throw e;
    }
 
-   // write out all data
+   // read in all data
+   stream() >> _geneSize >> _dataSize >> _correlationSize >> _offset;
+
+   // make sure reading worked
+   if ( !stream() )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("File IO Error"));
+      e.setDetails(QObject::tr("Failed reading in data object file."));
+      throw e;
+   }
+}
+
+
+
+
+
+
+void CorrelationBase::newData()
+{
+   // seek to beginning of data and make sure it worked
+   if ( !seek(0) )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("File IO Error"));
+      e.setDetails(QObject::tr("Failed calling seek() on data object file."));
+      throw e;
+   }
+
+   // write out all header information
    stream() << _geneSize << _dataSize << _correlationSize << _offset;
 
    // make sure writing worked
@@ -26,6 +55,36 @@ void CorrelationBase::finish()
       e.setTitle(QObject::tr("File IO Error"));
       e.setDetails(QObject::tr("Failed writing to data object file."));
       throw e;
+   }
+}
+
+
+
+
+
+
+void CorrelationBase::prepare(bool preAllocate)
+{
+   // check to see if pre-allocation is requested
+   if ( preAllocate )
+   {
+      // seek to beginning of data and make sure it worked
+      if ( !seek(0) )
+      {
+         E_MAKE_EXCEPTION(e);
+         e.setTitle(QObject::tr("File IO Error"));
+         e.setDetails(QObject::tr("Failed calling seek() on data object file."));
+         throw e;
+      }
+
+      // allocate total size needed in data and make sure it worked
+      if ( !allocate(getDataEnd()) )
+      {
+         E_MAKE_EXCEPTION(e);
+         e.setTitle(QObject::tr("File IO Error"));
+         e.setDetails(QObject::tr("Failed allocating space in data object file."));
+         throw e;
+      }
    }
 }
 
@@ -100,35 +159,6 @@ void CorrelationBase::write(Iterator index)
 
 
 
-void CorrelationBase::read()
-{
-   // seek to beginning of data object
-   if ( !seek(0) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("File IO Error"));
-      e.setDetails(QObject::tr("Failed calling seek() on data object file."));
-      throw e;
-   }
-
-   // read in all data
-   stream() >> _geneSize >> _dataSize >> _correlationSize >> _offset;
-
-   // make sure reading worked
-   if ( !stream() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("File IO Error"));
-      e.setDetails(QObject::tr("Failed reading in data object file."));
-      throw e;
-   }
-}
-
-
-
-
-
-
 bool CorrelationBase::findCorrelation(qint64 indent, int first, int last) const
 {
    // calculate the midway pivot point and seek to it
@@ -195,7 +225,7 @@ bool CorrelationBase::findCorrelation(qint64 indent, int first, int last) const
 void CorrelationBase::seekCorrelation(int index) const
 {
    // seek to correlation index requested making sure it worked
-   if ( !seek(_headerSize + _offset + index*(_dataSize + 8)) )
+   if ( !seek(_headerSize + _offset + index*(_dataSize + sizeof(qint64))) )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("File IO Error"));

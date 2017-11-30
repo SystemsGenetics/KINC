@@ -23,11 +23,15 @@ public:
       int _x {1};
       int _y {0};
    };
-   void finish() override final;
+   virtual void readData() override;
+   virtual quint64 getDataEnd() const override
+      { return _headerSize + _offset + _correlationSize*(_dataSize + sizeof(qint64)); }
+   virtual void newData() override;
+   virtual void prepare(bool preAllocate) override;
+   virtual void finish() override { CorrelationBase::newData(); }
 protected:
    void initialize(int geneSize, int dataSize, int offset);
    void write(Iterator index);
-   void read();
    bool findCorrelation(Iterator index) const
       { return findCorrelation(index.indent(),0,_correlationSize - 1); }
 private:
