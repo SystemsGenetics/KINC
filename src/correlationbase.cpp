@@ -159,6 +159,19 @@ void CorrelationBase::write(Iterator index)
 
 
 
+void CorrelationBase::findCorrelation(qint64 index) const
+{
+   // seek to correlation position and skip indent data
+   seekCorrelation(index);
+   qint64 indent;
+   stream() >> indent;
+}
+
+
+
+
+
+
 bool CorrelationBase::findCorrelation(qint64 indent, int first, int last) const
 {
    // calculate the midway pivot point and seek to it
@@ -222,8 +235,18 @@ bool CorrelationBase::findCorrelation(qint64 indent, int first, int last) const
 
 
 
-void CorrelationBase::seekCorrelation(int index) const
+void CorrelationBase::seekCorrelation(qint64 index) const
 {
+   // make sure index is within range
+   if ( index < 0 || index >= _correlationSize )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("Domain Error"));
+      e.setDetails(QObject::tr("Attempting to seek to correlation %1 when total size is %2.")
+                   .arg(index).arg(_correlationSize));
+      throw e;
+   }
+
    // seek to correlation index requested making sure it worked
    if ( !seek(_headerSize + _offset + index*(_dataSize + sizeof(qint64))) )
    {

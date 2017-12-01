@@ -13,14 +13,8 @@ using namespace std;
 
 void CorrelationMatrix::readData()
 {
-   // seek to beginning of data and make sure it worked
-   if ( !seek(0) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed calling seek() on data object file."));
-      throw e;
-   }
+   // read in correlation base data
+   CorrelationBase::readData();
 
    // read in all header values
    stream() >> _geneSize >> _sampleSize >> _correlationSize >> _maxModes;
@@ -40,73 +34,19 @@ void CorrelationMatrix::readData()
 
 
 
-quint64 CorrelationMatrix::getDataEnd() const
+void CorrelationMatrix::finish()
 {
-   // initialize gene, correlation, and mode size
-   qint64 geneSize {_geneSize};
-   qint64 correlationSize = _correlationSize*_maxModes*sizeof(Correlation);
-   qint64 modeSize = _sampleSize*_maxModes*sizeof(qint8);
-
-   // compute total size of data and return
-   return (geneSize*(geneSize-1)/2)*(correlationSize+modeSize+sizeof(qint8));
-}
-
-
-
-
-
-
-void CorrelationMatrix::newData()
-{
-   // seek to beginning of data and make sure it worked
-   if ( !seek(0) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed calling seek() on data object file."));
-      throw e;
-   }
-
-   // write out all header information
+   // write out correlation base's and this object's header
+   CorrelationBase::finish();
    stream() << _geneSize << _sampleSize << _correlationSize << _maxModes;
 
    // make sure writing worked
    if ( !stream() )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed writing to data object file."));
+      e.setTitle(QObject::tr("File IO Error"));
+      e.setDetails(QObject::tr("Failed writing to data object file."));
       throw e;
-   }
-}
-
-
-
-
-
-
-void CorrelationMatrix::prepare(bool preAllocate)
-{
-   // check to see if pre-allocation is requested
-   if ( preAllocate )
-   {
-      // seek to beginning of data and make sure it worked
-      if ( !seek(0) )
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("File IO Error"));
-         e.setDetails(tr("Failed calling seek() on data object file."));
-         throw e;
-      }
-
-      // allocate total size needed in data and make sure it worked
-      if ( !allocate(getDataEnd()) )
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("File IO Error"));
-         e.setDetails(tr("Failed allocating space in data object file."));
-         throw e;
-      }
    }
 }
 
@@ -166,9 +106,9 @@ int CorrelationMatrix::rowCount(const QModelIndex& parent) const
 
 int CorrelationMatrix::columnCount(const QModelIndex& parent) const
 {
-   // return gene size
+   // return gene size multiplied by number of modes
    Q_UNUSED(parent);
-   return _geneSize;
+   return _geneSize*_maxModes*_correlationSize;
 }
 
 
@@ -198,32 +138,10 @@ QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
    {
       swap(x,y);
    }
-   pair.read(x,y);
+   pair.read({x,y});
 
-   // construct pair information string
-   QString ret;
-   for (int i = 0; i < pair.getModeSize() ;++i)
-   {
-      // begin new mode line
-      ret.append(tr("Mode %1: ").arg(i));
-      for (int j = 0; j < _correlationSize ;)
-      {
-         // add new correlation
-         ret.append(QString::number(pair.at(i,j)));
-
-         // add comma if this is not last correlation
-         if ( ++j < _correlationSize )
-         {
-            ret.append(", ");
-         }
-      }
-
-      // finish mode line with end of line
-      ret.append("\n");
-   }
-
-   // return pair information string
-   return ret;
+   // return first correlation value of first mode
+   return pair.at(0,0);
 }
 
 
@@ -232,26 +150,39 @@ QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
 
 
 void CorrelationMatrix::initialize(const EMetadata& geneNames, qint32 sampleSize
-                                   , qint8 correlationSize, qint8 maxModes)
+                                   , const EMetadata& correlationNames, qint8 maxModes)
 {
-   // make sure gene names metadata is an array
-   if ( !geneNames.isArray() )
+   // make sure correlation names is an array and is not empty
+   if ( !correlationNames.isArray() || correlationNames.toArray()->isEmpty() )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Gene names metadata is not correct array type."));
+      e.setDetails(tr("Correlation names metadata is not an array or empty."));
       throw e;
    }
 
-   // get map of metadata root and make copy of gene names
+   // make sure gene names metadata is an array and is not empty
+   if ( !geneNames.isArray() || geneNames.toArray()->isEmpty() )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Domain Error"));
+      e.setDetails(tr("Gene names metadata is not an array or empty."));
+      throw e;
+   }
+
+   // get map of metadata root and make copy of gene and correlation names
    EMetadata::Map* map {meta().toObject()};
    map->insert("genes",new EMetadata(geneNames));
+   map->insert("correlations",new EMetadata(correlationNames));
 
    // save gene, sample, correlation sizes and max modes
    _geneSize = geneNames.toArray()->size();
    _sampleSize = sampleSize;
-   _correlationSize = correlationSize;
+   _correlationSize = correlationNames.toArray()->size();
    _maxModes = maxModes;
+
+   // initialize correlation base class
+   CorrelationBase::initialize(_geneSize,sizeof(float)*_maxModes*_correlationSize,DATA_OFFSET);
 }
 
 
@@ -280,14 +211,30 @@ const EMetadata& CorrelationMatrix::getGeneNames() const
 
 
 
-void CorrelationMatrix::increment(int &x, int &y)
+void CorrelationMatrix::readPair(Iterator index, float* correlations) const
 {
-   // increment y and check if it is equal or bigger than x
-   if ( ++y >= x )
+   // find correlation if it exists
+   if ( findCorrelation(index) )
    {
-      // increment x and reset y to zero
-      ++x;
-      y = 0;
+      // read in all correlations and make sure reading worked
+      stream().read(correlations,sizeof(float)*_maxModes*_correlationSize);
+      if ( !stream() )
+      {
+         E_MAKE_EXCEPTION(e);
+         e.setTitle(tr("File IO Error"));
+         e.setDetails(tr("Failed reading from data object file."));
+         throw e;
+      }
+   }
+
+   // else correlation does not exist
+   else
+   {
+      // set all correlations for gene pair to NAN
+      for (int i = 0; i < _maxModes*_correlationSize ;++i)
+      {
+         correlations[i] = NAN;
+      }
    }
 }
 
@@ -296,31 +243,11 @@ void CorrelationMatrix::increment(int &x, int &y)
 
 
 
-void CorrelationMatrix::readPair(int x, int y, Correlation* correlations, qint8* modes
-                                 , qint8& modeSize) const
+void CorrelationMatrix::readPair(qint64 index, float *correlations) const
 {
-   // initialize index, correlation size, and mode size
-   qint64 bX {x};
-   qint64 bY {y};
-   qint64 index {(bX*(bX-1)/2)+bY};
-   qint64 correlationSize = _correlationSize*_maxModes*sizeof(Correlation);
-   qint64 iModeSize = _sampleSize*_maxModes*sizeof(qint8);
-
-   // seek to beginning of pair information and make sure it worked
-   if ( !seek(DATA_OFFSET+(index*(correlationSize+iModeSize+sizeof(qint8)))) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed calling seek() on data object file."));
-      throw e;
-   }
-
-   // read in pair information
-   stream() >> modeSize;
-   stream().read(correlations,_correlationSize);
-   stream().read(modes,iModeSize);
-
-   // make sure reading worked
+   // find correlation read in all correlations and make sure reading worked
+   findCorrelation(index);
+   stream().read(correlations,sizeof(float)*_maxModes*_correlationSize);
    if ( !stream() )
    {
       E_MAKE_EXCEPTION(e);
@@ -335,29 +262,11 @@ void CorrelationMatrix::readPair(int x, int y, Correlation* correlations, qint8*
 
 
 
-void CorrelationMatrix::writePair(int x, int y, const Correlation* correlations, const qint8* modes
-                                  , qint8 modeSize)
+void CorrelationMatrix::writePair(Iterator index, const float* correlations)
 {
-   // initialize index, correlation size, and mode size
-   qint64 bX {x};
-   qint64 bY {y};
-   qint64 index {(bX*(bX-1)/2)+bY};
-   qint64 correlationSize = _correlationSize*_maxModes*sizeof(Correlation);
-   qint64 iModeSize = _sampleSize*_maxModes*sizeof(qint8);
-
-   // seek to beginning of pair information and make sure it worked
-   if ( !seek(DATA_OFFSET+(index*(correlationSize+iModeSize+sizeof(qint8)))) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed calling seek() on data object file."));
-      throw e;
-   }
-
-   // write out pair information
-   stream() << modeSize;
-   stream().write(correlations,_correlationSize);
-   stream().write(modes,iModeSize);
+   // write new correlation
+   write(index);
+   stream().write(correlations,_maxModes*_correlationSize);
 
    // make sure writing worked
    if ( !stream() )
@@ -387,9 +296,8 @@ CorrelationMatrix::Pair::Pair(CorrelationMatrix* matrix):
       throw e;
    }
 
-   // create new arrays for correlation values and mode masks
-   _correlations = new Correlation[_matrix->_correlationSize*_matrix->_maxModes];
-   _modes = new qint8[_matrix->_sampleSize*_matrix->_maxModes];
+   // create new array for correlation values
+   _correlations = new float[_matrix->_maxModes*_matrix->_correlationSize];
 }
 
 
@@ -409,9 +317,8 @@ CorrelationMatrix::Pair::Pair(const CorrelationMatrix* matrix):
       throw e;
    }
 
-   // create new arrays for correlation values and mode masks
-   _correlations = new Correlation[_cMatrix->_correlationSize*_cMatrix->_maxModes];
-   _modes = new qint8[_cMatrix->_sampleSize*_cMatrix->_maxModes];
+   // create new array for correlation values
+   _correlations = new float[_cMatrix->_maxModes*_cMatrix->_correlationSize];
 }
 
 
@@ -419,20 +326,30 @@ CorrelationMatrix::Pair::Pair(const CorrelationMatrix* matrix):
 
 
 
-void CorrelationMatrix::Pair::write(int x, int y)
+void CorrelationMatrix::Pair::readFirst() const
 {
-   // make sure xy gene pair is valid
-   if ( x < 0 || y < 0 || y >= x )
+   // set index to beginning and read in correlations
+   _index = 0;
+   _cMatrix->readPair(_index,_correlations);
+}
+
+
+
+
+
+
+bool CorrelationMatrix::Pair::readNext() const
+{
+   // check if there are any more correlations to read
+   if ( _index < (_cMatrix->correlationSize() - 1) )
    {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Attempting to write invalid pair %1,%2 with gene size of %3.").arg(x).arg(y)
-                   .arg(_matrix->_geneSize));
-      throw e;
+      // read in correlations of next correlation and return true
+      _cMatrix->readPair(++_index,_correlations);
+      return true;
    }
 
-   // write pair to matrix
-   _matrix->writePair(x,y,_correlations,_modes,_modeSize);
+   // no more correlations to read return false
+   return false;
 }
 
 
@@ -440,42 +357,22 @@ void CorrelationMatrix::Pair::write(int x, int y)
 
 
 
-void CorrelationMatrix::Pair::read(int x, int y) const
-{
-   // make sure xy gene pair is valid
-   if ( x < 0 || y < 0 || y >= x )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Attempting to read invalid pair %1,%2 with gene size of %3.").arg(x).arg(y)
-                   .arg(_cMatrix->_geneSize));
-      throw e;
-   }
-
-   // read pair from matrix
-   _cMatrix->readPair(x,y,_correlations,_modes,_modeSize);
-}
-
-
-
-
-
-
-CorrelationMatrix::Correlation& CorrelationMatrix::Pair::at(int mode, int index)
+float& CorrelationMatrix::Pair::at(int mode, int correlation)
 {
    // make sure mode and index are valid
-   if ( mode < 0 || mode > _modeSize || index < 0 || index > _matrix->_correlationSize )
+   if ( mode < 0 || mode > _matrix->_maxModes || correlation < 0
+        || correlation > _matrix->_correlationSize )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Domain Error"));
       e.setDetails(tr("Invalid mode of %1 and index of %2 with max modes of %3 and correlation "
-                      "size of %4").arg(mode).arg(index).arg(_matrix->_maxModes)
+                      "size of %4").arg(mode).arg(correlation).arg(_matrix->_maxModes)
                    .arg(_matrix->_correlationSize));
       throw e;
    }
 
    // return correlation value
-   return _correlations[(mode*_matrix->_correlationSize)+index];
+   return _correlations[mode*_matrix->_correlationSize + correlation];
 }
 
 
@@ -483,63 +380,20 @@ CorrelationMatrix::Correlation& CorrelationMatrix::Pair::at(int mode, int index)
 
 
 
-const CorrelationMatrix::Correlation& CorrelationMatrix::Pair::at(int mode, int index) const
+const float& CorrelationMatrix::Pair::at(int mode, int correlation) const
 {
    // make sure mode and index are valid
-   if ( mode < 0 || mode > _modeSize || index < 0 || index > _cMatrix->_correlationSize )
+   if ( mode < 0 || mode > _cMatrix->_maxModes || correlation < 0
+        || correlation > _cMatrix->_correlationSize )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Domain Error"));
       e.setDetails(tr("Invalid mode of %1 and index of %2 with max modes of %3 and correlation "
-                      "size of %4").arg(mode).arg(index).arg(_cMatrix->_maxModes)
+                      "size of %4").arg(mode).arg(correlation).arg(_cMatrix->_maxModes)
                    .arg(_cMatrix->_correlationSize));
       throw e;
    }
 
    // return correlation value
-   return _correlations[(mode*_cMatrix->_correlationSize)+index];
-}
-
-
-
-
-
-
-qint8& CorrelationMatrix::Pair::mode(int mode, int index)
-{
-   // make sure mode and index are valid
-   if ( mode < 0 || mode > _modeSize || index < 0 || index > _matrix->_sampleSize )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Invalid mode of %1 and index of %2 with max modes of %3 and sample size of"
-                      " %4").arg(mode).arg(index).arg(_matrix->_maxModes)
-                   .arg(_matrix->_sampleSize));
-      throw e;
-   }
-
-   // return mode sample mask
-   return _modes[(mode*_matrix->_sampleSize)+index];
-}
-
-
-
-
-
-
-const qint8& CorrelationMatrix::Pair::mode(int mode, int index) const
-{
-   // make sure mode and index are valid
-   if ( mode < 0 || mode > _modeSize || index < 0 || index > _cMatrix->_sampleSize )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Invalid mode of %1 and index of %2 with max modes of %3 and sample size of"
-                      " %4").arg(mode).arg(index).arg(_cMatrix->_maxModes)
-                   .arg(_cMatrix->_sampleSize));
-      throw e;
-   }
-
-   // return mode sample mask
-   return _modes[(mode*_cMatrix->_sampleSize)+index];
+   return _correlations[mode*_cMatrix->_correlationSize + correlation];
 }
