@@ -39,7 +39,9 @@ SOURCES += \
     spearman.cpp \
     rmt.cpp \
     pearson.cpp \
-    correlationbase.cpp
+    correlationbase.cpp \
+    genepair_vector.cpp \
+    genepair_base.cpp
 
 HEADERS += \
     analyticfactory.h \
@@ -50,7 +52,9 @@ HEADERS += \
     spearman.h \
     rmt.h \
     pearson.h \
-    correlationbase.h
+    correlationbase.h \
+    genepair_vector.h \
+    genepair_base.h
 
 RESOURCES += \
     opencl.qrc
