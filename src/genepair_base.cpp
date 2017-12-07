@@ -103,7 +103,7 @@ void Base::initialize(int geneSize, int dataSize, int offset)
    if ( geneSize < 1 || dataSize < 1 || offset < 0 )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Correlation Base Initialization Error"));
+      e.setTitle(QObject::tr("Gene Pair Base Initialization Error"));
       e.setDetails(QObject::tr("An integer argument given is less than the minimum."));
       throw e;
    }
@@ -123,18 +123,18 @@ void Base::initialize(int geneSize, int dataSize, int offset)
 
 void Base::write(Vector index)
 {
-   // make sure the new correlation has a higher indent than the previous written so the list of
+   // make sure the new gene pair has a higher indent than the previous written so the list of
    // all indents are sorted
    if ( index.indent() >= _lastWrite.indent() )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Correlation Base Logical Error"));
+      e.setTitle(QObject::tr("Gene Pair Base Logical Error"));
       e.setDetails(QObject::tr("Attempting to write indent %1 when last written is %2.")
                    .arg(index.indent()).arg(_lastWrite.indent()));
       throw e;
    }
 
-   // seek to position for next correlation and write indent value
+   // seek to position for next gene pair and write indent value
    seekPair(_pairSize);
    stream() << index.indent();
 
@@ -157,14 +157,15 @@ void Base::write(Vector index)
 
 
 
-qint64 Base::getPair(qint64 index) const
+Vector Base::getPair(qint64 index) const
 {
-   // seek to correlation position and read indent data
+   // seek to gene pair position and read item header data
    seekPair(index);
    qint64 indent;
-   stream() >> indent;
+   qint64 geneX;
+   stream() >> indent >> geneX;
 
-   // make sure reading worked and return indent
+   // make sure reading worked
    if ( !stream() )
    {
       E_MAKE_EXCEPTION(e);
@@ -172,7 +173,11 @@ qint64 Base::getPair(qint64 index) const
       e.setDetails(QObject::tr("Failed reading in gene pair indent."));
       throw e;
    }
-   return indent;
+
+   // return gene pair's vector
+   Vector ret;
+   ret.indent(indent,geneX);
+   return ret;
 }
 
 
@@ -186,9 +191,10 @@ qint64 Base::findPair(qint64 indent, qint64 first, qint64 last) const
    qint64 pivot {first + (last - first)/2};
    seekPair(pivot);
 
-   // read in indent value of correlation
+   // read in indent and geneX value of gene pair
    qint64 readIndent;
-   stream() >> readIndent;
+   qint64 geneX;
+   stream() >> readIndent >> geneX;
 
    // make sure reading worked
    if ( !stream() )
@@ -231,7 +237,7 @@ qint64 Base::findPair(qint64 indent, qint64 first, qint64 last) const
       }
    }
 
-   // else no correlation with given indent exists so return failure
+   // else no gene pair with given indent exists so return failure
    else
    {
       return -1;
@@ -255,8 +261,8 @@ void Base::seekPair(qint64 index) const
       throw e;
    }
 
-   // seek to correlation index requested making sure it worked
-   if ( !seek(_headerSize + _offset + index*(_dataSize + sizeof(qint64))) )
+   // seek to gene pair index requested making sure it worked
+   if ( !seek(_headerSize + _offset + index*(_dataSize + _itemHeaderSize)) )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("File IO Error"));

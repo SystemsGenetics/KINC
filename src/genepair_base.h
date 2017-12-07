@@ -13,7 +13,7 @@ namespace GenePair
    public:
       virtual void readData() override;
       virtual quint64 getDataEnd() const override
-         { return _headerSize + _offset + _pairSize*(_dataSize + sizeof(qint64)); }
+         { return _headerSize + _offset + _pairSize*(_dataSize + _itemHeaderSize); }
       virtual void newData() override;
       virtual void prepare(bool preAllocate) override;
       virtual void finish() override { Base::newData(); }
@@ -21,12 +21,13 @@ namespace GenePair
       void initialize(int geneSize, int dataSize, int offset);
       void write(Vector index);
       qint64 pairSize() const { return _pairSize; }
-      qint64 getPair(qint64 index) const;
+      Vector getPair(qint64 index) const;
       qint64 findPair(Vector index) const { return findPair(index.indent(),0,_pairSize - 1); }
    private:
       qint64 findPair(qint64 indent, qint64 first, qint64 last) const;
       void seekPair(qint64 index) const;
       constexpr static int _headerSize {18};
+      constexpr static int _itemHeaderSize {16};
       qint32 _geneSize {0};
       qint32 _dataSize {0};
       qint64 _pairSize {0};
