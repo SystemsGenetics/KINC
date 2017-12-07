@@ -5,6 +5,7 @@
 
 
 using namespace std;
+using namespace GenePair;
 
 
 
@@ -14,10 +15,10 @@ using namespace std;
 void CorrelationMatrix::readData()
 {
    // read in correlation base data
-   CorrelationBase::readData();
+   Base::readData();
 
    // read in all header values
-   stream() >> _geneSize >> _sampleSize >> _correlationSize >> _maxModes;
+   stream() >> _geneSize >> _sampleSize >> _correlationSize;
 
    // make sure reading worked
    if ( !stream() )
@@ -37,8 +38,8 @@ void CorrelationMatrix::readData()
 void CorrelationMatrix::finish()
 {
    // write out correlation base's and this object's header
-   CorrelationBase::finish();
-   stream() << _geneSize << _sampleSize << _correlationSize << _maxModes;
+   Base::finish();
+   stream() << _geneSize << _sampleSize << _correlationSize;
 
    // make sure writing worked
    if ( !stream() )
@@ -92,30 +93,6 @@ QVariant CorrelationMatrix::headerData(int section, Qt::Orientation orientation,
 
 
 
-int CorrelationMatrix::rowCount(const QModelIndex& parent) const
-{
-   // return gene size
-   Q_UNUSED(parent);
-   return _geneSize;
-}
-
-
-
-
-
-
-int CorrelationMatrix::columnCount(const QModelIndex& parent) const
-{
-   // return gene size multiplied by number of modes
-   Q_UNUSED(parent);
-   return _geneSize*_maxModes*_correlationSize;
-}
-
-
-
-
-
-
 QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
 {
    // if role is not display return nothing
@@ -140,8 +117,30 @@ QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
    }
    pair.read({x,y});
 
-   // return first correlation value of first mode
-   return pair.at(0,0);
+   // if this gene pair has no clusters return N/A
+   if ( pair.isEmpty() )
+   {
+      return QString("NULL");
+   }
+
+   //TODO COMMENT
+   QString ret;
+   for (int x = 0; x < (pair.clusterSize() - 1) ;++x)
+   {
+      ret.append("(");
+      for (int y = 0; y < (_correlationSize - 1) ;++y)
+      {
+         ret.append(pair.at(x,y)).append(",");
+      }
+      ret.append(pair.at(x,y)).append("), ");
+   }
+   ret.append("(");
+   for (int y = 0; y < (_correlationSize - 1) ;++y)
+   {
+      ret.append(pair.at(x,y)).append(",");
+   }
+   ret.append(pair.at(x,y)).append(")");
+   return ret;
 }
 
 
@@ -150,7 +149,7 @@ QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
 
 
 void CorrelationMatrix::initialize(const EMetadata& geneNames, qint32 sampleSize
-                                   , const EMetadata& correlationNames, qint8 maxModes)
+                                   , const EMetadata& correlationNames)
 {
    // make sure correlation names is an array and is not empty
    if ( !correlationNames.isArray() || correlationNames.toArray()->isEmpty() )
@@ -179,10 +178,9 @@ void CorrelationMatrix::initialize(const EMetadata& geneNames, qint32 sampleSize
    _geneSize = geneNames.toArray()->size();
    _sampleSize = sampleSize;
    _correlationSize = correlationNames.toArray()->size();
-   _maxModes = maxModes;
 
    // initialize correlation base class
-   CorrelationBase::initialize(_geneSize,sizeof(float)*_maxModes*_correlationSize,DATA_OFFSET);
+   Base::initialize(_geneSize,sizeof(float)*_correlationSize,DATA_OFFSET);
 }
 
 
@@ -211,13 +209,63 @@ const EMetadata& CorrelationMatrix::getGeneNames() const
 
 
 
-void CorrelationMatrix::readPair(Iterator index, float* correlations) const
+QList<QList<float>> CorrelationMatrix::readPair(Vector index) const
 {
    // find correlation if it exists
-   if ( findCorrelation(index) )
+   qint64 index_;
+   if ( (index_ = findPair(index)) != -1 )
    {
-      // read in all correlations and make sure reading worked
-      stream().read(correlations,sizeof(float)*_maxModes*_correlationSize);
+      QList<QList<float>> ret;
+      qint64 indent {index.indent()};
+      while ( indent <= index.maxIndent() )
+      {
+         ret.push_back(QList<float>());
+         ret.back().reserve(_correlationSize);
+         for (int i = 0; i < _correlationSize ;++i)
+         {
+            float value;
+            stream() >> value;
+            ret.back().push_back(value);
+         }
+         if ( !stream() )
+         {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("File IO Error"));
+            e.setDetails(tr("Failed reading from data object file."));
+            throw e;
+         }
+         indent = getPair(++index_);
+      }
+      return ret;
+   }
+
+   // else correlation does not exist
+   else
+   {
+      return QList<QList<float>>();
+   }
+}
+
+
+
+
+
+
+QList<QList<float>> CorrelationMatrix::readPair(qint64* index) const
+{
+   QList<QList<float>> ret;
+   Vector index_ {getPair(*index)};
+   qint64 indent {index_.indent()};
+   while ( indent <= index_.maxIndent() )
+   {
+      ret.push_back(QList<float>());
+      ret.back().reserve(_correlationSize);
+      for (int i = 0; i < _correlationSize ;++i)
+      {
+         float value;
+         stream() >> value;
+         ret.back().push_back(value);
+      }
       if ( !stream() )
       {
          E_MAKE_EXCEPTION(e);
@@ -225,17 +273,9 @@ void CorrelationMatrix::readPair(Iterator index, float* correlations) const
          e.setDetails(tr("Failed reading from data object file."));
          throw e;
       }
+      indent = getPair(++(*index));
    }
-
-   // else correlation does not exist
-   else
-   {
-      // set all correlations for gene pair to NAN
-      for (int i = 0; i < _maxModes*_correlationSize ;++i)
-      {
-         correlations[i] = NAN;
-      }
-   }
+   return ret;
 }
 
 
@@ -243,30 +283,19 @@ void CorrelationMatrix::readPair(Iterator index, float* correlations) const
 
 
 
-void CorrelationMatrix::readPair(qint64 index, float *correlations) const
+void CorrelationMatrix::writePair(Vector index, const QList<QList<float>> correlations)
 {
-   // find correlation read in all correlations and make sure reading worked
-   findCorrelation(index);
-   stream().read(correlations,sizeof(float)*_maxModes*_correlationSize);
-   if ( !stream() )
+   // make sure index and correlations are valid
+   if ( index.cluster() != 0 || correlations.size() >= Vector::_maxClusterSize )
    {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed reading from data object file."));
-      throw e;
+      ;//ERROR!
    }
-}
 
-
-
-
-
-
-void CorrelationMatrix::writePair(Iterator index, const float* correlations)
-{
-   // write new correlation
-   write(index);
-   stream().write(correlations,_maxModes*_correlationSize);
+   // write new gene pair correlations
+   for (const auto& list :correlations)
+   {
+      write(index++);
+   }
 
    // make sure writing worked
    if ( !stream() )
