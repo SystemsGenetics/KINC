@@ -10,17 +10,15 @@ using namespace GenePair;
 
 
 
-Vector::Vector(qint64 geneX, qint64 geneY, qint64 cluster):
+Vector::Vector(qint32 geneX, qint32 geneY):
    _geneX(geneX),
-   _geneY(geneY),
-   _cluster(cluster)
+   _geneY(geneY)
 {
-   if ( geneX < 1 || geneY < 0 || cluster < 0 || geneY >= geneX || cluster >= _maxClusterSize )
+   if ( geneX < 1 || geneY < 0 || geneY >= geneX )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Gene Pair Vector Error"));
-      e.setDetails(QObject::tr("Cannot initialize gene vector (%1,%2,%3).").arg(geneX).arg(geneY)
-                   .arg(cluster));
+      e.setDetails(QObject::tr("Cannot initialize gene vector (%1,%2).").arg(geneX).arg(geneY));
       throw e;
    }
 }
@@ -30,21 +28,20 @@ Vector::Vector(qint64 geneX, qint64 geneY, qint64 cluster):
 
 
 
-void Vector::indent(qint64 indent, qint64 geneX)
+qint64 Vector::indent(qint8 cluster) const
 {
-   qint64 cluster = indent%_maxClusterSize;
-   qint64 geneY = indent/_maxClusterSize - geneX*(geneX - 1);
-   if ( geneX < 1 || geneY < 0 || cluster < 0 || geneY >= geneX || cluster >= _maxClusterSize )
+   if ( cluster < 0 || cluster >= _maxClusterSize )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Gene Pair Vector Error"));
-      e.setDetails(QObject::tr("Cannot initialize gene vector (%1,%2,%3).").arg(geneX).arg(geneY)
-                   .arg(cluster));
+      e.setDetails(QObject::tr("Cluster %1 is outside limits.").arg(cluster));
       throw e;
    }
-   _geneX = geneX;
-   _geneY = geneY;
-   _cluster = cluster;
+   qint64 ret {_geneX};
+   ret = ret*(ret - 1)/2;
+   ret += _geneY;
+   ret = ret*_maxClusterSize + cluster;
+   return ret;
 }
 
 
@@ -54,14 +51,10 @@ void Vector::indent(qint64 indent, qint64 geneX)
 
 void Vector::operator++()
 {
-   if ( ++_cluster >= _maxClusterSize )
+   if ( ++_geneY >= _geneX )
    {
-      _cluster = 0;
-      if ( ++_geneY >= _geneX )
-      {
-         _geneY = 0;
-         ++_geneX;
-      }
+      _geneY = 0;
+      ++_geneX;
    }
 }
 
