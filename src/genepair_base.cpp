@@ -67,40 +67,10 @@ void Base::newData()
 
 
 
-void Base::prepare(bool preAllocate)
-{
-   // check to see if pre-allocation is requested
-   if ( preAllocate )
-   {
-      // seek to beginning of data and make sure it worked
-      if ( !seek(0) )
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(QObject::tr("File IO Error"));
-         e.setDetails(QObject::tr("Failed calling seek() on data object file."));
-         throw e;
-      }
-
-      // allocate total size needed in data and make sure it worked
-      if ( !allocate(getDataEnd()) )
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(QObject::tr("File IO Error"));
-         e.setDetails(QObject::tr("Failed allocating space in data object file."));
-         throw e;
-      }
-   }
-}
-
-
-
-
-
-
 void Base::initialize(int geneSize, int dataSize, int offset)
 {
    // make sure arguments are valid
-   if ( geneSize < 1 || dataSize < 1 || offset < 0 )
+   if ( geneSize < 2 || dataSize < 1 || offset < 0 )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Gene Pair Base Initialization Error"));
@@ -112,6 +82,7 @@ void Base::initialize(int geneSize, int dataSize, int offset)
    _geneSize = geneSize;
    _dataSize = dataSize;
    _pairSize = 0;
+   _rawPairSize = 0;
    _offset = offset;
    _lastWrite = Vector();
 }
@@ -121,22 +92,22 @@ void Base::initialize(int geneSize, int dataSize, int offset)
 
 
 
-void Base::write(Vector index)
+void Base::write(Vector index, qint8 cluster)
 {
    // make sure the new gene pair has a higher indent than the previous written so the list of
    // all indents are sorted
-   if ( index.indent() >= _lastWrite.indent() )
+   if ( index.indent(cluster) >= _lastWrite )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Gene Pair Base Logical Error"));
       e.setDetails(QObject::tr("Attempting to write indent %1 when last written is %2.")
-                   .arg(index.indent()).arg(_lastWrite.indent()));
+                   .arg(index.indent(0)).arg(_lastWrite));
       throw e;
    }
 
    // seek to position for next gene pair and write indent value
-   seekPair(_pairSize);
-   stream() << index.indent();
+   seekPair(_rawPairSize);
+   stream() << index.geneX() << index.geneY << cluster;
 
    // make sure writing worked
    if ( !stream() )
@@ -148,8 +119,8 @@ void Base::write(Vector index)
    }
 
    // increment pair size and set new last index
-   ++_pairSize;
-   _lastWrite = index;
+   ++_rawPairSize;
+   _lastWrite = index.indent(cluster);
 }
 
 
@@ -157,13 +128,13 @@ void Base::write(Vector index)
 
 
 
-Vector Base::getPair(qint64 index) const
+Vector Base::getPair(qint64 index, qint8* cluster) const
 {
    // seek to gene pair position and read item header data
    seekPair(index);
-   qint64 indent;
-   qint64 geneX;
-   stream() >> indent >> geneX;
+   qint32 geneX;
+   qint32 geneY;
+   stream() >> geneX >> geneY >> *cluster;
 
    // make sure reading worked
    if ( !stream() )
@@ -175,9 +146,7 @@ Vector Base::getPair(qint64 index) const
    }
 
    // return gene pair's vector
-   Vector ret;
-   ret.indent(indent,geneX);
-   return ret;
+   return {geneX,geneY};
 }
 
 

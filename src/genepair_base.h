@@ -11,28 +11,53 @@ namespace GenePair
    class Base : public EAbstractData
    {
    public:
-      virtual void readData() override;
-      virtual quint64 getDataEnd() const override
+      class Pair
+      {
+      public:
+         Pair(Base* matrix);
+         Pair(const Base* matrix);
+         virtual void clear() = 0;
+         virtual void addCluster() = 0;
+         void write(Vector index);
+         void read(Vector index) const;
+         void readFirst() const;
+         void readNext() const;
+         bool hasNext() const;
+         int clusterSize() const;
+         bool isEmpty() const;
+         const Vector& index() const;
+      protected:
+         virtual void writeCluster(EDataStream& stream, int cluster) = 0;
+         virtual void readCluster(EDataStream& stream, int cluster) = 0;
+      private:
+         Base* _matrix {nullptr};
+         const Base* _cMatrix;
+         Vector _index;
+      };
+      virtual void readData() override final;
+      virtual quint64 getDataEnd() const override final
          { return _headerSize + _offset + _pairSize*(_dataSize + _itemHeaderSize); }
-      virtual void newData() override;
-      virtual void prepare(bool preAllocate) override;
-      virtual void finish() override { Base::newData(); }
+      virtual void newData() override final;
+      virtual void prepare(bool) override final {}
+      virtual void finish() override final { Base::newData(); }
+      qint64 size() const { return _pairSize; }
    protected:
+      virtual void writeHeader() = 0;
+      virtual void readHeader() = 0;
       void initialize(int geneSize, int dataSize, int offset);
-      void write(Vector index);
-      qint64 pairSize() const { return _pairSize; }
-      Vector getPair(qint64 index) const;
-      qint64 findPair(Vector index) const { return findPair(index.indent(),0,_pairSize - 1); }
    private:
+      void write(Vector index);
+      Vector getPair(qint64 index) const;
       qint64 findPair(qint64 indent, qint64 first, qint64 last) const;
       void seekPair(qint64 index) const;
-      constexpr static int _headerSize {18};
-      constexpr static int _itemHeaderSize {16};
+      constexpr static int _headerSize {24};
+      constexpr static int _itemHeaderSize {9};
       qint32 _geneSize {0};
       qint32 _dataSize {0};
       qint64 _pairSize {0};
+      qint64 _rawPairSize {0};
       qint16 _offset {0};
-      Vector _lastWrite;
+      qint64 _lastWrite;
    };
 }
 
