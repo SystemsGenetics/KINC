@@ -267,6 +267,34 @@ void ExpressionMatrix::initialize(QStringList geneNames, QStringList sampleNames
 
 
 
+ExpressionMatrix::Transform ExpressionMatrix::getTransform() const
+{
+   // get metadata root of data object
+   const EMetadata::Map* map {meta().toObject()};
+   QString transformName = *(*map)["transform"]->toString();
+
+   // get transform type according to transform string
+   if ( transformName == "none" ) {
+      return Transform::None;
+   }
+   else if ( transformName == "natural logarithm" ) {
+      return Transform::NLog;
+   }
+   else if ( transformName == "logarithm base 2" ) {
+      return Transform::Log2;
+   }
+   else if ( transformName == "logarithm base 10" ) {
+      return Transform::Log10;
+   }
+
+   return Transform::None;
+}
+
+
+
+
+
+
 void ExpressionMatrix::setTransform(ExpressionMatrix::Transform transform)
 {
    // get metadata root of data object and create new string
@@ -356,6 +384,27 @@ const EMetadata& ExpressionMatrix::getGeneNames() const
 
    // return gene names list
    return *(*map)["genes"];
+}
+
+
+
+
+
+
+const EMetadata& ExpressionMatrix::getSampleNames() const
+{
+   // get metadata root and make sure samples key exist
+   const EMetadata::Map* map {meta().toObject()};
+   if ( !map->contains("samples") )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Null Return Reference"));
+      e.setDetails(tr("Requesting reference to sample names when none exists."));
+      throw e;
+   }
+
+   // return sample names list
+   return *(*map)["samples"];
 }
 
 
