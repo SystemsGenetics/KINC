@@ -53,7 +53,6 @@ EAbstractAnalytic::ArgumentType Spearman::getArgumentData(int argument)
    case Minimum: return Type::Integer;
    case BlockSize: return Type::Integer;
    case KernelSize: return Type::Integer;
-   case PreAllocate: return Type::Bool;
    default: return Type::Bool;
    }
 }
@@ -80,7 +79,6 @@ QVariant Spearman::getArgumentData(int argument, Role role)
       case Minimum: return QString("min");
       case BlockSize: return QString("bsize");
       case KernelSize: return QString("ksize");
-      case PreAllocate: return QString("prealloc");
       default: return QVariant();
       }
    case Role::Title:
@@ -92,7 +90,6 @@ QVariant Spearman::getArgumentData(int argument, Role role)
       case Minimum: return tr("Minimum Sample Size:");
       case BlockSize: return tr("Block Size:");
       case KernelSize: return tr("Kernel Size:");
-      case PreAllocate: return tr("Pre-Allocate Output?");
       default: return QVariant();
       }
    case Role::WhatsThis:
@@ -109,8 +106,6 @@ QVariant Spearman::getArgumentData(int argument, Role role)
                                 " to run for execution.");
       case KernelSize: return tr("This option only applies if OpenCL is used. Total number of"
                                  " kernels to run per block of execution.");
-      case PreAllocate: return tr("Should the output correlation matrix have file space"
-                                  " pre-allocated? WARNING this only works in linux systems.");
       default: return QVariant();
       }
    case Role::DefaultValue:
@@ -176,9 +171,6 @@ void Spearman::setArgument(int argument, QVariant value)
    case KernelSize:
       _kernelSize = value.toInt();
       break;
-   case PreAllocate:
-      _allocate = value.toBool();
-      break;
    }
 }
 
@@ -227,8 +219,12 @@ bool Spearman::initialize()
    }
 
    // initialize new correlation matrix and return pre-allocation argument
-   _output->initialize(_input->getGeneNames(),_input->getSampleSize(),1,1);
-   return _allocate;
+   EMetadata correlations(EMetadata::Array);
+   EMetadata* name {new EMetadata(EMetadata::String)};
+   *(name->toString()) = "spearman";
+   correlations.toArray()->append(name);
+   _output->initialize(_input->getGeneNames(),correlations);
+   return false;
 }
 
 
@@ -241,7 +237,7 @@ void Spearman::runSerial()
    // initialize percent complete and steps
    int lastPercent {0};
    qint64 steps {0};
-   qint64 totalSteps {_output->getGeneSize()*(_output->getGeneSize() - 1)/2};
+   qint64 totalSteps {_output->geneSize()*(_output->geneSize() - 1)/2};
 
    // initialize arrays used for GSL spearman function
    double a[_input->getSampleSize()];
@@ -250,16 +246,15 @@ void Spearman::runSerial()
 
    // initialize correlation gene pair and expression genes for input/output
    CorrelationMatrix::Pair pair(_output);
-   pair.setModeSize(1);
+   pair.addCluster();
    ExpressionMatrix::Gene gene1(_input);
    ExpressionMatrix::Gene gene2(_input);
 
    // initialize xy gene indexes
-   int x {1};
-   int y {0};
+   GenePair::Vector vector;
 
    // increment through all gene pairs
-   while ( x < _output->getGeneSize() )
+   while ( vector.geneX() < _output->geneSize() )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -269,8 +264,8 @@ void Spearman::runSerial()
 
       // initialize sample size and read in gene expressions
       int size {0};
-      gene1.read(x);
-      gene2.read(y);
+      gene1.read(vector.geneX());
+      gene2.read(vector.geneY());
 
       // populate a and b arrays with shared expressions of gene x and y
       for (auto x = 0; x < _input->getSampleSize() ;++x)
@@ -283,21 +278,19 @@ void Spearman::runSerial()
          }
       }
 
-      // set to NAN if sample size does not meet the minimum
-      if ( size < _minimum )
+      // do not bother getting or saving correlation if it does not have the minimum size
+      if ( size >= _minimum )
       {
-         pair.at(0,0) = NAN;
-      }
-
-      // else run GSL spearman function and set result to correlation
-      else
-      {
+         // save gene pair only if within threshold limits
          pair.at(0,0) = gsl_stats_spearman(a,1,b,1,size,work);
+         if ( pair.at(0,0) >= _minThreshold && pair.at(0,0) <= _maxThreshold )
+         {
+            pair.write(vector);
+         }
       }
 
-      // save gene pair and increment to next pair
-      pair.write(x,y);
-      CorrelationMatrix::increment(x,y);
+      // increment to next pair
+      ++vector;
 
       // increment steps and calculate percent complete
       ++steps;
@@ -336,7 +329,7 @@ int Spearman::getBlockSize()
 
 
    // calculate total number of calculations that will be done and return block size
-   qint64 geneSize {_output->getGeneSize()};
+   qint64 geneSize {_output->geneSize()};
    _totalPairs = geneSize*(geneSize-1)/2;
    return _blockSize;
 }
@@ -483,7 +476,7 @@ void Spearman::initializeKernelArguments()
 
    // get first power of 2 number greater or equal to sample size
    int pow2Size {2};
-   while ( pow2Size < _output->getSampleSize() )
+   while ( pow2Size < _input->getSampleSize() )
    {
       pow2Size *= 2;
    }
@@ -511,7 +504,7 @@ void Spearman::initializeKernelArguments()
    }
 
    // set all static kernel arguments
-   _kernel->setArgument(0,(cl_int)_output->getSampleSize());
+   _kernel->setArgument(0,(cl_int)_input->getSampleSize());
    _kernel->setArgument(1,(cl_int)pow2Size);
    _kernel->setArgument(2,(cl_int)_minimum);
    _kernel->setBuffer(4,_expressions);
@@ -536,19 +529,18 @@ void Spearman::initializeKernelArguments()
 void Spearman::runStartBlock(Block& block)
 {
    // check if there are more gene comparisons to compute
-   if ( _x < _output->getGeneSize() )
+   if ( _vector.geneX() < _output->geneSize() )
    {
       // set block xy to beginning of read comparisons
-      block.x = _x;
-      block.y = _y;
+      _nextVector = block.vector = _vector;
 
       // copy list of comparisons to be done on this run
       int index {0};
-      while ( _x < _output->getGeneSize() && index < _kernelSize )
+      while ( _vector.geneX() < _output->geneSize() && index < _kernelSize )
       {
-         (*block.references)[index*2] = _x;
-         (*block.references)[(index*2)+1] = _y;
-         CorrelationMatrix::increment(_x,_y);
+         (*block.references)[index*2] = _vector.geneX();
+         (*block.references)[(index*2)+1] = _vector.geneY();
+         ++_vector;
          ++index;
       }
 
@@ -657,9 +649,9 @@ void Spearman::runExecuteBlock(Block& block)
 
 void Spearman::runReadBlock(Block& block)
 {
-   // use pair declaration and check if read is complete
+   // use pair declaration and check if read is complete and we are next in line
    using Pair = CorrelationMatrix::Pair;
-   if ( block.event.isDone() )
+   if ( block.event.isDone() && _nextVector == block.vector )
    {
       // make sure opencl event worked
       if ( !block.event )
@@ -671,21 +663,20 @@ void Spearman::runReadBlock(Block& block)
 
       // make new correlation pair
       Pair pair(_output);
+      pair.addCluster();
 
-      // initialize mode size to one and set mask to all ones
-      pair.setModeSize(1);
-      for (int i = 0; i < _output->getSampleSize() ;++i)
-      {
-         pair.mode(0,i) = 1;
-      }
-
-      // iterate through all valid spearman answers and write each one to correlation matrix
+      // iterate through all valid spearman answers and write each one to correlation matrix that is
+      // not a NaN and is within the threshold limits
       int index {0};
-      while ( block.x < _output->getGeneSize() && index < _kernelSize )
+      while ( block.vector.geneX() < _output->geneSize() && index < _kernelSize )
       {
          pair.at(0,0) = (*block.answers)[index];
-         pair.write(block.x,block.y);
-         CorrelationMatrix::increment(block.x,block.y);
+         if ( !isnan(pair.at(0,0)) && pair.at(0,0) >= _minThreshold
+              && pair.at(0,0) <= _maxThreshold )
+         {
+            pair.write(block.vector);
+         }
+         ++(block.vector);
          ++index;
          ++_pairsComplete;
       }
