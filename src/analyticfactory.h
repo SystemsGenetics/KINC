@@ -10,6 +10,7 @@ public:
    enum Types
    {
       ImportExpressionMatrixType = 0
+      ,ExportExpressionMatrixType
       ,SpearmanType
       ,PearsonType
       ,RMTType

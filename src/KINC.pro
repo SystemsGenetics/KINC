@@ -35,6 +35,7 @@ SOURCES += \
     datafactory.cpp \
     expressionmatrix.cpp \
     importexpressionmatrix.cpp \
+    exportexpressionmatrix.cpp \
     correlationmatrix.cpp \
     spearman.cpp \
     rmt.cpp \
@@ -48,6 +49,7 @@ HEADERS += \
     datafactory.h \
     expressionmatrix.h \
     importexpressionmatrix.h \
+    exportexpressionmatrix.h \
     correlationmatrix.h \
     spearman.h \
     rmt.h \
@@ -58,4 +60,3 @@ HEADERS += \
 
 RESOURCES += \
     opencl.qrc
-

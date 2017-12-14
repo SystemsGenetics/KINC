@@ -1,5 +1,6 @@
 #include "analyticfactory.h"
 #include "importexpressionmatrix.h"
+#include "exportexpressionmatrix.h"
 #include "spearman.h"
 #include "pearson.h"
 #include "rmt.h"
@@ -19,6 +20,7 @@ QString AnalyticFactory::getName(quint16 type)
    switch (type)
    {
    case ImportExpressionMatrixType: return QObject::tr("Import Expression Matrix");
+   case ExportExpressionMatrixType: return QObject::tr("Export Expression Matrix");
    case SpearmanType: return QObject::tr("Spearman");
    case PearsonType: return QObject::tr("Pearson");
    case RMTType: return QObject::tr("RMT");
@@ -37,6 +39,7 @@ QString AnalyticFactory::getCommandName(quint16 type)
    switch (type)
    {
    case ImportExpressionMatrixType: return QString("import_emx");
+   case ExportExpressionMatrixType: return QString("export_emx");
    case SpearmanType: return QString("spearman");
    case PearsonType: return QString("pearson");
    case RMTType: return QString("rmt");
@@ -55,6 +58,7 @@ std::unique_ptr<EAbstractAnalytic> AnalyticFactory::make(quint16 type)
    switch (type)
    {
    case ImportExpressionMatrixType: return unique_ptr<EAbstractAnalytic>(new ImportExpressionMatrix);
+   case ExportExpressionMatrixType: return unique_ptr<EAbstractAnalytic>(new ExportExpressionMatrix);
    case SpearmanType: return unique_ptr<EAbstractAnalytic>(new Spearman);
    case PearsonType: return unique_ptr<EAbstractAnalytic>(new Pearson);
    case RMTType: return unique_ptr<EAbstractAnalytic>(new RMT);
