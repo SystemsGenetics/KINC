@@ -69,7 +69,7 @@ void Base::newData()
 
 
 
-const EMetadata& Base::getGeneNames() const
+const EMetadata& Base::geneNames() const
 {
    // get metadata root and make sure genes key exist
    const EMetadata::Map* map {meta().toObject()};

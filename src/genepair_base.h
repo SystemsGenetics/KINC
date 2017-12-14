@@ -53,8 +53,9 @@ namespace GenePair
       virtual void newData() override final;
       virtual void prepare(bool) override final {}
       virtual void finish() override final { newData(); }
+      int geneSize() const { return _geneSize; }
       qint64 size() const { return _pairSize; }
-      const EMetadata& getGeneNames() const;
+      const EMetadata& geneNames() const;
    protected:
       virtual void writeHeader() = 0;
       virtual void readHeader() = 0;
