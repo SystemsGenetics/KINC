@@ -12,21 +12,12 @@ using namespace GenePair;
 
 
 
-void CorrelationMatrix::readData()
+void CorrelationMatrix::Pair::addCluster(int amount) const
 {
-   // read in correlation base data
-   Base::readData();
-
-   // read in all header values
-   stream() >> _geneSize >> _sampleSize >> _correlationSize;
-
-   // make sure reading worked
-   if ( !stream() )
+   // keep adding a new list of floats for given amount
+   while ( amount-- > 0 )
    {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed reading from data object file."));
-      throw e;
+      _correlations.push_back({});
    }
 }
 
@@ -35,19 +26,67 @@ void CorrelationMatrix::readData()
 
 
 
-void CorrelationMatrix::finish()
+QString CorrelationMatrix::Pair::toString() const
 {
-   // write out correlation base's and this object's header
-   Base::finish();
-   stream() << _geneSize << _sampleSize << _correlationSize;
-
-   // make sure writing worked
-   if ( !stream() )
+   // initialize list of strings and iterate through all clusters
+   QStringList ret;
+   for (const auto& cluster : _correlations)
    {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("File IO Error"));
-      e.setDetails(QObject::tr("Failed writing to data object file."));
-      throw e;
+      // initialize list of strings for cluster and iterate through each correlation
+      QStringList clusterStrings;
+      for (const auto& correlation : cluster)
+      {
+         // add correlation value as string
+         clusterStrings << QString::number(correlation);
+      }
+
+      // join all cluster strings into one string
+      ret << clusterStrings.join(',').prepend('(').append(')');
+   }
+
+   // join all clusters and return as string
+   return ret.join(',');
+}
+
+
+
+
+
+
+void CorrelationMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
+{
+   // make sure cluster value is within range
+   if ( cluster >= 0 && cluster < _correlations.size() )
+   {
+      // iterate through each correlation and write to object
+      for (const auto& correlation : _correlations.at(cluster))
+      {
+         stream << correlation;
+      }
+   }
+}
+
+
+
+
+
+
+void CorrelationMatrix::Pair::readCluster(const EDataStream& stream, int cluster) const
+{
+   // make sure cluster value is within range
+   if ( cluster >= 0 && cluster < _correlations.size() )
+   {
+      // clear cluster and reserve for given size
+      _correlations[cluster].clear();
+      _correlations[cluster].reserve(_cMatrix->_correlationSize);
+
+      // read in number of correlations per cluster and add to list
+      for (int i = 0; i < _cMatrix->_correlationSize ;++i)
+      {
+         float value;
+         stream >> value;
+         _correlations[cluster].push_back(value);
+      }
    }
 }
 
@@ -67,20 +106,15 @@ QVariant CorrelationMatrix::headerData(int section, Qt::Orientation orientation,
       return QVariant();
    }
 
-   // get map to metadata root and check if genes key exists
-   const EMetadata::Map* map {meta().toObject()};
-   if ( map->contains("genes") )
+   // get genes metadata and make sure it is an array
+   const EMetadata& genes {geneNames()};
+   if ( genes.isArray() )
    {
-      // get genes metadata and make sure it is an array
-      EMetadata* genes {(*map)["genes"]};
-      if ( genes->isArray() )
+      // make sure section is within limits of gene name array
+      if ( section >= 0 && section < genes.toArray()->size() )
       {
-         // make sure section is within limits of gene name array
-         if ( section >= 0 && section < genes->toArray()->size() )
-         {
-            // return gene name
-            return genes->toArray()->at(section)->toVariant();
-         }
+         // return gene name
+         return genes.toArray()->at(section)->toVariant();
       }
    }
 
@@ -117,30 +151,8 @@ QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
    }
    pair.read({x,y});
 
-   // if this gene pair has no clusters return N/A
-   if ( pair.isEmpty() )
-   {
-      return QString("NULL");
-   }
-
-   //TODO COMMENT
-   QString ret;
-   for (int x = 0; x < (pair.clusterSize() - 1) ;++x)
-   {
-      ret.append("(");
-      for (int y = 0; y < (_correlationSize - 1) ;++y)
-      {
-         ret.append(pair.at(x,y)).append(",");
-      }
-      ret.append(pair.at(x,y)).append("), ");
-   }
-   ret.append("(");
-   for (int y = 0; y < (_correlationSize - 1) ;++y)
-   {
-      ret.append(pair.at(x,y)).append(",");
-   }
-   ret.append(pair.at(x,y)).append(")");
-   return ret;
+   // Return value of gene pair as a string
+   return pair.toString();
 }
 
 
@@ -148,8 +160,7 @@ QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
 
 
 
-void CorrelationMatrix::initialize(const EMetadata& geneNames, qint32 sampleSize
-                                   , const EMetadata& correlationNames)
+void CorrelationMatrix::initialize(const EMetadata &geneNames, const EMetadata &correlationNames)
 {
    // make sure correlation names is an array and is not empty
    if ( !correlationNames.isArray() || correlationNames.toArray()->isEmpty() )
@@ -160,269 +171,11 @@ void CorrelationMatrix::initialize(const EMetadata& geneNames, qint32 sampleSize
       throw e;
    }
 
-   // make sure gene names metadata is an array and is not empty
-   if ( !geneNames.isArray() || geneNames.toArray()->isEmpty() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Gene names metadata is not an array or empty."));
-      throw e;
-   }
-
    // get map of metadata root and make copy of gene and correlation names
    EMetadata::Map* map {meta().toObject()};
-   map->insert("genes",new EMetadata(geneNames));
    map->insert("correlations",new EMetadata(correlationNames));
 
-   // save gene, sample, correlation sizes and max modes
-   _geneSize = geneNames.toArray()->size();
-   _sampleSize = sampleSize;
+   // save correlation size and initialize base class
    _correlationSize = correlationNames.toArray()->size();
-
-   // initialize correlation base class
-   Base::initialize(_geneSize,sizeof(float)*_correlationSize,DATA_OFFSET);
-}
-
-
-
-
-
-
-const EMetadata& CorrelationMatrix::getGeneNames() const
-{
-   // get metadata root and make sure genes key exist
-   const EMetadata::Map* map {meta().toObject()};
-   if ( !map->contains("genes") )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Null Return Reference"));
-      e.setDetails(tr("Requesting reference to gene names when none exists."));
-      throw e;
-   }
-
-   // return gene names list
-   return *(*map)["genes"];
-}
-
-
-
-
-
-
-QList<QList<float>> CorrelationMatrix::readPair(Vector index) const
-{
-   // find correlation if it exists
-   qint64 index_;
-   if ( (index_ = findPair(index)) != -1 )
-   {
-      QList<QList<float>> ret;
-      qint64 indent {index.indent()};
-      while ( indent <= index.maxIndent() )
-      {
-         ret.push_back(QList<float>());
-         ret.back().reserve(_correlationSize);
-         for (int i = 0; i < _correlationSize ;++i)
-         {
-            float value;
-            stream() >> value;
-            ret.back().push_back(value);
-         }
-         if ( !stream() )
-         {
-            E_MAKE_EXCEPTION(e);
-            e.setTitle(tr("File IO Error"));
-            e.setDetails(tr("Failed reading from data object file."));
-            throw e;
-         }
-         indent = getPair(++index_);
-      }
-      return ret;
-   }
-
-   // else correlation does not exist
-   else
-   {
-      return QList<QList<float>>();
-   }
-}
-
-
-
-
-
-
-QList<QList<float>> CorrelationMatrix::readPair(qint64* index) const
-{
-   QList<QList<float>> ret;
-   Vector index_ {getPair(*index)};
-   qint64 indent {index_.indent()};
-   while ( indent <= index_.maxIndent() )
-   {
-      ret.push_back(QList<float>());
-      ret.back().reserve(_correlationSize);
-      for (int i = 0; i < _correlationSize ;++i)
-      {
-         float value;
-         stream() >> value;
-         ret.back().push_back(value);
-      }
-      if ( !stream() )
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("File IO Error"));
-         e.setDetails(tr("Failed reading from data object file."));
-         throw e;
-      }
-      indent = getPair(++(*index));
-   }
-   return ret;
-}
-
-
-
-
-
-
-void CorrelationMatrix::writePair(Vector index, const QList<QList<float>> correlations)
-{
-   // make sure index and correlations are valid
-   if ( index.cluster() != 0 || correlations.size() >= Vector::_maxClusterSize )
-   {
-      ;//ERROR!
-   }
-
-   // write new gene pair correlations
-   for (const auto& list :correlations)
-   {
-      write(index++);
-   }
-
-   // make sure writing worked
-   if ( !stream() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed reading from data object file."));
-      throw e;
-   }
-}
-
-
-
-
-
-
-CorrelationMatrix::Pair::Pair(CorrelationMatrix* matrix):
-   _matrix(matrix),
-   _cMatrix(matrix)
-{
-   // make sure matrix pointer is valid
-   if ( !matrix )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Attempting to create gene pair with null correlation matrix pointer."));
-      throw e;
-   }
-
-   // create new array for correlation values
-   _correlations = new float[_matrix->_maxModes*_matrix->_correlationSize];
-}
-
-
-
-
-
-
-CorrelationMatrix::Pair::Pair(const CorrelationMatrix* matrix):
-   _cMatrix(matrix)
-{
-   // make sure matrix pointer is valid
-   if ( !matrix )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Attempting to create gene pair with null correlation matrix pointer."));
-      throw e;
-   }
-
-   // create new array for correlation values
-   _correlations = new float[_cMatrix->_maxModes*_cMatrix->_correlationSize];
-}
-
-
-
-
-
-
-void CorrelationMatrix::Pair::readFirst() const
-{
-   // set index to beginning and read in correlations
-   _index = 0;
-   _cMatrix->readPair(_index,_correlations);
-}
-
-
-
-
-
-
-bool CorrelationMatrix::Pair::readNext() const
-{
-   // check if there are any more correlations to read
-   if ( _index < (_cMatrix->correlationSize() - 1) )
-   {
-      // read in correlations of next correlation and return true
-      _cMatrix->readPair(++_index,_correlations);
-      return true;
-   }
-
-   // no more correlations to read return false
-   return false;
-}
-
-
-
-
-
-
-float& CorrelationMatrix::Pair::at(int mode, int correlation)
-{
-   // make sure mode and index are valid
-   if ( mode < 0 || mode > _matrix->_maxModes || correlation < 0
-        || correlation > _matrix->_correlationSize )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Invalid mode of %1 and index of %2 with max modes of %3 and correlation "
-                      "size of %4").arg(mode).arg(correlation).arg(_matrix->_maxModes)
-                   .arg(_matrix->_correlationSize));
-      throw e;
-   }
-
-   // return correlation value
-   return _correlations[mode*_matrix->_correlationSize + correlation];
-}
-
-
-
-
-
-
-const float& CorrelationMatrix::Pair::at(int mode, int correlation) const
-{
-   // make sure mode and index are valid
-   if ( mode < 0 || mode > _cMatrix->_maxModes || correlation < 0
-        || correlation > _cMatrix->_correlationSize )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Invalid mode of %1 and index of %2 with max modes of %3 and correlation "
-                      "size of %4").arg(mode).arg(correlation).arg(_cMatrix->_maxModes)
-                   .arg(_cMatrix->_correlationSize));
-      throw e;
-   }
-
-   // return correlation value
-   return _correlations[mode*_cMatrix->_correlationSize + correlation];
+   Base::initialize(geneNames,sizeof(float)*_correlationSize,DATA_OFFSET);
 }

@@ -8,47 +8,41 @@ class CorrelationMatrix : public QAbstractTableModel, public GenePair::Base
 {
    Q_OBJECT
 public:
-   using GenePair::Vector;
-   class Pair
+   class Pair : public Base::Pair
    {
    public:
-      Pair(CorrelationMatrix* matrix);
-      Pair(const CorrelationMatrix* matrix);
-      void write(Vector index) { _matrix->writePair(index,_correlations); }
-      void read(Vector index) const { _correlations = _cMatrix->readPair(index); }
-      void readFirst() const;
-      bool readNext() const;
-      void clear() const;
-      int addCluster() const;
-      int clusterSize() const;
-      bool isEmpty() const;
-      const float& at(int cluster, int correlation) const;
+      Pair(CorrelationMatrix* matrix):
+         Base::Pair(matrix),
+         _cMatrix(matrix)
+         {}
+      Pair(const CorrelationMatrix* matrix):
+         Base::Pair(matrix),
+         _cMatrix(matrix)
+         {}
+      virtual void clearClusters() const { _correlations.clear(); }
+      virtual void addCluster(int amount = 1) const;
+      virtual int clusterSize() const { return _correlations.size(); }
+      virtual bool isEmpty() const { return _correlations.isEmpty(); }
+      QString toString() const;
+      const float& at(int cluster, int correlation) const
+         { return _correlations.at(cluster).at(correlation); }
+      float& at(int cluster, int correlation) { return _correlations[cluster][correlation]; }
    private:
-      CorrelationMatrix* _matrix {nullptr};
-      const CorrelationMatrix* _cMatrix;
+      virtual void writeCluster(EDataStream& stream, int cluster);
+      virtual void readCluster(const EDataStream& stream, int cluster) const;
       mutable QList<QList<float>> _correlations;
-      mutable qint64 _index {-1};
+      const CorrelationMatrix* _cMatrix;
    };
-   virtual void readData() override final;
-   virtual void finish() override final;
    virtual QAbstractTableModel* getModel() override final { return this; }
    virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-   virtual int rowCount(const QModelIndex&) const override final { return _geneSize; }
-   virtual int columnCount(const QModelIndex&) const override final { return _geneSize; }
+   virtual int rowCount(const QModelIndex&) const override final { return geneSize(); }
+   virtual int columnCount(const QModelIndex&) const override final { return geneSize(); }
    virtual QVariant data(const QModelIndex& index, int role) const override final;
-   void initialize(const EMetadata& geneNames, qint32 sampleSize
-                   , const EMetadata& correlationNames);
-   qint32 geneSize() const { return _geneSize; }
-   qint32 sampleSize() const { return _sampleSize; }
-   qint8 correlationSize() const { return _correlationSize; }
-   const EMetadata& getGeneNames() const;
+   void initialize(const EMetadata& geneNames, const EMetadata& correlationNames);
 private:
-   QList<QList<float>> readPair(Vector index) const;
-   QList<QList<float>> readPair(qint64* index) const;
-   void writePair(Vector index, const QList<QList<float>>& correlations);
-   static const int DATA_OFFSET {9};
-   qint32 _geneSize {0};
-   qint32 _sampleSize {0};
+   virtual void writeHeader() { stream() << _correlationSize; }
+   virtual void readHeader() { stream() >> _correlationSize; }
+   static const int DATA_OFFSET {1};
    qint8 _correlationSize {0};
 };
 
