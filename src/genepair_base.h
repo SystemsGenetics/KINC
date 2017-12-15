@@ -28,8 +28,8 @@ namespace GenePair
          Pair(Pair&&) = default;
          virtual void clearClusters() const = 0;
          virtual void addCluster(int amount = 1) const = 0;
-         virtual int clusterSize() const;
-         virtual bool isEmpty() const;
+         virtual int clusterSize() const = 0;
+         virtual bool isEmpty() const = 0;
          void write(Vector index);
          void read(Vector index) const;
          void readFirst() const;

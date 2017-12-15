@@ -325,7 +325,8 @@ void Base::Pair::read(Vector index) const
 
    // attempt to find vector within data object
    qint64 index_;
-   if ( (index_ = _cMatrix->findPair(index.indent(0),0,_cMatrix->_rawPairSize - 1)) != -1 )
+   if ( _cMatrix->_rawPairSize > 0
+        && (index_ = _cMatrix->findPair(index.indent(0),0,_cMatrix->_rawPairSize - 1)) != -1 )
    {
       // gene pair with vector found, read in all clusters
       _nextIndex = index_;
