@@ -53,7 +53,6 @@ EAbstractAnalytic::ArgumentType Pearson::getArgumentData(int argument)
    case Minimum: return Type::Integer;
    case BlockSize: return Type::Integer;
    case KernelSize: return Type::Integer;
-   case PreAllocate: return Type::Bool;
    default: return Type::Bool;
    }
 }
@@ -80,7 +79,6 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       case Minimum: return QString("min");
       case BlockSize: return QString("bsize");
       case KernelSize: return QString("ksize");
-      case PreAllocate: return QString("prealloc");
       default: return QVariant();
       }
    case Role::Title:
@@ -92,7 +90,6 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       case Minimum: return tr("Minimum Sample Size:");
       case BlockSize: return tr("Block Size:");
       case KernelSize: return tr("Kernel Size:");
-      case PreAllocate: return tr("Pre-Allocate Output?");
       default: return QVariant();
       }
    case Role::WhatsThis:
@@ -109,8 +106,6 @@ QVariant Pearson::getArgumentData(int argument, Role role)
                                 " to run for execution.");
       case KernelSize: return tr("This option only applies if OpenCL is used. Total number of"
                                  " kernels to run per block of execution.");
-      case PreAllocate: return tr("Should the output correlation matrix have file space"
-                                  " pre-allocated? WARNING this only works in linux systems.");
       default: return QVariant();
       }
    case Role::DefaultValue:
@@ -176,9 +171,6 @@ void Pearson::setArgument(int argument, QVariant value)
    case KernelSize:
       _kernelSize = value.toInt();
       break;
-   case PreAllocate:
-      _allocate = value.toBool();
-      break;
    }
 }
 
@@ -227,8 +219,12 @@ bool Pearson::initialize()
    }
 
    // initialize new correlation matrix and return pre-allocation argument
-   _output->initialize(_input->getGeneNames(),_input->getSampleSize(),1,1);
-   return _allocate;
+   EMetadata correlations(EMetadata::Array);
+   EMetadata* name {new EMetadata(EMetadata::String)};
+   *(name->toString()) = "pearson";
+   correlations.toArray()->append(name);
+   _output->initialize(_input->getGeneNames(),correlations);
+   return false;
 }
 
 
@@ -254,7 +250,7 @@ int Pearson::getBlockSize()
 
 
    // calculate total number of calculations that will be done and return block size
-   qint64 geneSize {_output->getGeneSize()};
+   qint64 geneSize {_output->geneSize()};
    _totalPairs = geneSize*(geneSize-1)/2;
    return _blockSize;
 }
@@ -263,7 +259,7 @@ int Pearson::getBlockSize()
 
 
 
-
+/////////////////////////////////////
 bool Pearson::runBlock(int index)
 {
    // figure out what state this block is in and execute it
@@ -395,18 +391,17 @@ void Pearson::runSerial()
 {
     // Initialize correlation gene pair and expression genes for input/output
     CorrelationMatrix::Pair pair(_output);
-    pair.setModeSize(1);
+    pair.addCluster();
     ExpressionMatrix::Gene gene1(_input);
     ExpressionMatrix::Gene gene2(_input);
 
     // Initialize the first gene comparision
-    int x {1};
-    int y {0};
+    GenePair::Vector vector;
 
     // Iterate through the gene pairs
     // _output->getGeneSize() represents all of the possible comparisons that can
     // be done limited by the gene with the least amount of samples
-    while(x < _output->getGeneSize())
+    while(vector.geneX() < _output->geneSize())
     {
         // Initialize the running sum variables
         double sumx {0.0}, sumy {0.0}, sumx2 {0.0}, sumy2 {0.0}, sumxy {0.0};
@@ -420,8 +415,8 @@ void Pearson::runSerial()
         // Initialize sample size and read in gene expressions
         // Keep track of the count of viable samples that ARE NOT nans
         int size {0};
-        gene1.read(x);
-        gene2.read(y);
+        gene1.read(vector.geneX());
+        gene2.read(vector.geneY());
 
         // Iterate through the gene1 and gene2 sample row
         for (auto i = 0; i < _input->getSampleSize(); i++)
@@ -450,11 +445,13 @@ void Pearson::runSerial()
         pair.at(0,0) = numerator / denominator;
 
         // Save this gene pair and increment to the next comparison
-        pair.write(x, y);
-        CorrelationMatrix::increment(x,y);
-
+        if ( !isnan(pair.at(0,0)) && pair.at(0,0) >= _minThreshold
+             && pair.at(0,0) <= _maxThreshold )
+        {
+         pair.write(vector);
+        }
+        ++vector;
     }
-
 }
 
 
@@ -466,7 +463,7 @@ void Pearson::initializeKernelArguments()
 
    // get first power of 2 number greater or equal to sample size
    int pow2Size {2};
-   while ( pow2Size < _output->getSampleSize() )
+   while ( pow2Size < _input->getSampleSize() )
    {
       pow2Size *= 2;
    }
@@ -494,7 +491,7 @@ void Pearson::initializeKernelArguments()
    }
 
    // set all static kernel arguments
-   _kernel->setArgument(0,(cl_int)_output->getSampleSize());
+   _kernel->setArgument(0,(cl_int)_input->getSampleSize());
    _kernel->setArgument(1,(cl_int)_minimum);
    _kernel->setBuffer(2,_expressions);
    _kernel->setDimensionCount(1);
@@ -518,19 +515,18 @@ void Pearson::initializeKernelArguments()
 void Pearson::runStartBlock(Block& block)
 {
    // check if there are more gene comparisons to compute
-   if ( _x < _output->getGeneSize() )
+   if ( _vector.geneX() < _output->geneSize() )
    {
       // set block xy to beginning of read comparisons
-      block.x = _x;
-      block.y = _y;
+      _nextVector = block.vector = _vector;
 
       // copy list of comparisons to be done on this run
       int index {0};
-      while ( _x < _output->getGeneSize() && index < _kernelSize )
+      while ( _vector.geneX() < _output->geneSize() && index < _kernelSize )
       {
-         (*block.references)[index*2] = _x;
-         (*block.references)[(index*2)+1] = _y;
-         CorrelationMatrix::increment(_x,_y);
+         (*block.references)[index*2] = _vector.geneX();
+         (*block.references)[(index*2)+1] = _vector.geneY();
+         ++_vector;
          ++index;
       }
 
@@ -638,9 +634,9 @@ void Pearson::runExecuteBlock(Block& block)
 
 void Pearson::runReadBlock(Block& block)
 {
-   // use pair declaration and check if read is complete
+   // use pair declaration and check if read is complete and we are next in line
    using Pair = CorrelationMatrix::Pair;
-   if ( block.event.isDone() )
+   if ( block.event.isDone() && _nextVector == block.vector )
    {
       // make sure opencl event worked
       if ( !block.event )
@@ -652,21 +648,20 @@ void Pearson::runReadBlock(Block& block)
 
       // make new correlation pair
       Pair pair(_output);
+      pair.addCluster();
 
-      // initialize mode size to one and set mask to all ones
-      pair.setModeSize(1);
-      for (int i = 0; i < _output->getSampleSize() ;++i)
-      {
-         pair.mode(0,i) = 1;
-      }
-
-      // iterate through all valid spearman answers and write each one to correlation matrix
+      // iterate through all valid spearman answers and write each one to correlation matrix that is
+      // not a NaN and is within threshold limits
       int index {0};
-      while ( block.x < _output->getGeneSize() && index < _kernelSize )
+      while ( block.vector.geneX() < _output->geneSize() && index < _kernelSize )
       {
          pair.at(0,0) = (*block.answers)[index];
-         pair.write(block.x,block.y);
-         CorrelationMatrix::increment(block.x,block.y);
+         if ( !isnan(pair.at(0,0)) && pair.at(0,0) >= _minThreshold
+              && pair.at(0,0) <= _maxThreshold )
+         {
+            pair.write(block.vector);
+         }
+         ++(block.vector);
          ++index;
          ++_pairsComplete;
       }

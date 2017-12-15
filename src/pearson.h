@@ -3,6 +3,8 @@
 #include <ace/core/AceCore.h>
 #include <ace/core/AceOpenCL.h>
 
+#include "genepair_vector.h"
+
 
 
 class ExpressionMatrix;
@@ -22,7 +24,6 @@ public:
       ,Minimum
       ,BlockSize
       ,KernelSize
-      ,PreAllocate
       ,Total
    };
    virtual int getArgumentCount() override final { return Total; }
@@ -66,8 +67,7 @@ private:
          delete workBuffer;
       }
       int state {Start};
-      int x;
-      int y;
+      GenePair::Vector vector;
       EOpenCLEvent event;
       EOpenCLBuffer<cl_int>* references;
       EOpenCLBuffer<cl_float>* answers;
@@ -85,13 +85,14 @@ private:
    int _minimum {30};
    int _blockSize {4};
    int _kernelSize {4096};
-   bool _allocate {false};
+   float _minThreshold {0.5};
+   float _maxThreshold {1.0};
    Block** _blocks {nullptr};
    EOpenCLProgram* _program {nullptr};
    EOpenCLKernel* _kernel {nullptr};
    EOpenCLBuffer<cl_float>* _expressions {nullptr};
-   int _x {1};
-   int _y {0};
+   GenePair::Vector _vector;
+   GenePair::Vector _nextVector;
    qint64 _totalPairs;
    qint64 _pairsComplete {0};
    int _lastPercent {0};
