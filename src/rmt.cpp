@@ -1,4 +1,5 @@
 #include <memory>
+#include <random>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_math.h>
@@ -206,16 +207,15 @@ void RMT::runSerial()
 
    // initialize text stream for output and get gene names
    QTextStream stream(_output);
-   const EMetadata::List* names {_input->getGeneNames().toArray()};
+   const EMetadata::List* names {_input->geneNames().toArray()};
 
    // initialize pair iterator, xy gene indexes, and last percent complete
    CorrelationMatrix::Pair pair(_input);
-   int x {1};
-   int y {0};
+   GenePair::Vector vector;
    int lastPercent {66};
 
    // iterate through all gene pairs until end is reached
-   while ( x < _input->getGeneSize() )
+   while ( vector.geneX() < _input->geneSize() )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -224,19 +224,19 @@ void RMT::runSerial()
       }
 
       // read gene pair and check if it meets threshold
-      pair.read(x,y);
+      pair.read(vector);
       if ( pair.at(0,0) >= threshold )
       {
          // write correlation to output
-         stream << *(names->at(x)->toString()) << "\t" << *(names->at(y)->toString()) << "\tco\t"
-                << pair.at(0,0) << "\n";
+         stream << *(names->at(vector.geneX())->toString()) << "\t"
+                << *(names->at(vector.geneY())->toString()) << "\tco\t" << pair.at(0,0) << "\n";
       }
 
       // increment to next gene pair
-      CorrelationMatrix::increment(x,y);
+      ++vector;
 
       // determine new percentage complete and check if new
-      int newPercent {66 + 34*x/_input->getGeneSize()};
+      int newPercent {66 + 34*vector.geneX()/_input->geneSize()};
       if ( newPercent != lastPercent )
       {
          // update to new percentage and emit progressed signal
@@ -368,20 +368,19 @@ float RMT::determineChi(float threshold, int* size)
 void RMT::generateGeneThresholds()
 {
    // resize thresholds matrix and initialize all to the minimum
-   _geneThresholds.fill(-1.0,_input->getGeneSize());
+   _geneThresholds.fill(-1.0,_input->geneSize());
 
    // initialize percent complete and steps
    int lastPercent {0};
    qint64 steps {0};
-   qint64 totalSteps {_input->getGeneSize()*(_input->getGeneSize() - 1)/2};
+   qint64 totalSteps {_input->geneSize()*(_input->geneSize() - 1)/2};
 
    // xy gene indexes and iterator
-   int x {1};
-   int y {0};
+   GenePair::Vector vector;
    CorrelationMatrix::Pair pair(_input);
 
    // iterate through all gene pairs
-   while ( x < _input->getGeneSize() )
+   while ( vector.geneX() < _input->geneSize() )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -390,24 +389,24 @@ void RMT::generateGeneThresholds()
       }
 
       // read in gene pair and check if it is a real number
-      pair.read(x,y);
-      if ( !isnan(pair.at(0,0)) )
+      pair.read(vector);
+      if ( !pair.isEmpty() && !isnan(pair.at(0,0)) )
       {
          // if value is greater than current max of gene x set it to new max
-         if ( pair.at(0,0) > _geneThresholds.at(x) )
+         if ( pair.at(0,0) > _geneThresholds.at(vector.geneX()) )
          {
-            _geneThresholds[x] = pair.at(0,0);
+            _geneThresholds[vector.geneX()] = pair.at(0,0);
          }
 
          // if value is greater than current max of gene y set it to new max
-         if ( pair.at(0,0) > _geneThresholds.at(y) )
+         if ( pair.at(0,0) > _geneThresholds.at(vector.geneY()) )
          {
-            _geneThresholds[y] = pair.at(0,0);
+            _geneThresholds[vector.geneY()] = pair.at(0,0);
          }
       }
 
       // increment to next gene pair, steps, and compute new percent complete
-      CorrelationMatrix::increment(x,y);
+      ++vector;
       ++steps;
       qint64 newPercent {33*steps/totalSteps};
 
@@ -428,9 +427,13 @@ void RMT::generateGeneThresholds()
 
 QVector<double> RMT::generatePruneMatrix(float threshold, int* size)
 {
+   // make random number generator with normal distribution from -1 to 1
+   default_random_engine generator;
+   normal_distribution<float> distribution(0.0,0.3);
+
    // generate vector of gene indexes that have max threshold above given threshold
    QVector<int> genes;
-   for (int i = 0; i < _input->getGeneSize() ;++i)
+   for (int i = 0; i < _input->geneSize() ;++i)
    {
       if ( _geneThresholds.at(i) >= threshold )
       {
@@ -471,18 +474,18 @@ QVector<double> RMT::generatePruneMatrix(float threshold, int* size)
             {
                swap(g1,g2);
             }
-            pair.read(g1,g2);
+            pair.read({g1,g2});
 
             // if the correlation is a real number get value
-            if ( !isnan(pair.at(0,0)) && !isinf(pair.at(0,0)) )
+            if ( !pair.isEmpty() && !isnan(pair.at(0,0)) && !isinf(pair.at(0,0)) )
             {
                pruneMatrix[i*genes.size() + j] = pair.at(0,0);
             }
 
-            // else set value to zero
+            // else set value to random value
             else
             {
-               pruneMatrix[i*genes.size() + j] = 0.0;
+               pruneMatrix[i*genes.size() + j] = distribution(generator);
             }
          }
       }
