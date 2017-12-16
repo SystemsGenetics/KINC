@@ -30,7 +30,7 @@ EAbstractAnalytic::ArgumentType RMT::getArgumentData(int argument)
    switch (argument)
    {
    case InputData: return Type::DataIn;
-   case OutputFile: return Type::FileOut;
+   case OutputData: return Type::DataOut;
    case LogFile: return Type::FileOut;
    case FilterSize: return Type::Integer;
    default: return Type::Bool;
@@ -55,7 +55,7 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       switch (argument)
       {
       case InputData: return QString("input");
-      case OutputFile: return QString("output");
+      case OutputData: return QString("output");
       case LogFile: return QString("log");
       case FilterSize: return QString("filter");
       default: return QVariant();
@@ -65,7 +65,7 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       switch (argument)
       {
       case InputData: return tr("Input:");
-      case OutputFile: return tr("Output:");
+      case OutputData: return tr("Output:");
       case LogFile: return tr("Log File:");
       case FilterSize: return tr("Filter Size:");
       default: return QVariant();
@@ -76,7 +76,7 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       {
       case InputData: return tr("Input correlation matrix that will be used to output correlation"
                                 " above a threshold determined by Random Matrix Theory.");
-      case OutputFile: return tr("Output text file that will hold listing of all gene correlations"
+      case OutputData: return tr("Output correlation matrix that will hold all gene correlations"
                                  " above a certain threshold.");
       case LogFile: return tr("Output text file that logs all chi trials.");
       case FilterSize: return tr("Sample size for low pass filter of chi results.");
@@ -87,13 +87,13 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       switch (argument)
       {
       case InputData: return DataFactory::CorrelationMatrixType;
+      case OutputData: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
    case Role::FileFilters:
       // figure out which argument is being queried and return file filters
       switch (argument)
       {
-      case OutputFile: return tr("Text File %1").arg("(*.txt)");
       case LogFile: return tr("Text File %1").arg("(*.txt)");
       default: return QVariant();
       }
@@ -147,9 +147,6 @@ void RMT::setArgument(int argument, QFile* file)
    // figure out which argument is being queried and set file pointer
    switch (argument)
    {
-   case OutputFile:
-      _output = file;
-      break;
    case LogFile:
       _logfile = file;
       break;
@@ -163,10 +160,15 @@ void RMT::setArgument(int argument, QFile* file)
 
 void RMT::setArgument(int argument, EAbstractData* data)
 {
-   // set input argument if this is correct argument
-   if ( argument == InputData )
+   // figure out which argument is being queried and set data pointer
+   switch (argument)
    {
+   case InputData:
       _input = dynamic_cast<CorrelationMatrix*>(data);
+      break;
+   case OutputData:
+      _output = dynamic_cast<CorrelationMatrix*>(data);
+      break;
    }
 }
 
@@ -187,6 +189,9 @@ bool RMT::initialize()
       throw e;
    }
 
+   // initialize new correlation matrix
+   _output->initialize(_input->geneNames(),_input->correlationNames());
+
    // nothing to pre-allocate
    return false;
 }
@@ -205,17 +210,19 @@ void RMT::runSerial()
       return;
    }
 
-   // initialize text stream for output and get gene names
-   QTextStream stream(_output);
-   const EMetadata::List* names {_input->geneNames().toArray()};
-
-   // initialize pair iterator, xy gene indexes, and last percent complete
+   // initialize pair iterators and last percent complete
    CorrelationMatrix::Pair pair(_input);
-   GenePair::Vector vector;
+   CorrelationMatrix::Pair outPair(_output);
+   pair.readFirst();
+   outPair.addCluster();
    int lastPercent {66};
 
+   // initialize steps and total steps
+   qint64 steps {0};
+   qint64 totalSteps {_input->size()};
+
    // iterate through all gene pairs until end is reached
-   while ( vector.geneX() < _input->geneSize() )
+   while ( true )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -223,20 +230,26 @@ void RMT::runSerial()
          return;
       }
 
-      // read gene pair and check if it meets threshold
-      pair.read(vector);
-      if ( pair.at(0,0) >= threshold )
+      // check if it meets threshold and is not empty
+      if ( !pair.isEmpty() && pair.at(0,0) >= threshold )
       {
          // write correlation to output
-         stream << *(names->at(vector.geneX())->toString()) << "\t"
-                << *(names->at(vector.geneY())->toString()) << "\tco\t" << pair.at(0,0) << "\n";
+         outPair.at(0,0) = pair.at(0,0);
+         outPair.write(pair.vector());
       }
 
-      // increment to next gene pair
-      ++vector;
+      // if we are at end break from loop
+      if ( !pair.hasNext() )
+      {
+         break;
+      }
+
+      // read next gene pair and increment steps
+      pair.readNext();
+      ++steps;
 
       // determine new percentage complete and check if new
-      int newPercent {66 + 34*vector.geneX()/_input->geneSize()};
+      int newPercent = 66 + steps/totalSteps;
       if ( newPercent != lastPercent )
       {
          // update to new percentage and emit progressed signal
@@ -373,14 +386,14 @@ void RMT::generateGeneThresholds()
    // initialize percent complete and steps
    int lastPercent {0};
    qint64 steps {0};
-   qint64 totalSteps {_input->geneSize()*(_input->geneSize() - 1)/2};
+   qint64 totalSteps {_input->size()};
 
-   // xy gene indexes and iterator
-   GenePair::Vector vector;
+   // initialize gene pair iterator
    CorrelationMatrix::Pair pair(_input);
+   pair.readFirst();
 
    // iterate through all gene pairs
-   while ( vector.geneX() < _input->geneSize() )
+   while ( true )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -388,25 +401,30 @@ void RMT::generateGeneThresholds()
          return;
       }
 
-      // read in gene pair and check if it is a real number
-      pair.read(vector);
+      // check if it is a real number and not empty
       if ( !pair.isEmpty() && !isnan(pair.at(0,0)) )
       {
          // if value is greater than current max of gene x set it to new max
-         if ( pair.at(0,0) > _geneThresholds.at(vector.geneX()) )
+         if ( pair.at(0,0) > _geneThresholds.at(pair.vector().geneX()) )
          {
-            _geneThresholds[vector.geneX()] = pair.at(0,0);
+            _geneThresholds[pair.vector().geneX()] = pair.at(0,0);
          }
 
          // if value is greater than current max of gene y set it to new max
-         if ( pair.at(0,0) > _geneThresholds.at(vector.geneY()) )
+         if ( pair.at(0,0) > _geneThresholds.at(pair.vector().geneY()) )
          {
-            _geneThresholds[vector.geneY()] = pair.at(0,0);
+            _geneThresholds[pair.vector().geneY()] = pair.at(0,0);
          }
       }
 
-      // increment to next gene pair, steps, and compute new percent complete
-      ++vector;
+      // if we are at end break from loop
+      if ( !pair.hasNext() )
+      {
+         break;
+      }
+
+      // read in next gene pair, increment steps, and compute new percent complete
+      pair.readNext();
       ++steps;
       qint64 newPercent {33*steps/totalSteps};
 

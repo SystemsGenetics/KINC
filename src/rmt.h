@@ -14,7 +14,7 @@ public:
    enum Arguments
    {
       InputData = 0
-      ,OutputFile
+      ,OutputData
       ,LogFile
       ,FilterSize
       ,Total
@@ -45,7 +45,7 @@ private:
    constexpr static float _chiSquareBinSize {0.05};
    constexpr static double _minimumEigenValue {0.000001};
    CorrelationMatrix* _input {nullptr};
-   QFile* _output {nullptr};
+   CorrelationMatrix* _output {nullptr};
    QFile* _logfile {nullptr};
    int _filterSize {10};
    float _initialThreshold {0.99607};
