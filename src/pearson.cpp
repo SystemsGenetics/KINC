@@ -51,6 +51,8 @@ EAbstractAnalytic::ArgumentType Pearson::getArgumentData(int argument)
    case InputData: return Type::DataIn;
    case OutputData: return Type::DataOut;
    case Minimum: return Type::Integer;
+   case MinThreshold: return Type::Double;
+   case MaxThreshold: return Type::Double;
    case BlockSize: return Type::Integer;
    case KernelSize: return Type::Integer;
    default: return Type::Bool;
@@ -77,6 +79,8 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       case InputData: return QString("input");
       case OutputData: return QString("output");
       case Minimum: return QString("min");
+      case MinThreshold: return QString("minthresh");
+      case MaxThreshold: return QString("maxthresh");
       case BlockSize: return QString("bsize");
       case KernelSize: return QString("ksize");
       default: return QVariant();
@@ -88,6 +92,8 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       case InputData: return tr("Input:");
       case OutputData: return tr("Output:");
       case Minimum: return tr("Minimum Sample Size:");
+      case MinThreshold: return tr("Minimum Threshold:");
+      case MaxThreshold: return tr("Maximum Threshold:");
       case BlockSize: return tr("Block Size:");
       case KernelSize: return tr("Kernel Size:");
       default: return QVariant();
@@ -102,6 +108,10 @@ QVariant Pearson::getArgumentData(int argument, Role role)
                                  " results.");
       case Minimum: return tr("Minimum size of samples two genes must share to generate a spearman"
                               " coefficient.");
+      case MinThreshold: return tr("Minimum threshold that a correlation value must be equal to or"
+                                   " greater than to be added to the correlation matrix.");
+      case MaxThreshold: return tr("Maximum threshold that a correlation value must be equal to or"
+                                   " lesser than to be added to the correlation matrix.");
       case BlockSize: return tr("This option only applies if OpenCL is used. Total number of blocks"
                                 " to run for execution.");
       case KernelSize: return tr("This option only applies if OpenCL is used. Total number of"
@@ -114,6 +124,8 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case Minimum: return 30;
+      case MinThreshold: return 0.5;
+      case MaxThreshold: return 1.0;
       case BlockSize: return 4;
       case KernelSize: return 4096;
       default: return QVariant();
@@ -124,6 +136,8 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case Minimum: return 1;
+      case MinThreshold: return -1.0;
+      case MaxThreshold: return -1.0;
       case BlockSize: return 1;
       case KernelSize: return 1;
       default: return QVariant();
@@ -134,6 +148,8 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case Minimum: return INT_MAX;
+      case MinThreshold: return 1.0;
+      case MaxThreshold: return 1.0;
       case BlockSize: return INT_MAX;
       case KernelSize: return INT_MAX;
       default: return QVariant();
@@ -164,6 +180,12 @@ void Pearson::setArgument(int argument, QVariant value)
    {
    case Minimum:
       _minimum = value.toInt();
+      break;
+   case MinThreshold:
+      _minThreshold = value.toDouble();
+      break;
+   case MaxThreshold:
+      _maxThreshold = value.toDouble();
       break;
    case BlockSize:
       _blockSize = value.toInt();

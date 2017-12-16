@@ -22,6 +22,8 @@ public:
       InputData = 0
       ,OutputData
       ,Minimum
+      ,MinThreshold
+      ,MaxThreshold
       ,BlockSize
       ,KernelSize
       ,Total
