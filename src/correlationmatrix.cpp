@@ -179,3 +179,24 @@ void CorrelationMatrix::initialize(const EMetadata &geneNames, const EMetadata &
    _correlationSize = correlationNames.toArray()->size();
    Base::initialize(geneNames,sizeof(float)*_correlationSize,DATA_OFFSET);
 }
+
+
+
+
+
+
+const EMetadata &CorrelationMatrix::correlationNames() const
+{
+   // get metadata root and make sure correlations key exist
+   const EMetadata::Map* map {meta().toObject()};
+   if ( !map->contains("correlations") )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("Null Return Reference"));
+      e.setDetails(QObject::tr("Requesting reference to correlation names when none exists."));
+      throw e;
+   }
+
+   // return correlation names list
+   return *(*map)["correlations"];
+}
