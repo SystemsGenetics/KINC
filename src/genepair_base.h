@@ -65,14 +65,14 @@ namespace GenePair
       Vector getPair(qint64 index, qint8* cluster) const;
       qint64 findPair(qint64 indent, qint64 first, qint64 last) const;
       void seekPair(qint64 index) const;
-      constexpr static int _headerSize {24};
+      constexpr static int _headerSize {26};
       constexpr static int _itemHeaderSize {9};
       qint32 _geneSize {0};
       qint32 _dataSize {0};
       qint64 _pairSize {0};
       qint64 _rawPairSize {0};
       qint16 _offset {0};
-      qint64 _lastWrite {-1};
+      qint64 _lastWrite {-2};
    };
 }
 

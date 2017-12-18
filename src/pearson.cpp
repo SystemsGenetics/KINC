@@ -540,7 +540,7 @@ void Pearson::runStartBlock(Block& block)
    if ( _vector.geneX() < _output->geneSize() )
    {
       // set block xy to beginning of read comparisons
-      _nextVector = block.vector = _vector;
+      block.vector = _vector;
 
       // copy list of comparisons to be done on this run
       int index {0};
@@ -688,7 +688,8 @@ void Pearson::runReadBlock(Block& block)
          ++_pairsComplete;
       }
 
-      // change block state to start
+      // update next vector and change block state to start
+      _nextVector = block.vector;
       block.state = Block::Start;
    }
 }

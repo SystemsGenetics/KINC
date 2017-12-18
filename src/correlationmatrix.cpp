@@ -18,6 +18,10 @@ void CorrelationMatrix::Pair::addCluster(int amount) const
    while ( amount-- > 0 )
    {
       _correlations.push_back({});
+      for (int i = 0; i < _cMatrix->_correlationSize ;++i)
+      {
+         _correlations.back().push_back(NAN);
+      }
    }
 }
 
@@ -28,6 +32,12 @@ void CorrelationMatrix::Pair::addCluster(int amount) const
 
 QString CorrelationMatrix::Pair::toString() const
 {
+   // if there are no correlations simply return null
+   if ( _correlations.isEmpty() )
+   {
+      return tr("(null)");
+   }
+
    // initialize list of strings and iterate through all clusters
    QStringList ret;
    for (const auto& cluster : _correlations)
@@ -134,11 +144,15 @@ QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
    {
       return QVariant();
    }
+   if ( index.row() == 1 && index.column() == 0 )
+   {
+      int a {0};
+   }
 
    // if row and column are equal return one
    if ( index.row() == index.column() )
    {
-      return 1;
+      return "(1)";
    }
 
    // get constant pair and read in values

@@ -154,6 +154,15 @@ QVariant Spearman::getArgumentData(int argument, Role role)
       case KernelSize: return INT_MAX;
       default: return QVariant();
       }
+   case Role::Decimals:
+      switch (argument)
+      {
+      case MinThreshold:
+      case MaxThreshold:
+         return 6;
+      default:
+         return QVariant();
+      }
    case Role::DataType:
       // figure out which argument is being queried and if applicable return data type else
       // return nothing
@@ -554,7 +563,7 @@ void Spearman::runStartBlock(Block& block)
    if ( _vector.geneX() < _output->geneSize() )
    {
       // set block xy to beginning of read comparisons
-      _nextVector = block.vector = _vector;
+      block.vector = _vector;
 
       // copy list of comparisons to be done on this run
       int index {0};
@@ -703,7 +712,8 @@ void Spearman::runReadBlock(Block& block)
          ++_pairsComplete;
       }
 
-      // change block state to start
+      // update next vector and change block state to start
+      _nextVector = block.vector;
       block.state = Block::Start;
    }
 }

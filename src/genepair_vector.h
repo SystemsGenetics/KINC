@@ -26,7 +26,7 @@ namespace GenePair
          { return _geneX != object._geneX || _geneY != object._geneY; }
       constexpr static qint8 _maxClusterSize {64};
    private:
-      qint32 _geneX {0};
+      qint32 _geneX {1};
       qint32 _geneY {0};
    };
 }

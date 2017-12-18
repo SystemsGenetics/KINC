@@ -120,7 +120,7 @@ void Base::initialize(const EMetadata& geneNames, int dataSize, int offset)
    _offset = offset;
    _pairSize = 0;
    _rawPairSize = 0;
-   _lastWrite = 0;
+   _lastWrite = -1;
 }
 
 
@@ -131,7 +131,7 @@ void Base::initialize(const EMetadata& geneNames, int dataSize, int offset)
 void Base::write(Vector index, qint8 cluster)
 {
    // make sure this is new data object that can be written to
-   if ( _lastWrite == -1 )
+   if ( _lastWrite == -2 )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Gene Pair Base Logical Error"));
@@ -141,7 +141,7 @@ void Base::write(Vector index, qint8 cluster)
 
    // make sure the new gene pair has a higher indent than the previous written so the list of
    // all indents are sorted
-   if ( index.indent(cluster) >= _lastWrite )
+   if ( index.indent(cluster) <= _lastWrite )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Gene Pair Base Logical Error"));
@@ -151,7 +151,13 @@ void Base::write(Vector index, qint8 cluster)
    }
 
    // seek to position for next gene pair and write indent value
-   seekPair(_rawPairSize);
+   if ( !seek(_headerSize + _offset + _rawPairSize*(_dataSize + _itemHeaderSize)) )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("File IO Error"));
+      e.setDetails(QObject::tr("Failed calling seek() on data object file."));
+      throw e;
+   }
    stream() << index.geneX() << index.geneY() << cluster;
 
    // make sure writing worked
