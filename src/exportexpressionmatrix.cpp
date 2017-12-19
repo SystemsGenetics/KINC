@@ -167,13 +167,13 @@ void ExportExpressionMatrix::runSerial()
    QTextStream stream(_output);
    stream.setRealNumberPrecision(12);
 
-   for ( int i = 0; i < _input->columnCount(QModelIndex()); i++ )
+   for ( int i = 0; i < _input->getSampleSize(); i++ )
    {
       stream << *sampleNames->at(i)->toString() << "\t";
    }
    stream << "\n";
 
-   for ( int i = 0; i < _input->rowCount(QModelIndex()); i++ )
+   for ( int i = 0; i < _input->getGeneSize(); i++ )
    {
       // if interruption is requested exit immediately
       if ( isInterruptionRequested() )
@@ -184,7 +184,7 @@ void ExportExpressionMatrix::runSerial()
       // write a single row to a line in the output file
       stream << *geneNames->at(i)->toString();
 
-      for ( int j = 0; j < _input->columnCount(QModelIndex()); j++ )
+      for ( int j = 0; j < _input->getSampleSize(); j++ )
       {
          Expression value = _input->data(_input->index(i, j), Qt::DisplayRole).toFloat();
 
@@ -220,7 +220,7 @@ void ExportExpressionMatrix::runSerial()
       stream << "\n";
 
       // figure out percent complete
-      int newPercent = (i + 1) / _input->rowCount(QModelIndex());
+      int newPercent = 100 * (i + 1) / _input->getGeneSize();
 
       // if percent complete has changed update it and emit progressed
       if ( newPercent != lastPercent )
