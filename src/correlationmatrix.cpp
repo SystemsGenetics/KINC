@@ -144,10 +144,6 @@ QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
    {
       return QVariant();
    }
-   if ( index.row() == 1 && index.column() == 0 )
-   {
-      int a {0};
-   }
 
    // if row and column are equal return one
    if ( index.row() == index.column() )
