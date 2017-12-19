@@ -10,6 +10,7 @@ public:
    enum Types
    {
       ExpressionMatrixType = 0
+      ,CCMatrixType
       ,CorrelationMatrixType
       ,Total
    };
