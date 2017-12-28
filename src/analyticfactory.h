@@ -11,6 +11,7 @@ public:
    {
       ImportExpressionMatrixType = 0
       ,ExportExpressionMatrixType
+      ,KMeansType
       ,SpearmanType
       ,PearsonType
       ,RMTType

@@ -43,7 +43,8 @@ SOURCES += \
     correlationbase.cpp \
     genepair_vector.cpp \
     genepair_base.cpp \
-    ccmatrix.cpp
+    ccmatrix.cpp \
+    kmeans.cpp
 
 HEADERS += \
     analyticfactory.h \
@@ -58,7 +59,8 @@ HEADERS += \
     correlationbase.h \
     genepair_vector.h \
     genepair_base.h \
-    ccmatrix.h
+    ccmatrix.h \
+    kmeans.h
 
 RESOURCES += \
     opencl.qrc
