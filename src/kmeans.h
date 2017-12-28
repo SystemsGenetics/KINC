@@ -17,7 +17,7 @@ public:
    {
       InputData = 0
       ,OutputData
-      ,Minimum
+      ,MinSamples
       ,MinClusters
       ,MaxClusters
       ,Total
@@ -38,7 +38,7 @@ private:
 
    ExpressionMatrix* _input {nullptr};
    CCMatrix* _output {nullptr};
-   int _minimum {30};
+   int _minSamples {30};
    int _minClusters {1};
    int _maxClusters {5};
 };

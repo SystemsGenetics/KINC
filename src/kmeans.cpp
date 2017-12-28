@@ -31,7 +31,7 @@ EAbstractAnalytic::ArgumentType KMeans::getArgumentData(int argument)
    {
    case InputData: return Type::DataIn;
    case OutputData: return Type::DataOut;
-   case Minimum: return Type::Integer;
+   case MinSamples: return Type::Integer;
    case MinClusters: return Type::Integer;
    case MaxClusters: return Type::Integer;
    default: return Type::Bool;
@@ -57,7 +57,7 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       {
       case InputData: return QString("input");
       case OutputData: return QString("output");
-      case Minimum: return QString("min");
+      case MinSamples: return QString("min");
       case MinClusters: return QString("minclus");
       case MaxClusters: return QString("maxclus");
       default: return QVariant();
@@ -68,7 +68,7 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       {
       case InputData: return tr("Input:");
       case OutputData: return tr("Output:");
-      case Minimum: return tr("Minimum Sample Size:");
+      case MinSamples: return tr("Minimum Sample Size:");
       case MinClusters: return tr("Minimum Clusters:");
       case MaxClusters: return tr("Maximum Clusters:");
       default: return QVariant();
@@ -79,7 +79,7 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       {
       case InputData: return tr("Input expression matrix that will be used to compute pair-wise clusters.");
       case OutputData: return tr("Output cluster matrix that will store pair-wise clusters.");
-      case Minimum: return tr("Minimum size of samples two genes must share to perform clustering.");
+      case MinSamples: return tr("Minimum size of samples two genes must share to perform clustering.");
       case MinClusters: return tr("Minimum number of clusters to test.");
       case MaxClusters: return tr("Maximum number of clusters to test.");
       default: return QVariant();
@@ -89,7 +89,7 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       // return nothing
       switch (argument)
       {
-      case Minimum: return 30;
+      case MinSamples: return 30;
       case MinClusters: return 1;
       case MaxClusters: return 5;
       default: return QVariant();
@@ -99,7 +99,7 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       // return nothing
       switch (argument)
       {
-      case Minimum: return 1;
+      case MinSamples: return 1;
       case MinClusters: return 1;
       case MaxClusters: return 1;
       default: return QVariant();
@@ -109,7 +109,7 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       // return nothing
       switch (argument)
       {
-      case Minimum: return INT_MAX;
+      case MinSamples: return INT_MAX;
       case MinClusters: return INT_MAX;
       case MaxClusters: return INT_MAX;
       default: return QVariant();
@@ -138,8 +138,8 @@ void KMeans::setArgument(int argument, QVariant value)
    // figure out which argument is being set and set it
    switch (argument)
    {
-   case Minimum:
-      _minimum = value.toInt();
+   case MinSamples:
+      _minSamples = value.toInt();
       break;
    case MinClusters:
       _minClusters = value.toInt();
@@ -186,7 +186,7 @@ bool KMeans::initialize()
    }
 
    // make sure minimum is a legal value
-   if ( _minimum < 1 )
+   if ( _minSamples < 1 )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
@@ -423,7 +423,7 @@ void KMeans::runSerial()
       }
 
       // perform clustering only if there are enough samples
-      if ( size >= _minimum )
+      if ( size >= _minSamples )
       {
          CCMatrix::Pair pair = computePair(X, size, 2);
 
