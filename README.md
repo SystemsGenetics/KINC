@@ -1,17 +1,40 @@
-First, open a new KINC Expression Matrix file 
+# Knowledge Independent Network Construction (KINC)
 
-open Hsapiens-9606-201603-2016-RNASeq-Quantile-CancerGenomeAtlas-v1.emx:emx --select
+KINC is a Qt/ACE application that produces a gene co-expression network (GCN) from a gene expression matrix (GEM). KINC implements several algorithms that are required for this process:
 
-Second, import the file the KINC file the expression data from the flat text file. This file has headers and empty values are indicated with 'NA'
+Correlation
+- Pearson
+- Spearman
 
-load Hsapiens-9606-201603-2016-RNASeq-Quantile-CancerGenomeAtlas-v1 --nosample=NA
+Clustering
+- K-means
+- Gaussian mixture models
 
-Next see what GPU devices are available
-cl list
+Thresholding
+- Random matrix theory
 
-Set the CL device:
+# Installation
 
-cl set 0:0
+This software uses GSL, OpenCL, and [ACE](https://github.com/SystemsGenetics/ACE). For instructions on installing ACE, see the project repository. For all other dependencies, consult your package manager. For example, to install dependencies on Ubuntu:
+```
+sudo apt install libgsl2 ocl-icd-opencl-dev
+```
 
-Now run spearman
-spearman --in=Hsapiens-9606-201603-2016-RNASeq-Quantile-CancerGenomeAtlas-v1.emx --out=Hsapiens-9606-201603-2016-RNASeq-Quantile-CancerGenomeAtlas-v1.cmx:cmx
+To build KINC:
+```
+cd build
+qmake ../src
+make
+cd ..
+```
+
+# Usage
+
+To build a GCN involves several steps:
+
+1. Import expression matrix
+2. Compute cluster composition matrix
+3. Compute correlation matrix
+4. Compute thresholded correlation matrix
+
+KINC provides a GUI to perform each step one at a time, as well as a console to show the equivalent command-line operation. That is, every KINC operation can be done through the GUI or the command-line.
