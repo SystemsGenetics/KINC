@@ -213,9 +213,7 @@ bool KMeans::initialize()
 
 
 
-
-
-float computeVectorDistance(const float *a, const float *b, int n)
+float KMeans::computeVecDiffNorm(const float *a, const float *b, int n)
 {
    float dist = 0;
    for ( int i = 0; i < n; ++i )
@@ -226,6 +224,11 @@ float computeVectorDistance(const float *a, const float *b, int n)
 
    return sqrt(dist);
 }
+
+
+
+
+
 
 QVector<int> KMeans::computeKmeans(const float *X, int N, int D, float *Mu, int K)
 {
@@ -246,7 +249,7 @@ QVector<int> KMeans::computeKmeans(const float *X, int N, int D, float *Mu, int 
             const float *x_i = &X[i * D];
             const float *mu_k = &Mu[k * D];
 
-            float dist = computeVectorDistance(x_i, mu_k, D);
+            float dist = computeVecDiffNorm(x_i, mu_k, D);
 
             if ( min_k == -1 || dist < min_dist )
             {
@@ -298,9 +301,7 @@ QVector<int> KMeans::computeKmeans(const float *X, int N, int D, float *Mu, int 
 
 
 
-
-
-float computeLogLikelihood(const float *X, int N, int D, const float *Mu, int K, const QVector<int>& y)
+float KMeans::computeLogLikelihood(const float *X, int N, int D, const float *Mu, int K, const QVector<int>& y)
 {
    // compute within-class scatter
    float S = 0;
@@ -317,7 +318,7 @@ float computeLogLikelihood(const float *X, int N, int D, const float *Mu, int K,
          const float *mu_k = &Mu[k * D];
          const float *x_i = &X[i * D];
 
-         float dist = computeVectorDistance(x_i, mu_k, D);
+         float dist = computeVecDiffNorm(x_i, mu_k, D);
 
          S += dist * dist;
       }
@@ -326,13 +327,23 @@ float computeLogLikelihood(const float *X, int N, int D, const float *Mu, int K,
    return -S;
 }
 
-float computeBIC(const float *X, int N, int D, const float *Mu, int K, const QVector<int>& y)
+
+
+
+
+
+float KMeans::computeBIC(const float *X, int N, int D, const float *Mu, int K, const QVector<int>& y)
 {
    int p = K * D;
    float L = computeLogLikelihood(X, N, D, Mu, K, y);
 
    return log(N) * p - 2 * L;
 }
+
+
+
+
+
 
 CCMatrix::Pair KMeans::computePair(const float *X, int N, int D)
 {
@@ -372,8 +383,6 @@ CCMatrix::Pair KMeans::computePair(const float *X, int N, int D)
 
    return pair;
 }
-
-
 
 
 
