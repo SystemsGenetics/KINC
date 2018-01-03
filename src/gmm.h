@@ -1,14 +1,15 @@
-#ifndef KMEANS_H
-#define KMEANS_H
+#ifndef GMM_H
+#define GMM_H
 #include <ace/core/AceCore.h>
 
 #include "expressionmatrix.h"
 #include "ccmatrix.h"
+#include "genepair_gmm.h"
 #include "genepair_vector.h"
 
 
 
-class KMeans : public EAbstractAnalytic
+class GMM : public EAbstractAnalytic
 {
    Q_OBJECT
 
@@ -35,10 +36,7 @@ public:
    virtual void finish() override final {}
 
 private:
-   float computeVecDiffNorm(const float *a, const float *b, int n);
-   QVector<int> computeKmeans(const float *X, int N, int D, float *Mu, int K);
-   float computeLogLikelihood(const float *X, int N, int D, const float *Mu, int K, const QVector<int>& y);
-   float computeBIC(const float *X, int N, int D, const float *Mu, int K, const QVector<int>& y);
+   float computeBIC(const GenePair::GMM& gmm, int N, int D);
    CCMatrix::Pair computePair(const float *X, int N, int D);
 
    ExpressionMatrix* _input {nullptr};

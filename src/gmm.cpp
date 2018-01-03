@@ -1,9 +1,7 @@
 #include <ace/core/metadata.h>
-#include <gsl/gsl_cblas.h>
 
-#include "kmeans.h"
+#include "gmm.h"
 #include "datafactory.h"
-
 
 using namespace std;
 
@@ -12,7 +10,7 @@ using namespace std;
 
 
 
-EAbstractAnalytic::ArgumentType KMeans::getArgumentData(int argument)
+EAbstractAnalytic::ArgumentType GMM::getArgumentData(int argument)
 {
    // use type declaration
    using Type = EAbstractAnalytic::ArgumentType;
@@ -34,7 +32,7 @@ EAbstractAnalytic::ArgumentType KMeans::getArgumentData(int argument)
 
 
 
-QVariant KMeans::getArgumentData(int argument, Role role)
+QVariant GMM::getArgumentData(int argument, Role role)
 {
    // use role declaration
    using Role = EAbstractAnalytic::Role;
@@ -124,7 +122,7 @@ QVariant KMeans::getArgumentData(int argument, Role role)
 
 
 
-void KMeans::setArgument(int argument, QVariant value)
+void GMM::setArgument(int argument, QVariant value)
 {
    // figure out which argument is being set and set it
    switch (argument)
@@ -146,7 +144,7 @@ void KMeans::setArgument(int argument, QVariant value)
 
 
 
-void KMeans::setArgument(int argument, EAbstractData *data)
+void GMM::setArgument(int argument, EAbstractData *data)
 {
    // figure out which argument is having its data set and if applicable set it
    switch (argument)
@@ -165,7 +163,7 @@ void KMeans::setArgument(int argument, EAbstractData *data)
 
 
 
-bool KMeans::initialize()
+bool GMM::initialize()
 {
    // make sure there is valid input and output
    if ( !_input || !_output )
@@ -176,7 +174,7 @@ bool KMeans::initialize()
       throw e;
    }
 
-   // make sure minimum is a legal value
+   // make sure minimum sample size is a legal value
    if ( _minSamples < 1 )
    {
       E_MAKE_EXCEPTION(e);
@@ -204,16 +202,11 @@ bool KMeans::initialize()
 
 
 
-float KMeans::computeVecDiffNorm(const float *a, const float *b, int n)
+float GMM::computeBIC(const GenePair::GMM& gmm, int N, int D)
 {
-   float dist = 0;
-   for ( int i = 0; i < n; ++i )
-   {
-      float diff = a[i] - b[i];
-      dist += diff * diff;
-   }
+   int p = gmm.numClusters() * (1 + D + D * D);
 
-   return sqrt(dist);
+   return log(N) * p - 2 * gmm.logLikelihood();
 }
 
 
@@ -221,166 +214,54 @@ float KMeans::computeVecDiffNorm(const float *a, const float *b, int n)
 
 
 
-QVector<int> KMeans::computeKmeans(const float *X, int N, int D, float *Mu, int K)
+CCMatrix::Pair GMM::computePair(const float *X, int N, int D)
 {
-   // initialize K means randomly from X
-   for ( int k = 0; k < K; ++k )
-   {
-      int i = rand() % N;
-
-      for ( int j = 0; j < D; ++j )
-      {
-         Mu[k * D + j] = X[i * D + j];
-      }
-   }
-
-   // iterate K means until convergence
-   QVector<int> y;
-   QVector<int> y_next(N);
-
-   while ( true )
-   {
-      // E step
-      for ( int i = 0; i < N; ++i )
-      {
-         // find k that minimizes norm(x_i - mu_k)
-         int min_k = -1;
-         float min_dist;
-
-         for ( int k = 0; k < K; ++k )
-         {
-            const float *x_i = &X[i * D];
-            const float *mu_k = &Mu[k * D];
-
-            float dist = computeVecDiffNorm(x_i, mu_k, D);
-
-            if ( min_k == -1 || dist < min_dist )
-            {
-               min_k = k;
-               min_dist = dist;
-            }
-         }
-
-         y_next[i] = min_k;
-      }
-
-      // check for convergence
-      if ( y == y_next )
-      {
-         break;
-      }
-
-      y = y_next;
-
-      // M step
-      for ( int k = 0; k < K; ++k )
-      {
-         // compute mu_k = mean of all x_i in cluster k
-         float *mu_k = &Mu[k * D];
-         int n_k = 0;
-
-         memset(mu_k, 0, D * sizeof(float));
-
-         for ( int i = 0; i < N; ++i )
-         {
-            const float *x_i = &X[i * D];
-
-            if ( y[i] == k )
-            {
-               cblas_saxpy(D, 1.0f, x_i, 1, mu_k, 1);
-               n_k++;
-            }
-         }
-
-         cblas_sscal(D, 1.0f / n_k, mu_k, 1);
-      }
-   }
-
-   return y;
-}
-
-
-
-
-
-
-float KMeans::computeLogLikelihood(const float *X, int N, int D, const float *Mu, int K, const QVector<int>& y)
-{
-   // compute within-class scatter
-   float S = 0;
-
-   for ( int k = 0; k < K; ++k )
-   {
-      for ( int i = 0; i < N; ++i )
-      {
-         if ( y[i] != k )
-         {
-            continue;
-         }
-
-         const float *mu_k = &Mu[k * D];
-         const float *x_i = &X[i * D];
-
-         float dist = computeVecDiffNorm(x_i, mu_k, D);
-
-         S += dist * dist;
-      }
-   }
-
-   return -S;
-}
-
-
-
-
-
-
-float KMeans::computeBIC(const float *X, int N, int D, const float *Mu, int K, const QVector<int>& y)
-{
-   int p = K * D;
-   float L = computeLogLikelihood(X, N, D, Mu, K, y);
-
-   return log(N) * p - 2 * L;
-}
-
-
-
-
-
-
-CCMatrix::Pair KMeans::computePair(const float *X, int N, int D)
-{
-   // compute clustering model
-   int bestK = 0;
-   QVector<int> bestLabels;
-   float bestValue = 0;
-
-   float Mu[_maxClusters * D];
+   // run each clustering model
+   QVector<GenePair::GMM> models(_maxClusters - _minClusters + 1);
 
    for ( int K = _minClusters; K <= _maxClusters; ++K )
    {
-      // run each clustering model
-      QVector<int> labels = computeKmeans(X, N, D, Mu, K);
+      auto& gmm = models[K - _minClusters];
 
-      // select the model with lowest criterion value
-      float value = computeBIC(X, N, D, Mu, K, labels);
+      gmm.fit(X, N, D, K);
+   }
 
-      if ( bestK == 0 || value < bestValue ) {
-         bestK = K;
-         bestLabels = labels;
+   // select the model with the lowest criterion value
+   float bestValue = 0;
+   auto bestModel = models.end();
+
+   for ( auto iter = models.begin(); iter != models.end(); ++iter )
+   {
+      if ( !iter->success() )
+      {
+         continue;
+      }
+
+      float value = computeBIC(*iter, N, D);
+
+      if ( bestModel == models.end() || value < bestValue )
+      {
          bestValue = value;
+         bestModel = iter;
       }
    }
 
    // compute cluster labels for gene pair
    CCMatrix::Pair pair(_output);
-   pair.addCluster(bestK);
+
+   if ( bestModel == models.end() )
+   {
+      fprintf(stderr, "warning: all models failed\n");
+      return pair;
+   }
+
+   pair.addCluster(bestModel->numClusters());
 
    for ( int i = 0; i < N; ++i )
    {
-      for ( int k = 0; k < bestK; ++k )
+      for ( int k = 0; k < bestModel->numClusters(); ++k )
       {
-         pair.at(k, i) = (k == bestLabels[i]);
+         pair.at(k, i) = (k == bestModel->labels()[i]);
       }
    }
 
@@ -392,7 +273,7 @@ CCMatrix::Pair KMeans::computePair(const float *X, int N, int D)
 
 
 
-void KMeans::runSerial()
+void GMM::runSerial()
 {
    // initialize percent complete and steps
    int lastPercent {0};

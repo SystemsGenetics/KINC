@@ -2,6 +2,7 @@
 #include "importexpressionmatrix.h"
 #include "exportexpressionmatrix.h"
 #include "kmeans.h"
+#include "gmm.h"
 #include "spearman.h"
 #include "pearson.h"
 #include "rmt.h"
@@ -23,6 +24,7 @@ QString AnalyticFactory::getName(quint16 type)
    case ImportExpressionMatrixType: return QObject::tr("Import Expression Matrix");
    case ExportExpressionMatrixType: return QObject::tr("Export Expression Matrix");
    case KMeansType: return QObject::tr("K-means Clustering");
+   case GMMType: return QObject::tr("GMM Clustering");
    case SpearmanType: return QObject::tr("Spearman");
    case PearsonType: return QObject::tr("Pearson");
    case RMTType: return QObject::tr("RMT");
@@ -43,6 +45,7 @@ QString AnalyticFactory::getCommandName(quint16 type)
    case ImportExpressionMatrixType: return QString("import_emx");
    case ExportExpressionMatrixType: return QString("export_emx");
    case KMeansType: return QString("kmeans");
+   case GMMType: return QString("gmm");
    case SpearmanType: return QString("spearman");
    case PearsonType: return QString("pearson");
    case RMTType: return QString("rmt");
@@ -63,6 +66,7 @@ std::unique_ptr<EAbstractAnalytic> AnalyticFactory::make(quint16 type)
    case ImportExpressionMatrixType: return unique_ptr<EAbstractAnalytic>(new ImportExpressionMatrix);
    case ExportExpressionMatrixType: return unique_ptr<EAbstractAnalytic>(new ExportExpressionMatrix);
    case KMeansType: return unique_ptr<EAbstractAnalytic>(new KMeans);
+   case GMMType: return unique_ptr<EAbstractAnalytic>(new GMM);
    case SpearmanType: return unique_ptr<EAbstractAnalytic>(new Spearman);
    case PearsonType: return unique_ptr<EAbstractAnalytic>(new Pearson);
    case RMTType: return unique_ptr<EAbstractAnalytic>(new RMT);
