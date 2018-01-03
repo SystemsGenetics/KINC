@@ -1,6 +1,7 @@
 #ifndef GENEPAIR_GMM_H
 #define GENEPAIR_GNN_H
 #include <ace/core/AceCore.h>
+#include <gsl/gsl_matrix.h>
 
 namespace GenePair
 {
@@ -17,7 +18,7 @@ namespace GenePair
 
          void initialize(int D, float pi, float *mu);
          void prepareCovariance();
-         void logMvNormDist(const float *X, int N, float *P);
+         void logMvNormDist(const gsl_matrix_float *X, float *P);
 
          float _pi;
          float *_mu;
@@ -35,16 +36,16 @@ namespace GenePair
       float logLikelihood() const { return _logL; }
       const QVector<int>& labels() const { return _labels; }
 
-      void fit(const float *X, int N, int D, int K, int maxIterations=100);
+      void fit(const gsl_matrix_float *X, int K, int maxIterations=100);
 
    private:
-      void initialize(const float *X, int N, int D, int K);
-      void kmeans(const float *X, int N, int D, float *M, int K);
-      void calcLogMvNorm(const float *X, int N, float *logProb);
+      void initialize(const gsl_matrix_float *X, int K);
+      void kmeans(const gsl_matrix_float *X, float *M, int K);
+      void calcLogMvNorm(const gsl_matrix_float *X, float *logProb);
       void logLikelihoodAndGammaNK(const float *logpi, float *logProb, int N, float *logL);
       void calcLogGammaK(const float *loggamma, int N, float *logGamma);
       float calcLogGammaSum(const float *logpi, const float *logGamma);
-      void performMStep(float *logpi, float *loggamma, float *logGamma, const float logGammaSum, const float *X, int N, int D, float *outerProduct, float *xm);
+      void performMStep(float *logpi, float *loggamma, float *logGamma, const float logGammaSum, const gsl_matrix_float *X, float *outerProduct, float *xm);
       QVector<int> calcLabels(float *loggamma, int N);
 
       int _K;
