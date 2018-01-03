@@ -232,6 +232,18 @@ float KMeans::computeVecDiffNorm(const float *a, const float *b, int n)
 
 QVector<int> KMeans::computeKmeans(const float *X, int N, int D, float *Mu, int K)
 {
+   // initialize K means randomly from X
+   for ( int k = 0; k < K; ++k )
+   {
+      int i = rand() % N;
+
+      for ( int j = 0; j < D; ++j )
+      {
+         Mu[k * D + j] = X[i * D + j];
+      }
+   }
+
+   // iterate K means until convergence
    QVector<int> y;
    QVector<int> y_next(N);
 
@@ -373,7 +385,7 @@ CCMatrix::Pair KMeans::computePair(const float *X, int N, int D)
    CCMatrix::Pair pair(_output);
    pair.addCluster(bestK);
 
-   for ( int i = 0; i < bestLabels.size(); ++i )
+   for ( int i = 0; i < N; ++i )
    {
       for ( int k = 0; k < bestK; ++k )
       {
