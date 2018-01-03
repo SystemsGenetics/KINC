@@ -249,9 +249,9 @@ void GMM::Component::logMvNormDist(const gsl_matrix_float *X, float *P)
    // normal distribution conditioned on a single component for the set of points
    // given by X.
    //
-   // P(x|component) = exp{ -0.5 * (x - mu)^T Sigma^{-} (x - mu) } / sqrt{ (2pi)^k det(Sigma) }
+   // P(x|k) = exp{ -0.5 * (x - mu)^T Sigma^{-} (x - mu) } / sqrt{ (2pi)^k det(Sigma) }
    //
-   // Where Sigma and Mu are really Sigma_{component} Mu_{component}
+   // Where Sigma and Mu are really Sigma_{k} Mu_{k}
 
    const int N = X->size1;
    const int D = X->size2;
@@ -261,12 +261,12 @@ void GMM::Component::logMvNormDist(const gsl_matrix_float *X, float *P)
    float *innerProduct = (float *) malloc(N * sizeof(float));
 
    // Let XM = (x - m)
-   for (int point = 0; point < N; ++point)
+   for (int i = 0; i < N; ++i)
    {
-      for (int dim = 0; dim < D; ++dim)
+      for (int j = 0; j < D; ++j)
       {
-         const int i = point * D + dim;
-         XM[i] = X->data[i] - _mu[dim];
+         const int idx = i * D + j;
+         XM[idx] = X->data[idx] - _mu[j];
       }
    }
 
@@ -275,20 +275,20 @@ void GMM::Component::logMvNormDist(const gsl_matrix_float *X, float *P)
 
    // XM^T SXM
    memset(innerProduct, 0, N * sizeof(float));
-   for (int point = 0; point < N; ++point)
+   for (int i = 0; i < N; ++i)
    {
-      for (int dim = 0; dim < D; ++dim)
+      for (int j = 0; j < D; ++j)
       {
-         innerProduct[point] += XM[point * D + dim] * SXM[point * D + dim];
+         innerProduct[i] += XM[i * D + j] * SXM[i * D + j];
       }
    }
 
    // Compute P expf( -0.5 innerProduct ) / normalizer
-   for (int point = 0; point < N; ++point)
+   for (int i = 0; i < N; ++i)
    {
       // Normalizer already has negative sign on it.
-      P[point] = -0.5 * innerProduct[point] + _normalizer;
-      assert(P[point] == P[point]);
+      P[i] = -0.5 * innerProduct[i] + _normalizer;
+      assert(P[i] == P[i]);
    }
 
    free(XM);
@@ -358,15 +358,15 @@ void GMM::kmeans(const gsl_matrix_float *X, float *M, int K)
 {
    const int N = X->size1;
    const int D = X->size2;
-   const float tolerance = 1e-3;
+   const float TOLERANCE = 1e-3;
    float diff = 0;
 
-   const int maxIterations = 20;
+   const int MAX_ITERATIONS = 20;
 
    float MP[K * D];
    int counts[K];
 
-   for (int iteration = 0; iteration < maxIterations && diff > tolerance; ++iteration)
+   for (int iteration = 0; iteration < MAX_ITERATIONS && diff > TOLERANCE; ++iteration)
    {
       memset(MP, 0, K * D * sizeof(float));
       memset(counts, 0, K * sizeof(int));
@@ -434,12 +434,12 @@ void GMM::calcLogMvNorm(const gsl_matrix_float *X, float *logProb)
 void GMM::logLikelihoodAndGammaNK(const float *logpi, float *logProb, int N, float *logL)
 {
    *logL = 0.0;
-   for (int point = 0; point < N; ++point)
+   for (int i = 0; i < N; ++i)
    {
       float maxArg = -INFINITY;
       for (int k = 0; k < _K; ++k)
       {
-         const float logProbK = logpi[k] + logProb[k * N + point];
+         const float logProbK = logpi[k] + logProb[k * N + i];
          if (logProbK > maxArg)
          {
             maxArg = logProbK;
@@ -449,7 +449,7 @@ void GMM::logLikelihoodAndGammaNK(const float *logpi, float *logProb, int N, flo
       float sum = 0.0;
       for (int k = 0; k < _K; ++k)
       {
-         const float logProbK = logpi[k] + logProb[k * N + point];
+         const float logProbK = logpi[k] + logProb[k * N + i];
          sum += expf(logProbK - maxArg);
       }
 
@@ -458,7 +458,7 @@ void GMM::logLikelihoodAndGammaNK(const float *logpi, float *logProb, int N, flo
       *logL += logpx;
       for (int k = 0; k < _K; ++k)
       {
-         logProb[k * N + point] += -logpx;
+         logProb[k * N + i] += -logpx;
       }
    }
 }
@@ -477,9 +477,9 @@ void GMM::calcLogGammaK(const float *loggamma, int N, float *logGamma)
       const float *loggammak = &loggamma[k * N];
 
       float maxArg = -INFINITY;
-      for (int point = 0; point < N; ++point)
+      for (int i = 0; i < N; ++i)
       {
-         const float loggammank = loggammak[point];
+         const float loggammank = loggammak[i];
          if (loggammank > maxArg)
          {
             maxArg = loggammank;
@@ -487,9 +487,9 @@ void GMM::calcLogGammaK(const float *loggamma, int N, float *logGamma)
       }
 
       float sum = 0;
-      for (int point = 0; point < N; ++point)
+      for (int i = 0; i < N; ++i)
       {
-         const float loggammank = loggammak[point];
+         const float loggammank = loggammak[i];
          sum += expf(loggammank - maxArg);
       }
       assert(sum >= 0);
@@ -550,10 +550,10 @@ void GMM::performMStep(float *logpi, float *loggamma, float *logGamma, const flo
    //  and costly, expf(x) calls.
    for (int k = 0; k < _K; ++k)
    {
-      for (int n = 0; n < N; ++n)
+      for (int i = 0; i < N; ++i)
       {
-         const int i = k * N + n;
-         loggamma[i] = expf(loggamma[i]);
+         const int idx = k * N + i;
+         loggamma[idx] = expf(loggamma[idx]);
       }
    }
 
@@ -568,11 +568,11 @@ void GMM::performMStep(float *logpi, float *loggamma, float *logGamma, const flo
       auto& component = _components[k];
 
       memset(component._mu, 0, D * sizeof(float));
-      for (int point = 0; point < N; ++point)
+      for (int i = 0; i < N; ++i)
       {
-         for (int dim = 0; dim < D; ++dim)
+         for (int j = 0; j < D; ++j)
          {
-            component._mu[dim] += loggamma[k * N + point] * X->data[point * D + dim];
+            component._mu[j] += loggamma[k * N + i] * X->data[i * D + j];
          }
       }
 
@@ -588,12 +588,12 @@ void GMM::performMStep(float *logpi, float *loggamma, float *logGamma, const flo
       auto& component = _components[k];
 
       memset(component._sigma, 0, D * D * sizeof(float));
-      for (int point = 0; point < N; ++point)
+      for (int i = 0; i < N; ++i)
       {
          // (x - m)
-         for (int dim = 0; dim < D; ++dim)
+         for (int j = 0; j < D; ++j)
          {
-            xm[dim] = X->data[point * D + dim] - component._mu[dim];
+            xm[j] = X->data[i * D + j] - component._mu[j];
          }
 
          // (x - m) (x - m)^T
@@ -605,15 +605,15 @@ void GMM::performMStep(float *logpi, float *loggamma, float *logGamma, const flo
             }
          }
 
-         for (int i = 0; i < D * D; ++i)
+         for (int j = 0; j < D * D; ++j)
          {
-            component._sigma[i] += loggamma[k * N + point] * outerProduct[i];
+            component._sigma[j] += loggamma[k * N + i] * outerProduct[j];
          }
       }
 
-      for (int i = 0; i < D * D; ++i)
+      for (int j = 0; j < D * D; ++j)
       {
-         component._sigma[i] /= logGamma[k];
+         component._sigma[j] /= logGamma[k];
       }
 
       component.prepareCovariance();
@@ -661,8 +661,7 @@ void GMM::fit(const gsl_matrix_float *X, int K, int maxIterations)
 
    initialize(X, K);
 
-   const float tolerance = 1e-8;
-   int iteration = 0;
+   const float TOLERANCE = 1e-8;
    float prevLogL = -INFINITY;
    float currentLogL = -INFINITY;
 
@@ -682,7 +681,7 @@ void GMM::fit(const gsl_matrix_float *X, int K, int maxIterations)
 
    try
    {
-      do
+      for ( int t = 0; t < maxIterations; ++t )
       {
          // --- E-Step ---
 
@@ -690,22 +689,15 @@ void GMM::fit(const gsl_matrix_float *X, int K, int maxIterations)
          calcLogMvNorm(X, loggamma);
 
          prevLogL = currentLogL;
-         logLikelihoodAndGammaNK(
-            logpi,
-            loggamma, N,
-            &currentLogL
-         );
+         logLikelihoodAndGammaNK(logpi, loggamma, N, &currentLogL);
 
-         if ( fabsf(currentLogL - prevLogL) < tolerance )
+         if ( fabsf(currentLogL - prevLogL) < TOLERANCE )
          {
             break;
          }
 
-         // Let Gamma[component] = \Sum_point gamma[component, point]
-         calcLogGammaK(
-            loggamma, N,
-            logGamma
-         );
+         // Let Gamma[k] = \Sum_point gamma[k, i]
+         calcLogGammaK(loggamma, N, logGamma);
 
          float logGammaSum = calcLogGammaSum(logpi, logGamma);
 
@@ -715,7 +707,7 @@ void GMM::fit(const gsl_matrix_float *X, int K, int maxIterations)
             X,
             outerProduct, xm
          );
-      } while ( ++iteration < maxIterations );
+      }
 
       // save outputs
       _success = true;
