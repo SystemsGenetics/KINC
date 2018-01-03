@@ -1,27 +1,9 @@
-#include <gsl/gsl_cblas.h>
-
 #include "genepair_kmeans.h"
+#include "genepair_linalg.h"
 
 
 
 using namespace GenePair;
-
-
-
-
-
-
-float vector_diff_norm(const float *a, const float *b, int n)
-{
-   float dist = 0;
-   for ( int i = 0; i < n; ++i )
-   {
-      float diff = a[i] - b[i];
-      dist += diff * diff;
-   }
-
-   return sqrt(dist);
-}
 
 
 
@@ -54,7 +36,7 @@ void KMeans::initialize(const gsl_matrix_float *X, int K)
       gsl_vector_float *mu = gsl_vector_float_alloc(D);
 
       int i = rand() % N;
-      memcpy(mu->data, &X->data[i * D], D * sizeof(float));
+      vector_copy(mu->data, &X->data[i * D]);
 
       _means.push_back(mu);
    }
@@ -91,7 +73,7 @@ void KMeans::fit(const gsl_matrix_float *X, int K)
             const float *x_i = &X->data[i * D];
             const float *mu_k = _means[k]->data;
 
-            float dist = vector_diff_norm(x_i, mu_k, D);
+            float dist = vector_diff_norm(x_i, mu_k);
 
             if ( min_k == -1 || dist < min_dist )
             {
@@ -118,7 +100,7 @@ void KMeans::fit(const gsl_matrix_float *X, int K)
          float *mu_k = _means[k]->data;
          int n_k = 0;
 
-         memset(mu_k, 0, D * sizeof(float));
+         vector_init_zero(mu_k);
 
          for ( int i = 0; i < N; ++i )
          {
@@ -126,12 +108,12 @@ void KMeans::fit(const gsl_matrix_float *X, int K)
 
             if ( y[i] == k )
             {
-               cblas_saxpy(D, 1.0f, x_i, 1, mu_k, 1);
+               vector_add(mu_k, x_i);
                n_k++;
             }
          }
 
-         cblas_sscal(D, 1.0f / n_k, mu_k, 1);
+         vector_scale(mu_k, 1.0f / n_k);
       }
    }
 
@@ -165,7 +147,7 @@ float KMeans::computeLogLikelihood(const gsl_matrix_float *X)
          const float *mu_k = _means[k]->data;
          const float *x_i = &X->data[i * D];
 
-         float dist = vector_diff_norm(x_i, mu_k, D);
+         float dist = vector_diff_norm(x_i, mu_k);
 
          S += dist * dist;
       }

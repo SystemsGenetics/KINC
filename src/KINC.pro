@@ -45,6 +45,7 @@ SOURCES += \
     genepair_base.cpp \
     genepair_gmm.cpp \
     genepair_kmeans.cpp \
+    genepair_linalg.cpp \
     ccmatrix.cpp \
     kmeans.cpp \
     gmm.cpp
@@ -64,6 +65,7 @@ HEADERS += \
     genepair_base.h \
     genepair_gmm.h \
     genepair_kmeans.h \
+    genepair_linalg.h \
     ccmatrix.h \
     kmeans.h \
     gmm.h
