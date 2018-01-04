@@ -1,8 +1,7 @@
 #include <cassert>
-#include <cfloat>
-#include <gsl/gsl_cblas.h>
 
 #include "genepair_gmm.h"
+#include "genepair_linalg.h"
 
 
 
@@ -12,167 +11,12 @@ using namespace GenePair;
 
 
 
-void choleskyDecomposition(const float *A, int D, float *L)
-{
-   // p. 157-158., Cholesky Factorization, 4.2 LU and Cholesky Factorizations,
-   // Numerical Analysis by Kincaid, Cheney.
-
-   // A is a real, symmetric, and positive definite D x D matrix
-   assert(D > 0);
-   assert(A != NULL);
-   for (int i = 0; i < D; ++i) {
-      for (int j = 0; j < D; ++j) {
-         // Check that we are real valued
-         float a = A[i * D + j];
-         assert(a == a && fabsf(a) != INFINITY);
-
-         // Check that we are symmetric
-         float b = A[j * D + i];
-         float absDiff = fabsf(a - b);
-         assert(absDiff < 2.0 * FLT_EPSILON);
-      }
-   }
-
-   // L is the resulting lower diagonal portion of A = LL^T
-   assert(L != NULL);
-   memset(L, 0, sizeof(float) * D * D);
-
-   for (int k = 0; k < D; ++k) {
-      float sum = 0;
-      for (int s = 0; s < k; ++s) {
-         const float l = L[k * D + s];
-         const float ll = l * l;
-         assert(ll == ll);
-         assert(ll != -INFINITY);
-         assert(ll != INFINITY);
-         assert(ll >= 0);
-         sum += ll;
-      }
-
-      assert(sum == sum);
-      assert(sum != -INFINITY);
-      assert(sum != INFINITY);
-      assert(sum >= 0);
-
-      sum = A[k * D + k] - sum;
-      if (sum <= FLT_EPSILON) {
-         // If this happens then we are not positive definite.
-         throw std::runtime_error("A must be positive definite");
-      }
-
-      L[k * D + k] = sqrtf(sum);
-      for (int i = k + 1; i < D; ++i) {
-         float subsum = 0;
-         for (int s = 0; s < k; ++s)
-            subsum += L[i * D + s] * L[k * D + s];
-
-         L[i * D + k] = (A[i * D + k] - subsum) / L[k * D + k];
-      }
-   }
-}
-
-void solvePositiveDefinite(const float *L, const float *B, float *X, int D, int N)
-{
-   // Want to solve the system given by: L(L^T)X = B where:
-   //   L: D x D lower diagonal matrix
-   //   X: D x N unknown
-   //   B: D x N known
-   //
-   // Solve by first finding L Z = B, then L^T X = Z
-
-   float *Z = (float *) calloc(N * D, sizeof(float));
-
-   // 2015-09-23 GEL play the access of L into L(F)orward and L(B)ackward.
-   // Found that sequential access improved runtime. 2017-03-24 GEL basically
-   // pretend to carry out the forward and backward solvers, but to improve
-   // runtime, load in L in sequential order ahead of time, so second time
-   // around, we will have cached that data so the CPU will prefetch as needed.
-   float *LF = (float *) malloc(D * D * sizeof(float));
-   for (int i = 0, lf = 0; i < D; i++) {
-      if (i > 0) {
-         for (int j = 0; j <= i - 1; j++) {
-            LF[lf++] = L[i * D + j];
-         }
-      }
-
-      LF[lf++] = L[i * D + i];
-   }
-
-   float *LB = (float *) malloc(D * D * sizeof(float));
-   for (int i = 0, lb = 0; i < D; ++i) {
-      int ip = D - 1 - i;
-      for (int j = ip + 1; j < D; j++) {
-         LB[lb++] = L[j * D + ip];
-      }
-
-      LB[lb++] = L[ip * D + ip];
-   }
-
-   // Use forward subsitution to solve lower triangular matrix system Lz = b.
-   // p. 150., Easy-to-Solve Systems, 4.2 LU and Cholesky Factorizations, Numerical Analysis by Kincaid, Cheney.
-   for (int point = 0; point < N; ++point) {
-      const float *b = &(B[point * D]);
-      float *z = &(Z[point * D]);
-
-      for (int i = 0, lf = 0; i < D; i++) {
-         float sum = 0.0;
-         if (i > 0) {
-            for (int j = 0; j <= i - 1; j++) {
-               sum += LF[lf++] * z[j];
-            }
-         }
-
-         z[i] = (b[i] - sum) / LF[lf++];
-      }
-   }
-
-   // use backward subsitution to solve L^T x = z
-   // p. 150., Easy-to-Solve Systems, 4.2 LU and Cholesky Factorizations, Numerical Analysis by Kincaid, Cheney.
-   for (int point = 0; point < N; ++point) {
-      float *z = &(Z[point * D]);
-      float *x = &(X[point * D]);
-
-      for (int i = 0, lb = 0; i < D; i++) {
-         int ip = D - 1 - i;
-
-         float sum = 0;
-         for (int j = ip + 1; j < D; j++)
-            // Want A^T so switch switch i,j
-            sum += LB[lb++] * x[j];
-
-         x[ip] = (z[ip] - sum) / LB[lb++];
-      }
-   }
-
-   free(LF);
-   free(LB);
-   free(Z);
-}
-
-float vecDiffNorm(const float *a, const float *b, int D)
-{
-   float dist = 0;
-   for (int d = 0; d < D; ++d)
-   {
-      float distD = a[d] - b[d];
-      distD *= distD;
-      dist += distD;
-   }
-   return sqrtf(dist);
-}
-
-
-
-
-
-
 GMM::Component::Component()
 {
-   _D = 0;
    _pi = 0;
    _mu = nullptr;
    _sigma = nullptr;
-   _sigmaL = nullptr;
+   _sigmaInv = nullptr;
    _normalizer = 0;
 }
 
@@ -183,9 +27,9 @@ GMM::Component::Component()
 
 GMM::Component::~Component()
 {
-   free(_mu);
-   free(_sigma);
-   free(_sigmaL);
+   gsl_vector_float_free(_mu);
+   gsl_matrix_float_free(_sigma);
+   gsl_matrix_float_free(_sigmaInv);
 }
 
 
@@ -193,23 +37,20 @@ GMM::Component::~Component()
 
 
 
-void GMM::Component::initialize(int D, float pi, float *mu)
+void GMM::Component::initialize(float pi, gsl_vector_float *mu)
 {
-   _D = D;
-   _pi = pi;
+   const int D = mu->size;
 
-   _mu = (float *) malloc(D * sizeof(float));
-   memcpy(_mu, mu, D * sizeof(float));
+   // initialize pi and mu as given
+   _pi = pi;
+   _mu = mu;
 
    // Use identity covariance- assume dimensions are independent
-   _sigma = (float *) calloc(D * D, sizeof(float));
-   for ( int i = 0; i < D; ++i )
-   {
-      _sigma[i * D + i] = 1;
-   }
+   _sigma = gsl_matrix_float_alloc(D, D);
+   matrix_init_identity(_sigma->data);
 
    // Initialize zero artifacts
-   _sigmaL = (float *) calloc(D * D, sizeof(float));
+   _sigmaInv = gsl_matrix_float_calloc(D, D);
    _normalizer = 0;
 }
 
@@ -220,22 +61,15 @@ void GMM::Component::initialize(int D, float pi, float *mu)
 
 void GMM::Component::prepareCovariance()
 {
-   // Perform cholesky factorization once each iteration instead of
-   // repeadily for each normDist execution.
-   choleskyDecomposition(_sigma, _D, _sigmaL);
+   const int D = _sigma->size1;
 
-   // log det(Sigma) = 2 sum log L_{i,i}
-   float logDet = 1.0;
-   for ( int i = 0; i < _D; ++i )
-   {
-      float diag = _sigmaL[i * _D + i];
-      assert(diag > 0);
-      logDet += logf(diag);
-   }
+   // Compute inverse of Sigma once each iteration instead of
+   // repeatedly for each logMvNormDist execution.
+   float det;
+   matrix_inverse(_sigma->data, _sigmaInv->data, &det);
 
-   logDet *= 2;
-
-   _normalizer = -0.5 * (_D * logf(2.0 * M_PI) + logDet);
+   // Compute normalizer for multivariate normal distribution
+   _normalizer = -0.5f * (D * log(2.0f * M_PI) + log(det));
 }
 
 
@@ -243,57 +77,34 @@ void GMM::Component::prepareCovariance()
 
 
 
-void GMM::Component::logMvNormDist(const gsl_matrix_float *X, float *P)
+void GMM::Component::logMvNormDist(const gsl_matrix_float *X, float *logProbK)
 {
-   // Here we are computing the probability density function of the  multivariate
+   // Here we are computing the probability density function of the multivariate
    // normal distribution conditioned on a single component for the set of points
    // given by X.
    //
-   // P(x|k) = exp{ -0.5 * (x - mu)^T Sigma^{-} (x - mu) } / sqrt{ (2pi)^k det(Sigma) }
-   //
-   // Where Sigma and Mu are really Sigma_{k} Mu_{k}
+   // P(x|k) = exp{ -0.5 * (x - mu)^T Sigma^{-} (x - mu) } / sqrt{ (2pi)^d det(Sigma) }
 
    const int N = X->size1;
    const int D = X->size2;
 
-   float *XM = (float *) malloc(N * D * sizeof(float));
-   float *SXM = (float *) malloc(N * D * sizeof(float));
-   float *innerProduct = (float *) malloc(N * sizeof(float));
-
-   // Let XM = (x - m)
    for (int i = 0; i < N; ++i)
    {
-      for (int j = 0; j < D; ++j)
-      {
-         const int idx = i * D + j;
-         XM[idx] = X->data[idx] - _mu[j];
-      }
+      // Let xm = (x - mu)
+      float xm[D];
+      vector_copy(xm, &X->data[i * D]);
+      vector_subtract(xm, _mu->data);
+
+      // Compute xm^T Sxm = xm^T S^-1 xm
+      float Sxm[D];
+      matrix_product(_sigmaInv->data, xm, Sxm);
+
+      float xmSxm = vector_dot(xm, Sxm);
+
+      // Compute log(P) = normalizer - 0.5 * xm^T * S^-1 * xm
+      logProbK[i] = _normalizer - 0.5f * xmSxm;
+      assert(logProbK[i] == logProbK[i]);
    }
-
-   // Sigma SXM = XM => Sigma^{-} XM = SXM
-   solvePositiveDefinite(_sigmaL, XM, SXM, D, N);
-
-   // XM^T SXM
-   memset(innerProduct, 0, N * sizeof(float));
-   for (int i = 0; i < N; ++i)
-   {
-      for (int j = 0; j < D; ++j)
-      {
-         innerProduct[i] += XM[i * D + j] * SXM[i * D + j];
-      }
-   }
-
-   // Compute P expf( -0.5 innerProduct ) / normalizer
-   for (int i = 0; i < N; ++i)
-   {
-      // Normalizer already has negative sign on it.
-      P[i] = -0.5 * innerProduct[i] + _normalizer;
-      assert(P[i] == P[i]);
-   }
-
-   free(XM);
-   free(SXM);
-   free(innerProduct);
 }
 
 
@@ -323,19 +134,19 @@ void GMM::initialize(const gsl_matrix_float *X, int K)
    _logL = INFINITY;
 
    // initialize means randomly from X and with k-means
-   float M[K * D];
+   QVector<gsl_vector_float *> means(K);
 
    for ( int k = 0; k < K; ++k )
    {
-      int i = rand() % N;
+      gsl_vector_float *mu = gsl_vector_float_alloc(D);
 
-      for ( int j = 0; j < D; ++j )
-      {
-         M[k * D + j] = X->data[i * D + j];
-      }
+      int i = rand() % N;
+      vector_copy(mu->data, &X->data[i * D]);
+
+      means[k] = mu;
    }
 
-   kmeans(X, M, K);
+   kmeans(X, means);
 
    // initialize components
    _components.resize(K);
@@ -344,7 +155,7 @@ void GMM::initialize(const gsl_matrix_float *X, int K)
    {
       auto& component = _components[k];
 
-      component.initialize(D, 1.0f / K, &M[k * D]);
+      component.initialize(1.0f / K, means[k]);
       component.prepareCovariance();
    }
 }
@@ -354,10 +165,11 @@ void GMM::initialize(const gsl_matrix_float *X, int K)
 
 
 
-void GMM::kmeans(const gsl_matrix_float *X, float *M, int K)
+void GMM::kmeans(const gsl_matrix_float *X, const QVector<gsl_vector_float *>& means)
 {
    const int N = X->size1;
    const int D = X->size2;
+   const int K = means.size();
    const float TOLERANCE = 1e-3;
    float diff = 0;
 
@@ -366,7 +178,7 @@ void GMM::kmeans(const gsl_matrix_float *X, float *M, int K)
    float MP[K * D];
    int counts[K];
 
-   for (int iteration = 0; iteration < MAX_ITERATIONS && diff > TOLERANCE; ++iteration)
+   for (int t = 0; t < MAX_ITERATIONS && diff > TOLERANCE; ++t)
    {
       memset(MP, 0, K * D * sizeof(float));
       memset(counts, 0, K * sizeof(int));
@@ -380,8 +192,8 @@ void GMM::kmeans(const gsl_matrix_float *X, float *M, int K)
          int minDk = 0;
          for (int k = 0; k < K; ++k)
          {
-            const float *Mk = &M[k * D];
-            float dist = vecDiffNorm(Xi, Mk, D);
+            const float *Mk = means[k]->data;
+            float dist = vector_diff_norm(Xi, Mk);
             if (minD > dist)
             {
                minD = dist;
@@ -389,23 +201,26 @@ void GMM::kmeans(const gsl_matrix_float *X, float *M, int K)
             }
          }
 
-         cblas_saxpy(D, 1.0f, Xi, 1, &M[minDk * D], 1);
+         vector_add(means[minDk]->data, Xi);
          ++counts[minDk];
       }
 
       for (int k = 0; k < K; ++k)
       {
-         cblas_sscal(D, 1.0f / counts[k], &MP[k * D], 1);
+         vector_scale(&MP[k * D], 1.0f / counts[k]);
       }
 
       diff = 0;
       for (int k = 0; k < K; ++k)
       {
-         diff += vecDiffNorm(&MP[k * D], &M[k * D], D);
+         diff += vector_diff_norm(&MP[k * D], means[k]->data);
       }
-      diff /= (float) K;
+      diff /= K;
 
-      memcpy(M, MP, K * D * sizeof(float));
+      for (int k = 0; k < K; ++k)
+      {
+         vector_copy(means[k]->data, &MP[k * D]);
+      }
    }
 }
 
@@ -450,11 +265,11 @@ void GMM::logLikelihoodAndGammaNK(const float *logpi, float *logProb, int N, flo
       for (int k = 0; k < _K; ++k)
       {
          const float logProbK = logpi[k] + logProb[k * N + i];
-         sum += expf(logProbK - maxArg);
+         sum += exp(logProbK - maxArg);
       }
 
       assert(sum >= 0);
-      const float logpx = maxArg + logf(sum);
+      const float logpx = maxArg + log(sum);
       *logL += logpx;
       for (int k = 0; k < _K; ++k)
       {
@@ -490,11 +305,11 @@ void GMM::calcLogGammaK(const float *loggamma, int N, float *logGamma)
       for (int i = 0; i < N; ++i)
       {
          const float loggammank = loggammak[i];
-         sum += expf(loggammank - maxArg);
+         sum += exp(loggammank - maxArg);
       }
       assert(sum >= 0);
 
-      logGamma[k] = maxArg + logf(sum);
+      logGamma[k] = maxArg + log(sum);
    }
 }
 
@@ -519,11 +334,11 @@ float GMM::calcLogGammaSum(const float *logpi, const float *logGamma)
    for (int k = 0; k < _K; ++k)
    {
       const float arg = logpi[k] + logGamma[k];
-      sum += expf(arg - maxArg);
+      sum += exp(arg - maxArg);
    }
    assert(sum >= 0);
 
-   return maxArg + logf(sum);
+   return maxArg + log(sum);
 }
 
 
@@ -531,7 +346,7 @@ float GMM::calcLogGammaSum(const float *logpi, const float *logGamma)
 
 
 
-void GMM::performMStep(float *logpi, float *loggamma, float *logGamma, const float logGammaSum, const gsl_matrix_float *X, float *outerProduct, float *xm)
+void GMM::performMStep(float *logpi, float *loggamma, float *logGamma, float logGammaSum, const gsl_matrix_float *X)
 {
    const int N = X->size1;
    const int D = X->size2;
@@ -542,79 +357,61 @@ void GMM::performMStep(float *logpi, float *loggamma, float *logGamma, const flo
       auto& component = _components[k];
 
       logpi[k] += logGamma[k] - logGammaSum;
-      component._pi = expf(logpi[k]);
+      component._pi = exp(logpi[k]);
       assert(0 <= component._pi && component._pi <= 1);
    }
 
-   // Convert loggamma and logGamma over to gamma and logGamma to avoid duplicate,
-   //  and costly, expf(x) calls.
+   // convert loggamma / logGamma to gamma / Gamma to avoid duplicate exp(x) calls
    for (int k = 0; k < _K; ++k)
    {
       for (int i = 0; i < N; ++i)
       {
          const int idx = k * N + i;
-         loggamma[idx] = expf(loggamma[idx]);
+         loggamma[idx] = exp(loggamma[idx]);
       }
    }
 
    for (int k = 0; k < _K; ++k)
    {
-      logGamma[k] = expf(logGamma[k]);
+      logGamma[k] = exp(logGamma[k]);
    }
 
-   // Update mu
    for (int k = 0; k < _K; ++k)
    {
       auto& component = _components[k];
 
-      memset(component._mu, 0, D * sizeof(float));
+      // Update mu
+      float *mu = component._mu->data;
+
+      vector_init_zero(mu);
+
       for (int i = 0; i < N; ++i)
       {
-         for (int j = 0; j < D; ++j)
-         {
-            component._mu[j] += loggamma[k * N + i] * X->data[i * D + j];
-         }
+         vector_add(mu, loggamma[k * N + i], &X->data[i * D]);
       }
 
-      for (int i = 0; i < D; ++i)
-      {
-         component._mu[i] /= logGamma[k];
-      }
-   }
+      vector_scale(mu, 1.0f / logGamma[k]);
 
-   // Update sigma
-   for (int k = 0; k < _K; ++k)
-   {
-      auto& component = _components[k];
+      // Update sigma
+      float *sigma = component._sigma->data;
 
-      memset(component._sigma, 0, D * D * sizeof(float));
+      matrix_init_zero(sigma);
+
       for (int i = 0; i < N; ++i)
       {
-         // (x - m)
-         for (int j = 0; j < D; ++j)
-         {
-            xm[j] = X->data[i * D + j] - component._mu[j];
-         }
+         // xm = (x - mu)
+         float xm[D];
+         vector_copy(xm, &X->data[i * D]);
+         vector_subtract(xm, mu);
 
-         // (x - m) (x - m)^T
-         for (int row = 0; row < D; ++row)
-         {
-            for (int column = 0; column < D; ++column)
-            {
-               outerProduct[row * D + column] = xm[row] * xm[column];
-            }
-         }
+         // S_i = gamma_ik * (x - mu) (x - mu)^T
+         float outerProduct[D * D];
+         matrix_outer_product(xm, xm, outerProduct);
 
-         for (int j = 0; j < D * D; ++j)
-         {
-            component._sigma[j] += loggamma[k * N + i] * outerProduct[j];
-         }
+         matrix_add(sigma, loggamma[k * N + i], outerProduct);
       }
 
-      for (int j = 0; j < D * D; ++j)
-      {
-         component._sigma[j] /= logGamma[k];
-      }
+      matrix_scale(sigma, 1.0f / logGamma[k]);
 
       component.prepareCovariance();
    }
@@ -657,7 +454,6 @@ QVector<int> GMM::calcLabels(float *loggamma, int N)
 void GMM::fit(const gsl_matrix_float *X, int K, int maxIterations)
 {
    const int N = X->size1;
-   const int D = X->size2;
 
    initialize(X, K);
 
@@ -665,18 +461,13 @@ void GMM::fit(const gsl_matrix_float *X, int K, int maxIterations)
    float prevLogL = -INFINITY;
    float currentLogL = -INFINITY;
 
-   float *logpi = (float *) calloc(K, sizeof(float));
-   float *loggamma = (float *) calloc(N * K, sizeof(float));
-   float *logGamma = (float *) calloc(K, sizeof(float));
-
-   float *xm = (float *) calloc(D, sizeof(float));
-   float *outerProduct = (float *) calloc(D * D, sizeof(float));
+   float *logpi = (float *) malloc(K * sizeof(float));
+   float *loggamma = (float *) malloc(N * K * sizeof(float));
+   float *logGamma = (float *) malloc(K * sizeof(float));
 
    for (int k = 0; k < K; ++k)
    {
-      const float pik = _components[k]._pi;
-      assert(pik >= 0);
-      logpi[k] = logf(pik);
+      logpi[k] = log(_components[k]._pi);
    }
 
    try
@@ -691,22 +482,18 @@ void GMM::fit(const gsl_matrix_float *X, int K, int maxIterations)
          prevLogL = currentLogL;
          logLikelihoodAndGammaNK(logpi, loggamma, N, &currentLogL);
 
-         if ( fabsf(currentLogL - prevLogL) < TOLERANCE )
+         if ( fabs(currentLogL - prevLogL) < TOLERANCE )
          {
             break;
          }
 
-         // Let Gamma[k] = \Sum_point gamma[k, i]
+         // Let Gamma[k] = \Sum_i gamma[k, i]
          calcLogGammaK(loggamma, N, logGamma);
 
          float logGammaSum = calcLogGammaSum(logpi, logGamma);
 
          // --- M-Step ---
-         performMStep(
-            logpi, loggamma, logGamma, logGammaSum,
-            X,
-            outerProduct, xm
-         );
+         performMStep(logpi, loggamma, logGamma, logGammaSum, X);
       }
 
       // save outputs
@@ -722,7 +509,4 @@ void GMM::fit(const gsl_matrix_float *X, int K, int maxIterations)
    free(logpi);
    free(loggamma);
    free(logGamma);
-
-   free(xm);
-   free(outerProduct);
 }
