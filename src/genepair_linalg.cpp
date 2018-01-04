@@ -9,17 +9,9 @@ namespace GenePair {
 
 
 
-#define ELEM(M, n, i, j) ((M)[(i) * (n) + (j)])
-
-
-
-
-
-
-void vectorInitZero(float *a)
+inline const float& elem(const Matrix2x2& M, int n, int i, int j)
 {
-   a[0] = 0;
-   a[1] = 0;
+   return M.data[i * n + j];
 }
 
 
@@ -27,10 +19,9 @@ void vectorInitZero(float *a)
 
 
 
-void vectorCopy(float *a, const float *b)
+inline float& elem(Matrix2x2& M, int n, int i, int j)
 {
-   a[0] = b[0];
-   a[1] = b[1];
+   return M.data[i * n + j];
 }
 
 
@@ -38,10 +29,10 @@ void vectorCopy(float *a, const float *b)
 
 
 
-void vectorAdd(float *a, const float *b)
+void vectorInitZero(Vector2& a)
 {
-   a[0] += b[0];
-   a[1] += b[1];
+   a.data[0] = 0;
+   a.data[1] = 0;
 }
 
 
@@ -49,10 +40,10 @@ void vectorAdd(float *a, const float *b)
 
 
 
-void vectorAdd(float *a, float c, const float *b)
+void vectorAdd(Vector2& a, const Vector2& b)
 {
-   a[0] += c * b[0];
-   a[1] += c * b[1];
+   a.data[0] += b.data[0];
+   a.data[1] += b.data[1];
 }
 
 
@@ -60,10 +51,10 @@ void vectorAdd(float *a, float c, const float *b)
 
 
 
-void vectorSubtract(float *a, const float *b)
+void vectorAdd(Vector2& a, float c, const Vector2& b)
 {
-   a[0] -= b[0];
-   a[1] -= b[1];
+   a.data[0] += c * b.data[0];
+   a.data[1] += c * b.data[1];
 }
 
 
@@ -71,10 +62,10 @@ void vectorSubtract(float *a, const float *b)
 
 
 
-void vectorScale(float *a, float c)
+void vectorSubtract(Vector2& a, const Vector2& b)
 {
-   a[0] *= c;
-   a[1] *= c;
+   a.data[0] -= b.data[0];
+   a.data[1] -= b.data[1];
 }
 
 
@@ -82,9 +73,10 @@ void vectorScale(float *a, float c)
 
 
 
-float vectorDot(const float *a, const float *b)
+void vectorScale(Vector2& a, float c)
 {
-   return a[0] * b[0] + a[1] * b[1];
+   a.data[0] *= c;
+   a.data[1] *= c;
 }
 
 
@@ -92,11 +84,21 @@ float vectorDot(const float *a, const float *b)
 
 
 
-float vectorDiffNorm(const float *a, const float *b)
+float vectorDot(const Vector2& a, const Vector2& b)
+{
+   return a.data[0] * b.data[0] + a.data[1] * b.data[1];
+}
+
+
+
+
+
+
+float vectorDiffNorm(const Vector2& a, const Vector2& b)
 {
    float dist = 0;
-   dist += (a[0] - b[0]) * (a[0] - b[0]);
-   dist += (a[1] - b[1]) * (a[1] - b[1]);
+   dist += (a.data[0] - b.data[0]) * (a.data[0] - b.data[0]);
+   dist += (a.data[1] - b.data[1]) * (a.data[1] - b.data[1]);
 
    return sqrt(dist);
 }
@@ -106,14 +108,14 @@ float vectorDiffNorm(const float *a, const float *b)
 
 
 
-void matrixInitIdentity(float *M)
+void matrixInitIdentity(Matrix2x2& M)
 {
    const int N = 2;
 
-   ELEM(M, N, 0, 0) = 1;
-   ELEM(M, N, 0, 1) = 0;
-   ELEM(M, N, 1, 0) = 0;
-   ELEM(M, N, 1, 1) = 1;
+   elem(M, N, 0, 0) = 1;
+   elem(M, N, 0, 1) = 0;
+   elem(M, N, 1, 0) = 0;
+   elem(M, N, 1, 1) = 1;
 }
 
 
@@ -121,14 +123,14 @@ void matrixInitIdentity(float *M)
 
 
 
-void matrixInitZero(float *M)
+void matrixInitZero(Matrix2x2& M)
 {
    const int N = 2;
 
-   ELEM(M, N, 0, 0) = 0;
-   ELEM(M, N, 0, 1) = 0;
-   ELEM(M, N, 1, 0) = 0;
-   ELEM(M, N, 1, 1) = 0;
+   elem(M, N, 0, 0) = 0;
+   elem(M, N, 0, 1) = 0;
+   elem(M, N, 1, 0) = 0;
+   elem(M, N, 1, 1) = 0;
 }
 
 
@@ -136,14 +138,14 @@ void matrixInitZero(float *M)
 
 
 
-void matrixAdd(float *A, float c, const float *B)
+void matrixAdd(Matrix2x2& A, float c, const Matrix2x2& B)
 {
    const int N = 2;
 
-   ELEM(A, N, 0, 0) += c * ELEM(B, N, 0, 0);
-   ELEM(A, N, 0, 1) += c * ELEM(B, N, 0, 1);
-   ELEM(A, N, 1, 0) += c * ELEM(B, N, 1, 0);
-   ELEM(A, N, 1, 1) += c * ELEM(B, N, 1, 1);
+   elem(A, N, 0, 0) += c * elem(B, N, 0, 0);
+   elem(A, N, 0, 1) += c * elem(B, N, 0, 1);
+   elem(A, N, 1, 0) += c * elem(B, N, 1, 0);
+   elem(A, N, 1, 1) += c * elem(B, N, 1, 1);
 }
 
 
@@ -151,14 +153,14 @@ void matrixAdd(float *A, float c, const float *B)
 
 
 
-void matrixScale(float *A, float c)
+void matrixScale(Matrix2x2& A, float c)
 {
    const int N = 2;
 
-   ELEM(A, N, 0, 0) *= c;
-   ELEM(A, N, 0, 1) *= c;
-   ELEM(A, N, 1, 0) *= c;
-   ELEM(A, N, 1, 1) *= c;
+   elem(A, N, 0, 0) *= c;
+   elem(A, N, 0, 1) *= c;
+   elem(A, N, 1, 0) *= c;
+   elem(A, N, 1, 1) *= c;
 }
 
 
@@ -166,22 +168,22 @@ void matrixScale(float *A, float c)
 
 
 
-void matrixInverse(const float *A, float *B, float *p_det)
+void matrixInverse(const Matrix2x2& A, Matrix2x2& B, float *p_det)
 {
    const int N = 2;
    const float EPSILON = 1e-5;
 
-   float det = ELEM(A, N, 0, 0) * ELEM(A, N, 1, 1) - ELEM(A, N, 0, 1) * ELEM(A, N, 1, 0);
+   float det = elem(A, N, 0, 0) * elem(A, N, 1, 1) - elem(A, N, 0, 1) * elem(A, N, 1, 0);
 
    if ( fabs(det) <= EPSILON )
    {
       throw std::runtime_error("singular matrix");
    }
 
-   ELEM(B, N, 0, 0) = +ELEM(A, N, 1, 1) / det;
-   ELEM(B, N, 0, 1) = -ELEM(A, N, 0, 1) / det;
-   ELEM(B, N, 1, 0) = -ELEM(A, N, 1, 0) / det;
-   ELEM(B, N, 1, 1) = +ELEM(A, N, 0, 0) / det;
+   elem(B, N, 0, 0) = +elem(A, N, 1, 1) / det;
+   elem(B, N, 0, 1) = -elem(A, N, 0, 1) / det;
+   elem(B, N, 1, 0) = -elem(A, N, 1, 0) / det;
+   elem(B, N, 1, 1) = +elem(A, N, 0, 0) / det;
 
    *p_det = det;
 }
@@ -191,12 +193,12 @@ void matrixInverse(const float *A, float *B, float *p_det)
 
 
 
-void matrixProduct(const float *A, const float *x, float *b)
+void matrixProduct(const Matrix2x2& A, const Vector2& x, Vector2& b)
 {
    const int N = 2;
 
-   b[0] = ELEM(A, N, 0, 0) * x[0] + ELEM(A, N, 0, 1) * x[1];
-   b[1] = ELEM(A, N, 1, 0) * x[0] + ELEM(A, N, 1, 1) * x[1];
+   b.data[0] = elem(A, N, 0, 0) * x.data[0] + elem(A, N, 0, 1) * x.data[1];
+   b.data[1] = elem(A, N, 1, 0) * x.data[0] + elem(A, N, 1, 1) * x.data[1];
 }
 
 
@@ -204,14 +206,14 @@ void matrixProduct(const float *A, const float *x, float *b)
 
 
 
-void matrixOuterProduct(const float *a, const float *b, float *C)
+void matrixOuterProduct(const Vector2& a, const Vector2& b, Matrix2x2& C)
 {
    const int N = 2;
 
-   ELEM(C, N, 0, 0) = a[0] * b[0];
-   ELEM(C, N, 0, 1) = a[0] * b[1];
-   ELEM(C, N, 1, 0) = a[1] * b[0];
-   ELEM(C, N, 1, 1) = a[1] * b[1];
+   elem(C, N, 0, 0) = a.data[0] * b.data[0];
+   elem(C, N, 0, 1) = a.data[0] * b.data[1];
+   elem(C, N, 1, 0) = a.data[1] * b.data[0];
+   elem(C, N, 1, 1) = a.data[1] * b.data[1];
 }
 
 

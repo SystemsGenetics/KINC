@@ -1,5 +1,4 @@
 #include "genepair_kmeans.h"
-#include "genepair_linalg.h"
 
 
 
@@ -10,31 +9,15 @@ using namespace GenePair;
 
 
 
-KMeans::~KMeans()
-{
-   for ( float *mu : _means ) {
-      delete[] mu;
-   }
-}
-
-
-
-
-
-
-void KMeans::initialize(const float *X, int N, int D, int K)
+void KMeans::initialize(const QVector<Vector2>& X, int K)
 {
    // initialize number of clusters
-   _K = K;
+   _means.resize(K);
 
    for ( int k = 0; k < K; ++k )
    {
-      float *mu = new float[D];
-
-      int i = rand() % N;
-      vectorCopy(mu, &X[i * D]);
-
-      _means.append(mu);
+      int i = rand() % X.size();
+      _means[k] = X[i];
    }
 }
 
@@ -43,12 +26,14 @@ void KMeans::initialize(const float *X, int N, int D, int K)
 
 
 
-void KMeans::fit(const float *X, int N, int D, int K)
+void KMeans::fit(const QVector<Vector2>& X, int K)
 {
    // initialize model
-   initialize(X, N, D, K);
+   initialize(X, K);
 
    // iterate K means until convergence
+   const int N = X.size();
+
    QVector<int> y;
    QVector<int> y_next(N);
 
@@ -63,10 +48,7 @@ void KMeans::fit(const float *X, int N, int D, int K)
 
          for ( int k = 0; k < K; ++k )
          {
-            const float *x_i = &X[i * D];
-            const float *mu_k = _means[k];
-
-            float dist = vectorDiffNorm(x_i, mu_k);
+            float dist = vectorDiffNorm(X[i], _means[k]);
 
             if ( min_k == -1 || dist < min_dist )
             {
@@ -90,28 +72,25 @@ void KMeans::fit(const float *X, int N, int D, int K)
       for ( int k = 0; k < K; ++k )
       {
          // compute mu_k = mean of all x_i in cluster k
-         float *mu_k = _means[k];
          int n_k = 0;
 
-         vectorInitZero(mu_k);
+         vectorInitZero(_means[k]);
 
          for ( int i = 0; i < N; ++i )
          {
-            const float *x_i = &X[i * D];
-
             if ( y[i] == k )
             {
-               vectorAdd(mu_k, x_i);
+               vectorAdd(_means[k], X[i]);
                n_k++;
             }
          }
 
-         vectorScale(mu_k, 1.0f / n_k);
+         vectorScale(_means[k], 1.0f / n_k);
       }
    }
 
    // save outputs
-   _logL = computeLogLikelihood(X, N, D);
+   _logL = computeLogLikelihood(X);
    _labels = y;
 }
 
@@ -120,24 +99,21 @@ void KMeans::fit(const float *X, int N, int D, int K)
 
 
 
-float KMeans::computeLogLikelihood(const float *X, int N, int D)
+float KMeans::computeLogLikelihood(const QVector<Vector2>& X)
 {
    // compute within-class scatter
    float S = 0;
 
-   for ( int k = 0; k < _K; ++k )
+   for ( int k = 0; k < _means.size(); ++k )
    {
-      for ( int i = 0; i < N; ++i )
+      for ( int i = 0; i < X.size(); ++i )
       {
          if ( _labels[i] != k )
          {
             continue;
          }
 
-         const float *mu_k = _means[k];
-         const float *x_i = &X[i * D];
-
-         float dist = vectorDiffNorm(x_i, mu_k);
+         float dist = vectorDiffNorm(X[i], _means[k]);
 
          S += dist * dist;
       }

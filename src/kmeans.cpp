@@ -215,7 +215,7 @@ float KMeans::computeBIC(const GenePair::KMeans& model, int N, int D)
 
 
 
-CCMatrix::Pair KMeans::computePair(const float *X, int N, int D)
+CCMatrix::Pair KMeans::computePair(const QVector<GenePair::Vector2>& X)
 {
    // run each clustering model
    QVector<GenePair::KMeans> models(_maxClusters - _minClusters + 1);
@@ -224,7 +224,7 @@ CCMatrix::Pair KMeans::computePair(const float *X, int N, int D)
    {
       auto& model = models[K - _minClusters];
 
-      model.fit(X, N, D, K);
+      model.fit(X, K);
    }
 
    // select the model with the lowest criterion value
@@ -233,7 +233,7 @@ CCMatrix::Pair KMeans::computePair(const float *X, int N, int D)
 
    for ( auto iter = models.begin(); iter != models.end(); ++iter )
    {
-      float value = computeBIC(*iter, N, D);
+      float value = computeBIC(*iter, X.size(), 2);
 
       if ( bestModel == models.end() || value < bestValue )
       {
@@ -246,7 +246,7 @@ CCMatrix::Pair KMeans::computePair(const float *X, int N, int D)
    CCMatrix::Pair pair(_output);
    pair.addCluster(bestModel->numClusters());
 
-   for ( int i = 0; i < N; ++i )
+   for ( int i = 0; i < X.size(); ++i )
    {
       for ( int k = 0; k < bestModel->numClusters(); ++k )
       {
@@ -270,7 +270,8 @@ void KMeans::runSerial()
    qint64 totalSteps {_output->geneSize()*(_output->geneSize() - 1)/2};
 
    // initialize arrays used for k-means clustering
-   float X[_input->getSampleSize() * 2];
+   QVector<GenePair::Vector2> X;
+   X.reserve(_input->getSampleSize());
 
    // initialize expression genes for input/output
    ExpressionMatrix::Gene gene1(_input);
@@ -289,25 +290,24 @@ void KMeans::runSerial()
       }
 
       // initialize sample size and read in gene expressions
-      int size {0};
       gene1.read(vector.geneX());
       gene2.read(vector.geneY());
 
-      // populate a and b arrays with shared expressions of gene x and y
+      // populate X with shared expressions of gene x and y
+      X.clear();
+
       for ( auto i = 0; i < _input->getSampleSize(); ++i )
       {
          if ( !std::isnan(gene1.at(i)) && !std::isnan(gene2.at(i)) )
          {
-            X[size * 2 + 0] = gene1.at(i);
-            X[size * 2 + 1] = gene2.at(i);
-            ++size;
+            X.append({ gene1.at(i), gene2.at(i) });
          }
       }
 
       // perform clustering only if there are enough samples
-      if ( size >= _minSamples )
+      if ( X.size() >= _minSamples )
       {
-         CCMatrix::Pair pair = computePair(X, size, 2);
+         CCMatrix::Pair pair = computePair(X);
 
          pair.write(vector);
       }

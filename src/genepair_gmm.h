@@ -2,50 +2,50 @@
 #define GENEPAIR_GMM_H
 #include <ace/core/AceCore.h>
 
+#include "genepair_linalg.h"
+
 namespace GenePair
 {
    class GMM
    {
    public:
-      GMM();
+      GMM() = default;
 
       class Component
       {
       public:
-         Component();
-         ~Component();
+         Component() = default;
 
-         void initialize(float pi, float *mu);
+         void initialize(float pi, const Vector2& mu);
          void prepareCovariance();
-         void calcLogMvNorm(const float *X, int N, int D, float *logP);
+         void calcLogMvNorm(const QVector<Vector2>& X, float *logP);
 
          float _pi;
-         float *_mu;
-         float *_sigma;
+         Vector2 _mu;
+         Matrix2x2 _sigma;
 
       private:
-         float *_sigmaInv;
+         Matrix2x2 _sigmaInv;
          float _normalizer;
       };
 
-      int numClusters() const { return _K; }
+      int numClusters() const { return _components.size(); }
       bool success() const { return _success; }
       float logLikelihood() const { return _logL; }
       const QVector<int>& labels() const { return _labels; }
 
-      void fit(const float *X, int N, int D, int K, int maxIterations=100);
+      void fit(const QVector<Vector2>& X, int K, int maxIterations=100);
 
    private:
-      void initialize(const float *X, int N, int D, int K);
-      void kmeans(const float *X, int N, int D, const QVector<float *>& means);
-      void calcLogMvNorm(const float *X, int N, int D, float *logProb);
-      void calcLogLikelihoodAndGammaNK(const float *logpi, float *logProb, int N, float *logL);
-      void calcLogGammaK(const float *loggamma, int N, float *logGamma);
-      float calcLogGammaSum(const float *logpi, const float *logGamma);
-      void performMStep(float *logpi, float *loggamma, float *logGamma, float logGammaSum, const float *X, int N, int D);
-      QVector<int> calcLabels(float *loggamma, int N);
+      void initialize(const QVector<Vector2>& X, int K);
+      void kmeans(const QVector<Vector2>& X);
+      void calcLogMvNorm(const QVector<Vector2>& X, float *logProb);
+      void calcLogLikelihoodAndGammaNK(const float *logpi, int K, float *logProb, int N, float *logL);
+      void calcLogGammaK(const float *loggamma, int N, int K, float *logGamma);
+      float calcLogGammaSum(const float *logpi, int K, const float *logGamma);
+      void performMStep(float *logpi, int K, float *loggamma, float *logGamma, float logGammaSum, const QVector<Vector2>& X);
+      QVector<int> calcLabels(float *loggamma, int N, int K);
 
-      int _K;
       QVector<Component> _components;
       bool _success;
       float _logL;
