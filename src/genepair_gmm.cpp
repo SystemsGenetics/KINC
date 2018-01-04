@@ -27,9 +27,9 @@ GMM::Component::Component()
 
 GMM::Component::~Component()
 {
-   gsl_vector_float_free(_mu);
-   gsl_matrix_float_free(_sigma);
-   gsl_matrix_float_free(_sigmaInv);
+   delete[] _mu;
+   delete[] _sigma;
+   delete[] _sigmaInv;
 }
 
 
@@ -37,20 +37,22 @@ GMM::Component::~Component()
 
 
 
-void GMM::Component::initialize(float pi, gsl_vector_float *mu)
+void GMM::Component::initialize(float pi, float *mu)
 {
-   const int D = mu->size;
+   const int D = 2;
 
    // initialize pi and mu as given
    _pi = pi;
    _mu = mu;
 
    // Use identity covariance- assume dimensions are independent
-   _sigma = gsl_matrix_float_alloc(D, D);
-   matrixInitIdentity(_sigma->data);
+   _sigma = new float[D * D];
+   matrixInitIdentity(_sigma);
 
    // Initialize zero artifacts
-   _sigmaInv = gsl_matrix_float_calloc(D, D);
+   _sigmaInv = new float[D * D];
+   matrixInitZero(_sigmaInv);
+
    _normalizer = 0;
 }
 
@@ -61,12 +63,12 @@ void GMM::Component::initialize(float pi, gsl_vector_float *mu)
 
 void GMM::Component::prepareCovariance()
 {
-   const int D = _sigma->size1;
+   const int D = 2;
 
    // Compute inverse of Sigma once each iteration instead of
-   // repeatedly for each logMvNormDist execution.
+   // repeatedly for each calcLogMvNorm execution.
    float det;
-   matrixInverse(_sigma->data, _sigmaInv->data, &det);
+   matrixInverse(_sigma, _sigmaInv, &det);
 
    // Compute normalizer for multivariate normal distribution
    _normalizer = -0.5f * (D * log(2.0f * M_PI) + log(det));
@@ -77,7 +79,7 @@ void GMM::Component::prepareCovariance()
 
 
 
-void GMM::Component::logMvNormDist(const gsl_matrix_float *X, float *logProbK)
+void GMM::Component::calcLogMvNorm(const float *X, int N, int D, float *logP)
 {
    // Here we are computing the probability density function of the multivariate
    // normal distribution conditioned on a single component for the set of points
@@ -85,25 +87,22 @@ void GMM::Component::logMvNormDist(const gsl_matrix_float *X, float *logProbK)
    //
    // P(x|k) = exp{ -0.5 * (x - mu)^T Sigma^{-} (x - mu) } / sqrt{ (2pi)^d det(Sigma) }
 
-   const int N = X->size1;
-   const int D = X->size2;
-
    for (int i = 0; i < N; ++i)
    {
       // Let xm = (x - mu)
       float xm[D];
-      vectorCopy(xm, &X->data[i * D]);
-      vectorSubtract(xm, _mu->data);
+      vectorCopy(xm, &X[i * D]);
+      vectorSubtract(xm, _mu);
 
       // Compute xm^T Sxm = xm^T S^-1 xm
       float Sxm[D];
-      matrixProduct(_sigmaInv->data, xm, Sxm);
+      matrixProduct(_sigmaInv, xm, Sxm);
 
       float xmSxm = vectorDot(xm, Sxm);
 
       // Compute log(P) = normalizer - 0.5 * xm^T * S^-1 * xm
-      logProbK[i] = _normalizer - 0.5f * xmSxm;
-      assert(logProbK[i] == logProbK[i]);
+      logP[i] = _normalizer - 0.5f * xmSxm;
+      assert(logP[i] == logP[i]);
    }
 }
 
@@ -123,30 +122,28 @@ GMM::GMM()
 
 
 
-void GMM::initialize(const gsl_matrix_float *X, int K)
+void GMM::initialize(const float *X, int N, int D, int K)
 {
    // X is an N x D set of training data
-   const int N = X->size1;
-   const int D = X->size2;
 
    _K = K;
    _success = false;
    _logL = INFINITY;
 
    // initialize means randomly from X and with k-means
-   QVector<gsl_vector_float *> means(K);
+   QVector<float *> means(K);
 
    for ( int k = 0; k < K; ++k )
    {
-      gsl_vector_float *mu = gsl_vector_float_alloc(D);
+      float *mu = new float[D];
 
       int i = rand() % N;
-      vectorCopy(mu->data, &X->data[i * D]);
+      vectorCopy(mu, &X[i * D]);
 
       means[k] = mu;
    }
 
-   kmeans(X, means);
+   kmeans(X, N, D, means);
 
    // initialize components
    _components.resize(K);
@@ -165,10 +162,8 @@ void GMM::initialize(const gsl_matrix_float *X, int K)
 
 
 
-void GMM::kmeans(const gsl_matrix_float *X, const QVector<gsl_vector_float *>& means)
+void GMM::kmeans(const float *X, int N, int D, const QVector<float *>& means)
 {
-   const int N = X->size1;
-   const int D = X->size2;
    const int K = means.size();
    const float TOLERANCE = 1e-3;
    float diff = 0;
@@ -185,14 +180,14 @@ void GMM::kmeans(const gsl_matrix_float *X, const QVector<gsl_vector_float *>& m
 
       for (int i = 0; i < N; ++i)
       {
-         const float *Xi = &X->data[i * D];
+         const float *Xi = &X[i * D];
 
          // arg min
          float minD = INFINITY;
          int minDk = 0;
          for (int k = 0; k < K; ++k)
          {
-            const float *Mk = means[k]->data;
+            const float *Mk = means[k];
             float dist = vectorDiffNorm(Xi, Mk);
             if (minD > dist)
             {
@@ -201,7 +196,7 @@ void GMM::kmeans(const gsl_matrix_float *X, const QVector<gsl_vector_float *>& m
             }
          }
 
-         vectorAdd(means[minDk]->data, Xi);
+         vectorAdd(means[minDk], Xi);
          ++counts[minDk];
       }
 
@@ -213,13 +208,13 @@ void GMM::kmeans(const gsl_matrix_float *X, const QVector<gsl_vector_float *>& m
       diff = 0;
       for (int k = 0; k < K; ++k)
       {
-         diff += vectorDiffNorm(&MP[k * D], means[k]->data);
+         diff += vectorDiffNorm(&MP[k * D], means[k]);
       }
       diff /= K;
 
       for (int k = 0; k < K; ++k)
       {
-         vectorCopy(means[k]->data, &MP[k * D]);
+         vectorCopy(means[k], &MP[k * D]);
       }
    }
 }
@@ -229,15 +224,13 @@ void GMM::kmeans(const gsl_matrix_float *X, const QVector<gsl_vector_float *>& m
 
 
 
-void GMM::calcLogMvNorm(const gsl_matrix_float *X, float *logProb)
+void GMM::calcLogMvNorm(const float *X, int N, int D, float *logProb)
 {
-   const int N = X->size1;
-
    for ( int k = 0; k < _K; ++k )
    {
       auto& component = _components[k];
 
-      component.logMvNormDist(X, &logProb[k * N]);
+      component.calcLogMvNorm(X, N, D, &logProb[k * N]);
    }
 }
 
@@ -246,7 +239,7 @@ void GMM::calcLogMvNorm(const gsl_matrix_float *X, float *logProb)
 
 
 
-void GMM::logLikelihoodAndGammaNK(const float *logpi, float *logProb, int N, float *logL)
+void GMM::calcLogLikelihoodAndGammaNK(const float *logpi, float *logProb, int N, float *logL)
 {
    *logL = 0.0;
    for (int i = 0; i < N; ++i)
@@ -346,11 +339,8 @@ float GMM::calcLogGammaSum(const float *logpi, const float *logGamma)
 
 
 
-void GMM::performMStep(float *logpi, float *loggamma, float *logGamma, float logGammaSum, const gsl_matrix_float *X)
+void GMM::performMStep(float *logpi, float *loggamma, float *logGamma, float logGammaSum, const float *X, int N, int D)
 {
-   const int N = X->size1;
-   const int D = X->size2;
-
    // update pi
    for (int k = 0; k < _K; ++k)
    {
@@ -381,19 +371,19 @@ void GMM::performMStep(float *logpi, float *loggamma, float *logGamma, float log
       auto& component = _components[k];
 
       // Update mu
-      float *mu = component._mu->data;
+      float *mu = component._mu;
 
       vectorInitZero(mu);
 
       for (int i = 0; i < N; ++i)
       {
-         vectorAdd(mu, loggamma[k * N + i], &X->data[i * D]);
+         vectorAdd(mu, loggamma[k * N + i], &X[i * D]);
       }
 
       vectorScale(mu, 1.0f / logGamma[k]);
 
       // Update sigma
-      float *sigma = component._sigma->data;
+      float *sigma = component._sigma;
 
       matrixInitZero(sigma);
 
@@ -401,7 +391,7 @@ void GMM::performMStep(float *logpi, float *loggamma, float *logGamma, float log
       {
          // xm = (x - mu)
          float xm[D];
-         vectorCopy(xm, &X->data[i * D]);
+         vectorCopy(xm, &X[i * D]);
          vectorSubtract(xm, mu);
 
          // S_i = gamma_ik * (x - mu) (x - mu)^T
@@ -451,19 +441,17 @@ QVector<int> GMM::calcLabels(float *loggamma, int N)
 
 
 
-void GMM::fit(const gsl_matrix_float *X, int K, int maxIterations)
+void GMM::fit(const float *X, int N, int D, int K, int maxIterations)
 {
-   const int N = X->size1;
-
-   initialize(X, K);
+   initialize(X, N, D, K);
 
    const float TOLERANCE = 1e-8;
    float prevLogL = -INFINITY;
    float currentLogL = -INFINITY;
 
-   float *logpi = (float *) malloc(K * sizeof(float));
-   float *loggamma = (float *) malloc(N * K * sizeof(float));
-   float *logGamma = (float *) malloc(K * sizeof(float));
+   float *logpi = new float[K];
+   float *loggamma = new float[N * K];
+   float *logGamma = new float[K];
 
    for (int k = 0; k < K; ++k)
    {
@@ -477,10 +465,10 @@ void GMM::fit(const gsl_matrix_float *X, int K, int maxIterations)
          // --- E-Step ---
 
          // Compute gamma
-         calcLogMvNorm(X, loggamma);
+         calcLogMvNorm(X, N, D, loggamma);
 
          prevLogL = currentLogL;
-         logLikelihoodAndGammaNK(logpi, loggamma, N, &currentLogL);
+         calcLogLikelihoodAndGammaNK(logpi, loggamma, N, &currentLogL);
 
          if ( fabs(currentLogL - prevLogL) < TOLERANCE )
          {
@@ -493,7 +481,7 @@ void GMM::fit(const gsl_matrix_float *X, int K, int maxIterations)
          float logGammaSum = calcLogGammaSum(logpi, logGamma);
 
          // --- M-Step ---
-         performMStep(logpi, loggamma, logGamma, logGammaSum, X);
+         performMStep(logpi, loggamma, logGamma, logGammaSum, X, N, D);
       }
 
       // save outputs
@@ -506,7 +494,7 @@ void GMM::fit(const gsl_matrix_float *X, int K, int maxIterations)
       _success = false;
    }
 
-   free(logpi);
-   free(loggamma);
-   free(logGamma);
+   delete[] logpi;
+   delete[] loggamma;
+   delete[] logGamma;
 }

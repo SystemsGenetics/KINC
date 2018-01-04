@@ -215,11 +215,8 @@ float GMM::computeBIC(const GenePair::GMM& gmm, int N, int D)
 
 
 
-CCMatrix::Pair GMM::computePair(const float *data, int N, int D)
+CCMatrix::Pair GMM::computePair(const float *X, int N, int D)
 {
-   gsl_matrix_float_const_view view = gsl_matrix_float_const_view_array(data, N, D);
-   const gsl_matrix_float *X = &view.matrix;
-
    // run each clustering model
    QVector<GenePair::GMM> models(_maxClusters - _minClusters + 1);
 
@@ -227,7 +224,7 @@ CCMatrix::Pair GMM::computePair(const float *data, int N, int D)
    {
       auto& gmm = models[K - _minClusters];
 
-      gmm.fit(X, K);
+      gmm.fit(X, N, D, K);
    }
 
    // select the model with the lowest criterion value

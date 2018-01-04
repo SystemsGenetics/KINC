@@ -13,7 +13,7 @@ using namespace GenePair;
 KMeans::~KMeans()
 {
    for ( float *mu : _means ) {
-      delete mu;
+      delete[] mu;
    }
 }
 
