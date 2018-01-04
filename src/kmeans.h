@@ -37,7 +37,7 @@ public:
 
 private:
    float computeBIC(const GenePair::KMeans& model, int N, int D);
-   CCMatrix::Pair computePair(const float *data, int N, int D);
+   CCMatrix::Pair computePair(const float *X, int N, int D);
 
    ExpressionMatrix* _input {nullptr};
    CCMatrix* _output {nullptr};

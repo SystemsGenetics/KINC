@@ -12,8 +12,8 @@ using namespace GenePair;
 
 KMeans::~KMeans()
 {
-   for ( gsl_vector_float *mu : _means ) {
-      gsl_vector_float_free(mu);
+   for ( float *mu : _means ) {
+      delete mu;
    }
 }
 
@@ -22,23 +22,19 @@ KMeans::~KMeans()
 
 
 
-void KMeans::initialize(const gsl_matrix_float *X, int K)
+void KMeans::initialize(const float *X, int N, int D, int K)
 {
    // initialize number of clusters
    _K = K;
 
-   // initialize means randomly from X
-   const int N = X->size1;
-   const int D = X->size2;
-
    for ( int k = 0; k < K; ++k )
    {
-      gsl_vector_float *mu = gsl_vector_float_alloc(D);
+      float *mu = new float[D];
 
       int i = rand() % N;
-      vectorCopy(mu->data, &X->data[i * D]);
+      vectorCopy(mu, &X[i * D]);
 
-      _means.push_back(mu);
+      _means.append(mu);
    }
 }
 
@@ -47,15 +43,12 @@ void KMeans::initialize(const gsl_matrix_float *X, int K)
 
 
 
-void KMeans::fit(const gsl_matrix_float *X, int K)
+void KMeans::fit(const float *X, int N, int D, int K)
 {
    // initialize model
-   initialize(X, K);
+   initialize(X, N, D, K);
 
    // iterate K means until convergence
-   const int N = X->size1;
-   const int D = X->size2;
-
    QVector<int> y;
    QVector<int> y_next(N);
 
@@ -70,8 +63,8 @@ void KMeans::fit(const gsl_matrix_float *X, int K)
 
          for ( int k = 0; k < K; ++k )
          {
-            const float *x_i = &X->data[i * D];
-            const float *mu_k = _means[k]->data;
+            const float *x_i = &X[i * D];
+            const float *mu_k = _means[k];
 
             float dist = vectorDiffNorm(x_i, mu_k);
 
@@ -97,14 +90,14 @@ void KMeans::fit(const gsl_matrix_float *X, int K)
       for ( int k = 0; k < K; ++k )
       {
          // compute mu_k = mean of all x_i in cluster k
-         float *mu_k = _means[k]->data;
+         float *mu_k = _means[k];
          int n_k = 0;
 
          vectorInitZero(mu_k);
 
          for ( int i = 0; i < N; ++i )
          {
-            const float *x_i = &X->data[i * D];
+            const float *x_i = &X[i * D];
 
             if ( y[i] == k )
             {
@@ -118,7 +111,7 @@ void KMeans::fit(const gsl_matrix_float *X, int K)
    }
 
    // save outputs
-   _logL = computeLogLikelihood(X);
+   _logL = computeLogLikelihood(X, N, D);
    _labels = y;
 }
 
@@ -127,11 +120,8 @@ void KMeans::fit(const gsl_matrix_float *X, int K)
 
 
 
-float KMeans::computeLogLikelihood(const gsl_matrix_float *X)
+float KMeans::computeLogLikelihood(const float *X, int N, int D)
 {
-   const int N = X->size1;
-   const int D = X->size2;
-
    // compute within-class scatter
    float S = 0;
 
@@ -144,8 +134,8 @@ float KMeans::computeLogLikelihood(const gsl_matrix_float *X)
             continue;
          }
 
-         const float *mu_k = _means[k]->data;
-         const float *x_i = &X->data[i * D];
+         const float *mu_k = _means[k];
+         const float *x_i = &X[i * D];
 
          float dist = vectorDiffNorm(x_i, mu_k);
 

@@ -215,11 +215,8 @@ float KMeans::computeBIC(const GenePair::KMeans& model, int N, int D)
 
 
 
-CCMatrix::Pair KMeans::computePair(const float *data, int N, int D)
+CCMatrix::Pair KMeans::computePair(const float *X, int N, int D)
 {
-   gsl_matrix_float_const_view view = gsl_matrix_float_const_view_array(data, N, D);
-   const gsl_matrix_float *X = &view.matrix;
-
    // run each clustering model
    QVector<GenePair::KMeans> models(_maxClusters - _minClusters + 1);
 
@@ -227,7 +224,7 @@ CCMatrix::Pair KMeans::computePair(const float *data, int N, int D)
    {
       auto& model = models[K - _minClusters];
 
-      model.fit(X, K);
+      model.fit(X, N, D, K);
    }
 
    // select the model with the lowest criterion value
