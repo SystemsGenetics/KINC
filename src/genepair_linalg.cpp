@@ -16,7 +16,7 @@ namespace GenePair {
 
 
 
-void vector_init_zero(float *a)
+void vectorInitZero(float *a)
 {
    a[0] = 0;
    a[1] = 0;
@@ -27,7 +27,7 @@ void vector_init_zero(float *a)
 
 
 
-void vector_copy(float *a, const float *b)
+void vectorCopy(float *a, const float *b)
 {
    a[0] = b[0];
    a[1] = b[1];
@@ -38,7 +38,7 @@ void vector_copy(float *a, const float *b)
 
 
 
-void vector_add(float *a, const float *b)
+void vectorAdd(float *a, const float *b)
 {
    a[0] += b[0];
    a[1] += b[1];
@@ -49,7 +49,7 @@ void vector_add(float *a, const float *b)
 
 
 
-void vector_add(float *a, float c, const float *b)
+void vectorAdd(float *a, float c, const float *b)
 {
    a[0] += c * b[0];
    a[1] += c * b[1];
@@ -60,7 +60,7 @@ void vector_add(float *a, float c, const float *b)
 
 
 
-void vector_subtract(float *a, const float *b)
+void vectorSubtract(float *a, const float *b)
 {
    a[0] -= b[0];
    a[1] -= b[1];
@@ -71,7 +71,7 @@ void vector_subtract(float *a, const float *b)
 
 
 
-void vector_scale(float *a, float c)
+void vectorScale(float *a, float c)
 {
    a[0] *= c;
    a[1] *= c;
@@ -82,7 +82,7 @@ void vector_scale(float *a, float c)
 
 
 
-float vector_dot(const float *a, const float *b)
+float vectorDot(const float *a, const float *b)
 {
    return a[0] * b[0] + a[1] * b[1];
 }
@@ -92,7 +92,7 @@ float vector_dot(const float *a, const float *b)
 
 
 
-float vector_diff_norm(const float *a, const float *b)
+float vectorDiffNorm(const float *a, const float *b)
 {
    float dist = 0;
    dist += (a[0] - b[0]) * (a[0] - b[0]);
@@ -106,7 +106,7 @@ float vector_diff_norm(const float *a, const float *b)
 
 
 
-void matrix_init_identity(float *M)
+void matrixInitIdentity(float *M)
 {
    const int N = 2;
 
@@ -121,7 +121,7 @@ void matrix_init_identity(float *M)
 
 
 
-void matrix_init_zero(float *M)
+void matrixInitZero(float *M)
 {
    const int N = 2;
 
@@ -136,7 +136,7 @@ void matrix_init_zero(float *M)
 
 
 
-void matrix_add(float *A, float c, const float *B)
+void matrixAdd(float *A, float c, const float *B)
 {
    const int N = 2;
 
@@ -151,7 +151,7 @@ void matrix_add(float *A, float c, const float *B)
 
 
 
-void matrix_scale(float *A, float c)
+void matrixScale(float *A, float c)
 {
    const int N = 2;
 
@@ -166,7 +166,7 @@ void matrix_scale(float *A, float c)
 
 
 
-void matrix_inverse(const float *A, float *B, float *p_det)
+void matrixInverse(const float *A, float *B, float *p_det)
 {
    const int N = 2;
    const float EPSILON = 1e-5;
@@ -191,7 +191,7 @@ void matrix_inverse(const float *A, float *B, float *p_det)
 
 
 
-void matrix_product(const float *A, const float *x, float *b)
+void matrixProduct(const float *A, const float *x, float *b)
 {
    const int N = 2;
 
@@ -204,7 +204,7 @@ void matrix_product(const float *A, const float *x, float *b)
 
 
 
-void matrix_outer_product(const float *a, const float *b, float *C)
+void matrixOuterProduct(const float *a, const float *b, float *C)
 {
    const int N = 2;
 

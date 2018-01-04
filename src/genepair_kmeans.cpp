@@ -36,7 +36,7 @@ void KMeans::initialize(const gsl_matrix_float *X, int K)
       gsl_vector_float *mu = gsl_vector_float_alloc(D);
 
       int i = rand() % N;
-      vector_copy(mu->data, &X->data[i * D]);
+      vectorCopy(mu->data, &X->data[i * D]);
 
       _means.push_back(mu);
    }
@@ -73,7 +73,7 @@ void KMeans::fit(const gsl_matrix_float *X, int K)
             const float *x_i = &X->data[i * D];
             const float *mu_k = _means[k]->data;
 
-            float dist = vector_diff_norm(x_i, mu_k);
+            float dist = vectorDiffNorm(x_i, mu_k);
 
             if ( min_k == -1 || dist < min_dist )
             {
@@ -100,7 +100,7 @@ void KMeans::fit(const gsl_matrix_float *X, int K)
          float *mu_k = _means[k]->data;
          int n_k = 0;
 
-         vector_init_zero(mu_k);
+         vectorInitZero(mu_k);
 
          for ( int i = 0; i < N; ++i )
          {
@@ -108,12 +108,12 @@ void KMeans::fit(const gsl_matrix_float *X, int K)
 
             if ( y[i] == k )
             {
-               vector_add(mu_k, x_i);
+               vectorAdd(mu_k, x_i);
                n_k++;
             }
          }
 
-         vector_scale(mu_k, 1.0f / n_k);
+         vectorScale(mu_k, 1.0f / n_k);
       }
    }
 
@@ -147,7 +147,7 @@ float KMeans::computeLogLikelihood(const gsl_matrix_float *X)
          const float *mu_k = _means[k]->data;
          const float *x_i = &X->data[i * D];
 
-         float dist = vector_diff_norm(x_i, mu_k);
+         float dist = vectorDiffNorm(x_i, mu_k);
 
          S += dist * dist;
       }

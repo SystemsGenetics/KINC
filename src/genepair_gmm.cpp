@@ -47,7 +47,7 @@ void GMM::Component::initialize(float pi, gsl_vector_float *mu)
 
    // Use identity covariance- assume dimensions are independent
    _sigma = gsl_matrix_float_alloc(D, D);
-   matrix_init_identity(_sigma->data);
+   matrixInitIdentity(_sigma->data);
 
    // Initialize zero artifacts
    _sigmaInv = gsl_matrix_float_calloc(D, D);
@@ -66,7 +66,7 @@ void GMM::Component::prepareCovariance()
    // Compute inverse of Sigma once each iteration instead of
    // repeatedly for each logMvNormDist execution.
    float det;
-   matrix_inverse(_sigma->data, _sigmaInv->data, &det);
+   matrixInverse(_sigma->data, _sigmaInv->data, &det);
 
    // Compute normalizer for multivariate normal distribution
    _normalizer = -0.5f * (D * log(2.0f * M_PI) + log(det));
@@ -92,14 +92,14 @@ void GMM::Component::logMvNormDist(const gsl_matrix_float *X, float *logProbK)
    {
       // Let xm = (x - mu)
       float xm[D];
-      vector_copy(xm, &X->data[i * D]);
-      vector_subtract(xm, _mu->data);
+      vectorCopy(xm, &X->data[i * D]);
+      vectorSubtract(xm, _mu->data);
 
       // Compute xm^T Sxm = xm^T S^-1 xm
       float Sxm[D];
-      matrix_product(_sigmaInv->data, xm, Sxm);
+      matrixProduct(_sigmaInv->data, xm, Sxm);
 
-      float xmSxm = vector_dot(xm, Sxm);
+      float xmSxm = vectorDot(xm, Sxm);
 
       // Compute log(P) = normalizer - 0.5 * xm^T * S^-1 * xm
       logProbK[i] = _normalizer - 0.5f * xmSxm;
@@ -141,7 +141,7 @@ void GMM::initialize(const gsl_matrix_float *X, int K)
       gsl_vector_float *mu = gsl_vector_float_alloc(D);
 
       int i = rand() % N;
-      vector_copy(mu->data, &X->data[i * D]);
+      vectorCopy(mu->data, &X->data[i * D]);
 
       means[k] = mu;
    }
@@ -193,7 +193,7 @@ void GMM::kmeans(const gsl_matrix_float *X, const QVector<gsl_vector_float *>& m
          for (int k = 0; k < K; ++k)
          {
             const float *Mk = means[k]->data;
-            float dist = vector_diff_norm(Xi, Mk);
+            float dist = vectorDiffNorm(Xi, Mk);
             if (minD > dist)
             {
                minD = dist;
@@ -201,25 +201,25 @@ void GMM::kmeans(const gsl_matrix_float *X, const QVector<gsl_vector_float *>& m
             }
          }
 
-         vector_add(means[minDk]->data, Xi);
+         vectorAdd(means[minDk]->data, Xi);
          ++counts[minDk];
       }
 
       for (int k = 0; k < K; ++k)
       {
-         vector_scale(&MP[k * D], 1.0f / counts[k]);
+         vectorScale(&MP[k * D], 1.0f / counts[k]);
       }
 
       diff = 0;
       for (int k = 0; k < K; ++k)
       {
-         diff += vector_diff_norm(&MP[k * D], means[k]->data);
+         diff += vectorDiffNorm(&MP[k * D], means[k]->data);
       }
       diff /= K;
 
       for (int k = 0; k < K; ++k)
       {
-         vector_copy(means[k]->data, &MP[k * D]);
+         vectorCopy(means[k]->data, &MP[k * D]);
       }
    }
 }
@@ -383,35 +383,35 @@ void GMM::performMStep(float *logpi, float *loggamma, float *logGamma, float log
       // Update mu
       float *mu = component._mu->data;
 
-      vector_init_zero(mu);
+      vectorInitZero(mu);
 
       for (int i = 0; i < N; ++i)
       {
-         vector_add(mu, loggamma[k * N + i], &X->data[i * D]);
+         vectorAdd(mu, loggamma[k * N + i], &X->data[i * D]);
       }
 
-      vector_scale(mu, 1.0f / logGamma[k]);
+      vectorScale(mu, 1.0f / logGamma[k]);
 
       // Update sigma
       float *sigma = component._sigma->data;
 
-      matrix_init_zero(sigma);
+      matrixInitZero(sigma);
 
       for (int i = 0; i < N; ++i)
       {
          // xm = (x - mu)
          float xm[D];
-         vector_copy(xm, &X->data[i * D]);
-         vector_subtract(xm, mu);
+         vectorCopy(xm, &X->data[i * D]);
+         vectorSubtract(xm, mu);
 
          // S_i = gamma_ik * (x - mu) (x - mu)^T
          float outerProduct[D * D];
-         matrix_outer_product(xm, xm, outerProduct);
+         matrixOuterProduct(xm, xm, outerProduct);
 
-         matrix_add(sigma, loggamma[k * N + i], outerProduct);
+         matrixAdd(sigma, loggamma[k * N + i], outerProduct);
       }
 
-      matrix_scale(sigma, 1.0f / logGamma[k]);
+      matrixScale(sigma, 1.0f / logGamma[k]);
 
       component.prepareCovariance();
    }

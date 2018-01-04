@@ -4,22 +4,22 @@
 
 namespace GenePair
 {
-   void vector_init_zero(float *a);
-   void vector_copy(float *a, const float *b);
-   void vector_add(float *a, const float *b);
-   void vector_add(float *a, float c, const float *b);
-   void vector_subtract(float *a, const float *b);
-   void vector_scale(float *a, float c);
-   float vector_dot(const float *a, const float *b);
-   float vector_diff_norm(const float *a, const float *b);
+   void vectorInitZero(float *a);
+   void vectorCopy(float *a, const float *b);
+   void vectorAdd(float *a, const float *b);
+   void vectorAdd(float *a, float c, const float *b);
+   void vectorSubtract(float *a, const float *b);
+   void vectorScale(float *a, float c);
+   float vectorDot(const float *a, const float *b);
+   float vectorDiffNorm(const float *a, const float *b);
 
-   void matrix_init_identity(float *M);
-   void matrix_init_zero(float *M);
-   void matrix_add(float *A, float c, const float *B);
-   void matrix_scale(float *A, float c);
-   void matrix_inverse(const float *A, float *B, float *p_det);
-   void matrix_product(const float *A, const float *x, float *b);
-   void matrix_outer_product(const float *a, const float *b, float *C);
+   void matrixInitIdentity(float *M);
+   void matrixInitZero(float *M);
+   void matrixAdd(float *A, float c, const float *B);
+   void matrixScale(float *A, float c);
+   void matrixInverse(const float *A, float *B, float *p_det);
+   void matrixProduct(const float *A, const float *x, float *b);
+   void matrixOuterProduct(const float *a, const float *b, float *C);
 }
 
 #endif
