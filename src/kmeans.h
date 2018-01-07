@@ -44,7 +44,8 @@ public:
 
 private:
    float computeBIC(const GenePair::KMeans& model, int N, int D);
-   CCMatrix::Pair computePair(const QVector<GenePair::Vector2>& X);
+   void computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<int>& bestLabels);
+   void savePair(int K, const QVector<int>& labels, const GenePair::Vector& vector);
 
    struct Block
    {

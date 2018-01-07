@@ -215,7 +215,7 @@ float GMM::computeBIC(const GenePair::GMM& gmm, int N, int D)
 
 
 
-CCMatrix::Pair GMM::computePair(const QVector<GenePair::Vector2>& X)
+void GMM::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<int>& bestLabels)
 {
    // run each clustering model
    QVector<GenePair::GMM> models(_maxClusters - _minClusters + 1);
@@ -247,26 +247,37 @@ CCMatrix::Pair GMM::computePair(const QVector<GenePair::Vector2>& X)
       }
    }
 
-   // compute cluster labels for gene pair
-   CCMatrix::Pair pair(_output);
-
    if ( bestModel == models.end() )
    {
       fprintf(stderr, "warning: all models failed\n");
-      return pair;
+      return;
    }
 
-   pair.addCluster(bestModel->numClusters());
+   // save outputs
+   bestK = bestModel->numClusters();
+   bestLabels = bestModel->labels();
+}
 
-   for ( int i = 0; i < X.size(); ++i )
+
+
+
+
+
+void GMM::savePair(int K, const QVector<int>& labels, const GenePair::Vector& vector)
+{
+   // compute cluster labels for gene pair
+   CCMatrix::Pair pair(_output);
+   pair.addCluster(K);
+
+   for ( int i = 0; i < labels.size(); ++i )
    {
-      for ( int k = 0; k < bestModel->numClusters(); ++k )
+      for ( int k = 0; k < K; ++k )
       {
-         pair.at(k, i) = (k == bestModel->labels()[i]);
+         pair.at(k, i) = (k == labels[i]);
       }
    }
 
-   return pair;
+   pair.write(vector);
 }
 
 
@@ -283,7 +294,6 @@ void GMM::runSerial()
 
    // initialize arrays used for k-means clustering
    QVector<GenePair::Vector2> X;
-   X.reserve(_input->getSampleSize());
 
    // initialize expression genes for input/output
    ExpressionMatrix::Gene gene1(_input);
@@ -307,6 +317,7 @@ void GMM::runSerial()
 
       // populate X with shared expressions of gene x and y
       X.clear();
+      X.reserve(_input->getSampleSize());
 
       for ( auto i = 0; i < _input->getSampleSize(); ++i )
       {
@@ -319,9 +330,12 @@ void GMM::runSerial()
       // perform clustering only if there are enough samples
       if ( X.size() >= _minSamples )
       {
-         CCMatrix::Pair pair = computePair(X);
+         int K;
+         QVector<int> labels;
 
-         pair.write(vector);
+         computeModel(X, K, labels);
+
+         savePair(K, labels, vector);
       }
 
       // increment to next pair
