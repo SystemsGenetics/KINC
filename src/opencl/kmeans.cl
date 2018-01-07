@@ -97,8 +97,7 @@ int fetchData(
    indexB *= size;
 
    // build data matrix from expressions and indices
-   int i;
-   for ( i = 0; i < size; ++i )
+   for ( int i = 0; i < size; ++i )
    {
       if ( !isnan(expressions[indexA + i]) && !isnan(expressions[indexB + i]) )
       {
@@ -181,8 +180,7 @@ void computeKmeans(
    uint2 state = (get_global_id(0), get_global_id(1));
 
    // initialize means randomly from X
-   int k;
-   for ( k = 0; k < K; ++k )
+   for ( int k = 0; k < K; ++k )
    {
       int i = rand(&state) % N;
       Mu[k] = X[i];
@@ -192,14 +190,13 @@ void computeKmeans(
    while ( true )
    {
       // compute new labels
-      int i;
-      for ( i = 0; i < N; ++i )
+      for ( int i = 0; i < N; ++i )
       {
          // find k that minimizes norm(x_i - mu_k)
          int min_k = -1;
          float min_dist;
 
-         for ( k = 0; k < K; ++k )
+         for ( int k = 0; k < K; ++k )
          {
             float dist = vectorDiffNorm(&X[i], &Mu[k]);
 
@@ -216,7 +213,7 @@ void computeKmeans(
       // check for convergence
       bool converged = true;
 
-      for ( i = 0; i < N; ++i )
+      for ( int i = 0; i < N; ++i )
       {
          if ( y[i] != y_next[i] )
          {
@@ -231,20 +228,20 @@ void computeKmeans(
       }
 
       // update labels
-      for ( i = 0; i < N; ++i )
+      for ( int i = 0; i < N; ++i )
       {
          y[i] = y_next[i];
       }
 
       // update means
-      for ( k = 0; k < K; ++k )
+      for ( int k = 0; k < K; ++k )
       {
          // compute mu_k = mean of all x_i in cluster k
          int n_k = 0;
 
          vectorInitZero(&Mu[k]);
 
-         for ( i = 0; i < N; ++i )
+         for ( int i = 0; i < N; ++i )
          {
             if ( y[i] == k )
             {
@@ -328,13 +325,15 @@ __kernel void computeKmeansBlock(
    // fetch data matrix X from expression matrix
    int numSamples = fetchData(expressions, size, pairs[i].x, pairs[i].y, X);
 
+   // initialize output
+   *bestK = 0;
+
    // make sure minimum number of related samples is reached
    if ( numSamples >= minSamples )
    {
       float bestValue = INFINITY;
 
-      int K;
-      for ( K = minClusters; K <= maxClusters; K++ )
+      for ( int K = minClusters; K <= maxClusters; K++ )
       {
          // run each clustering model
          float logL;
@@ -349,16 +348,11 @@ __kernel void computeKmeansBlock(
             *bestK = K;
             bestValue = value;
 
-            int i;
-            for ( i = 0; i < numSamples; i++ )
+            for ( int i = 0; i < numSamples; i++ )
             {
                bestLabels[i] = y1[i];
             }
          }
       }
-   }
-   else
-   {
-      bestLabels[0] = -1;
    }
 }

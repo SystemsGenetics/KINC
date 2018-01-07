@@ -760,7 +760,7 @@ void KMeans::runReadBlock(Block& block)
          int *bestLabels = &(*block.resultLabels)[index * N];
 
          // save cluster pair if clustering model is valid
-         if ( bestLabels[0] != -1 )
+         if ( bestK != 0 )
          {
             CCMatrix::Pair pair(_output);
             pair.addCluster(bestK);
