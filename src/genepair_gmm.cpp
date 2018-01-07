@@ -136,7 +136,7 @@ void GMM::kmeans(const QVector<Vector2>& X)
             }
          }
 
-         vectorAdd(_components[minDk]._mu, X[i]);
+         vectorAdd(MP[minDk], X[i]);
          ++counts[minDk];
       }
 
