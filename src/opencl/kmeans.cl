@@ -1,5 +1,12 @@
 
-void vectorInitZero(__global float2 *a)
+typedef float2 Vector2;
+
+
+
+
+
+
+void vectorInitZero(__global Vector2 *a)
 {
    a->x = 0;
    a->y = 0;
@@ -10,7 +17,7 @@ void vectorInitZero(__global float2 *a)
 
 
 
-void vectorAdd(__global float2 *a, const __global float2 *b)
+void vectorAdd(__global Vector2 *a, __global const Vector2 *b)
 {
    a->x += b->x;
    a->y += b->y;
@@ -21,7 +28,7 @@ void vectorAdd(__global float2 *a, const __global float2 *b)
 
 
 
-void vectorScale(__global float2 *a, float c)
+void vectorScale(__global Vector2 *a, float c)
 {
    a->x *= c;
    a->y *= c;
@@ -32,7 +39,7 @@ void vectorScale(__global float2 *a, float c)
 
 
 
-float vectorDiffNorm(const __global float2 *a, const __global float2 *b)
+float vectorDiffNorm(__global const Vector2 *a, __global const Vector2 *b)
 {
    float dist = 0;
    dist += (a->x - b->x) * (a->x - b->x);
@@ -82,7 +89,7 @@ uint rand(uint2 *state)
 int fetchData(
    __global const float *expressions, int size,
    int indexA, int indexB,
-   __global float2 *X)
+   __global Vector2 *X)
 {
    int numSamples = 0;
 
@@ -96,7 +103,7 @@ int fetchData(
       if ( !isnan(expressions[indexA + i]) && !isnan(expressions[indexB + i]) )
       {
          // if both expressions exist add expressions to new lists and increment
-         X[numSamples] = (float2) (
+         X[numSamples] = (Vector2) (
             expressions[indexA + i],
             expressions[indexB + i]
          );
@@ -123,9 +130,9 @@ int fetchData(
  * @param K
  */
 float computeLogLikelihood(
-   __global const float2 *X, int N,
+   __global const Vector2 *X, int N,
    __global const int *y,
-   __global const float2 *Mu, int K)
+   __global const Vector2 *Mu, int K)
 {
    // compute within-class scatter
    float S = 0;
@@ -165,10 +172,10 @@ float computeLogLikelihood(
  * @param logL
  */
 void computeKmeans(
-   __global const float2 *X, int N,
+   __global const Vector2 *X, int N,
    __global int *y,
    __global int *y_next,
-   __global float2 *Mu, int K,
+   __global Vector2 *Mu, int K,
    float *logL)
 {
    uint2 state = (get_global_id(0), get_global_id(1));
@@ -282,8 +289,8 @@ float computeBIC(int K, float logL, int N, int D)
  * Compute a block of K-means models given a block of gene pairs.
  *
  * For each gene pair, several models are computed and the best model
- * is selected according to a criterion (BIC). The resulting sample mask
- * for each pair is returned.
+ * is selected according to a criterion (BIC). The selected K and the
+ * resulting sample mask for each pair is returned.
  *
  * @param expressions
  * @param size
@@ -295,14 +302,15 @@ float computeBIC(int K, float logL, int N, int D)
  * @param workMu
  * @param worky1
  * @param worky2
- * @param results
+ * @param resultKs
+ * @param resultLabels
  */
 __kernel void computeKmeansBlock(
    __global const float *expressions, int size,
    __global const int2 *pairs,
    int minSamples, int minClusters, int maxClusters,
-   __global float2 *workX,
-   __global float2 *workMu,
+   __global Vector2 *workX,
+   __global Vector2 *workMu,
    __global int *worky1,
    __global int *worky2,
    __global int *resultKs,
@@ -310,8 +318,8 @@ __kernel void computeKmeansBlock(
 {
    // initialize workspace variables
    int i = get_global_id(0);
-   __global float2 *X = &workX[i * size];
-   __global float2 *Mu = &workMu[i * maxClusters];
+   __global Vector2 *X = &workX[i * size];
+   __global Vector2 *Mu = &workMu[i * maxClusters];
    __global int *y1 = &worky1[i * size];
    __global int *y2 = &worky2[i * size];
    __global int *bestK = &resultKs[i];
@@ -351,6 +359,6 @@ __kernel void computeKmeansBlock(
    }
    else
    {
-      bestLabels[0] = NAN;
+      bestLabels[0] = -1;
    }
 }
