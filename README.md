@@ -28,6 +28,10 @@ make
 cd ..
 ```
 
+## Using ACE GUI / Console
+
+ACE provides two separate libraries for GUI and console applications. By default, KINC is built as a GUI application. To build KINC as a console application, you must use `ace/console/Application.h` in `main.cpp` and link to `-laceconsole` instead of `-lacegui` in `KINC.pro`.
+
 # Usage
 
 To build a GCN involves several steps:
