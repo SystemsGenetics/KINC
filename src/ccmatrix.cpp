@@ -30,16 +30,10 @@ void CCMatrix::Pair::addCluster(int amount) const
 
 QString CCMatrix::Pair::toString() const
 {
-   // if there are no clusters simply return null type
+   // if there are no clusters return empty string
    if ( _sampleMasks.isEmpty() )
    {
-      QString ret("(");
-      for (int i = 0; i < _cMatrix->_sampleSize ;++i)
-      {
-         ret.append("1");
-      }
-      ret.append(")");
-      return ret;
+      return "";
    }
 
    // initialize list of strings and iterate through all clusters
@@ -181,10 +175,10 @@ QVariant CCMatrix::data(const QModelIndex &index, int role) const
       return QVariant();
    }
 
-   // if row and column are equal return one
+   // if row and column are equal return empty string
    if ( index.row() == index.column() )
    {
-      return "(1)";
+      return "";
    }
 
    // get constant pair and read in values
