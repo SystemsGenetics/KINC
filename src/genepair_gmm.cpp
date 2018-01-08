@@ -166,14 +166,14 @@ void GMM::kmeans(const QVector<Vector2>& X)
 
 
 
-void GMM::calcLogMvNorm(const QVector<Vector2>& X, float *logProb)
+void GMM::calcLogMvNorm(const QVector<Vector2>& X, float *loggamma)
 {
    const int N = X.size();
    const int K = _components.size();
 
    for ( int k = 0; k < K; ++k )
    {
-      _components[k].calcLogMvNorm(X, &logProb[k * N]);
+      _components[k].calcLogMvNorm(X, &loggamma[k * N]);
    }
 }
 
@@ -182,7 +182,7 @@ void GMM::calcLogMvNorm(const QVector<Vector2>& X, float *logProb)
 
 
 
-void GMM::calcLogLikelihoodAndGammaNK(const float *logpi, int K, float *logProb, int N, float *logL)
+void GMM::calcLogLikelihoodAndGammaNK(const float *logpi, int K, float *loggamma, int N, float *logL)
 {
    *logL = 0.0;
    for (int i = 0; i < N; ++i)
@@ -190,7 +190,7 @@ void GMM::calcLogLikelihoodAndGammaNK(const float *logpi, int K, float *logProb,
       float maxArg = -INFINITY;
       for (int k = 0; k < K; ++k)
       {
-         const float logProbK = logpi[k] + logProb[k * N + i];
+         const float logProbK = logpi[k] + loggamma[k * N + i];
          if (logProbK > maxArg)
          {
             maxArg = logProbK;
@@ -200,7 +200,7 @@ void GMM::calcLogLikelihoodAndGammaNK(const float *logpi, int K, float *logProb,
       float sum = 0.0;
       for (int k = 0; k < K; ++k)
       {
-         const float logProbK = logpi[k] + logProb[k * N + i];
+         const float logProbK = logpi[k] + loggamma[k * N + i];
          sum += exp(logProbK - maxArg);
       }
 
@@ -208,7 +208,7 @@ void GMM::calcLogLikelihoodAndGammaNK(const float *logpi, int K, float *logProb,
       *logL += logpx;
       for (int k = 0; k < K; ++k)
       {
-         logProb[k * N + i] += -logpx;
+         loggamma[k * N + i] += -logpx;
       }
    }
 }
@@ -353,24 +353,43 @@ QVector<int> GMM::calcLabels(float *loggamma, int N, int K)
 {
    QVector<int> labels(N);
 
-   for ( int i = 0; i < N; i++ )
+   for ( int i = 0; i < N; ++i )
    {
-      int max_j = -1;
-      float max_gamma;
+      int max_k = -1;
+      float max_gamma = -INFINITY;
 
-      for ( int j = 0; j < K; j++ )
+      for ( int k = 0; k < K; ++k )
       {
-         if ( max_j == -1 || max_gamma < loggamma[i * K + j] )
+         if ( max_gamma < loggamma[k * N + i] )
          {
-            max_j = j;
-            max_gamma = loggamma[i * K + j];
+            max_k = k;
+            max_gamma = loggamma[k * N + i];
          }
       }
 
-      labels[i] = max_j;
+      labels[i] = max_k;
    }
 
    return labels;
+}
+
+
+
+
+
+
+float GMM::calcEntropy(float *loggamma, int N)
+{
+   float E = 0;
+
+   for ( int i = 0; i < N; ++i )
+   {
+      int k = _labels[i];
+
+      E += log(loggamma[k * N + i]);
+   }
+
+   return E;
 }
 
 
@@ -427,6 +446,7 @@ void GMM::fit(const QVector<Vector2>& X, int K, int maxIterations)
       _success = true;
       _logL = currentLogL;
       _labels = calcLabels(loggamma, N, K);
+      _entropy = calcEntropy(loggamma, N);
    }
    catch ( std::runtime_error& e )
    {

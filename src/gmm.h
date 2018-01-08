@@ -44,6 +44,7 @@ public:
 
 private:
    float computeBIC(int K, float logL, int N, int D);
+   float computeICL(int K, float logL, int N, int D, float E);
    void computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<int>& bestLabels);
    void savePair(const GenePair::Vector& vector, int K, const QVector<int>& labels);
 

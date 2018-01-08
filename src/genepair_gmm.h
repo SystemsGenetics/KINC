@@ -32,6 +32,7 @@ namespace GenePair
       int numClusters() const { return _components.size(); }
       bool success() const { return _success; }
       float logLikelihood() const { return _logL; }
+      float entropy() const { return _entropy; }
       const QVector<int>& labels() const { return _labels; }
 
       void fit(const QVector<Vector2>& X, int K, int maxIterations=100);
@@ -39,16 +40,18 @@ namespace GenePair
    private:
       void initialize(const QVector<Vector2>& X, int K);
       void kmeans(const QVector<Vector2>& X);
-      void calcLogMvNorm(const QVector<Vector2>& X, float *logProb);
-      void calcLogLikelihoodAndGammaNK(const float *logpi, int K, float *logProb, int N, float *logL);
+      void calcLogMvNorm(const QVector<Vector2>& X, float *loggamma);
+      void calcLogLikelihoodAndGammaNK(const float *logpi, int K, float *loggamma, int N, float *logL);
       void calcLogGammaK(const float *loggamma, int N, int K, float *logGamma);
       float calcLogGammaSum(const float *logpi, int K, const float *logGamma);
       void performMStep(float *logpi, int K, float *loggamma, float *logGamma, float logGammaSum, const QVector<Vector2>& X);
       QVector<int> calcLabels(float *loggamma, int N, int K);
+      float calcEntropy(float *loggamma, int N);
 
       QVector<Component> _components;
       bool _success;
       float _logL;
+      float _entropy;
       QVector<int> _labels;
    };
 }

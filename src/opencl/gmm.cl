@@ -593,13 +593,62 @@ bool performMStep(
 
 
 
+void calcLabels(
+   __global const float *loggamma, int N, int K,
+   __global int *labels)
+{
+   for ( int i = 0; i < N; ++i )
+   {
+      int max_k = -1;
+      float max_gamma = -INFINITY;
+
+      for ( int k = 0; k < K; ++k )
+      {
+         if ( max_gamma < loggamma[k * N + i] )
+         {
+            max_k = k;
+            max_gamma = loggamma[k * N + i];
+         }
+      }
+
+      labels[i] = max_k;
+   }
+}
+
+
+
+
+
+
+float calcEntropy(
+   __global const float *loggamma, int N,
+   __global const int *labels)
+{
+   float E = 0;
+
+   for ( int i = 0; i < N; ++i )
+   {
+      int k = labels[i];
+
+      E += log(loggamma[k * N + i]);
+   }
+
+   return E;
+}
+
+
+
+
+
+
 /**
  * Compute a Gaussian mixture model from a dataset.
  */
 bool fit(
    __global const Vector2 *X, int N, int K,
-   __global int *y,
+   __global int *labels,
    float *logL,
+   float *entropy,
    __global Component *components,
    __global Vector2 *MP,
    __global int *counts,
@@ -664,26 +713,10 @@ bool fit(
       }
    }
 
-   // compute labels
-   for ( int i = 0; i < N; i++ )
-   {
-      int max_j = -1;
-      float max_gamma;
-
-      for ( int j = 0; j < K; j++ )
-      {
-         if ( max_j == -1 || max_gamma < loggamma[i * K + j] )
-         {
-            max_j = j;
-            max_gamma = loggamma[i * K + j];
-         }
-      }
-
-      y[i] = max_j;
-   }
-
-   // save log-likelihood
+   // save outputs
    *logL = currentLogL;
+   calcLabels(loggamma, N, K, labels);
+   *entropy = calcEntropy(loggamma, N, labels);
 
    return true;
 }
@@ -694,18 +727,28 @@ bool fit(
 
 
 /**
- * Compute the Bayes information criterion of a GMM.
- *
- * @param K
- * @param logL
- * @param N
- * @param D
+ * Compute the Bayes Information Criterion of a GMM.
  */
 float computeBIC(int K, float logL, int N, int D)
 {
-   int p = K * D;
+   int p = K * (1 + D + D * D);
 
    return log((float) N) * p - 2 * logL;
+}
+
+
+
+
+
+
+/**
+ * Compute the Integrated Completed Likelihood of a GMM.
+ */
+float computeICL(int K, float logL, int N, int D, float E)
+{
+   int p = K * (1 + D + D * D);
+
+   return log((float) N) * p - 2 * logL - 2 * E;
 }
 
 
@@ -738,7 +781,7 @@ __kernel void computeGMMBlock(
    // initialize workspace variables
    int i = get_global_id(0);
    __global Vector2 *X = &work_X[i * size];
-   __global int *y = &work_y[i * size];
+   __global int *labels = &work_y[i * size];
    __global Component *components = &work_components[i * maxClusters];
    __global Vector2 *MP = &work_MP[i * maxClusters];
    __global int *counts = &work_counts[i * maxClusters];
@@ -763,9 +806,11 @@ __kernel void computeGMMBlock(
       {
          // run each clustering model
          float logL;
+         float entropy;
+
          bool success = fit(
             X, numSamples, K,
-            y, &logL,
+            labels, &logL, &entropy,
             components,
             MP, counts,
             logpi, loggamma, logGamma
@@ -777,7 +822,7 @@ __kernel void computeGMMBlock(
          }
 
          // evaluate model
-         float value = computeBIC(K, logL, numSamples, 2);
+         float value = computeICL(K, logL, numSamples, 2, entropy);
 
          // save the best model
          if ( value < bestValue )
@@ -789,7 +834,7 @@ __kernel void computeGMMBlock(
             {
                if ( bestLabels[i] != -1 )
                {
-                  bestLabels[i] = y[j];
+                  bestLabels[i] = labels[j];
                   ++j;
                }
             }

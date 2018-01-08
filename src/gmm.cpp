@@ -253,9 +253,21 @@ bool GMM::initialize()
 
 float GMM::computeBIC(int K, float logL, int N, int D)
 {
-   int p = K * D;
+   int p = K * (1 + D + D * D);
 
    return log(N) * p - 2 * logL;
+}
+
+
+
+
+
+
+float GMM::computeICL(int K, float logL, int N, int D, float E)
+{
+   int p = K * (1 + D + D * D);
+
+   return log(N) * p - 2 * logL - 2 * E;
 }
 
 
@@ -280,7 +292,7 @@ void GMM::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<
       }
 
       // evaluate model
-      float value = computeBIC(K, model.logLikelihood(), X.size(), 2);
+      float value = computeICL(K, model.logLikelihood(), X.size(), 2, model.entropy());
 
       // save the best model
       if ( value < bestValue )
