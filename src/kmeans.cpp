@@ -671,12 +671,12 @@ void KMeans::runLoadBlock(Block& block)
 
       // set kernel arguments and execute it
       _kernel->setBuffer(2, block.pairs);
-      _kernel->setBuffer(6, block.workX);
-      _kernel->setBuffer(7, block.workMu);
-      _kernel->setBuffer(8, block.worky1);
-      _kernel->setBuffer(9, block.worky2);
-      _kernel->setBuffer(10, block.resultKs);
-      _kernel->setBuffer(11, block.resultLabels);
+      _kernel->setBuffer(6, block.work_X);
+      _kernel->setBuffer(7, block.work_y);
+      _kernel->setBuffer(8, block.work_Mu);
+      _kernel->setBuffer(9, block.work_ynext);
+      _kernel->setBuffer(10, block.result_K);
+      _kernel->setBuffer(11, block.result_labels);
       block.event = _kernel->execute();
 
       // make sure kernel worked
@@ -711,19 +711,19 @@ void KMeans::runExecuteBlock(Block& block)
       }
 
       // read clustering results from device and make sure it worked
-      block.event = block.resultKs->read();
-      if ( !*block.resultKs )
+      block.event = block.result_K->read();
+      if ( !*block.result_K )
       {
          E_MAKE_EXCEPTION(e);
-         block.resultKs->fillException(e);
+         block.result_K->fillException(e);
          throw e;
       }
 
-      block.event = block.resultLabels->read();
-      if ( !*block.resultLabels )
+      block.event = block.result_labels->read();
+      if ( !*block.result_labels )
       {
          E_MAKE_EXCEPTION(e);
-         block.resultLabels->fillException(e);
+         block.result_labels->fillException(e);
          throw e;
       }
 
@@ -756,8 +756,8 @@ void KMeans::runReadBlock(Block& block)
       {
          // read results
          int N = _input->getSampleSize();
-         int bestK = (*block.resultKs)[index];
-         int *bestLabels = &(*block.resultLabels)[index * N];
+         int bestK = (*block.result_K)[index];
+         int *bestLabels = &(*block.result_labels)[index * N];
 
          // save cluster pair if clustering model is valid
          if ( bestK != 0 )

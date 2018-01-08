@@ -161,21 +161,13 @@ float computeLogLikelihood(
 
 /**
  * Compute a K-means clustering model from a dataset.
- *
- * @param X
- * @param N
- * @param y
- * @param y_next
- * @param Mu
- * @param K
- * @param logL
  */
 void computeKmeans(
-   __global const Vector2 *X, int N,
+   __global const Vector2 *X, int N, int K,
    __global int *y,
-   __global int *y_next,
-   __global Vector2 *Mu, int K,
-   float *logL)
+   float *logL,
+   __global Vector2 *Mu,
+   __global int *y_next)
 {
    uint2 state = (get_global_id(0), get_global_id(1));
 
@@ -288,39 +280,26 @@ float computeBIC(int K, float logL, int N, int D)
  * For each gene pair, several models are computed and the best model
  * is selected according to a criterion (BIC). The selected K and the
  * resulting sample mask for each pair is returned.
- *
- * @param expressions
- * @param size
- * @param pairs
- * @param minSamples
- * @param minClusters
- * @param maxClusters
- * @param workX
- * @param workMu
- * @param worky1
- * @param worky2
- * @param resultKs
- * @param resultLabels
  */
 __kernel void computeKmeansBlock(
    __global const float *expressions, int size,
    __global const int2 *pairs,
    int minSamples, int minClusters, int maxClusters,
-   __global Vector2 *workX,
-   __global Vector2 *workMu,
-   __global int *worky1,
-   __global int *worky2,
-   __global int *resultKs,
-   __global int *resultLabels)
+   __global Vector2 *work_X,
+   __global int *work_y,
+   __global Vector2 *work_Mu,
+   __global int *work_ynext,
+   __global int *result_K,
+   __global int *result_labels)
 {
    // initialize workspace variables
    int i = get_global_id(0);
-   __global Vector2 *X = &workX[i * size];
-   __global Vector2 *Mu = &workMu[i * maxClusters];
-   __global int *y1 = &worky1[i * size];
-   __global int *y2 = &worky2[i * size];
-   __global int *bestK = &resultKs[i];
-   __global int *bestLabels = &resultLabels[i * size];
+   __global Vector2 *X = &work_X[i * size];
+   __global int *y = &work_y[i * size];
+   __global Vector2 *Mu = &work_Mu[i * maxClusters];
+   __global int *y_next = &work_ynext[i * size];
+   __global int *bestK = &result_K[i];
+   __global int *bestLabels = &result_labels[i * size];
 
    // fetch data matrix X from expression matrix
    int numSamples = fetchData(expressions, size, pairs[i].x, pairs[i].y, X);
@@ -337,7 +316,7 @@ __kernel void computeKmeansBlock(
       {
          // run each clustering model
          float logL;
-         computeKmeans(X, numSamples, y1, y2, Mu, K, &logL);
+         computeKmeans(X, numSamples, K, y, &logL, Mu, y_next);
 
          // evaluate model
          float value = computeBIC(K, logL, numSamples, 2);
@@ -350,7 +329,7 @@ __kernel void computeKmeansBlock(
 
             for ( int i = 0; i < numSamples; i++ )
             {
-               bestLabels[i] = y1[i];
+               bestLabels[i] = y[i];
             }
          }
       }

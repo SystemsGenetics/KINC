@@ -61,12 +61,13 @@ private:
       Block(EOpenCLDevice& device, int N, int K, int kernelSize)
       {
          pairs = device.makeBuffer<cl_int2>(1 * kernelSize).release();
-         workX = device.makeBuffer<cl_float2>(N * kernelSize).release();
-         workMu = device.makeBuffer<cl_float2>(K * kernelSize).release();
-         worky1 = device.makeBuffer<cl_int>(N * kernelSize).release();
-         worky2 = device.makeBuffer<cl_int>(N * kernelSize).release();
-         resultKs = device.makeBuffer<cl_int>(1 * kernelSize).release();
-         resultLabels = device.makeBuffer<cl_int>(N * kernelSize).release();
+         work_X = device.makeBuffer<cl_float2>(N * kernelSize).release();
+         work_y = device.makeBuffer<cl_int>(N * kernelSize).release();
+         work_Mu = device.makeBuffer<cl_float2>(K * kernelSize).release();
+         work_ynext = device.makeBuffer<cl_int>(N * kernelSize).release();
+         result_K = device.makeBuffer<cl_int>(1 * kernelSize).release();
+         result_labels = device.makeBuffer<cl_int>(N * kernelSize).release();
+
          if ( !device )
          {
             E_MAKE_EXCEPTION(e);
@@ -77,24 +78,24 @@ private:
       ~Block()
       {
          delete pairs;
-         delete workX;
-         delete workMu;
-         delete worky1;
-         delete worky2;
-         delete resultKs;
-         delete resultLabels;
+         delete work_X;
+         delete work_y;
+         delete work_Mu;
+         delete work_ynext;
+         delete result_K;
+         delete result_labels;
       }
 
       int state {Start};
       GenePair::Vector vector;
       EOpenCLEvent event;
       EOpenCLBuffer<cl_int2>* pairs;
-      EOpenCLBuffer<cl_float2>* workX;
-      EOpenCLBuffer<cl_float2>* workMu;
-      EOpenCLBuffer<cl_int>* worky1;
-      EOpenCLBuffer<cl_int>* worky2;
-      EOpenCLBuffer<cl_int>* resultKs;
-      EOpenCLBuffer<cl_int>* resultLabels;
+      EOpenCLBuffer<cl_float2>* work_X;
+      EOpenCLBuffer<cl_int>* work_y;
+      EOpenCLBuffer<cl_float2>* work_Mu;
+      EOpenCLBuffer<cl_int>* work_ynext;
+      EOpenCLBuffer<cl_int>* result_K;
+      EOpenCLBuffer<cl_int>* result_labels;
    };
 
    void initializeKernel();
