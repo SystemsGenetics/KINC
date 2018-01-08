@@ -251,11 +251,11 @@ bool KMeans::initialize()
 
 
 
-float KMeans::computeBIC(const GenePair::KMeans& model, int N, int D)
+float KMeans::computeBIC(int K, float logL, int N, int D)
 {
-   int p = model.numClusters() * D;
+   int p = K * D;
 
-   return log(N) * p - 2 * model.logLikelihood();
+   return log(N) * p - 2 * logL;
 }
 
 
@@ -265,34 +265,32 @@ float KMeans::computeBIC(const GenePair::KMeans& model, int N, int D)
 
 void KMeans::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<int>& bestLabels)
 {
-   // run each clustering model
-   QVector<GenePair::KMeans> models(_maxClusters - _minClusters + 1);
+   float bestValue = INFINITY;
 
    for ( int K = _minClusters; K <= _maxClusters; ++K )
    {
-      auto& model = models[K - _minClusters];
+      // run each clustering model
+      GenePair::KMeans model;
 
       model.fit(X, K);
-   }
 
-   // select the model with the lowest criterion value
-   float bestValue = 0;
-   auto bestModel = models.end();
+      // evaluate model
+      float value = computeBIC(K, model.logLikelihood(), X.size(), 2);
 
-   for ( auto iter = models.begin(); iter != models.end(); ++iter )
-   {
-      float value = computeBIC(*iter, X.size(), 2);
-
-      if ( bestModel == models.end() || value < bestValue )
+      if ( value < bestValue )
       {
+         bestK = K;
          bestValue = value;
-         bestModel = iter;
+
+         for ( int i = 0, j = 0; i < X.size(); ++i )
+         {
+            if ( bestLabels[i] != -1 ) {
+               bestLabels[i] = model.labels()[j];
+               ++j;
+            }
+         }
       }
    }
-
-   // save outputs
-   bestK = bestModel->numClusters();
-   bestLabels = bestModel->labels();
 }
 
 
@@ -300,7 +298,7 @@ void KMeans::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVect
 
 
 
-void KMeans::savePair(int K, const QVector<int>& labels, const GenePair::Vector& vector)
+void KMeans::savePair(const GenePair::Vector& vector, int K, const QVector<int>& labels)
 {
    // compute cluster labels for gene pair
    CCMatrix::Pair pair(_output);
@@ -330,6 +328,7 @@ void KMeans::runSerial()
    qint64 totalSteps {_output->geneSize()*(_output->geneSize() - 1)/2};
 
    // initialize arrays used for k-means clustering
+   QVector<int> labels(_input->getSampleSize());
    QVector<GenePair::Vector2> X;
 
    // initialize expression genes for input/output
@@ -361,18 +360,26 @@ void KMeans::runSerial()
          if ( !std::isnan(gene1.at(i)) && !std::isnan(gene2.at(i)) )
          {
             X.append({ gene1.at(i), gene2.at(i) });
+
+            labels[i] = 0;
+         }
+         else
+         {
+            labels[i] = -1;
          }
       }
 
       // perform clustering only if there are enough samples
+      int bestK = 0;
+
       if ( X.size() >= _minSamples )
       {
-         int K;
-         QVector<int> labels;
+         computeModel(X, bestK, labels);
+      }
 
-         computeModel(X, K, labels);
-
-         savePair(K, labels, vector);
+      if ( bestK != 0 )
+      {
+         savePair(vector, bestK, labels);
       }
 
       // increment to next pair

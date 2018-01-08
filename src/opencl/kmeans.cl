@@ -84,12 +84,14 @@ uint rand(uint2 *state)
  * @param indexA
  * @param indexB
  * @param X
+ * @param labels
  * @return number of rows in X
  */
 int fetchData(
    __global const float *expressions, int size,
    int indexA, int indexB,
-   __global Vector2 *X)
+   __global Vector2 *X,
+   __global int *labels)
 {
    int numSamples = 0;
 
@@ -107,6 +109,12 @@ int fetchData(
             expressions[indexB + i]
          );
          numSamples++;
+
+         labels[i] = 0;
+      }
+      else
+      {
+         labels[i] = -1;
       }
    }
 
@@ -302,7 +310,7 @@ __kernel void computeKmeansBlock(
    __global int *bestLabels = &result_labels[i * size];
 
    // fetch data matrix X from expression matrix
-   int numSamples = fetchData(expressions, size, pairs[i].x, pairs[i].y, X);
+   int numSamples = fetchData(expressions, size, pairs[i].x, pairs[i].y, X, bestLabels);
 
    // initialize output
    *bestK = 0;
@@ -312,7 +320,7 @@ __kernel void computeKmeansBlock(
    {
       float bestValue = INFINITY;
 
-      for ( int K = minClusters; K <= maxClusters; K++ )
+      for ( int K = minClusters; K <= maxClusters; ++K )
       {
          // run each clustering model
          float logL;
@@ -327,9 +335,13 @@ __kernel void computeKmeansBlock(
             *bestK = K;
             bestValue = value;
 
-            for ( int i = 0; i < numSamples; i++ )
+            for ( int i = 0, j = 0; i < numSamples; ++i )
             {
-               bestLabels[i] = y[i];
+               if ( bestLabels[i] != -1 )
+               {
+                  bestLabels[i] = y[j];
+                  ++j;
+               }
             }
          }
       }
