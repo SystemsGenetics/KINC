@@ -30,7 +30,7 @@ cd ..
 
 ## Using ACE GUI / Console
 
-ACE provides two separate libraries for GUI and console applications. By default, KINC is built as a GUI application. To build KINC as a console application, you must use `ace/console/Application.h` in `main.cpp` and link to `-laceconsole` instead of `-lacegui` in `KINC.pro`.
+ACE provides two separate libraries for GUI and console applications. The `GUI` variable in `KINC.pro` controls which library KINC uses. By default, KINC is built as a GUI application. When run as a GUI application, KINC prints the console equivalent of every analytic as it is run.
 
 # Usage
 
@@ -40,5 +40,3 @@ To build a GCN involves several steps:
 2. Compute cluster composition matrix
 3. Compute correlation matrix
 4. Compute thresholded correlation matrix
-
-KINC provides a GUI to perform each step one at a time, as well as a console to show the equivalent command-line operation. That is, every KINC operation can be done through the GUI or the command-line.
