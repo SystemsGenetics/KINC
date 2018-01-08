@@ -12,6 +12,14 @@ using namespace std;
 
 
 
+const char* GMM::BIC {QT_TR_NOOP("BIC")};
+const char* GMM::ICL {QT_TR_NOOP("ICL")};
+
+
+
+
+
+
 GMM::~GMM()
 {
    // check if blocks are allocated
@@ -50,6 +58,7 @@ EAbstractAnalytic::ArgumentType GMM::getArgumentData(int argument)
    case MinSamples: return Type::Integer;
    case MinClusters: return Type::Integer;
    case MaxClusters: return Type::Integer;
+   case CriterionArg: return Type::Combo;
    case BlockSize: return Type::Integer;
    case KernelSize: return Type::Integer;
    default: return Type::Bool;
@@ -78,6 +87,7 @@ QVariant GMM::getArgumentData(int argument, Role role)
       case MinSamples: return QString("min");
       case MinClusters: return QString("minclus");
       case MaxClusters: return QString("maxclus");
+      case CriterionArg: return QString("crit");
       case BlockSize: return QString("bsize");
       case KernelSize: return QString("ksize");
       default: return QVariant();
@@ -91,6 +101,7 @@ QVariant GMM::getArgumentData(int argument, Role role)
       case MinSamples: return tr("Minimum Sample Size:");
       case MinClusters: return tr("Minimum Clusters:");
       case MaxClusters: return tr("Maximum Clusters:");
+      case CriterionArg: return tr("Criterion:");
       case BlockSize: return tr("Block Size:");
       case KernelSize: return tr("Kernel Size:");
       default: return QVariant();
@@ -104,11 +115,19 @@ QVariant GMM::getArgumentData(int argument, Role role)
       case MinSamples: return tr("Minimum size of samples two genes must share to perform clustering.");
       case MinClusters: return tr("Minimum number of clusters to test.");
       case MaxClusters: return tr("Maximum number of clusters to test.");
+      case CriterionArg: return tr("Criterion to determine the number of clusters.");
       case BlockSize: return tr("This option only applies if OpenCL is used. Total number of blocks"
                                 " to run for execution.");
       case KernelSize: return tr("This option only applies if OpenCL is used. Total number of"
                                  " kernels to run per block of execution.");
       default: return QVariant();
+      }
+   case Role::ComboValues:
+      // if this is criterion argument return combo values else return nothing
+      switch (argument)
+      {
+      case CriterionArg: return QStringList() << tr(BIC) << tr(ICL);
+      default: return QStringList();
       }
    case Role::DefaultValue:
       // figure out which argument is being queried and if applicable return default value else
@@ -118,6 +137,7 @@ QVariant GMM::getArgumentData(int argument, Role role)
       case MinSamples: return 30;
       case MinClusters: return 1;
       case MaxClusters: return 5;
+      case CriterionArg: return tr(BIC);
       case BlockSize: return 4;
       case KernelSize: return 4096;
       default: return QVariant();
@@ -178,6 +198,19 @@ void GMM::setArgument(int argument, QVariant value)
       break;
    case MaxClusters:
       _maxClusters = value.toInt();
+      break;
+   case CriterionArg:
+      {
+         const QString option = value.toString();
+         if ( option == tr(BIC) )
+         {
+            _criterion = Criterion::BIC;
+         }
+         else if ( option == tr(ICL) )
+         {
+            _criterion = Criterion::ICL;
+         }
+      }
       break;
    case BlockSize:
       _blockSize = value.toInt();
@@ -292,7 +325,17 @@ void GMM::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<
       }
 
       // evaluate model
-      float value = computeICL(K, model.logLikelihood(), X.size(), 2, model.entropy());
+      float value = INFINITY;
+
+      switch (_criterion)
+      {
+      case Criterion::BIC:
+         value = computeBIC(K, model.logLikelihood(), X.size(), 2);
+         break;
+      case Criterion::ICL:
+         value = computeICL(K, model.logLikelihood(), X.size(), 2, model.entropy());
+         break;
+      }
 
       // save the best model
       if ( value < bestValue )
@@ -615,6 +658,7 @@ void GMM::initializeKernelArguments()
    _kernel->setArgument(3, (cl_int)_minSamples);
    _kernel->setArgument(4, (cl_int)_minClusters);
    _kernel->setArgument(5, (cl_int)_maxClusters);
+   _kernel->setArgument(6, (cl_int)_criterion);
    _kernel->setDimensionCount(1);
    _kernel->setGlobalSize(0, _kernelSize);
    _kernel->setWorkgroupSize(0, workgroupSize);
@@ -697,16 +741,16 @@ void GMM::runLoadBlock(Block& block)
 
       // set kernel arguments and execute it
       _kernel->setBuffer(2, block.pairs);
-      _kernel->setBuffer(6, block.work_X);
-      _kernel->setBuffer(7, block.work_y);
-      _kernel->setBuffer(8, block.work_components);
-      _kernel->setBuffer(9, block.work_MP);
-      _kernel->setBuffer(10, block.work_counts);
-      _kernel->setBuffer(11, block.work_logpi);
-      _kernel->setBuffer(12, block.work_loggamma);
-      _kernel->setBuffer(13, block.work_logGamma);
-      _kernel->setBuffer(14, block.result_K);
-      _kernel->setBuffer(15, block.result_labels);
+      _kernel->setBuffer(7, block.work_X);
+      _kernel->setBuffer(8, block.work_y);
+      _kernel->setBuffer(9, block.work_components);
+      _kernel->setBuffer(10, block.work_MP);
+      _kernel->setBuffer(11, block.work_counts);
+      _kernel->setBuffer(12, block.work_logpi);
+      _kernel->setBuffer(13, block.work_loggamma);
+      _kernel->setBuffer(14, block.work_logGamma);
+      _kernel->setBuffer(15, block.result_K);
+      _kernel->setBuffer(16, block.result_labels);
       block.event = _kernel->execute();
 
       // make sure kernel worked

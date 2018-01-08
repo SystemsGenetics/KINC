@@ -24,9 +24,16 @@ public:
       ,MinSamples
       ,MinClusters
       ,MaxClusters
+      ,CriterionArg
       ,BlockSize
       ,KernelSize
       ,Total
+   };
+
+   enum class Criterion
+   {
+      BIC
+      ,ICL
    };
 
    virtual int getArgumentCount() override final { return Total; }
@@ -43,6 +50,9 @@ public:
    virtual void finish() override final {}
 
 private:
+   static const char* BIC;
+   static const char* ICL;
+
    float computeBIC(int K, float logL, int N, int D);
    float computeICL(int K, float logL, int N, int D, float E);
    void computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<int>& bestLabels);
@@ -68,7 +78,7 @@ private:
          work_MP = device.makeBuffer<GenePair::Vector2>(K * kernelSize).release();
          work_counts = device.makeBuffer<cl_int>(K * kernelSize).release();
          work_logpi = device.makeBuffer<cl_float>(K * kernelSize).release();
-         work_loggamma = device.makeBuffer<cl_float>(N * K * kernelSize).release();
+         work_loggamma = device.makeBuffer<cl_float>(N * N * kernelSize).release();
          work_logGamma = device.makeBuffer<cl_float>(K * kernelSize).release();
          result_K = device.makeBuffer<cl_int>(1 * kernelSize).release();
          result_labels = device.makeBuffer<cl_int>(N * kernelSize).release();
@@ -124,6 +134,7 @@ private:
    int _minSamples {30};
    int _minClusters {1};
    int _maxClusters {5};
+   Criterion _criterion {Criterion::BIC};
    int _blockSize {4};
    int _kernelSize {4096};
 

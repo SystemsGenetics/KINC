@@ -407,7 +407,7 @@ void GMM::fit(const QVector<Vector2>& X, int K, int maxIterations)
    float currentLogL = -INFINITY;
 
    float *logpi = new float[K];
-   float *loggamma = new float[N * K];
+   float *loggamma = new float[K * N];
    float *logGamma = new float[K];
 
    for (int k = 0; k < K; ++k)

@@ -726,6 +726,17 @@ bool fit(
 
 
 
+typedef enum
+{
+   BIC,
+   ICL
+} Criterion;
+
+
+
+
+
+
 /**
  * Compute the Bayes Information Criterion of a GMM.
  */
@@ -766,7 +777,7 @@ float computeICL(int K, float logL, int N, int D, float E)
 __kernel void computeGMMBlock(
    __global const float *expressions, int size,
    __global const int2 *pairs,
-   int minSamples, int minClusters, int maxClusters,
+   int minSamples, int minClusters, int maxClusters, Criterion criterion,
    __global Vector2 *work_X,
    __global int *work_y,
    __global Component *work_components,
@@ -786,7 +797,7 @@ __kernel void computeGMMBlock(
    __global Vector2 *MP = &work_MP[i * maxClusters];
    __global int *counts = &work_counts[i * maxClusters];
    __global float *logpi = &work_logpi[i * maxClusters];
-   __global float *loggamma = &work_loggamma[i * size * maxClusters];
+   __global float *loggamma = &work_loggamma[i * maxClusters * size];
    __global float *logGamma = &work_logGamma[i * maxClusters];
    __global int *bestK = &result_K[i];
    __global int *bestLabels = &result_labels[i * size];
@@ -822,7 +833,17 @@ __kernel void computeGMMBlock(
          }
 
          // evaluate model
-         float value = computeICL(K, logL, numSamples, 2, entropy);
+         float value = INFINITY;
+
+         switch (criterion)
+         {
+         case BIC:
+            value = computeBIC(K, logL, numSamples, 2);
+            break;
+         case ICL:
+            value = computeICL(K, logL, numSamples, 2, entropy);
+            break;
+         }
 
          // save the best model
          if ( value < bestValue )
