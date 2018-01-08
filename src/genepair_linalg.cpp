@@ -162,14 +162,7 @@ void matrixScale(Matrix2x2& A, float c)
 
 void matrixInverse(const Matrix2x2& A, Matrix2x2& B, float *p_det)
 {
-   const float EPSILON = 1e-5;
-
    float det = elem(A, 0, 0) * elem(A, 1, 1) - elem(A, 0, 1) * elem(A, 1, 0);
-
-   if ( fabs(det) <= EPSILON )
-   {
-      throw std::runtime_error("singular matrix");
-   }
 
    elem(B, 0, 0) = +elem(A, 1, 1) / det;
    elem(B, 0, 1) = -elem(A, 0, 1) / det;

@@ -264,14 +264,13 @@ void Component_initialize(
 bool Component_prepareCovariance(__global Component *component)
 {
    const int D = 2;
-   const float EPSILON = 1e-5;
 
    // Compute inverse of Sigma once each iteration instead of
    // repeatedly for each calcLogMvNorm execution.
    float det;
    matrixInverse(&component->sigma, &component->sigmaInv, &det);
 
-   if ( fabs(det) <= EPSILON )
+   if ( fabs(det) <= 0 )
    {
       return false;
    }

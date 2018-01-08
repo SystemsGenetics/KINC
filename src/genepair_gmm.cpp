@@ -1,5 +1,3 @@
-#include <cassert>
-
 #include "genepair_gmm.h"
 
 
@@ -39,6 +37,11 @@ void GMM::Component::prepareCovariance()
    float det;
    matrixInverse(_sigma, _sigmaInv, &det);
 
+   if ( det <= 0 )
+   {
+      throw std::runtime_error("matrix inverse failed");
+   }
+
    // Compute normalizer for multivariate normal distribution
    _normalizer = -0.5f * (D * log(2.0f * M_PI) + log(det));
 }
@@ -70,7 +73,6 @@ void GMM::Component::calcLogMvNorm(const QVector<Vector2>& X, float *logP)
 
       // Compute log(P) = normalizer - 0.5 * xm^T * S^-1 * xm
       logP[i] = _normalizer - 0.5f * xmSxm;
-      assert(logP[i] == logP[i]);
    }
 }
 
@@ -202,7 +204,6 @@ void GMM::calcLogLikelihoodAndGammaNK(const float *logpi, int K, float *logProb,
          sum += exp(logProbK - maxArg);
       }
 
-      assert(sum >= 0);
       const float logpx = maxArg + log(sum);
       *logL += logpx;
       for (int k = 0; k < K; ++k)
@@ -241,7 +242,6 @@ void GMM::calcLogGammaK(const float *loggamma, int N, int K, float *logGamma)
          const float loggammank = loggammak[i];
          sum += exp(loggammank - maxArg);
       }
-      assert(sum >= 0);
 
       logGamma[k] = maxArg + log(sum);
    }
@@ -270,7 +270,6 @@ float GMM::calcLogGammaSum(const float *logpi, int K, const float *logGamma)
       const float arg = logpi[k] + logGamma[k];
       sum += exp(arg - maxArg);
    }
-   assert(sum >= 0);
 
    return maxArg + log(sum);
 }
