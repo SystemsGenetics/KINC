@@ -277,6 +277,7 @@ void KMeans::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVect
       // evaluate model
       float value = computeBIC(K, model.logLikelihood(), X.size(), 2);
 
+      // save the best model
       if ( value < bestValue )
       {
          bestK = K;
@@ -284,7 +285,8 @@ void KMeans::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVect
 
          for ( int i = 0, j = 0; i < X.size(); ++i )
          {
-            if ( bestLabels[i] != -1 ) {
+            if ( bestLabels[i] != -1 )
+            {
                bestLabels[i] = model.labels()[j];
                ++j;
             }
@@ -300,7 +302,6 @@ void KMeans::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVect
 
 void KMeans::savePair(const GenePair::Vector& vector, int K, const QVector<int>& labels)
 {
-   // compute cluster labels for gene pair
    CCMatrix::Pair pair(_output);
    pair.addCluster(K);
 

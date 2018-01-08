@@ -43,9 +43,9 @@ public:
    virtual void finish() override final {}
 
 private:
-   float computeBIC(const GenePair::GMM& model, int N, int D);
+   float computeBIC(int K, float logL, int N, int D);
    void computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<int>& bestLabels);
-   void savePair(int K, const QVector<int>& labels, const GenePair::Vector& vector);
+   void savePair(const GenePair::Vector& vector, int K, const QVector<int>& labels);
 
    struct Block
    {

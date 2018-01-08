@@ -1,10 +1,12 @@
 
-typedef union {
+typedef union
+{
    float s[2];
    float2 v2;
 } Vector2;
 
-typedef union {
+typedef union
+{
    float s[4];
    float4 v4;
 } Matrix2x2;
@@ -190,12 +192,14 @@ uint rand(uint2 *state)
  * @param indexA
  * @param indexB
  * @param X
+ * @param labels
  * @return number of rows in X
  */
 int fetchData(
    __global const float *expressions, int size,
    int indexA, int indexB,
-   __global Vector2 *X)
+   __global Vector2 *X,
+   __global int *labels)
 {
    int numSamples = 0;
 
@@ -213,6 +217,12 @@ int fetchData(
             expressions[indexB + i]
          );
          numSamples++;
+
+         labels[i] = 0;
+      }
+      else
+      {
+         labels[i] = -1;
       }
    }
 
@@ -225,7 +235,8 @@ int fetchData(
 
 
 
-typedef struct {
+typedef struct
+{
    float pi;
    Vector2 mu;
    Matrix2x2 sigma;
@@ -738,7 +749,7 @@ __kernel void computeGMMBlock(
    __global int *bestLabels = &result_labels[i * size];
 
    // fetch data matrix X from expression matrix
-   int numSamples = fetchData(expressions, size, pairs[i].x, pairs[i].y, X);
+   int numSamples = fetchData(expressions, size, pairs[i].x, pairs[i].y, X, bestLabels);
 
    // initialize output
    *bestK = 0;
@@ -748,7 +759,7 @@ __kernel void computeGMMBlock(
    {
       float bestValue = INFINITY;
 
-      for ( int K = minClusters; K <= maxClusters; K++ )
+      for ( int K = minClusters; K <= maxClusters; ++K )
       {
          // run each clustering model
          float logL;
@@ -774,9 +785,13 @@ __kernel void computeGMMBlock(
             *bestK = K;
             bestValue = value;
 
-            for ( int i = 0; i < numSamples; i++ )
+            for ( int i = 0, j = 0; i < numSamples; ++i )
             {
-               bestLabels[i] = y[i];
+               if ( bestLabels[i] != -1 )
+               {
+                  bestLabels[i] = y[j];
+                  ++j;
+               }
             }
          }
       }

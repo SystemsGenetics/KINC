@@ -1,5 +1,4 @@
 #include <ace/core/metadata.h>
-#include <iostream>
 
 #include "gmm.h"
 #include "datafactory.h"
@@ -252,11 +251,11 @@ bool GMM::initialize()
 
 
 
-float GMM::computeBIC(const GenePair::GMM& model, int N, int D)
+float GMM::computeBIC(int K, float logL, int N, int D)
 {
-   int p = model.numClusters() * (1 + D + D * D);
+   int p = K * D;
 
-   return log(N) * p - 2 * model.logLikelihood();
+   return log(N) * p - 2 * logL;
 }
 
 
@@ -266,45 +265,39 @@ float GMM::computeBIC(const GenePair::GMM& model, int N, int D)
 
 void GMM::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<int>& bestLabels)
 {
-   // run each clustering model
-   QVector<GenePair::GMM> models(_maxClusters - _minClusters + 1);
+   float bestValue = INFINITY;
 
    for ( int K = _minClusters; K <= _maxClusters; ++K )
    {
-      auto& model = models[K - _minClusters];
+      // run each clustering model
+      GenePair::GMM model;
 
       model.fit(X, K);
-   }
 
-   // select the model with the lowest criterion value
-   float bestValue = 0;
-   auto bestModel = models.end();
-
-   for ( auto iter = models.begin(); iter != models.end(); ++iter )
-   {
-      if ( !iter->success() )
+      if ( !model.success() )
       {
          continue;
       }
 
-      float value = computeBIC(*iter, X.size(), 2);
+      // evaluate model
+      float value = computeBIC(K, model.logLikelihood(), X.size(), 2);
 
-      if ( bestModel == models.end() || value < bestValue )
+      // save the best model
+      if ( value < bestValue )
       {
+         bestK = K;
          bestValue = value;
-         bestModel = iter;
+
+         for ( int i = 0, j = 0; i < X.size(); ++i )
+         {
+            if ( bestLabels[i] != -1 )
+            {
+               bestLabels[i] = model.labels()[j];
+               ++j;
+            }
+         }
       }
    }
-
-   if ( bestModel == models.end() )
-   {
-      fprintf(stderr, "warning: all models failed\n");
-      return;
-   }
-
-   // save outputs
-   bestK = bestModel->numClusters();
-   bestLabels = bestModel->labels();
 }
 
 
@@ -312,9 +305,8 @@ void GMM::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<
 
 
 
-void GMM::savePair(int K, const QVector<int>& labels, const GenePair::Vector& vector)
+void GMM::savePair(const GenePair::Vector& vector, int K, const QVector<int>& labels)
 {
-   // compute cluster labels for gene pair
    CCMatrix::Pair pair(_output);
    pair.addCluster(K);
 
@@ -342,6 +334,7 @@ void GMM::runSerial()
    qint64 totalSteps {_output->geneSize()*(_output->geneSize() - 1)/2};
 
    // initialize arrays used for k-means clustering
+   QVector<int> labels(_input->getSampleSize());
    QVector<GenePair::Vector2> X;
 
    // initialize expression genes for input/output
@@ -373,18 +366,26 @@ void GMM::runSerial()
          if ( !std::isnan(gene1.at(i)) && !std::isnan(gene2.at(i)) )
          {
             X.append({ gene1.at(i), gene2.at(i) });
+
+            labels[i] = 0;
+         }
+         else
+         {
+            labels[i] = -1;
          }
       }
 
       // perform clustering only if there are enough samples
+      int bestK = 0;
+
       if ( X.size() >= _minSamples )
       {
-         int K;
-         QVector<int> labels;
+         computeModel(X, bestK, labels);
+      }
 
-         computeModel(X, K, labels);
-
-         savePair(K, labels, vector);
+      if ( bestK != 0 )
+      {
+         savePair(vector, bestK, labels);
       }
 
       // increment to next pair
@@ -502,9 +503,6 @@ void GMM::initializeKernel()
       e.setDetails(tr("OpenCL program failed to compile:\n\n%1")
          .arg(_program->getBuildError())
          .replace('\n',"<br/>"));
-
-      // HACK: print compile errors to stdout
-      std::cout << _program->getBuildError().toStdString() << "\n";
 
       throw e;
    }
