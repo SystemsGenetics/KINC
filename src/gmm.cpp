@@ -438,7 +438,8 @@ void GMM::runSerial()
          computeModel(X, bestK, labels);
       }
 
-      if ( bestK != 0 )
+      // save cluster pair if multiple clusters are found
+      if ( bestK > 1 )
       {
          savePair(vector, bestK, labels);
       }
@@ -833,8 +834,8 @@ void GMM::runReadBlock(Block& block)
          int bestK = (*block.result_K)[index];
          int *bestLabels = &(*block.result_labels)[index * N];
 
-         // save cluster pair if clustering model is valid
-         if ( bestK != 0 )
+         // save cluster pair if multiple clusters are found
+         if ( bestK > 1 )
          {
             CCMatrix::Pair pair(_output);
             pair.addCluster(bestK);
