@@ -43,6 +43,7 @@ public:
    virtual void finish() override final {}
 
 private:
+   void fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<int>& labels);
    float computeBIC(int K, float logL, int N, int D);
    void computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<int>& bestLabels);
    void savePair(const GenePair::Vector& vector, int K, const QVector<int>& labels);
@@ -63,7 +64,7 @@ private:
          pairs = device.makeBuffer<cl_int2>(1 * kernelSize).release();
          work_X = device.makeBuffer<cl_float2>(N * kernelSize).release();
          work_y = device.makeBuffer<cl_int>(N * kernelSize).release();
-         work_Mu = device.makeBuffer<cl_float2>(K * kernelSize).release();
+         work_means = device.makeBuffer<cl_float2>(K * kernelSize).release();
          work_ynext = device.makeBuffer<cl_int>(N * kernelSize).release();
          result_K = device.makeBuffer<cl_int>(1 * kernelSize).release();
          result_labels = device.makeBuffer<cl_int>(N * kernelSize).release();
@@ -80,7 +81,7 @@ private:
          delete pairs;
          delete work_X;
          delete work_y;
-         delete work_Mu;
+         delete work_means;
          delete work_ynext;
          delete result_K;
          delete result_labels;
@@ -92,7 +93,7 @@ private:
       EOpenCLBuffer<cl_int2>* pairs;
       EOpenCLBuffer<cl_float2>* work_X;
       EOpenCLBuffer<cl_int>* work_y;
-      EOpenCLBuffer<cl_float2>* work_Mu;
+      EOpenCLBuffer<cl_float2>* work_means;
       EOpenCLBuffer<cl_int>* work_ynext;
       EOpenCLBuffer<cl_int>* result_K;
       EOpenCLBuffer<cl_int>* result_labels;

@@ -9,37 +9,26 @@ using namespace GenePair;
 
 
 
-void KMeans::initialize(const QVector<Vector2>& X, int K)
+void KMeans::fit(const QVector<Vector2>& X, int K)
 {
-   // initialize number of clusters
+   const int N = X.size();
+
+   // initialize means randomly from X
    _means.resize(K);
 
    for ( int k = 0; k < K; ++k )
    {
-      int i = rand() % X.size();
+      int i = rand() % N;
       _means[k] = X[i];
    }
-}
-
-
-
-
-
-
-void KMeans::fit(const QVector<Vector2>& X, int K)
-{
-   // initialize model
-   initialize(X, K);
 
    // iterate K means until convergence
-   const int N = X.size();
-
    QVector<int> y;
    QVector<int> y_next(N);
 
    while ( true )
    {
-      // E step
+      // compute new labels
       for ( int i = 0; i < N; ++i )
       {
          // find k that minimizes norm(x_i - mu_k)
@@ -66,9 +55,10 @@ void KMeans::fit(const QVector<Vector2>& X, int K)
          break;
       }
 
+      // update labels
       y = y_next;
 
-      // M step
+      // update means
       for ( int k = 0; k < K; ++k )
       {
          // compute mu_k = mean of all x_i in cluster k

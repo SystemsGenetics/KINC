@@ -126,13 +126,13 @@ int fetchData(
  * @param X
  * @param N
  * @param y
- * @param Mu
+ * @param means
  * @param K
  */
 float computeLogLikelihood(
    __global const Vector2 *X, int N,
    __global const int *y,
-   __global const Vector2 *Mu, int K)
+   __global const Vector2 *means, int K)
 {
    // compute within-class scatter
    float S = 0;
@@ -146,7 +146,7 @@ float computeLogLikelihood(
             continue;
          }
 
-         float dist = vectorDiffNorm(&X[i], &Mu[k]);
+         float dist = vectorDiffNorm(&X[i], &means[k]);
 
          S += dist * dist;
       }
@@ -163,11 +163,11 @@ float computeLogLikelihood(
 /**
  * Compute a K-means clustering model from a dataset.
  */
-void computeKmeans(
+void fit(
    __global const Vector2 *X, int N, int K,
    __global int *y,
    float *logL,
-   __global Vector2 *Mu,
+   __global Vector2 *means,
    __global int *y_next)
 {
    uint2 state = (get_global_id(0), get_global_id(1));
@@ -176,7 +176,7 @@ void computeKmeans(
    for ( int k = 0; k < K; ++k )
    {
       int i = rand(&state) % N;
-      Mu[k] = X[i];
+      means[k] = X[i];
    }
 
    // iterate K means until convergence
@@ -191,7 +191,7 @@ void computeKmeans(
 
          for ( int k = 0; k < K; ++k )
          {
-            float dist = vectorDiffNorm(&X[i], &Mu[k]);
+            float dist = vectorDiffNorm(&X[i], &means[k]);
 
             if ( min_k == -1 || dist < min_dist )
             {
@@ -232,22 +232,23 @@ void computeKmeans(
          // compute mu_k = mean of all x_i in cluster k
          int n_k = 0;
 
-         vectorInitZero(&Mu[k]);
+         vectorInitZero(&means[k]);
 
          for ( int i = 0; i < N; ++i )
          {
             if ( y[i] == k )
             {
-               vectorAdd(&Mu[k], &X[i]);
+               vectorAdd(&means[k], &X[i]);
                n_k++;
             }
          }
 
-         vectorScale(&Mu[k], 1.0f / n_k);
+         vectorScale(&means[k], 1.0f / n_k);
       }
    }
 
-   *logL = computeLogLikelihood(X, N, y, Mu, K);
+   // save outputs
+   *logL = computeLogLikelihood(X, N, y, means, K);
 }
 
 
@@ -288,7 +289,7 @@ __kernel void computeKmeansBlock(
    int minSamples, int minClusters, int maxClusters,
    __global Vector2 *work_X,
    __global int *work_y,
-   __global Vector2 *work_Mu,
+   __global Vector2 *work_means,
    __global int *work_ynext,
    __global int *result_K,
    __global int *result_labels)
@@ -297,7 +298,7 @@ __kernel void computeKmeansBlock(
    int i = get_global_id(0);
    __global Vector2 *X = &work_X[i * size];
    __global int *y = &work_y[i * size];
-   __global Vector2 *Mu = &work_Mu[i * maxClusters];
+   __global Vector2 *means = &work_means[i * maxClusters];
    __global int *y_next = &work_ynext[i * size];
    __global int *bestK = &result_K[i];
    __global int *bestLabels = &result_labels[i * size];
@@ -317,7 +318,7 @@ __kernel void computeKmeansBlock(
       {
          // run each clustering model
          float logL;
-         computeKmeans(X, numSamples, K, y, &logL, Mu, y_next);
+         fit(X, numSamples, K, y, &logL, means, y_next);
 
          // evaluate model
          float value = computeBIC(K, logL, numSamples, 2);
