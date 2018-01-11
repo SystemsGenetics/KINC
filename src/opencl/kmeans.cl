@@ -1,52 +1,45 @@
 
-typedef float2 Vector2;
-
-
-
-
-
-
-void vectorInitZero(__global Vector2 *a)
+typedef union
 {
-   a->x = 0;
-   a->y = 0;
-}
+   float s[2];
+   float2 v2;
+} Vector2;
 
 
 
 
 
 
-void vectorAdd(__global Vector2 *a, __global const Vector2 *b)
-{
-   a->x += b->x;
-   a->y += b->y;
-}
+#define vectorInitZero(a) \
+   (a)->s[0] = 0; \
+   (a)->s[1] = 0;
 
 
 
 
 
 
-void vectorScale(__global Vector2 *a, float c)
-{
-   a->x *= c;
-   a->y *= c;
-}
+#define vectorAdd(a, b) \
+   (a)->s[0] += (b)->s[0]; \
+   (a)->s[1] += (b)->s[1];
 
 
 
 
 
 
-float vectorDiffNorm(__global const Vector2 *a, __global const Vector2 *b)
-{
-   float dist = 0;
-   dist += (a->x - b->x) * (a->x - b->x);
-   dist += (a->y - b->y) * (a->y - b->y);
+#define vectorScale(a, c) \
+   (a)->s[0] *= (c); \
+   (a)->s[1] *= (c);
 
-   return sqrt(dist);
-}
+
+
+
+
+
+#define SQR(x) ((x)*(x))
+#define vectorDiffNorm(a, b) \
+   sqrt(SQR((a)->s[0] - (b)->s[0]) + SQR((a)->s[1] - (b)->s[1]))
 
 
 
@@ -104,7 +97,7 @@ int fetchData(
       if ( !isnan(expressions[indexA + i]) && !isnan(expressions[indexB + i]) )
       {
          // if both expressions exist add expressions to new lists and increment
-         X[numSamples] = (Vector2) (
+         X[numSamples].v2 = (float2) (
             expressions[indexA + i],
             expressions[indexB + i]
          );
