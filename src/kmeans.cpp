@@ -333,12 +333,12 @@ void KMeans::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVect
 
 
 
-void KMeans::savePair(const GenePair::Vector& vector, int K, const QVector<int>& labels)
+void KMeans::savePair(const GenePair::Vector& vector, int K, const int *labels, int N)
 {
    CCMatrix::Pair pair(_output);
    pair.addCluster(K);
 
-   for ( int i = 0; i < labels.size(); ++i )
+   for ( int i = 0; i < N; ++i )
    {
       for ( int k = 0; k < K; ++k )
       {
@@ -391,7 +391,7 @@ void KMeans::runSerial()
       // save cluster pair if multiple clusters are found
       if ( bestK > 1 )
       {
-         savePair(vector, bestK, labels);
+         savePair(vector, bestK, labels.data(), labels.size());
       }
 
       // increment to next pair
@@ -781,18 +781,7 @@ void KMeans::runReadBlock(Block& block)
          // save cluster pair if multiple clusters are found
          if ( bestK > 1 )
          {
-            CCMatrix::Pair pair(_output);
-            pair.addCluster(bestK);
-
-            for ( int i = 0; i < N; ++i )
-            {
-               for ( int k = 0; k < bestK; ++k )
-               {
-                  pair.at(k, i) = (k == bestLabels[i]);
-               }
-            }
-
-            pair.write(block.vector);
+            savePair(block.vector, bestK, bestLabels, N);
          }
 
          // increment indices

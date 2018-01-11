@@ -46,7 +46,7 @@ private:
    void fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<int>& labels);
    float computeBIC(int K, float logL, int N, int D);
    void computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<int>& bestLabels);
-   void savePair(const GenePair::Vector& vector, int K, const QVector<int>& labels);
+   void savePair(const GenePair::Vector& vector, int K, const int *labels, int N);
 
    struct Block
    {
