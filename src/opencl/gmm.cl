@@ -182,40 +182,46 @@ int rand(ulong *state)
  *
  * @param expressions
  * @param size
- * @param indexA
- * @param indexB
+ * @param pair
+ * @param minThreshold
  * @param X
  * @param labels
  * @return number of rows in X
  */
 int fetchData(
    __global const float *expressions, int size,
-   int indexA, int indexB,
+   int2 pair,
+   int minThreshold,
    __global Vector2 *X,
    __global char *labels)
 {
    int numSamples = 0;
 
-   indexA *= size;
-   indexB *= size;
+   pair.x *= size;
+   pair.y *= size;
 
    // build data matrix from expressions and indices
    for ( int i = 0; i < size; ++i )
    {
-      if ( !isnan(expressions[indexA + i]) && !isnan(expressions[indexB + i]) )
-      {
-         // if both expressions exist add expressions to new lists and increment
-         X[numSamples].v2 = (float2) (
-            expressions[indexA + i],
-            expressions[indexB + i]
-         );
-         numSamples++;
+      float2 v = (float2) (
+         expressions[pair.x + i],
+         expressions[pair.y + i]
+      );
 
-         labels[i] = 0;
+      if ( isnan(v.x) || isnan(v.y) )
+      {
+         labels[i] = -9;
+      }
+      else if ( v.x < minThreshold || v.y < minThreshold )
+      {
+         labels[i] = -6;
       }
       else
       {
-         labels[i] = -1;
+         X[numSamples].v2 = v;
+         numSamples++;
+
+         labels[i] = 0;
       }
    }
 
@@ -770,7 +776,8 @@ float computeICL(int K, float logL, int N, int D, float E)
 __kernel void computeGMMBlock(
    __global const float *expressions, int size,
    __global const int2 *pairs,
-   int minSamples, int minClusters, int maxClusters, Criterion criterion,
+   int minSamples, int minThreshold, int minClusters, int maxClusters,
+   Criterion criterion,
    __global Vector2 *work_X,
    __global char *work_labels,
    __global Component *work_components,
@@ -796,7 +803,7 @@ __kernel void computeGMMBlock(
    __global char *bestLabels = &result_labels[i * size];
 
    // fetch data matrix X from expression matrix
-   int numSamples = fetchData(expressions, size, pairs[i].x, pairs[i].y, X, bestLabels);
+   int numSamples = fetchData(expressions, size, pairs[i], minThreshold, X, bestLabels);
 
    // initialize output
    *bestK = 0;
@@ -846,7 +853,7 @@ __kernel void computeGMMBlock(
 
             for ( int i = 0, j = 0; i < numSamples; ++i )
             {
-               if ( bestLabels[i] != -1 )
+               if ( bestLabels[i] >= 0 )
                {
                   bestLabels[i] = labels[j];
                   ++j;

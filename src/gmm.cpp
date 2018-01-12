@@ -56,6 +56,7 @@ EAbstractAnalytic::ArgumentType GMM::getArgumentData(int argument)
    case InputData: return Type::DataIn;
    case OutputData: return Type::DataOut;
    case MinSamples: return Type::Integer;
+   case MinThreshold: return Type::Double;
    case MinClusters: return Type::Integer;
    case MaxClusters: return Type::Integer;
    case CriterionArg: return Type::Combo;
@@ -85,6 +86,7 @@ QVariant GMM::getArgumentData(int argument, Role role)
       case InputData: return QString("input");
       case OutputData: return QString("output");
       case MinSamples: return QString("min");
+      case MinThreshold: return QString("minthresh");
       case MinClusters: return QString("minclus");
       case MaxClusters: return QString("maxclus");
       case CriterionArg: return QString("crit");
@@ -99,6 +101,7 @@ QVariant GMM::getArgumentData(int argument, Role role)
       case InputData: return tr("Input:");
       case OutputData: return tr("Output:");
       case MinSamples: return tr("Minimum Sample Size:");
+      case MinThreshold: return tr("Minimum Threshold:");
       case MinClusters: return tr("Minimum Clusters:");
       case MaxClusters: return tr("Maximum Clusters:");
       case CriterionArg: return tr("Criterion:");
@@ -113,6 +116,8 @@ QVariant GMM::getArgumentData(int argument, Role role)
       case InputData: return tr("Input expression matrix that will be used to compute pair-wise clusters.");
       case OutputData: return tr("Output cluster matrix that will store pair-wise clusters.");
       case MinSamples: return tr("Minimum size of samples two genes must share to perform clustering.");
+      case MinThreshold: return tr("Minimum threshold that a gene expression must be equal to or"
+                                   " greater than to be included in clustering.");
       case MinClusters: return tr("Minimum number of clusters to test.");
       case MaxClusters: return tr("Maximum number of clusters to test.");
       case CriterionArg: return tr("Criterion to determine the number of clusters.");
@@ -135,6 +140,7 @@ QVariant GMM::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case MinSamples: return 30;
+      case MinThreshold: return -INFINITY;
       case MinClusters: return 1;
       case MaxClusters: return 5;
       case CriterionArg: return tr(BIC);
@@ -148,6 +154,7 @@ QVariant GMM::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case MinSamples: return 1;
+      case MinThreshold: return -INFINITY;
       case MinClusters: return 1;
       case MaxClusters: return 1;
       case BlockSize: return 1;
@@ -160,6 +167,7 @@ QVariant GMM::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case MinSamples: return INT_MAX;
+      case MinThreshold: return +INFINITY;
       case MinClusters: return INT_MAX;
       case MaxClusters: return INT_MAX;
       case BlockSize: return INT_MAX;
@@ -192,6 +200,9 @@ void GMM::setArgument(int argument, QVariant value)
    {
    case MinSamples:
       _minSamples = value.toInt();
+      break;
+   case MinThreshold:
+      _minThreshold = value.toDouble();
       break;
    case MinClusters:
       _minClusters = value.toInt();
@@ -299,15 +310,19 @@ void GMM::fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& 
 
    for ( int i = 0; i < _input->getSampleSize(); ++i )
    {
-      if ( !std::isnan(gene1.at(i)) && !std::isnan(gene2.at(i)) )
+      if ( std::isnan(gene1.at(i)) || std::isnan(gene2.at(i)) )
+      {
+         labels[i] = -9;
+      }
+      else if ( gene1.at(i) < _minThreshold || gene2.at(i) < _minThreshold )
+      {
+         labels[i] = -6;
+      }
+      else
       {
          X.append({ gene1.at(i), gene2.at(i) });
 
          labels[i] = 0;
-      }
-      else
-      {
-         labels[i] = -1;
       }
    }
 }
@@ -378,7 +393,7 @@ void GMM::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<
 
          for ( int i = 0, j = 0; i < X.size(); ++i )
          {
-            if ( bestLabels[i] != -1 )
+            if ( bestLabels[i] >= 0 )
             {
                bestLabels[i] = model.labels()[j];
                ++j;
@@ -402,7 +417,9 @@ void GMM::savePair(const GenePair::Vector& vector, int K, const cl_char *labels,
    {
       for ( int k = 0; k < K; ++k )
       {
-         pair.at(k, i) = (k == labels[i]);
+         pair.at(k, i) = (labels[i] >= 0)
+            ? (k == labels[i])
+            : -labels[i];
       }
    }
 
@@ -667,9 +684,10 @@ void GMM::initializeKernelArguments()
    _kernel->setBuffer(0, _expressions);
    _kernel->setArgument(1, (cl_int)_input->getSampleSize());
    _kernel->setArgument(3, (cl_int)_minSamples);
-   _kernel->setArgument(4, (cl_int)_minClusters);
-   _kernel->setArgument(5, (cl_int)_maxClusters);
-   _kernel->setArgument(6, (cl_int)_criterion);
+   _kernel->setArgument(4, (cl_int)_minThreshold);
+   _kernel->setArgument(5, (cl_int)_minClusters);
+   _kernel->setArgument(6, (cl_int)_maxClusters);
+   _kernel->setArgument(7, (cl_int)_criterion);
    _kernel->setDimensionCount(1);
    _kernel->setGlobalSize(0, _kernelSize);
    _kernel->setWorkgroupSize(0, workgroupSize);
@@ -752,16 +770,16 @@ void GMM::runLoadBlock(Block& block)
 
       // set kernel arguments and execute it
       _kernel->setBuffer(2, block.pairs);
-      _kernel->setBuffer(7, block.work_X);
-      _kernel->setBuffer(8, block.work_labels);
-      _kernel->setBuffer(9, block.work_components);
-      _kernel->setBuffer(10, block.work_MP);
-      _kernel->setBuffer(11, block.work_counts);
-      _kernel->setBuffer(12, block.work_logpi);
-      _kernel->setBuffer(13, block.work_loggamma);
-      _kernel->setBuffer(14, block.work_logGamma);
-      _kernel->setBuffer(15, block.result_K);
-      _kernel->setBuffer(16, block.result_labels);
+      _kernel->setBuffer(8, block.work_X);
+      _kernel->setBuffer(9, block.work_labels);
+      _kernel->setBuffer(10, block.work_components);
+      _kernel->setBuffer(11, block.work_MP);
+      _kernel->setBuffer(12, block.work_counts);
+      _kernel->setBuffer(13, block.work_logpi);
+      _kernel->setBuffer(14, block.work_loggamma);
+      _kernel->setBuffer(15, block.work_logGamma);
+      _kernel->setBuffer(16, block.result_K);
+      _kernel->setBuffer(17, block.result_labels);
       block.event = _kernel->execute();
 
       // make sure kernel worked

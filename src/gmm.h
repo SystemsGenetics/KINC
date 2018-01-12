@@ -22,6 +22,7 @@ public:
       InputData = 0
       ,OutputData
       ,MinSamples
+      ,MinThreshold
       ,MinClusters
       ,MaxClusters
       ,CriterionArg
@@ -133,6 +134,7 @@ private:
    ExpressionMatrix* _input {nullptr};
    CCMatrix* _output {nullptr};
    int _minSamples {30};
+   float _minThreshold {-INFINITY};
    int _minClusters {1};
    int _maxClusters {5};
    Criterion _criterion {Criterion::BIC};
