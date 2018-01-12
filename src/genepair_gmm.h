@@ -35,10 +35,9 @@ namespace GenePair
       float entropy() const { return _entropy; }
       const QVector<int>& labels() const { return _labels; }
 
-      void fit(const QVector<Vector2>& X, int K, int maxIterations=100);
+      void fit(const QVector<Vector2>& X, int K);
 
    private:
-      void initialize(const QVector<Vector2>& X, int K);
       void kmeans(const QVector<Vector2>& X);
       void calcLogMvNorm(const QVector<Vector2>& X, float *loggamma);
       void calcLogLikelihoodAndGammaNK(const float *logpi, int K, float *loggamma, int N, float *logL);

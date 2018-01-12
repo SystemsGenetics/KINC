@@ -284,6 +284,39 @@ bool GMM::initialize()
 
 
 
+void GMM::fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<int>& labels)
+{
+   // read in gene expressions
+   ExpressionMatrix::Gene gene1(_input);
+   ExpressionMatrix::Gene gene2(_input);
+
+   gene1.read(vector.geneX());
+   gene2.read(vector.geneY());
+
+   // populate X with shared expressions of gene x and y
+   X.clear();
+   X.reserve(_input->getSampleSize());
+
+   for ( int i = 0; i < _input->getSampleSize(); ++i )
+   {
+      if ( !std::isnan(gene1.at(i)) && !std::isnan(gene2.at(i)) )
+      {
+         X.append({ gene1.at(i), gene2.at(i) });
+
+         labels[i] = 0;
+      }
+      else
+      {
+         labels[i] = -1;
+      }
+   }
+}
+
+
+
+
+
+
 float GMM::computeBIC(int K, float logL, int N, int D)
 {
    int p = K * (1 + D + D * D);
@@ -360,12 +393,12 @@ void GMM::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<
 
 
 
-void GMM::savePair(const GenePair::Vector& vector, int K, const QVector<int>& labels)
+void GMM::savePair(const GenePair::Vector& vector, int K, const int *labels, int N)
 {
    CCMatrix::Pair pair(_output);
    pair.addCluster(K);
 
-   for ( int i = 0; i < labels.size(); ++i )
+   for ( int i = 0; i < N; ++i )
    {
       for ( int k = 0; k < K; ++k )
       {
@@ -388,13 +421,9 @@ void GMM::runSerial()
    qint64 steps {0};
    qint64 totalSteps {_output->geneSize()*(_output->geneSize() - 1)/2};
 
-   // initialize arrays used for k-means clustering
-   QVector<int> labels(_input->getSampleSize());
+   // initialize arrays used for GMM clustering
    QVector<GenePair::Vector2> X;
-
-   // initialize expression genes for input/output
-   ExpressionMatrix::Gene gene1(_input);
-   ExpressionMatrix::Gene gene2(_input);
+   QVector<int> labels(_input->getSampleSize());
 
    // initialize xy gene indexes
    GenePair::Vector vector;
@@ -408,27 +437,8 @@ void GMM::runSerial()
          return;
       }
 
-      // initialize sample size and read in gene expressions
-      gene1.read(vector.geneX());
-      gene2.read(vector.geneY());
-
-      // populate X with shared expressions of gene x and y
-      X.clear();
-      X.reserve(_input->getSampleSize());
-
-      for ( auto i = 0; i < _input->getSampleSize(); ++i )
-      {
-         if ( !std::isnan(gene1.at(i)) && !std::isnan(gene2.at(i)) )
-         {
-            X.append({ gene1.at(i), gene2.at(i) });
-
-            labels[i] = 0;
-         }
-         else
-         {
-            labels[i] = -1;
-         }
-      }
+      // fetch data matrix X from expression matrix
+      fetchData(vector, X, labels);
 
       // perform clustering only if there are enough samples
       int bestK = 0;
@@ -441,7 +451,7 @@ void GMM::runSerial()
       // save cluster pair if multiple clusters are found
       if ( bestK > 1 )
       {
-         savePair(vector, bestK, labels);
+         savePair(vector, bestK, labels.data(), labels.size());
       }
 
       // increment to next pair
@@ -837,18 +847,7 @@ void GMM::runReadBlock(Block& block)
          // save cluster pair if multiple clusters are found
          if ( bestK > 1 )
          {
-            CCMatrix::Pair pair(_output);
-            pair.addCluster(bestK);
-
-            for ( int i = 0; i < N; ++i )
-            {
-               for ( int k = 0; k < bestK; ++k )
-               {
-                  pair.at(k, i) = (k == bestLabels[i]);
-               }
-            }
-
-            pair.write(block.vector);
+            savePair(block.vector, bestK, bestLabels, N);
          }
 
          // increment indices

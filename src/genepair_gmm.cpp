@@ -81,39 +81,13 @@ void GMM::Component::calcLogMvNorm(const QVector<Vector2>& X, float *logP)
 
 
 
-void GMM::initialize(const QVector<Vector2>& X, int K)
-{
-   _success = false;
-   _logL = INFINITY;
-
-   // initialize components
-   _components.resize(K);
-
-   for ( int k = 0; k < K; ++k )
-   {
-      // use uniform mixture proportion and randomly sampled mean
-      int i = rand() % X.size();
-
-      _components[k].initialize(1.0f / K, X[i]);
-      _components[k].prepareCovariance();
-   }
-
-   // initialize means with k-means
-   kmeans(X);
-}
-
-
-
-
-
-
 void GMM::kmeans(const QVector<Vector2>& X)
 {
    const int K = _components.size();
-   const float TOLERANCE = 1e-3;
-   float diff = 0;
 
    const int MAX_ITERATIONS = 20;
+   const float TOLERANCE = 1e-3;
+   float diff = 0;
 
    Vector2 MP[K];
    int counts[K];
@@ -397,15 +371,26 @@ float GMM::calcEntropy(float *loggamma, int N)
 
 
 
-void GMM::fit(const QVector<Vector2>& X, int K, int maxIterations)
+void GMM::fit(const QVector<Vector2>& X, int K)
 {
-   initialize(X, K);
-
    const int N = X.size();
-   const float TOLERANCE = 1e-8;
-   float prevLogL = -INFINITY;
-   float currentLogL = -INFINITY;
 
+   // initialize components
+   _components.resize(K);
+
+   for ( int k = 0; k < K; ++k )
+   {
+      // use uniform mixture proportion and randomly sampled mean
+      int i = rand() % N;
+
+      _components[k].initialize(1.0f / K, X[i]);
+      _components[k].prepareCovariance();
+   }
+
+   // initialize means with k-means
+   kmeans(X);
+
+   // initialize workspace
    float *logpi = new float[K];
    float *loggamma = new float[K * N];
    float *logGamma = new float[K];
@@ -415,9 +400,15 @@ void GMM::fit(const QVector<Vector2>& X, int K, int maxIterations)
       logpi[k] = log(_components[k]._pi);
    }
 
+   // run EM algorithm
+   const int MAX_ITERATIONS = 100;
+   const float TOLERANCE = 1e-8;
+   float prevLogL = -INFINITY;
+   float currentLogL = -INFINITY;
+
    try
    {
-      for ( int t = 0; t < maxIterations; ++t )
+      for ( int t = 0; t < MAX_ITERATIONS; ++t )
       {
          // E step
          // compute gamma, log-likelihood
