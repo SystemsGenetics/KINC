@@ -192,7 +192,7 @@ int fetchData(
    __global const float *expressions, int size,
    int indexA, int indexB,
    __global Vector2 *X,
-   __global int *labels)
+   __global char *labels)
 {
    int numSamples = 0;
 
@@ -588,7 +588,7 @@ bool performMStep(
 
 void calcLabels(
    __global const float *loggamma, int N, int K,
-   __global int *labels)
+   __global char *labels)
 {
    for ( int i = 0; i < N; ++i )
    {
@@ -615,7 +615,7 @@ void calcLabels(
 
 float calcEntropy(
    __global const float *loggamma, int N,
-   __global const int *labels)
+   __global const char *labels)
 {
    float E = 0;
 
@@ -639,7 +639,7 @@ float calcEntropy(
  */
 bool fit(
    __global const Vector2 *X, int N, int K,
-   __global int *labels,
+   __global char *labels,
    float *logL,
    float *entropy,
    __global Component *components,
@@ -772,7 +772,7 @@ __kernel void computeGMMBlock(
    __global const int2 *pairs,
    int minSamples, int minClusters, int maxClusters, Criterion criterion,
    __global Vector2 *work_X,
-   __global int *work_y,
+   __global char *work_labels,
    __global Component *work_components,
    __global Vector2 *work_MP,
    __global int *work_counts,
@@ -780,12 +780,12 @@ __kernel void computeGMMBlock(
    __global float *work_loggamma,
    __global float *work_logGamma,
    __global int *result_K,
-   __global int *result_labels)
+   __global char *result_labels)
 {
    // initialize workspace variables
    int i = get_global_id(0);
    __global Vector2 *X = &work_X[i * size];
-   __global int *labels = &work_y[i * size];
+   __global char *labels = &work_labels[i * size];
    __global Component *components = &work_components[i * maxClusters];
    __global Vector2 *MP = &work_MP[i * maxClusters];
    __global int *counts = &work_counts[i * maxClusters];
@@ -793,7 +793,7 @@ __kernel void computeGMMBlock(
    __global float *loggamma = &work_loggamma[i * maxClusters * size];
    __global float *logGamma = &work_logGamma[i * maxClusters];
    __global int *bestK = &result_K[i];
-   __global int *bestLabels = &result_labels[i * size];
+   __global char *bestLabels = &result_labels[i * size];
 
    // fetch data matrix X from expression matrix
    int numSamples = fetchData(expressions, size, pairs[i].x, pairs[i].y, X, bestLabels);

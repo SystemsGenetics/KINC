@@ -284,7 +284,7 @@ bool GMM::initialize()
 
 
 
-void GMM::fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<int>& labels)
+void GMM::fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels)
 {
    // read in gene expressions
    ExpressionMatrix::Gene gene1(_input);
@@ -341,7 +341,7 @@ float GMM::computeICL(int K, float logL, int N, int D, float E)
 
 
 
-void GMM::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<int>& bestLabels)
+void GMM::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels)
 {
    float bestValue = INFINITY;
 
@@ -393,7 +393,7 @@ void GMM::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<
 
 
 
-void GMM::savePair(const GenePair::Vector& vector, int K, const int *labels, int N)
+void GMM::savePair(const GenePair::Vector& vector, int K, const cl_char *labels, int N)
 {
    CCMatrix::Pair pair(_output);
    pair.addCluster(K);
@@ -423,7 +423,7 @@ void GMM::runSerial()
 
    // initialize arrays used for GMM clustering
    QVector<GenePair::Vector2> X;
-   QVector<int> labels(_input->getSampleSize());
+   QVector<cl_char> labels(_input->getSampleSize());
 
    // initialize xy gene indexes
    GenePair::Vector vector;
@@ -753,7 +753,7 @@ void GMM::runLoadBlock(Block& block)
       // set kernel arguments and execute it
       _kernel->setBuffer(2, block.pairs);
       _kernel->setBuffer(7, block.work_X);
-      _kernel->setBuffer(8, block.work_y);
+      _kernel->setBuffer(8, block.work_labels);
       _kernel->setBuffer(9, block.work_components);
       _kernel->setBuffer(10, block.work_MP);
       _kernel->setBuffer(11, block.work_counts);
@@ -842,7 +842,7 @@ void GMM::runReadBlock(Block& block)
          // read results
          int N = _input->getSampleSize();
          int bestK = (*block.result_K)[index];
-         int *bestLabels = &(*block.result_labels)[index * N];
+         cl_char *bestLabels = &(*block.result_labels)[index * N];
 
          // save cluster pair if multiple clusters are found
          if ( bestK > 1 )

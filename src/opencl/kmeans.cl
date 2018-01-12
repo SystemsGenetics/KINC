@@ -77,7 +77,7 @@ int fetchData(
    __global const float *expressions, int size,
    int indexA, int indexB,
    __global Vector2 *X,
-   __global int *labels)
+   __global char *labels)
 {
    int numSamples = 0;
 
@@ -124,7 +124,7 @@ int fetchData(
  */
 float computeLogLikelihood(
    __global const Vector2 *X, int N,
-   __global const int *y,
+   __global const char *y,
    __global const Vector2 *means, int K)
 {
    // compute within-class scatter
@@ -161,7 +161,7 @@ void fit(
    __global int *y,
    float *logL,
    __global Vector2 *means,
-   __global int *y_next)
+   __global char *y_next)
 {
    ulong state = 1;
 
@@ -281,20 +281,20 @@ __kernel void computeKmeansBlock(
    __global const int2 *pairs,
    int minSamples, int minClusters, int maxClusters,
    __global Vector2 *work_X,
-   __global int *work_y,
+   __global char *work_y,
    __global Vector2 *work_means,
-   __global int *work_ynext,
+   __global char *work_ynext,
    __global int *result_K,
-   __global int *result_labels)
+   __global char *result_labels)
 {
    // initialize workspace variables
    int i = get_global_id(0);
    __global Vector2 *X = &work_X[i * size];
-   __global int *y = &work_y[i * size];
+   __global char *y = &work_y[i * size];
    __global Vector2 *means = &work_means[i * maxClusters];
-   __global int *y_next = &work_ynext[i * size];
+   __global char *y_next = &work_ynext[i * size];
    __global int *bestK = &result_K[i];
-   __global int *bestLabels = &result_labels[i * size];
+   __global char *bestLabels = &result_labels[i * size];
 
    // fetch data matrix X from expression matrix
    int numSamples = fetchData(expressions, size, pairs[i].x, pairs[i].y, X, bestLabels);

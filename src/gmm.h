@@ -53,11 +53,11 @@ private:
    static const char* BIC;
    static const char* ICL;
 
-   void fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<int>& labels);
+   void fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels);
    float computeBIC(int K, float logL, int N, int D);
    float computeICL(int K, float logL, int N, int D, float E);
-   void computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<int>& bestLabels);
-   void savePair(const GenePair::Vector& vector, int K, const int *labels, int N);
+   void computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels);
+   void savePair(const GenePair::Vector& vector, int K, const cl_char *labels, int N);
 
    struct Block
    {
@@ -74,7 +74,7 @@ private:
       {
          pairs = device.makeBuffer<cl_int2>(1 * kernelSize).release();
          work_X = device.makeBuffer<GenePair::Vector2>(N * kernelSize).release();
-         work_y = device.makeBuffer<cl_int>(N * kernelSize).release();
+         work_labels = device.makeBuffer<cl_char>(N * kernelSize).release();
          work_components = device.makeBuffer<GenePair::GMM::Component>(K * kernelSize).release();
          work_MP = device.makeBuffer<GenePair::Vector2>(K * kernelSize).release();
          work_counts = device.makeBuffer<cl_int>(K * kernelSize).release();
@@ -82,7 +82,7 @@ private:
          work_loggamma = device.makeBuffer<cl_float>(N * N * kernelSize).release();
          work_logGamma = device.makeBuffer<cl_float>(K * kernelSize).release();
          result_K = device.makeBuffer<cl_int>(1 * kernelSize).release();
-         result_labels = device.makeBuffer<cl_int>(N * kernelSize).release();
+         result_labels = device.makeBuffer<cl_char>(N * kernelSize).release();
 
          if ( !device )
          {
@@ -95,7 +95,7 @@ private:
       {
          delete pairs;
          delete work_X;
-         delete work_y;
+         delete work_labels;
          delete work_components;
          delete work_MP;
          delete work_counts;
@@ -111,7 +111,7 @@ private:
       EOpenCLEvent event;
       EOpenCLBuffer<cl_int2>* pairs;
       EOpenCLBuffer<GenePair::Vector2>* work_X;
-      EOpenCLBuffer<cl_int>* work_y;
+      EOpenCLBuffer<cl_char>* work_labels;
       EOpenCLBuffer<GenePair::GMM::Component>* work_components;
       EOpenCLBuffer<GenePair::Vector2>* work_MP;
       EOpenCLBuffer<cl_int>* work_counts;
@@ -119,7 +119,7 @@ private:
       EOpenCLBuffer<cl_float>* work_loggamma;
       EOpenCLBuffer<cl_float>* work_logGamma;
       EOpenCLBuffer<cl_int>* result_K;
-      EOpenCLBuffer<cl_int>* result_labels;
+      EOpenCLBuffer<cl_char>* result_labels;
    };
 
    void initializeKernel();

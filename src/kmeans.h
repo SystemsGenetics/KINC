@@ -43,10 +43,10 @@ public:
    virtual void finish() override final {}
 
 private:
-   void fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<int>& labels);
+   void fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels);
    float computeBIC(int K, float logL, int N, int D);
-   void computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<int>& bestLabels);
-   void savePair(const GenePair::Vector& vector, int K, const int *labels, int N);
+   void computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels);
+   void savePair(const GenePair::Vector& vector, int K, const cl_char *labels, int N);
 
    struct Block
    {
@@ -63,11 +63,11 @@ private:
       {
          pairs = device.makeBuffer<cl_int2>(1 * kernelSize).release();
          work_X = device.makeBuffer<cl_float2>(N * kernelSize).release();
-         work_y = device.makeBuffer<cl_int>(N * kernelSize).release();
+         work_y = device.makeBuffer<cl_char>(N * kernelSize).release();
          work_means = device.makeBuffer<cl_float2>(K * kernelSize).release();
-         work_ynext = device.makeBuffer<cl_int>(N * kernelSize).release();
+         work_ynext = device.makeBuffer<cl_char>(N * kernelSize).release();
          result_K = device.makeBuffer<cl_int>(1 * kernelSize).release();
-         result_labels = device.makeBuffer<cl_int>(N * kernelSize).release();
+         result_labels = device.makeBuffer<cl_char>(N * kernelSize).release();
 
          if ( !device )
          {
@@ -92,11 +92,11 @@ private:
       EOpenCLEvent event;
       EOpenCLBuffer<cl_int2>* pairs;
       EOpenCLBuffer<cl_float2>* work_X;
-      EOpenCLBuffer<cl_int>* work_y;
+      EOpenCLBuffer<cl_char>* work_y;
       EOpenCLBuffer<cl_float2>* work_means;
-      EOpenCLBuffer<cl_int>* work_ynext;
+      EOpenCLBuffer<cl_char>* work_ynext;
       EOpenCLBuffer<cl_int>* result_K;
-      EOpenCLBuffer<cl_int>* result_labels;
+      EOpenCLBuffer<cl_char>* result_labels;
    };
 
    void initializeKernel();

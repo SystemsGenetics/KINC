@@ -23,8 +23,8 @@ void KMeans::fit(const QVector<Vector2>& X, int K)
    }
 
    // iterate K means until convergence
-   QVector<int> y;
-   QVector<int> y_next(N);
+   QVector<cl_char> y;
+   QVector<cl_char> y_next(N);
 
    while ( true )
    {

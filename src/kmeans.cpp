@@ -251,7 +251,7 @@ bool KMeans::initialize()
 
 
 
-void KMeans::fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<int>& labels)
+void KMeans::fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels)
 {
    // read in gene expressions
    ExpressionMatrix::Gene gene1(_input);
@@ -296,7 +296,7 @@ float KMeans::computeBIC(int K, float logL, int N, int D)
 
 
 
-void KMeans::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<int>& bestLabels)
+void KMeans::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels)
 {
    float bestValue = INFINITY;
 
@@ -333,7 +333,7 @@ void KMeans::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVect
 
 
 
-void KMeans::savePair(const GenePair::Vector& vector, int K, const int *labels, int N)
+void KMeans::savePair(const GenePair::Vector& vector, int K, const cl_char *labels, int N)
 {
    CCMatrix::Pair pair(_output);
    pair.addCluster(K);
@@ -363,7 +363,7 @@ void KMeans::runSerial()
 
    // initialize arrays used for k-means clustering
    QVector<GenePair::Vector2> X;
-   QVector<int> labels(_input->getSampleSize());
+   QVector<cl_char> labels(_input->getSampleSize());
 
    // initialize xy gene indexes
    GenePair::Vector vector;
@@ -776,7 +776,7 @@ void KMeans::runReadBlock(Block& block)
          // read results
          int N = _input->getSampleSize();
          int bestK = (*block.result_K)[index];
-         int *bestLabels = &(*block.result_labels)[index * N];
+         cl_char *bestLabels = &(*block.result_labels)[index * N];
 
          // save cluster pair if multiple clusters are found
          if ( bestK > 1 )

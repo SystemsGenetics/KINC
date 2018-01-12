@@ -13,7 +13,7 @@ namespace GenePair
 
       int numClusters() const { return _means.size(); }
       float logLikelihood() const { return _logL; }
-      const QVector<int>& labels() const { return _labels; }
+      const QVector<cl_char>& labels() const { return _labels; }
 
       void fit(const QVector<Vector2>& X, int K);
 
@@ -22,7 +22,7 @@ namespace GenePair
 
       QVector<Vector2> _means;
       float _logL;
-      QVector<int> _labels;
+      QVector<cl_char> _labels;
    };
 }
 
