@@ -162,21 +162,14 @@ typedef union
 
 
 /**
- * Implementation of the MWC64X random number generator.
+ * Implementation of rand(), taken from POSIX example.
  *
  * @param state
  */
-uint rand(uint2 *state)
+int rand(ulong *state)
 {
-   enum { A = 4294883355U };
-   uint x = (*state).x, c = (*state).y;  // Unpack the state
-   uint res = x ^ c;                     // Calculate the result
-   uint hi = mul_hi(x, A);               // Step the RNG
-   x = x * A + c;
-   c = hi + (x < c);
-   *state = (uint2)(x, c);               // Pack the state back up
-
-   return res;                           // Return the next result
+   *state = (*state) * 1103515245 + 12345;
+   return ((unsigned)((*state)/65536) % 32768);
 }
 
 
@@ -656,7 +649,7 @@ bool fit(
    __global float *loggamma,
    __global float *logGamma)
 {
-   uint2 state = (get_global_id(0), get_global_id(1));
+   ulong state = 1;
 
    // initialize components
    for ( int k = 0; k < K; ++k )
