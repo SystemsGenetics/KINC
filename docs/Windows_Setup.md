@@ -16,6 +16,7 @@ cd ../
 git clone git@github.com:SystemsGenetics/KINC.git
 cd KINC
 git checkout develop
+```
 
 ## Step 3: Setup ACE and KINC in QTCreator
 Within QTCreater click **File** > **New File or Project** and click **Import Existring Project** and in the box that appears, select the path to the directory where ACE was cloned.  Be sure to select the ACE/src directory.  Follow the dialog prompts until the project is imported.  Do the same with KINC.
