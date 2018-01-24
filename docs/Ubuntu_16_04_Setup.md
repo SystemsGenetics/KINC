@@ -3,6 +3,8 @@
 To begin development work in KINC on Ubuntu 16.04 the following steps can be used to setup your coding environment:
 
 ## Step 1: Install Dependencies
+
+### OpenCL
 First we need to instal the OpenCL development libraries.  
 
 ```bash
@@ -13,11 +15,20 @@ sudo apt install ocl-icd-opencl-dev
 ```
 For Intel or NVidia drivers see the respective drivers.
 
+### OpenMPI
 Next, we need to install the OpenMPI library
 
 ```bash
 sudo apt-get install openmpi-bin libopenmpi-dev openmpi-common
 ```
+
+### QT 5.7 or greater
+First identify the most recent version of QT at http://download.qt.io/official_releases/qt and adjust the commands below accordingly:
+
+```bash
+wget http://download.qt.io/official_releases/qt/5.10/5.10.0/qt-opensource-linux-x64-5.10.0.run
+./qt-opensource-linux-x64-5.7.0.run
+
 
 ## Step 2: Download ACE and KINC
 Use Git to clone the ACE and ACE repositories and switch to the develop branch
