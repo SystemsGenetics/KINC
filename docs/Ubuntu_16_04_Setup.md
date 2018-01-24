@@ -3,6 +3,7 @@
 To begin development work in KINC on Ubuntu 16.04 the following steps can be used to setup your coding environment:
 
 ## Step 1: Install Dependencies
+This document assumes you already have the g++ compiler installed.
 
 ### OpenCL
 First we need to instal the OpenCL development libraries.  
