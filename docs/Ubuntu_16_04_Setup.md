@@ -44,4 +44,36 @@ git clone git@github.com:SystemsGenetics/KINC.git
 cd KINC
 git checkout develop
 ```
-### Step 3: Compile ACE
+### Step 3: Compile ACE and KINC on the command-line
+Compile ACE according to its own instructions.  If you install ACE locally you'll have to add the following to your LD_LIBRARY_PATH environment variable.
+
+```bash
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${HOME}/software/lib"
+```
+
+To Compile KINC run these command inside the build directory:
+
+```bash
+qmake ../src/KINC.pro
+make
+```
+You can now run KINC.
+
+### Step 4: Use QTCreator for Coding
+First add ACE. Click **File** > **New File or Project** and then click **Import Existing Project** in the dialogue that appears.  Set the **Location** as the path to the **src** directory of ACE.   Follow through the prompts on the Dialogue until the ACE project is loaded.  Next, configure the Build Settings (accessible by clicking the **Projects** icon on the left side bar.  Be sure to set the following settings:
+
+**Generic Manager**
+- Build directory:  {ACE}/build
+
+replace {ACE} with the full path to the ACE clone directory.
+
+
+
+**Build Steps**
+- Custom Process Step
+  - Command: qmake (or the full path where qmake is instlaled)
+  - Arguments:  ../src/KINC.pro
+  - Working directory: %{buildDir}
+- Make
+  - leave as default but uncheck 'all' if it is checked.
+
