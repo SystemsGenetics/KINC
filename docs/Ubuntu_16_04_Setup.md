@@ -67,8 +67,6 @@ First add ACE. Click **File** > **New File or Project** and then click **Import 
 
 replace {ACE} with the full path to the ACE clone directory.
 
-
-
 **Build Steps**
 - Custom Process Step
   - Command: qmake (or the full path where qmake is instlaled)
@@ -77,3 +75,4 @@ replace {ACE} with the full path to the ACE clone directory.
 - Make
   - leave as default but uncheck 'all' if it is checked.
 
+Setup KINC in a similar way.
