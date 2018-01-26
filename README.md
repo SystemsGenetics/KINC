@@ -17,7 +17,7 @@ Thresholding
 
 This software uses GSL, OpenCL, and [ACE](https://github.com/SystemsGenetics/ACE). For instructions on installing ACE, see the project repository. For all other dependencies, consult your package manager. For example, to install dependencies on Ubuntu:
 ```
-sudo apt install libgsl2 ocl-icd-opencl-dev
+sudo apt install libgsl2 ocl-icd-opencl-dev libopenmpi-dev
 ```
 
 To build KINC:
@@ -28,9 +28,9 @@ make
 cd ..
 ```
 
-## Using ACE GUI / Console
+## Using the KINC GUI or Console
 
-ACE provides two separate libraries for GUI and console applications. The `GUI` variable in `KINC.pro` controls which library KINC uses. By default, KINC is built as a GUI application. When run as a GUI application, KINC prints the console equivalent of every analytic as it is run.
+ACE provides two different libraries for GUI and console applications. The `GUI` variable in `KINC.pro` controls which library KINC uses. By default, KINC is built as a GUI application. When run as a GUI application, KINC prints the console equivalent of every analytic as it is run.
 
 # Usage
 
