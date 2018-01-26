@@ -60,19 +60,4 @@ make
 You can now run KINC.
 
 ### Step 4: Use QTCreator for Coding
-First add ACE. Click **File** > **New File or Project** and then click **Import Existing Project** in the dialogue that appears.  Set the **Location** as the path to the **src** directory of ACE.   Follow through the prompts on the Dialogue until the ACE project is loaded.  Next, configure the Build Settings (accessible by clicking the **Projects** icon on the left side bar.  Be sure to set the following settings:
-
-**Generic Manager**
-- Build directory:  {ACE}/build
-
-replace {ACE} with the full path to the ACE clone directory.
-
-**Build Steps**
-- Custom Process Step
-  - Command: qmake (or the full path where qmake is instlaled)
-  - Arguments:  ../src/KINC.pro
-  - Working directory: %{buildDir}
-- Make
-  - leave as default but uncheck 'all' if it is checked.
-
-Setup KINC in a similar way.
+First add ACE. Click **File** > **Open File or Project** and then navigate in the file browser to the ACE directory and click the ACE.pro file. Navigate through configure setup.  Do the same for KINC.
