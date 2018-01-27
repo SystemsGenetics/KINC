@@ -21,4 +21,4 @@ git checkout develop
 ```
 
 ## Step 3: Setup ACE and KINC in QTCreator
-Within QTCreater click **File** > **New File or Project** and click **Import Existring Project** and in the box that appears, select the path to the directory where ACE was cloned.  Be sure to select the ACE/src directory.  Follow the dialog prompts until the project is imported.  Do the same with KINC.
+First add ACE. Click **File** > **Open File or Project** and then navigate in the file browser to the ACE directory and click the ACE.pro file. Navigate through configure setup. Do the same for KINC.
