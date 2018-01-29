@@ -272,7 +272,7 @@ qint64 Base::findPair(qint64 indent, qint64 first, qint64 last) const
 void Base::seekPair(qint64 index) const
 {
    // make sure index is within range
-   if ( index < 0 || index >= _pairSize )
+   if ( index < 0 || index >= _rawPairSize )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Domain Error"));
