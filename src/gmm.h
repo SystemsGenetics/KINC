@@ -26,6 +26,8 @@ public:
       ,MinClusters
       ,MaxClusters
       ,CriterionArg
+      ,RemovePreOutliers
+      ,RemovePostOutliers
       ,BlockSize
       ,KernelSize
       ,Total
@@ -55,6 +57,7 @@ private:
    static const char* ICL;
 
    void fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels);
+   void markOutliers(const QVector<GenePair::Vector2>& X, int j, QVector<cl_char>& labels, int cluster, cl_char marker);
    float computeBIC(int K, float logL, int N, int D);
    float computeICL(int K, float logL, int N, int D, float E);
    void computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels);
@@ -138,6 +141,8 @@ private:
    int _minClusters {1};
    int _maxClusters {5};
    Criterion _criterion {Criterion::BIC};
+   bool _removePreOutliers {false};
+   bool _removePostOutliers {false};
    int _blockSize {4};
    int _kernelSize {4096};
 

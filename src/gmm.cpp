@@ -60,6 +60,8 @@ EAbstractAnalytic::ArgumentType GMM::getArgumentData(int argument)
    case MinClusters: return Type::Integer;
    case MaxClusters: return Type::Integer;
    case CriterionArg: return Type::Combo;
+   case RemovePreOutliers: return Type::Bool;
+   case RemovePostOutliers: return Type::Bool;
    case BlockSize: return Type::Integer;
    case KernelSize: return Type::Integer;
    default: return Type::Bool;
@@ -90,6 +92,8 @@ QVariant GMM::getArgumentData(int argument, Role role)
       case MinClusters: return QString("minclus");
       case MaxClusters: return QString("maxclus");
       case CriterionArg: return QString("crit");
+      case RemovePreOutliers: return QString("preout");
+      case RemovePostOutliers: return QString("postout");
       case BlockSize: return QString("bsize");
       case KernelSize: return QString("ksize");
       default: return QVariant();
@@ -105,6 +109,8 @@ QVariant GMM::getArgumentData(int argument, Role role)
       case MinClusters: return tr("Minimum Clusters:");
       case MaxClusters: return tr("Maximum Clusters:");
       case CriterionArg: return tr("Criterion:");
+      case RemovePreOutliers: return tr("Remove pre-clustering outliers:");
+      case RemovePostOutliers: return tr("Remove post-clustering outliers:");
       case BlockSize: return tr("Block Size:");
       case KernelSize: return tr("Kernel Size:");
       default: return QVariant();
@@ -121,6 +127,8 @@ QVariant GMM::getArgumentData(int argument, Role role)
       case MinClusters: return tr("Minimum number of clusters to test.");
       case MaxClusters: return tr("Maximum number of clusters to test.");
       case CriterionArg: return tr("Criterion to determine the number of clusters.");
+      case RemovePreOutliers: tr("Remove statistical outliers before clustering.");
+      case RemovePostOutliers: tr("Remove statistical outliers after clustering.");
       case BlockSize: return tr("This option only applies if OpenCL is used. Total number of blocks"
                                 " to run for execution.");
       case KernelSize: return tr("This option only applies if OpenCL is used. Total number of"
@@ -144,6 +152,8 @@ QVariant GMM::getArgumentData(int argument, Role role)
       case MinClusters: return 1;
       case MaxClusters: return 5;
       case CriterionArg: return tr(BIC);
+      case RemovePreOutliers: return false;
+      case RemovePostOutliers: return false;
       case BlockSize: return 4;
       case KernelSize: return 4096;
       default: return QVariant();
@@ -222,6 +232,12 @@ void GMM::setArgument(int argument, QVariant value)
             _criterion = Criterion::ICL;
          }
       }
+      break;
+   case RemovePreOutliers:
+      _removePreOutliers = value.toBool();
+      break;
+   case RemovePostOutliers:
+      _removePostOutliers = value.toBool();
       break;
    case BlockSize:
       _blockSize = value.toInt();
@@ -323,6 +339,51 @@ void GMM::fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& 
          X.append({ gene1.at(i), gene2.at(i) });
 
          labels[i] = 0;
+      }
+   }
+}
+
+
+
+
+
+
+void GMM::markOutliers(const QVector<GenePair::Vector2>& X, int j, QVector<cl_char>& labels, int cluster, cl_char marker)
+{
+   // filter and sort X[:, j] by index
+   QVector<int> idx;
+   idx.reserve(X.size());
+
+   for ( int i = 0; i < X.size(); i++ )
+   {
+      if ( X[i].s[j] == cluster || X[i].s[j] == marker )
+      {
+         idx.push_back(i);
+      }
+   }
+
+   std::sort(idx.begin(), idx.end(), [&X, j](size_t a, size_t b) { return X[a].s[j] < X[b].s[j]; });
+
+   // compute quartiles, interquartile range, upper and lower bounds
+   const int n = idx.size();
+
+   if ( n < _minSamples )
+   {
+      return;
+   }
+
+   float Q1 = X[idx[n * 1 / 4]].s[j];
+   float Q3 = X[idx[n * 3 / 4]].s[j];
+
+   float min = Q1 - 1.5f * (Q3 - Q1);
+   float max = Q3 + 1.5f * (Q3 - Q1);
+
+   // mark outliers
+   for ( int i = 0; i < n; ++i )
+   {
+      if ( X[idx[i]].s[j] < min || max < X[idx[i]].s[j] )
+      {
+         labels[idx[i]] = marker;
       }
    }
 }
@@ -457,6 +518,13 @@ void GMM::runSerial()
       // fetch data matrix X from expression matrix
       fetchData(vector, X, labels);
 
+      // remove pre-clustering outliers
+      if ( _removePreOutliers )
+      {
+         markOutliers(X, 0, labels, 0, -7);
+         markOutliers(X, 1, labels, 0, -7);
+      }
+
       // perform clustering only if there are enough samples
       int bestK = 0;
 
@@ -468,6 +536,16 @@ void GMM::runSerial()
       // save cluster pair if multiple clusters are found
       if ( bestK > 1 )
       {
+         // remove post-clustering outliers
+         if ( _removePostOutliers )
+         {
+            for ( int k = 0; k < bestK; ++k )
+            {
+               markOutliers(X, 0, labels, k, -8);
+               markOutliers(X, 1, labels, k, -8);
+            }
+         }
+
          savePair(vector, bestK, labels.data(), labels.size());
       }
 
