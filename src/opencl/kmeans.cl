@@ -293,8 +293,14 @@ __kernel void computeKmeansBlock(
    __global int *result_K,
    __global char *result_labels)
 {
-   // initialize workspace variables
    int i = get_global_id(0);
+
+   if ( pairs[i].x == 0 && pairs[i].y == 0 )
+   {
+      return;
+   }
+
+   // initialize workspace variables
    __global Vector2 *X = &work_X[i * size];
    __global char *y = &work_y[i * size];
    __global Vector2 *means = &work_means[i * maxClusters];
@@ -305,10 +311,9 @@ __kernel void computeKmeansBlock(
    // fetch data matrix X from expression matrix
    int numSamples = fetchData(expressions, size, pairs[i], minThreshold, X, bestLabels);
 
-   // initialize output
+   // perform clustering only if there are enough samples
    *bestK = 0;
 
-   // make sure minimum number of related samples is reached
    if ( numSamples >= minSamples )
    {
       float bestValue = INFINITY;
