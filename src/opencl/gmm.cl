@@ -182,7 +182,7 @@ int rand(ulong *state)
  *
  * @param expressions
  * @param size
- * @param pair
+ * @param vector
  * @param minThreshold
  * @param X
  * @param labels
@@ -190,35 +190,31 @@ int rand(ulong *state)
  */
 int fetchData(
    __global const float *expressions, int size,
-   int2 pair,
+   int2 vector,
    int minThreshold,
    __global Vector2 *X,
    __global char *labels)
 {
+   // index into gene expressions
+   __global float *gene1 = &expressions[vector.x * size];
+   __global float *gene2 = &expressions[vector.y * size];
+
+   // populate X with shared expressions of gene pair
    int numSamples = 0;
 
-   pair.x *= size;
-   pair.y *= size;
-
-   // build data matrix from expressions and indices
    for ( int i = 0; i < size; ++i )
    {
-      float2 v = (float2) (
-         expressions[pair.x + i],
-         expressions[pair.y + i]
-      );
-
-      if ( isnan(v.x) || isnan(v.y) )
+      if ( isnan(gene1[i]) || isnan(gene2[i]) )
       {
          labels[i] = -9;
       }
-      else if ( v.x < minThreshold || v.y < minThreshold )
+      else if ( gene1[i] < minThreshold || gene2[i] < minThreshold )
       {
          labels[i] = -6;
       }
       else
       {
-         X[numSamples].v2 = v;
+         X[numSamples].v2 = (float2) ( gene1[i], gene2[i] );
          numSamples++;
 
          labels[i] = 0;

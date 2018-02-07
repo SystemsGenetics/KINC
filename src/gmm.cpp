@@ -358,7 +358,7 @@ void GMM::markOutliers(const QVector<GenePair::Vector2>& X, int j, QVector<cl_ch
    {
       if ( labels[i] == cluster || labels[i] == marker )
       {
-         x_sorted.push_back(X[i].s[j]);
+         x_sorted.append(X[i].s[j]);
       }
    }
 
