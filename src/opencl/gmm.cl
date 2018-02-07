@@ -234,6 +234,152 @@ int fetchData(
 
 
 
+void swap(__global float *array, int i, int j)
+{
+   float tmp = array[i];
+   array[i] = array[j];
+   array[j] = tmp;
+}
+
+
+
+
+
+
+void siftDown(__global float *array, int start, int end)
+{
+   int root = start;
+
+   while ( 2 * root + 1 <= end )
+   {
+      int child = 2 * root + 1;
+      int swp = root;
+
+      if ( array[swp] < array[child] )
+      {
+         swp = child;
+      }
+
+      if ( child + 1 <= end && array[swp] < array[child + 1] )
+      {
+         swp = child + 1;
+      }
+
+      if ( swp == root )
+      {
+         return;
+      }
+      else
+      {
+         swap(array, root, swp);
+         root = swp;
+      }
+   }
+}
+
+
+
+
+
+
+void heapify(__global float *array, int n)
+{
+   int start = ((n-1) - 1) / 2;
+
+   while ( start >= 0 )
+   {
+      siftDown(array, start, n - 1);
+      start -= 1;
+   }
+}
+
+
+
+
+
+
+/**
+ * Sort an array using heapsort.
+ *
+ * @param array
+ * @param n
+ */
+void sort(__global float *array, int n)
+{
+   heapify(array, n);
+
+   int end = n - 1;
+   while ( end > 0 )
+   {
+      swap(array, end, 0);
+      end -= 1;
+
+      siftDown(array, 0, end);
+   }
+}
+
+
+
+
+
+
+/**
+ * Remove outliers from a gene in a gene pair.
+ *
+ * @param X
+ * @param N
+ * @param j
+ * @param labels
+ * @param cluster
+ * @param marker
+ */
+void markOutliers(
+   __global const Vector2 *X, int N, int j,
+   __global char *labels, int cluster,
+   char marker,
+   __global float *x_sorted)
+{
+   // compute x_sorted = X[:, j], filtered and sorted
+   int n = 0;
+
+   for ( int i = 0; i < N; i++ )
+   {
+      if ( labels[i] == cluster || labels[i] == marker )
+      {
+         x_sorted[n] = X[i].s[j];
+         n++;
+      }
+   }
+
+   if ( n == 0 )
+   {
+      return;
+   }
+
+   sort(x_sorted, n);
+
+   // compute quartiles, interquartile range, upper and lower bounds
+   float Q1 = x_sorted[n * 1 / 4];
+   float Q3 = x_sorted[n * 3 / 4];
+
+   float T_min = Q1 - 1.5f * (Q3 - Q1);
+   float T_max = Q3 + 1.5f * (Q3 - Q1);
+
+   // mark outliers
+   for ( int i = 0; i < N; ++i )
+   {
+      if ( labels[i] == cluster && (X[i].s[j] < T_min || T_max < X[i].s[j]) )
+      {
+         labels[i] = marker;
+      }
+   }
+}
+
+
+
+
+
+
 typedef struct
 {
    float pi;
@@ -776,8 +922,12 @@ float computeICL(int K, float logL, int N, int D, float E)
 __kernel void computeGMMBlock(
    __global const float *expressions, int size,
    __global const int2 *pairs,
-   int minSamples, int minThreshold, int minClusters, int maxClusters,
+   int minSamples,
+   int minThreshold,
+   int minClusters, int maxClusters,
    Criterion criterion,
+   int removePreOutliers,
+   int removePostOutliers,
    __global Vector2 *work_X,
    __global char *work_labels,
    __global Component *work_components,
@@ -789,8 +939,14 @@ __kernel void computeGMMBlock(
    __global int *result_K,
    __global char *result_labels)
 {
-   // initialize workspace variables
    int i = get_global_id(0);
+
+   if ( pairs[i].x == 0 && pairs[i].y == 0 )
+   {
+      return;
+   }
+
+   // initialize workspace variables
    __global Vector2 *X = &work_X[i * size];
    __global char *labels = &work_labels[i * size];
    __global Component *components = &work_components[i * maxClusters];
@@ -805,10 +961,18 @@ __kernel void computeGMMBlock(
    // fetch data matrix X from expression matrix
    int numSamples = fetchData(expressions, size, pairs[i], minThreshold, X, bestLabels);
 
-   // initialize output
+   // remove pre-clustering outliers
+   __global float *work = loggamma;
+
+   if ( removePreOutliers )
+   {
+      markOutliers(X, numSamples, 0, bestLabels, 0, -7, work);
+      markOutliers(X, numSamples, 1, bestLabels, 0, -7, work);
+   }
+
+   // perform clustering only if there are enough samples
    *bestK = 0;
 
-   // make sure minimum number of related samples is reached
    if ( numSamples >= minSamples )
    {
       float bestValue = INFINITY;
@@ -859,6 +1023,19 @@ __kernel void computeGMMBlock(
                   ++j;
                }
             }
+         }
+      }
+   }
+
+   if ( *bestK > 1 )
+   {
+      // remove post-clustering outliers
+      if ( removePostOutliers )
+      {
+         for ( int k = 0; k < *bestK; ++k )
+         {
+            markOutliers(X, numSamples, 0, bestLabels, k, -8, work);
+            markOutliers(X, numSamples, 1, bestLabels, k, -8, work);
          }
       }
    }

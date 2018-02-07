@@ -350,40 +350,40 @@ void GMM::fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& 
 
 void GMM::markOutliers(const QVector<GenePair::Vector2>& X, int j, QVector<cl_char>& labels, int cluster, cl_char marker)
 {
-   // filter and sort X[:, j] by index
-   QVector<int> idx;
-   idx.reserve(X.size());
+   // compute x_sorted = X[:, j], filtered and sorted
+   QVector<float> x_sorted;
+   x_sorted.reserve(X.size());
 
    for ( int i = 0; i < X.size(); i++ )
    {
-      if ( X[i].s[j] == cluster || X[i].s[j] == marker )
+      if ( labels[i] == cluster || labels[i] == marker )
       {
-         idx.push_back(i);
+         x_sorted.push_back(X[i].s[j]);
       }
    }
 
-   std::sort(idx.begin(), idx.end(), [&X, j](size_t a, size_t b) { return X[a].s[j] < X[b].s[j]; });
-
-   // compute quartiles, interquartile range, upper and lower bounds
-   const int n = idx.size();
-
-   if ( n < _minSamples )
+   if ( x_sorted.size() == 0 )
    {
       return;
    }
 
-   float Q1 = X[idx[n * 1 / 4]].s[j];
-   float Q3 = X[idx[n * 3 / 4]].s[j];
+   std::sort(x_sorted.begin(), x_sorted.end());
 
-   float min = Q1 - 1.5f * (Q3 - Q1);
-   float max = Q3 + 1.5f * (Q3 - Q1);
+   // compute quartiles, interquartile range, upper and lower bounds
+   const int n = x_sorted.size();
+
+   float Q1 = x_sorted[n * 1 / 4];
+   float Q3 = x_sorted[n * 3 / 4];
+
+   float T_min = Q1 - 1.5f * (Q3 - Q1);
+   float T_max = Q3 + 1.5f * (Q3 - Q1);
 
    // mark outliers
-   for ( int i = 0; i < n; ++i )
+   for ( int i = 0; i < X.size(); ++i )
    {
-      if ( X[idx[i]].s[j] < min || max < X[idx[i]].s[j] )
+      if ( labels[i] == cluster && (X[i].s[j] < T_min || T_max < X[i].s[j]) )
       {
-         labels[idx[i]] = marker;
+         labels[i] = marker;
       }
    }
 }
@@ -766,6 +766,8 @@ void GMM::initializeKernelArguments()
    _kernel->setArgument(5, (cl_int)_minClusters);
    _kernel->setArgument(6, (cl_int)_maxClusters);
    _kernel->setArgument(7, (cl_int)_criterion);
+   _kernel->setArgument(8, (cl_int)_removePreOutliers);
+   _kernel->setArgument(9, (cl_int)_removePostOutliers);
    _kernel->setDimensionCount(1);
    _kernel->setGlobalSize(0, _kernelSize);
    _kernel->setWorkgroupSize(0, workgroupSize);
@@ -848,16 +850,16 @@ void GMM::runLoadBlock(Block& block)
 
       // set kernel arguments and execute it
       _kernel->setBuffer(2, block.pairs);
-      _kernel->setBuffer(8, block.work_X);
-      _kernel->setBuffer(9, block.work_labels);
-      _kernel->setBuffer(10, block.work_components);
-      _kernel->setBuffer(11, block.work_MP);
-      _kernel->setBuffer(12, block.work_counts);
-      _kernel->setBuffer(13, block.work_logpi);
-      _kernel->setBuffer(14, block.work_loggamma);
-      _kernel->setBuffer(15, block.work_logGamma);
-      _kernel->setBuffer(16, block.result_K);
-      _kernel->setBuffer(17, block.result_labels);
+      _kernel->setBuffer(10, block.work_X);
+      _kernel->setBuffer(11, block.work_labels);
+      _kernel->setBuffer(12, block.work_components);
+      _kernel->setBuffer(13, block.work_MP);
+      _kernel->setBuffer(14, block.work_counts);
+      _kernel->setBuffer(15, block.work_logpi);
+      _kernel->setBuffer(16, block.work_loggamma);
+      _kernel->setBuffer(17, block.work_logGamma);
+      _kernel->setBuffer(18, block.result_K);
+      _kernel->setBuffer(19, block.result_labels);
       block.event = _kernel->execute();
 
       // make sure kernel worked

@@ -83,7 +83,7 @@ private:
          work_MP = device.makeBuffer<GenePair::Vector2>(K * kernelSize).release();
          work_counts = device.makeBuffer<cl_int>(K * kernelSize).release();
          work_logpi = device.makeBuffer<cl_float>(K * kernelSize).release();
-         work_loggamma = device.makeBuffer<cl_float>(N * N * kernelSize).release();
+         work_loggamma = device.makeBuffer<cl_float>(N * K * kernelSize).release();
          work_logGamma = device.makeBuffer<cl_float>(K * kernelSize).release();
          result_K = device.makeBuffer<cl_int>(1 * kernelSize).release();
          result_labels = device.makeBuffer<cl_char>(N * kernelSize).release();
