@@ -35,7 +35,7 @@ QString CorrelationMatrix::Pair::toString() const
    // if there are no correlations simply return null
    if ( _correlations.isEmpty() )
    {
-      return tr("(null)");
+      return tr("");
    }
 
    // initialize list of strings and iterate through all clusters
@@ -51,7 +51,7 @@ QString CorrelationMatrix::Pair::toString() const
       }
 
       // join all cluster strings into one string
-      ret << clusterStrings.join(',').prepend('(').append(')');
+      ret << clusterStrings.join(',');
    }
 
    // join all clusters and return as string
@@ -148,7 +148,7 @@ QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
    // if row and column are equal return one
    if ( index.row() == index.column() )
    {
-      return "(1)";
+      return "1";
    }
 
    // get constant pair and read in values

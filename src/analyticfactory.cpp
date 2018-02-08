@@ -25,9 +25,9 @@ QString AnalyticFactory::getName(quint16 type)
    case ExportExpressionMatrixType: return QObject::tr("Export Expression Matrix");
    case KMeansType: return QObject::tr("K-means Clustering");
    case GMMType: return QObject::tr("GMM Clustering");
-   case SpearmanType: return QObject::tr("Spearman");
-   case PearsonType: return QObject::tr("Pearson");
-   case RMTType: return QObject::tr("RMT");
+   case SpearmanType: return QObject::tr("Spearman Correlation");
+   case PearsonType: return QObject::tr("Pearson Correlation");
+   case RMTType: return QObject::tr("RMT Thresholding");
    default: return QString();
    }
 }
