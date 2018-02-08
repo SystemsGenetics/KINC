@@ -3,23 +3,24 @@
 #include <ace/core/AceCore.h>
 #include <ace/core/AceOpenCL.h>
 
+#include "expressionmatrix.h"
+#include "ccmatrix.h"
+#include "correlationmatrix.h"
 #include "genepair_vector.h"
-
-
-
-class ExpressionMatrix;
-class CorrelationMatrix;
 
 
 
 class Spearman : public EAbstractAnalytic
 {
    Q_OBJECT
+
 public:
    ~Spearman();
+
    enum Arguments
    {
       InputData = 0
+      ,ClusterData
       ,OutputData
       ,Minimum
       ,MinThreshold
@@ -28,6 +29,7 @@ public:
       ,KernelSize
       ,Total
    };
+
    virtual int getArgumentCount() override final { return Total; }
    virtual ArgumentType getArgumentData(int argument) override final;
    virtual QVariant getArgumentData(int argument, Role role) override final;
@@ -40,7 +42,10 @@ public:
    virtual int getBlockSize() override;
    virtual bool runBlock(int block) override final;
    virtual void finish() override final {}
+
 private:
+   int fetchData(const GenePair::Vector& vector, const CCMatrix::Pair& pair, int k, double *a, double *b);
+
    struct Block
    {
       enum
@@ -85,7 +90,9 @@ private:
    void runLoadBlock(Block& block);
    void runExecuteBlock(Block& block);
    void runReadBlock(Block& block);
+
    ExpressionMatrix* _input {nullptr};
+   CCMatrix* _cMatrix {nullptr};
    CorrelationMatrix* _output {nullptr};
    int _minimum {30};
    int _blockSize {4};

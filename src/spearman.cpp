@@ -3,8 +3,6 @@
 
 #include "spearman.h"
 #include "datafactory.h"
-#include "expressionmatrix.h"
-#include "correlationmatrix.h"
 
 
 
@@ -49,6 +47,7 @@ EAbstractAnalytic::ArgumentType Spearman::getArgumentData(int argument)
    switch (argument)
    {
    case InputData: return Type::DataIn;
+   case ClusterData: return Type::DataIn;
    case OutputData: return Type::DataOut;
    case Minimum: return Type::Integer;
    case MinThreshold: return Type::Double;
@@ -77,6 +76,7 @@ QVariant Spearman::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case InputData: return QString("input");
+      case ClusterData: return QString("cmatrix");
       case OutputData: return QString("output");
       case Minimum: return QString("min");
       case MinThreshold: return QString("minthresh");
@@ -90,6 +90,7 @@ QVariant Spearman::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case InputData: return tr("Input:");
+      case ClusterData: return tr("Cluster Matrix:");
       case OutputData: return tr("Output:");
       case Minimum: return tr("Minimum Sample Size:");
       case MinThreshold: return tr("Minimum Threshold:");
@@ -104,6 +105,7 @@ QVariant Spearman::getArgumentData(int argument, Role role)
       {
       case InputData: return tr("Input expression matrix that will be used to compute spearman"
                                 " coefficients.");
+      case ClusterData: return tr("Cluster matrix to compute correlations for separate clusters.");
       case OutputData: return tr("Output correlation matrixx that will store spearman coefficient"
                                  " results.");
       case Minimum: return tr("Minimum size of samples two genes must share to generate a spearman"
@@ -169,6 +171,7 @@ QVariant Spearman::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case InputData: return DataFactory::ExpressionMatrixType;
+      case ClusterData: return DataFactory::CCMatrixType;
       case OutputData: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
@@ -218,6 +221,9 @@ void Spearman::setArgument(int argument, EAbstractData *data)
    case InputData:
       _input = dynamic_cast<ExpressionMatrix*>(data);
       break;
+   case ClusterData:
+      _cMatrix = dynamic_cast<CCMatrix*>(data);
+      break;
    case OutputData:
       _output = dynamic_cast<CorrelationMatrix*>(data);
       break;
@@ -232,7 +238,7 @@ void Spearman::setArgument(int argument, EAbstractData *data)
 bool Spearman::initialize()
 {
    // make sure there is valid input and output
-   if ( !_input || !_output )
+   if ( !_input || !_cMatrix || !_output )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
@@ -263,6 +269,53 @@ bool Spearman::initialize()
 
 
 
+int Spearman::fetchData(const GenePair::Vector& vector, const CCMatrix::Pair& pair, int k, double *a, double *b)
+{
+   // read in gene expressions
+   ExpressionMatrix::Gene gene1(_input);
+   ExpressionMatrix::Gene gene2(_input);
+
+   gene1.read(vector.geneX());
+   gene2.read(vector.geneY());
+
+   // populate a and b with shared expressions of gene pair
+   int numSamples = 0;
+
+   if ( pair.clusterSize() > 0 )
+   {
+      // add samples that are in the cluster
+      for ( int i = 0; i < _input->getSampleSize(); ++i )
+      {
+         if ( pair.at(k, i) == 1 )
+         {
+            a[numSamples] = gene1.at(i);
+            b[numSamples] = gene2.at(i);
+            ++numSamples;
+         }
+      }
+   }
+   else
+   {
+      // add samples that are valid
+      for ( int i = 0; i < _input->getSampleSize(); ++i )
+      {
+         if ( !isnan(gene1.at(i)) && !isnan(gene2.at(i)) )
+         {
+            a[numSamples] = gene1.at(i);
+            b[numSamples] = gene2.at(i);
+            ++numSamples;
+         }
+      }
+   }
+
+   return numSamples;
+}
+
+
+
+
+
+
 void Spearman::runSerial()
 {
    // initialize percent complete and steps
@@ -275,14 +328,13 @@ void Spearman::runSerial()
    double b[_input->getSampleSize()];
    double work[_input->getSampleSize()*2];
 
-   // initialize correlation gene pair and expression genes for input/output
-   CorrelationMatrix::Pair pair(_output);
-   pair.addCluster();
-   ExpressionMatrix::Gene gene1(_input);
-   ExpressionMatrix::Gene gene2(_input);
+   // initialize input/output pairs
+   CCMatrix::Pair inPair(_cMatrix);
+   CorrelationMatrix::Pair outPair(_output);
 
    // initialize xy gene indexes
    GenePair::Vector vector;
+   int cluster {0};
 
    // increment through all gene pairs
    while ( vector.geneX() < _output->geneSize() )
@@ -293,35 +345,43 @@ void Spearman::runSerial()
          return;
       }
 
-      // initialize sample size and read in gene expressions
-      int size {0};
-      gene1.read(vector.geneX());
-      gene2.read(vector.geneY());
-
-      // populate a and b arrays with shared expressions of gene x and y
-      for (auto x = 0; x < _input->getSampleSize() ;++x)
+      // read next cluster pair
+      if ( cluster == 0 )
       {
-         if ( !std::isnan(gene1.at(x)) && !std::isnan(gene2.at(x)) )
+         inPair.read(vector);
+         outPair.clearClusters();
+         outPair.addCluster(max(1, inPair.clusterSize()));
+      }
+
+      // fetch a and b arrays from expression matrix
+      int numSamples = fetchData(vector, inPair, cluster, a, b);
+
+      // compute correlation only if there are enough samples
+      float result = NAN;
+
+      if ( numSamples >= _minimum )
+      {
+         result = gsl_stats_spearman(a, 1, b, 1, numSamples, work);
+      }
+
+      // save correlation if within threshold limits
+      if ( !isnan(result) && _minThreshold <= result && result <= _maxThreshold )
+      {
+         outPair.at(cluster, 0) = result;
+
+         if ( cluster == outPair.clusterSize() - 1 )
          {
-            a[size] = gene1.at(x);
-            b[size] = gene2.at(x);
-            ++size;
+            outPair.write(vector);
          }
       }
 
-      // do not bother getting or saving correlation if it does not have the minimum size
-      if ( size >= _minimum )
-      {
-         // save gene pair only if within threshold limits
-         pair.at(0,0) = gsl_stats_spearman(a,1,b,1,size,work);
-         if ( pair.at(0,0) >= _minThreshold && pair.at(0,0) <= _maxThreshold )
-         {
-            pair.write(vector);
-         }
-      }
+      // increment to next cluster
+      cluster = (cluster + 1) % outPair.clusterSize();
 
-      // increment to next pair
-      ++vector;
+      if ( cluster == 0 )
+      {
+         ++vector;
+      }
 
       // increment steps and calculate percent complete
       ++steps;
