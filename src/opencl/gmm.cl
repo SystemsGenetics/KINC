@@ -196,8 +196,8 @@ int fetchData(
    __global char *labels)
 {
    // index into gene expressions
-   __global float *gene1 = &expressions[vector.x * size];
-   __global float *gene2 = &expressions[vector.y * size];
+   __global const float *gene1 = &expressions[vector.x * size];
+   __global const float *gene2 = &expressions[vector.y * size];
 
    // populate X with shared expressions of gene pair
    int numSamples = 0;
@@ -230,11 +230,11 @@ int fetchData(
 
 
 
-void swap(__global float *array, int i, int j)
+void swap(__global float *a, __global float *b)
 {
-   float tmp = array[i];
-   array[i] = array[j];
-   array[j] = tmp;
+   float c = *a;
+   *a = *b;
+   *b = c;
 }
 
 
@@ -267,7 +267,7 @@ void siftDown(__global float *array, int start, int end)
       }
       else
       {
-         swap(array, root, swp);
+         swap(&array[root], &array[swp]);
          root = swp;
       }
    }
@@ -307,7 +307,7 @@ void sort(__global float *array, int n)
    int end = n - 1;
    while ( end > 0 )
    {
-      swap(array, end, 0);
+      swap(&array[end], &array[0]);
       end -= 1;
 
       siftDown(array, 0, end);

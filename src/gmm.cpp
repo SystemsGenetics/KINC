@@ -320,13 +320,13 @@ void GMM::fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& 
    gene1.read(vector.geneX());
    gene2.read(vector.geneY());
 
-   // populate X with shared expressions of gene x and y
+   // populate X with shared expressions of gene pair
    X.clear();
    X.reserve(_input->getSampleSize());
 
    for ( int i = 0; i < _input->getSampleSize(); ++i )
    {
-      if ( std::isnan(gene1.at(i)) || std::isnan(gene2.at(i)) )
+      if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
       {
          labels[i] = -9;
       }
@@ -367,7 +367,7 @@ void GMM::markOutliers(const QVector<GenePair::Vector2>& X, int j, QVector<cl_ch
       return;
    }
 
-   std::sort(x_sorted.begin(), x_sorted.end());
+   sort(x_sorted.begin(), x_sorted.end());
 
    // compute quartiles, interquartile range, upper and lower bounds
    const int n = x_sorted.size();

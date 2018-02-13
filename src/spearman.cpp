@@ -49,7 +49,7 @@ EAbstractAnalytic::ArgumentType Spearman::getArgumentData(int argument)
    case InputData: return Type::DataIn;
    case ClusterData: return Type::DataIn;
    case OutputData: return Type::DataOut;
-   case Minimum: return Type::Integer;
+   case MinSamples: return Type::Integer;
    case MinThreshold: return Type::Double;
    case MaxThreshold: return Type::Double;
    case BlockSize: return Type::Integer;
@@ -78,7 +78,7 @@ QVariant Spearman::getArgumentData(int argument, Role role)
       case InputData: return QString("input");
       case ClusterData: return QString("cmatrix");
       case OutputData: return QString("output");
-      case Minimum: return QString("min");
+      case MinSamples: return QString("min");
       case MinThreshold: return QString("minthresh");
       case MaxThreshold: return QString("maxthresh");
       case BlockSize: return QString("bsize");
@@ -92,7 +92,7 @@ QVariant Spearman::getArgumentData(int argument, Role role)
       case InputData: return tr("Input:");
       case ClusterData: return tr("Cluster Matrix:");
       case OutputData: return tr("Output:");
-      case Minimum: return tr("Minimum Sample Size:");
+      case MinSamples: return tr("Minimum Sample Size:");
       case MinThreshold: return tr("Minimum Threshold:");
       case MaxThreshold: return tr("Maximum Threshold:");
       case BlockSize: return tr("Block Size:");
@@ -108,7 +108,7 @@ QVariant Spearman::getArgumentData(int argument, Role role)
       case ClusterData: return tr("Cluster matrix to compute correlations for separate clusters.");
       case OutputData: return tr("Output correlation matrixx that will store spearman coefficient"
                                  " results.");
-      case Minimum: return tr("Minimum size of samples two genes must share to generate a spearman"
+      case MinSamples: return tr("Minimum size of samples two genes must share to generate a spearman"
                               " coefficient.");
       case MinThreshold: return tr("Minimum threshold that a correlation value must be equal to or"
                                    " greater than to be added to the correlation matrix.");
@@ -125,7 +125,7 @@ QVariant Spearman::getArgumentData(int argument, Role role)
       // return nothing
       switch (argument)
       {
-      case Minimum: return 30;
+      case MinSamples: return 30;
       case MinThreshold: return 0.5;
       case MaxThreshold: return 1.0;
       case BlockSize: return 4;
@@ -137,7 +137,7 @@ QVariant Spearman::getArgumentData(int argument, Role role)
       // return nothing
       switch (argument)
       {
-      case Minimum: return 1;
+      case MinSamples: return 1;
       case MinThreshold: return -1.0;
       case MaxThreshold: return -1.0;
       case BlockSize: return 1;
@@ -149,7 +149,7 @@ QVariant Spearman::getArgumentData(int argument, Role role)
       // return nothing
       switch (argument)
       {
-      case Minimum: return INT_MAX;
+      case MinSamples: return INT_MAX;
       case MinThreshold: return 1.0;
       case MaxThreshold: return 1.0;
       case BlockSize: return INT_MAX;
@@ -190,8 +190,8 @@ void Spearman::setArgument(int argument, QVariant value)
    // figure out which argument is being set and set it
    switch (argument)
    {
-   case Minimum:
-      _minimum = value.toInt();
+   case MinSamples:
+      _minSamples = value.toInt();
       break;
    case MinThreshold:
       _minThreshold = value.toDouble();
@@ -247,7 +247,7 @@ bool Spearman::initialize()
    }
 
    // make sure minimum is a legal value
-   if ( _minimum < 1 )
+   if ( _minSamples < 1 )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
@@ -359,7 +359,7 @@ void Spearman::runSerial()
       // compute correlation only if there are enough samples
       float result = NAN;
 
-      if ( numSamples >= _minimum )
+      if ( numSamples >= _minSamples )
       {
          result = gsl_stats_spearman(a, 1, b, 1, numSamples, work);
       }
@@ -601,7 +601,7 @@ void Spearman::initializeKernelArguments()
    _kernel->setBuffer(0, _expressions);
    _kernel->setArgument(1, (cl_int)_input->getSampleSize());
    _kernel->setArgument(2, (cl_int)workSize);
-   _kernel->setArgument(5, (cl_int)_minimum);
+   _kernel->setArgument(5, (cl_int)_minSamples);
    _kernel->setDimensionCount(1);
    _kernel->setGlobalSize(0, _kernelSize);
    _kernel->setWorkgroupSize(0, workgroupSize);

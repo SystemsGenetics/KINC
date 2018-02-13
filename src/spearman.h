@@ -22,7 +22,7 @@ public:
       InputData = 0
       ,ClusterData
       ,OutputData
-      ,Minimum
+      ,MinSamples
       ,MinThreshold
       ,MaxThreshold
       ,BlockSize
@@ -103,7 +103,7 @@ private:
    ExpressionMatrix* _input {nullptr};
    CCMatrix* _cMatrix {nullptr};
    CorrelationMatrix* _output {nullptr};
-   int _minimum {30};
+   int _minSamples {30};
    int _blockSize {4};
    int _kernelSize {4096};
    float _minThreshold {0.5};
