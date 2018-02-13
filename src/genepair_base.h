@@ -24,6 +24,7 @@ namespace GenePair
             _cMatrix(matrix),
             _vector({matrix->_geneSize,0})
             {}
+         Pair() {}
          Pair(const Pair&) = default;
          Pair(Pair&&) = default;
          virtual void clearClusters() const = 0;

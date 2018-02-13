@@ -418,6 +418,9 @@ int Spearman::getBlockSize()
    initializeBlockExpressions();
    initializeKernelArguments();
 
+   // initialize input/output pairs
+   _inPair = CCMatrix::Pair(_cMatrix);
+   _outPair = CorrelationMatrix::Pair(_output);
 
    // calculate total number of calculations that will be done and return block size
    qint64 geneSize {_output->geneSize()};
@@ -565,11 +568,11 @@ void Spearman::initializeKernelArguments()
    // get opencl device
    EOpenCLDevice& device {EOpenCLDevice::getInstance()};
 
-   // get first power of 2 number greater or equal to sample size
-   int pow2Size {2};
-   while ( pow2Size < _input->getSampleSize() )
+   // get work size (sample size rounded up to next power of 2)
+   int workSize {2};
+   while ( workSize < _input->getSampleSize() )
    {
-      pow2Size *= 2;
+      workSize *= 2;
    }
 
    // increase kernel size to first power of 2 reached
@@ -584,7 +587,7 @@ void Spearman::initializeKernelArguments()
    _blocks = new Block*[_blockSize];
    for (int i = 0; i < _blockSize ;++i)
    {
-      _blocks[i] = new Block(device,pow2Size,_kernelSize);
+      _blocks[i] = new Block(device,_input->getSampleSize(),workSize,_kernelSize);
    }
 
    // figure out workgroup size for opencl kernels
@@ -595,13 +598,13 @@ void Spearman::initializeKernelArguments()
    }
 
    // set all static kernel arguments
-   _kernel->setArgument(0,(cl_int)_input->getSampleSize());
-   _kernel->setArgument(1,(cl_int)pow2Size);
-   _kernel->setArgument(2,(cl_int)_minimum);
-   _kernel->setBuffer(4,_expressions);
+   _kernel->setBuffer(0, _expressions);
+   _kernel->setArgument(1, (cl_int)_input->getSampleSize());
+   _kernel->setArgument(2, (cl_int)workSize);
+   _kernel->setArgument(5, (cl_int)_minimum);
    _kernel->setDimensionCount(1);
-   _kernel->setGlobalSize(0,_kernelSize);
-   _kernel->setWorkgroupSize(0,workgroupSize);
+   _kernel->setGlobalSize(0, _kernelSize);
+   _kernel->setWorkgroupSize(0, workgroupSize);
 
    // make sure everything with kernel worked
    if ( !*_kernel )
@@ -624,31 +627,76 @@ void Spearman::runStartBlock(Block& block)
    {
       // set block xy to beginning of read comparisons
       block.vector = _vector;
+      block.cluster = _cluster;
 
-      // copy list of comparisons to be done on this run
+      // load first input pair
+      if ( _cluster != 0 )
+      {
+         _inPair.read(_vector);
+      }
+
+      // copy gene pairs and sample masks for this block
       int index {0};
       while ( _vector.geneX() < _output->geneSize() && index < _kernelSize )
       {
-         (*block.references)[index*2] = _vector.geneX();
-         (*block.references)[(index*2)+1] = _vector.geneY();
-         ++_vector;
+         // copy gene pair
+         (*block.pairs)[index] = { _vector.geneX(), _vector.geneY() };
+
+         // read next cluster pair
+         if ( _cluster == 0 )
+         {
+            _inPair.read(_vector);
+         }
+
+         // copy sample mask if there is one
+         int N = _input->getSampleSize();
+         cl_char *sampleMask = &(*block.sampleMasks)[index * N];
+
+         if ( _inPair.clusterSize() > 0 )
+         {
+            for ( int i = 0; i < N; ++i )
+            {
+               sampleMask[i] = _inPair.at(_cluster, i);
+            }
+         }
+         else
+         {
+            sampleMask[0] = -1;
+         }
+
+         // increment to next cluster
+         _cluster = (_cluster + 1) % max(1, _inPair.clusterSize());
+
+         if ( _cluster == 0 )
+         {
+            ++_vector;
+         }
+
          ++index;
       }
 
       // copy any remaining and unused comparisons to zero
       while ( index < _kernelSize )
       {
-         (*block.references)[index*2] = 0;
-         (*block.references)[(index*2)+1] = 0;
+         (*block.pairs)[index] = { 0, 0 };
          ++index;
       }
 
-      // write comparison references to device making sure it worked
-      block.event = block.references->write();
-      if ( !*block.references )
+      // write pairs to device making sure it worked
+      block.event = block.pairs->write();
+      if ( !*block.pairs )
       {
          E_MAKE_EXCEPTION(e);
-         block.references->fillException(e);
+         block.pairs->fillException(e);
+         throw e;
+      }
+
+      // write sample masks to device making sure it worked
+      block.event = block.sampleMasks->write();
+      if ( !*block.sampleMasks )
+      {
+         E_MAKE_EXCEPTION(e);
+         block.sampleMasks->fillException(e);
          throw e;
       }
 
@@ -682,10 +730,11 @@ void Spearman::runLoadBlock(Block& block)
       }
 
       // set kernel arguments and execute it
-      _kernel->setBuffer(3,block.references);
-      _kernel->setBuffer(5,block.workBuffer);
-      _kernel->setBuffer(6,block.rankBuffer);
-      _kernel->setBuffer(7,block.answers);
+      _kernel->setBuffer(3, block.pairs);
+      _kernel->setBuffer(4, block.sampleMasks);
+      _kernel->setBuffer(6, block.workBuffer);
+      _kernel->setBuffer(7, block.rankBuffer);
+      _kernel->setBuffer(8, block.results);
       block.event = _kernel->execute();
 
       // make sure kernel worked
@@ -719,12 +768,12 @@ void Spearman::runExecuteBlock(Block& block)
          throw e;
       }
 
-      // read spearman answers from device and make sure it worked
-      block.event = block.answers->read();
-      if ( !*block.answers )
+      // read spearman results from device and make sure it worked
+      block.event = block.results->read();
+      if ( !*block.results )
       {
          E_MAKE_EXCEPTION(e);
-         block.answers->fillException(e);
+         block.results->fillException(e);
          throw e;
       }
 
@@ -740,8 +789,7 @@ void Spearman::runExecuteBlock(Block& block)
 
 void Spearman::runReadBlock(Block& block)
 {
-   // use pair declaration and check if read is complete and we are next in line
-   using Pair = CorrelationMatrix::Pair;
+   // check if read is complete and we are next in line
    if ( block.event.isDone() && _nextVector == block.vector )
    {
       // make sure opencl event worked
@@ -752,24 +800,55 @@ void Spearman::runReadBlock(Block& block)
          throw e;
       }
 
-      // make new correlation pair
-      Pair pair(_output);
-      pair.addCluster();
+      // load first input/output pair
+      if ( block.cluster != 0 )
+      {
+         _inPair.read(block.vector);
+         _outPair.read(block.vector);
+      }
 
-      // iterate through all valid spearman answers and write each one to correlation matrix that is
-      // not a NaN and is within the threshold limits
+      // save each valid correlation result to correlation matrix
       int index {0};
       while ( block.vector.geneX() < _output->geneSize() && index < _kernelSize )
       {
-         pair.at(0,0) = (*block.answers)[index];
-         if ( !isnan(pair.at(0,0)) && pair.at(0,0) >= _minThreshold
-              && pair.at(0,0) <= _maxThreshold )
+         // read next cluster pair
+         if ( block.cluster == 0 )
          {
-            pair.write(block.vector);
+            _inPair.read(block.vector);
+            _outPair.clearClusters();
+            _outPair.addCluster(max(1, _inPair.clusterSize()));
          }
-         ++block.vector;
+
+         // read result
+         float result = (*block.results)[index];
+
+         // save correlation if within threshold limits
+         if ( !isnan(result) && _minThreshold <= result && result <= _maxThreshold )
+         {
+            _outPair.at(block.cluster, 0) = result;
+
+            if ( block.cluster == _outPair.clusterSize() - 1 )
+            {
+               _outPair.write(block.vector);
+            }
+         }
+
+         // increment to next cluster
+         block.cluster = (block.cluster + 1) % _outPair.clusterSize();
+
+         if ( block.cluster == 0 )
+         {
+            ++block.vector;
+         }
+
          ++index;
          ++_pairsComplete;
+      }
+
+      // save last output pair
+      if ( block.cluster != 0 )
+      {
+         _outPair.write(block.vector);
       }
 
       // update next vector and change block state to start

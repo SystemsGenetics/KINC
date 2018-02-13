@@ -19,6 +19,7 @@ public:
          Base::Pair(matrix),
          _cMatrix(matrix)
          {}
+      Pair() {}
       virtual void clearClusters() const { _sampleMasks.clear(); }
       virtual void addCluster(int amount = 1) const;
       virtual int clusterSize() const { return _sampleMasks.size(); }

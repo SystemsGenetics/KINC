@@ -56,33 +56,42 @@ private:
          ,Read
          ,Done
       };
-      Block(EOpenCLDevice& device, int size, int kernelSize)
+
+      Block(EOpenCLDevice& device, int size, int workSize, int kernelSize)
       {
-         references = device.makeBuffer<cl_int>(2*kernelSize).release();
-         answers = device.makeBuffer<cl_float>(kernelSize).release();
-         workBuffer = device.makeBuffer<cl_float>(2*size*kernelSize).release();
-         rankBuffer = device.makeBuffer<cl_int>(2*size*kernelSize).release();
+         pairs = device.makeBuffer<cl_int2>(kernelSize).release();
+         sampleMasks = device.makeBuffer<cl_char>(size * kernelSize).release();
+         workBuffer = device.makeBuffer<cl_float>(2*workSize * kernelSize).release();
+         rankBuffer = device.makeBuffer<cl_int>(2*workSize * kernelSize).release();
+         results = device.makeBuffer<cl_float>(kernelSize).release();
+
          if ( !device )
          {
             E_MAKE_EXCEPTION(e);
             throw e;
          }
       }
+
       ~Block()
       {
-         delete references;
-         delete answers;
+         delete pairs;
+         delete sampleMasks;
          delete workBuffer;
          delete rankBuffer;
+         delete results;
       }
+
       int state {Start};
       GenePair::Vector vector;
+      int cluster;
       EOpenCLEvent event;
-      EOpenCLBuffer<cl_int>* references;
-      EOpenCLBuffer<cl_float>* answers;
+      EOpenCLBuffer<cl_int2>* pairs;
+      EOpenCLBuffer<cl_char>* sampleMasks;
       EOpenCLBuffer<cl_float>* workBuffer;
       EOpenCLBuffer<cl_int>* rankBuffer;
+      EOpenCLBuffer<cl_float>* results;
    };
+
    void initializeKernel();
    void initializeBlockExpressions();
    void initializeKernelArguments();
@@ -104,7 +113,10 @@ private:
    EOpenCLKernel* _kernel {nullptr};
    EOpenCLBuffer<cl_float>* _expressions {nullptr};
    GenePair::Vector _vector;
+   int _cluster {0};
    GenePair::Vector _nextVector;
+   CCMatrix::Pair _inPair;
+   CorrelationMatrix::Pair _outPair;
    qint64 _totalPairs;
    qint64 _pairsComplete {0};
    int _lastPercent {0};

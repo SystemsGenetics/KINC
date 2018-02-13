@@ -7,58 +7,73 @@
 // Fetch and build array of expressions for both genes, skipping any expressions that are missing
 // for either gene. Also builds ordered rank list used for spearman algorithm.
 //
-// @param indexA Index into expression list for gene A.
-// @param indexB Index into expression list for gene B.
+// @param expressions Array of all expressions for all genes to generate gene lists from.
 // @param size Size of lists for both genes.
 // @param workSize Size of new work arrays for genes and rank list.
-// @param listA New array of expressions for gene A that this function builds.
-// @param listB New array of expressions for gene B that this function builds.
+// @param vector Index into expression list for gene A.
+// @param sampleMask Array of values denoting membership in a cluster.
+// @param a New array of expressions for gene A that this function builds.
+// @param b New array of expressions for gene B that this function builds.
 // @param rankList New array that is initialized to start at 1 and increment by one for each
 // successive element.
-// @param expressions Array of all expressions for all genes to generate gene lists from.
 // @return Returns size of newly generated arrays which excludes any missing expression values.
-int fetchLists(int indexA, int indexB, int size, int workSize, __global float* listA
-               , __global float* listB, __global int* rankList, __global float* expressions)
+int fetchData(
+   __global const float *expressions,
+   int size, int workSize,
+   int2 vector,
+   __global const char *sampleMask,
+   __global float *a,
+   __global float *b,
+   __global int *rankList)
 {
    // initialize counters and indexes
-   int i;
-   int j = 0;
-   int newSize = 2;
-   indexA *= size;
-   indexB *= size;
+   __global const float *gene1 = &expressions[vector.x * size];
+   __global const float *gene2 = &expressions[vector.y * size];
 
-   // go through expression list with given indexes, generating new lists from it
-   for (i = 0; i < size ;++i)
+   // populate a and b with shared expressions of gene pair
+   int j = 0;
+
+   if ( sampleMask[0] != -1 )
    {
-      if ( !isnan(expressions[indexA+i]) && !isnan(expressions[indexB+i]) )
+      // add samples that are in the cluster
+      for ( int i = 0; i < size; ++i )
       {
-         // if both expressions exist add expressions to new lists, next rank, and increment
-         listA[j] = expressions[indexA+i];
-         listB[j] = expressions[indexB+i];
-         rankList[j] = j+1;
-         j++;
+         if ( sampleMask[i] == 1 )
+         {
+            a[j] = gene1[i];
+            b[j] = gene2[i];
+            rankList[j] = j + 1;
+            ++j;
+         }
+      }
+   }
+   else
+   {
+      // add samples that are valid
+      for ( int i = 0; i < size; ++i )
+      {
+         if ( !isnan(gene1[i]) && !isnan(gene2[i]) )
+         {
+            a[j] = gene1[i];
+            b[j] = gene2[i];
+            rankList[j] = j + 1;
+            ++j;
+         }
       }
    }
 
-   // set new size of generated lists and set unused end of lists to infinity or zero
-   newSize = j;
-   for (i = j; i < size;++i)
-   {
-      listA[i] = INFINITY;
-      listB[i] = INFINITY;
-      rankList[i] = 0;
-   }
-
    // set any remaining values in work arrays to infinity or zero
-   for ( i = size; i < workSize ;++i)
+   int numSamples = j;
+
+   for ( int i = j; i < workSize; ++i )
    {
-      listA[i] = INFINITY;
-      listB[i] = INFINITY;
+      a[i] = INFINITY;
+      b[i] = INFINITY;
       rankList[i] = 0;
    }
 
    // return new size for generated lists
-   return newSize;
+   return numSamples;
 }
 
 
@@ -205,51 +220,64 @@ float calculateSpearman(int size, __global int* rankList)
 
 
 
-// Calculate a bulk selection of spearman coefficients with different genes.
+// Calculate a block of spearman coefficients given a block of gene pairs.
 //
+// @param expressions Row first 2 dimensional array of all gene expressions.
 // @param size The size of the expressions/samples per gene.
 // @param workSize The power of 2 work size, MUST be a power of 2.
-// @param targetList Array containing all gene targets to sort.
-// @param expressions Row first 2 dimensional array of all gene expressions.
+// @param pairs Array of gene pairs.
+// @param sampleMasks Array of sample masks for each gene pair.
 // @param workLists Work space to be used for spearman calculations.
 // @param rankLists Work space to be used for spearman calculations.
-// @param resultList Array that will contain all completed spearman coefficients of all gene
-// correlations specified in target list.
-__kernel void calculateSpearmanBlock(int size, int workSize, int minimumSize
-                                     , __global int* targetList, __global float* expressions
-                                     , __global float* workLists, __global int* rankLists
-                                     , __global float* resultList)
+// @param results Array of output spearman coefficients for each gene pair.
+__kernel void calculateSpearmanBlock(
+   __global const float *expressions,
+   int size, int workSize,
+   __global const int2 *pairs,
+   __global const char *sampleMasks,
+   int minSamples,
+   __global float *workLists,
+   __global int *rankLists,
+   __global float *results)
 {
-   // initialize all variables and get global id
-   int newSize,pow2Size;
    int i = get_global_id(0);
-   __global float* listA = &workLists[2*i*workSize];
-   __global float* listB = &workLists[(2*i+1)*workSize];
-   __global int* rankList = &rankLists[i*workSize];
 
-   // fetch gene expressions lists for both genes from target list
-   newSize = fetchLists(targetList[2*i],targetList[2*i+1],size,workSize,listA,listB,rankList
-                        ,expressions);
+   if ( pairs[i].x == 0 && pairs[i].y == 0 )
+   {
+      return;
+   }
 
-   // make sure minimum number of related samples is reached
-   if ( newSize >= minimumSize )
+   // initialize workspace variables
+   __global const char *sampleMask = &sampleMasks[i * size];
+   __global float *a = &workLists[(2*i+0) * workSize];
+   __global float *b = &workLists[(2*i+1) * workSize];
+   __global int *rankList = &rankLists[2*i * workSize];
+
+   // fetch a and b arrays from expression matrix
+   int numSamples = fetchData(
+      expressions, size, workSize,
+      pairs[i],
+      sampleMask,
+      a, b, rankList
+   );
+
+   // compute correlation only if there are enough samples
+   results[i] = NAN;
+
+   if ( numSamples >= minSamples )
    {
       // get new power of 2 floor size
-      pow2Size = 2;
-      while ( pow2Size < newSize )
+      int pow2Size = 2;
+      while ( pow2Size < numSamples )
       {
          pow2Size *= 2;
       }
 
       // execute two bitonic sorts that is beginning of spearman algorithm
-      bitonicSortFF(pow2Size,listA,listB);
-      bitonicSortFI(pow2Size,listB,rankList);
+      bitonicSortFF(pow2Size, a, b);
+      bitonicSortFI(pow2Size, b, rankList);
 
       // calculate spearman coefficient from rearranged rank list and save to result list
-      resultList[i] = calculateSpearman(newSize,rankList);
-   }
-   else
-   {
-      resultList[i] = NAN;
+      results[i] = calculateSpearman(numSamples, rankList);
    }
 }
