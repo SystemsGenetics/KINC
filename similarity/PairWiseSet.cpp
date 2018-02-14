@@ -13,7 +13,7 @@ PairWiseSet::PairWiseSet(EMatrix * ematrix, int i, int j) {
 
   this->x_clean = NULL;
   this->y_clean = NULL;
-  this->n_clean = NAN;
+  this->n_clean = 0;
   this->samples = NULL;
   this->threshold= NAN;
 
@@ -33,7 +33,7 @@ PairWiseSet::PairWiseSet(EMatrix * ematrix, int i, int j, double th) {
 
   this->x_clean = NULL;
   this->y_clean = NULL;
-  this->n_clean = NAN;
+  this->n_clean = 0;
   this->samples = NULL;
   this->threshold= th;
 
@@ -59,7 +59,7 @@ PairWiseSet::PairWiseSet(double *a, double *b, int n, int i, int j, double th) {
 
   this->x_clean = NULL;
   this->y_clean = NULL;
-  this->n_clean = NAN;
+  this->n_clean = 0;
   this->samples = NULL;
   this->threshold= th;
 

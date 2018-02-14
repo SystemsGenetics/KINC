@@ -1,3 +1,4 @@
+#include <limits.h>
 #include "RunExtract.h"
 
 /**
@@ -67,7 +68,7 @@ void RunExtract::printUsage() {
 
 RunExtract::RunExtract(int argc, char *argv[]) {
   // Set clustering defaults.
-  max_missing = INFINITY;
+  max_missing = INT_MAX;
   max_modes = 1;
   min_range = 0;
   min_cluster_size = 30;

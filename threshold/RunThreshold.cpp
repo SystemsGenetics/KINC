@@ -1,3 +1,4 @@
+#include <limits.h>
 #include "RunThreshold.h"
 
 /**
@@ -73,7 +74,7 @@ void RunThreshold::printUsage() {
  */
 RunThreshold::RunThreshold(int argc, char *argv[]) {
   // initialize some of the program parameters
-  max_missing = INFINITY;
+  max_missing = INT_MAX;
   max_modes = 1;
   min_range = 0;
   min_cluster_size = 30;
