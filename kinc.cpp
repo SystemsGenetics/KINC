@@ -1,5 +1,4 @@
 #include "kinc.h"
-#include <mcheck.h>
 
 /**
  * Prints the command-line usage instructions for the similarity command
@@ -21,9 +20,6 @@ void print_usage() {
  * accordingly.
  */
 int main(int argc, char *argv[]) {
-  // Enable mtrace memory leak checking
-  //mtrace();
-
   // The return value
   int retval = 0;
 
@@ -94,59 +90,3 @@ int main(int argc, char *argv[]) {
 
   return retval;
 }
-
-/**
- *
- */
-void start_mpi() {
-
-  //  // MPI variables
-  //  int mpi_err, mpi_num_procs, mpi_id;
-  //
-  //  // Initialize MPI.
-  //  mpi_err = MPI_Init(&argc, &argv);
-  //
-  //  // Find out my process ID, and how many processes were started.
-  //  mpi_err |= MPI_Comm_rank(MPI_COMM_WORLD, &mpi_id);
-  //  mpi_err |= MPI_Comm_size(MPI_COMM_WORLD, &mpi_num_procs);
-  //
-  //  if (mpi_err != 0) {
-  //    printf("MPI initialization failed\n");
-  //    exit(1);
-  //  }
-
-    // For testing a single process... should comment out when not testing.
-  //  if (mpi_id + 1 != 5) {
-  //    mpi_err = MPI_Finalize();
-  //    return 1;
-  //  }
-
-  //  printf("Using %i out of %i processes.\n", mpi_id + 1, mpi_num_procs);
-}
-
-/**
- *
- */
-void end_mpi() {
-  // Wait until all other processes are completed before closing the manager 
-//  MPI_Status stat;
-//  char message[10];
-//  if (mpi_id > 0 ) {
-//    // All non master processes should report done when completed.
-//    sprintf(message, "Done");
-//    MPI_Send(message, strlen(message)+1, MPI_BYTE, 0,1,MPI_COMM_WORLD);
-//  }
-//  else {
-//    // The master process should wait to get 'Done' from each process
-//    // before terminating
-//    int proc;
-//    for (proc = 1; proc < mpi_num_procs; proc++) {
-//      MPI_Recv(message, sizeof(message), MPI_BYTE, proc, 1, MPI_COMM_WORLD, &stat);
-//    }
-//  }
-//
-//  // Terminate MPI.
-//  mpi_err = MPI_Finalize();
-}
-
-

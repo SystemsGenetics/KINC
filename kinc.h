@@ -34,8 +34,6 @@
 #include <stdio.h>
 #include <string.h>
 
-//#include <mpi.h>
-
 #include "similarity/RunSimilarity.h"
 #include "threshold/RunThreshold.h"
 #include "extract/RunExtract.h"
@@ -51,4 +49,3 @@ void print_usage();
 int do_extract(int argc, char *argv[]);
 
 #endif
-
