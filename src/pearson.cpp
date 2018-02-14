@@ -113,10 +113,8 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       case MinSamples: return tr("Minimum size of samples two genes must share to generate a spearman"
                               " coefficient.");
       case MinExpression: return tr("Minimum threshold for a gene expression to be included in correlation.");
-      case MinCorrelation: return tr("Minimum threshold that a correlation value must be equal to or"
-                                   " greater than to be added to the correlation matrix.");
-      case MaxCorrelation: return tr("Maximum threshold that a correlation value must be equal to or"
-                                   " lesser than to be added to the correlation matrix.");
+      case MinCorrelation: return tr("Minimum threshold (absolute value) for a correlation to be saved.");
+      case MaxCorrelation: return tr("Maximum threshold (absolute value) for a correlation to be saved.");
       case BlockSize: return tr("This option only applies if OpenCL is used. Total number of blocks"
                                 " to run for execution.");
       case KernelSize: return tr("This option only applies if OpenCL is used. Total number of"
@@ -143,8 +141,8 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       {
       case MinSamples: return 1;
       case MinExpression: return -INFINITY;
-      case MinCorrelation: return -1.0;
-      case MaxCorrelation: return -1.0;
+      case MinCorrelation: return 0.0;
+      case MaxCorrelation: return 0.0;
       case BlockSize: return 1;
       case KernelSize: return 1;
       default: return QVariant();
@@ -381,7 +379,7 @@ void Pearson::runSerial()
       }
 
       // save correlation if within threshold limits
-      if ( !isnan(result) && _minCorrelation <= result && result <= _maxCorrelation )
+      if ( !isnan(result) && _minCorrelation <= abs(result) && abs(result) <= _maxCorrelation )
       {
          outPair.at(cluster, 0) = result;
 
@@ -831,7 +829,7 @@ void Pearson::runReadBlock(Block& block)
          float result = (*block.results)[index];
 
          // save correlation if within threshold limits
-         if ( !isnan(result) && _minCorrelation <= result && result <= _maxCorrelation )
+         if ( !isnan(result) && _minCorrelation <= abs(result) && abs(result) <= _maxCorrelation )
          {
             _outPair.at(block.cluster, 0) = result;
 
