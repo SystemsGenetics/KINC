@@ -4,111 +4,126 @@
 
 
 
-int fetchLists(__global float* expressions, int indexA, int indexB, __global float* listA
-               , __global float* listB, int size)
+// Fetch and build array of expressions for both genes, skipping any expressions that are missing
+// for either gene.
+//
+// @param expressions Array of all expressions for all genes to generate gene lists from.
+// @param size Size of lists for both genes.
+// @param vector Index into expression list for gene A.
+// @param sampleMask Array of values denoting membership in a cluster.
+// @param x New array of expressions for gene A that this function builds.
+// @param y New array of expressions for gene B that this function builds.
+// @return Returns size of newly generated arrays which excludes any missing expression values.
+int fetchData(
+   __global const float *expressions,
+   int size,
+   int2 vector,
+   __global const char *sampleMask,
+   __global float *x,
+   __global float *y)
 {
    // initialize counters and indexes
-   int i;
-   int j = 0;
-   int newSize = 2;
-   indexA *= size;
-   indexB *= size;
+   __global const float *gene1 = &expressions[vector.x * size];
+   __global const float *gene2 = &expressions[vector.y * size];
 
-   // go through expression list with given indexes, generating new lists from it
-   for (i = 0; i < size ;++i)
+   // populate a and b with shared expressions of gene pair
+   int numSamples = 0;
+
+   if ( sampleMask[0] != -1 )
    {
-      if ( !isnan(expressions[indexA+i]) && !isnan(expressions[indexB+i]) )
+      // add samples that are in the cluster
+      for ( int i = 0; i < size; ++i )
       {
-         // if both expressions exist add expressions to new lists and increment
-         listA[j] = expressions[indexA+i];
-         listB[j] = expressions[indexB+i];
-         j++;
+         if ( sampleMask[i] == 1 )
+         {
+            x[numSamples] = gene1[i];
+            y[numSamples] = gene2[i];
+            ++numSamples;
+         }
+      }
+   }
+   else
+   {
+      // add samples that are valid
+      for ( int i = 0; i < size; ++i )
+      {
+         if ( !isnan(gene1[i]) && !isnan(gene2[i]) )
+         {
+            x[numSamples] = gene1[i];
+            y[numSamples] = gene2[i];
+            ++numSamples;
+         }
       }
    }
 
-   // set new size of generated lists and set unused end of lists to infinity
-   newSize = j;
-   for (i = j; i < size;++i)
-   {
-      listA[i] = INFINITY;
-      listB[i] = INFINITY;
-   }
-
    // return new size for generated lists
-   return newSize;
+   return numSamples;
 }
 
 
 
 
 
-/*
- *
- *
- *
- */
-__kernel void calculatePearsonBlock(int size, int minimumSize, __global float* expressions
-                                    , __global float* workLists , __global int* targetList
-                                    , __global float* resultList)
+
+// Calculate a block of pearson coefficients given a block of gene pairs.
+//
+// @param expressions Gene expression matrix
+// @param size The size of the expressions/samples per gene.
+// @param pairs Array of gene pairs.
+// @param sampleMasks Array of sample masks for each gene pair.
+// @param work Work space to be used for pearson calculations.
+// @param results Array of output spearman coefficients for each gene pair.
+__kernel void calculatePearsonBlock(
+   __global const float *expressions,
+   int size,
+   __global const int2 *pairs,
+   __global const char *sampleMasks,
+   int minSamples,
+   __global float *work,
+   __global float *results)
 {
-   // Initialize variables used for pearson
-   float aSum;
-   float bSum;
-   float aaSum;
-   float bbSum;
-   float abSum;
-   float a;
-   float b;
-
-
-   // initialize counters and other variables
-   int x;
-   int newSize;
    int i = get_global_id(0);
 
-   // initialize pointers to both work lists
-   __global float* listA = &workLists[2*i*size];
-   __global float* listB = &workLists[(2*i+1)*size];
-
-   // Populate work lists from expression data and make sure minimum size is reached
-   newSize = fetchLists(expressions,targetList[2*i],targetList[2*i + 1],listA,listB,size);
-   if ( newSize >= minimumSize )
+   if ( pairs[i].x == 0 && pairs[i].y == 0 )
    {
-      // Calculate summation of both lists
-      aSum = aaSum = 0.0;
-      bSum = bbSum = 0.0;
-      abSum = 0.0;
-      for (x = 0; x < newSize ;++x)
-      {
-         aSum += listA[x];
-         bSum += listB[x];
-
-         aaSum += (listA[x]*listA[x]);
-         bbSum += (listB[x]*listB[x]);
-
-         abSum += (listA[x]*listB[x]);
-      }
-
-      // Calculate numerator of pearson
-      a = ((newSize)*abSum) - (aSum*bSum);
-      // Calculate denominator of pearson and check to see if it is zero
-      b = sqrt(((newSize*aaSum)-(aSum*aSum))*((newSize*bbSum)-(bSum*bSum)));
-      if ( b == 0.0 )
-      {
-         // set result to zero
-         resultList[i] = 0.0;
-      }
-
-      // else denominator is non-zero so calculate pearson with a/b
-      else
-      {
-         resultList[i] = a/b;
-      }
+      return;
    }
 
-   // else minimum is not reached and NAN is returned
-   else
+   // initialize workspace variables
+   __global const char *sampleMask = &sampleMasks[i * size];
+   __global float *x = &work[(2*i+0) * size];
+   __global float *y = &work[(2*i+1) * size];
+
+   // fetch x and y arrays from expression matrix
+   int n = fetchData(
+      expressions, size,
+      pairs[i],
+      sampleMask,
+      x, y
+   );
+
+   // compute correlation only if there are enough samples
+   results[i] = NAN;
+
+   if ( n >= minSamples )
    {
-      resultList[i] = NAN;
+      // compute intermediate sums
+      float sumx = 0;
+      float sumy = 0;
+      float sumx2 = 0;
+      float sumy2 = 0;
+      float sumxy = 0;
+
+      for ( int i = 0; i < n; ++i )
+      {
+         sumx += x[i];
+         sumy += y[i];
+         sumx2 += x[i] * x[i];
+         sumy2 += y[i] * y[i];
+         sumxy += x[i] * y[i];
+      }
+
+      // compute Pearson correlation coefficient
+      results[i] = (n*sumxy - sumx*sumy) / sqrt((n*sumx2 - sumx*sumx) * (n*sumy2 - sumy*sumy));
    }
 }

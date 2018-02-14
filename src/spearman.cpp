@@ -332,11 +332,11 @@ void Spearman::runSerial()
    CCMatrix::Pair inPair(_cMatrix);
    CorrelationMatrix::Pair outPair(_output);
 
-   // initialize xy gene indexes
+   // initialize gene pair index
    GenePair::Vector vector;
    int cluster {0};
 
-   // increment through all gene pairs
+   // iterate through all gene pairs
    while ( vector.geneX() < _output->geneSize() )
    {
       // make sure interruption is not requested

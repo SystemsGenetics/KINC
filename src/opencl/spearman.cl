@@ -31,7 +31,7 @@ int fetchData(
    __global const float *gene2 = &expressions[vector.y * size];
 
    // populate a and b with shared expressions of gene pair
-   int j = 0;
+   int numSamples = 0;
 
    if ( sampleMask[0] != -1 )
    {
@@ -40,10 +40,10 @@ int fetchData(
       {
          if ( sampleMask[i] == 1 )
          {
-            a[j] = gene1[i];
-            b[j] = gene2[i];
-            rankList[j] = j + 1;
-            ++j;
+            a[numSamples] = gene1[i];
+            b[numSamples] = gene2[i];
+            rankList[numSamples] = numSamples + 1;
+            ++numSamples;
          }
       }
    }
@@ -54,18 +54,16 @@ int fetchData(
       {
          if ( !isnan(gene1[i]) && !isnan(gene2[i]) )
          {
-            a[j] = gene1[i];
-            b[j] = gene2[i];
-            rankList[j] = j + 1;
-            ++j;
+            a[numSamples] = gene1[i];
+            b[numSamples] = gene2[i];
+            rankList[numSamples] = numSamples + 1;
+            ++numSamples;
          }
       }
    }
 
    // set any remaining values in work arrays to infinity or zero
-   int numSamples = j;
-
-   for ( int i = j; i < workSize; ++i )
+   for ( int i = numSamples; i < workSize; ++i )
    {
       a[i] = INFINITY;
       b[i] = INFINITY;
@@ -222,7 +220,7 @@ float calculateSpearman(int size, __global int* rankList)
 
 // Calculate a block of spearman coefficients given a block of gene pairs.
 //
-// @param expressions Row first 2 dimensional array of all gene expressions.
+// @param expressions Gene expression matrix
 // @param size The size of the expressions/samples per gene.
 // @param workSize The power of 2 work size, MUST be a power of 2.
 // @param pairs Array of gene pairs.

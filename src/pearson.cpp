@@ -1,10 +1,7 @@
 #include <ace/core/metadata.h>
-#include <gsl/gsl_statistics.h>
 
 #include "pearson.h"
 #include "datafactory.h"
-#include "expressionmatrix.h"
-#include "correlationmatrix.h"
 
 
 
@@ -49,8 +46,9 @@ EAbstractAnalytic::ArgumentType Pearson::getArgumentData(int argument)
    switch (argument)
    {
    case InputData: return Type::DataIn;
+   case ClusterData: return Type::DataIn;
    case OutputData: return Type::DataOut;
-   case Minimum: return Type::Integer;
+   case MinSamples: return Type::Integer;
    case MinThreshold: return Type::Double;
    case MaxThreshold: return Type::Double;
    case BlockSize: return Type::Integer;
@@ -77,8 +75,9 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case InputData: return QString("input");
+      case ClusterData: return QString("cmatrix");
       case OutputData: return QString("output");
-      case Minimum: return QString("min");
+      case MinSamples: return QString("min");
       case MinThreshold: return QString("minthresh");
       case MaxThreshold: return QString("maxthresh");
       case BlockSize: return QString("bsize");
@@ -90,8 +89,9 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case InputData: return tr("Input:");
+      case ClusterData: return tr("Cluster Matrix:");
       case OutputData: return tr("Output:");
-      case Minimum: return tr("Minimum Sample Size:");
+      case MinSamples: return tr("Minimum Sample Size:");
       case MinThreshold: return tr("Minimum Threshold:");
       case MaxThreshold: return tr("Maximum Threshold:");
       case BlockSize: return tr("Block Size:");
@@ -104,9 +104,10 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       {
       case InputData: return tr("Input expression matrix that will be used to compute pearson"
                                 " coefficients.");
+      case ClusterData: return tr("Cluster matrix to compute correlations for separate clusters.");
       case OutputData: return tr("Output correlation matrixx that will store pearson coefficient"
                                  " results.");
-      case Minimum: return tr("Minimum size of samples two genes must share to generate a spearman"
+      case MinSamples: return tr("Minimum size of samples two genes must share to generate a spearman"
                               " coefficient.");
       case MinThreshold: return tr("Minimum threshold that a correlation value must be equal to or"
                                    " greater than to be added to the correlation matrix.");
@@ -123,7 +124,7 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       // return nothing
       switch (argument)
       {
-      case Minimum: return 30;
+      case MinSamples: return 30;
       case MinThreshold: return 0.5;
       case MaxThreshold: return 1.0;
       case BlockSize: return 4;
@@ -135,7 +136,7 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       // return nothing
       switch (argument)
       {
-      case Minimum: return 1;
+      case MinSamples: return 1;
       case MinThreshold: return -1.0;
       case MaxThreshold: return -1.0;
       case BlockSize: return 1;
@@ -147,7 +148,7 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       // return nothing
       switch (argument)
       {
-      case Minimum: return INT_MAX;
+      case MinSamples: return INT_MAX;
       case MinThreshold: return 1.0;
       case MaxThreshold: return 1.0;
       case BlockSize: return INT_MAX;
@@ -160,6 +161,7 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case InputData: return DataFactory::ExpressionMatrixType;
+      case ClusterData: return DataFactory::CCMatrixType;
       case OutputData: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
@@ -178,8 +180,8 @@ void Pearson::setArgument(int argument, QVariant value)
    // figure out which argument is being set and set it
    switch (argument)
    {
-   case Minimum:
-      _minimum = value.toInt();
+   case MinSamples:
+      _minSamples = value.toInt();
       break;
    case MinThreshold:
       _minThreshold = value.toDouble();
@@ -209,6 +211,9 @@ void Pearson::setArgument(int argument, EAbstractData *data)
    case InputData:
       _input = dynamic_cast<ExpressionMatrix*>(data);
       break;
+   case ClusterData:
+      _cMatrix = dynamic_cast<CCMatrix*>(data);
+      break;
    case OutputData:
       _output = dynamic_cast<CorrelationMatrix*>(data);
       break;
@@ -223,7 +228,7 @@ void Pearson::setArgument(int argument, EAbstractData *data)
 bool Pearson::initialize()
 {
    // make sure there is valid input and output
-   if ( !_input || !_output )
+   if ( !_input || !_cMatrix || !_output )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
@@ -232,7 +237,7 @@ bool Pearson::initialize()
    }
 
    // make sure minimum is a legal value
-   if ( _minimum < 1 )
+   if ( _minSamples < 1 )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
@@ -247,6 +252,155 @@ bool Pearson::initialize()
    correlations.toArray()->append(name);
    _output->initialize(_input->getGeneNames(),correlations);
    return false;
+}
+
+
+
+
+
+
+int Pearson::fetchData(const GenePair::Vector& vector, const CCMatrix::Pair& pair, int k, float *x, float *y)
+{
+   // read in gene expressions
+   ExpressionMatrix::Gene gene1(_input);
+   ExpressionMatrix::Gene gene2(_input);
+
+   gene1.read(vector.geneX());
+   gene2.read(vector.geneY());
+
+   // populate x and y with shared expressions of gene pair
+   int numSamples = 0;
+
+   if ( pair.clusterSize() > 0 )
+   {
+      // add samples that are in the cluster
+      for ( int i = 0; i < _input->getSampleSize(); ++i )
+      {
+         if ( pair.at(k, i) == 1 )
+         {
+            x[numSamples] = gene1.at(i);
+            y[numSamples] = gene2.at(i);
+            ++numSamples;
+         }
+      }
+   }
+   else
+   {
+      // add samples that are valid
+      for ( int i = 0; i < _input->getSampleSize(); ++i )
+      {
+         if ( !isnan(gene1.at(i)) && !isnan(gene2.at(i)) )
+         {
+            x[numSamples] = gene1.at(i);
+            y[numSamples] = gene2.at(i);
+            ++numSamples;
+         }
+      }
+   }
+
+   return numSamples;
+}
+
+
+
+
+
+
+void Pearson::runSerial()
+{
+   // initialize percent complete and steps
+   int lastPercent {0};
+   qint64 steps {0};
+   qint64 totalSteps {_output->geneSize()*(_output->geneSize() - 1)/2};
+
+   // initialize work arrays
+   float x[_input->getSampleSize()];
+   float y[_input->getSampleSize()];
+
+   // initialize input/output pairs
+   CCMatrix::Pair inPair(_cMatrix);
+   CorrelationMatrix::Pair outPair(_output);
+
+   // initialize gene pair index
+   GenePair::Vector vector;
+   int cluster {0};
+
+   // iterate through all gene pairs
+   while ( vector.geneX() < _output->geneSize() )
+   {
+      // make sure interruption is not requested
+      if ( isInterruptionRequested() )
+      {
+         return;
+      }
+
+      // read next cluster pair
+      if ( cluster == 0 )
+      {
+         inPair.read(vector);
+         outPair.clearClusters();
+         outPair.addCluster(max(1, inPair.clusterSize()));
+      }
+
+      // fetch a and b arrays from expression matrix
+      int n = fetchData(vector, inPair, cluster, x, y);
+
+      // compute correlation only if there are enough samples
+      float result = NAN;
+
+      if ( n >= _minSamples )
+      {
+         // compute intermediate sums
+         float sumx = 0;
+         float sumy = 0;
+         float sumx2 = 0;
+         float sumy2 = 0;
+         float sumxy = 0;
+
+         for ( int i = 0; i < n; ++i )
+         {
+            sumx += x[i];
+            sumy += y[i];
+            sumx2 += x[i] * x[i];
+            sumy2 += y[i] * y[i];
+            sumxy += x[i] * y[i];
+         }
+
+         // compute Pearson correlation coefficient
+         result = (n*sumxy - sumx*sumy) / sqrt((n*sumx2 - sumx*sumx) * (n*sumy2 - sumy*sumy));
+      }
+
+      // save correlation if within threshold limits
+      if ( !isnan(result) && _minThreshold <= result && result <= _maxThreshold )
+      {
+         outPair.at(cluster, 0) = result;
+
+         if ( cluster == outPair.clusterSize() - 1 )
+         {
+            outPair.write(vector);
+         }
+      }
+
+      // increment to next cluster
+      cluster = (cluster + 1) % outPair.clusterSize();
+
+      if ( cluster == 0 )
+      {
+         ++vector;
+      }
+
+      // increment steps and calculate percent complete
+      ++steps;
+      qint64 newPercent {100*steps/totalSteps};
+
+      // check to see if percent has changed
+      if ( newPercent != lastPercent )
+      {
+         // update percent complete and emit progressed signal
+         lastPercent = newPercent;
+         emit progressed(lastPercent);
+      }
+   }
 }
 
 
@@ -270,6 +424,9 @@ int Pearson::getBlockSize()
    initializeBlockExpressions();
    initializeKernelArguments();
 
+   // initialize input/output pairs
+   _inPair = CCMatrix::Pair(_cMatrix);
+   _outPair = CorrelationMatrix::Pair(_output);
 
    // calculate total number of calculations that will be done and return block size
    qint64 geneSize {_output->geneSize()};
@@ -281,7 +438,7 @@ int Pearson::getBlockSize()
 
 
 
-/////////////////////////////////////
+
 bool Pearson::runBlock(int index)
 {
    // figure out what state this block is in and execute it
@@ -350,7 +507,6 @@ void Pearson::initializeKernel()
    }
 
    // get kernel from compiled code making sure it worked
-   // TODO: Connor never changed the kernel function name!!??
    _kernel = _program->makeKernel("calculatePearsonBlock").release();
    if ( !*_program )
    {
@@ -409,72 +565,7 @@ void Pearson::initializeBlockExpressions()
 }
 
 
-void Pearson::runSerial()
-{
-    // Initialize correlation gene pair and expression genes for input/output
-    CorrelationMatrix::Pair pair(_output);
-    pair.addCluster();
-    ExpressionMatrix::Gene gene1(_input);
-    ExpressionMatrix::Gene gene2(_input);
 
-    // Initialize the first gene comparision
-    GenePair::Vector vector;
-
-    // Iterate through the gene pairs
-    // _output->getGeneSize() represents all of the possible comparisons that can
-    // be done limited by the gene with the least amount of samples
-    while(vector.geneX() < _output->geneSize())
-    {
-        // Initialize the running sum variables
-        double sumx {0.0}, sumy {0.0}, sumx2 {0.0}, sumy2 {0.0}, sumxy {0.0};
-        // A trap to kill this function if there is an interrupt i.e. the user wants to kill
-        // the process
-        if ( isInterruptionRequested() )
-        {
-           return;
-        }
-
-        // Initialize sample size and read in gene expressions
-        // Keep track of the count of viable samples that ARE NOT nans
-        int size {0};
-        gene1.read(vector.geneX());
-        gene2.read(vector.geneY());
-
-        // Iterate through the gene1 and gene2 sample row
-        for (auto i = 0; i < _input->getSampleSize(); i++)
-        {
-            if(!std::isnan(gene1.at(i)) && !std::isnan(gene2.at(i)))
-            {
-                // Multiply the current scores together
-                //  - keep a running sum of this
-                sumxy += gene1.at(i) * gene2.at(i);
-                //  - keep a running sum the x and y values
-                sumx += gene1.at(i);
-                sumy += gene2.at(i);
-                //  - keep a running sum of the square of x and y values
-                sumx2 += pow(gene1.at(i), 2.0);
-                sumy2 += pow(gene2.at(i), 2.0);
-                size++;
-            }
-        }
-
-        // Once we're out of this loop we have the summation values needed to
-        // calculate the Pearson Coefficient for the selected gene comparison
-        double numerator {(size * sumxy) - (sumx * sumy)};
-        double denominator {sqrt(((size*sumx2) - pow(sumx, 2.0)))*sqrt(((size*sumy2) - pow(sumy, 2.0)))};
-
-        // Set result to correlation
-        pair.at(0,0) = numerator / denominator;
-
-        // Save this gene pair and increment to the next comparison
-        if ( !isnan(pair.at(0,0)) && pair.at(0,0) >= _minThreshold
-             && pair.at(0,0) <= _maxThreshold )
-        {
-         pair.write(vector);
-        }
-        ++vector;
-    }
-}
 
 
 
@@ -482,13 +573,6 @@ void Pearson::initializeKernelArguments()
 {
    // get opencl device
    EOpenCLDevice& device {EOpenCLDevice::getInstance()};
-
-   // get first power of 2 number greater or equal to sample size
-   int pow2Size {2};
-   while ( pow2Size < _input->getSampleSize() )
-   {
-      pow2Size *= 2;
-   }
 
    // increase kernel size to first power of 2 reached
    int pow2 {2};
@@ -502,7 +586,7 @@ void Pearson::initializeKernelArguments()
    _blocks = new Block*[_blockSize];
    for (int i = 0; i < _blockSize ;++i)
    {
-      _blocks[i] = new Block(device,pow2Size,_kernelSize);
+      _blocks[i] = new Block(device,_input->getSampleSize(),_kernelSize);
    }
 
    // figure out workgroup size for opencl kernels
@@ -513,9 +597,9 @@ void Pearson::initializeKernelArguments()
    }
 
    // set all static kernel arguments
-   _kernel->setArgument(0,(cl_int)_input->getSampleSize());
-   _kernel->setArgument(1,(cl_int)_minimum);
-   _kernel->setBuffer(2,_expressions);
+   _kernel->setBuffer(0, _expressions);
+   _kernel->setArgument(1, (cl_int)_input->getSampleSize());
+   _kernel->setArgument(4, (cl_int)_minSamples);
    _kernel->setDimensionCount(1);
    _kernel->setGlobalSize(0,_kernelSize);
    _kernel->setWorkgroupSize(0,workgroupSize);
@@ -541,31 +625,76 @@ void Pearson::runStartBlock(Block& block)
    {
       // set block xy to beginning of read comparisons
       block.vector = _vector;
+      block.cluster = _cluster;
+
+      // load first input pair
+      if ( _cluster != 0 )
+      {
+         _inPair.read(_vector);
+      }
 
       // copy list of comparisons to be done on this run
       int index {0};
       while ( _vector.geneX() < _output->geneSize() && index < _kernelSize )
       {
-         (*block.references)[index*2] = _vector.geneX();
-         (*block.references)[(index*2)+1] = _vector.geneY();
-         ++_vector;
+         // copy gene pair
+         (*block.pairs)[index] = { _vector.geneX(), _vector.geneY() };
+
+         // read next cluster pair
+         if ( _cluster == 0 )
+         {
+            _inPair.read(_vector);
+         }
+
+         // copy sample mask if there is one
+         int N = _input->getSampleSize();
+         cl_char *sampleMask = &(*block.sampleMasks)[index * N];
+
+         if ( _inPair.clusterSize() > 0 )
+         {
+            for ( int i = 0; i < N; ++i )
+            {
+               sampleMask[i] = _inPair.at(_cluster, i);
+            }
+         }
+         else
+         {
+            sampleMask[0] = -1;
+         }
+
+         // increment to next cluster
+         _cluster = (_cluster + 1) % max(1, _inPair.clusterSize());
+
+         if ( _cluster == 0 )
+         {
+            ++_vector;
+         }
+
          ++index;
       }
 
       // copy any remaining and unused comparisons to zero
       while ( index < _kernelSize )
       {
-         (*block.references)[index*2] = 0;
-         (*block.references)[(index*2)+1] = 0;
+         (*block.pairs)[index] = { 0, 0 };
          ++index;
       }
 
       // write comparison references to device making sure it worked
-      block.event = block.references->write();
-      if ( !*block.references )
+      block.event = block.pairs->write();
+      if ( !*block.pairs )
       {
          E_MAKE_EXCEPTION(e);
-         block.references->fillException(e);
+         block.pairs->fillException(e);
+         throw e;
+      }
+
+      // write sample masks to device making sure it worked
+      block.event = block.sampleMasks->write();
+      if ( !*block.sampleMasks )
+      {
+         E_MAKE_EXCEPTION(e);
+         block.sampleMasks->fillException(e);
          throw e;
       }
 
@@ -599,9 +728,10 @@ void Pearson::runLoadBlock(Block& block)
       }
 
       // set kernel arguments and execute it
-      _kernel->setBuffer(3,block.workBuffer);
-      _kernel->setBuffer(4,block.references);
-      _kernel->setBuffer(5,block.answers);
+      _kernel->setBuffer(2, block.pairs);
+      _kernel->setBuffer(3, block.sampleMasks);
+      _kernel->setBuffer(5, block.workBuffer);
+      _kernel->setBuffer(6, block.results);
       block.event = _kernel->execute();
 
       // make sure kernel worked
@@ -636,11 +766,11 @@ void Pearson::runExecuteBlock(Block& block)
       }
 
       // read spearman answers from device and make sure it worked
-      block.event = block.answers->read();
-      if ( !*block.answers )
+      block.event = block.results->read();
+      if ( !*block.results )
       {
          E_MAKE_EXCEPTION(e);
-         block.answers->fillException(e);
+         block.results->fillException(e);
          throw e;
       }
 
@@ -656,8 +786,7 @@ void Pearson::runExecuteBlock(Block& block)
 
 void Pearson::runReadBlock(Block& block)
 {
-   // use pair declaration and check if read is complete and we are next in line
-   using Pair = CorrelationMatrix::Pair;
+   // check if read is complete and we are next in line
    if ( block.event.isDone() && _nextVector == block.vector )
    {
       // make sure opencl event worked
@@ -668,24 +797,55 @@ void Pearson::runReadBlock(Block& block)
          throw e;
       }
 
-      // make new correlation pair
-      Pair pair(_output);
-      pair.addCluster();
+      // load first input/output pair
+      if ( block.cluster != 0 )
+      {
+         _inPair.read(block.vector);
+         _outPair.read(block.vector);
+      }
 
-      // iterate through all valid spearman answers and write each one to correlation matrix that is
-      // not a NaN and is within threshold limits
+      // save each valid correlation result to correlation matrix
       int index {0};
       while ( block.vector.geneX() < _output->geneSize() && index < _kernelSize )
       {
-         pair.at(0,0) = (*block.answers)[index];
-         if ( !isnan(pair.at(0,0)) && pair.at(0,0) >= _minThreshold
-              && pair.at(0,0) <= _maxThreshold )
+         // read next cluster pair
+         if ( block.cluster == 0 )
          {
-            pair.write(block.vector);
+            _inPair.read(block.vector);
+            _outPair.clearClusters();
+            _outPair.addCluster(max(1, _inPair.clusterSize()));
          }
-         ++(block.vector);
+
+         // read result
+         float result = (*block.results)[index];
+
+         // save correlation if within threshold limits
+         if ( !isnan(result) && _minThreshold <= result && result <= _maxThreshold )
+         {
+            _outPair.at(block.cluster, 0) = result;
+
+            if ( block.cluster == _outPair.clusterSize() - 1 )
+            {
+               _outPair.write(block.vector);
+            }
+         }
+
+         // increment to next cluster
+         block.cluster = (block.cluster + 1) % _outPair.clusterSize();
+
+         if ( block.cluster == 0 )
+         {
+            ++block.vector;
+         }
+
          ++index;
          ++_pairsComplete;
+      }
+
+      // save last output pair
+      if ( block.cluster != 0 )
+      {
+         _outPair.write(block.vector);
       }
 
       // update next vector and change block state to start

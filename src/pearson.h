@@ -3,31 +3,33 @@
 #include <ace/core/AceCore.h>
 #include <ace/core/AceOpenCL.h>
 
+#include "expressionmatrix.h"
+#include "ccmatrix.h"
+#include "correlationmatrix.h"
 #include "genepair_vector.h"
-
-
-
-class ExpressionMatrix;
-class CorrelationMatrix;
 
 
 
 class Pearson : public EAbstractAnalytic
 {
    Q_OBJECT
+
 public:
    ~Pearson();
+
    enum Arguments
    {
       InputData = 0
+      ,ClusterData
       ,OutputData
-      ,Minimum
+      ,MinSamples
       ,MinThreshold
       ,MaxThreshold
       ,BlockSize
       ,KernelSize
       ,Total
    };
+
    virtual int getArgumentCount() override final { return Total; }
    virtual ArgumentType getArgumentData(int argument) override final;
    virtual QVariant getArgumentData(int argument, Role role) override final;
@@ -36,11 +38,14 @@ public:
    quint32 getCapabilities() const override final
       { return Capabilities::Serial|Capabilities::OpenCL; }
    virtual bool initialize() override final;
+   virtual void runSerial() override final;
    virtual int getBlockSize() override;
    virtual bool runBlock(int block) override final;
    virtual void finish() override final {}
-   virtual void runSerial() override final;
+
 private:
+   int fetchData(const GenePair::Vector& vector, const CCMatrix::Pair& pair, int k, float *x, float *y);
+
    struct Block
    {
       enum
@@ -51,30 +56,39 @@ private:
          ,Read
          ,Done
       };
+
       Block(EOpenCLDevice& device, int size, int kernelSize)
       {
-         references = device.makeBuffer<cl_int>(2*kernelSize).release();
-         answers = device.makeBuffer<cl_float>(kernelSize).release();
-         workBuffer = device.makeBuffer<cl_float>(2*size*kernelSize).release();
+         pairs = device.makeBuffer<cl_int2>(kernelSize).release();
+         sampleMasks = device.makeBuffer<cl_char>(size * kernelSize).release();
+         workBuffer = device.makeBuffer<cl_float>(2*size * kernelSize).release();
+         results = device.makeBuffer<cl_float>(kernelSize).release();
+
          if ( !device )
          {
             E_MAKE_EXCEPTION(e);
             throw e;
          }
       }
+
       ~Block()
       {
-         delete references;
-         delete answers;
+         delete pairs;
+         delete sampleMasks;
          delete workBuffer;
+         delete results;
       }
+
       int state {Start};
       GenePair::Vector vector;
+      int cluster;
       EOpenCLEvent event;
-      EOpenCLBuffer<cl_int>* references;
-      EOpenCLBuffer<cl_float>* answers;
+      EOpenCLBuffer<cl_int2>* pairs;
+      EOpenCLBuffer<cl_char>* sampleMasks;
       EOpenCLBuffer<cl_float>* workBuffer;
+      EOpenCLBuffer<cl_float>* results;
    };
+
    void initializeKernel();
    void initializeBlockExpressions();
    void initializeKernelArguments();
@@ -82,9 +96,11 @@ private:
    void runLoadBlock(Block& block);
    void runExecuteBlock(Block& block);
    void runReadBlock(Block& block);
+
    ExpressionMatrix* _input {nullptr};
+   CCMatrix* _cMatrix {nullptr};
    CorrelationMatrix* _output {nullptr};
-   int _minimum {30};
+   int _minSamples {30};
    int _blockSize {4};
    int _kernelSize {4096};
    float _minThreshold {0.5};
@@ -94,7 +110,10 @@ private:
    EOpenCLKernel* _kernel {nullptr};
    EOpenCLBuffer<cl_float>* _expressions {nullptr};
    GenePair::Vector _vector;
+   int _cluster {0};
    GenePair::Vector _nextVector;
+   CCMatrix::Pair _inPair;
+   CorrelationMatrix::Pair _outPair;
    qint64 _totalPairs;
    qint64 _pairsComplete {0};
    int _lastPercent {0};
