@@ -164,7 +164,7 @@ float computeLogLikelihood(
  */
 void fit(
    __global const Vector2 *X, int N, int K,
-   __global int *y,
+   __global char *y,
    float *logL,
    __global Vector2 *means,
    __global char *y_next)
