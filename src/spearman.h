@@ -23,8 +23,9 @@ public:
       ,ClusterData
       ,OutputData
       ,MinSamples
-      ,MinThreshold
-      ,MaxThreshold
+      ,MinExpression
+      ,MinCorrelation
+      ,MaxCorrelation
       ,BlockSize
       ,KernelSize
       ,Total
@@ -104,10 +105,12 @@ private:
    CCMatrix* _cMatrix {nullptr};
    CorrelationMatrix* _output {nullptr};
    int _minSamples {30};
+   float _minExpression {-INFINITY};
+   float _minCorrelation {0.5};
+   float _maxCorrelation {1.0};
    int _blockSize {4};
    int _kernelSize {4096};
-   float _minThreshold {0.5};
-   float _maxThreshold {1.0};
+
    Block** _blocks {nullptr};
    EOpenCLProgram* _program {nullptr};
    EOpenCLKernel* _kernel {nullptr};

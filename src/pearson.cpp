@@ -49,8 +49,9 @@ EAbstractAnalytic::ArgumentType Pearson::getArgumentData(int argument)
    case ClusterData: return Type::DataIn;
    case OutputData: return Type::DataOut;
    case MinSamples: return Type::Integer;
-   case MinThreshold: return Type::Double;
-   case MaxThreshold: return Type::Double;
+   case MinExpression: return Type::Double;
+   case MinCorrelation: return Type::Double;
+   case MaxCorrelation: return Type::Double;
    case BlockSize: return Type::Integer;
    case KernelSize: return Type::Integer;
    default: return Type::Bool;
@@ -77,9 +78,10 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       case InputData: return QString("input");
       case ClusterData: return QString("cmatrix");
       case OutputData: return QString("output");
-      case MinSamples: return QString("min");
-      case MinThreshold: return QString("minthresh");
-      case MaxThreshold: return QString("maxthresh");
+      case MinSamples: return QString("minsamp");
+      case MinExpression: return QString("minexpr");
+      case MinCorrelation: return QString("mincorr");
+      case MaxCorrelation: return QString("maxcorr");
       case BlockSize: return QString("bsize");
       case KernelSize: return QString("ksize");
       default: return QVariant();
@@ -92,8 +94,9 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       case ClusterData: return tr("Cluster Matrix:");
       case OutputData: return tr("Output:");
       case MinSamples: return tr("Minimum Sample Size:");
-      case MinThreshold: return tr("Minimum Threshold:");
-      case MaxThreshold: return tr("Maximum Threshold:");
+      case MinExpression: return tr("Minimum Expression:");
+      case MinCorrelation: return tr("Minimum Correlation:");
+      case MaxCorrelation: return tr("Maximum Correlation:");
       case BlockSize: return tr("Block Size:");
       case KernelSize: return tr("Kernel Size:");
       default: return QVariant();
@@ -109,9 +112,10 @@ QVariant Pearson::getArgumentData(int argument, Role role)
                                  " results.");
       case MinSamples: return tr("Minimum size of samples two genes must share to generate a spearman"
                               " coefficient.");
-      case MinThreshold: return tr("Minimum threshold that a correlation value must be equal to or"
+      case MinExpression: return tr("Minimum threshold for a gene expression to be included in correlation.");
+      case MinCorrelation: return tr("Minimum threshold that a correlation value must be equal to or"
                                    " greater than to be added to the correlation matrix.");
-      case MaxThreshold: return tr("Maximum threshold that a correlation value must be equal to or"
+      case MaxCorrelation: return tr("Maximum threshold that a correlation value must be equal to or"
                                    " lesser than to be added to the correlation matrix.");
       case BlockSize: return tr("This option only applies if OpenCL is used. Total number of blocks"
                                 " to run for execution.");
@@ -125,8 +129,9 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case MinSamples: return 30;
-      case MinThreshold: return 0.5;
-      case MaxThreshold: return 1.0;
+      case MinExpression: return -INFINITY;
+      case MinCorrelation: return 0.5;
+      case MaxCorrelation: return 1.0;
       case BlockSize: return 4;
       case KernelSize: return 4096;
       default: return QVariant();
@@ -137,8 +142,9 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case MinSamples: return 1;
-      case MinThreshold: return -1.0;
-      case MaxThreshold: return -1.0;
+      case MinExpression: return -INFINITY;
+      case MinCorrelation: return -1.0;
+      case MaxCorrelation: return -1.0;
       case BlockSize: return 1;
       case KernelSize: return 1;
       default: return QVariant();
@@ -149,8 +155,9 @@ QVariant Pearson::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case MinSamples: return INT_MAX;
-      case MinThreshold: return 1.0;
-      case MaxThreshold: return 1.0;
+      case MinExpression: return +INFINITY;
+      case MinCorrelation: return 1.0;
+      case MaxCorrelation: return 1.0;
       case BlockSize: return INT_MAX;
       case KernelSize: return INT_MAX;
       default: return QVariant();
@@ -183,11 +190,14 @@ void Pearson::setArgument(int argument, QVariant value)
    case MinSamples:
       _minSamples = value.toInt();
       break;
-   case MinThreshold:
-      _minThreshold = value.toDouble();
+   case MinExpression:
+      _minExpression = value.toDouble();
       break;
-   case MaxThreshold:
-      _maxThreshold = value.toDouble();
+   case MinCorrelation:
+      _minCorrelation = value.toDouble();
+      break;
+   case MaxCorrelation:
+      _maxCorrelation = value.toDouble();
       break;
    case BlockSize:
       _blockSize = value.toInt();
@@ -289,7 +299,7 @@ int Pearson::fetchData(const GenePair::Vector& vector, const CCMatrix::Pair& pai
       // add samples that are valid
       for ( int i = 0; i < _input->getSampleSize(); ++i )
       {
-         if ( !isnan(gene1.at(i)) && !isnan(gene2.at(i)) )
+         if ( !isnan(gene1.at(i)) && !isnan(gene2.at(i)) && _minExpression <= gene1.at(i) && _minExpression <= gene2.at(i) )
          {
             x[numSamples] = gene1.at(i);
             y[numSamples] = gene2.at(i);
@@ -371,7 +381,7 @@ void Pearson::runSerial()
       }
 
       // save correlation if within threshold limits
-      if ( !isnan(result) && _minThreshold <= result && result <= _maxThreshold )
+      if ( !isnan(result) && _minCorrelation <= result && result <= _maxCorrelation )
       {
          outPair.at(cluster, 0) = result;
 
@@ -600,6 +610,7 @@ void Pearson::initializeKernelArguments()
    _kernel->setBuffer(0, _expressions);
    _kernel->setArgument(1, (cl_int)_input->getSampleSize());
    _kernel->setArgument(4, (cl_int)_minSamples);
+   _kernel->setArgument(5, (cl_int)_minExpression);
    _kernel->setDimensionCount(1);
    _kernel->setGlobalSize(0,_kernelSize);
    _kernel->setWorkgroupSize(0,workgroupSize);
@@ -730,8 +741,8 @@ void Pearson::runLoadBlock(Block& block)
       // set kernel arguments and execute it
       _kernel->setBuffer(2, block.pairs);
       _kernel->setBuffer(3, block.sampleMasks);
-      _kernel->setBuffer(5, block.workBuffer);
-      _kernel->setBuffer(6, block.results);
+      _kernel->setBuffer(6, block.workBuffer);
+      _kernel->setBuffer(7, block.results);
       block.event = _kernel->execute();
 
       // make sure kernel worked
@@ -820,7 +831,7 @@ void Pearson::runReadBlock(Block& block)
          float result = (*block.results)[index];
 
          // save correlation if within threshold limits
-         if ( !isnan(result) && _minThreshold <= result && result <= _maxThreshold )
+         if ( !isnan(result) && _minCorrelation <= result && result <= _maxCorrelation )
          {
             _outPair.at(block.cluster, 0) = result;
 

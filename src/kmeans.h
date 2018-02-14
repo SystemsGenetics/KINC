@@ -22,7 +22,7 @@ public:
       InputData = 0
       ,OutputData
       ,MinSamples
-      ,MinThreshold
+      ,MinExpression
       ,MinClusters
       ,MaxClusters
       ,BlockSize
@@ -111,7 +111,7 @@ private:
    ExpressionMatrix* _input {nullptr};
    CCMatrix* _output {nullptr};
    int _minSamples {30};
-   float _minThreshold {-INFINITY};
+   float _minExpression {-INFINITY};
    int _minClusters {1};
    int _maxClusters {5};
    int _blockSize {4};

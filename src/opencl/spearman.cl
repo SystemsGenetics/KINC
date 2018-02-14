@@ -12,6 +12,7 @@
 // @param workSize Size of new work arrays for genes and rank list.
 // @param vector Index into expression list for gene A.
 // @param sampleMask Array of values denoting membership in a cluster.
+// @param minExpression Minimum threshold for a gene expression to be included.
 // @param a New array of expressions for gene A that this function builds.
 // @param b New array of expressions for gene B that this function builds.
 // @param rankList New array that is initialized to start at 1 and increment by one for each
@@ -22,6 +23,7 @@ int fetchData(
    int size, int workSize,
    int2 vector,
    __global const char *sampleMask,
+   int minExpression,
    __global float *a,
    __global float *b,
    __global int *rankList)
@@ -52,7 +54,7 @@ int fetchData(
       // add samples that are valid
       for ( int i = 0; i < size; ++i )
       {
-         if ( !isnan(gene1[i]) && !isnan(gene2[i]) )
+         if ( !isnan(gene1[i]) && !isnan(gene2[i]) && minExpression <= gene1[i] && minExpression <= gene2[i] )
          {
             a[numSamples] = gene1[i];
             b[numSamples] = gene2[i];
@@ -225,6 +227,8 @@ float calculateSpearman(int size, __global int* rankList)
 // @param workSize The power of 2 work size, MUST be a power of 2.
 // @param pairs Array of gene pairs.
 // @param sampleMasks Array of sample masks for each gene pair.
+// @param minSamples Minimum number of samples required to calculate correlation.
+// @param minExpression Minimum threshold for a gene expression to be included.
 // @param workLists Work space to be used for spearman calculations.
 // @param rankLists Work space to be used for spearman calculations.
 // @param results Array of output spearman coefficients for each gene pair.
@@ -234,6 +238,7 @@ __kernel void calculateSpearmanBlock(
    __global const int2 *pairs,
    __global const char *sampleMasks,
    int minSamples,
+   int minExpression,
    __global float *workLists,
    __global int *rankLists,
    __global float *results)
@@ -256,6 +261,7 @@ __kernel void calculateSpearmanBlock(
       expressions, size, workSize,
       pairs[i],
       sampleMask,
+      minExpression,
       a, b, rankList
    );
 

@@ -183,7 +183,7 @@ int rand(ulong *state)
  * @param expressions
  * @param size
  * @param vector
- * @param minThreshold
+ * @param minExpression
  * @param X
  * @param labels
  * @return number of rows in X
@@ -191,7 +191,7 @@ int rand(ulong *state)
 int fetchData(
    __global const float *expressions, int size,
    int2 vector,
-   int minThreshold,
+   int minExpression,
    __global Vector2 *X,
    __global char *labels)
 {
@@ -208,7 +208,7 @@ int fetchData(
       {
          labels[i] = -9;
       }
-      else if ( gene1[i] < minThreshold || gene2[i] < minThreshold )
+      else if ( gene1[i] < minExpression || gene2[i] < minExpression )
       {
          labels[i] = -6;
       }
@@ -919,7 +919,7 @@ __kernel void computeGMMBlock(
    __global const float *expressions, int size,
    __global const int2 *pairs,
    int minSamples,
-   int minThreshold,
+   int minExpression,
    int minClusters, int maxClusters,
    Criterion criterion,
    int removePreOutliers,
@@ -955,7 +955,7 @@ __kernel void computeGMMBlock(
    __global char *bestLabels = &result_labels[i * size];
 
    // fetch data matrix X from expression matrix
-   int numSamples = fetchData(expressions, size, pairs[i], minThreshold, X, bestLabels);
+   int numSamples = fetchData(expressions, size, pairs[i], minExpression, X, bestLabels);
 
    // remove pre-clustering outliers
    __global float *work = loggamma;

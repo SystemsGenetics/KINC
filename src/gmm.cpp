@@ -56,7 +56,7 @@ EAbstractAnalytic::ArgumentType GMM::getArgumentData(int argument)
    case InputData: return Type::DataIn;
    case OutputData: return Type::DataOut;
    case MinSamples: return Type::Integer;
-   case MinThreshold: return Type::Double;
+   case MinExpression: return Type::Double;
    case MinClusters: return Type::Integer;
    case MaxClusters: return Type::Integer;
    case CriterionArg: return Type::Combo;
@@ -87,8 +87,8 @@ QVariant GMM::getArgumentData(int argument, Role role)
       {
       case InputData: return QString("input");
       case OutputData: return QString("output");
-      case MinSamples: return QString("min");
-      case MinThreshold: return QString("minthresh");
+      case MinSamples: return QString("minsamp");
+      case MinExpression: return QString("minexpr");
       case MinClusters: return QString("minclus");
       case MaxClusters: return QString("maxclus");
       case CriterionArg: return QString("crit");
@@ -105,7 +105,7 @@ QVariant GMM::getArgumentData(int argument, Role role)
       case InputData: return tr("Input:");
       case OutputData: return tr("Output:");
       case MinSamples: return tr("Minimum Sample Size:");
-      case MinThreshold: return tr("Minimum Threshold:");
+      case MinExpression: return tr("Minimum Expression:");
       case MinClusters: return tr("Minimum Clusters:");
       case MaxClusters: return tr("Maximum Clusters:");
       case CriterionArg: return tr("Criterion:");
@@ -122,8 +122,7 @@ QVariant GMM::getArgumentData(int argument, Role role)
       case InputData: return tr("Input expression matrix that will be used to compute pair-wise clusters.");
       case OutputData: return tr("Output cluster matrix that will store pair-wise clusters.");
       case MinSamples: return tr("Minimum size of samples two genes must share to perform clustering.");
-      case MinThreshold: return tr("Minimum threshold that a gene expression must be equal to or"
-                                   " greater than to be included in clustering.");
+      case MinExpression: return tr("Minimum threshold for a gene expression to be included in clustering.");
       case MinClusters: return tr("Minimum number of clusters to test.");
       case MaxClusters: return tr("Maximum number of clusters to test.");
       case CriterionArg: return tr("Criterion to determine the number of clusters.");
@@ -148,7 +147,7 @@ QVariant GMM::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case MinSamples: return 30;
-      case MinThreshold: return -INFINITY;
+      case MinExpression: return -INFINITY;
       case MinClusters: return 1;
       case MaxClusters: return 5;
       case CriterionArg: return tr(BIC);
@@ -164,7 +163,7 @@ QVariant GMM::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case MinSamples: return 1;
-      case MinThreshold: return -INFINITY;
+      case MinExpression: return -INFINITY;
       case MinClusters: return 1;
       case MaxClusters: return 1;
       case BlockSize: return 1;
@@ -177,7 +176,7 @@ QVariant GMM::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case MinSamples: return INT_MAX;
-      case MinThreshold: return +INFINITY;
+      case MinExpression: return +INFINITY;
       case MinClusters: return INT_MAX;
       case MaxClusters: return INT_MAX;
       case BlockSize: return INT_MAX;
@@ -211,8 +210,8 @@ void GMM::setArgument(int argument, QVariant value)
    case MinSamples:
       _minSamples = value.toInt();
       break;
-   case MinThreshold:
-      _minThreshold = value.toDouble();
+   case MinExpression:
+      _minExpression = value.toDouble();
       break;
    case MinClusters:
       _minClusters = value.toInt();
@@ -330,7 +329,7 @@ void GMM::fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& 
       {
          labels[i] = -9;
       }
-      else if ( gene1.at(i) < _minThreshold || gene2.at(i) < _minThreshold )
+      else if ( gene1.at(i) < _minExpression || gene2.at(i) < _minExpression )
       {
          labels[i] = -6;
       }
@@ -762,7 +761,7 @@ void GMM::initializeKernelArguments()
    _kernel->setBuffer(0, _expressions);
    _kernel->setArgument(1, (cl_int)_input->getSampleSize());
    _kernel->setArgument(3, (cl_int)_minSamples);
-   _kernel->setArgument(4, (cl_int)_minThreshold);
+   _kernel->setArgument(4, (cl_int)_minExpression);
    _kernel->setArgument(5, (cl_int)_minClusters);
    _kernel->setArgument(6, (cl_int)_maxClusters);
    _kernel->setArgument(7, (cl_int)_criterion);

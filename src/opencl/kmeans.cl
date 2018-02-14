@@ -68,7 +68,7 @@ int rand(ulong *state)
  * @param expressions
  * @param size
  * @param pair
- * @param minThreshold
+ * @param minExpression
  * @param X
  * @param labels
  * @return number of rows in X
@@ -76,7 +76,7 @@ int rand(ulong *state)
 int fetchData(
    __global const float *expressions, int size,
    int2 pair,
-   int minThreshold,
+   int minExpression,
    __global Vector2 *X,
    __global char *labels)
 {
@@ -97,7 +97,7 @@ int fetchData(
       {
          labels[i] = -9;
       }
-      else if ( v.x < minThreshold || v.y < minThreshold )
+      else if ( v.x < minExpression || v.y < minExpression )
       {
          labels[i] = -6;
       }
@@ -285,7 +285,7 @@ float computeBIC(int K, float logL, int N, int D)
 __kernel void computeKmeansBlock(
    __global const float *expressions, int size,
    __global const int2 *pairs,
-   int minSamples, int minThreshold, int minClusters, int maxClusters,
+   int minSamples, int minExpression, int minClusters, int maxClusters,
    __global Vector2 *work_X,
    __global char *work_y,
    __global Vector2 *work_means,
@@ -309,7 +309,7 @@ __kernel void computeKmeansBlock(
    __global char *bestLabels = &result_labels[i * size];
 
    // fetch data matrix X from expression matrix
-   int numSamples = fetchData(expressions, size, pairs[i], minThreshold, X, bestLabels);
+   int numSamples = fetchData(expressions, size, pairs[i], minExpression, X, bestLabels);
 
    // perform clustering only if there are enough samples
    *bestK = 0;

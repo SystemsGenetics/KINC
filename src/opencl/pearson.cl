@@ -11,6 +11,7 @@
 // @param size Size of lists for both genes.
 // @param vector Index into expression list for gene A.
 // @param sampleMask Array of values denoting membership in a cluster.
+// @param minExpression Minimum threshold for a gene expression to be included.
 // @param x New array of expressions for gene A that this function builds.
 // @param y New array of expressions for gene B that this function builds.
 // @return Returns size of newly generated arrays which excludes any missing expression values.
@@ -19,6 +20,7 @@ int fetchData(
    int size,
    int2 vector,
    __global const char *sampleMask,
+   int minExpression,
    __global float *x,
    __global float *y)
 {
@@ -47,7 +49,7 @@ int fetchData(
       // add samples that are valid
       for ( int i = 0; i < size; ++i )
       {
-         if ( !isnan(gene1[i]) && !isnan(gene2[i]) )
+         if ( !isnan(gene1[i]) && !isnan(gene2[i]) && minExpression <= gene1[i] && minExpression <= gene2[i] )
          {
             x[numSamples] = gene1[i];
             y[numSamples] = gene2[i];
@@ -71,6 +73,8 @@ int fetchData(
 // @param size The size of the expressions/samples per gene.
 // @param pairs Array of gene pairs.
 // @param sampleMasks Array of sample masks for each gene pair.
+// @param minSamples Minimum number of samples required to calculate correlation.
+// @param minExpression Minimum threshold for a gene expression to be included.
 // @param work Work space to be used for pearson calculations.
 // @param results Array of output spearman coefficients for each gene pair.
 __kernel void calculatePearsonBlock(
@@ -79,6 +83,7 @@ __kernel void calculatePearsonBlock(
    __global const int2 *pairs,
    __global const char *sampleMasks,
    int minSamples,
+   int minExpression,
    __global float *work,
    __global float *results)
 {
@@ -99,6 +104,7 @@ __kernel void calculatePearsonBlock(
       expressions, size,
       pairs[i],
       sampleMask,
+      minExpression,
       x, y
    );
 
