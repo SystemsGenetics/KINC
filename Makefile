@@ -1,6 +1,7 @@
+# build parameters
 DEBUG ?= 0
-INSTALL_PREFIX ?= .
 
+# compiler, compiler flags
 CXX = g++
 CXXFLAGS = -std=c++11
 LDFLAGS = -lm -lgsl -lgslcblas -llapack -lblas -lpthread -lmixmod -lmixmod_newmat
@@ -11,6 +12,7 @@ else
 CXXFLAGS += -O3 -Wno-unused-result
 endif
 
+# output files
 OBJS = \
 	general/error.o \
 	general/misc.o \
@@ -67,6 +69,3 @@ kinc: $(OBJS)
 
 clean:
 	rm -f $(OBJS) $(BINS)
-
-install: all
-	install -m 0755 $(BINS) $(INSTALL_PREFIX)

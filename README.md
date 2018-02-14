@@ -14,11 +14,32 @@ KINC depends on the following software:
 - BLAS (http://www.netlib.org/blas/)
 - LAPACK (http://www.netlib.org/lapack/)
 
-To build KINC:
+Most dependencies can be installed through a package manager, such as on Ubuntu:
 ```
+sudo apt install libblas-dev liblapack-dev libgsl-dev
+```
+
+The mixmod library can be built and installed from source:
+```
+# download and extract mixmod source
+wget http://www.mixmod.org/IMG/tgz/libmixmod_3.2.2_src.tgz
+tar -xvf libmixmod_3.2.2_src.tgz
+
+# build and install libmixmod
+cd libmixmod_3.2.2/BUILD
+cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/software
 make
-make install [INSTALL_PREFIX=...]
+make install
+
+# make sure these environment variables are set
+# (append to ~/.bashrc)
+export INSTALL_PREFIX=$HOME/software
+export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$INSTALL_PREFIX/include
+export LIBRARY_PATH=$LIBRARY_PATH:$INSTALL_PREFIX/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_PREFIX/lib
 ```
+
+To build KINC, simply run `make`:
 
 ## Usage
 
