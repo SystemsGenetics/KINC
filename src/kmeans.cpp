@@ -668,7 +668,7 @@ void KMeans::runStartBlock(Block& block)
       }
 
       // write pairs to device making sure it worked
-      block.event = block.pairs->write();
+      block.events.append(block.pairs->write());
       if ( !*block.pairs )
       {
          E_MAKE_EXCEPTION(e);
@@ -695,15 +695,10 @@ void KMeans::runStartBlock(Block& block)
 void KMeans::runLoadBlock(Block& block)
 {
    // check to see if reference loading is complete
-   if ( block.event.isDone() )
+   if ( !block.isWaiting() )
    {
-      // make sure opencl event worked
-      if ( !block.event )
-      {
-         E_MAKE_EXCEPTION(e);
-         block.event.fillException(e);
-         throw e;
-      }
+      // make sure opencl events worked
+      block.checkAllEvents();
 
       // set kernel arguments and execute it
       _kernel->setBuffer(2, block.pairs);
@@ -713,7 +708,7 @@ void KMeans::runLoadBlock(Block& block)
       _kernel->setBuffer(10, block.work_ynext);
       _kernel->setBuffer(11, block.result_K);
       _kernel->setBuffer(12, block.result_labels);
-      block.event = _kernel->execute();
+      block.events.append(_kernel->execute());
 
       // make sure kernel worked
       if ( !*_kernel )
@@ -736,18 +731,13 @@ void KMeans::runLoadBlock(Block& block)
 void KMeans::runExecuteBlock(Block& block)
 {
    // check to see if kernel execution is complete
-   if ( block.event.isDone() )
+   if ( !block.isWaiting() )
    {
-      // make sure opencl event worked
-      if ( !block.event )
-      {
-         E_MAKE_EXCEPTION(e);
-         block.event.fillException(e);
-         throw e;
-      }
+      // make sure opencl events worked
+      block.checkAllEvents();
 
       // read clustering results from device and make sure it worked
-      block.event = block.result_K->read();
+      block.events.append(block.result_K->read());
       if ( !*block.result_K )
       {
          E_MAKE_EXCEPTION(e);
@@ -755,7 +745,7 @@ void KMeans::runExecuteBlock(Block& block)
          throw e;
       }
 
-      block.event = block.result_labels->read();
+      block.events.append(block.result_labels->read());
       if ( !*block.result_labels )
       {
          E_MAKE_EXCEPTION(e);
@@ -776,15 +766,10 @@ void KMeans::runExecuteBlock(Block& block)
 void KMeans::runReadBlock(Block& block)
 {
    // check if read is complete and we are next in line
-   if ( block.event.isDone() && _nextVector == block.vector )
+   if ( !block.isWaiting() && _nextVector == block.vector )
    {
-      // make sure opencl event worked
-      if ( !block.event )
-      {
-         E_MAKE_EXCEPTION(e);
-         block.event.fillException(e);
-         throw e;
-      }
+      // make sure opencl events worked
+      block.checkAllEvents();
 
       // save each valid clustering result to cluster matrix
       int index {0};
@@ -810,5 +795,8 @@ void KMeans::runReadBlock(Block& block)
       // update next vector and change block state to start
       _nextVector = block.vector;
       block.state = Block::Start;
+
+      // clear all opencl events
+      block.events.clear();
    }
 }

@@ -692,7 +692,7 @@ void Spearman::runStartBlock(Block& block)
       }
 
       // write pairs to device making sure it worked
-      block.event = block.pairs->write();
+      block.events.append(block.pairs->write());
       if ( !*block.pairs )
       {
          E_MAKE_EXCEPTION(e);
@@ -701,7 +701,7 @@ void Spearman::runStartBlock(Block& block)
       }
 
       // write sample masks to device making sure it worked
-      block.event = block.sampleMasks->write();
+      block.events.append(block.sampleMasks->write());
       if ( !*block.sampleMasks )
       {
          E_MAKE_EXCEPTION(e);
@@ -728,15 +728,10 @@ void Spearman::runStartBlock(Block& block)
 void Spearman::runLoadBlock(Block& block)
 {
    // check to see if reference loading is complete
-   if ( block.event.isDone() )
+   if ( !block.isWaiting() )
    {
-      // make sure opencl event worked
-      if ( !block.event )
-      {
-         E_MAKE_EXCEPTION(e);
-         block.event.fillException(e);
-         throw e;
-      }
+      // make sure opencl events worked
+      block.checkAllEvents();
 
       // set kernel arguments and execute it
       _kernel->setBuffer(3, block.pairs);
@@ -744,7 +739,7 @@ void Spearman::runLoadBlock(Block& block)
       _kernel->setBuffer(7, block.workBuffer);
       _kernel->setBuffer(8, block.rankBuffer);
       _kernel->setBuffer(9, block.results);
-      block.event = _kernel->execute();
+      block.events.append(_kernel->execute());
 
       // make sure kernel worked
       if ( !*_kernel )
@@ -767,18 +762,13 @@ void Spearman::runLoadBlock(Block& block)
 void Spearman::runExecuteBlock(Block& block)
 {
    // check to see if kernel execution is complete
-   if ( block.event.isDone() )
+   if ( !block.isWaiting() )
    {
-      // make sure opencl event worked
-      if ( !block.event )
-      {
-         E_MAKE_EXCEPTION(e);
-         block.event.fillException(e);
-         throw e;
-      }
+      // make sure opencl events worked
+      block.checkAllEvents();
 
       // read spearman results from device and make sure it worked
-      block.event = block.results->read();
+      block.events.append(block.results->read());
       if ( !*block.results )
       {
          E_MAKE_EXCEPTION(e);
@@ -799,15 +789,10 @@ void Spearman::runExecuteBlock(Block& block)
 void Spearman::runReadBlock(Block& block)
 {
    // check if read is complete and we are next in line
-   if ( block.event.isDone() && _nextVector == block.vector )
+   if ( !block.isWaiting() && _nextVector == block.vector )
    {
-      // make sure opencl event worked
-      if ( !block.event )
-      {
-         E_MAKE_EXCEPTION(e);
-         block.event.fillException(e);
-         throw e;
-      }
+      // make sure opencl events worked
+      block.checkAllEvents();
 
       // load first input/output pair
       if ( block.cluster != 0 )
@@ -863,5 +848,8 @@ void Spearman::runReadBlock(Block& block)
       // update next vector and change block state to start
       _nextVector = block.vector;
       block.state = Block::Start;
+
+      // clear all opencl events
+      block.events.clear();
    }
 }

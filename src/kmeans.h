@@ -88,9 +88,35 @@ private:
          delete result_labels;
       }
 
+      bool isWaiting()
+      {
+         for ( auto& event : events )
+         {
+            if ( !event.isDone() )
+            {
+               return true;
+            }
+         }
+
+         return false;
+      }
+
+      void checkAllEvents()
+      {
+         for ( auto& event : events )
+         {
+            if ( !event )
+            {
+               E_MAKE_EXCEPTION(e);
+               event.fillException(e);
+               throw e;
+            }
+         }
+      }
+
       int state {Start};
       GenePair::Vector vector;
-      EOpenCLEvent event;
+      QVector<EOpenCLEvent> events;
       EOpenCLBuffer<cl_int2>* pairs;
       EOpenCLBuffer<cl_float2>* work_X;
       EOpenCLBuffer<cl_char>* work_y;

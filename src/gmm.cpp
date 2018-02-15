@@ -810,7 +810,7 @@ void GMM::runStartBlock(Block& block)
       }
 
       // write pairs to device making sure it worked
-      block.event = block.pairs->write();
+      block.events.append(block.pairs->write());
       if ( !*block.pairs )
       {
          E_MAKE_EXCEPTION(e);
@@ -837,15 +837,10 @@ void GMM::runStartBlock(Block& block)
 void GMM::runLoadBlock(Block& block)
 {
    // check to see if reference loading is complete
-   if ( block.event.isDone() )
+   if ( !block.isWaiting() )
    {
-      // make sure opencl event worked
-      if ( !block.event )
-      {
-         E_MAKE_EXCEPTION(e);
-         block.event.fillException(e);
-         throw e;
-      }
+      // make sure opencl events worked
+      block.checkAllEvents();
 
       // set kernel arguments and execute it
       _kernel->setBuffer(2, block.pairs);
@@ -859,7 +854,7 @@ void GMM::runLoadBlock(Block& block)
       _kernel->setBuffer(17, block.work_logGamma);
       _kernel->setBuffer(18, block.result_K);
       _kernel->setBuffer(19, block.result_labels);
-      block.event = _kernel->execute();
+      block.events.append(_kernel->execute());
 
       // make sure kernel worked
       if ( !*_kernel )
@@ -882,18 +877,13 @@ void GMM::runLoadBlock(Block& block)
 void GMM::runExecuteBlock(Block& block)
 {
    // check to see if kernel execution is complete
-   if ( block.event.isDone() )
+   if ( !block.isWaiting() )
    {
-      // make sure opencl event worked
-      if ( !block.event )
-      {
-         E_MAKE_EXCEPTION(e);
-         block.event.fillException(e);
-         throw e;
-      }
+      // make sure opencl events worked
+      block.checkAllEvents();
 
       // read clustering results from device and make sure it worked
-      block.event = block.result_K->read();
+      block.events.append(block.result_K->read());
       if ( !*block.result_K )
       {
          E_MAKE_EXCEPTION(e);
@@ -901,7 +891,7 @@ void GMM::runExecuteBlock(Block& block)
          throw e;
       }
 
-      block.event = block.result_labels->read();
+      block.events.append(block.result_labels->read());
       if ( !*block.result_labels )
       {
          E_MAKE_EXCEPTION(e);
@@ -922,15 +912,10 @@ void GMM::runExecuteBlock(Block& block)
 void GMM::runReadBlock(Block& block)
 {
    // check if read is complete and we are next in line
-   if ( block.event.isDone() && _nextVector == block.vector )
+   if ( !block.isWaiting() && _nextVector == block.vector )
    {
-      // make sure opencl event worked
-      if ( !block.event )
-      {
-         E_MAKE_EXCEPTION(e);
-         block.event.fillException(e);
-         throw e;
-      }
+      // make sure opencl events worked
+      block.checkAllEvents();
 
       // save each valid clustering result to cluster matrix
       int index {0};
@@ -956,5 +941,8 @@ void GMM::runReadBlock(Block& block)
       // update next vector and change block state to start
       _nextVector = block.vector;
       block.state = Block::Start;
+
+      // clear all opencl events
+      block.events.clear();
    }
 }
