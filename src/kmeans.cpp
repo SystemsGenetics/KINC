@@ -51,6 +51,8 @@ EAbstractAnalytic::ArgumentType KMeans::getArgumentData(int argument)
    case MinExpression: return Type::Double;
    case MinClusters: return Type::Integer;
    case MaxClusters: return Type::Integer;
+   case NumInits: return Type::Integer;
+   case MaxIterations: return Type::Integer;
    case BlockSize: return Type::Integer;
    case KernelSize: return Type::Integer;
    default: return Type::Bool;
@@ -80,6 +82,8 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       case MinExpression: return QString("minexpr");
       case MinClusters: return QString("minclus");
       case MaxClusters: return QString("maxclus");
+      case NumInits: return QString("numinit");
+      case MaxIterations: return QString("maxiter");
       case BlockSize: return QString("bsize");
       case KernelSize: return QString("ksize");
       default: return QVariant();
@@ -94,6 +98,8 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       case MinExpression: return tr("Minimum Expression:");
       case MinClusters: return tr("Minimum Clusters:");
       case MaxClusters: return tr("Maximum Clusters:");
+      case NumInits: return tr("Inits:");
+      case MaxIterations: return tr("Maximum Iterations:");
       case BlockSize: return tr("Block Size:");
       case KernelSize: return tr("Kernel Size:");
       default: return QVariant();
@@ -108,6 +114,8 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       case MinExpression: return tr("Minimum threshold for a gene expression to be included in clustering.");
       case MinClusters: return tr("Minimum number of clusters to test.");
       case MaxClusters: return tr("Maximum number of clusters to test.");
+      case NumInits: return tr("Number of runs for each clustering model.");
+      case MaxIterations: return tr("Maximum number of iterations for each clustering model.");
       case BlockSize: return tr("This option only applies if OpenCL is used. Total number of blocks"
                                 " to run for execution.");
       case KernelSize: return tr("This option only applies if OpenCL is used. Total number of"
@@ -123,6 +131,8 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       case MinExpression: return -INFINITY;
       case MinClusters: return 1;
       case MaxClusters: return 5;
+      case NumInits: return 10;
+      case MaxIterations: return 300;
       case BlockSize: return 4;
       case KernelSize: return 4096;
       default: return QVariant();
@@ -136,6 +146,8 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       case MinExpression: return -INFINITY;
       case MinClusters: return 1;
       case MaxClusters: return 1;
+      case NumInits: return 1;
+      case MaxIterations: return 1;
       case BlockSize: return 1;
       case KernelSize: return 1;
       default: return QVariant();
@@ -149,6 +161,8 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       case MinExpression: return +INFINITY;
       case MinClusters: return INT_MAX;
       case MaxClusters: return INT_MAX;
+      case NumInits: return INT_MAX;
+      case MaxIterations: return INT_MAX;
       case BlockSize: return INT_MAX;
       case KernelSize: return INT_MAX;
       default: return QVariant();
@@ -188,6 +202,12 @@ void KMeans::setArgument(int argument, QVariant value)
       break;
    case MaxClusters:
       _maxClusters = value.toInt();
+      break;
+   case NumInits:
+      _numInits = value.toInt();
+      break;
+   case MaxIterations:
+      _maxIterations = value.toInt();
       break;
    case BlockSize:
       _blockSize = value.toInt();
@@ -319,7 +339,7 @@ void KMeans::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVect
       // run each clustering model
       GenePair::KMeans model;
 
-      model.fit(X, K);
+      model.fit(X, K, _numInits, _maxIterations);
 
       // evaluate model
       float value = computeBIC(K, model.logLikelihood(), X.size(), 2);
@@ -447,7 +467,6 @@ int KMeans::getBlockSize()
    initializeKernel();
    initializeBlockExpressions();
    initializeKernelArguments();
-
 
    // calculate total number of calculations that will be done and return block size
    qint64 geneSize {_output->geneSize()};
@@ -625,6 +644,8 @@ void KMeans::initializeKernelArguments()
    _kernel->setArgument(4, (cl_int)_minExpression);
    _kernel->setArgument(5, (cl_int)_minClusters);
    _kernel->setArgument(6, (cl_int)_maxClusters);
+   _kernel->setArgument(7, (cl_int)_numInits);
+   _kernel->setArgument(8, (cl_int)_maxIterations);
    _kernel->setDimensionCount(1);
    _kernel->setGlobalSize(0, _kernelSize);
    _kernel->setWorkgroupSize(0, workgroupSize);
@@ -702,12 +723,11 @@ void KMeans::runLoadBlock(Block& block)
 
       // set kernel arguments and execute it
       _kernel->setBuffer(2, block.pairs);
-      _kernel->setBuffer(7, block.work_X);
-      _kernel->setBuffer(8, block.work_y);
-      _kernel->setBuffer(9, block.work_means);
-      _kernel->setBuffer(10, block.work_ynext);
-      _kernel->setBuffer(11, block.result_K);
-      _kernel->setBuffer(12, block.result_labels);
+      _kernel->setBuffer(9, block.work_X);
+      _kernel->setBuffer(10, block.work_labels);
+      _kernel->setBuffer(11, block.work_means);
+      _kernel->setBuffer(12, block.result_K);
+      _kernel->setBuffer(13, block.result_labels);
       block.events.append(_kernel->execute());
 
       // make sure kernel worked

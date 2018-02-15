@@ -25,6 +25,8 @@ public:
       ,MinExpression
       ,MinClusters
       ,MaxClusters
+      ,NumInits
+      ,MaxIterations
       ,BlockSize
       ,KernelSize
       ,Total
@@ -64,9 +66,8 @@ private:
       {
          pairs = device.makeBuffer<cl_int2>(1 * kernelSize).release();
          work_X = device.makeBuffer<cl_float2>(N * kernelSize).release();
-         work_y = device.makeBuffer<cl_char>(N * kernelSize).release();
+         work_labels = device.makeBuffer<cl_char>(3*N * kernelSize).release();
          work_means = device.makeBuffer<cl_float2>(K * kernelSize).release();
-         work_ynext = device.makeBuffer<cl_char>(N * kernelSize).release();
          result_K = device.makeBuffer<cl_int>(1 * kernelSize).release();
          result_labels = device.makeBuffer<cl_char>(N * kernelSize).release();
 
@@ -81,9 +82,8 @@ private:
       {
          delete pairs;
          delete work_X;
-         delete work_y;
+         delete work_labels;
          delete work_means;
-         delete work_ynext;
          delete result_K;
          delete result_labels;
       }
@@ -119,9 +119,8 @@ private:
       QVector<EOpenCLEvent> events;
       EOpenCLBuffer<cl_int2>* pairs;
       EOpenCLBuffer<cl_float2>* work_X;
-      EOpenCLBuffer<cl_char>* work_y;
+      EOpenCLBuffer<cl_char>* work_labels;
       EOpenCLBuffer<cl_float2>* work_means;
-      EOpenCLBuffer<cl_char>* work_ynext;
       EOpenCLBuffer<cl_int>* result_K;
       EOpenCLBuffer<cl_char>* result_labels;
    };
@@ -140,6 +139,8 @@ private:
    float _minExpression {-INFINITY};
    int _minClusters {1};
    int _maxClusters {5};
+   int _numInits {10};
+   int _maxIterations {300};
    int _blockSize {4};
    int _kernelSize {4096};
 

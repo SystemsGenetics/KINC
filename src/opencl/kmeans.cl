@@ -164,90 +164,109 @@ float computeLogLikelihood(
  */
 void fit(
    __global const Vector2 *X, int N, int K,
-   __global char *y,
+   int numInits,
+   int maxIterations,
    float *logL,
+   __global char *labels,
    __global Vector2 *means,
+   __global char *y,
    __global char *y_next)
 {
    ulong state = 1;
 
-   // initialize means randomly from X
-   for ( int k = 0; k < K; ++k )
+   // repeat with several initializations
+   *logL = INFINITY;
+
+   for ( int init = 0; init < numInits; ++init )
    {
-      int i = rand(&state) % N;
-      means[k] = X[i];
-   }
-
-   // iterate K means until convergence
-   while ( true )
-   {
-      // compute new labels
-      for ( int i = 0; i < N; ++i )
-      {
-         // find k that minimizes norm(x_i - mu_k)
-         int min_k = -1;
-         float min_dist;
-
-         for ( int k = 0; k < K; ++k )
-         {
-            float dist = vectorDiffNorm(&X[i], &means[k]);
-
-            if ( min_k == -1 || dist < min_dist )
-            {
-               min_k = k;
-               min_dist = dist;
-            }
-         }
-
-         y_next[i] = min_k;
-      }
-
-      // check for convergence
-      bool converged = true;
-
-      for ( int i = 0; i < N; ++i )
-      {
-         if ( y[i] != y_next[i] )
-         {
-            converged = false;
-            break;
-         }
-      }
-
-      if ( converged )
-      {
-         break;
-      }
-
-      // update labels
-      for ( int i = 0; i < N; ++i )
-      {
-         y[i] = y_next[i];
-      }
-
-      // update means
+      // initialize means randomly from X
       for ( int k = 0; k < K; ++k )
       {
-         // compute mu_k = mean of all x_i in cluster k
-         int n_k = 0;
+         int i = rand(&state) % N;
+         means[k] = X[i];
+      }
 
-         vectorInitZero(&means[k]);
+      // iterate K means until convergence
+      for ( int t = 0; t < maxIterations; ++t )
+      {
+         // compute new labels
+         for ( int i = 0; i < N; ++i )
+         {
+            // find k that minimizes norm(x_i - mu_k)
+            int min_k = -1;
+            float min_dist;
+
+            for ( int k = 0; k < K; ++k )
+            {
+               float dist = vectorDiffNorm(&X[i], &means[k]);
+
+               if ( min_k == -1 || dist < min_dist )
+               {
+                  min_k = k;
+                  min_dist = dist;
+               }
+            }
+
+            y_next[i] = min_k;
+         }
+
+         // check for convergence
+         bool converged = true;
 
          for ( int i = 0; i < N; ++i )
          {
-            if ( y[i] == k )
+            if ( y[i] != y_next[i] )
             {
-               vectorAdd(&means[k], &X[i]);
-               n_k++;
+               converged = false;
+               break;
             }
          }
 
-         vectorScale(&means[k], 1.0f / n_k);
+         if ( converged )
+         {
+            break;
+         }
+
+         // update labels
+         for ( int i = 0; i < N; ++i )
+         {
+            y[i] = y_next[i];
+         }
+
+         // update means
+         for ( int k = 0; k < K; ++k )
+         {
+            // compute mu_k = mean of all x_i in cluster k
+            int n_k = 0;
+
+            vectorInitZero(&means[k]);
+
+            for ( int i = 0; i < N; ++i )
+            {
+               if ( y[i] == k )
+               {
+                  vectorAdd(&means[k], &X[i]);
+                  n_k++;
+               }
+            }
+
+            vectorScale(&means[k], 1.0f / n_k);
+         }
+      }
+
+      // save the run with the greatest log-likelihood
+      float nextLogL = computeLogLikelihood(X, N, y, means, K);
+
+      if ( *logL < nextLogL )
+      {
+         *logL = nextLogL;
+
+         for ( int i = 0; i < N; ++i )
+         {
+            labels[i] = y[i];
+         }
       }
    }
-
-   // save outputs
-   *logL = computeLogLikelihood(X, N, y, means, K);
 }
 
 
@@ -285,11 +304,15 @@ float computeBIC(int K, float logL, int N, int D)
 __kernel void computeKmeansBlock(
    __global const float *expressions, int size,
    __global const int2 *pairs,
-   int minSamples, int minExpression, int minClusters, int maxClusters,
+   int minSamples,
+   int minExpression,
+   int minClusters,
+   int maxClusters,
+   int numInits,
+   int maxIterations,
    __global Vector2 *work_X,
-   __global char *work_y,
+   __global char *work_labels,
    __global Vector2 *work_means,
-   __global char *work_ynext,
    __global int *result_K,
    __global char *result_labels)
 {
@@ -302,9 +325,10 @@ __kernel void computeKmeansBlock(
 
    // initialize workspace variables
    __global Vector2 *X = &work_X[i * size];
-   __global char *y = &work_y[i * size];
+   __global char *labels = &work_labels[(3*i+0) * size];
    __global Vector2 *means = &work_means[i * maxClusters];
-   __global char *y_next = &work_ynext[i * size];
+   __global char *y = &work_labels[(3*i+1) * size];
+   __global char *y_next = &work_labels[(3*i+2) * size];
    __global int *bestK = &result_K[i];
    __global char *bestLabels = &result_labels[i * size];
 
@@ -322,7 +346,7 @@ __kernel void computeKmeansBlock(
       {
          // run each clustering model
          float logL;
-         fit(X, numSamples, K, y, &logL, means, y_next);
+         fit(X, numSamples, K, numInits, maxIterations, &logL, labels, means, y, y_next);
 
          // evaluate model
          float value = computeBIC(K, logL, numSamples, 2);

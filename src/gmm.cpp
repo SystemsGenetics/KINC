@@ -586,7 +586,6 @@ int GMM::getBlockSize()
    initializeBlockExpressions();
    initializeKernelArguments();
 
-
    // calculate total number of calculations that will be done and return block size
    qint64 geneSize {_output->geneSize()};
    _totalPairs = geneSize*(geneSize-1)/2;

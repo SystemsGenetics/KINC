@@ -15,7 +15,7 @@ namespace GenePair
       float logLikelihood() const { return _logL; }
       const QVector<cl_char>& labels() const { return _labels; }
 
-      void fit(const QVector<Vector2>& X, int K);
+      void fit(const QVector<Vector2>& X, int K, int numInits, int maxIterations);
 
    private:
       float computeLogLikelihood(const QVector<Vector2>& X);
