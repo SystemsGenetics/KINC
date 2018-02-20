@@ -299,12 +299,12 @@ void Base::seekPair(qint64 index) const
 void Base::Pair::write(Vector index)
 {
    // make sure cluster size of gene pair does not exceed max
-   if ( clusterSize() > Vector::_maxClusterSize )
+   if ( clusterSize() > Vector::MAX_CLUSTER_SIZE )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Gene Pair Logical Error"));
       e.setDetails(QObject::tr("Cannot write gene pair with cluster size of %1 exceeding the max of"
-                               " %2.").arg(clusterSize()).arg(Vector::_maxClusterSize));
+                               " %2.").arg(clusterSize()).arg(Vector::MAX_CLUSTER_SIZE));
       throw e;
    }
 
@@ -398,7 +398,7 @@ void Base::Pair::readNext() const
          }
 
          // make sure max cluster size has not been exceeded
-         if ( ++count > Vector::_maxClusterSize )
+         if ( ++count > Vector::MAX_CLUSTER_SIZE )
          {
             E_MAKE_EXCEPTION(e);
             e.setTitle(QObject::tr("File IO Error"));

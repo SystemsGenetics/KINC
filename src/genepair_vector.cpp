@@ -32,7 +32,7 @@ Vector::Vector(qint32 geneX, qint32 geneY):
 qint64 Vector::indent(qint8 cluster) const
 {
    // make sure cluster given is valid
-   if ( cluster < 0 || cluster >= _maxClusterSize )
+   if ( cluster < 0 || cluster >= MAX_CLUSTER_SIZE )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Gene Pair Vector Error"));
@@ -44,7 +44,7 @@ qint64 Vector::indent(qint8 cluster) const
    qint64 ret {_geneX};
    ret = ret*(ret - 1)/2;
    ret += _geneY;
-   ret = ret*_maxClusterSize + cluster;
+   ret = ret*MAX_CLUSTER_SIZE + cluster;
    return ret;
 }
 

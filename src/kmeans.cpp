@@ -159,8 +159,8 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       {
       case MinSamples: return INT_MAX;
       case MinExpression: return +INFINITY;
-      case MinClusters: return INT_MAX;
-      case MaxClusters: return INT_MAX;
+      case MinClusters: return GenePair::Vector::MAX_CLUSTER_SIZE;
+      case MaxClusters: return GenePair::Vector::MAX_CLUSTER_SIZE;
       case NumInits: return INT_MAX;
       case MaxIterations: return INT_MAX;
       case BlockSize: return INT_MAX;
