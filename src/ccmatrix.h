@@ -40,6 +40,7 @@ public:
    virtual QVariant data(const QModelIndex& index, int role) const override final;
    void initialize(const EMetadata& geneNames, const EMetadata& sampleNames);
    const EMetadata& sampleNames() const;
+   int sampleSize() const { return _sampleSize; }
 private:
    virtual void writeHeader() { stream() << _sampleSize; }
    virtual void readHeader() { stream() >> _sampleSize; }

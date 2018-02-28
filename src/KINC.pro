@@ -57,6 +57,8 @@ SOURCES += \
     importexpressionmatrix.cpp \
     exportexpressionmatrix.cpp \
     correlationmatrix.cpp \
+    importcorrelationmatrix.cpp \
+    exportcorrelationmatrix.cpp \
     spearman.cpp \
     rmt.cpp \
     pearson.cpp \
@@ -77,6 +79,8 @@ HEADERS += \
     importexpressionmatrix.h \
     exportexpressionmatrix.h \
     correlationmatrix.h \
+    importcorrelationmatrix.h \
+    exportcorrelationmatrix.h \
     spearman.h \
     rmt.h \
     pearson.h \
