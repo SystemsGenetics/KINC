@@ -57,7 +57,6 @@ MixtureModelPWClusters::~MixtureModelPWClusters() {
  * Executes mixture model clustering.
  */
 void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
-  int64_t lowest_cluster_num = 9;
   int found = 0;
 
   // Make sure we have the correct number of observations before performing
@@ -70,7 +69,7 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
   XEM::GaussianData * gdata = new XEM::GaussianData(pwset->n_clean, 2, data);
   XEM::DataDescription dataDescription(gdata);
 
-  // Set the number of clusters to be tested to 9.
+  // Set the number of clusters to be tested to [1, max_clusters].
   vector<int64_t> nbCluster;
   for (int i = 1; i <= max_clusters; i++) {
     nbCluster.push_back(i);
@@ -100,12 +99,8 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
   // Finalize input: run a series of sanity checks on it
   cInput.finalize();
 
-  // Run XEM::ClusteringMain 5 times to find the iteration with the
-  // lowest number of clusters.  We do this because the MixModLib can
-  // detect different numbers of clusters depending on the random starting
-  // point in the algorithm.
-  for (int i = 0; i < 1; i++) {
-
+  // Run XEM::ClusteringMain and select the best model
+  try {
     // Find clusters.
     XEM::ClusteringMain cMain(&cInput);
     cMain.run();
@@ -147,19 +142,19 @@ void MixtureModelPWClusters::run(char * criterion, int max_clusters) {
         }
       }
 
-      // If this is the fewest number of clusters we've seen then copy
-      // the labels over.
-      if (num_clusters < lowest_cluster_num) {
-        lowest_cluster_num = num_clusters;
-        if (this->labels == NULL) {
-          this->labels = (int64_t *) malloc(sizeof(int64_t) * this->pwset->n_clean);
-        }
-        for (int i = 0; i < this->pwset->n_clean; i++) {
-          this->labels[i] = cLabels[i];
-        }
+      // Copy the labels over.
+      if (this->labels == NULL) {
+        this->labels = (int64_t *) malloc(sizeof(int64_t) * this->pwset->n_clean);
+      }
+      for (int i = 0; i < this->pwset->n_clean; i++) {
+        this->labels[i] = cLabels[i];
       }
       delete cLabels;
     }
+  }
+  catch ( XEM::OtherException& e ) {
+    std::cerr << "\nmixmod error (" << pwset->gene1 << ", " << pwset->gene2 << "): " << e.what() << "\n";
+    return;
   }
   delete gdata;
 
