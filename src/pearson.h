@@ -108,7 +108,6 @@ private:
 
       int state {Start};
       GenePair::Vector vector;
-      int cluster;
       QVector<EOpenCLEvent> events;
       EOpenCLBuffer<cl_int2>* pairs;
       EOpenCLBuffer<cl_char>* sampleMasks;
@@ -139,7 +138,6 @@ private:
    EOpenCLKernel* _kernel {nullptr};
    EOpenCLBuffer<cl_float>* _expressions {nullptr};
    GenePair::Vector _vector;
-   int _cluster {0};
    GenePair::Vector _nextVector;
    CCMatrix::Pair _inPair;
    CorrelationMatrix::Pair _outPair;

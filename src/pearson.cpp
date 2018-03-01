@@ -634,26 +634,26 @@ void Pearson::runStartBlock(Block& block)
    {
       // set block xy to beginning of read comparisons
       block.vector = _vector;
-      block.cluster = _cluster;
-
-      // load first input pair
-      if ( _cluster != 0 )
-      {
-         _inPair.read(_vector);
-      }
 
       // copy list of comparisons to be done on this run
       int index {0};
+      int cluster {0};
       while ( _vector.geneX() < _output->geneSize() && index < _kernelSize )
       {
-         // copy gene pair
-         (*block.pairs)[index] = { _vector.geneX(), _vector.geneY() };
-
          // read next cluster pair
-         if ( _cluster == 0 )
+         if ( cluster == 0 )
          {
             _inPair.read(_vector);
          }
+
+         // stop if gene pair won't fit in this block
+         if ( index + _inPair.clusterSize() > _kernelSize )
+         {
+            break;
+         }
+
+         // copy gene pair
+         (*block.pairs)[index] = { _vector.geneX(), _vector.geneY() };
 
          // copy sample mask if there is one
          int N = _input->getSampleSize();
@@ -663,7 +663,7 @@ void Pearson::runStartBlock(Block& block)
          {
             for ( int i = 0; i < N; ++i )
             {
-               sampleMask[i] = _inPair.at(_cluster, i);
+               sampleMask[i] = _inPair.at(cluster, i);
             }
          }
          else
@@ -672,9 +672,9 @@ void Pearson::runStartBlock(Block& block)
          }
 
          // increment to next cluster
-         _cluster = (_cluster + 1) % max(1, _inPair.clusterSize());
+         cluster = (cluster + 1) % max(1, _inPair.clusterSize());
 
-         if ( _cluster == 0 )
+         if ( cluster == 0 )
          {
             ++_vector;
          }
@@ -791,19 +791,19 @@ void Pearson::runReadBlock(Block& block)
       // make sure opencl events worked
       block.checkAllEvents();
 
-      // load first input/output pair
-      if ( block.cluster != 0 )
-      {
-         _inPair.read(block.vector);
-         _outPair.read(block.vector);
-      }
-
       // save each valid correlation result to correlation matrix
       int index {0};
+      int cluster {0};
       while ( block.vector.geneX() < _output->geneSize() && index < _kernelSize )
       {
+         // stop if remaining pairs are empty
+         if ( (*block.pairs)[index].x == 0 )
+         {
+            break;
+         }
+
          // read next cluster pair
-         if ( block.cluster == 0 )
+         if ( cluster == 0 )
          {
             _inPair.read(block.vector);
             _outPair.clearClusters();
@@ -816,30 +816,24 @@ void Pearson::runReadBlock(Block& block)
          // save correlation if within threshold limits
          if ( !isnan(result) && _minCorrelation <= abs(result) && abs(result) <= _maxCorrelation )
          {
-            _outPair.at(block.cluster, 0) = result;
+            _outPair.at(cluster, 0) = result;
 
-            if ( block.cluster == _outPair.clusterSize() - 1 )
+            if ( cluster == _outPair.clusterSize() - 1 )
             {
                _outPair.write(block.vector);
             }
          }
 
          // increment to next cluster
-         block.cluster = (block.cluster + 1) % _outPair.clusterSize();
+         cluster = (cluster + 1) % _outPair.clusterSize();
 
-         if ( block.cluster == 0 )
+         if ( cluster == 0 )
          {
             ++block.vector;
+            ++_pairsComplete;
          }
 
          ++index;
-         ++_pairsComplete;
-      }
-
-      // save last output pair
-      if ( block.cluster != 0 )
-      {
-         _outPair.write(block.vector);
       }
 
       // update next vector and change block state to start
