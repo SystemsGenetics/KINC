@@ -11,6 +11,7 @@ namespace GenePair
    public:
       Vector() = default;
       Vector(qint32 geneX, qint32 geneY);
+      Vector(qint64 index);
       Vector(const Vector&) = default;
       Vector(Vector&&) = default;
       qint64 indent(qint8 cluster) const;

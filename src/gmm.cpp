@@ -1,3 +1,4 @@
+#include <ace/core/ace_qmpi.h>
 #include <ace/core/metadata.h>
 
 #include "gmm.h"
@@ -14,6 +15,17 @@ using namespace std;
 
 const char* GMM::BIC {QT_TR_NOOP("BIC")};
 const char* GMM::ICL {QT_TR_NOOP("ICL")};
+
+
+
+
+
+
+// TODO: move to a common location like ace_qmpi.h
+inline int BLOCK_LOW(int i, int p, int n) { return i * n / p; }
+inline int BLOCK_HIGH(int i, int p, int n) { return BLOCK_LOW(i + 1, p, n) - 1; }
+inline int BLOCK_SIZE(int i, int p, int n) { return BLOCK_HIGH(i, p, n) - BLOCK_LOW(i, p, n) + 1; }
+inline int BLOCK_OWNER(int j, int p, int n) { return (p * (j + 1) - 1) / n; }
 
 
 
@@ -300,8 +312,13 @@ bool GMM::initialize()
       throw e;
    }
 
-   // initialize new cc matrix and return pre-allocation argument
+   // initialize new cc matrix
    _output->initialize(_input->getGeneNames(),_input->getSampleNames());
+
+   // initialize total pairs
+   _totalPairs = _output->geneSize()*(_output->geneSize() - 1)/2;
+
+   // return pre-allocation argument
    return false;
 }
 
@@ -310,7 +327,7 @@ bool GMM::initialize()
 
 
 
-void GMM::fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels)
+void GMM::fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels)
 {
    // read in gene expressions
    ExpressionMatrix::Gene gene1(_input);
@@ -416,48 +433,77 @@ float GMM::computeICL(int K, float logL, int N, int D, float E)
 
 
 
-void GMM::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels)
+void GMM::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels)
 {
-   float bestValue = INFINITY;
+   // fetch data matrix X from expression matrix
+   fetchData(vector, X, bestLabels);
 
-   for ( int K = _minClusters; K <= _maxClusters; ++K )
+   // remove pre-clustering outliers
+   if ( _removePreOutliers )
    {
-      // run each clustering model
-      GenePair::GMM model;
+      markOutliers(X, 0, bestLabels, 0, -7);
+      markOutliers(X, 1, bestLabels, 0, -7);
+   }
 
-      model.fit(X, K);
+   // perform clustering only if there are enough samples
+   bestK = 0;
 
-      if ( !model.success() )
+   if ( X.size() >= _minSamples )
+   {
+      float bestValue = INFINITY;
+
+      for ( int K = _minClusters; K <= _maxClusters; ++K )
       {
-         continue;
-      }
+         // run each clustering model
+         GenePair::GMM model;
 
-      // evaluate model
-      float value = INFINITY;
+         model.fit(X, K);
 
-      switch (_criterion)
-      {
-      case Criterion::BIC:
-         value = computeBIC(K, model.logLikelihood(), X.size(), 2);
-         break;
-      case Criterion::ICL:
-         value = computeICL(K, model.logLikelihood(), X.size(), 2, model.entropy());
-         break;
-      }
-
-      // save the best model
-      if ( value < bestValue )
-      {
-         bestK = K;
-         bestValue = value;
-
-         for ( int i = 0, j = 0; i < X.size(); ++i )
+         if ( !model.success() )
          {
-            if ( bestLabels[i] >= 0 )
+            continue;
+         }
+
+         // evaluate model
+         float value = INFINITY;
+
+         switch (_criterion)
+         {
+         case Criterion::BIC:
+            value = computeBIC(K, model.logLikelihood(), X.size(), 2);
+            break;
+         case Criterion::ICL:
+            value = computeICL(K, model.logLikelihood(), X.size(), 2, model.entropy());
+            break;
+         }
+
+         // save the best model
+         if ( value < bestValue )
+         {
+            bestK = K;
+            bestValue = value;
+
+            for ( int i = 0, j = 0; i < X.size(); ++i )
             {
-               bestLabels[i] = model.labels()[j];
-               ++j;
+               if ( bestLabels[i] >= 0 )
+               {
+                  bestLabels[i] = model.labels()[j];
+                  ++j;
+               }
             }
+         }
+      }
+   }
+
+   if ( bestK > 1 )
+   {
+      // remove post-clustering outliers
+      if ( _removePostOutliers )
+      {
+         for ( int k = 0; k < bestK; ++k )
+         {
+            markOutliers(X, 0, bestLabels, k, -8);
+            markOutliers(X, 1, bestLabels, k, -8);
          }
       }
    }
@@ -468,7 +514,7 @@ void GMM::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<
 
 
 
-void GMM::savePair(const GenePair::Vector& vector, int K, const cl_char *labels, int N)
+void GMM::savePair(GenePair::Vector vector, int K, const cl_char *labels, int N)
 {
    CCMatrix::Pair pair(_output);
    pair.addCluster(K);
@@ -493,20 +539,12 @@ void GMM::savePair(const GenePair::Vector& vector, int K, const cl_char *labels,
 
 void GMM::runSerial()
 {
-   // initialize percent complete and steps
-   int lastPercent {0};
-   qint64 steps {0};
-   qint64 totalSteps {_output->geneSize()*(_output->geneSize() - 1)/2};
-
-   // initialize arrays used for GMM clustering
+   // initialize workspace arrays
    QVector<GenePair::Vector2> X;
    QVector<cl_char> labels(_input->getSampleSize());
 
-   // initialize xy gene indexes
-   GenePair::Vector vector;
-
-   // increment through all gene pairs
-   while ( vector.geneX() < _output->geneSize() )
+   // iterate through all gene pairs
+   while ( _vector.geneX() < _output->geneSize() )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -514,55 +552,174 @@ void GMM::runSerial()
          return;
       }
 
-      // fetch data matrix X from expression matrix
-      fetchData(vector, X, labels);
+      // compute clusters
+      int bestK;
 
-      // remove pre-clustering outliers
-      if ( _removePreOutliers )
-      {
-         markOutliers(X, 0, labels, 0, -7);
-         markOutliers(X, 1, labels, 0, -7);
-      }
-
-      // perform clustering only if there are enough samples
-      int bestK = 0;
-
-      if ( X.size() >= _minSamples )
-      {
-         computeModel(X, bestK, labels);
-      }
+      computePair(_vector, X, bestK, labels);
 
       // save cluster pair if multiple clusters are found
       if ( bestK > 1 )
       {
-         // remove post-clustering outliers
-         if ( _removePostOutliers )
-         {
-            for ( int k = 0; k < bestK; ++k )
-            {
-               markOutliers(X, 0, labels, k, -8);
-               markOutliers(X, 1, labels, k, -8);
-            }
-         }
-
-         savePair(vector, bestK, labels.data(), labels.size());
+         savePair(_vector, bestK, labels.data(), labels.size());
       }
 
       // increment to next pair
-      ++vector;
+      ++_vector;
 
       // increment steps and calculate percent complete
-      ++steps;
-      qint64 newPercent {100*steps/totalSteps};
+      ++_pairsComplete;
+      qint64 newPercent {100*_pairsComplete/_totalPairs};
 
-      // check to see if percent has changed
-      if ( newPercent != lastPercent )
+      // emit progressed signal when percent changes
+      if ( newPercent != _lastPercent )
       {
-         // update percent complete and emit progressed signal
-         lastPercent = newPercent;
-         emit progressed(lastPercent);
+         _lastPercent = newPercent;
+         emit progressed(_lastPercent);
       }
    }
+}
+
+
+
+
+
+
+QByteArray GMM::buildMPIBlock()
+{
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+   QByteArray data;
+
+   // assign a block to each slave
+   if ( _mpiBlocksOut < mpi.size() - 1 )
+   {
+      QDataStream stream(&data, QIODevice::WriteOnly);
+      stream << _mpiBlocksOut;
+
+      ++_mpiBlocksOut;
+   }
+
+   // send data to slave
+   return data;
+}
+
+
+
+
+
+
+bool GMM::readMPIBlock(const QByteArray& block)
+{
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+
+   // read data from slave node
+   QDataStream stream(block);
+
+   int blockIndex;
+   stream >> blockIndex;
+
+   // defer this block if it is not next in line
+   if ( blockIndex != _mpiBlocksIn )
+   {
+      return false;
+   }
+
+   // iterate through gene pairs in this block
+   int totalBlocks = mpi.size() - 1;
+   int blockSize = BLOCK_SIZE(blockIndex, totalBlocks, _totalPairs);
+
+   for ( int i = 0; i < blockSize; ++i )
+   {
+      // read results
+      int bestK;
+      stream >> bestK;
+
+      // save results if necessary
+      if ( bestK > 1 )
+      {
+         QVector<cl_char> labels;
+         stream >> labels;
+
+         savePair(_vector, bestK, labels.data(), labels.size());
+      }
+
+      // increment gene pair index
+      ++_vector;
+   }
+
+   ++_mpiBlocksIn;
+
+   return true;
+}
+
+
+
+
+
+
+QByteArray GMM::processMPIBlock(const QByteArray& block)
+{
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+
+   // read data from master node
+   QDataStream in(block);
+
+   int blockIndex;
+   in >> blockIndex;
+
+   // initialize output data
+   QByteArray data;
+   QDataStream out(&data, QIODevice::WriteOnly);
+
+   out << blockIndex;
+
+   // initialize total pairs
+   _totalPairs = _input->getGeneSize()*(_input->getGeneSize() - 1)/2;
+
+   // initialize gene pair vector
+   int totalBlocks = mpi.size() - 1;
+   qint64 blockLow = BLOCK_LOW(blockIndex, totalBlocks, _totalPairs);
+   qint64 blockSize = BLOCK_SIZE(blockIndex, totalBlocks, _totalPairs);
+
+   _vector = GenePair::Vector(blockLow);
+
+   // initialize workspace arrays
+   QVector<GenePair::Vector2> X;
+   QVector<cl_char> labels(_input->getSampleSize());
+
+   // iterate through gene pairs in this block
+   for ( qint64 i = 0; i < blockSize; ++i )
+   {
+      // compute clusters
+      int bestK;
+
+      computePair(_vector, X, bestK, labels);
+
+      // save cluster pair if multiple clusters are found
+      out << bestK;
+
+      if ( bestK > 1 )
+      {
+         out << labels;
+      }
+
+      // increment gene pair index
+      ++_vector;
+
+      // increment steps and calculate percent complete
+      qint64 newPercent {100*i/blockSize};
+
+      // emit progressed signal when percent changes
+      if ( newPercent != _lastPercent )
+      {
+         _lastPercent = newPercent;
+         emit progressed(_lastPercent);
+
+         qInfo("%d: %d%%", mpi.rank(), _lastPercent);
+      }
+   }
+
+   // send data to master node
+   return data;
 }
 
 
@@ -586,9 +743,7 @@ int GMM::getBlockSize()
    initializeBlockExpressions();
    initializeKernelArguments();
 
-   // calculate total number of calculations that will be done and return block size
-   qint64 geneSize {_output->geneSize()};
-   _totalPairs = geneSize*(geneSize-1)/2;
+   // return block size
    return _blockSize;
 }
 

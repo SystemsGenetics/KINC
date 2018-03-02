@@ -29,6 +29,38 @@ Vector::Vector(qint32 geneX, qint32 geneY):
 
 
 
+Vector::Vector(qint64 index):
+   _geneX(1),
+   _geneY(0)
+{
+   // make sure index given is valid
+   if ( index < 0 )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("Gene Pair Vector Error"));
+      e.setDetails(QObject::tr("Cannot initialize gene vector from index %1.").arg(index));
+      throw e;
+   }
+
+   // compute vector from index
+   qint64 pos {0};
+   while ( pos <= index )
+   {
+      ++_geneX;
+      pos = _geneX * (_geneX - 1) / 2;
+   }
+
+   --_geneX;
+   pos = _geneX * (_geneX - 1) / 2;
+
+   _geneY = index - pos;
+}
+
+
+
+
+
+
 qint64 Vector::indent(qint8 cluster) const
 {
    // make sure cluster given is valid
@@ -41,11 +73,8 @@ qint64 Vector::indent(qint8 cluster) const
    }
 
    // compute indent with given cluster and return it
-   qint64 ret {_geneX};
-   ret = ret*(ret - 1)/2;
-   ret += _geneY;
-   ret = ret*MAX_CLUSTER_SIZE + cluster;
-   return ret;
+   qint64 index {_geneX * (_geneX - 1) / 2 + _geneY};
+   return index * MAX_CLUSTER_SIZE + cluster;
 }
 
 

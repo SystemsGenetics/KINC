@@ -51,17 +51,20 @@ public:
    virtual int getBlockSize() override;
    virtual bool runBlock(int block) override final;
    virtual void finish() override final {}
+   virtual QByteArray buildMPIBlock() override final;
+   virtual bool readMPIBlock(const QByteArray& block) override final;
+   virtual QByteArray processMPIBlock(const QByteArray& block) override final;
 
 private:
    static const char* BIC;
    static const char* ICL;
 
-   void fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels);
+   void fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels);
    void markOutliers(const QVector<GenePair::Vector2>& X, int j, QVector<cl_char>& labels, int cluster, cl_char marker);
    float computeBIC(int K, float logL, int N, int D);
    float computeICL(int K, float logL, int N, int D, float E);
-   void computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels);
-   void savePair(const GenePair::Vector& vector, int K, const cl_char *labels, int N);
+   void computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels);
+   void savePair(GenePair::Vector vector, int K, const cl_char *labels, int N);
 
    struct Block
    {
@@ -176,6 +179,10 @@ private:
    EOpenCLProgram* _program {nullptr};
    EOpenCLKernel* _kernel {nullptr};
    EOpenCLBuffer<cl_float>* _expressions {nullptr};
+
+   int _mpiBlocksOut {0};
+   int _mpiBlocksIn {0};
+
    GenePair::Vector _vector;
    GenePair::Vector _nextVector;
    qint64 _totalPairs;
