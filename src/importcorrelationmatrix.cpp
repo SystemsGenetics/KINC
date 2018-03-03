@@ -239,6 +239,7 @@ void ImportCorrelationMatrix::runSerial()
    _ccMatrix->initialize(metaGeneNames, metaSampleNames);
    _cMatrix->initialize(metaGeneNames, metaCorrelationNames);
 
+   GenePair::Vector vector;
    CCMatrix::Pair ccPair(_ccMatrix);
    CorrelationMatrix::Pair cPair(_cMatrix);
 
@@ -262,11 +263,10 @@ void ImportCorrelationMatrix::runSerial()
       {
          int geneX = words[0].toInt();
          int geneY = words[1].toInt();
-         int cluster = words[2].toInt() - 1;
-         int clusterSize = words[3].toInt();
          float correlation = words[9].toFloat();
          QStringRef sampleMask = words[10];
 
+         // make sure sample mask has correct length
          if ( sampleMask.size() != _sampleSize )
          {
             E_MAKE_EXCEPTION(e);
@@ -277,43 +277,49 @@ void ImportCorrelationMatrix::runSerial()
             throw e;
          }
 
-         GenePair::Vector vector(geneX, geneY);
+         // save previous pair when new pair is read
+         GenePair::Vector nextVector(geneX, geneY);
 
-         // save cluster data
-         if ( clusterSize > 1 )
+         if ( vector != nextVector )
          {
-            ccPair.read(vector);
-
-            if ( ccPair.clusterSize() == 0 )
+            // save pairs
+            if ( ccPair.clusterSize() > 1 )
             {
-               ccPair.addCluster(clusterSize);
+               ccPair.write(vector);
             }
 
-            for ( int i = 0; i < sampleMask.size(); ++i )
+            if ( cPair.clusterSize() > 0 )
             {
-               ccPair.at(cluster, i) = sampleMask[i].digitValue();
+               cPair.write(vector);
             }
 
-            ccPair.write(vector);
+            // reset pairs
+            ccPair.clearClusters();
+            cPair.clearClusters();
+
+            // update vector
+            vector = nextVector;
          }
 
-         // save correlation data
-         cPair.read(vector);
+         // append cluster and correlation to gene pair
+         int cluster = ccPair.clusterSize();
 
-         if ( cPair.clusterSize() == 0 )
+         ccPair.addCluster();
+         cPair.addCluster();
+
+         for ( int i = 0; i < sampleMask.size(); ++i )
          {
-            cPair.addCluster(clusterSize);
+            ccPair.at(cluster, i) = sampleMask[i].digitValue();
          }
 
          cPair.at(cluster, 0) = correlation;
-         cPair.write(vector);
       }
       else if ( words.size() != 1 && words.size() != 0 )
       {
          E_MAKE_EXCEPTION(e);
          e.setTitle(tr("Parsing Error"));
          e.setDetails(tr("Encountered line with incorrect amount of fields. "
-                         "Read in %1 fields when it should have been %2.")
+                         "Read %1 fields when there should have been %2.")
                       .arg(words.size()).arg(11));
          throw e;
       }

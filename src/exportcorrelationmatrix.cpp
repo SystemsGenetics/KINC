@@ -144,9 +144,11 @@ void ExportCorrelationMatrix::runSerial()
 
    // initialize xy gene indexes
    GenePair::Vector vector;
-   int cluster = 0;
    CCMatrix::Pair ccPair(_ccMatrix);
    CorrelationMatrix::Pair cPair(_cMatrix);
+
+   // initialize workspace
+   QString sampleMask(_ccMatrix->sampleSize());
 
    // create text stream to output file and write until end reached
    QTextStream stream(_output);
@@ -162,55 +164,76 @@ void ExportCorrelationMatrix::runSerial()
       }
 
       // read cluster and correlation data for gene pair
-      if ( cluster == 0 )
-      {
-         ccPair.read(vector);
-         cPair.read(vector);
-      }
+      ccPair.read(vector);
+      cPair.read(vector);
 
       // write gene pair data to output file
-      if ( cPair.clusterSize() > 0 )
+      for ( int cluster = 0; cluster < cPair.clusterSize(); cluster++ )
       {
-         int numClean = 0;
+         int numSamples = 0;
          int numMissing = 0;
-         int numThreshold = 0;
-         int numPreOutliers = 0;
          int numPostOutliers = 0;
-         QString sampleMask(_ccMatrix->sampleSize(), '0');
+         int numPreOutliers = 0;
+         int numThreshold = 0;
 
          if ( ccPair.clusterSize() > 1 )
          {
+            // compute summary statistics
+            for ( int i = 0; i < _ccMatrix->sampleSize(); i++ )
+            {
+               switch ( ccPair.at(cluster, i) )
+               {
+               case 1:
+                  numSamples++;
+                  break;
+               case 6:
+                  numThreshold++;
+                  break;
+               case 7:
+                  numPreOutliers++;
+                  break;
+               case 8:
+                  numPostOutliers++;
+                  break;
+               case 9:
+                  numMissing++;
+                  break;
+               }
+            }
+
+            // write sample mask to string
             for ( int i = 0; i < _ccMatrix->sampleSize(); i++ )
             {
                sampleMask[i] = '0' + ccPair.at(cluster, i);
             }
          }
+         else
+         {
+            // initialize sample mask to all 0's
+            sampleMask.fill('0');
+         }
 
+         // write cluster to output file
          stream
             << vector.geneX()
             << "\t" << vector.geneY()
             << "\t" << cluster
             << "\t" << cPair.clusterSize()
-            << "\t" << numClean
+            << "\t" << numSamples
             << "\t" << numMissing
-            << "\t" << numThreshold
-            << "\t" << numPreOutliers
             << "\t" << numPostOutliers
+            << "\t" << numPreOutliers
+            << "\t" << numThreshold
             << "\t" << cPair.at(cluster, 0)
             << "\t" << sampleMask
             << "\n";
       }
 
-      // increment to next cluster
-      cluster = (cluster + 1) % cPair.clusterSize();
-
-      if ( cluster == 0 )
-      {
-         ++vector;
-         ++steps;
-      }
+      // increment to next pair
+      ++vector;
 
       // increment steps and calculate percent complete
+      ++steps;
       qint64 newPercent {100*steps/totalSteps};
 
       // check to see if percent has changed
