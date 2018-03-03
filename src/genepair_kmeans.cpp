@@ -14,7 +14,7 @@ void KMeans::fit(const QVector<Vector2>& X, int K, int numInits, int maxIteratio
    const int N = X.size();
 
    // repeat with several initializations
-   _logL = INFINITY;
+   _logL = -INFINITY;
 
    for ( int init = 0; init < numInits; ++init )
    {
@@ -28,7 +28,7 @@ void KMeans::fit(const QVector<Vector2>& X, int K, int numInits, int maxIteratio
       }
 
       // iterate K means until convergence
-      QVector<cl_char> y;
+      QVector<cl_char> y(N);
       QVector<cl_char> y_next(N);
 
       for ( int t = 0; t < maxIterations; ++t )
@@ -61,7 +61,7 @@ void KMeans::fit(const QVector<Vector2>& X, int K, int numInits, int maxIteratio
          }
 
          // update labels
-         y = y_next;
+         std::swap(y, y_next);
 
          // update means
          for ( int k = 0; k < K; ++k )
@@ -85,12 +85,12 @@ void KMeans::fit(const QVector<Vector2>& X, int K, int numInits, int maxIteratio
       }
 
       // save the run with the greatest log-likelihood
-      float logL = computeLogLikelihood(X);
+      float logL = computeLogLikelihood(X, y);
 
       if ( _logL < logL )
       {
          _logL = logL;
-         _labels = std::move(y);
+         std::swap(_labels, y);
       }
    }
 }
@@ -100,7 +100,7 @@ void KMeans::fit(const QVector<Vector2>& X, int K, int numInits, int maxIteratio
 
 
 
-float KMeans::computeLogLikelihood(const QVector<Vector2>& X)
+float KMeans::computeLogLikelihood(const QVector<Vector2>& X, const QVector<cl_char>& y)
 {
    // compute within-class scatter
    float S = 0;
@@ -109,7 +109,7 @@ float KMeans::computeLogLikelihood(const QVector<Vector2>& X)
    {
       for ( int i = 0; i < X.size(); ++i )
       {
-         if ( _labels[i] != k )
+         if ( y[i] != k )
          {
             continue;
          }

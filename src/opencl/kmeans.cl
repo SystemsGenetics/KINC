@@ -175,7 +175,7 @@ void fit(
    ulong state = 1;
 
    // repeat with several initializations
-   *logL = INFINITY;
+   *logL = -INFINITY;
 
    for ( int init = 0; init < numInits; ++init )
    {
