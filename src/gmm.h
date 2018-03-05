@@ -182,11 +182,13 @@ private:
 
    int _mpiBlocksOut {0};
    int _mpiBlocksIn {0};
+   QDataStream *_mpiOut {nullptr};
 
    GenePair::Vector _vector;
    GenePair::Vector _nextVector;
-   qint64 _totalPairs;
-   qint64 _pairsComplete {0};
+   qint64 _totalSteps;
+   qint64 _stepsStarted {0};
+   qint64 _stepsComplete {0};
    int _lastPercent {0};
 };
 

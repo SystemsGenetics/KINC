@@ -315,8 +315,8 @@ bool GMM::initialize()
    // initialize new cc matrix
    _output->initialize(_input->getGeneNames(),_input->getSampleNames());
 
-   // initialize total pairs
-   _totalPairs = _output->geneSize()*(_output->geneSize() - 1)/2;
+   // initialize total steps
+   _totalSteps = _output->geneSize()*(_output->geneSize() - 1)/2;
 
    // return pre-allocation argument
    return false;
@@ -516,20 +516,32 @@ void GMM::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, in
 
 void GMM::savePair(GenePair::Vector vector, int K, const cl_char *labels, int N)
 {
-   CCMatrix::Pair pair(_output);
-   pair.addCluster(K);
+   // get MPI instance
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
 
-   for ( int i = 0; i < N; ++i )
+   if ( mpi.isMaster() )
    {
-      for ( int k = 0; k < K; ++k )
-      {
-         pair.at(k, i) = (labels[i] >= 0)
-            ? (k == labels[i])
-            : -labels[i];
-      }
-   }
+      // save cluster data to output file
+      CCMatrix::Pair pair(_output);
+      pair.addCluster(K);
 
-   pair.write(vector);
+      for ( int i = 0; i < N; ++i )
+      {
+         for ( int k = 0; k < K; ++k )
+         {
+            pair.at(k, i) = (labels[i] >= 0)
+               ? (k == labels[i])
+               : -labels[i];
+         }
+      }
+
+      pair.write(vector);
+   }
+   else
+   {
+      // send cluster data to master node
+      _mpiOut->writeRawData(reinterpret_cast<const char *>(labels), N);
+   }
 }
 
 
@@ -539,12 +551,15 @@ void GMM::savePair(GenePair::Vector vector, int K, const cl_char *labels, int N)
 
 void GMM::runSerial()
 {
+   // get MPI instance
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+
    // initialize workspace arrays
    QVector<GenePair::Vector2> X;
    QVector<cl_char> labels(_input->getSampleSize());
 
-   // iterate through all gene pairs
-   while ( _vector.geneX() < _output->geneSize() )
+   // iterate through gene pairs
+   while ( _stepsComplete < _totalSteps )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -557,6 +572,12 @@ void GMM::runSerial()
 
       computePair(_vector, X, bestK, labels);
 
+      // send cluster size to master node
+      if ( !mpi.isMaster() )
+      {
+         (*_mpiOut) << bestK;
+      }
+
       // save cluster pair if multiple clusters are found
       if ( bestK > 1 )
       {
@@ -567,14 +588,20 @@ void GMM::runSerial()
       ++_vector;
 
       // increment steps and calculate percent complete
-      ++_pairsComplete;
-      qint64 newPercent {100*_pairsComplete/_totalPairs};
+      ++_stepsComplete;
+      qint64 newPercent {100*_stepsComplete/_totalSteps};
 
       // emit progressed signal when percent changes
       if ( newPercent != _lastPercent )
       {
          _lastPercent = newPercent;
          emit progressed(_lastPercent);
+
+         // TEMP: print MPI slave's progress
+         if ( !mpi.isMaster() )
+         {
+            qInfo("%d: %d%%", mpi.rank(), _lastPercent);
+         }
       }
    }
 }
@@ -609,6 +636,7 @@ QByteArray GMM::buildMPIBlock()
 
 bool GMM::readMPIBlock(const QByteArray& block)
 {
+   // get MPI instance
    Ace::QMPI& mpi {Ace::QMPI::initialize()};
 
    // read data from slave node
@@ -623,9 +651,12 @@ bool GMM::readMPIBlock(const QByteArray& block)
       return false;
    }
 
-   // iterate through gene pairs in this block
+   // compute block parameters
    int totalBlocks = mpi.size() - 1;
-   int blockSize = BLOCK_SIZE(blockIndex, totalBlocks, _totalPairs);
+   int blockSize = BLOCK_SIZE(blockIndex, totalBlocks, _totalSteps);
+
+   // iterate through gene pairs in this block
+   QVector<cl_char> labels(_input->getSampleSize());
 
    for ( int i = 0; i < blockSize; ++i )
    {
@@ -636,8 +667,7 @@ bool GMM::readMPIBlock(const QByteArray& block)
       // save results if necessary
       if ( bestK > 1 )
       {
-         QVector<cl_char> labels;
-         stream >> labels;
+         stream.readRawData(reinterpret_cast<char *>(labels.data()), labels.size());
 
          savePair(_vector, bestK, labels.data(), labels.size());
       }
@@ -656,66 +686,80 @@ bool GMM::readMPIBlock(const QByteArray& block)
 
 
 
-QByteArray GMM::processMPIBlock(const QByteArray& block)
+QByteArray GMM::processMPIBlock(const QByteArray& /*block*/)
 {
+   // get MPI instance
    Ace::QMPI& mpi {Ace::QMPI::initialize()};
-
-   // read data from master node
-   QDataStream in(block);
-
-   int blockIndex;
-   in >> blockIndex;
 
    // initialize output data
    QByteArray data;
-   QDataStream out(&data, QIODevice::WriteOnly);
+   _mpiOut = new QDataStream(&data, QIODevice::WriteOnly);
 
-   out << blockIndex;
-
-   // initialize total pairs
-   _totalPairs = _input->getGeneSize()*(_input->getGeneSize() - 1)/2;
-
-   // initialize gene pair vector
+   // compute block parameters
+   int blockIndex = mpi.rank() - 1;
    int totalBlocks = mpi.size() - 1;
-   qint64 blockLow = BLOCK_LOW(blockIndex, totalBlocks, _totalPairs);
-   qint64 blockSize = BLOCK_SIZE(blockIndex, totalBlocks, _totalPairs);
+   qint64 totalPairs = _input->getGeneSize()*(_input->getGeneSize() - 1)/2;
+   qint64 blockLow = BLOCK_LOW(blockIndex, totalBlocks, totalPairs);
 
+   // save block index
+   (*_mpiOut) << blockIndex;
+
+   // initialize gene pair vector and total steps
    _vector = GenePair::Vector(blockLow);
+   _totalSteps = BLOCK_SIZE(blockIndex, totalBlocks, totalPairs);
 
-   // initialize workspace arrays
-   QVector<GenePair::Vector2> X;
-   QVector<cl_char> labels(_input->getSampleSize());
-
-   // iterate through gene pairs in this block
-   for ( qint64 i = 0; i < blockSize; ++i )
+   // check to see if analytic can run OpenCL and there is a device to use
+   if ( getCapabilities()&Capabilities::OpenCL
+        && EOpenCLDevice::getInstance().getStatus() == EOpenCLDevice::Ok )
    {
-      // compute clusters
-      int bestK;
-
-      computePair(_vector, X, bestK, labels);
-
-      // save cluster pair if multiple clusters are found
-      out << bestK;
-
-      if ( bestK > 1 )
+      // initialize block info
+      int blockSize {getBlockSize()};
+      int done {0};
+      bool blocks[blockSize];
+      for (int i = 0; i < blockSize ;++i)
       {
-         out << labels;
+         blocks[i] = true;
       }
 
-      // increment gene pair index
-      ++_vector;
-
-      // increment steps and calculate percent complete
-      qint64 newPercent {100*i/blockSize};
-
-      // emit progressed signal when percent changes
-      if ( newPercent != _lastPercent )
+      // begin block while loop
+      while ( done < blockSize )
       {
-         _lastPercent = newPercent;
-         emit progressed(_lastPercent);
+         // if interruption is requested exit
+         if ( isInterruptionRequested() )
+         {
+            break;
+         }
 
-         qInfo("%d: %d%%", mpi.rank(), _lastPercent);
+         for (int i = 0; i < blockSize ;++i)
+         {
+            // make sure block is still alive
+            if ( blocks[i] )
+            {
+               // if block is still alive run it
+               if ( !runBlock(i) )
+               {
+                  // block is done, remove it from active list
+                  blocks[i] = false;
+                  ++done;
+               }
+            }
+         }
       }
+   }
+
+   // else just run serial if possible
+   else if ( getCapabilities()&Capabilities::Serial )
+   {
+      runSerial();
+   }
+
+   // else analytic cannot run and throw failure
+   else
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Failed Analytic Execution."));
+      e.setDetails(tr("Could not execute analytic because it lacks any applicable capability."));
+      throw e;
    }
 
    // send data to master node
@@ -754,6 +798,9 @@ int GMM::getBlockSize()
 
 bool GMM::runBlock(int index)
 {
+   // get MPI instance
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+
    // figure out what state this block is in and execute it
    switch (_blocks[index]->state)
    {
@@ -776,13 +823,19 @@ bool GMM::runBlock(int index)
    }
 
    // figure out new percent complete
-   int newPercent = _pairsComplete*100/_totalPairs;
+   int newPercent = _stepsComplete*100/_totalSteps;
 
    // if percent complete has changed update it and emit progressed
    if ( newPercent != _lastPercent )
    {
       _lastPercent = newPercent;
       emit progressed(_lastPercent);
+
+      // TEMP: print MPI slave's progress
+      if ( !mpi.isMaster() )
+      {
+         qInfo("%d: %d%%", mpi.rank(), _lastPercent);
+      }
    }
 
    // signal block is still running
@@ -942,19 +995,22 @@ void GMM::initializeKernelArguments()
 void GMM::runStartBlock(Block& block)
 {
    // check if there are more gene pairs to compute
-   if ( _vector.geneX() < _output->geneSize() )
+   if ( _stepsStarted < _totalSteps )
    {
       // set block xy to beginning of read comparisons
       block.vector = _vector;
 
       // copy list of pairs to be done on this run
       int index {0};
-      while ( _vector.geneX() < _output->geneSize() && index < _kernelSize )
+      while ( _stepsStarted + index < _totalSteps && index < _kernelSize )
       {
          (*block.pairs)[index] = { _vector.geneX(), _vector.geneY() };
          ++_vector;
          ++index;
       }
+
+      // update steps started
+      _stepsStarted += index;
 
       // copy any remaining and unused pairs to zero
       while ( index < _kernelSize )
@@ -1065,6 +1121,9 @@ void GMM::runExecuteBlock(Block& block)
 
 void GMM::runReadBlock(Block& block)
 {
+   // get MPI instance
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+
    // check if read is complete and we are next in line
    if ( !block.isWaiting() && _nextVector == block.vector )
    {
@@ -1073,12 +1132,17 @@ void GMM::runReadBlock(Block& block)
 
       // save each valid clustering result to cluster matrix
       int index {0};
-      while ( block.vector.geneX() < _output->geneSize() && index < _kernelSize )
+      while ( _stepsComplete < _totalSteps && index < _kernelSize )
       {
          // read results
          int N = _input->getSampleSize();
          int bestK = (*block.result_K)[index];
          cl_char *bestLabels = &(*block.result_labels)[index * N];
+
+         if ( !mpi.isMaster() )
+         {
+            (*_mpiOut) << bestK;
+         }
 
          // save cluster pair if multiple clusters are found
          if ( bestK > 1 )
@@ -1089,7 +1153,7 @@ void GMM::runReadBlock(Block& block)
          // increment indices
          ++block.vector;
          ++index;
-         ++_pairsComplete;
+         ++_stepsComplete;
       }
 
       // update next vector and change block state to start
