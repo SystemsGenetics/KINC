@@ -46,10 +46,10 @@ public:
    virtual void finish() override final {}
 
 private:
-   void fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels);
+   void fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels);
    float computeBIC(int K, float logL, int N, int D);
-   void computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels);
-   void savePair(const GenePair::Vector& vector, int K, const cl_char *labels, int N);
+   void computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels);
+   void savePair(GenePair::Vector vector, int K, const cl_char *labels, int N);
 
    struct Block
    {

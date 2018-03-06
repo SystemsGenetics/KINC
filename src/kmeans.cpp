@@ -281,7 +281,7 @@ bool KMeans::initialize()
 
 
 
-void KMeans::fetchData(const GenePair::Vector& vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels)
+void KMeans::fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels)
 {
    // read in gene expressions
    ExpressionMatrix::Gene gene1(_input);
@@ -330,32 +330,41 @@ float KMeans::computeBIC(int K, float logL, int N, int D)
 
 
 
-void KMeans::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels)
+void KMeans::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels)
 {
-   float bestValue = INFINITY;
+   // fetch data matrix X from expression matrix
+   fetchData(vector, X, bestLabels);
 
-   for ( int K = _minClusters; K <= _maxClusters; ++K )
+   // perform clustering only if there are enough samples
+   bestK = 0;
+
+   if ( X.size() >= _minSamples )
    {
-      // run each clustering model
-      GenePair::KMeans model;
+      float bestValue = INFINITY;
 
-      model.fit(X, K, _numInits, _maxIterations);
-
-      // evaluate model
-      float value = computeBIC(K, model.logLikelihood(), X.size(), 2);
-
-      // save the best model
-      if ( value < bestValue )
+      for ( int K = _minClusters; K <= _maxClusters; ++K )
       {
-         bestK = K;
-         bestValue = value;
+         // run each clustering model
+         GenePair::KMeans model;
 
-         for ( int i = 0, j = 0; i < X.size(); ++i )
+         model.fit(X, K, _numInits, _maxIterations);
+
+         // evaluate model
+         float value = computeBIC(K, model.logLikelihood(), X.size(), 2);
+
+         // save the best model
+         if ( value < bestValue )
          {
-            if ( bestLabels[i] >= 0 )
+            bestK = K;
+            bestValue = value;
+
+            for ( int i = 0, j = 0; i < X.size(); ++i )
             {
-               bestLabels[i] = model.labels()[j];
-               ++j;
+               if ( bestLabels[i] >= 0 )
+               {
+                  bestLabels[i] = model.labels()[j];
+                  ++j;
+               }
             }
          }
       }
@@ -367,7 +376,7 @@ void KMeans::computeModel(const QVector<GenePair::Vector2>& X, int& bestK, QVect
 
 
 
-void KMeans::savePair(const GenePair::Vector& vector, int K, const cl_char *labels, int N)
+void KMeans::savePair(GenePair::Vector vector, int K, const cl_char *labels, int N)
 {
    CCMatrix::Pair pair(_output);
    pair.addCluster(K);
@@ -413,16 +422,10 @@ void KMeans::runSerial()
          return;
       }
 
-      // fetch data matrix X from expression matrix
-      fetchData(vector, X, labels);
+      // compute clusters
+      int bestK;
 
-      // perform clustering only if there are enough samples
-      int bestK = 0;
-
-      if ( X.size() >= _minSamples )
-      {
-         computeModel(X, bestK, labels);
-      }
+      computePair(_vector, X, bestK, labels);
 
       // save cluster pair if multiple clusters are found
       if ( bestK > 1 )
