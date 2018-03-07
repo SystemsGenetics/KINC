@@ -323,9 +323,9 @@ void GMM::performMStep(float *logpi, int K, float *loggamma, float *logGamma, fl
 
 
 
-QVector<cl_char> GMM::calcLabels(float *loggamma, int N, int K)
+QVector<qint8> GMM::calcLabels(float *loggamma, int N, int K)
 {
-   QVector<cl_char> labels(N);
+   QVector<qint8> labels(N);
 
    for ( int i = 0; i < N; ++i )
    {

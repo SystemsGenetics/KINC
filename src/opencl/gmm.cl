@@ -331,7 +331,7 @@ void sort(__global float *array, int n)
  */
 void markOutliers(
    __global const Vector2 *X, int N, int j,
-   __global char *labels, int cluster,
+   __global char *labels, char cluster,
    char marker,
    __global float *x_sorted)
 {
@@ -920,7 +920,7 @@ __kernel void computeGMMBlock(
    __global const int2 *pairs,
    int minSamples,
    int minExpression,
-   int minClusters, int maxClusters,
+   char minClusters, char maxClusters,
    Criterion criterion,
    int removePreOutliers,
    int removePostOutliers,
@@ -932,7 +932,7 @@ __kernel void computeGMMBlock(
    __global float *work_logpi,
    __global float *work_loggamma,
    __global float *work_logGamma,
-   __global int *result_K,
+   __global char *result_K,
    __global char *result_labels)
 {
    int i = get_global_id(0);
@@ -951,7 +951,7 @@ __kernel void computeGMMBlock(
    __global float *logpi = &work_logpi[i * maxClusters];
    __global float *loggamma = &work_loggamma[i * maxClusters * size];
    __global float *logGamma = &work_logGamma[i * maxClusters];
-   __global int *bestK = &result_K[i];
+   __global char *bestK = &result_K[i];
    __global char *bestLabels = &result_labels[i * size];
 
    // fetch data matrix X from expression matrix
@@ -973,7 +973,7 @@ __kernel void computeGMMBlock(
    {
       float bestValue = INFINITY;
 
-      for ( int K = minClusters; K <= maxClusters; ++K )
+      for ( char K = minClusters; K <= maxClusters; ++K )
       {
          // run each clustering model
          float logL;
@@ -1028,7 +1028,7 @@ __kernel void computeGMMBlock(
       // remove post-clustering outliers
       if ( removePostOutliers )
       {
-         for ( int k = 0; k < *bestK; ++k )
+         for ( char k = 0; k < *bestK; ++k )
          {
             markOutliers(X, numSamples, 0, bestLabels, k, -8, work);
             markOutliers(X, numSamples, 1, bestLabels, k, -8, work);

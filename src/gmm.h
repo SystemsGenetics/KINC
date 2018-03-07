@@ -59,12 +59,12 @@ private:
    static const char* BIC;
    static const char* ICL;
 
-   void fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels);
-   void markOutliers(const QVector<GenePair::Vector2>& X, int j, QVector<cl_char>& labels, int cluster, cl_char marker);
+   void fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<qint8>& labels);
+   void markOutliers(const QVector<GenePair::Vector2>& X, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker);
    float computeBIC(int K, float logL, int N, int D);
    float computeICL(int K, float logL, int N, int D, float E);
-   void computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels);
-   void savePair(GenePair::Vector vector, int K, const cl_char *labels, int N);
+   void computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, qint8& bestK, QVector<qint8>& bestLabels);
+   void savePair(GenePair::Vector vector, qint8 K, const qint8 *labels, int N);
 
    struct Block
    {
@@ -88,7 +88,7 @@ private:
          work_logpi = device.makeBuffer<cl_float>(K * kernelSize).release();
          work_loggamma = device.makeBuffer<cl_float>(N * K * kernelSize).release();
          work_logGamma = device.makeBuffer<cl_float>(K * kernelSize).release();
-         result_K = device.makeBuffer<cl_int>(1 * kernelSize).release();
+         result_K = device.makeBuffer<cl_char>(1 * kernelSize).release();
          result_labels = device.makeBuffer<cl_char>(N * kernelSize).release();
 
          if ( !device )
@@ -151,7 +151,7 @@ private:
       EOpenCLBuffer<cl_float>* work_logpi;
       EOpenCLBuffer<cl_float>* work_loggamma;
       EOpenCLBuffer<cl_float>* work_logGamma;
-      EOpenCLBuffer<cl_int>* result_K;
+      EOpenCLBuffer<cl_char>* result_K;
       EOpenCLBuffer<cl_char>* result_labels;
    };
 
@@ -167,8 +167,8 @@ private:
    CCMatrix* _output {nullptr};
    int _minSamples {30};
    float _minExpression {-INFINITY};
-   int _minClusters {1};
-   int _maxClusters {5};
+   qint8 _minClusters {1};
+   qint8 _maxClusters {5};
    Criterion _criterion {Criterion::BIC};
    bool _removePreOutliers {false};
    bool _removePostOutliers {false};

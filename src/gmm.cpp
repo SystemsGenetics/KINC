@@ -327,7 +327,7 @@ bool GMM::initialize()
 
 
 
-void GMM::fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels)
+void GMM::fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<qint8>& labels)
 {
    // read in gene expressions
    ExpressionMatrix::Gene gene1(_input);
@@ -364,7 +364,7 @@ void GMM::fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVec
 
 
 
-void GMM::markOutliers(const QVector<GenePair::Vector2>& X, int j, QVector<cl_char>& labels, int cluster, cl_char marker)
+void GMM::markOutliers(const QVector<GenePair::Vector2>& X, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker)
 {
    // compute x_sorted = X[:, j], filtered and sorted
    QVector<float> x_sorted;
@@ -433,7 +433,7 @@ float GMM::computeICL(int K, float logL, int N, int D, float E)
 
 
 
-void GMM::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels)
+void GMM::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, qint8& bestK, QVector<qint8>& bestLabels)
 {
    // fetch data matrix X from expression matrix
    fetchData(vector, X, bestLabels);
@@ -452,7 +452,7 @@ void GMM::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, in
    {
       float bestValue = INFINITY;
 
-      for ( int K = _minClusters; K <= _maxClusters; ++K )
+      for ( qint8 K = _minClusters; K <= _maxClusters; ++K )
       {
          // run each clustering model
          GenePair::GMM model;
@@ -500,7 +500,7 @@ void GMM::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, in
       // remove post-clustering outliers
       if ( _removePostOutliers )
       {
-         for ( int k = 0; k < bestK; ++k )
+         for ( qint8 k = 0; k < bestK; ++k )
          {
             markOutliers(X, 0, bestLabels, k, -8);
             markOutliers(X, 1, bestLabels, k, -8);
@@ -514,7 +514,7 @@ void GMM::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, in
 
 
 
-void GMM::savePair(GenePair::Vector vector, int K, const cl_char *labels, int N)
+void GMM::savePair(GenePair::Vector vector, qint8 K, const qint8 *labels, int N)
 {
    // get MPI instance
    Ace::QMPI& mpi {Ace::QMPI::initialize()};
@@ -527,7 +527,7 @@ void GMM::savePair(GenePair::Vector vector, int K, const cl_char *labels, int N)
 
       for ( int i = 0; i < N; ++i )
       {
-         for ( int k = 0; k < K; ++k )
+         for ( qint8 k = 0; k < K; ++k )
          {
             pair.at(k, i) = (labels[i] >= 0)
                ? (k == labels[i])
@@ -556,7 +556,7 @@ void GMM::runSerial()
 
    // initialize workspace arrays
    QVector<GenePair::Vector2> X;
-   QVector<cl_char> labels(_input->getSampleSize());
+   QVector<qint8> labels(_input->getSampleSize());
 
    // iterate through gene pairs
    while ( _stepsComplete < _totalSteps )
@@ -568,7 +568,7 @@ void GMM::runSerial()
       }
 
       // compute clusters
-      int bestK;
+      qint8 bestK;
 
       computePair(_vector, X, bestK, labels);
 
@@ -656,12 +656,12 @@ bool GMM::readMPIBlock(const QByteArray& block)
    int blockSize = BLOCK_SIZE(blockIndex, totalBlocks, _totalSteps);
 
    // iterate through gene pairs in this block
-   QVector<cl_char> labels(_input->getSampleSize());
+   QVector<qint8> labels(_input->getSampleSize());
 
    for ( int i = 0; i < blockSize; ++i )
    {
       // read results
-      int bestK;
+      qint8 bestK;
       stream >> bestK;
 
       // save results if necessary
@@ -969,8 +969,8 @@ void GMM::initializeKernelArguments()
    _kernel->setArgument(1, (cl_int)_input->getSampleSize());
    _kernel->setArgument(3, (cl_int)_minSamples);
    _kernel->setArgument(4, (cl_int)_minExpression);
-   _kernel->setArgument(5, (cl_int)_minClusters);
-   _kernel->setArgument(6, (cl_int)_maxClusters);
+   _kernel->setArgument(5, (cl_char)_minClusters);
+   _kernel->setArgument(6, (cl_char)_maxClusters);
    _kernel->setArgument(7, (cl_int)_criterion);
    _kernel->setArgument(8, (cl_int)_removePreOutliers);
    _kernel->setArgument(9, (cl_int)_removePostOutliers);
@@ -1136,8 +1136,8 @@ void GMM::runReadBlock(Block& block)
       {
          // read results
          int N = _input->getSampleSize();
-         int bestK = (*block.result_K)[index];
-         cl_char *bestLabels = &(*block.result_labels)[index * N];
+         qint8 bestK = (*block.result_K)[index];
+         qint8 *bestLabels = &(*block.result_labels)[index * N];
 
          if ( !mpi.isMaster() )
          {

@@ -33,7 +33,7 @@ namespace GenePair
       bool success() const { return _success; }
       float logLikelihood() const { return _logL; }
       float entropy() const { return _entropy; }
-      const QVector<cl_char>& labels() const { return _labels; }
+      const QVector<qint8>& labels() const { return _labels; }
 
       void fit(const QVector<Vector2>& X, int K);
 
@@ -44,14 +44,14 @@ namespace GenePair
       void calcLogGammaK(const float *loggamma, int N, int K, float *logGamma);
       float calcLogGammaSum(const float *logpi, int K, const float *logGamma);
       void performMStep(float *logpi, int K, float *loggamma, float *logGamma, float logGammaSum, const QVector<Vector2>& X);
-      QVector<cl_char> calcLabels(float *loggamma, int N, int K);
+      QVector<qint8> calcLabels(float *loggamma, int N, int K);
       float calcEntropy(float *loggamma, int N);
 
       QVector<Component> _components;
       bool _success;
       float _logL;
       float _entropy;
-      QVector<cl_char> _labels;
+      QVector<qint8> _labels;
    };
 }
 

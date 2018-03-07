@@ -1,11 +1,12 @@
 #ifndef GENEPAIR_LINALG_H
 #define GENEPAIR_LINALG_H
 #include <ace/core/AceCore.h>
-#include <ace/core/AceOpenCL.h>
 
 namespace GenePair
 {
-   typedef cl_float2 Vector2;
+   typedef union {
+      float s[2];
+   } Vector2;
 
    void vectorInitZero(Vector2& a);
    void vectorAdd(Vector2& a, const Vector2& b);
@@ -15,7 +16,9 @@ namespace GenePair
    float vectorDot(const Vector2& a, const Vector2& b);
    float vectorDiffNorm(const Vector2& a, const Vector2& b);
 
-   typedef cl_float4 Matrix2x2;
+   typedef union {
+      float s[4];
+   } Matrix2x2;
 
    void matrixInitIdentity(Matrix2x2& M);
    void matrixInitZero(Matrix2x2& M);

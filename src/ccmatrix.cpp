@@ -16,6 +16,7 @@ void CCMatrix::Pair::addCluster(int amount) const
    while ( amount-- > 0 )
    {
       _sampleMasks.push_back({});
+      _sampleMasks.back().reserve(_cMatrix->_sampleSize);
       for (int i = 0; i < _cMatrix->_sampleSize ;++i)
       {
          _sampleMasks.back().push_back(0);
