@@ -306,14 +306,14 @@ __kernel void computeKmeansBlock(
    __global const int2 *pairs,
    int minSamples,
    int minExpression,
-   int minClusters,
-   int maxClusters,
+   char minClusters,
+   char maxClusters,
    int numInits,
    int maxIterations,
    __global Vector2 *work_X,
    __global char *work_labels,
    __global Vector2 *work_means,
-   __global int *result_K,
+   __global char *result_K,
    __global char *result_labels)
 {
    int i = get_global_id(0);
@@ -329,7 +329,7 @@ __kernel void computeKmeansBlock(
    __global Vector2 *means = &work_means[i * maxClusters];
    __global char *y = &work_labels[(3*i+1) * size];
    __global char *y_next = &work_labels[(3*i+2) * size];
-   __global int *bestK = &result_K[i];
+   __global char *bestK = &result_K[i];
    __global char *bestLabels = &result_labels[i * size];
 
    // fetch data matrix X from expression matrix
@@ -342,7 +342,7 @@ __kernel void computeKmeansBlock(
    {
       float bestValue = INFINITY;
 
-      for ( int K = minClusters; K <= maxClusters; ++K )
+      for ( char K = minClusters; K <= maxClusters; ++K )
       {
          // run each clustering model
          float logL;

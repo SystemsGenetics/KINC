@@ -28,8 +28,8 @@ void KMeans::fit(const QVector<Vector2>& X, int K, int numInits, int maxIteratio
       }
 
       // iterate K means until convergence
-      QVector<cl_char> y(N);
-      QVector<cl_char> y_next(N);
+      QVector<qint8> y(N);
+      QVector<qint8> y_next(N);
 
       for ( int t = 0; t < maxIterations; ++t )
       {
@@ -100,7 +100,7 @@ void KMeans::fit(const QVector<Vector2>& X, int K, int numInits, int maxIteratio
 
 
 
-float KMeans::computeLogLikelihood(const QVector<Vector2>& X, const QVector<cl_char>& y)
+float KMeans::computeLogLikelihood(const QVector<Vector2>& X, const QVector<qint8>& y)
 {
    // compute within-class scatter
    float S = 0;

@@ -281,7 +281,7 @@ bool KMeans::initialize()
 
 
 
-void KMeans::fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels)
+void KMeans::fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<qint8>& labels)
 {
    // read in gene expressions
    ExpressionMatrix::Gene gene1(_input);
@@ -330,7 +330,7 @@ float KMeans::computeBIC(int K, float logL, int N, int D)
 
 
 
-void KMeans::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels)
+void KMeans::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, qint8& bestK, QVector<qint8>& bestLabels)
 {
    // fetch data matrix X from expression matrix
    fetchData(vector, X, bestLabels);
@@ -342,7 +342,7 @@ void KMeans::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X,
    {
       float bestValue = INFINITY;
 
-      for ( int K = _minClusters; K <= _maxClusters; ++K )
+      for ( qint8 K = _minClusters; K <= _maxClusters; ++K )
       {
          // run each clustering model
          GenePair::KMeans model;
@@ -376,14 +376,14 @@ void KMeans::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X,
 
 
 
-void KMeans::savePair(GenePair::Vector vector, int K, const cl_char *labels, int N)
+void KMeans::savePair(GenePair::Vector vector, qint8 K, const qint8 *labels, int N)
 {
    CCMatrix::Pair pair(_output);
    pair.addCluster(K);
 
    for ( int i = 0; i < N; ++i )
    {
-      for ( int k = 0; k < K; ++k )
+      for ( qint8 k = 0; k < K; ++k )
       {
          pair.at(k, i) = (labels[i] >= 0)
             ? (k == labels[i])
@@ -408,7 +408,7 @@ void KMeans::runSerial()
 
    // initialize arrays used for k-means clustering
    QVector<GenePair::Vector2> X;
-   QVector<cl_char> labels(_input->getSampleSize());
+   QVector<qint8> labels(_input->getSampleSize());
 
    // initialize xy gene indexes
    GenePair::Vector vector;
@@ -423,7 +423,7 @@ void KMeans::runSerial()
       }
 
       // compute clusters
-      int bestK;
+      qint8 bestK;
 
       computePair(_vector, X, bestK, labels);
 
@@ -645,8 +645,8 @@ void KMeans::initializeKernelArguments()
    _kernel->setArgument(1, (cl_int)_input->getSampleSize());
    _kernel->setArgument(3, (cl_int)_minSamples);
    _kernel->setArgument(4, (cl_int)_minExpression);
-   _kernel->setArgument(5, (cl_int)_minClusters);
-   _kernel->setArgument(6, (cl_int)_maxClusters);
+   _kernel->setArgument(5, (cl_char)_minClusters);
+   _kernel->setArgument(6, (cl_char)_maxClusters);
    _kernel->setArgument(7, (cl_int)_numInits);
    _kernel->setArgument(8, (cl_int)_maxIterations);
    _kernel->setDimensionCount(1);
@@ -800,8 +800,8 @@ void KMeans::runReadBlock(Block& block)
       {
          // read results
          int N = _input->getSampleSize();
-         int bestK = (*block.result_K)[index];
-         cl_char *bestLabels = &(*block.result_labels)[index * N];
+         qint8 bestK = (*block.result_K)[index];
+         qint8 *bestLabels = &(*block.result_labels)[index * N];
 
          // save cluster pair if multiple clusters are found
          if ( bestK > 1 )

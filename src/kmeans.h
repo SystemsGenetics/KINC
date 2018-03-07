@@ -46,10 +46,10 @@ public:
    virtual void finish() override final {}
 
 private:
-   void fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<cl_char>& labels);
+   void fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<qint8>& labels);
    float computeBIC(int K, float logL, int N, int D);
-   void computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, int& bestK, QVector<cl_char>& bestLabels);
-   void savePair(GenePair::Vector vector, int K, const cl_char *labels, int N);
+   void computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, qint8& bestK, QVector<qint8>& bestLabels);
+   void savePair(GenePair::Vector vector, qint8 K, const qint8 *labels, int N);
 
    struct Block
    {
@@ -68,7 +68,7 @@ private:
          work_X = device.makeBuffer<cl_float2>(N * kernelSize).release();
          work_labels = device.makeBuffer<cl_char>(3*N * kernelSize).release();
          work_means = device.makeBuffer<cl_float2>(K * kernelSize).release();
-         result_K = device.makeBuffer<cl_int>(1 * kernelSize).release();
+         result_K = device.makeBuffer<cl_char>(1 * kernelSize).release();
          result_labels = device.makeBuffer<cl_char>(N * kernelSize).release();
 
          if ( !device )
@@ -121,7 +121,7 @@ private:
       EOpenCLBuffer<cl_float2>* work_X;
       EOpenCLBuffer<cl_char>* work_labels;
       EOpenCLBuffer<cl_float2>* work_means;
-      EOpenCLBuffer<cl_int>* result_K;
+      EOpenCLBuffer<cl_char>* result_K;
       EOpenCLBuffer<cl_char>* result_labels;
    };
 
@@ -137,8 +137,8 @@ private:
    CCMatrix* _output {nullptr};
    int _minSamples {30};
    float _minExpression {-INFINITY};
-   int _minClusters {1};
-   int _maxClusters {5};
+   qint8 _minClusters {1};
+   qint8 _maxClusters {5};
    int _numInits {10};
    int _maxIterations {300};
    int _blockSize {4};
