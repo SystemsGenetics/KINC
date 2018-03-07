@@ -19,6 +19,7 @@ public:
       ,ClusterData
       ,CorrelationData
       ,OutputFile
+      ,GraphMLFile
       ,MinCorrelation
       ,MaxCorrelation
       ,Total
@@ -39,6 +40,7 @@ private:
    CCMatrix* _ccMatrix {nullptr};
    CorrelationMatrix* _cMatrix {nullptr};
    QFile* _output {nullptr};
+   QFile* _graphml {nullptr};
    float _minCorrelation {0.85};
    float _maxCorrelation {1.00};
 };

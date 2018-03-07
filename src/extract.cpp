@@ -22,6 +22,7 @@ EAbstractAnalytic::ArgumentType Extract::getArgumentData(int argument)
    case ClusterData: return Type::DataIn;
    case CorrelationData: return Type::DataIn;
    case OutputFile: return Type::FileOut;
+   case GraphMLFile: return Type::FileOut;
    case MinCorrelation: return Type::Double;
    case MaxCorrelation: return Type::Double;
    default: return Type::Bool;
@@ -49,6 +50,7 @@ QVariant Extract::getArgumentData(int argument, Role role)
       case ClusterData: return QString("clus");
       case CorrelationData: return QString("corr");
       case OutputFile: return QString("output");
+      case GraphMLFile: return QString("graphml");
       case MinCorrelation: return QString("mincorr");
       case MaxCorrelation: return QString("maxcorr");
       default: return QString();
@@ -61,6 +63,7 @@ QVariant Extract::getArgumentData(int argument, Role role)
       case ClusterData: return tr("Cluster Matrix:");
       case CorrelationData: return tr("Correlation Matrix:");
       case OutputFile: return tr("Output File:");
+      case GraphMLFile: return tr("GraphML File:");
       case MinCorrelation: return tr("Minimum Correlation:");
       case MaxCorrelation: return tr("Maximum Correlation:");
       default: return QString();
@@ -73,6 +76,7 @@ QVariant Extract::getArgumentData(int argument, Role role)
       case ClusterData: return tr("Input cluster matrix containing cluster composition data.");
       case CorrelationData: return tr("Input correlation matrix containing correlation data.");
       case OutputFile: return tr("Raw output text file that will contain network edges.");
+      case GraphMLFile: return tr("Raw output text file that will contain network in GraphML format.");
       case MinCorrelation: return tr("Minimum (absolute) correlation threshold for gene pairs.");
       case MaxCorrelation: return tr("Maximum (absolute) correlation threshold for gene pairs.");
       default: return QString();
@@ -118,6 +122,7 @@ QVariant Extract::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case OutputFile: return tr("Raw text file %1").arg("(*.txt)");
+      case GraphMLFile: return tr("GraphML file %1").arg("(*.graphml)");
       default: return QString();
       }
    default:
@@ -154,10 +159,14 @@ void Extract::setArgument(int argument, EAbstractData* data)
 
 void Extract::setArgument(int argument, QFile* file)
 {
-   // if argument is output file set it
+   // figure out which argument is being set and set it
    if ( argument == OutputFile )
    {
       _output = file;
+   }
+   else if ( argument == GraphMLFile )
+   {
+      _graphml = file;
    }
 }
 
@@ -210,7 +219,7 @@ void Extract::runSerial()
    // initialize percent complete and steps
    int lastPercent {0};
    qint64 steps {0};
-   qint64 totalSteps {_cMatrix->size()};
+   qint64 totalSteps {_cMatrix->size() * 2};
 
    // initialize pair iterators
    CorrelationMatrix::Pair pair(_cMatrix);
@@ -262,8 +271,8 @@ void Extract::runSerial()
       // write gene pair data to output file
       for ( int cluster = 0; cluster < pair.clusterSize(); cluster++ )
       {
-         QString& gene1(*geneNames->at(pair.vector().geneX())->toString());
-         QString& gene2(*geneNames->at(pair.vector().geneY())->toString());
+         QString& source(*geneNames->at(pair.vector().geneX())->toString());
+         QString& target(*geneNames->at(pair.vector().geneY())->toString());
          float correlation = pair.at(cluster, 0);
          QString interaction("co");
          int numSamples = 0;
@@ -337,8 +346,8 @@ void Extract::runSerial()
 
          // write cluster to output file
          stream
-            << gene1
-            << "\t" << gene2
+            << source
+            << "\t" << target
             << "\t" << correlation
             << "\t" << interaction
             << "\t" << cluster
@@ -354,7 +363,7 @@ void Extract::runSerial()
 
       // increment steps and calculate percent complete
       ++steps;
-      qint64 newPercent {100*steps/totalSteps};
+      qint64 newPercent {50*steps/totalSteps};
 
       // check to see if percent has changed
       if ( newPercent != lastPercent )
@@ -366,6 +375,128 @@ void Extract::runSerial()
    }
 
    // make sure writing output file worked
+   if ( stream.status() != QTextStream::Ok )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("File IO Error"));
+      e.setDetails(tr("Qt Text Stream encountered an unknown error."));
+      throw e;
+   }
+
+   // reset gene pair iterator
+   pair.reset();
+
+   // create text stream to graphml file and write until end reached
+   stream.setDevice(_graphml);
+
+   // write header to file
+   stream
+      << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+      << "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\"\n"
+      << "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+      << "    xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n"
+      << "  <graph id=\"G\" edgedefault=\"undirected\">\n";
+
+   // write each node to file
+   for ( int i = 0; i < _cMatrix->geneSize(); i++ )
+   {
+      QString& id = *geneNames->at(i)->toString();
+
+      stream << "    <node id=\"" << id << "\"/>\n";
+   }
+
+   // increment through all gene pairs
+   while ( pair.hasNext() )
+   {
+      // make sure interruption is not requested
+      if ( isInterruptionRequested() )
+      {
+         return;
+      }
+
+      // read next gene pair
+      pair.readNext();
+
+      if ( pair.clusterSize() > 1 )
+      {
+         ccPair.read(pair.vector());
+      }
+
+      // write gene pair edges to file
+      for ( int cluster = 0; cluster < pair.clusterSize(); cluster++ )
+      {
+         QString& source(*geneNames->at(pair.vector().geneX())->toString());
+         QString& target(*geneNames->at(pair.vector().geneY())->toString());
+         float correlation = pair.at(cluster, 0);
+
+         // exclude edge if correlation is not within thresholds
+         if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
+         {
+            continue;
+         }
+
+         // if there are multiple clusters then use cluster data
+         if ( pair.clusterSize() > 1 )
+         {
+            // write sample mask to string
+            for ( int i = 0; i < _ccMatrix->sampleSize(); i++ )
+            {
+               sampleMask[i] = '0' + ccPair.at(cluster, i);
+            }
+         }
+
+         // otherwise use expression data
+         else
+         {
+            // read in gene expressions
+            ExpressionMatrix::Gene gene1(_eMatrix);
+            ExpressionMatrix::Gene gene2(_eMatrix);
+
+            gene1.read(pair.vector().geneX());
+            gene2.read(pair.vector().geneY());
+
+            // determine sample mask from expression data
+            for ( int i = 0; i < _eMatrix->getSampleSize(); ++i )
+            {
+               if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
+               {
+                  sampleMask[i] = '9';
+               }
+               else
+               {
+                  sampleMask[i] = '1';
+               }
+            }
+         }
+
+         // write edge to file
+         stream
+            << "    <edge"
+            << " source=\"" << source << "\""
+            << " target=\"" << target << "\""
+            << " samples=\"" << sampleMask << "\""
+            << "/>\n";
+      }
+
+      // increment steps and calculate percent complete
+      ++steps;
+      qint64 newPercent {50 + 50*steps/totalSteps};
+
+      // check to see if percent has changed
+      if ( newPercent != lastPercent )
+      {
+         // update percent complete and emit progressed signal
+         lastPercent = newPercent;
+         emit progressed(lastPercent);
+      }
+   }
+
+   // write footer to file
+   stream
+      << "  </graph>\n"
+      << "</graphml>\n";
+
+   // make sure writing graphml file worked
    if ( stream.status() != QTextStream::Ok )
    {
       E_MAKE_EXCEPTION(e);
