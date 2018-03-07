@@ -140,22 +140,21 @@ void ExportCorrelationMatrix::runSerial()
    // initialize percent complete and steps
    int lastPercent {0};
    qint64 steps {0};
-   qint64 totalSteps {_ccMatrix->geneSize()*(_ccMatrix->geneSize() - 1)/2};
+   qint64 totalSteps {_cMatrix->size()};
 
-   // initialize xy gene indexes
-   GenePair::Vector vector;
-   CCMatrix::Pair ccPair(_ccMatrix);
+   // initialize pair iterators
    CorrelationMatrix::Pair cPair(_cMatrix);
+   CCMatrix::Pair ccPair(_ccMatrix);
 
    // initialize workspace
-   QString sampleMask(_ccMatrix->sampleSize());
+   QString sampleMask(_ccMatrix->sampleSize(), '0');
 
    // create text stream to output file and write until end reached
    QTextStream stream(_output);
    stream.setRealNumberPrecision(6);
 
    // increment through all gene pairs
-   while ( vector.geneX() < _ccMatrix->geneSize() )
+   while ( cPair.hasNext() )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -163,13 +162,18 @@ void ExportCorrelationMatrix::runSerial()
          return;
       }
 
-      // read cluster and correlation data for gene pair
-      ccPair.read(vector);
-      cPair.read(vector);
+      // read next gene pair
+      cPair.readNext();
+
+      if ( cPair.clusterSize() > 1 )
+      {
+         ccPair.read(cPair.vector());
+      }
 
       // write gene pair data to output file
       for ( int cluster = 0; cluster < cPair.clusterSize(); cluster++ )
       {
+         float correlation = cPair.at(cluster, 0);
          int numSamples = 0;
          int numMissing = 0;
          int numPostOutliers = 0;
@@ -215,8 +219,8 @@ void ExportCorrelationMatrix::runSerial()
 
          // write cluster to output file
          stream
-            << vector.geneX()
-            << "\t" << vector.geneY()
+            << cPair.vector().geneX()
+            << "\t" << cPair.vector().geneY()
             << "\t" << cluster
             << "\t" << cPair.clusterSize()
             << "\t" << numSamples
@@ -224,13 +228,10 @@ void ExportCorrelationMatrix::runSerial()
             << "\t" << numPostOutliers
             << "\t" << numPreOutliers
             << "\t" << numThreshold
-            << "\t" << cPair.at(cluster, 0)
+            << "\t" << correlation
             << "\t" << sampleMask
             << "\n";
       }
-
-      // increment to next pair
-      ++vector;
 
       // increment steps and calculate percent complete
       ++steps;
