@@ -33,7 +33,7 @@ namespace GenePair
          virtual bool isEmpty() const = 0;
          void write(Vector index);
          void read(Vector index) const;
-         void readFirst() const;
+         void reset() const { _nextIndex = 0; };
          void readNext() const;
          bool hasNext() const { return _nextIndex != _cMatrix->_rawPairSize; }
          const Vector& vector() const { return _vector; }

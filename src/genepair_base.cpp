@@ -345,18 +345,6 @@ void Base::Pair::read(Vector index) const
 
 
 
-void Base::Pair::readFirst() const
-{
-   // reset next index to first gene pair and read it
-   _nextIndex = 0;
-   readNext();
-}
-
-
-
-
-
-
 void Base::Pair::readNext() const
 {
    // make sure read next index is not already at end of data object

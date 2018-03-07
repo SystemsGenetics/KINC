@@ -213,7 +213,6 @@ void RMT::runSerial()
    // initialize pair iterators and last percent complete
    CorrelationMatrix::Pair pair(_input);
    CorrelationMatrix::Pair outPair(_output);
-   pair.readFirst();
    outPair.addCluster();
    int lastPercent {66};
 
@@ -222,13 +221,16 @@ void RMT::runSerial()
    qint64 totalSteps {_input->size()};
 
    // iterate through all gene pairs until end is reached
-   while ( true )
+   while ( pair.hasNext() )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
       {
          return;
       }
+
+      // read next gene pair
+      pair.readNext();
 
       // check if it meets threshold and is not empty
       if ( !pair.isEmpty() && pair.at(0,0) >= threshold )
@@ -238,21 +240,14 @@ void RMT::runSerial()
          outPair.write(pair.vector());
       }
 
-      // if we are at end break from loop
-      if ( !pair.hasNext() )
-      {
-         break;
-      }
-
-      // read next gene pair and increment steps
-      pair.readNext();
+      // increment steps and calculate percent complete
       ++steps;
+      qint64 newPercent = 66 + 33*steps/totalSteps;
 
-      // determine new percentage complete and check if new
-      int newPercent = 66 + steps/totalSteps;
+      // check to see if percent has changed
       if ( newPercent != lastPercent )
       {
-         // update to new percentage and emit progressed signal
+         // update percent complete and emit progressed signal
          lastPercent = newPercent;
          emit progressed(lastPercent);
       }
@@ -390,16 +385,18 @@ void RMT::generateGeneThresholds()
 
    // initialize gene pair iterator
    CorrelationMatrix::Pair pair(_input);
-   pair.readFirst();
 
    // iterate through all gene pairs
-   while ( true )
+   while ( pair.hasNext() )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
       {
          return;
       }
+
+      // read in next gene pair
+      pair.readNext();
 
       // check if it is a real number and not empty
       if ( !pair.isEmpty() && !isnan(pair.at(0,0)) )
@@ -417,14 +414,7 @@ void RMT::generateGeneThresholds()
          }
       }
 
-      // if we are at end break from loop
-      if ( !pair.hasNext() )
-      {
-         break;
-      }
-
-      // read in next gene pair, increment steps, and compute new percent complete
-      pair.readNext();
+      // increment steps and compute new percent complete
       ++steps;
       qint64 newPercent {33*steps/totalSteps};
 
