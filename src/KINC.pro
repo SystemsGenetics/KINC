@@ -70,7 +70,8 @@ SOURCES += \
     genepair_linalg.cpp \
     ccmatrix.cpp \
     kmeans.cpp \
-    gmm.cpp
+    gmm.cpp \
+    extract.cpp
 
 HEADERS += \
     analyticfactory.h \
@@ -92,7 +93,8 @@ HEADERS += \
     genepair_linalg.h \
     ccmatrix.h \
     kmeans.h \
-    gmm.h
+    gmm.h \
+    extract.h
 
 RESOURCES += \
     opencl.qrc

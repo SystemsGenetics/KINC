@@ -8,6 +8,7 @@
 #include "spearman.h"
 #include "pearson.h"
 #include "rmt.h"
+#include "extract.h"
 
 
 
@@ -32,6 +33,7 @@ QString AnalyticFactory::getName(quint16 type)
    case SpearmanType: return QObject::tr("Spearman Correlation");
    case PearsonType: return QObject::tr("Pearson Correlation");
    case RMTType: return QObject::tr("RMT Thresholding");
+   case ExtractType: return QObject::tr("Extract Network");
    default: return QString();
    }
 }
@@ -55,6 +57,7 @@ QString AnalyticFactory::getCommandName(quint16 type)
    case SpearmanType: return QString("spearman");
    case PearsonType: return QString("pearson");
    case RMTType: return QString("rmt");
+   case ExtractType: return QString("extract");
    default: return QString();
    }
 }
@@ -78,6 +81,7 @@ std::unique_ptr<EAbstractAnalytic> AnalyticFactory::make(quint16 type)
    case SpearmanType: return unique_ptr<EAbstractAnalytic>(new Spearman);
    case PearsonType: return unique_ptr<EAbstractAnalytic>(new Pearson);
    case RMTType: return unique_ptr<EAbstractAnalytic>(new RMT);
+   case ExtractType: return unique_ptr<EAbstractAnalytic>(new Extract);
    default: return nullptr;
    }
 }

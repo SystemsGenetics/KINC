@@ -18,6 +18,7 @@ public:
       ,SpearmanType
       ,PearsonType
       ,RMTType
+      ,ExtractType
       ,Total
    };
    virtual quint16 getCount() override final { return Total; }
