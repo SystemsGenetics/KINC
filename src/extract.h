@@ -4,6 +4,7 @@
 
 #include "ccmatrix.h"
 #include "correlationmatrix.h"
+#include "expressionmatrix.h"
 
 
 
@@ -14,7 +15,8 @@ class Extract : public EAbstractAnalytic
 public:
    enum Arguments
    {
-      ClusterData = 0
+      ExpressionData = 0
+      ,ClusterData
       ,CorrelationData
       ,OutputFile
       ,MinCorrelation
@@ -33,6 +35,7 @@ public:
    virtual void runSerial() override final;
 
 private:
+   ExpressionMatrix* _eMatrix {nullptr};
    CCMatrix* _ccMatrix {nullptr};
    CorrelationMatrix* _cMatrix {nullptr};
    QFile* _output {nullptr};

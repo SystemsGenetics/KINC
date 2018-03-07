@@ -3,6 +3,13 @@
 
 
 
+using namespace std;
+
+
+
+
+
+
 EAbstractAnalytic::ArgumentType Extract::getArgumentData(int argument)
 {
    // use type declaration
@@ -11,6 +18,7 @@ EAbstractAnalytic::ArgumentType Extract::getArgumentData(int argument)
    // figure out which argument is being queried and return its type
    switch (argument)
    {
+   case ExpressionData: return Type::DataIn;
    case ClusterData: return Type::DataIn;
    case CorrelationData: return Type::DataIn;
    case OutputFile: return Type::FileOut;
@@ -37,6 +45,7 @@ QVariant Extract::getArgumentData(int argument, Role role)
       // figure out which argument is being queried and return command line name
       switch (argument)
       {
+      case ExpressionData: return QString("expr");
       case ClusterData: return QString("clus");
       case CorrelationData: return QString("corr");
       case OutputFile: return QString("output");
@@ -48,6 +57,7 @@ QVariant Extract::getArgumentData(int argument, Role role)
       // figure out which argument is being queried and return title
       switch (argument)
       {
+      case ExpressionData: return tr("Expression Matrix:");
       case ClusterData: return tr("Cluster Matrix:");
       case CorrelationData: return tr("Correlation Matrix:");
       case OutputFile: return tr("Output File:");
@@ -59,6 +69,7 @@ QVariant Extract::getArgumentData(int argument, Role role)
       // figure out which argument is being queried and return "What's This?" text
       switch (argument)
       {
+      case ExpressionData: return tr("Input expression matrix containing gene expression data.");
       case ClusterData: return tr("Input cluster matrix containing cluster composition data.");
       case CorrelationData: return tr("Input correlation matrix containing correlation data.");
       case OutputFile: return tr("Raw output text file that will contain network edges.");
@@ -97,6 +108,7 @@ QVariant Extract::getArgumentData(int argument, Role role)
       // if this is input data argument return data type else return nothing
       switch (argument)
       {
+      case ExpressionData: return DataFactory::ExpressionMatrixType;
       case ClusterData: return DataFactory::CCMatrixType;
       case CorrelationData: return DataFactory::CorrelationMatrixType;
       default: return QString();
@@ -121,7 +133,11 @@ QVariant Extract::getArgumentData(int argument, Role role)
 void Extract::setArgument(int argument, EAbstractData* data)
 {
    // if argument is input data set it
-   if ( argument == ClusterData )
+   if ( argument == ExpressionData )
+   {
+      _eMatrix = dynamic_cast<ExpressionMatrix*>(data);
+   }
+   else if ( argument == ClusterData )
    {
       _ccMatrix = dynamic_cast<CCMatrix*>(data);
    }
@@ -172,7 +188,7 @@ void Extract::setArgument(int argument, QVariant value)
 bool Extract::initialize()
 {
    // make sure input and output arguments were set
-   if ( !_ccMatrix || !_cMatrix || !_output )
+   if ( !_eMatrix || !_ccMatrix || !_cMatrix || !_output )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
@@ -197,7 +213,7 @@ void Extract::runSerial()
    qint64 totalSteps {_cMatrix->size()};
 
    // initialize pair iterators
-   CorrelationMatrix::Pair cPair(_cMatrix);
+   CorrelationMatrix::Pair pair(_cMatrix);
    CCMatrix::Pair ccPair(_ccMatrix);
 
    // get gene names
@@ -227,7 +243,7 @@ void Extract::runSerial()
       << "\n";
 
    // increment through all gene pairs
-   while ( cPair.hasNext() )
+   while ( pair.hasNext() )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -236,19 +252,19 @@ void Extract::runSerial()
       }
 
       // read next gene pair
-      cPair.readNext();
+      pair.readNext();
 
-      if ( cPair.clusterSize() > 1 )
+      if ( pair.clusterSize() > 1 )
       {
-         ccPair.read(cPair.vector());
+         ccPair.read(pair.vector());
       }
 
       // write gene pair data to output file
-      for ( int cluster = 0; cluster < cPair.clusterSize(); cluster++ )
+      for ( int cluster = 0; cluster < pair.clusterSize(); cluster++ )
       {
-         QString& gene1(*geneNames->at(cPair.vector().geneX())->toString());
-         QString& gene2(*geneNames->at(cPair.vector().geneY())->toString());
-         float correlation = cPair.at(cluster, 0);
+         QString& gene1(*geneNames->at(pair.vector().geneX())->toString());
+         QString& gene2(*geneNames->at(pair.vector().geneY())->toString());
+         float correlation = pair.at(cluster, 0);
          QString interaction("co");
          int numSamples = 0;
          int numMissing = 0;
@@ -262,7 +278,8 @@ void Extract::runSerial()
             continue;
          }
 
-         if ( ccPair.clusterSize() > 1 )
+         // if there are multiple clusters then use cluster data
+         if ( pair.clusterSize() > 1 )
          {
             // compute summary statistics
             for ( int i = 0; i < _ccMatrix->sampleSize(); i++ )
@@ -293,10 +310,29 @@ void Extract::runSerial()
                sampleMask[i] = '0' + ccPair.at(cluster, i);
             }
          }
+
+         // otherwise use expression data
          else
          {
-            // initialize sample mask to all 0's
-            sampleMask.fill('0');
+            // read in gene expressions
+            ExpressionMatrix::Gene gene1(_eMatrix);
+            ExpressionMatrix::Gene gene2(_eMatrix);
+
+            gene1.read(pair.vector().geneX());
+            gene2.read(pair.vector().geneY());
+
+            // determine sample mask from expression data
+            for ( int i = 0; i < _eMatrix->getSampleSize(); ++i )
+            {
+               if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
+               {
+                  sampleMask[i] = '9';
+               }
+               else
+               {
+                  sampleMask[i] = '1';
+               }
+            }
          }
 
          // write cluster to output file
@@ -306,7 +342,7 @@ void Extract::runSerial()
             << "\t" << correlation
             << "\t" << interaction
             << "\t" << cluster
-            << "\t" << cPair.clusterSize()
+            << "\t" << pair.clusterSize()
             << "\t" << numSamples
             << "\t" << numMissing
             << "\t" << numPostOutliers

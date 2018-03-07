@@ -143,7 +143,7 @@ void ExportCorrelationMatrix::runSerial()
    qint64 totalSteps {_cMatrix->size()};
 
    // initialize pair iterators
-   CorrelationMatrix::Pair cPair(_cMatrix);
+   CorrelationMatrix::Pair pair(_cMatrix);
    CCMatrix::Pair ccPair(_ccMatrix);
 
    // initialize workspace
@@ -154,7 +154,7 @@ void ExportCorrelationMatrix::runSerial()
    stream.setRealNumberPrecision(6);
 
    // increment through all gene pairs
-   while ( cPair.hasNext() )
+   while ( pair.hasNext() )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -163,24 +163,25 @@ void ExportCorrelationMatrix::runSerial()
       }
 
       // read next gene pair
-      cPair.readNext();
+      pair.readNext();
 
-      if ( cPair.clusterSize() > 1 )
+      if ( pair.clusterSize() > 1 )
       {
-         ccPair.read(cPair.vector());
+         ccPair.read(pair.vector());
       }
 
       // write gene pair data to output file
-      for ( int cluster = 0; cluster < cPair.clusterSize(); cluster++ )
+      for ( int cluster = 0; cluster < pair.clusterSize(); cluster++ )
       {
-         float correlation = cPair.at(cluster, 0);
+         float correlation = pair.at(cluster, 0);
          int numSamples = 0;
          int numMissing = 0;
          int numPostOutliers = 0;
          int numPreOutliers = 0;
          int numThreshold = 0;
 
-         if ( ccPair.clusterSize() > 1 )
+         // if there are multiple clusters then use cluster data
+         if ( pair.clusterSize() > 1 )
          {
             // compute summary statistics
             for ( int i = 0; i < _ccMatrix->sampleSize(); i++ )
@@ -211,18 +212,19 @@ void ExportCorrelationMatrix::runSerial()
                sampleMask[i] = '0' + ccPair.at(cluster, i);
             }
          }
+
+         // else just initialize empty sample mask
          else
          {
-            // initialize sample mask to all 0's
             sampleMask.fill('0');
          }
 
          // write cluster to output file
          stream
-            << cPair.vector().geneX()
-            << "\t" << cPair.vector().geneY()
+            << pair.vector().geneX()
+            << "\t" << pair.vector().geneY()
             << "\t" << cluster
-            << "\t" << cPair.clusterSize()
+            << "\t" << pair.clusterSize()
             << "\t" << numSamples
             << "\t" << numMissing
             << "\t" << numPostOutliers
