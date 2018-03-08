@@ -1,16 +1,22 @@
 
 MAKE = make
 
-BUILD = build
+BUILD_CLI = build-cli
+BUILD_GUI = build-gui
 SRC = src
-BINS = kinc
+BINS = kinc-cli kinc-gui
 
 all: $(BINS)
 
-kinc: $(SRC)/*.h $(SRC)/*.cpp $(SRC)/opencl/*.cl
-	cd $(BUILD) && qmake ../src
-	+$(MAKE) -C $(BUILD)
-	cp $(BUILD)/kinc .
+kinc-cli: $(SRC)/*.h $(SRC)/*.cpp $(SRC)/opencl/*.cl
+	cd $(BUILD_CLI) && GUI=0 qmake ../src
+	+$(MAKE) -C $(BUILD_CLI)
+	cp $(BUILD_CLI)/kinc $@
+
+kinc-gui: $(SRC)/*.h $(SRC)/*.cpp $(SRC)/opencl/*.cl
+	cd $(BUILD_GUI) && GUI=1 qmake ../src
+	+$(MAKE) -C $(BUILD_GUI)
+	cp $(BUILD_GUI)/kinc $@
 
 clean:
-	rm -f $(BUILD)/* $(BINS)
+	rm -f $(BUILD_CLI)/* $(BUILD_GUI)/* $(BINS)

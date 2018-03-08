@@ -2,7 +2,12 @@
 TARGET = kinc
 TEMPLATE = app
 CONFIG += c++11
-GUI = 1
+
+GUI = $$(GUI)
+
+isEmpty(GUI) {
+   GUI = 1
+}
 
 # Qt libraries
 QT += core
