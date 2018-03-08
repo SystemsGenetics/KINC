@@ -30,7 +30,6 @@ EAbstractAnalytic::ArgumentType RMT::getArgumentData(int argument)
    switch (argument)
    {
    case InputData: return Type::DataIn;
-   case OutputData: return Type::DataOut;
    case LogFile: return Type::FileOut;
    case FilterSize: return Type::Integer;
    default: return Type::Bool;
@@ -55,7 +54,6 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       switch (argument)
       {
       case InputData: return QString("input");
-      case OutputData: return QString("output");
       case LogFile: return QString("log");
       case FilterSize: return QString("filter");
       default: return QVariant();
@@ -65,7 +63,6 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       switch (argument)
       {
       case InputData: return tr("Input:");
-      case OutputData: return tr("Output:");
       case LogFile: return tr("Log File:");
       case FilterSize: return tr("Filter Size:");
       default: return QVariant();
@@ -76,8 +73,6 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       {
       case InputData: return tr("Input correlation matrix that will be used to output correlation"
                                 " above a threshold determined by Random Matrix Theory.");
-      case OutputData: return tr("Output correlation matrix that will hold all gene correlations"
-                                 " above a certain threshold.");
       case LogFile: return tr("Output text file that logs all chi trials.");
       case FilterSize: return tr("Sample size for low pass filter of chi results.");
       default: return QVariant();
@@ -87,7 +82,6 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       switch (argument)
       {
       case InputData: return DataFactory::CorrelationMatrixType;
-      case OutputData: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
    case Role::FileFilters:
@@ -166,9 +160,6 @@ void RMT::setArgument(int argument, EAbstractData* data)
    case InputData:
       _input = dynamic_cast<CorrelationMatrix*>(data);
       break;
-   case OutputData:
-      _output = dynamic_cast<CorrelationMatrix*>(data);
-      break;
    }
 }
 
@@ -180,17 +171,14 @@ void RMT::setArgument(int argument, EAbstractData* data)
 bool RMT::initialize()
 {
    // make sure input and output were set properly
-   if ( !_input || !_output || !_logfile )
+   if ( !_input || !_logfile )
    {
       // report argument error and fail
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
-      e.setDetails(QObject::tr("Did not get valid input, output, or logfile arguments."));
+      e.setDetails(QObject::tr("Did not get valid input or logfile arguments."));
       throw e;
    }
-
-   // initialize new correlation matrix
-   _output->initialize(_input->geneNames(),_input->correlationNames());
 
    // nothing to pre-allocate
    return false;
@@ -203,64 +191,6 @@ bool RMT::initialize()
 
 void RMT::runSerial()
 {
-   // determine threshold using RMT and make sure interruption is not requested
-   float threshold {determineThreshold()};
-   if ( isInterruptionRequested() )
-   {
-      return;
-   }
-
-   // initialize pair iterators and last percent complete
-   CorrelationMatrix::Pair pair(_input);
-   CorrelationMatrix::Pair outPair(_output);
-   outPair.addCluster();
-   int lastPercent {66};
-
-   // initialize steps and total steps
-   qint64 steps {0};
-   qint64 totalSteps {_input->size()};
-
-   // iterate through all gene pairs until end is reached
-   while ( pair.hasNext() )
-   {
-      // make sure interruption is not requested
-      if ( isInterruptionRequested() )
-      {
-         return;
-      }
-
-      // read next gene pair
-      pair.readNext();
-
-      // check if it meets threshold and is not empty
-      if ( !pair.isEmpty() && pair.at(0,0) >= threshold )
-      {
-         // write correlation to output
-         outPair.at(0,0) = pair.at(0,0);
-         outPair.write(pair.vector());
-      }
-
-      // increment steps and calculate percent complete
-      ++steps;
-      qint64 newPercent = 66 + 33*steps/totalSteps;
-
-      // check to see if percent has changed
-      if ( newPercent != lastPercent )
-      {
-         // update percent complete and emit progressed signal
-         lastPercent = newPercent;
-         emit progressed(lastPercent);
-      }
-   }
-}
-
-
-
-
-
-
-float RMT::determineThreshold()
-{
    // generate list of maximum threshold for each gene and initialize log text stream
    generateGeneThresholds();
    QTextStream stream(_logfile);
@@ -271,7 +201,7 @@ float RMT::determineThreshold()
    QQueue<float> previousChi;
 
    // initialize last percent, steps, and total steps
-   int lastPercent {33};
+   int lastPercent {50};
    int steps {0};
    int totalSteps = (_initialThreshold - _thresholdMinimum)/_thresholdStep;
 
@@ -281,7 +211,7 @@ float RMT::determineThreshold()
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
       {
-         return 0.0;
+         return;
       }
 
       // add new raw chi value to queue
@@ -318,7 +248,7 @@ float RMT::determineThreshold()
       }
 
       // determine new percent complete and check if it is new
-      int newPercent {33 + 33*steps/totalSteps};
+      int newPercent {50 + 50*steps/totalSteps};
       if ( newPercent != lastPercent )
       {
          // update new percentage and emit progressed signal
@@ -330,8 +260,8 @@ float RMT::determineThreshold()
       ++steps;
    }
 
-   // return threshold where chi was first above 100
-   return threshold - _thresholdStep;
+   // write threshold where chi was first above 100
+   stream << threshold - _thresholdStep << "\n";
 }
 
 
@@ -416,7 +346,7 @@ void RMT::generateGeneThresholds()
 
       // increment steps and compute new percent complete
       ++steps;
-      qint64 newPercent {33*steps/totalSteps};
+      qint64 newPercent {50*steps/totalSteps};
 
       // check to see if percent complete changed
       if ( newPercent != lastPercent )

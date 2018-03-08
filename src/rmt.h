@@ -14,7 +14,6 @@ public:
    enum Arguments
    {
       InputData = 0
-      ,OutputData
       ,LogFile
       ,FilterSize
       ,Total
@@ -29,7 +28,6 @@ public:
    virtual bool initialize() override final;
    virtual void runSerial() override final;
 private:
-   float determineThreshold();
    float determineChi(float threshold, int* size);
    void generateGeneThresholds();
    QVector<double> generatePruneMatrix(float threshold, int* size);
@@ -45,7 +43,6 @@ private:
    constexpr static float _chiSquareBinSize {0.05};
    constexpr static double _minimumEigenValue {0.000001};
    CorrelationMatrix* _input {nullptr};
-   CorrelationMatrix* _output {nullptr};
    QFile* _logfile {nullptr};
    int _filterSize {10};
    float _initialThreshold {0.99607};
