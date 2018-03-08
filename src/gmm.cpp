@@ -21,17 +21,6 @@ const char* GMM::ICL {QT_TR_NOOP("ICL")};
 
 
 
-// TODO: move to a common location like ace_qmpi.h
-inline int BLOCK_LOW(int i, int p, int n) { return i * n / p; }
-inline int BLOCK_HIGH(int i, int p, int n) { return BLOCK_LOW(i + 1, p, n) - 1; }
-inline int BLOCK_SIZE(int i, int p, int n) { return BLOCK_HIGH(i, p, n) - BLOCK_LOW(i, p, n) + 1; }
-inline int BLOCK_OWNER(int j, int p, int n) { return (p * (j + 1) - 1) / n; }
-
-
-
-
-
-
 GMM::~GMM()
 {
    // check if blocks are allocated
@@ -596,12 +585,6 @@ void GMM::runSerial()
       {
          _lastPercent = newPercent;
          emit progressed(_lastPercent);
-
-         // TEMP: print MPI slave's progress
-         if ( !mpi.isMaster() )
-         {
-            qInfo("%d: %d%%", mpi.rank(), _lastPercent);
-         }
       }
    }
 }
@@ -613,19 +596,26 @@ void GMM::runSerial()
 
 QByteArray GMM::buildMPIBlock()
 {
-   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+   const qint64 MPI_BLOCK_SIZE {8192};
+
    QByteArray data;
 
-   // assign a block to each slave
-   if ( _mpiBlocksOut < mpi.size() - 1 )
+   // check if there are more gene pairs to compute
+   if ( _stepsStarted < _totalSteps )
    {
       QDataStream stream(&data, QIODevice::WriteOnly);
-      stream << _mpiBlocksOut;
 
-      ++_mpiBlocksOut;
+      // determine block size
+      qint64 steps = min(_totalSteps - _stepsStarted, MPI_BLOCK_SIZE);
+
+      // write block start and block size
+      stream << _stepsStarted << steps;
+
+      // update steps started
+      _stepsStarted += steps;
    }
 
-   // send data to slave
+   // send data to worker
    return data;
 }
 
@@ -636,24 +626,18 @@ QByteArray GMM::buildMPIBlock()
 
 bool GMM::readMPIBlock(const QByteArray& block)
 {
-   // get MPI instance
-   Ace::QMPI& mpi {Ace::QMPI::initialize()};
-
-   // read data from slave node
+   // read block start and block size from worker
    QDataStream stream(block);
 
-   int blockIndex;
-   stream >> blockIndex;
+   qint64 blockStart;
+   qint64 blockSize;
+   stream >> blockStart >> blockSize;
 
    // defer this block if it is not next in line
-   if ( blockIndex != _mpiBlocksIn )
+   if ( blockStart != _stepsComplete )
    {
       return false;
    }
-
-   // compute block parameters
-   int totalBlocks = mpi.size() - 1;
-   int blockSize = BLOCK_SIZE(blockIndex, totalBlocks, _totalSteps);
 
    // iterate through gene pairs in this block
    QVector<qint8> labels(_input->getSampleSize());
@@ -674,9 +658,18 @@ bool GMM::readMPIBlock(const QByteArray& block)
 
       // increment gene pair index
       ++_vector;
+      ++_stepsComplete;
    }
 
-   ++_mpiBlocksIn;
+   // calculate percent complete
+   qint64 newPercent {100*_stepsComplete/_totalSteps};
+
+   // emit progressed signal when percent changes
+   if ( newPercent != _lastPercent )
+   {
+      _lastPercent = newPercent;
+      emit progressed(_lastPercent);
+   }
 
    return true;
 }
@@ -686,27 +679,30 @@ bool GMM::readMPIBlock(const QByteArray& block)
 
 
 
-QByteArray GMM::processMPIBlock(const QByteArray& /*block*/)
+QByteArray GMM::processMPIBlock(const QByteArray& block)
 {
-   // get MPI instance
-   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+   // read block start and block size from master
+   QDataStream stream(block);
+
+   qint64 blockStart;
+   qint64 blockSize;
+   stream >> blockStart >> blockSize;
 
    // initialize output data
    QByteArray data;
+
+   if ( _mpiOut )
+   {
+      delete _mpiOut;
+   }
    _mpiOut = new QDataStream(&data, QIODevice::WriteOnly);
 
-   // compute block parameters
-   int blockIndex = mpi.rank() - 1;
-   int totalBlocks = mpi.size() - 1;
-   qint64 totalPairs = _input->getGeneSize()*(_input->getGeneSize() - 1)/2;
-   qint64 blockLow = BLOCK_LOW(blockIndex, totalBlocks, totalPairs);
-
-   // save block index
-   (*_mpiOut) << blockIndex;
+   // write block start and block size
+   (*_mpiOut) << blockStart << blockSize;
 
    // initialize gene pair vector and total steps
-   _vector = GenePair::Vector(blockLow);
-   _totalSteps = BLOCK_SIZE(blockIndex, totalBlocks, totalPairs);
+   _vector = GenePair::Vector(blockStart);
+   _totalSteps = blockSize;
 
    // check to see if analytic can run OpenCL and there is a device to use
    if ( getCapabilities()&Capabilities::OpenCL
@@ -798,9 +794,6 @@ int GMM::getBlockSize()
 
 bool GMM::runBlock(int index)
 {
-   // get MPI instance
-   Ace::QMPI& mpi {Ace::QMPI::initialize()};
-
    // figure out what state this block is in and execute it
    switch (_blocks[index]->state)
    {
@@ -830,12 +823,6 @@ bool GMM::runBlock(int index)
    {
       _lastPercent = newPercent;
       emit progressed(_lastPercent);
-
-      // TEMP: print MPI slave's progress
-      if ( !mpi.isMaster() )
-      {
-         qInfo("%d: %d%%", mpi.rank(), _lastPercent);
-      }
    }
 
    // signal block is still running
