@@ -180,6 +180,7 @@ private:
    EOpenCLKernel* _kernel {nullptr};
    EOpenCLBuffer<cl_float>* _expressions {nullptr};
 
+   int _mpiWorkersFinished {0};
    QDataStream *_mpiOut {nullptr};
 
    GenePair::Vector _vector;

@@ -598,13 +598,16 @@ QByteArray GMM::buildMPIBlock()
 {
    const qint64 MPI_BLOCK_SIZE {8192};
 
+   // get MPI instance
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+
+   // initialize output data
    QByteArray data;
+   QDataStream stream(&data, QIODevice::WriteOnly);
 
    // check if there are more gene pairs to compute
    if ( _stepsStarted < _totalSteps )
    {
-      QDataStream stream(&data, QIODevice::WriteOnly);
-
       // determine block size
       qint64 steps = min(_totalSteps - _stepsStarted, MPI_BLOCK_SIZE);
 
@@ -613,6 +616,16 @@ QByteArray GMM::buildMPIBlock()
 
       // update steps started
       _stepsStarted += steps;
+   }
+
+   // else signal each worker to quit
+   else if ( _mpiWorkersFinished < mpi.size() - 1 )
+   {
+      // write -1 to signal to quit
+      stream << (qint64) -1 << (qint64) 0;
+
+      // update number of workers finished
+      ++_mpiWorkersFinished;
    }
 
    // send data to worker
@@ -626,6 +639,12 @@ QByteArray GMM::buildMPIBlock()
 
 bool GMM::readMPIBlock(const QByteArray& block)
 {
+   // do nothing if block is confirmation of a worker quitting
+   if ( _stepsComplete == _totalSteps )
+   {
+      return true;
+   }
+
    // read block start and block size from worker
    QDataStream stream(block);
 
@@ -687,6 +706,13 @@ QByteArray GMM::processMPIBlock(const QByteArray& block)
    qint64 blockStart;
    qint64 blockSize;
    stream >> blockStart >> blockSize;
+
+   // quit if master node sends -1
+   if ( blockStart == -1 )
+   {
+      emit finished();
+      return QByteArray();
+   }
 
    // initialize output data
    QByteArray data;
