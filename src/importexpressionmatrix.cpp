@@ -237,20 +237,17 @@ void ImportExpressionMatrix::runSerial()
       }
       ~Gene()
       {
-         delete next;
          delete[] expressions;
       }
 
       Expression* expressions;
-      Gene* next {nullptr};
    };
 
    // initialize variable used to track percent complete
    int lastPercent {0};
 
    // initialize gene expression linked list
-   std::unique_ptr<Gene> geneRoot;
-   Gene* geneTail {nullptr};
+   QList<Gene *> genes;
 
    // initialize gene and sample name lists
    QStringList geneNames;
@@ -308,24 +305,11 @@ void ImportExpressionMatrix::runSerial()
                throw e;
             }
 
-            // make new linked list gene node
+            // make new gene
             Gene* gene {new Gene(_sampleSize)};
 
-            // if linked list is empty make new node head of list
-            if ( !geneTail )
-            {
-               geneTail = gene;
-               geneRoot.reset(geneTail);
-            }
-
-            // else add to last node in last and make new node the tail
-            else
-            {
-               geneTail->next = gene;
-               geneTail = gene;
-            }
-
-            // add gene name to list
+            // append gene data and gene name
+            genes.append(gene);
             geneNames.append(words.at(0).toString());
 
             // iterate through all gene expressions
@@ -396,8 +380,7 @@ void ImportExpressionMatrix::runSerial()
       throw e;
    }
 
-   // reset gene tail to beginning of linked list and initialize output data
-   geneTail = geneRoot.get();
+   // initialize output data
    _output->initialize(geneNames,sampleNames);
 
    // create gene iterator for expression matrix and iterate through all genes
@@ -410,26 +393,16 @@ void ImportExpressionMatrix::runSerial()
          return;
       }
 
-      // make sure next gene tail is valid
-      if ( !geneTail )
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("Internal Error"));
-         e.setDetails(tr("Prematurely reached end of linked gene list."));
-         throw e;
-      }
-
       // iterate through all gene expressions and copy them to gene iterator
       for (int x = 0; x < _output->getSampleSize() ;++x)
       {
-         gene[x] = geneTail->expressions[x];
+         gene[x] = genes[i]->expressions[x];
       }
 
       // write gene iterator to expression matrix
       gene.write(i);
 
-      // move to next gene node in linked list and calculate percent complete
-      geneTail = geneTail->next;
+      // calculate percent complete
       int newPercent = 50 + i*50/_output->getGeneSize();
 
       // if precent complete has changed update it and emit progressed
