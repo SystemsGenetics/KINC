@@ -717,10 +717,6 @@ QByteArray GMM::processMPIBlock(const QByteArray& block)
    // initialize output data
    QByteArray data;
 
-   if ( _mpiOut )
-   {
-      delete _mpiOut;
-   }
    _mpiOut = new QDataStream(&data, QIODevice::WriteOnly);
 
    // write block start and block size
@@ -729,6 +725,7 @@ QByteArray GMM::processMPIBlock(const QByteArray& block)
    // initialize gene pair vector and total steps
    _vector = GenePair::Vector(blockStart);
    _totalSteps = blockSize;
+   _stepsComplete = 0;
 
    // check to see if analytic can run OpenCL and there is a device to use
    if ( getCapabilities()&Capabilities::OpenCL
@@ -783,6 +780,9 @@ QByteArray GMM::processMPIBlock(const QByteArray& block)
       e.setDetails(tr("Could not execute analytic because it lacks any applicable capability."));
       throw e;
    }
+
+   // cleanup
+   delete _mpiOut;
 
    // send data to master node
    return data;
