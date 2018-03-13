@@ -305,7 +305,7 @@ bool GMM::initialize()
    _output->initialize(_input->getGeneNames(),_input->getSampleNames());
 
    // initialize total steps
-   _totalSteps = _output->geneSize()*(_output->geneSize() - 1)/2;
+   _totalSteps = (qint64)_output->geneSize()*(_output->geneSize() - 1)/2;
 
    // return pre-allocation argument
    return false;
