@@ -725,6 +725,7 @@ QByteArray GMM::processMPIBlock(const QByteArray& block)
    // initialize gene pair vector and total steps
    _vector = GenePair::Vector(blockStart);
    _totalSteps = blockSize;
+   _stepsStarted = 0;
    _stepsComplete = 0;
 
    // check to see if analytic can run OpenCL and there is a device to use
@@ -805,9 +806,17 @@ int GMM::getBlockSize()
    }
 
    // initialize all opencl components
-   initializeKernel();
-   initializeBlockExpressions();
-   initializeKernelArguments();
+   if ( !_blocks )
+   {
+      initializeKernel();
+      initializeBlockExpressions();
+      initializeKernelArguments();
+   }
+
+   for ( int i = 0; i < _blockSize; ++i )
+   {
+      _blocks[i]->state = Block::Start;
+   }
 
    // return block size
    return _blockSize;
