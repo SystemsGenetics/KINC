@@ -652,15 +652,13 @@ bool GMM::readMPIBlock(const QByteArray& block)
    qint64 blockSize;
    stream >> blockStart >> blockSize;
 
-   qInfo("%d: reading block (%d KB)...", 0, block.size() / 1024);
-
    // defer this block if it is not next in line
    if ( blockStart != _stepsComplete )
    {
-      qInfo("%d: deferring block for later", 0);
-
       return false;
    }
+
+   qInfo("%d: reading block (%d KB)...", 0, block.size() / 1024);
 
    // iterate through gene pairs in this block
    QVector<qint8> labels(_input->getSampleSize());
