@@ -596,7 +596,7 @@ void GMM::runSerial()
 
 QByteArray GMM::buildMPIBlock()
 {
-   const qint64 MPI_BLOCK_SIZE {8192};
+   const qint64 MPI_BLOCK_SIZE { 32 * 1024 };
 
    // get MPI instance
    Ace::QMPI& mpi {Ace::QMPI::initialize()};
@@ -652,9 +652,13 @@ bool GMM::readMPIBlock(const QByteArray& block)
    qint64 blockSize;
    stream >> blockStart >> blockSize;
 
+   qInfo("%d: reading block (%d KB)...", 0, block.size() / 1024);
+
    // defer this block if it is not next in line
    if ( blockStart != _stepsComplete )
    {
+      qInfo("%d: deferring block for later", 0);
+
       return false;
    }
 
@@ -680,6 +684,8 @@ bool GMM::readMPIBlock(const QByteArray& block)
       ++_stepsComplete;
    }
 
+   qInfo("%d: finished reading block", 0);
+
    // calculate percent complete
    qint64 newPercent {100*_stepsComplete/_totalSteps};
 
@@ -700,12 +706,17 @@ bool GMM::readMPIBlock(const QByteArray& block)
 
 QByteArray GMM::processMPIBlock(const QByteArray& block)
 {
+   // get MPI instance
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+
    // read block start and block size from master
    QDataStream stream(block);
 
    qint64 blockStart;
    qint64 blockSize;
    stream >> blockStart >> blockSize;
+
+   qInfo("%d: starting block %12lld", mpi.rank(), blockStart);
 
    // quit if master node sends -1
    if ( blockStart == -1 )
@@ -784,6 +795,8 @@ QByteArray GMM::processMPIBlock(const QByteArray& block)
 
    // cleanup
    delete _mpiOut;
+
+   qInfo("%d: finished block", mpi.rank());
 
    // send data to master node
    return data;
@@ -1016,9 +1029,13 @@ void GMM::initializeKernelArguments()
 
 void GMM::runStartBlock(Block& block)
 {
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+
    // check if there are more gene pairs to compute
    if ( _stepsStarted < _totalSteps )
    {
+      qInfo("%d: loading %12lld / %lld...", mpi.rank(), _stepsStarted, _totalSteps);
+
       // set block xy to beginning of read comparisons
       block.vector = _vector;
 
@@ -1068,9 +1085,13 @@ void GMM::runStartBlock(Block& block)
 
 void GMM::runLoadBlock(Block& block)
 {
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+
    // check to see if reference loading is complete
    if ( !block.isWaiting() )
    {
+      qInfo("%d: executing kernel...", mpi.rank());
+
       // make sure opencl events worked
       block.checkAllEvents();
 
@@ -1108,9 +1129,13 @@ void GMM::runLoadBlock(Block& block)
 
 void GMM::runExecuteBlock(Block& block)
 {
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+
    // check to see if kernel execution is complete
    if ( !block.isWaiting() )
    {
+      qInfo("%d: reading data...", mpi.rank());
+
       // make sure opencl events worked
       block.checkAllEvents();
 
@@ -1149,6 +1174,8 @@ void GMM::runReadBlock(Block& block)
    // check if read is complete and we are next in line
    if ( !block.isWaiting() && _nextVector == block.vector )
    {
+      qInfo("%d: reading %12lld / %lld...", mpi.rank(), _stepsComplete, _totalSteps);
+
       // make sure opencl events worked
       block.checkAllEvents();
 
