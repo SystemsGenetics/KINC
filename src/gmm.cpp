@@ -735,6 +735,7 @@ QByteArray GMM::processMPIBlock(const QByteArray& block)
 
    // initialize gene pair vector and total steps
    _vector = GenePair::Vector(blockStart);
+   _nextVector = _vector;
    _totalSteps = blockSize;
    _stepsStarted = 0;
    _stepsComplete = 0;
@@ -826,6 +827,7 @@ int GMM::getBlockSize()
       initializeKernelArguments();
    }
 
+   // reset blocks to initial state
    for ( int i = 0; i < _blockSize; ++i )
    {
       _blocks[i]->state = Block::Start;
