@@ -27,6 +27,14 @@ qmake ../src
 make
 cd ..
 ```
+To compile a command-line version (without the graphical interface):
+```
+export GUI=0
+cd build-cli
+qmake ../src
+make
+cd ..
+
 
 ## Using the KINC GUI or Console
 
