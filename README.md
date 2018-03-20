@@ -34,7 +34,7 @@ cd build-cli
 qmake ../src
 make
 cd ..
-
+```
 
 ## Using the KINC GUI or Console
 
