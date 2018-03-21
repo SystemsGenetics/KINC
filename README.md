@@ -48,3 +48,12 @@ To build a GCN involves several steps:
 2. Compute cluster composition matrix
 3. Compute correlation matrix
 4. Compute thresholded correlation matrix
+
+# Troubleshooting
+## An error occurred in MPI_Init
+KINC requires MPI as a dependency, but on most systems you can execute the command-line KINC as a stand-alone tool without using 'mpirun'.  This is because KINC checks during runtime if MPI is appropriate for execution. However, on a SLURM cluster where MPI jobs must be run using the srun command and where PMI2 is compiled into MPI, then KINC cannot be executed stand-alone.  It must be executed using srun with the --mpi argument set to pmi2.  For example:
+
+```
+srun --mpi=pmi2 kinc run import_emx --input Yeast-ematrix.txt --output Yeast.emx --nan NA
+```
+
