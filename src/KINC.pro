@@ -67,7 +67,6 @@ SOURCES += \
     spearman.cpp \
     rmt.cpp \
     pearson.cpp \
-    correlationbase.cpp \
     genepair_vector.cpp \
     genepair_base.cpp \
     genepair_gmm.cpp \
@@ -90,7 +89,6 @@ HEADERS += \
     spearman.h \
     rmt.h \
     pearson.h \
-    correlationbase.h \
     genepair_vector.h \
     genepair_base.h \
     genepair_gmm.h \
