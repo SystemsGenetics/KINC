@@ -6,7 +6,7 @@
 #include "expressionmatrix.h"
 #include "ccmatrix.h"
 #include "correlationmatrix.h"
-#include "genepair_vector.h"
+#include "genepair_pearson.h"
 
 
 
@@ -45,8 +45,6 @@ public:
    virtual void finish() override final {}
 
 private:
-   int fetchData(const GenePair::Vector& vector, const CCMatrix::Pair& pair, int k, float *x, float *y);
-
    struct Block
    {
       enum

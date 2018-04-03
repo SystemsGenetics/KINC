@@ -1,5 +1,4 @@
 #include <ace/core/metadata.h>
-#include <gsl/gsl_statistics.h>
 
 #include "spearman.h"
 #include "datafactory.h"
@@ -277,53 +276,6 @@ bool Spearman::initialize()
 
 
 
-int Spearman::fetchData(const GenePair::Vector& vector, const CCMatrix::Pair& pair, int k, double *a, double *b)
-{
-   // read in gene expressions
-   ExpressionMatrix::Gene gene1(_input);
-   ExpressionMatrix::Gene gene2(_input);
-
-   gene1.read(vector.geneX());
-   gene2.read(vector.geneY());
-
-   // populate a and b with shared expressions of gene pair
-   int numSamples = 0;
-
-   if ( pair.clusterSize() > 0 )
-   {
-      // add samples that are in the cluster
-      for ( int i = 0; i < _input->getSampleSize(); ++i )
-      {
-         if ( pair.at(k, i) == 1 )
-         {
-            a[numSamples] = gene1.at(i);
-            b[numSamples] = gene2.at(i);
-            ++numSamples;
-         }
-      }
-   }
-   else
-   {
-      // add samples that are valid
-      for ( int i = 0; i < _input->getSampleSize(); ++i )
-      {
-         if ( !isnan(gene1.at(i)) && !isnan(gene2.at(i)) && _minExpression <= gene1.at(i) && _minExpression <= gene2.at(i) )
-         {
-            a[numSamples] = gene1.at(i);
-            b[numSamples] = gene2.at(i);
-            ++numSamples;
-         }
-      }
-   }
-
-   return numSamples;
-}
-
-
-
-
-
-
 void Spearman::runSerial()
 {
    // initialize percent complete and steps
@@ -331,10 +283,8 @@ void Spearman::runSerial()
    qint64 steps {0};
    qint64 totalSteps {_output->geneSize()*(_output->geneSize() - 1)/2};
 
-   // initialize arrays used for GSL spearman function
-   double a[_input->getSampleSize()];
-   double b[_input->getSampleSize()];
-   double work[_input->getSampleSize()*2];
+   // initialize correlation model
+   GenePair::Spearman model;
 
    // initialize input/output pairs
    CCMatrix::Pair inPair(_cMatrix);
@@ -361,16 +311,8 @@ void Spearman::runSerial()
          outPair.addCluster(max(1, inPair.clusterSize()));
       }
 
-      // fetch a and b arrays from expression matrix
-      int numSamples = fetchData(vector, inPair, cluster, a, b);
-
-      // compute correlation only if there are enough samples
-      float result = NAN;
-
-      if ( numSamples >= _minSamples )
-      {
-         result = gsl_stats_spearman(a, 1, b, 1, numSamples, work);
-      }
+      // compute correlation
+      float result = model.compute(_input, vector, inPair, cluster, _minSamples, _minExpression);
 
       // save correlation if within threshold limits
       if ( !isnan(result) && _minCorrelation <= abs(result) && abs(result) <= _maxCorrelation )

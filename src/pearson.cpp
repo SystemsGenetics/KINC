@@ -267,53 +267,6 @@ bool Pearson::initialize()
 
 
 
-int Pearson::fetchData(const GenePair::Vector& vector, const CCMatrix::Pair& pair, int k, float *x, float *y)
-{
-   // read in gene expressions
-   ExpressionMatrix::Gene gene1(_input);
-   ExpressionMatrix::Gene gene2(_input);
-
-   gene1.read(vector.geneX());
-   gene2.read(vector.geneY());
-
-   // populate x and y with shared expressions of gene pair
-   int numSamples = 0;
-
-   if ( pair.clusterSize() > 0 )
-   {
-      // add samples that are in the cluster
-      for ( int i = 0; i < _input->getSampleSize(); ++i )
-      {
-         if ( pair.at(k, i) == 1 )
-         {
-            x[numSamples] = gene1.at(i);
-            y[numSamples] = gene2.at(i);
-            ++numSamples;
-         }
-      }
-   }
-   else
-   {
-      // add samples that are valid
-      for ( int i = 0; i < _input->getSampleSize(); ++i )
-      {
-         if ( !isnan(gene1.at(i)) && !isnan(gene2.at(i)) && _minExpression <= gene1.at(i) && _minExpression <= gene2.at(i) )
-         {
-            x[numSamples] = gene1.at(i);
-            y[numSamples] = gene2.at(i);
-            ++numSamples;
-         }
-      }
-   }
-
-   return numSamples;
-}
-
-
-
-
-
-
 void Pearson::runSerial()
 {
    // initialize percent complete and steps
@@ -321,9 +274,8 @@ void Pearson::runSerial()
    qint64 steps {0};
    qint64 totalSteps {_output->geneSize()*(_output->geneSize() - 1)/2};
 
-   // initialize work arrays
-   float x[_input->getSampleSize()];
-   float y[_input->getSampleSize()];
+   // initialize correlation model
+   GenePair::Pearson model;
 
    // initialize input/output pairs
    CCMatrix::Pair inPair(_cMatrix);
@@ -350,33 +302,8 @@ void Pearson::runSerial()
          outPair.addCluster(max(1, inPair.clusterSize()));
       }
 
-      // fetch a and b arrays from expression matrix
-      int n = fetchData(vector, inPair, cluster, x, y);
-
-      // compute correlation only if there are enough samples
-      float result = NAN;
-
-      if ( n >= _minSamples )
-      {
-         // compute intermediate sums
-         float sumx = 0;
-         float sumy = 0;
-         float sumx2 = 0;
-         float sumy2 = 0;
-         float sumxy = 0;
-
-         for ( int i = 0; i < n; ++i )
-         {
-            sumx += x[i];
-            sumy += y[i];
-            sumx2 += x[i] * x[i];
-            sumy2 += y[i] * y[i];
-            sumxy += x[i] * y[i];
-         }
-
-         // compute Pearson correlation coefficient
-         result = (n*sumxy - sumx*sumy) / sqrt((n*sumx2 - sumx*sumx) * (n*sumy2 - sumy*sumy));
-      }
+      // compute correlation
+      float result = model.compute(_input, vector, inPair, cluster, _minSamples, _minExpression);
 
       // save correlation if within threshold limits
       if ( !isnan(result) && _minCorrelation <= abs(result) && abs(result) <= _maxCorrelation )
