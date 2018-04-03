@@ -323,10 +323,8 @@ void GMM::performMStep(float *logpi, int K, float *loggamma, float *logGamma, fl
 
 
 
-QVector<qint8> GMM::calcLabels(float *loggamma, int N, int K)
+void GMM::calcLabels(float *loggamma, int N, int K, QVector<qint8>& labels)
 {
-   QVector<qint8> labels(N);
-
    for ( int i = 0; i < N; ++i )
    {
       int max_k = -1;
@@ -343,8 +341,6 @@ QVector<qint8> GMM::calcLabels(float *loggamma, int N, int K)
 
       labels[i] = max_k;
    }
-
-   return labels;
 }
 
 
@@ -352,13 +348,13 @@ QVector<qint8> GMM::calcLabels(float *loggamma, int N, int K)
 
 
 
-float GMM::calcEntropy(float *loggamma, int N)
+float GMM::calcEntropy(float *loggamma, int N, const QVector<qint8>& labels)
 {
    float E = 0;
 
    for ( int i = 0; i < N; ++i )
    {
-      int k = _labels[i];
+      int k = labels[i];
 
       E += log(loggamma[k * N + i]);
    }
@@ -371,7 +367,7 @@ float GMM::calcEntropy(float *loggamma, int N)
 
 
 
-void GMM::fit(const QVector<Vector2>& X, int K)
+bool GMM::fit(const QVector<Vector2>& X, int K, QVector<qint8>& labels)
 {
    const int N = X.size();
 
@@ -405,6 +401,7 @@ void GMM::fit(const QVector<Vector2>& X, int K)
    const float TOLERANCE = 1e-8;
    float prevLogL = -INFINITY;
    float currentLogL = -INFINITY;
+   bool success;
 
    try
    {
@@ -434,17 +431,20 @@ void GMM::fit(const QVector<Vector2>& X, int K)
       }
 
       // save outputs
-      _success = true;
       _logL = currentLogL;
-      _labels = calcLabels(loggamma, N, K);
-      _entropy = calcEntropy(loggamma, N);
+      calcLabels(loggamma, N, K, labels);
+      _entropy = calcEntropy(loggamma, N, labels);
+
+      success = true;
    }
    catch ( std::runtime_error& e )
    {
-      _success = false;
+      success = false;
    }
 
    delete[] logpi;
    delete[] loggamma;
    delete[] logGamma;
+
+   return success;
 }

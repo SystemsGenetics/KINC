@@ -225,11 +225,11 @@ void GMM::setArgument(int argument, QVariant value)
          const QString option = value.toString();
          if ( option == tr(BIC) )
          {
-            _criterion = Criterion::BIC;
+            _criterion = GenePair::Criterion::BIC;
          }
          else if ( option == tr(ICL) )
          {
-            _criterion = Criterion::ICL;
+            _criterion = GenePair::Criterion::ICL;
          }
       }
       break;
@@ -316,193 +316,6 @@ bool GMM::initialize()
 
 
 
-void GMM::fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<qint8>& labels)
-{
-   // read in gene expressions
-   ExpressionMatrix::Gene gene1(_input);
-   ExpressionMatrix::Gene gene2(_input);
-
-   gene1.read(vector.geneX());
-   gene2.read(vector.geneY());
-
-   // populate X with shared expressions of gene pair
-   X.clear();
-   X.reserve(_input->getSampleSize());
-
-   for ( int i = 0; i < _input->getSampleSize(); ++i )
-   {
-      if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
-      {
-         labels[i] = -9;
-      }
-      else if ( gene1.at(i) < _minExpression || gene2.at(i) < _minExpression )
-      {
-         labels[i] = -6;
-      }
-      else
-      {
-         X.append({ gene1.at(i), gene2.at(i) });
-
-         labels[i] = 0;
-      }
-   }
-}
-
-
-
-
-
-
-void GMM::markOutliers(const QVector<GenePair::Vector2>& X, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker)
-{
-   // compute x_sorted = X[:, j], filtered and sorted
-   QVector<float> x_sorted;
-   x_sorted.reserve(X.size());
-
-   for ( int i = 0; i < X.size(); i++ )
-   {
-      if ( labels[i] == cluster || labels[i] == marker )
-      {
-         x_sorted.append(X[i].s[j]);
-      }
-   }
-
-   if ( x_sorted.size() == 0 )
-   {
-      return;
-   }
-
-   sort(x_sorted.begin(), x_sorted.end());
-
-   // compute quartiles, interquartile range, upper and lower bounds
-   const int n = x_sorted.size();
-
-   float Q1 = x_sorted[n * 1 / 4];
-   float Q3 = x_sorted[n * 3 / 4];
-
-   float T_min = Q1 - 1.5f * (Q3 - Q1);
-   float T_max = Q3 + 1.5f * (Q3 - Q1);
-
-   // mark outliers
-   for ( int i = 0; i < X.size(); ++i )
-   {
-      if ( labels[i] == cluster && (X[i].s[j] < T_min || T_max < X[i].s[j]) )
-      {
-         labels[i] = marker;
-      }
-   }
-}
-
-
-
-
-
-
-float GMM::computeBIC(int K, float logL, int N, int D)
-{
-   int p = K * (1 + D + D * D);
-
-   return log(N) * p - 2 * logL;
-}
-
-
-
-
-
-
-float GMM::computeICL(int K, float logL, int N, int D, float E)
-{
-   int p = K * (1 + D + D * D);
-
-   return log(N) * p - 2 * logL - 2 * E;
-}
-
-
-
-
-
-
-void GMM::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, qint8& bestK, QVector<qint8>& bestLabels)
-{
-   // fetch data matrix X from expression matrix
-   fetchData(vector, X, bestLabels);
-
-   // remove pre-clustering outliers
-   if ( _removePreOutliers )
-   {
-      markOutliers(X, 0, bestLabels, 0, -7);
-      markOutliers(X, 1, bestLabels, 0, -7);
-   }
-
-   // perform clustering only if there are enough samples
-   bestK = 0;
-
-   if ( X.size() >= _minSamples )
-   {
-      float bestValue = INFINITY;
-
-      for ( qint8 K = _minClusters; K <= _maxClusters; ++K )
-      {
-         // run each clustering model
-         GenePair::GMM model;
-
-         model.fit(X, K);
-
-         if ( !model.success() )
-         {
-            continue;
-         }
-
-         // evaluate model
-         float value = INFINITY;
-
-         switch (_criterion)
-         {
-         case Criterion::BIC:
-            value = computeBIC(K, model.logLikelihood(), X.size(), 2);
-            break;
-         case Criterion::ICL:
-            value = computeICL(K, model.logLikelihood(), X.size(), 2, model.entropy());
-            break;
-         }
-
-         // save the best model
-         if ( value < bestValue )
-         {
-            bestK = K;
-            bestValue = value;
-
-            for ( int i = 0, j = 0; i < X.size(); ++i )
-            {
-               if ( bestLabels[i] >= 0 )
-               {
-                  bestLabels[i] = model.labels()[j];
-                  ++j;
-               }
-            }
-         }
-      }
-   }
-
-   if ( bestK > 1 )
-   {
-      // remove post-clustering outliers
-      if ( _removePostOutliers )
-      {
-         for ( qint8 k = 0; k < bestK; ++k )
-         {
-            markOutliers(X, 0, bestLabels, k, -8);
-            markOutliers(X, 1, bestLabels, k, -8);
-         }
-      }
-   }
-}
-
-
-
-
-
-
 void GMM::savePair(GenePair::Vector vector, qint8 K, const qint8 *labels, int N)
 {
    // get MPI instance
@@ -543,9 +356,8 @@ void GMM::runSerial()
    // get MPI instance
    Ace::QMPI& mpi {Ace::QMPI::initialize()};
 
-   // initialize workspace arrays
-   QVector<GenePair::Vector2> X;
-   QVector<qint8> labels(_input->getSampleSize());
+   // initialize clustering model
+   GenePair::GMM clusteringModel;
 
    // iterate through gene pairs
    while ( _stepsComplete < _totalSteps )
@@ -556,21 +368,32 @@ void GMM::runSerial()
          return;
       }
 
-      // compute clusters
-      qint8 bestK;
+      // compute clustering model
+      clusteringModel.compute(
+         _input,
+         _vector,
+         _minSamples,
+         _minExpression,
+         _minClusters,
+         _maxClusters,
+         _criterion,
+         _removePreOutliers,
+         _removePostOutliers
+      );
 
-      computePair(_vector, X, bestK, labels);
+      qint8 K {clusteringModel.clusterSize()};
+      const QVector<qint8>& labels {clusteringModel.labels()};
 
       // send cluster size to master node
       if ( !mpi.isMaster() )
       {
-         (*_mpiOut) << bestK;
+         (*_mpiOut) << K;
       }
 
       // save cluster pair if multiple clusters are found
-      if ( bestK > 1 )
+      if ( K > 1 )
       {
-         savePair(_vector, bestK, labels.data(), labels.size());
+         savePair(_vector, K, labels.data(), labels.size());
       }
 
       // increment to next pair
@@ -647,15 +470,15 @@ bool GMM::readMPIBlock(const QByteArray& block)
    for ( int i = 0; i < blockSize; ++i )
    {
       // read results
-      qint8 bestK;
-      stream >> bestK;
+      qint8 K;
+      stream >> K;
 
       // save results if necessary
-      if ( bestK > 1 )
+      if ( K > 1 )
       {
          stream.readRawData(reinterpret_cast<char *>(labels.data()), labels.size());
 
-         savePair(_vector, bestK, labels.data(), labels.size());
+         savePair(_vector, K, labels.data(), labels.size());
       }
 
       // increment gene pair index
@@ -1159,18 +982,18 @@ void GMM::runReadBlock(Block& block)
       {
          // read results
          int N = _input->getSampleSize();
-         qint8 bestK = (*block.result_K)[index];
-         qint8 *bestLabels = &(*block.result_labels)[index * N];
+         qint8 K = (*block.result_K)[index];
+         qint8 *labels = &(*block.result_labels)[index * N];
 
          if ( !mpi.isMaster() )
          {
-            (*_mpiOut) << bestK;
+            (*_mpiOut) << K;
          }
 
          // save cluster pair if multiple clusters are found
-         if ( bestK > 1 )
+         if ( K > 1 )
          {
-            savePair(block.vector, bestK, bestLabels, N);
+            savePair(block.vector, K, labels, N);
          }
 
          // increment indices

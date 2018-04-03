@@ -2,11 +2,11 @@
 #define GENEPAIR_GMM_H
 #include <ace/core/AceCore.h>
 
-#include "genepair_linalg.h"
+#include "genepair_clustering.h"
 
 namespace GenePair
 {
-   class GMM
+   class GMM : public Clustering
    {
    public:
       GMM() = default;
@@ -29,13 +29,10 @@ namespace GenePair
          float _normalizer;
       };
 
-      int numClusters() const { return _components.size(); }
-      bool success() const { return _success; }
+      bool fit(const QVector<Vector2>& X, int K, QVector<qint8>& labels);
+
       float logLikelihood() const { return _logL; }
       float entropy() const { return _entropy; }
-      const QVector<qint8>& labels() const { return _labels; }
-
-      void fit(const QVector<Vector2>& X, int K);
 
    private:
       void kmeans(const QVector<Vector2>& X);
@@ -44,14 +41,12 @@ namespace GenePair
       void calcLogGammaK(const float *loggamma, int N, int K, float *logGamma);
       float calcLogGammaSum(const float *logpi, int K, const float *logGamma);
       void performMStep(float *logpi, int K, float *loggamma, float *logGamma, float logGammaSum, const QVector<Vector2>& X);
-      QVector<qint8> calcLabels(float *loggamma, int N, int K);
-      float calcEntropy(float *loggamma, int N);
+      void calcLabels(float *loggamma, int N, int K, QVector<qint8>& labels);
+      float calcEntropy(float *loggamma, int N, const QVector<qint8>& labels);
 
       QVector<Component> _components;
-      bool _success;
       float _logL;
       float _entropy;
-      QVector<qint8> _labels;
    };
 }
 

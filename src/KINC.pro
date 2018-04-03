@@ -69,6 +69,7 @@ SOURCES += \
     pearson.cpp \
     genepair_vector.cpp \
     genepair_base.cpp \
+    genepair_clustering.cpp \
     genepair_gmm.cpp \
     genepair_kmeans.cpp \
     genepair_linalg.cpp \
@@ -91,6 +92,7 @@ HEADERS += \
     pearson.h \
     genepair_vector.h \
     genepair_base.h \
+    genepair_clustering.h \
     genepair_gmm.h \
     genepair_kmeans.h \
     genepair_linalg.h \

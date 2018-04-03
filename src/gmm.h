@@ -33,12 +33,6 @@ public:
       ,Total
    };
 
-   enum class Criterion
-   {
-      BIC
-      ,ICL
-   };
-
    virtual int getArgumentCount() override final { return Total; }
    virtual ArgumentType getArgumentData(int argument) override final;
    virtual QVariant getArgumentData(int argument, Role role) override final;
@@ -59,11 +53,6 @@ private:
    static const char* BIC;
    static const char* ICL;
 
-   void fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<qint8>& labels);
-   void markOutliers(const QVector<GenePair::Vector2>& X, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker);
-   float computeBIC(int K, float logL, int N, int D);
-   float computeICL(int K, float logL, int N, int D, float E);
-   void computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, qint8& bestK, QVector<qint8>& bestLabels);
    void savePair(GenePair::Vector vector, qint8 K, const qint8 *labels, int N);
 
    struct Block
@@ -169,7 +158,7 @@ private:
    float _minExpression {-INFINITY};
    qint8 _minClusters {1};
    qint8 _maxClusters {5};
-   Criterion _criterion {Criterion::BIC};
+   GenePair::Criterion _criterion {GenePair::Criterion::BIC};
    bool _removePreOutliers {false};
    bool _removePostOutliers {false};
    int _blockSize {4};
