@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
+        <file>opencl/linalg.cl</file>
         <file>opencl/gmm.cl</file>
         <file>opencl/kmeans.cl</file>
         <file>opencl/spearman.cl</file>

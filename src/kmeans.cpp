@@ -434,6 +434,7 @@ void KMeans::initializeKernel()
    }
 
    // add opencl c code and compile it making sure it worked
+   _program->addFile(":/opencl/linalg.cl");
    _program->addFile(":/opencl/kmeans.cl");
    if ( !_program->compile() )
    {

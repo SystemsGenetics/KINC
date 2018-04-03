@@ -1,45 +1,5 @@
 
-typedef union
-{
-   float s[2];
-   float2 v2;
-} Vector2;
-
-
-
-
-
-
-#define vectorInitZero(a) \
-   (a)->s[0] = 0; \
-   (a)->s[1] = 0;
-
-
-
-
-
-
-#define vectorAdd(a, b) \
-   (a)->s[0] += (b)->s[0]; \
-   (a)->s[1] += (b)->s[1];
-
-
-
-
-
-
-#define vectorScale(a, c) \
-   (a)->s[0] *= (c); \
-   (a)->s[1] *= (c);
-
-
-
-
-
-
-#define SQR(x) ((x)*(x))
-#define vectorDiffNorm(a, b) \
-   sqrt(SQR((a)->s[0] - (b)->s[0]) + SQR((a)->s[1] - (b)->s[1]))
+// #include "linalg.h"
 
 
 
