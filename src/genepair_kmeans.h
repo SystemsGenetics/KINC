@@ -2,27 +2,25 @@
 #define GENEPAIR_KMEANS_H
 #include <ace/core/AceCore.h>
 
-#include "genepair_linalg.h"
+#include "genepair_clustering.h"
 
 namespace GenePair
 {
-   class KMeans
+   class KMeans : public Clustering
    {
    public:
       KMeans() = default;
 
-      int numClusters() const { return _means.size(); }
-      float logLikelihood() const { return _logL; }
-      const QVector<qint8>& labels() const { return _labels; }
+      bool fit(const QVector<Vector2>& X, int K, QVector<qint8>& labels);
 
-      void fit(const QVector<Vector2>& X, int K, int numInits, int maxIterations);
+      float logLikelihood() const { return _logL; }
+      float entropy() const { return 0; }
 
    private:
       float computeLogLikelihood(const QVector<Vector2>& X, const QVector<qint8>& y);
 
       QVector<Vector2> _means;
       float _logL;
-      QVector<qint8> _labels;
    };
 }
 

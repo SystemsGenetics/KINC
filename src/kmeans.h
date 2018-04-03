@@ -25,8 +25,6 @@ public:
       ,MinExpression
       ,MinClusters
       ,MaxClusters
-      ,NumInits
-      ,MaxIterations
       ,BlockSize
       ,KernelSize
       ,Total
@@ -46,9 +44,6 @@ public:
    virtual void finish() override final {}
 
 private:
-   void fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<qint8>& labels);
-   float computeBIC(int K, float logL, int N, int D);
-   void computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, qint8& bestK, QVector<qint8>& bestLabels);
    void savePair(GenePair::Vector vector, qint8 K, const qint8 *labels, int N);
 
    struct Block

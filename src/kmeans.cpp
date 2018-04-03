@@ -51,8 +51,6 @@ EAbstractAnalytic::ArgumentType KMeans::getArgumentData(int argument)
    case MinExpression: return Type::Double;
    case MinClusters: return Type::Integer;
    case MaxClusters: return Type::Integer;
-   case NumInits: return Type::Integer;
-   case MaxIterations: return Type::Integer;
    case BlockSize: return Type::Integer;
    case KernelSize: return Type::Integer;
    default: return Type::Bool;
@@ -82,8 +80,6 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       case MinExpression: return QString("minexpr");
       case MinClusters: return QString("minclus");
       case MaxClusters: return QString("maxclus");
-      case NumInits: return QString("numinit");
-      case MaxIterations: return QString("maxiter");
       case BlockSize: return QString("bsize");
       case KernelSize: return QString("ksize");
       default: return QVariant();
@@ -98,8 +94,6 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       case MinExpression: return tr("Minimum Expression:");
       case MinClusters: return tr("Minimum Clusters:");
       case MaxClusters: return tr("Maximum Clusters:");
-      case NumInits: return tr("Inits:");
-      case MaxIterations: return tr("Maximum Iterations:");
       case BlockSize: return tr("Block Size:");
       case KernelSize: return tr("Kernel Size:");
       default: return QVariant();
@@ -114,8 +108,6 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       case MinExpression: return tr("Minimum threshold for a gene expression to be included in clustering.");
       case MinClusters: return tr("Minimum number of clusters to test.");
       case MaxClusters: return tr("Maximum number of clusters to test.");
-      case NumInits: return tr("Number of runs for each clustering model.");
-      case MaxIterations: return tr("Maximum number of iterations for each clustering model.");
       case BlockSize: return tr("This option only applies if OpenCL is used. Total number of blocks"
                                 " to run for execution.");
       case KernelSize: return tr("This option only applies if OpenCL is used. Total number of"
@@ -131,8 +123,6 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       case MinExpression: return -INFINITY;
       case MinClusters: return 1;
       case MaxClusters: return 5;
-      case NumInits: return 10;
-      case MaxIterations: return 300;
       case BlockSize: return 4;
       case KernelSize: return 4096;
       default: return QVariant();
@@ -146,8 +136,6 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       case MinExpression: return -INFINITY;
       case MinClusters: return 1;
       case MaxClusters: return 1;
-      case NumInits: return 1;
-      case MaxIterations: return 1;
       case BlockSize: return 1;
       case KernelSize: return 1;
       default: return QVariant();
@@ -161,8 +149,6 @@ QVariant KMeans::getArgumentData(int argument, Role role)
       case MinExpression: return +INFINITY;
       case MinClusters: return GenePair::Vector::MAX_CLUSTER_SIZE;
       case MaxClusters: return GenePair::Vector::MAX_CLUSTER_SIZE;
-      case NumInits: return INT_MAX;
-      case MaxIterations: return INT_MAX;
       case BlockSize: return INT_MAX;
       case KernelSize: return INT_MAX;
       default: return QVariant();
@@ -202,12 +188,6 @@ void KMeans::setArgument(int argument, QVariant value)
       break;
    case MaxClusters:
       _maxClusters = value.toInt();
-      break;
-   case NumInits:
-      _numInits = value.toInt();
-      break;
-   case MaxIterations:
-      _maxIterations = value.toInt();
       break;
    case BlockSize:
       _blockSize = value.toInt();
@@ -281,101 +261,6 @@ bool KMeans::initialize()
 
 
 
-void KMeans::fetchData(GenePair::Vector vector, QVector<GenePair::Vector2>& X, QVector<qint8>& labels)
-{
-   // read in gene expressions
-   ExpressionMatrix::Gene gene1(_input);
-   ExpressionMatrix::Gene gene2(_input);
-
-   gene1.read(vector.geneX());
-   gene2.read(vector.geneY());
-
-   // populate X with shared expressions of gene x and y
-   X.clear();
-   X.reserve(_input->getSampleSize());
-
-   for ( int i = 0; i < _input->getSampleSize(); ++i )
-   {
-      if ( std::isnan(gene1.at(i)) || std::isnan(gene2.at(i)) )
-      {
-         labels[i] = -9;
-      }
-      else if ( gene1.at(i) < _minExpression || gene2.at(i) < _minExpression )
-      {
-         labels[i] = -6;
-      }
-      else
-      {
-         X.append({ gene1.at(i), gene2.at(i) });
-
-         labels[i] = 0;
-      }
-   }
-}
-
-
-
-
-
-
-float KMeans::computeBIC(int K, float logL, int N, int D)
-{
-   int p = K * D;
-
-   return log(N) * p - 2 * logL;
-}
-
-
-
-
-
-
-void KMeans::computePair(GenePair::Vector vector, QVector<GenePair::Vector2>& X, qint8& bestK, QVector<qint8>& bestLabels)
-{
-   // fetch data matrix X from expression matrix
-   fetchData(vector, X, bestLabels);
-
-   // perform clustering only if there are enough samples
-   bestK = 0;
-
-   if ( X.size() >= _minSamples )
-   {
-      float bestValue = INFINITY;
-
-      for ( qint8 K = _minClusters; K <= _maxClusters; ++K )
-      {
-         // run each clustering model
-         GenePair::KMeans model;
-
-         model.fit(X, K, _numInits, _maxIterations);
-
-         // evaluate model
-         float value = computeBIC(K, model.logLikelihood(), X.size(), 2);
-
-         // save the best model
-         if ( value < bestValue )
-         {
-            bestK = K;
-            bestValue = value;
-
-            for ( int i = 0, j = 0; i < X.size(); ++i )
-            {
-               if ( bestLabels[i] >= 0 )
-               {
-                  bestLabels[i] = model.labels()[j];
-                  ++j;
-               }
-            }
-         }
-      }
-   }
-}
-
-
-
-
-
-
 void KMeans::savePair(GenePair::Vector vector, qint8 K, const qint8 *labels, int N)
 {
    CCMatrix::Pair pair(_output);
@@ -406,9 +291,8 @@ void KMeans::runSerial()
    qint64 steps {0};
    qint64 totalSteps {_output->geneSize()*(_output->geneSize() - 1)/2};
 
-   // initialize arrays used for k-means clustering
-   QVector<GenePair::Vector2> X;
-   QVector<qint8> labels(_input->getSampleSize());
+   // initialize clustering model
+   GenePair::KMeans clusteringModel;
 
    // initialize xy gene indexes
    GenePair::Vector vector;
@@ -422,15 +306,26 @@ void KMeans::runSerial()
          return;
       }
 
-      // compute clusters
-      qint8 bestK;
+      // compute clustering model
+      clusteringModel.compute(
+         _input,
+         _vector,
+         _minSamples,
+         _minExpression,
+         _minClusters,
+         _maxClusters,
+         GenePair::Criterion::BIC,
+         false,
+         false
+      );
 
-      computePair(_vector, X, bestK, labels);
+      qint8 K {clusteringModel.clusterSize()};
+      const QVector<qint8>& labels {clusteringModel.labels()};
 
       // save cluster pair if multiple clusters are found
-      if ( bestK > 1 )
+      if ( K > 1 )
       {
-         savePair(vector, bestK, labels.data(), labels.size());
+         savePair(vector, K, labels.data(), labels.size());
       }
 
       // increment to next pair
@@ -647,8 +542,8 @@ void KMeans::initializeKernelArguments()
    _kernel->setArgument(4, (cl_int)_minExpression);
    _kernel->setArgument(5, (cl_char)_minClusters);
    _kernel->setArgument(6, (cl_char)_maxClusters);
-   _kernel->setArgument(7, (cl_int)_numInits);
-   _kernel->setArgument(8, (cl_int)_maxIterations);
+   _kernel->setArgument(7, (cl_int) 10);
+   _kernel->setArgument(8, (cl_int) 300);
    _kernel->setDimensionCount(1);
    _kernel->setGlobalSize(0, _kernelSize);
    _kernel->setWorkgroupSize(0, workgroupSize);
@@ -800,13 +695,13 @@ void KMeans::runReadBlock(Block& block)
       {
          // read results
          int N = _input->getSampleSize();
-         qint8 bestK = (*block.result_K)[index];
-         qint8 *bestLabels = &(*block.result_labels)[index * N];
+         qint8 K = (*block.result_K)[index];
+         qint8 *labels = &(*block.result_labels)[index * N];
 
          // save cluster pair if multiple clusters are found
-         if ( bestK > 1 )
+         if ( K > 1 )
          {
-            savePair(block.vector, bestK, bestLabels, N);
+            savePair(block.vector, K, labels, N);
          }
 
          // increment indices

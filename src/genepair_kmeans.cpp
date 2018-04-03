@@ -9,14 +9,17 @@ using namespace GenePair;
 
 
 
-void KMeans::fit(const QVector<Vector2>& X, int K, int numInits, int maxIterations)
+bool KMeans::fit(const QVector<Vector2>& X, int K, QVector<qint8>& labels)
 {
    const int N = X.size();
+
+   const int NUM_INITS = 10;
+   const int MAX_ITERATIONS = 300;
 
    // repeat with several initializations
    _logL = -INFINITY;
 
-   for ( int init = 0; init < numInits; ++init )
+   for ( int init = 0; init < NUM_INITS; ++init )
    {
       // initialize means randomly from X
       _means.resize(K);
@@ -31,7 +34,7 @@ void KMeans::fit(const QVector<Vector2>& X, int K, int numInits, int maxIteratio
       QVector<qint8> y(N);
       QVector<qint8> y_next(N);
 
-      for ( int t = 0; t < maxIterations; ++t )
+      for ( int t = 0; t < MAX_ITERATIONS; ++t )
       {
          // compute new labels
          for ( int i = 0; i < N; ++i )
@@ -90,9 +93,11 @@ void KMeans::fit(const QVector<Vector2>& X, int K, int numInits, int maxIteratio
       if ( _logL < logL )
       {
          _logL = logL;
-         std::swap(_labels, y);
+         std::swap(labels, y);
       }
    }
+
+   return true;
 }
 
 
