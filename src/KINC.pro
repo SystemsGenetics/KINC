@@ -72,6 +72,7 @@ SOURCES += \
     genepair_gmm.cpp \
     genepair_kmeans.cpp \
     genepair_linalg.cpp \
+    genepair_correlation.cpp \
     genepair_pearson.cpp \
     genepair_spearman.cpp \
     ccmatrix.cpp \

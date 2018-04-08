@@ -11,29 +11,13 @@ using namespace GenePair;
 
 
 
-int nextPower2(int n)
-{
-	int pow2 = 2;
-	while ( pow2 < n )
-	{
-		pow2 *= 2;
-	}
-
-	return pow2;
-}
-
-
-
-
-
-
 void Spearman::initialize(ExpressionMatrix* input, CorrelationMatrix* output)
 {
    // pre-allocate workspace
    int workSize = nextPower2(input->getSampleSize());
 
-   _x.reserve(workSize);
-   _y.reserve(workSize);
+   _x.resize(workSize);
+   _y.resize(workSize);
    _rank.resize(workSize);
 
    // initialize correlation matrix
@@ -50,46 +34,46 @@ void Spearman::initialize(ExpressionMatrix* input, CorrelationMatrix* output)
 
 
 
-float Spearman::compute(
+float Spearman::computeCluster(
    const QVector<Vector2>& data,
-   const QVector<qint8>& labels, qint8 cluster,
+   const QVector<qint8>& labels,
+	qint8 cluster,
    int minSamples)
 {
    // extract samples in gene pair cluster
-   _x.clear();
-   _y.clear();
+	int n = 0;
 
    for ( int i = 0; i < data.size(); ++i )
    {
       if ( labels[i] == cluster )
       {
-         _x.append(data[i].s[0]);
-         _y.append(data[i].s[1]);
-         _rank[_x.size() - 1] = _x.size();
+         _x[n] = data[i].s[0];
+         _y[n] = data[i].s[1];
+         _rank[n] = n + 1;
+			++n;
       }
    }
 
-   for ( int i = _x.size(); i < _rank.size(); ++i )
+   for ( int i = n; i < _x.size(); ++i )
    {
-      _x.append(INFINITY);
-      _y.append(INFINITY);
+      _x[i] = INFINITY;
+      _y[i] = INFINITY;
       _rank[i] = 0;
    }
 
    // compute correlation only if there are enough samples
    float result = NAN;
 
-   if ( _x.size() >= minSamples )
+   if ( n >= minSamples )
    {
       // get new power of 2 floor size
-      int pow2Size = nextPower2(_x.size());
+      int pow2Size = nextPower2(n);
 
       // execute two bitonic sorts that is beginning of spearman algorithm
       bitonicSort(pow2Size, _x, _y);
       bitonicSort(pow2Size, _y, _rank);
 
       // go through spearman sorted rank list and calculate difference from 1,2,3,... list
-      int n = _x.size();
       int diff = 0;
 
       for ( int i = 0; i < n; ++i )
@@ -103,6 +87,22 @@ float Spearman::compute(
    }
 
    return result;
+}
+
+
+
+
+
+
+int Spearman::nextPower2(int n)
+{
+	int pow2 = 2;
+	while ( pow2 < n )
+	{
+		pow2 *= 2;
+	}
+
+	return pow2;
 }
 
 

@@ -8,13 +8,17 @@ namespace GenePair
    {
    public:
       void initialize(ExpressionMatrix* input, CorrelationMatrix* output);
-      float compute(
+
+   protected:
+      float computeCluster(
          const QVector<Vector2>& data,
-         const QVector<qint8>& labels, qint8 cluster,
+         const QVector<qint8>& labels,
+         qint8 cluster,
          int minSamples
       );
 
    private:
+      int nextPower2(int n);
       void bitonicSort(int size, QVector<float>& sortList, QVector<float>& extraList);
       void bitonicSort(int size, QVector<float>& sortList, QVector<int>& extraList);
 

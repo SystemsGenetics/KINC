@@ -14,7 +14,8 @@ using namespace GenePair;
 void Pearson::initialize(ExpressionMatrix* input, CorrelationMatrix* output)
 {
    // pre-allocate workspace
-   _X.reserve(input->getSampleSize());
+   _x.resize(input->getSampleSize());
+   _y.resize(input->getSampleSize());
 
    // initialize correlation matrix
    EMetadata correlations(EMetadata::Array);
@@ -30,25 +31,26 @@ void Pearson::initialize(ExpressionMatrix* input, CorrelationMatrix* output)
 
 
 
-float Pearson::compute(
+float Pearson::computeCluster(
    const QVector<Vector2>& data,
-   const QVector<qint8>& labels, qint8 cluster,
+   const QVector<qint8>& labels,
+   qint8 cluster,
    int minSamples)
 {
    // extract samples in gene pair cluster
-   _X.clear();
+   int n = 0;
 
    for ( int i = 0; i < data.size(); ++i )
    {
       if ( labels[i] == cluster )
       {
-         _X.append(data[i]);
+         _x[n] = data[i].s[0];
+         _y[n] = data[i].s[1];
+         ++n;
       }
    }
 
    // compute correlation only if there are enough samples
-   const int n = _X.size();
-
    float result = NAN;
 
    if ( n >= minSamples )
@@ -62,11 +64,11 @@ float Pearson::compute(
 
       for ( int i = 0; i < n; ++i )
       {
-         sumx += _X[i].s[0];
-         sumy += _X[i].s[1];
-         sumx2 += _X[i].s[0] * _X[i].s[0];
-         sumy2 += _X[i].s[1] * _X[i].s[1];
-         sumxy += _X[i].s[0] * _X[i].s[1];
+         sumx += _x[i];
+         sumy += _y[i];
+         sumx2 += _x[i] * _x[i];
+         sumy2 += _y[i] * _y[i];
+         sumxy += _x[i] * _y[i];
       }
 
       // compute Pearson correlation coefficient

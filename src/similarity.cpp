@@ -430,7 +430,7 @@ void Similarity::runSerial()
          return;
       }
 
-      // compute clustering model
+      // compute clusters
       _clusModel->compute(
          vector,
          _minSamples,
@@ -446,12 +446,12 @@ void Similarity::runSerial()
       const QVector<qint8>& labels {_clusModel->labels()};
 
       // compute correlation
-      QVector<float> correlations(K);
-
-      for ( qint8 k = 0; k < K; ++k )
-      {
-         correlations[k] = _corrModel->compute(_clusModel->dataMatrix(), labels, k, _minSamples);
-      }
+      QVector<float> correlations = _corrModel->compute(
+         _clusModel->dataMatrix(),
+         K,
+         labels,
+         _minSamples
+      );
 
       // save gene pair data
       savePair(vector, K, labels.data(), labels.size(), correlations.data());

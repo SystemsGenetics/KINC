@@ -9,6 +9,7 @@ namespace GenePair
    public:
       KMeans() = default;
 
+   protected:
       bool fit(const QVector<Vector2>& X, int K, QVector<qint8>& labels);
 
       float logLikelihood() const { return _logL; }

@@ -8,14 +8,18 @@ namespace GenePair
    {
    public:
       void initialize(ExpressionMatrix* input, CorrelationMatrix* output);
-      float compute(
+
+   protected:
+      float computeCluster(
          const QVector<Vector2>& data,
-         const QVector<qint8>& labels, qint8 cluster,
+         const QVector<qint8>& labels,
+         qint8 cluster,
          int minSamples
       );
 
    private:
-      QVector<Vector2> _X;
+      QVector<float> _x;
+      QVector<float> _y;
    };
 }
 
