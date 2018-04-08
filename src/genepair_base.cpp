@@ -169,7 +169,7 @@ void Base::write(Vector index, qint8 cluster)
       throw e;
    }
 
-   // increment pair size and set new last index
+   // increment cluster size and set new last index
    ++_clusterSize;
    _lastWrite = index.indent(cluster);
 }
@@ -276,8 +276,8 @@ void Base::seekPair(qint64 index) const
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Domain Error"));
-      e.setDetails(QObject::tr("Attempting to seek to gene pair %1 when total size is %2.")
-                   .arg(index).arg(_pairSize));
+      e.setDetails(QObject::tr("Attempting to seek to cluster index %1 when total size is %2.")
+                   .arg(index).arg(_clusterSize));
       throw e;
    }
 
@@ -330,12 +330,12 @@ void Base::Pair::read(Vector index) const
    clearClusters();
 
    // attempt to find vector within data object
-   qint64 index_;
+   qint64 clusterIndex;
    if ( _cMatrix->_clusterSize > 0
-        && (index_ = _cMatrix->findPair(index.indent(0),0,_cMatrix->_clusterSize - 1)) != -1 )
+        && (clusterIndex = _cMatrix->findPair(index.indent(0),0,_cMatrix->_clusterSize - 1)) != -1 )
    {
       // gene pair with vector found, read in all clusters
-      _nextIndex = index_;
+      _nextIndex = clusterIndex;
       readNext();
    }
 }

@@ -50,7 +50,7 @@ namespace GenePair
       };
       virtual void readData() override final;
       virtual quint64 getDataEnd() const override final
-         { return _headerSize + _offset + _pairSize*(_dataSize + _itemHeaderSize); }
+         { return _headerSize + _offset + _clusterSize*(_dataSize + _itemHeaderSize); }
       virtual void newData() override final;
       virtual void prepare(bool) override final {}
       virtual void finish() override final { newData(); }
