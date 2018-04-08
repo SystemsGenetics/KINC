@@ -37,7 +37,7 @@ EAbstractAnalytic::ArgumentType Similarity::getArgumentData(int argument)
    case InputData: return Type::DataIn;
    case ClusterData: return Type::DataOut;
    case CorrelationData: return Type::DataOut;
-   case ClusterArg: return Type::Combo;
+   case ClusteringArg: return Type::Combo;
    case CorrelationArg: return Type::Combo;
    case MinExpression: return Type::Double;
    case MinSamples: return Type::Integer;
@@ -72,7 +72,7 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       case InputData: return QString("input");
       case ClusterData: return QString("clus");
       case CorrelationData: return QString("corr");
-      case ClusterArg: return QString("clusmethod");
+      case ClusteringArg: return QString("clusmethod");
       case CorrelationArg: return QString("corrmethod");
       case MinExpression: return QString("minexpr");
       case MinSamples: return QString("minsamp");
@@ -92,7 +92,7 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       case InputData: return tr("Expressiom Matrix:");
       case ClusterData: return tr("Cluster Matrix:");
       case CorrelationData: return tr("Correlation Matrix:");
-      case ClusterArg: return tr("Clustering Method:");
+      case ClusteringArg: return tr("Clustering Method:");
       case CorrelationArg: return tr("Correlation Method:");
       case MinExpression: return tr("Minimum Expression:");
       case MinSamples: return tr("Minimum Sample Size:");
@@ -112,7 +112,7 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       case InputData: return tr("Input expression matrix.");
       case ClusterData: return tr("Output matrix that will contain gene pair clusters.");
       case CorrelationData: return tr("Output matrix that will contain gene pair correlations.");
-      case ClusterArg: return tr("Clustering method to use for gene pairs.");
+      case ClusteringArg: return tr("Clustering method to use for gene pairs.");
       case CorrelationArg: return tr("Correlation method to use for gene pairs.");
       case MinExpression: return tr("Minimum threshold for a sample to be included in a gene pair.");
       case MinSamples: return tr("Minimum number of shared samples for a gene pair to be processed.");
@@ -129,7 +129,7 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       // if this is criterion argument return combo values else return nothing
       switch (argument)
       {
-      case ClusterArg: return QStringList({ tr(GMM), tr(KMeans) });
+      case ClusteringArg: return QStringList({ tr(GMM), tr(KMeans) });
       case CorrelationArg: return QStringList({ tr(Pearson), tr(Spearman) });
       case CriterionArg: return QStringList({ tr(BIC), tr(ICL) });
       default: return QStringList();
@@ -139,7 +139,7 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       // return nothing
       switch (argument)
       {
-      case ClusterArg: return tr(GMM);
+      case ClusteringArg: return tr(GMM);
       case CorrelationArg: return tr(Pearson);
       case MinExpression: return -INFINITY;
       case MinSamples: return 30;
@@ -212,16 +212,18 @@ void Similarity::setArgument(int argument, QVariant value)
    // figure out which argument is being set and set it
    switch (argument)
    {
-   case ClusterArg:
+   case ClusteringArg:
       {
          const QString option = value.toString();
          if ( option == tr(GMM) )
          {
-            _clusMethod = new GenePair::GMM();
+            _clusMethod = ClusteringMethod::GMM;
+            _clusModel = new GenePair::GMM();
          }
          else if ( option == tr(KMeans) )
          {
-            _clusMethod = new GenePair::KMeans();
+            _clusMethod = ClusteringMethod::KMeans;
+            _clusModel = new GenePair::KMeans();
          }
       }
       break;
@@ -230,11 +232,13 @@ void Similarity::setArgument(int argument, QVariant value)
          const QString option = value.toString();
          if ( option == tr(Pearson) )
          {
-            _corrMethod = new GenePair::Pearson();
+            _corrMethod = CorrelationMethod::Pearson;
+            _corrModel = new GenePair::Pearson();
          }
          else if ( option == tr(Spearman) )
          {
-            _corrMethod = new GenePair::Spearman();
+            _corrMethod = CorrelationMethod::Spearman;
+            _corrModel = new GenePair::Spearman();
          }
       }
       break;
@@ -335,10 +339,10 @@ bool Similarity::initialize()
    }
 
    // initialize cluster matrix
-   _clusMethod->initialize(_input, _clusMatrix);
+   _clusModel->initialize(_input, _clusMatrix);
 
    // initialize correlation matrix
-   _corrMethod->initialize(_input, _corrMatrix);
+   _corrModel->initialize(_input, _corrMatrix);
 
    // return pre-allocation argument
    return false;
@@ -427,7 +431,7 @@ void Similarity::runSerial()
       }
 
       // compute clustering model
-      _clusMethod->compute(
+      _clusModel->compute(
          vector,
          _minSamples,
          _minExpression,
@@ -438,15 +442,15 @@ void Similarity::runSerial()
          _removePostOutliers
       );
 
-      qint8 K {_clusMethod->clusterSize()};
-      const QVector<qint8>& labels {_clusMethod->labels()};
+      qint8 K {_clusModel->clusterSize()};
+      const QVector<qint8>& labels {_clusModel->labels()};
 
       // compute correlation
       QVector<float> correlations(K);
 
       for ( qint8 k = 0; k < K; ++k )
       {
-         correlations[k] = _corrMethod->compute(_clusMethod->dataMatrix(), labels, k, _minSamples);
+         correlations[k] = _corrModel->compute(_clusModel->dataMatrix(), labels, k, _minSamples);
       }
 
       // save gene pair data

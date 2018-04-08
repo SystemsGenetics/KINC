@@ -20,7 +20,7 @@ public:
       InputData = 0
       ,ClusterData
       ,CorrelationData
-      ,ClusterArg
+      ,ClusteringArg
       ,CorrelationArg
       ,MinExpression
       ,MinSamples
@@ -34,7 +34,7 @@ public:
       ,Total
    };
 
-   enum class ClusterMethod
+   enum class ClusteringMethod
    {
       GMM
       ,KMeans
@@ -70,8 +70,10 @@ private:
    ExpressionMatrix* _input {nullptr};
    CCMatrix* _clusMatrix {nullptr};
    CorrelationMatrix* _corrMatrix {nullptr};
-   GenePair::Clustering* _clusMethod {nullptr};
-   GenePair::Correlation* _corrMethod {nullptr};
+   ClusteringMethod _clusMethod {ClusteringMethod::GMM};
+   CorrelationMethod _corrMethod {CorrelationMethod::Pearson};
+   GenePair::Clustering* _clusModel {nullptr};
+   GenePair::Correlation* _corrModel {nullptr};
    int _minSamples {30};
    float _minExpression {-INFINITY};
    qint8 _minClusters {1};
