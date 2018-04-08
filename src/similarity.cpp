@@ -373,7 +373,10 @@ void Similarity::savePair(GenePair::Vector vector, qint8 K, const qint8 *labels,
          }
       }
 
-      clusPair.write(vector);
+      if ( clusPair.clusterSize() > 0 )
+      {
+         clusPair.write(vector);
+      }
    }
 
    // save correlations that are within thresholds
@@ -392,7 +395,10 @@ void Similarity::savePair(GenePair::Vector vector, qint8 K, const qint8 *labels,
          }
       }
 
-      corrPair.write(vector);
+      if ( corrPair.clusterSize() > 0 )
+      {
+         corrPair.write(vector);
+      }
    }
 }
 
