@@ -2,32 +2,21 @@
 #define GENEPAIR_CORRELATION_H
 #include <ace/core/AceCore.h>
 
-#include "ccmatrix.h"
+#include "correlationmatrix.h"
 #include "expressionmatrix.h"
-#include "genepair_vector.h"
+#include "genepair_linalg.h"
 
 namespace GenePair
 {
    class Correlation
    {
    public:
-      virtual double compute(
-         ExpressionMatrix* input,
-         Vector vector,
-         const CCMatrix::Pair& pair, int cluster,
-         int minSamples,
-         int minExpression
+      virtual void initialize(ExpressionMatrix* input, CorrelationMatrix* output) = 0;
+      virtual float compute(
+         const QVector<Vector2>& data,
+         const QVector<qint8>& labels, qint8 cluster,
+         int minSamples
       ) = 0;
-
-   protected:
-      void fetchData(
-         ExpressionMatrix* input,
-         Vector vector,
-         const CCMatrix::Pair& pair, int cluster,
-         int minExpression,
-         QVector<double>& x,
-         QVector<double>& y
-      );
    };
 }
 

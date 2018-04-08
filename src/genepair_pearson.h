@@ -1,7 +1,5 @@
 #ifndef GENEPAIR_PEARSON_H
 #define GENEPAIR_PEARSON_H
-#include <ace/core/AceCore.h>
-
 #include "genepair_correlation.h"
 
 namespace GenePair
@@ -9,17 +7,15 @@ namespace GenePair
    class Pearson : public Correlation
    {
    public:
-      double compute(
-         ExpressionMatrix* input,
-         Vector vector,
-         const CCMatrix::Pair& pair, int cluster,
-         int minSamples,
-         int minExpression
+      void initialize(ExpressionMatrix* input, CorrelationMatrix* output);
+      float compute(
+         const QVector<Vector2>& data,
+         const QVector<qint8>& labels, qint8 cluster,
+         int minSamples
       );
-   
+
    private:
-      QVector<double> _x;
-      QVector<double> _y;
+      QVector<Vector2> _X;
    };
 }
 

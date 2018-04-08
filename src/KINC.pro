@@ -64,21 +64,17 @@ SOURCES += \
     correlationmatrix.cpp \
     importcorrelationmatrix.cpp \
     exportcorrelationmatrix.cpp \
-    spearman.cpp \
+    similarity.cpp \
     rmt.cpp \
-    pearson.cpp \
     genepair_vector.cpp \
     genepair_base.cpp \
     genepair_clustering.cpp \
     genepair_gmm.cpp \
     genepair_kmeans.cpp \
     genepair_linalg.cpp \
-    genepair_correlation.cpp \
     genepair_pearson.cpp \
     genepair_spearman.cpp \
     ccmatrix.cpp \
-    kmeans.cpp \
-    gmm.cpp \
     extract.cpp
 
 HEADERS += \
@@ -90,9 +86,8 @@ HEADERS += \
     correlationmatrix.h \
     importcorrelationmatrix.h \
     exportcorrelationmatrix.h \
-    spearman.h \
+    similarity.h \
     rmt.h \
-    pearson.h \
     genepair_vector.h \
     genepair_base.h \
     genepair_clustering.h \
@@ -103,8 +98,6 @@ HEADERS += \
     genepair_pearson.h \
     genepair_spearman.h \
     ccmatrix.h \
-    kmeans.h \
-    gmm.h \
     extract.h
 
 RESOURCES += \

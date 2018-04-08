@@ -1,7 +1,5 @@
 #ifndef GENEPAIR_GMM_H
 #define GENEPAIR_GMM_H
-#include <ace/core/AceCore.h>
-
 #include "genepair_clustering.h"
 
 namespace GenePair

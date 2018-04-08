@@ -1,3 +1,5 @@
+#include <ace/core/metadata.h>
+
 #include "genepair_pearson.h"
 
 
@@ -9,22 +11,43 @@ using namespace GenePair;
 
 
 
-double Pearson::compute(
-   ExpressionMatrix* input,
-   Vector vector,
-   const CCMatrix::Pair& pair, int cluster,
-   int minSamples,
-   int minExpression)
+void Pearson::initialize(ExpressionMatrix* input, CorrelationMatrix* output)
 {
    // pre-allocate workspace
-   _x.reserve(input->getSampleSize());
-   _y.reserve(input->getSampleSize());
+   _X.reserve(input->getSampleSize());
 
-   // fetch a and b arrays from expression matrix
-   fetchData(input, vector, pair, cluster, minExpression, _x, _y);
+   // initialize correlation matrix
+   EMetadata correlations(EMetadata::Array);
+   EMetadata* name {new EMetadata(EMetadata::String)};
+   *(name->toString()) = "pearson";
+   correlations.toArray()->append(name);
+
+   output->initialize(input->getGeneNames(), correlations);
+}
+
+
+
+
+
+
+float Pearson::compute(
+   const QVector<Vector2>& data,
+   const QVector<qint8>& labels, qint8 cluster,
+   int minSamples)
+{
+   // extract samples in gene pair cluster
+   _X.clear();
+
+   for ( int i = 0; i < data.size(); ++i )
+   {
+      if ( labels[i] == cluster )
+      {
+         _X.append(data[i]);
+      }
+   }
 
    // compute correlation only if there are enough samples
-   const int n = _x.size();
+   const int n = _X.size();
 
    float result = NAN;
 
@@ -39,11 +62,11 @@ double Pearson::compute(
 
       for ( int i = 0; i < n; ++i )
       {
-         sumx += _x[i];
-         sumy += _y[i];
-         sumx2 += _x[i] * _x[i];
-         sumy2 += _y[i] * _y[i];
-         sumxy += _x[i] * _y[i];
+         sumx += _X[i].s[0];
+         sumy += _X[i].s[1];
+         sumx2 += _X[i].s[0] * _X[i].s[0];
+         sumy2 += _X[i].s[1] * _X[i].s[1];
+         sumxy += _X[i].s[0] * _X[i].s[1];
       }
 
       // compute Pearson correlation coefficient

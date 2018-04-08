@@ -13,10 +13,7 @@ public:
       ,ExportExpressionMatrixType
       ,ImportCorrelationMatrixType
       ,ExportCorrelationMatrixType
-      ,KMeansType
-      ,GMMType
-      ,SpearmanType
-      ,PearsonType
+      ,SimilarityType
       ,RMTType
       ,ExtractType
       ,Total

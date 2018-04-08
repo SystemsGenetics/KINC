@@ -9,8 +9,25 @@ using namespace GenePair;
 
 
 
+void Clustering::initialize(ExpressionMatrix* input, CCMatrix* output)
+{
+   _input = input;
+
+   // pre-allocate workspace
+   _X.reserve(_input->getSampleSize());
+   _labels.resize(_input->getSampleSize());
+   _bestLabels.resize(_input->getSampleSize());
+
+   // initialize clustering matrix
+   output->initialize(_input->getGeneNames(),_input->getSampleNames());
+}
+
+
+
+
+
+
 void Clustering::compute(
-   ExpressionMatrix* input,
    Vector vector,
    int minSamples,
    int minExpression,
@@ -20,13 +37,8 @@ void Clustering::compute(
    bool removePreOutliers,
    bool removePostOutliers)
 {
-   // pre-allocate workspace
-   _X.reserve(input->getSampleSize());
-   _labels.resize(input->getSampleSize());
-   _bestLabels.resize(input->getSampleSize());
-
    // fetch data matrix X from expression matrix
-   fetchData(input, vector, minExpression);
+   fetchData(vector, minExpression);
 
    // remove pre-clustering outliers
    if ( removePreOutliers )
@@ -102,11 +114,11 @@ void Clustering::compute(
 
 
 
-void Clustering::fetchData(ExpressionMatrix* input, Vector vector, int minExpression)
+void Clustering::fetchData(Vector vector, int minExpression)
 {
    // read in gene expressions
-   ExpressionMatrix::Gene gene1(input);
-   ExpressionMatrix::Gene gene2(input);
+   ExpressionMatrix::Gene gene1(_input);
+   ExpressionMatrix::Gene gene2(_input);
 
    gene1.read(vector.geneX());
    gene2.read(vector.geneY());
@@ -114,7 +126,7 @@ void Clustering::fetchData(ExpressionMatrix* input, Vector vector, int minExpres
    // populate X with shared expressions of gene pair
    _X.clear();
 
-   for ( int i = 0; i < input->getSampleSize(); ++i )
+   for ( int i = 0; i < _input->getSampleSize(); ++i )
    {
       if ( std::isnan(gene1.at(i)) || std::isnan(gene2.at(i)) )
       {

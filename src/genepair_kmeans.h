@@ -1,7 +1,5 @@
 #ifndef GENEPAIR_KMEANS_H
 #define GENEPAIR_KMEANS_H
-#include <ace/core/AceCore.h>
-
 #include "genepair_clustering.h"
 
 namespace GenePair

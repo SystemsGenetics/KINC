@@ -3,10 +3,7 @@
 #include "exportexpressionmatrix.h"
 #include "importcorrelationmatrix.h"
 #include "exportcorrelationmatrix.h"
-#include "kmeans.h"
-#include "gmm.h"
-#include "spearman.h"
-#include "pearson.h"
+#include "similarity.h"
 #include "rmt.h"
 #include "extract.h"
 
@@ -28,10 +25,7 @@ QString AnalyticFactory::getName(quint16 type)
    case ExportExpressionMatrixType: return QObject::tr("Export Expression Matrix");
    case ImportCorrelationMatrixType: return QObject::tr("Import Correlation Matrix");
    case ExportCorrelationMatrixType: return QObject::tr("Export Correlation Matrix");
-   case KMeansType: return QObject::tr("K-means Clustering");
-   case GMMType: return QObject::tr("GMM Clustering");
-   case SpearmanType: return QObject::tr("Spearman Correlation");
-   case PearsonType: return QObject::tr("Pearson Correlation");
+   case SimilarityType: return QObject::tr("Similarity");
    case RMTType: return QObject::tr("RMT Thresholding");
    case ExtractType: return QObject::tr("Extract Network");
    default: return QString();
@@ -52,10 +46,7 @@ QString AnalyticFactory::getCommandName(quint16 type)
    case ExportExpressionMatrixType: return QString("export_emx");
    case ImportCorrelationMatrixType: return QString("import_cmx");
    case ExportCorrelationMatrixType: return QString("export_cmx");
-   case KMeansType: return QString("kmeans");
-   case GMMType: return QString("gmm");
-   case SpearmanType: return QString("spearman");
-   case PearsonType: return QString("pearson");
+   case SimilarityType: return QString("similarity");
    case RMTType: return QString("rmt");
    case ExtractType: return QString("extract");
    default: return QString();
@@ -76,10 +67,7 @@ std::unique_ptr<EAbstractAnalytic> AnalyticFactory::make(quint16 type)
    case ExportExpressionMatrixType: return unique_ptr<EAbstractAnalytic>(new ExportExpressionMatrix);
    case ImportCorrelationMatrixType: return unique_ptr<EAbstractAnalytic>(new ImportCorrelationMatrix);
    case ExportCorrelationMatrixType: return unique_ptr<EAbstractAnalytic>(new ExportCorrelationMatrix);
-   case KMeansType: return unique_ptr<EAbstractAnalytic>(new KMeans);
-   case GMMType: return unique_ptr<EAbstractAnalytic>(new GMM);
-   case SpearmanType: return unique_ptr<EAbstractAnalytic>(new Spearman);
-   case PearsonType: return unique_ptr<EAbstractAnalytic>(new Pearson);
+   case SimilarityType: return unique_ptr<EAbstractAnalytic>(new Similarity);
    case RMTType: return unique_ptr<EAbstractAnalytic>(new RMT);
    case ExtractType: return unique_ptr<EAbstractAnalytic>(new Extract);
    default: return nullptr;
