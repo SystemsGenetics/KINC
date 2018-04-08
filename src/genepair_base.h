@@ -35,7 +35,7 @@ namespace GenePair
          void read(Vector index) const;
          void reset() const { _nextIndex = 0; };
          void readNext() const;
-         bool hasNext() const { return _nextIndex != _cMatrix->_rawPairSize; }
+         bool hasNext() const { return _nextIndex != _cMatrix->_clusterSize; }
          const Vector& vector() const { return _vector; }
          Pair& operator=(const Pair&) = default;
          Pair& operator=(Pair&&) = default;
@@ -71,7 +71,7 @@ namespace GenePair
       qint32 _geneSize {0};
       qint32 _dataSize {0};
       qint64 _pairSize {0};
-      qint64 _rawPairSize {0};
+      qint64 _clusterSize {0};
       qint16 _offset {0};
       qint64 _lastWrite {-2};
    };

@@ -21,7 +21,7 @@ void Base::readData()
    }
 
    // read in all data
-   stream() >> _geneSize >> _dataSize >> _pairSize >> _rawPairSize >> _offset;
+   stream() >> _geneSize >> _dataSize >> _pairSize >> _clusterSize >> _offset;
    readHeader();
 
    // make sure reading worked
@@ -51,7 +51,7 @@ void Base::newData()
    }
 
    // write out all header information
-   stream() << _geneSize << _dataSize << _pairSize << _rawPairSize << _offset;
+   stream() << _geneSize << _dataSize << _pairSize << _clusterSize << _offset;
    writeHeader();
 
    // make sure writing worked
@@ -119,7 +119,7 @@ void Base::initialize(const EMetadata& geneNames, int dataSize, int offset)
    _dataSize = dataSize;
    _offset = offset;
    _pairSize = 0;
-   _rawPairSize = 0;
+   _clusterSize = 0;
    _lastWrite = -1;
 }
 
@@ -151,7 +151,7 @@ void Base::write(Vector index, qint8 cluster)
    }
 
    // seek to position for next gene pair and write indent value
-   if ( !seek(_headerSize + _offset + _rawPairSize*(_dataSize + _itemHeaderSize)) )
+   if ( !seek(_headerSize + _offset + _clusterSize*(_dataSize + _itemHeaderSize)) )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("File IO Error"));
@@ -170,7 +170,7 @@ void Base::write(Vector index, qint8 cluster)
    }
 
    // increment pair size and set new last index
-   ++_rawPairSize;
+   ++_clusterSize;
    _lastWrite = index.indent(cluster);
 }
 
@@ -272,7 +272,7 @@ qint64 Base::findPair(qint64 indent, qint64 first, qint64 last) const
 void Base::seekPair(qint64 index) const
 {
    // make sure index is within range
-   if ( index < 0 || index >= _rawPairSize )
+   if ( index < 0 || index >= _clusterSize )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Domain Error"));
@@ -331,8 +331,8 @@ void Base::Pair::read(Vector index) const
 
    // attempt to find vector within data object
    qint64 index_;
-   if ( _cMatrix->_rawPairSize > 0
-        && (index_ = _cMatrix->findPair(index.indent(0),0,_cMatrix->_rawPairSize - 1)) != -1 )
+   if ( _cMatrix->_clusterSize > 0
+        && (index_ = _cMatrix->findPair(index.indent(0),0,_cMatrix->_clusterSize - 1)) != -1 )
    {
       // gene pair with vector found, read in all clusters
       _nextIndex = index_;
@@ -348,7 +348,7 @@ void Base::Pair::read(Vector index) const
 void Base::Pair::readNext() const
 {
    // make sure read next index is not already at end of data object
-   if ( _nextIndex < _cMatrix->_rawPairSize )
+   if ( _nextIndex < _cMatrix->_clusterSize )
    {
       // clear any existing clusters
       clearClusters();
@@ -373,7 +373,7 @@ void Base::Pair::readNext() const
 
       // read in remaining clusters for gene pair
       qint8 count {1};
-      while ( _nextIndex < _cMatrix->_rawPairSize )
+      while ( _nextIndex < _cMatrix->_clusterSize )
       {
          // get next gene pair cluster
          _cMatrix->getPair(_nextIndex++,&cluster);
