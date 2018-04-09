@@ -40,13 +40,18 @@ float Pearson::computeCluster(
    // extract samples in gene pair cluster
    int n = 0;
 
-   for ( int i = 0; i < data.size(); ++i )
+   for ( int i = 0, j = 0; i < labels.size(); ++i )
    {
-      if ( labels[i] == cluster )
+      if ( labels[i] >= 0 )
       {
-         _x[n] = data[i].s[0];
-         _y[n] = data[i].s[1];
-         ++n;
+         if ( labels[i] == cluster )
+         {
+            _x[n] = data[j].s[0];
+            _y[n] = data[j].s[1];
+            ++n;
+         }
+
+         ++j;
       }
    }
 

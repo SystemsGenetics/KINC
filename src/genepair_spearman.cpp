@@ -41,20 +41,26 @@ float Spearman::computeCluster(
    int minSamples)
 {
    // extract samples in gene pair cluster
+   int N_pow2 = nextPower2(labels.size());
 	int n = 0;
 
-   for ( int i = 0; i < data.size(); ++i )
+   for ( int i = 0, j = 0; i < labels.size(); ++i )
    {
-      if ( labels[i] == cluster )
+      if ( labels[i] >= 0 )
       {
-         _x[n] = data[i].s[0];
-         _y[n] = data[i].s[1];
-         _rank[n] = n + 1;
-			++n;
+         if ( labels[i] == cluster )
+         {
+            _x[n] = data[j].s[0];
+            _y[n] = data[j].s[1];
+            _rank[n] = n + 1;
+            ++n;
+         }
+
+         ++j;
       }
    }
 
-   for ( int i = n; i < _x.size(); ++i )
+   for ( int i = n; i < N_pow2; ++i )
    {
       _x[i] = INFINITY;
       _y[i] = INFINITY;
@@ -67,11 +73,11 @@ float Spearman::computeCluster(
    if ( n >= minSamples )
    {
       // get new power of 2 floor size
-      int pow2Size = nextPower2(n);
+      int n_pow2 = nextPower2(n);
 
       // execute two bitonic sorts that is beginning of spearman algorithm
-      bitonicSort(pow2Size, _x, _y);
-      bitonicSort(pow2Size, _y, _rank);
+      bitonicSort(n_pow2, _x, _y);
+      bitonicSort(n_pow2, _y, _rank);
 
       // go through spearman sorted rank list and calculate difference from 1,2,3,... list
       int diff = 0;
