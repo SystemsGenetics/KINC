@@ -26,6 +26,33 @@ const char* Similarity::ICL {QT_TR_NOOP("ICL")};
 
 
 
+Similarity::~Similarity()
+{
+   // check if blocks are allocated
+   if ( _blocks )
+   {
+      // iterate through all blocks and delete them
+      for (int i = 0; i < _blockSize; ++i)
+      {
+         delete _blocks[i];
+      }
+
+      // delete pointer list
+      delete[] _blocks;
+   }
+
+   // delete program, kernels, and buffers
+   delete _program;
+   delete _kernel1;
+   delete _kernel2;
+   delete _expressions;
+}
+
+
+
+
+
+
 EAbstractAnalytic::ArgumentType Similarity::getArgumentData(int argument)
 {
    // use type declaration
@@ -48,6 +75,8 @@ EAbstractAnalytic::ArgumentType Similarity::getArgumentData(int argument)
    case RemovePostOutliers: return Type::Bool;
    case MinCorrelation: return Type::Double;
    case MaxCorrelation: return Type::Double;
+   case BlockSize: return Type::Integer;
+   case KernelSize: return Type::Integer;
    default: return Type::Bool;
    }
 }
@@ -83,6 +112,8 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       case RemovePostOutliers: return QString("postout");
       case MinCorrelation: return QString("mincorr");
       case MaxCorrelation: return QString("maxcorr");
+      case BlockSize: return QString("bsize");
+      case KernelSize: return QString("ksize");
       default: return QVariant();
       }
    case Role::Title:
@@ -103,6 +134,8 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       case RemovePostOutliers: return tr("Remove post-clustering outliers:");
       case MinCorrelation: return tr("Minimum Correlation:");
       case MaxCorrelation: return tr("Maximum Correlation:");
+      case BlockSize: return tr("Block Size:");
+      case KernelSize: return tr("Kernel Size:");
       default: return QVariant();
       }
    case Role::WhatsThis:
@@ -123,6 +156,8 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       case RemovePostOutliers: tr("Remove post-clustering outliers.");
       case MinCorrelation: return tr("Minimum threshold (absolute value) for a correlation to be saved.");
       case MaxCorrelation: return tr("Maximum threshold (absolute value) for a correlation to be saved.");
+      case BlockSize: return tr("(OpenCL) Total number of blocks to run.");
+      case KernelSize: return tr("(OpenCL) Total number of kernels to run per block.");
       default: return QVariant();
       }
    case Role::ComboValues:
@@ -150,6 +185,8 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       case RemovePostOutliers: return false;
       case MinCorrelation: return 0.5;
       case MaxCorrelation: return 1.0;
+      case BlockSize: return 4;
+      case KernelSize: return 4096;
       default: return QVariant();
       }
    case Role::Minimum:
@@ -163,6 +200,8 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       case MaxClusters: return 1;
       case MinCorrelation: return 0.0;
       case MaxCorrelation: return 0.0;
+      case BlockSize: return 1;
+      case KernelSize: return 1;
       default: return QVariant();
       }
    case Role::Maximum:
@@ -176,6 +215,8 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       case MaxClusters: return GenePair::Vector::MAX_CLUSTER_SIZE;
       case MinCorrelation: return 1.0;
       case MaxCorrelation: return 1.0;
+      case BlockSize: return INT_MAX;
+      case KernelSize: return INT_MAX;
       default: return QVariant();
       }
    case Role::Decimals:
@@ -279,6 +320,12 @@ void Similarity::setArgument(int argument, QVariant value)
    case MaxCorrelation:
       _maxCorrelation = value.toDouble();
       break;
+   case BlockSize:
+      _blockSize = value.toInt();
+      break;
+   case KernelSize:
+      _kernelSize = value.toInt();
+      break;
    }
 }
 
@@ -343,6 +390,9 @@ bool Similarity::initialize()
 
    // initialize correlation matrix
    _corrModel->initialize(_input, _corrMatrix);
+
+   // initialize total steps
+   _totalSteps = (qint64) _input->getGeneSize() * (_input->getGeneSize() - 1) / 2;
 
    // return pre-allocation argument
    return false;
@@ -413,16 +463,8 @@ void Similarity::savePair(GenePair::Vector vector, qint8 K, const qint8 *labels,
 
 void Similarity::runSerial()
 {
-   // initialize percent complete and steps
-   int lastPercent {0};
-   qint64 steps {0};
-   qint64 totalSteps {_input->getGeneSize()*(_input->getGeneSize() - 1)/2};
-
-   // initialize gene pair index
-   GenePair::Vector vector;
-
    // iterate through all gene pairs
-   while ( vector.geneX() < _input->getGeneSize() )
+   while ( _stepsComplete < _totalSteps )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -432,7 +474,7 @@ void Similarity::runSerial()
 
       // compute clusters
       _clusModel->compute(
-         vector,
+         _vector,
          _minSamples,
          _minExpression,
          _minClusters,
@@ -454,20 +496,562 @@ void Similarity::runSerial()
       );
 
       // save gene pair data
-      savePair(vector, K, labels.data(), labels.size(), correlations.data());
+      savePair(_vector, K, labels.data(), labels.size(), correlations.data());
 
       // increment to next pair
-      ++vector;
+      ++_vector;
 
       // increment steps and calculate percent complete
-      ++steps;
-      qint64 newPercent {100*steps/totalSteps};
+      ++_stepsComplete;
+      qint64 newPercent {100 * _stepsComplete / _totalSteps};
 
       // emit progressed signal when percent changes
-      if ( newPercent != lastPercent )
+      if ( newPercent != _lastPercent )
       {
-         lastPercent = newPercent;
-         emit progressed(lastPercent);
+         _lastPercent = newPercent;
+         emit progressed(_lastPercent);
       }
+   }
+}
+
+
+
+
+
+
+int Similarity::getBlockSize()
+{
+   // make sure block and kernel size are greater than zero
+   if ( _blockSize < 1 || _kernelSize < 1 )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Invalid Argument"));
+      e.setDetails((tr("Block size and/or kernel size are set to values less than 1.")));
+      throw e;
+   }
+
+   // initialize all opencl components
+   if ( !_blocks )
+   {
+      initializeOpenCL();
+   }
+
+   // reset blocks to initial state
+   for ( int i = 0; i < _blockSize; ++i )
+   {
+      _blocks[i]->state = Block::Start;
+   }
+
+   // return block size
+   return _blockSize;
+}
+
+
+
+
+
+
+bool Similarity::runBlock(int index)
+{
+   // figure out what state this block is in and execute it
+   switch (_blocks[index]->state)
+   {
+   case Block::Start:
+      runStartBlock(*_blocks[index]);
+      break;
+   case Block::Load:
+      runLoadBlock(*_blocks[index]);
+      break;
+   case Block::Execute1:
+      runExecute1Block(*_blocks[index]);
+      break;
+   case Block::Execute2:
+      runExecute2Block(*_blocks[index]);
+      break;
+   case Block::Read:
+      runReadBlock(*_blocks[index]);
+      break;
+   case Block::Done:
+   default:
+      // if state is done or unknown signal this block is done
+      return false;
+   }
+
+   // figure out new percent complete
+   qint64 newPercent {100 * _stepsComplete / _totalSteps};
+
+   // emit progressed signal when percent changes
+   if ( newPercent != _lastPercent )
+   {
+      _lastPercent = newPercent;
+      emit progressed(_lastPercent);
+   }
+
+   // signal block is still running
+   return true;
+}
+
+
+
+
+
+
+void Similarity::initializeOpenCL()
+{
+   // get opencl device
+   EOpenCLDevice& device {EOpenCLDevice::getInstance()};
+
+   // make program making sure it worked
+   _program = device.makeProgram().release();
+   if ( !device )
+   {
+      E_MAKE_EXCEPTION(e);
+      device.fillException(e);
+      throw e;
+   }
+
+   // add opencl c code
+   _program->addFile(":/opencl/linalg.cl");
+
+   if ( _clusMethod == ClusteringMethod::GMM )
+   {
+      _program->addFile(":/opencl/gmm.cl");
+   }
+   else if ( _clusMethod == ClusteringMethod::KMeans )
+   {
+      _program->addFile(":/opencl/kmeans.cl");
+   }
+
+   if ( _corrMethod == CorrelationMethod::Pearson )
+   {
+      _program->addFile(":/opencl/pearson.cl");
+   }
+   else if ( _corrMethod == CorrelationMethod::Spearman )
+   {
+      _program->addFile(":/opencl/spearman.cl");
+   }
+
+   // compile program making sure it worked
+   if ( !_program->compile() )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("OpenCL Compile Error"));
+      e.setDetails(tr("OpenCL program failed to compile:\n\n%1")
+         .arg(_program->getBuildError())
+         .replace('\n',"<br/>"));
+
+      throw e;
+   }
+
+   // get clustering kernel from compiled code making sure it worked
+   QString clusKernel;
+
+   if ( _clusMethod == ClusteringMethod::GMM )
+   {
+      clusKernel = "computeGMMBlock";
+   }
+   else if ( _clusMethod == ClusteringMethod::KMeans )
+   {
+      clusKernel = "computeKmeansBlock";
+   }
+
+   _kernel1 = _program->makeKernel(clusKernel).release();
+   if ( !*_program )
+   {
+      E_MAKE_EXCEPTION(e);
+      _program->fillException(e);
+      throw e;
+   }
+
+   // get correlation kernel from compiled code making sure it worked
+   QString corrKernel;
+
+   if ( _corrMethod == CorrelationMethod::Pearson )
+   {
+      corrKernel = "calculatePearsonBlock";
+   }
+   else if ( _corrMethod == CorrelationMethod::Spearman )
+   {
+      corrKernel = "calculateSpearmanBlock";
+   }
+
+   _kernel2 = _program->makeKernel(corrKernel).release();
+   if ( !*_program )
+   {
+      E_MAKE_EXCEPTION(e);
+      _program->fillException(e);
+      throw e;
+   }
+
+   // make new opencl buffer for expressions making sure it worked
+   _expressions = device.makeBuffer<cl_float>(_input->getRawSize()).release();
+   if ( !device )
+   {
+      E_MAKE_EXCEPTION(e);
+      device.fillException(e);
+      throw e;
+   }
+
+   // get raw expression data from input
+   unique_ptr<ExpressionMatrix::Expression> rawData(_input->dumpRawData());
+   ExpressionMatrix::Expression* rawDataRef {rawData.get()};
+
+   // copy expression data to opencl buffer
+   for (int i = 0; i < _input->getRawSize(); ++i)
+   {
+      (*_expressions)[i] = rawDataRef[i];
+   }
+
+   // write opencl expression buffer to device making sure it worked
+   EOpenCLEvent event = _expressions->write();
+   if ( !*_expressions )
+   {
+      E_MAKE_EXCEPTION(e);
+      _expressions->fillException(e);
+      throw e;
+   }
+
+   // wait for write to finish making sure it worked
+   event.wait();
+   if ( !event )
+   {
+      E_MAKE_EXCEPTION(e);
+      event.fillException(e);
+      throw e;
+   }
+
+   // get work size (sample size rounded up to next power of 2)
+   int N_pow2 {2};
+   while ( N_pow2 < _input->getSampleSize() )
+   {
+      N_pow2 *= 2;
+   }
+
+   // increase kernel size to next power of 2
+   int pow2 {2};
+   while ( pow2 < _kernelSize )
+   {
+      pow2 *= 2;
+   }
+   _kernelSize = pow2;
+
+   // figure out workgroup size for clustering kernel
+   int workgroupSize1 {_kernelSize};
+   while ( workgroupSize1 > (int)_kernel1->getMaxWorkgroupSize() )
+   {
+      workgroupSize1 /= 2;
+   }
+
+   // set all static kernel arguments
+   _kernel1->setDimensionCount(1);
+   _kernel1->setGlobalSize(0, _kernelSize);
+   _kernel1->setWorkgroupSize(0, workgroupSize1);
+
+   if ( _clusMethod == ClusteringMethod::GMM )
+   {
+      _kernel1->setBuffer(0, _expressions);
+      _kernel1->setArgument(1, (cl_int)_input->getSampleSize());
+      _kernel1->setArgument(3, (cl_int)_minSamples);
+      _kernel1->setArgument(4, (cl_int)_minExpression);
+      _kernel1->setArgument(5, (cl_char)_minClusters);
+      _kernel1->setArgument(6, (cl_char)_maxClusters);
+      _kernel1->setArgument(7, (cl_int)_criterion);
+      _kernel1->setArgument(8, (cl_int)_removePreOutliers);
+      _kernel1->setArgument(9, (cl_int)_removePostOutliers);
+   }
+   else if ( _clusMethod == ClusteringMethod::KMeans )
+   {
+      _kernel1->setBuffer(0, _expressions);
+      _kernel1->setArgument(1, (cl_int)_input->getSampleSize());
+      _kernel1->setArgument(3, (cl_int)_minSamples);
+      _kernel1->setArgument(4, (cl_int)_minExpression);
+      _kernel1->setArgument(5, (cl_char)_minClusters);
+      _kernel1->setArgument(6, (cl_char)_maxClusters);
+      _kernel1->setArgument(7, (cl_int) 10);
+      _kernel1->setArgument(8, (cl_int) 300);
+   }
+
+   // make sure everything with kernel worked
+   if ( !*_kernel1 )
+   {
+      E_MAKE_EXCEPTION(e);
+      _kernel1->fillException(e);
+      throw e;
+   }
+
+   // figure out workgroup size for correlation kernel
+   int workgroupSize2 {_kernelSize};
+   while ( workgroupSize2 > (int)_kernel2->getMaxWorkgroupSize() )
+   {
+      workgroupSize2 /= 2;
+   }
+
+   // set all static kernel arguments
+   _kernel2->setDimensionCount(1);
+   _kernel2->setGlobalSize(0, _kernelSize);
+   _kernel2->setWorkgroupSize(0, workgroupSize2);
+
+   if ( _corrMethod == CorrelationMethod::Pearson )
+   {
+      _kernel2->setArgument(1, (cl_char)_maxClusters);
+      _kernel2->setArgument(3, (cl_int)_input->getSampleSize());
+      _kernel2->setArgument(4, (cl_int)_minSamples);
+   }
+   else if ( _corrMethod == CorrelationMethod::Spearman )
+   {
+      _kernel2->setArgument(1, (cl_char)_maxClusters);
+      _kernel2->setArgument(3, (cl_int)_input->getSampleSize());
+      _kernel2->setArgument(4, (cl_int)_minSamples);
+   }
+
+   // make sure everything with kernel worked
+   if ( !*_kernel2 )
+   {
+      E_MAKE_EXCEPTION(e);
+      _kernel2->fillException(e);
+      throw e;
+   }
+
+   // initialize blocks
+   _blocks = new Block*[_blockSize];
+   for (int i = 0; i < _blockSize; ++i)
+   {
+      _blocks[i] = new Block(device, _input->getSampleSize(), N_pow2, _maxClusters, _kernelSize);
+   }
+}
+
+
+
+
+
+
+void Similarity::runStartBlock(Block& block)
+{
+   // check if there are more gene pairs to compute
+   if ( _stepsStarted < _totalSteps )
+   {
+      // set block xy to beginning of read comparisons
+      block.vector = _vector;
+
+      // copy list of pairs to be done on this run
+      int index {0};
+      while ( _stepsStarted + index < _totalSteps && index < _kernelSize )
+      {
+         (*block.pairs)[index] = { _vector.geneX(), _vector.geneY() };
+         ++_vector;
+         ++index;
+      }
+
+      // update steps started
+      _stepsStarted += index;
+
+      // copy any remaining and unused pairs to zero
+      while ( index < _kernelSize )
+      {
+         (*block.pairs)[index] = { 0, 0 };
+         ++index;
+      }
+
+      // write pairs to device making sure it worked
+      block.events.append(block.pairs->write());
+      if ( !*block.pairs )
+      {
+         E_MAKE_EXCEPTION(e);
+         block.pairs->fillException(e);
+         throw e;
+      }
+
+      // change block state to load
+      block.state = Block::Load;
+   }
+
+   // else all pairs are complete and this block is done
+   else
+   {
+      block.state = Block::Done;
+   }
+}
+
+
+
+
+
+
+void Similarity::runLoadBlock(Block& block)
+{
+   // check to see if reference loading is complete
+   if ( !block.isWaiting() )
+   {
+      // make sure opencl events worked
+      block.checkAllEvents();
+
+      // set kernel arguments and execute it
+      if ( _clusMethod == ClusteringMethod::GMM )
+      {
+         _kernel1->setBuffer(2, block.pairs);
+         _kernel1->setBuffer(10, block.work_X);
+         _kernel1->setBuffer(11, block.work_labels);
+         _kernel1->setBuffer(12, block.work_components);
+         _kernel1->setBuffer(13, block.work_MP);
+         _kernel1->setBuffer(14, block.work_counts);
+         _kernel1->setBuffer(15, block.work_logpi);
+         _kernel1->setBuffer(16, block.work_loggamma);
+         _kernel1->setBuffer(17, block.work_logGamma);
+         _kernel1->setBuffer(18, block.out_K);
+         _kernel1->setBuffer(19, block.out_labels);
+      }
+      else if ( _clusMethod == ClusteringMethod::KMeans )
+      {
+         _kernel1->setBuffer(2, block.pairs);
+         _kernel1->setBuffer(9, block.work_X);
+         _kernel1->setBuffer(10, block.work_labels);
+         _kernel1->setBuffer(11, block.work_MP);
+         _kernel1->setBuffer(12, block.out_K);
+         _kernel1->setBuffer(13, block.out_labels);
+      }
+
+      block.events.append(_kernel1->execute());
+
+      // make sure kernel worked
+      if ( !*_kernel1 )
+      {
+         E_MAKE_EXCEPTION(e);
+         _kernel1->fillException(e);
+         throw e;
+      }
+
+      // change block state to execute
+      block.state = Block::Execute1;
+   }
+}
+
+
+
+
+
+
+void Similarity::runExecute1Block(Block& block)
+{
+   // check to see if reference loading is complete
+   if ( !block.isWaiting() )
+   {
+      // make sure opencl events worked
+      block.checkAllEvents();
+
+      // set kernel arguments and execute it
+      if ( _corrMethod == CorrelationMethod::Pearson )
+      {
+         _kernel2->setBuffer(0, block.work_X);
+         _kernel2->setBuffer(2, block.out_labels);
+         _kernel2->setBuffer(5, block.work_x);
+         _kernel2->setBuffer(6, block.work_y);
+         _kernel2->setBuffer(7, block.out_correlations);
+      }
+      else if ( _corrMethod == CorrelationMethod::Spearman )
+      {
+         _kernel2->setBuffer(0, block.work_X);
+         _kernel2->setBuffer(2, block.out_labels);
+         _kernel2->setBuffer(5, block.work_x);
+         _kernel2->setBuffer(6, block.work_y);
+         _kernel2->setBuffer(7, block.work_rank);
+         _kernel2->setBuffer(8, block.out_correlations);
+      }
+
+      block.events.append(_kernel2->execute());
+
+      // make sure kernel worked
+      if ( !*_kernel2 )
+      {
+         E_MAKE_EXCEPTION(e);
+         _kernel2->fillException(e);
+         throw e;
+      }
+
+      // change block state to execute
+      block.state = Block::Execute2;
+   }
+}
+
+
+
+
+
+
+void Similarity::runExecute2Block(Block& block)
+{
+   // check to see if kernel execution is complete
+   if ( !block.isWaiting() )
+   {
+      // make sure opencl events worked
+      block.checkAllEvents();
+
+      // read results from device and make sure it worked
+      block.events.append(block.out_K->read());
+      if ( !*block.out_K )
+      {
+         E_MAKE_EXCEPTION(e);
+         block.out_K->fillException(e);
+         throw e;
+      }
+
+      block.events.append(block.out_labels->read());
+      if ( !*block.out_labels )
+      {
+         E_MAKE_EXCEPTION(e);
+         block.out_labels->fillException(e);
+         throw e;
+      }
+
+      block.events.append(block.out_correlations->read());
+      if ( !*block.out_correlations )
+      {
+         E_MAKE_EXCEPTION(e);
+         block.out_correlations->fillException(e);
+         throw e;
+      }
+
+      // change block state to read
+      block.state = Block::Read;
+   }
+}
+
+
+
+
+
+
+void Similarity::runReadBlock(Block& block)
+{
+   // check if read is complete and we are next in line
+   if ( !block.isWaiting() && _nextVector == block.vector )
+   {
+      // make sure opencl events worked
+      block.checkAllEvents();
+
+      // save each valid clustering result to cluster matrix
+      int index {0};
+      while ( _stepsComplete < _totalSteps && index < _kernelSize )
+      {
+         // read results
+         int N = _input->getSampleSize();
+         qint8 K = (*block.out_K)[index];
+         qint8 *labels = &(*block.out_labels)[index * N];
+         float *correlations = &(*block.out_correlations)[index * _maxClusters];
+
+         // save gene pair
+         savePair(block.vector, K, labels, N, correlations);
+
+         // increment indices
+         ++block.vector;
+         ++index;
+         ++_stepsComplete;
+      }
+
+      // clear all opencl events
+      block.events.clear();
+
+      // update next vector and change block state to start
+      _nextVector = block.vector;
+      block.state = Block::Start;
    }
 }

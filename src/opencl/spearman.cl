@@ -4,76 +4,15 @@
 
 
 
-// Fetch and build array of expressions for both genes, skipping any expressions that are missing
-// for either gene. Also builds ordered rank list used for spearman algorithm.
-//
-// @param expressions Array of all expressions for all genes to generate gene lists from.
-// @param size Size of lists for both genes.
-// @param workSize Size of new work arrays for genes and rank list.
-// @param vector Index into expression list for gene A.
-// @param sampleMask Array of values denoting membership in a cluster.
-// @param minExpression Minimum threshold for a gene expression to be included.
-// @param a New array of expressions for gene A that this function builds.
-// @param b New array of expressions for gene B that this function builds.
-// @param rankList New array that is initialized to start at 1 and increment by one for each
-// successive element.
-// @return Returns size of newly generated arrays which excludes any missing expression values.
-int fetchData(
-   __global const float *expressions,
-   int size, int workSize,
-   int2 vector,
-   __global const char *sampleMask,
-   int minExpression,
-   __global float *a,
-   __global float *b,
-   __global int *rankList)
+int nextPower2(int n)
 {
-   // initialize counters and indexes
-   __global const float *gene1 = &expressions[vector.x * size];
-   __global const float *gene2 = &expressions[vector.y * size];
+	int pow2 = 2;
+	while ( pow2 < n )
+	{
+		pow2 *= 2;
+	}
 
-   // populate a and b with shared expressions of gene pair
-   int numSamples = 0;
-
-   if ( sampleMask[0] != -1 )
-   {
-      // add samples that are in the cluster
-      for ( int i = 0; i < size; ++i )
-      {
-         if ( sampleMask[i] == 1 )
-         {
-            a[numSamples] = gene1[i];
-            b[numSamples] = gene2[i];
-            rankList[numSamples] = numSamples + 1;
-            ++numSamples;
-         }
-      }
-   }
-   else
-   {
-      // add samples that are valid
-      for ( int i = 0; i < size; ++i )
-      {
-         if ( !isnan(gene1[i]) && !isnan(gene2[i]) && minExpression <= gene1[i] && minExpression <= gene2[i] )
-         {
-            a[numSamples] = gene1[i];
-            b[numSamples] = gene2[i];
-            rankList[numSamples] = numSamples + 1;
-            ++numSamples;
-         }
-      }
-   }
-
-   // set any remaining values in work arrays to infinity or zero
-   for ( int i = numSamples; i < workSize; ++i )
-   {
-      a[i] = INFINITY;
-      b[i] = INFINITY;
-      rankList[i] = 0;
-   }
-
-   // return new size for generated lists
-   return numSamples;
+	return pow2;
 }
 
 
@@ -169,10 +108,10 @@ void bitonicSortFI(int size, __global float* sortList, __global int* extraList)
    {
       for (ib = ob; ib >= 2 ;ib /= 2)
       {
+         t = ib/2;
          for (i = 0; i < bsize ;++i)
          {
             dir = -((i/(ob/2))&0x1);
-            t = ib/2;
             a = (i/t)*ib+(i%t);
             b = a+t;
             if ( ( ( sortList[a] > sortList[b] ) && !dir )
@@ -191,28 +130,68 @@ void bitonicSortFI(int size, __global float* sortList, __global int* extraList)
 
 
 
-// Make the final calculation of the spearman coefficient with the given presorted spearman ranking
-// list.
-//
-// @param size Size of the ranking list.
-// @param rankList Presorted spearman ranking list.
-// @return Returns floating point spearman coefficient.
-float calculateSpearman(int size, __global int* rankList)
+float computeCluster(
+   __global const float2 *data,
+   __global const char *labels, int N,
+   char cluster,
+   int minSamples,
+   __global float *x,
+   __global float *y,
+   __global int *rank)
 {
-   // declare and initialize all variables
-   int i;
-   long tmp;
-   long difference = 0;
+   // extract samples in gene pair cluster
+   int N_pow2 = nextPower2(N);
+	int n = 0;
 
-   // go through spearman sorted rank list and calculate difference from 1,2,3,... list
-   for (i = 0; i < size ;++i)
+	for ( int i = 0, j = 0; i < N; ++i )
    {
-      tmp = (i+1)-rankList[i];
-      difference += tmp*tmp;
+      if ( labels[i] >= 0 )
+      {
+         if ( labels[i] == cluster )
+         {
+            x[n] = data[j].x;
+            y[n] = data[j].y;
+				rank[n] = n + 1;
+            ++n;
+         }
+
+         ++j;
+      }
    }
 
-   // calculate and return spearman coefficient
-   return 1.0-(6.0*(float)difference/((float)size*(((float)size*(float)size)-1.0)));
+   for ( int i = n; i < N_pow2; ++i )
+   {
+      x[i] = INFINITY;
+      y[i] = INFINITY;
+      rank[i] = 0;
+   }
+
+   // compute correlation only if there are enough samples
+   float result = NAN;
+
+   if ( n >= minSamples )
+   {
+      // get new power of 2 floor size
+      int n_pow2 = nextPower2(n);
+
+      // execute two bitonic sorts that is beginning of spearman algorithm
+      bitonicSortFF(n_pow2, x, y);
+      bitonicSortFI(n_pow2, y, rank);
+
+      // go through spearman sorted rank list and calculate difference from 1,2,3,... list
+      int diff = 0;
+
+      for ( int i = 0; i < n; ++i )
+      {
+         int tmp = (i + 1) - rank[i];
+         diff += tmp*tmp;
+      }
+
+      // compute spearman coefficient
+      result = 1.0 - 6.0 * diff / (n * (n*n - 1));
+   }
+
+   return result;
 }
 
 
@@ -220,68 +199,28 @@ float calculateSpearman(int size, __global int* rankList)
 
 
 
-// Calculate a block of spearman coefficients given a block of gene pairs.
-//
-// @param expressions Gene expression matrix
-// @param size The size of the expressions/samples per gene.
-// @param workSize The power of 2 work size, MUST be a power of 2.
-// @param pairs Array of gene pairs.
-// @param sampleMasks Array of sample masks for each gene pair.
-// @param minSamples Minimum number of samples required to calculate correlation.
-// @param minExpression Minimum threshold for a gene expression to be included.
-// @param workLists Work space to be used for spearman calculations.
-// @param rankLists Work space to be used for spearman calculations.
-// @param results Array of output spearman coefficients for each gene pair.
 __kernel void calculateSpearmanBlock(
-   __global const float *expressions,
-   int size, int workSize,
-   __global const int2 *pairs,
-   __global const char *sampleMasks,
+   __global const float2 *in_data,
+   char K,
+   __global const char *in_labels, int N,
    int minSamples,
-   int minExpression,
-   __global float *workLists,
-   __global int *rankLists,
-   __global float *results)
+   __global float *work_x,
+   __global float *work_y,
+   __global int *work_rank,
+   __global float *out_correlations)
 {
    int i = get_global_id(0);
+	int N_pow2 = nextPower2(N);
 
-   if ( pairs[i].x == 0 && pairs[i].y == 0 )
+   __global const float2 *data = &in_data[i * N];
+   __global const char *labels = &in_labels[i * N];
+   __global float *x = &work_x[i * N_pow2];
+   __global float *y = &work_y[i * N_pow2];
+   __global int *rank = &work_rank[i * N_pow2];
+   __global float *correlations = &out_correlations[i * K];
+
+   for ( char k = 0; k < K; ++k )
    {
-      return;
-   }
-
-   // initialize workspace variables
-   __global const char *sampleMask = &sampleMasks[i * size];
-   __global float *a = &workLists[(2*i+0) * workSize];
-   __global float *b = &workLists[(2*i+1) * workSize];
-   __global int *rankList = &rankLists[2*i * workSize];
-
-   // fetch a and b arrays from expression matrix
-   int numSamples = fetchData(
-      expressions, size, workSize,
-      pairs[i],
-      sampleMask,
-      minExpression,
-      a, b, rankList
-   );
-
-   // compute correlation only if there are enough samples
-   results[i] = NAN;
-
-   if ( numSamples >= minSamples )
-   {
-      // get new power of 2 floor size
-      int pow2Size = 2;
-      while ( pow2Size < numSamples )
-      {
-         pow2Size *= 2;
-      }
-
-      // execute two bitonic sorts that is beginning of spearman algorithm
-      bitonicSortFF(pow2Size, a, b);
-      bitonicSortFI(pow2Size, b, rankList);
-
-      // calculate spearman coefficient from rearranged rank list and save to result list
-      results[i] = calculateSpearman(numSamples, rankList);
+      correlations[k] = computeCluster(data, labels, N, k, minSamples, x, y, rank);
    }
 }
