@@ -64,6 +64,9 @@ public:
    virtual int getBlockSize() override;
    virtual bool runBlock(int block) override final;
    virtual void finish() override final {}
+   virtual QByteArray buildMPIBlock() override final;
+   virtual bool readMPIBlock(const QByteArray& block) override final;
+   virtual QByteArray processMPIBlock(const QByteArray& block) override final;
 
 private:
    static const char* GMM;
@@ -214,6 +217,8 @@ private:
    EOpenCLKernel* _kernel1 {nullptr};
    EOpenCLKernel* _kernel2 {nullptr};
    EOpenCLBuffer<cl_float>* _expressions {nullptr};
+
+   QDataStream *_mpiOut {nullptr};
 
    GenePair::Vector _vector;
    GenePair::Vector _nextVector;

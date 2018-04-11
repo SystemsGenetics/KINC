@@ -1,3 +1,5 @@
+#include <ace/core/ace_qmpi.h>
+
 #include "similarity.h"
 #include "datafactory.h"
 #include "genepair_gmm.h"
@@ -410,55 +412,80 @@ bool Similarity::initialize()
 
 void Similarity::savePair(GenePair::Vector vector, qint8 K, const qint8 *labels, int N, const float *correlations)
 {
-   // save clusters whose correlations are within correlations
-   if ( K > 1 )
+   // get MPI instance
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+
+   if ( mpi.isMaster() )
    {
-      CCMatrix::Pair clusPair(_clusMatrix);
-
-      for ( qint8 k = 0; k < K; ++k )
+      // save clusters whose correlations are within thresholds
+      if ( K > 1 )
       {
-         float corr = correlations[k];
+         CCMatrix::Pair clusPair(_clusMatrix);
 
-         if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
+         for ( qint8 k = 0; k < K; ++k )
          {
-            clusPair.addCluster();
+            float corr = correlations[k];
 
-            for ( int i = 0; i < N; ++i )
+            if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
             {
-               clusPair.at(clusPair.clusterSize() - 1, i) = (labels[i] >= 0)
-                  ? (k == labels[i])
-                  : -labels[i];
+               clusPair.addCluster();
+
+               for ( int i = 0; i < N; ++i )
+               {
+                  clusPair.at(clusPair.clusterSize() - 1, i) = (labels[i] >= 0)
+                     ? (k == labels[i])
+                     : -labels[i];
+               }
             }
          }
-      }
 
-      if ( clusPair.clusterSize() > 0 )
-      {
-         clusPair.write(vector);
-      }
-   }
-
-   // save correlations that are within thresholds
-   if ( K > 0 )
-   {
-      CorrelationMatrix::Pair corrPair(_corrMatrix);
-
-      for ( qint8 k = 0; k < K; ++k )
-      {
-         float corr = correlations[k];
-
-         if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
+         if ( clusPair.clusterSize() > 0 )
          {
-            corrPair.addCluster();
-            corrPair.at(corrPair.clusterSize() - 1, 0) = corr;
+            clusPair.write(vector);
          }
       }
 
-      if ( corrPair.clusterSize() > 0 )
+      // save correlations that are within thresholds
+      if ( K > 0 )
       {
-         corrPair.write(vector);
+         // save correlation data to output file
+         CorrelationMatrix::Pair corrPair(_corrMatrix);
+
+         for ( qint8 k = 0; k < K; ++k )
+         {
+            float corr = correlations[k];
+
+            if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
+            {
+               corrPair.addCluster();
+               corrPair.at(corrPair.clusterSize() - 1, 0) = corr;
+            }
+         }
+
+         if ( corrPair.clusterSize() > 0 )
+         {
+            corrPair.write(vector);
+         }
       }
    }
+   else
+   {
+      // send cluster size to master node
+      (*_mpiOut) << K;
+
+      // send cluster data to master node
+      if ( K > 1 )
+      {
+         _mpiOut->writeRawData(reinterpret_cast<const char *>(labels), N);
+      }
+
+      // send correlation data to master node
+      if ( K > 0 )
+      {
+         _mpiOut->writeRawData(reinterpret_cast<const char *>(correlations), K * sizeof(float));
+      }
+   }
+
 }
 
 
@@ -523,6 +550,194 @@ void Similarity::runSerial()
          emit progressed(_lastPercent);
       }
    }
+}
+
+
+
+
+
+
+QByteArray Similarity::buildMPIBlock()
+{
+   const qint64 MPI_BLOCK_SIZE { 32 * 1024 };
+
+   // initialize output data
+   QByteArray data;
+   QDataStream stream(&data, QIODevice::WriteOnly);
+
+   // check if there are more gene pairs to compute
+   if ( _stepsStarted < _totalSteps )
+   {
+      // determine block size
+      qint64 steps = min(_totalSteps - _stepsStarted, MPI_BLOCK_SIZE);
+
+      // write block start and block size
+      stream << _stepsStarted << steps;
+
+      // update steps started
+      _stepsStarted += steps;
+   }
+
+   // send data to worker
+   return data;
+}
+
+
+
+
+
+
+bool Similarity::readMPIBlock(const QByteArray& block)
+{
+   // read block start and block size from worker
+   QDataStream stream(block);
+
+   qint64 blockStart;
+   qint64 blockSize;
+   stream >> blockStart >> blockSize;
+
+   // defer this block if it is not next in line
+   if ( blockStart != _stepsComplete )
+   {
+      return false;
+   }
+
+   // iterate through gene pairs in this block
+   QVector<qint8> labels(_input->getSampleSize());
+   QVector<float> correlations(_maxClusters);
+
+   for ( int i = 0; i < blockSize; ++i )
+   {
+      // read cluster size
+      qint8 K;
+      stream >> K;
+
+      // read cluster data
+      if ( K > 1 )
+      {
+         stream.readRawData(reinterpret_cast<char *>(labels.data()), labels.size());
+      }
+
+      // read correlation data
+      if ( K > 0 )
+      {
+         stream.readRawData(reinterpret_cast<char *>(correlations.data()), K * sizeof(float));
+      }
+
+      // save results
+      savePair(_vector, K, labels.data(), labels.size(), correlations.data());
+
+      // increment gene pair index
+      ++_vector;
+      ++_stepsComplete;
+   }
+
+   // calculate percent complete
+   qint64 newPercent {100*_stepsComplete/_totalSteps};
+
+   // emit progressed signal when percent changes
+   if ( newPercent != _lastPercent )
+   {
+      _lastPercent = newPercent;
+      emit progressed(_lastPercent);
+   }
+
+   return true;
+}
+
+
+
+
+
+
+QByteArray Similarity::processMPIBlock(const QByteArray& block)
+{
+   // get MPI instance
+   Ace::QMPI& mpi {Ace::QMPI::initialize()};
+
+   // read block start and block size from master
+   QDataStream stream(block);
+
+   qint64 blockStart;
+   qint64 blockSize;
+   stream >> blockStart >> blockSize;
+
+   qInfo("%d: starting block %12lld", mpi.rank(), blockStart);
+
+   // initialize output data
+   QByteArray data;
+
+   _mpiOut = new QDataStream(&data, QIODevice::WriteOnly);
+
+   // write block start and block size
+   (*_mpiOut) << blockStart << blockSize;
+
+   // initialize gene pair vector and total steps
+   _vector = GenePair::Vector(blockStart);
+   _nextVector = _vector;
+   _totalSteps = blockSize;
+   _stepsStarted = 0;
+   _stepsComplete = 0;
+
+   // check to see if analytic can run OpenCL and there is a device to use
+   if ( getCapabilities()&Capabilities::OpenCL
+        && EOpenCLDevice::getInstance().getStatus() == EOpenCLDevice::Ok )
+   {
+      // initialize block info
+      int blockSize {getBlockSize()};
+      int done {0};
+      bool blocks[blockSize];
+      for (int i = 0; i < blockSize ;++i)
+      {
+         blocks[i] = true;
+      }
+
+      // begin block while loop
+      while ( done < blockSize )
+      {
+         // if interruption is requested exit
+         if ( isInterruptionRequested() )
+         {
+            break;
+         }
+
+         for (int i = 0; i < blockSize ;++i)
+         {
+            // make sure block is still alive
+            if ( blocks[i] )
+            {
+               // if block is still alive run it
+               if ( !runBlock(i) )
+               {
+                  // block is done, remove it from active list
+                  blocks[i] = false;
+                  ++done;
+               }
+            }
+         }
+      }
+   }
+
+   // else just run serial if possible
+   else if ( getCapabilities()&Capabilities::Serial )
+   {
+      runSerial();
+   }
+
+   // else analytic cannot run and throw failure
+   else
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Failed Analytic Execution."));
+      e.setDetails(tr("Could not execute analytic because it lacks any applicable capability."));
+      throw e;
+   }
+
+   // cleanup
+   delete _mpiOut;
+
+   // send data to master node
+   return data;
 }
 
 
