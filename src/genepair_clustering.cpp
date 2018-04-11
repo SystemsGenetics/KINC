@@ -14,7 +14,7 @@ void Clustering::initialize(ExpressionMatrix* input, CCMatrix* output)
    _input = input;
 
    // pre-allocate workspace
-   _X.reserve(_input->getSampleSize());
+   _X.resize(_input->getSampleSize());
    _labels.resize(_input->getSampleSize());
    _bestLabels.resize(_input->getSampleSize());
 
@@ -38,26 +38,26 @@ void Clustering::compute(
    bool removePostOutliers)
 {
    // fetch data matrix X from expression matrix
-   fetchData(vector, minExpression);
+   int numSamples = fetchData(vector, minExpression, _X, _bestLabels);
 
    // remove pre-clustering outliers
    if ( removePreOutliers )
    {
-      markOutliers(_X, 0, _bestLabels, 0, -7);
-      markOutliers(_X, 1, _bestLabels, 0, -7);
+      markOutliers(_X, numSamples, 0, _bestLabels, 0, -7);
+      markOutliers(_X, numSamples, 1, _bestLabels, 0, -7);
    }
 
    // perform clustering only if there are enough samples
    _bestK = 0;
 
-   if ( _X.size() >= minSamples )
+   if ( numSamples >= minSamples )
    {
       float bestValue = INFINITY;
 
       for ( qint8 K = minClusters; K <= maxClusters; ++K )
       {
          // run each clustering model
-         bool success = fit(_X, K, _labels);
+         bool success = fit(_X, numSamples, K, _labels);
 
          if ( !success )
          {
@@ -70,10 +70,10 @@ void Clustering::compute(
          switch (criterion)
          {
          case Criterion::BIC:
-            value = computeBIC(K, logLikelihood(), _X.size(), 2);
+            value = computeBIC(K, logLikelihood(), numSamples, 2);
             break;
          case Criterion::ICL:
-            value = computeICL(K, logLikelihood(), _X.size(), 2, entropy());
+            value = computeICL(K, logLikelihood(), numSamples, 2, entropy());
             break;
          }
 
@@ -83,7 +83,7 @@ void Clustering::compute(
             _bestK = K;
             bestValue = value;
 
-            for ( int i = 0, j = 0; i < _X.size(); ++i )
+            for ( int i = 0, j = 0; i < numSamples; ++i )
             {
                if ( _bestLabels[i] >= 0 )
                {
@@ -102,8 +102,8 @@ void Clustering::compute(
       {
          for ( qint8 k = 0; k < _bestK; ++k )
          {
-            markOutliers(_X, 0, _bestLabels, k, -8);
-            markOutliers(_X, 1, _bestLabels, k, -8);
+            markOutliers(_X, numSamples, 0, _bestLabels, k, -8);
+            markOutliers(_X, numSamples, 1, _bestLabels, k, -8);
          }
       }
    }
@@ -114,7 +114,7 @@ void Clustering::compute(
 
 
 
-void Clustering::fetchData(Vector vector, int minExpression)
+int Clustering::fetchData(Vector vector, int minExpression, QVector<Vector2>& X, QVector<qint8>& labels)
 {
    // read in gene expressions
    ExpressionMatrix::Gene gene1(_input);
@@ -124,25 +124,29 @@ void Clustering::fetchData(Vector vector, int minExpression)
    gene2.read(vector.geneY());
 
    // populate X with shared expressions of gene pair
-   _X.clear();
+   int numSamples = 0;
 
    for ( int i = 0; i < _input->getSampleSize(); ++i )
    {
       if ( std::isnan(gene1.at(i)) || std::isnan(gene2.at(i)) )
       {
-         _labels[i] = -9;
+         labels[i] = -9;
       }
       else if ( gene1.at(i) < minExpression || gene2.at(i) < minExpression )
       {
-         _labels[i] = -6;
+         labels[i] = -6;
       }
       else
       {
-         _X.append({ gene1.at(i), gene2.at(i) });
+         X[numSamples] = { gene1.at(i), gene2.at(i) };
+         numSamples++;
 
-         _labels[i] = 0;
+         labels[i] = 0;
       }
    }
+
+   // return size of X
+   return numSamples;
 }
 
 
@@ -150,13 +154,13 @@ void Clustering::fetchData(Vector vector, int minExpression)
 
 
 
-void Clustering::markOutliers(const QVector<Vector2>& X, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker)
+void Clustering::markOutliers(const QVector<Vector2>& X, int N, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker)
 {
    // compute x_sorted = X[:, j], filtered and sorted
    QVector<float> x_sorted;
-   x_sorted.reserve(X.size());
+   x_sorted.reserve(N);
 
-   for ( int i = 0; i < X.size(); i++ )
+   for ( int i = 0; i < N; i++ )
    {
       if ( labels[i] == cluster || labels[i] == marker )
       {
@@ -181,7 +185,7 @@ void Clustering::markOutliers(const QVector<Vector2>& X, int j, QVector<qint8>& 
    float T_max = Q3 + 1.5f * (Q3 - Q1);
 
    // mark outliers
-   for ( int i = 0; i < X.size(); ++i )
+   for ( int i = 0; i < N; ++i )
    {
       if ( labels[i] == cluster && (X[i].s[j] < T_min || T_max < X[i].s[j]) )
       {

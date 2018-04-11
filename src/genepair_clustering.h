@@ -35,13 +35,13 @@ namespace GenePair
       const QVector<Vector2>& dataMatrix() const { return _X; }
 
    protected:
-      virtual bool fit(const QVector<Vector2>& X, int K, QVector<qint8>& labels) = 0;
+      virtual bool fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels) = 0;
       virtual float logLikelihood() const = 0;
       virtual float entropy() const = 0;
 
    private:
-      void fetchData(Vector vector, int minExpression);
-      void markOutliers(const QVector<Vector2>& X, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker);
+      int fetchData(Vector vector, int minExpression, QVector<Vector2>& X, QVector<qint8>& labels);
+      void markOutliers(const QVector<Vector2>& X, int N, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker);
       float computeBIC(int K, float logL, int N, int D);
       float computeICL(int K, float logL, int N, int D, float E);
 

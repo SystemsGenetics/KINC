@@ -51,7 +51,7 @@ void GMM::Component::prepareCovariance()
 
 
 
-void GMM::Component::calcLogMvNorm(const QVector<Vector2>& X, float *logP)
+void GMM::Component::calcLogMvNorm(const QVector<Vector2>& X, int N, float *logP)
 {
    // Here we are computing the probability density function of the multivariate
    // normal distribution conditioned on a single component for the set of points
@@ -59,7 +59,7 @@ void GMM::Component::calcLogMvNorm(const QVector<Vector2>& X, float *logP)
    //
    // P(x|k) = exp{ -0.5 * (x - mu)^T Sigma^{-} (x - mu) } / sqrt{ (2pi)^d det(Sigma) }
 
-   for (int i = 0; i < X.size(); ++i)
+   for (int i = 0; i < N; ++i)
    {
       // Let xm = (x - mu)
       Vector2 xm = X[i];
@@ -81,7 +81,7 @@ void GMM::Component::calcLogMvNorm(const QVector<Vector2>& X, float *logP)
 
 
 
-void GMM::kmeans(const QVector<Vector2>& X)
+void GMM::kmeans(const QVector<Vector2>& X, int N)
 {
    const int K = _components.size();
 
@@ -97,7 +97,7 @@ void GMM::kmeans(const QVector<Vector2>& X)
       memset(MP, 0, K * sizeof(Vector2));
       memset(counts, 0, K * sizeof(int));
 
-      for (int i = 0; i < X.size(); ++i)
+      for (int i = 0; i < N; ++i)
       {
          // arg min
          float minD = INFINITY;
@@ -140,14 +140,13 @@ void GMM::kmeans(const QVector<Vector2>& X)
 
 
 
-void GMM::calcLogMvNorm(const QVector<Vector2>& X, float *loggamma)
+void GMM::calcLogMvNorm(const QVector<Vector2>& X, int N, float *loggamma)
 {
-   const int N = X.size();
    const int K = _components.size();
 
    for ( int k = 0; k < K; ++k )
    {
-      _components[k].calcLogMvNorm(X, &loggamma[k * N]);
+      _components[k].calcLogMvNorm(X, N, &loggamma[k * N]);
    }
 }
 
@@ -253,10 +252,8 @@ float GMM::calcLogGammaSum(const float *logpi, int K, const float *logGamma)
 
 
 
-void GMM::performMStep(float *logpi, int K, float *loggamma, float *logGamma, float logGammaSum, const QVector<Vector2>& X)
+void GMM::performMStep(float *logpi, int K, float *loggamma, float *logGamma, float logGammaSum, const QVector<Vector2>& X, int N)
 {
-   const int N = X.size();
-
    // update pi
    for (int k = 0; k < K; ++k)
    {
@@ -367,10 +364,8 @@ float GMM::calcEntropy(float *loggamma, int N, const QVector<qint8>& labels)
 
 
 
-bool GMM::fit(const QVector<Vector2>& X, int K, QVector<qint8>& labels)
+bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
 {
-   const int N = X.size();
-
    // initialize components
    _components.resize(K);
 
@@ -384,7 +379,7 @@ bool GMM::fit(const QVector<Vector2>& X, int K, QVector<qint8>& labels)
    }
 
    // initialize means with k-means
-   kmeans(X);
+   kmeans(X, N);
 
    // initialize workspace
    float *logpi = new float[K];
@@ -409,7 +404,7 @@ bool GMM::fit(const QVector<Vector2>& X, int K, QVector<qint8>& labels)
       {
          // E step
          // compute gamma, log-likelihood
-         calcLogMvNorm(X, loggamma);
+         calcLogMvNorm(X, N, loggamma);
 
          prevLogL = currentLogL;
          calcLogLikelihoodAndGammaNK(logpi, K, loggamma, N, &currentLogL);
@@ -427,7 +422,7 @@ bool GMM::fit(const QVector<Vector2>& X, int K, QVector<qint8>& labels)
          float logGammaSum = calcLogGammaSum(logpi, K, logGamma);
 
          // Update parameters
-         performMStep(logpi, K, loggamma, logGamma, logGammaSum, X);
+         performMStep(logpi, K, loggamma, logGamma, logGammaSum, X, N);
       }
 
       // save outputs

@@ -9,10 +9,8 @@ using namespace GenePair;
 
 
 
-bool KMeans::fit(const QVector<Vector2>& X, int K, QVector<qint8>& labels)
+bool KMeans::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
 {
-   const int N = X.size();
-
    const int NUM_INITS = 10;
    const int MAX_ITERATIONS = 300;
 
@@ -88,7 +86,7 @@ bool KMeans::fit(const QVector<Vector2>& X, int K, QVector<qint8>& labels)
       }
 
       // save the run with the greatest log-likelihood
-      float logL = computeLogLikelihood(X, y);
+      float logL = computeLogLikelihood(X, N, y);
 
       if ( _logL < logL )
       {
@@ -105,14 +103,14 @@ bool KMeans::fit(const QVector<Vector2>& X, int K, QVector<qint8>& labels)
 
 
 
-float KMeans::computeLogLikelihood(const QVector<Vector2>& X, const QVector<qint8>& y)
+float KMeans::computeLogLikelihood(const QVector<Vector2>& X, int N, const QVector<qint8>& y)
 {
    // compute within-class scatter
    float S = 0;
 
    for ( int k = 0; k < _means.size(); ++k )
    {
-      for ( int i = 0; i < X.size(); ++i )
+      for ( int i = 0; i < N; ++i )
       {
          if ( y[i] != k )
          {
