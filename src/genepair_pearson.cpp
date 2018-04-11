@@ -11,19 +11,11 @@ using namespace GenePair;
 
 
 
-void Pearson::initialize(ExpressionMatrix* input, CorrelationMatrix* output)
+void Pearson::initialize(ExpressionMatrix* input)
 {
    // pre-allocate workspace
    _x.resize(input->getSampleSize());
    _y.resize(input->getSampleSize());
-
-   // initialize correlation matrix
-   EMetadata correlations(EMetadata::Array);
-   EMetadata* name {new EMetadata(EMetadata::String)};
-   *(name->toString()) = "pearson";
-   correlations.toArray()->append(name);
-
-   output->initialize(input->getGeneNames(), correlations);
 }
 
 

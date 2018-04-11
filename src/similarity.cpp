@@ -386,10 +386,15 @@ bool Similarity::initialize()
    }
 
    // initialize cluster matrix
-   _clusModel->initialize(_input, _clusMatrix);
+   _clusMatrix->initialize(_input->getGeneNames(), _input->getSampleNames());
 
    // initialize correlation matrix
-   _corrModel->initialize(_input, _corrMatrix);
+   EMetadata correlations(EMetadata::Array);
+   EMetadata* name {new EMetadata(EMetadata::String)};
+   *(name->toString()) = _corrModel->getName();
+   correlations.toArray()->append(name);
+
+   _corrMatrix->initialize(_input->getGeneNames(), correlations);
 
    // initialize total steps
    _totalSteps = (qint64) _input->getGeneSize() * (_input->getGeneSize() - 1) / 2;
@@ -463,6 +468,12 @@ void Similarity::savePair(GenePair::Vector vector, qint8 K, const qint8 *labels,
 
 void Similarity::runSerial()
 {
+   // initialize clustering model
+   _clusModel->initialize(_input);
+
+   // initialize correlation model
+   _corrModel->initialize(_input);
+
    // iterate through all gene pairs
    while ( _stepsComplete < _totalSteps )
    {

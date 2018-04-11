@@ -9,7 +9,7 @@ using namespace GenePair;
 
 
 
-void Clustering::initialize(ExpressionMatrix* input, CCMatrix* output)
+void Clustering::initialize(ExpressionMatrix* input)
 {
    _input = input;
 
@@ -17,9 +17,6 @@ void Clustering::initialize(ExpressionMatrix* input, CCMatrix* output)
    _X.resize(_input->getSampleSize());
    _labels.resize(_input->getSampleSize());
    _bestLabels.resize(_input->getSampleSize());
-
-   // initialize clustering matrix
-   output->initialize(_input->getGeneNames(),_input->getSampleNames());
 }
 
 

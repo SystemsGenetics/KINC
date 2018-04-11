@@ -18,7 +18,7 @@ namespace GenePair
    class Clustering
    {
    public:
-      void initialize(ExpressionMatrix* input, CCMatrix* output);
+      void initialize(ExpressionMatrix* input);
       void compute(
          Vector vector,
          int minSamples,

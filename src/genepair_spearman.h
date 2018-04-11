@@ -7,7 +7,8 @@ namespace GenePair
    class Spearman : public Correlation
    {
    public:
-      void initialize(ExpressionMatrix* input, CorrelationMatrix* output);
+      void initialize(ExpressionMatrix* input);
+      QString getName() const { return "spearman"; }
 
    protected:
       float computeCluster(

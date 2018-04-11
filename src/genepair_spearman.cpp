@@ -11,7 +11,7 @@ using namespace GenePair;
 
 
 
-void Spearman::initialize(ExpressionMatrix* input, CorrelationMatrix* output)
+void Spearman::initialize(ExpressionMatrix* input)
 {
    // pre-allocate workspace
    int workSize = nextPower2(input->getSampleSize());
@@ -19,14 +19,6 @@ void Spearman::initialize(ExpressionMatrix* input, CorrelationMatrix* output)
    _x.resize(workSize);
    _y.resize(workSize);
    _rank.resize(workSize);
-
-   // initialize correlation matrix
-   EMetadata correlations(EMetadata::Array);
-   EMetadata* name {new EMetadata(EMetadata::String)};
-   *(name->toString()) = "spearman";
-   correlations.toArray()->append(name);
-
-   output->initialize(input->getGeneNames(), correlations);
 }
 
 
