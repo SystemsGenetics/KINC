@@ -29,7 +29,7 @@ public:
    virtual void runSerial() override final;
 private:
    float determineChi(float threshold, int* size);
-   void generateGeneThresholds();
+   void generateMaxCorrelations();
    QVector<double> generatePruneMatrix(float threshold, int* size);
    QVector<double> generateMatrixEigens(QVector<double>* pruneMatrix, int size);
    float getChiSquare(QVector<double>* eigens);
@@ -48,7 +48,8 @@ private:
    float _initialThreshold {0.99607};
    float _thresholdStep {0.001};
    float _thresholdMinimum {0.5};
-   QVector<float> _geneThresholds;
+   int _maxClusterSize {5};
+   QVector<float> _maxCorrelations;
 };
 
 

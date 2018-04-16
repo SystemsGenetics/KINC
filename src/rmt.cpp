@@ -191,8 +191,10 @@ bool RMT::initialize()
 
 void RMT::runSerial()
 {
-   // generate list of maximum threshold for each gene and initialize log text stream
-   generateGeneThresholds();
+   // generate list of maximum correlations for each gene
+   generateMaxCorrelations();
+
+   // initialize log text stream
    QTextStream stream(_logfile);
 
    // initialize chi, threshold, and history of both
@@ -234,7 +236,7 @@ void RMT::runSerial()
       }
 
       // output to log file
-      stream << threshold << "\t" << previousChi.back() << "\t" << chi << "\t" << size << "\n";
+      qInfo() << threshold << "\t" << previousChi.back() << "\t" << chi << "\t" << size << "\n";
 
       // decrement threshold by step and make sure minimum is not reached
       threshold -= _thresholdStep;
@@ -303,20 +305,19 @@ float RMT::determineChi(float threshold, int* size)
 
 
 
-void RMT::generateGeneThresholds()
+void RMT::generateMaxCorrelations()
 {
-   // resize thresholds matrix and initialize all to the minimum
-   _geneThresholds.fill(-1.0,_input->geneSize());
-
    // initialize percent complete and steps
    int lastPercent {0};
    qint64 steps {0};
    qint64 totalSteps {_input->size()};
 
-   // initialize gene pair iterator
-   CorrelationMatrix::Pair pair(_input);
+   // initialize elements to minimum value
+   _maxCorrelations.fill(0, _input->geneSize() * _maxClusterSize);
 
    // iterate through all gene pairs
+   CorrelationMatrix::Pair pair(_input);
+
    while ( pair.hasNext() )
    {
       // make sure interruption is not requested
@@ -328,19 +329,23 @@ void RMT::generateGeneThresholds()
       // read in next gene pair
       pair.readNext();
 
-      // check if it is a real number and not empty
-      if ( !pair.isEmpty() && !isnan(pair.at(0,0)) )
+      // iterate through each cluster
+      for ( int cluster = 0; cluster < pair.clusterSize(); ++cluster )
       {
+         int index1 = pair.vector().geneX() * _maxClusterSize + cluster;
+         int index2 = pair.vector().geneY() * _maxClusterSize + cluster;
+         float correlation = fabs(pair.at(cluster, 0));
+
          // if value is greater than current max of gene x set it to new max
-         if ( pair.at(0,0) > _geneThresholds.at(pair.vector().geneX()) )
+         if ( _maxCorrelations[index1] < correlation )
          {
-            _geneThresholds[pair.vector().geneX()] = pair.at(0,0);
+            _maxCorrelations[index1] = correlation;
          }
 
          // if value is greater than current max of gene y set it to new max
-         if ( pair.at(0,0) > _geneThresholds.at(pair.vector().geneY()) )
+         if ( _maxCorrelations[index2] < correlation )
          {
-            _geneThresholds[pair.vector().geneY()] = pair.at(0,0);
+            _maxCorrelations[index2] = correlation;
          }
       }
 
@@ -365,72 +370,55 @@ void RMT::generateGeneThresholds()
 
 QVector<double> RMT::generatePruneMatrix(float threshold, int* size)
 {
-   // make random number generator with normal distribution from -1 to 1
-   default_random_engine generator;
-   normal_distribution<float> distribution(0.0,0.3);
+   // generate vector of cluster indexes that have max threshold above given threshold
+   int numClusters = 0;
+   QVector<int> indices(_input->geneSize() * _maxClusterSize, -1);
 
-   // generate vector of gene indexes that have max threshold above given threshold
-   QVector<int> genes;
-   for (int i = 0; i < _input->geneSize() ;++i)
+   for ( int i = 0; i < indices.size(); ++i )
    {
-      if ( _geneThresholds.at(i) >= threshold )
+      if ( _maxCorrelations.at(i) >= threshold )
       {
-         genes.push_back(i);
+         indices[i] = numClusters;
+         ++numClusters;
       }
    }
 
-   // allocate new pruned matrix with gene vector size and initialize iterator
-   QVector<double> pruneMatrix(genes.size()*genes.size());
+   qInfo("generating pruned matrix (%d x %d)", numClusters, numClusters);
+
+   // allocate new pruned matrix with cluster size
+   QVector<double> pruneMatrix(numClusters * numClusters);
+
+   // initialize diagonal
+   for ( int i = 0; i < numClusters; ++i )
+   {
+      pruneMatrix[i * numClusters + i] = 1;
+   }
+
+   // iterate through all gene pairs
    CorrelationMatrix::Pair pair(_input);
 
-   // populate the pruned matrix with gene correlation values
-   for (int i = 0; i < genes.size() ;++i)
+   while ( pair.hasNext() )
    {
-      for (int j = 0; j < genes.size() ;++j)
+      // read in next gene pair
+      pair.readNext();
+
+      // iterate through each cluster
+      for ( int cluster = 0; cluster < pair.clusterSize(); ++cluster )
       {
-         // make sure interruption is not requested
-         if ( isInterruptionRequested() )
+         float correlation = pair.at(cluster, 0);
+
+         if ( !isnan(correlation) && fabs(correlation) >= threshold )
          {
-            return QVector<double>();
-         }
+            int i = indices[pair.vector().geneX() * _maxClusterSize + cluster];
+            int j = indices[pair.vector().geneY() * _maxClusterSize + cluster];
 
-         // get indexes for both genes
-         int g1 {genes[i]};
-         int g2 {genes[j]};
-
-         // if genes have same index set ij matrix value to 1
-         if ( g1 == g2 )
-         {
-            pruneMatrix[i*genes.size() + j] = 1.0;
-         }
-
-         // else get correlation value
-         else
-         {
-            // make sure first gene index is bigger and read gene pair
-            if ( g2 > g1 )
-            {
-               swap(g1,g2);
-            }
-            pair.read({g1,g2});
-
-            // if the correlation is a real number get value
-            if ( !pair.isEmpty() && !isnan(pair.at(0,0)) && !isinf(pair.at(0,0)) )
-            {
-               pruneMatrix[i*genes.size() + j] = pair.at(0,0);
-            }
-
-            // else set value to random value
-            else
-            {
-               pruneMatrix[i*genes.size() + j] = distribution(generator);
-            }
+            pruneMatrix[i * numClusters + j] = correlation;
          }
       }
    }
 
    // set size to size of pruned matrix and return pointer
-   *size = genes.size();
+   *size = numClusters;
    return pruneMatrix;
 }
 
