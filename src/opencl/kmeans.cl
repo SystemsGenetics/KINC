@@ -125,8 +125,6 @@ float computeLogLikelihood(
  */
 void fit(
    __global const Vector2 *X, int N, int K,
-   int numInits,
-   int maxIterations,
    float *logL,
    __global char *labels,
    __global Vector2 *means,
@@ -135,10 +133,13 @@ void fit(
 {
    ulong state = 1;
 
+   const int NUM_INITS = 10;
+   const int MAX_ITERATIONS = 300;
+
    // repeat with several initializations
    *logL = -INFINITY;
 
-   for ( int init = 0; init < numInits; ++init )
+   for ( int init = 0; init < NUM_INITS; ++init )
    {
       // initialize means randomly from X
       for ( int k = 0; k < K; ++k )
@@ -148,7 +149,7 @@ void fit(
       }
 
       // iterate K means until convergence
-      for ( int t = 0; t < maxIterations; ++t )
+      for ( int t = 0; t < MAX_ITERATIONS; ++t )
       {
          // compute new labels
          for ( int i = 0; i < N; ++i )
@@ -269,9 +270,10 @@ __kernel void computeKmeansBlock(
    int minExpression,
    char minClusters,
    char maxClusters,
-   int numInits,
-   int maxIterations,
+   int removePreOutliers,
+   int removePostOutliers,
    __global Vector2 *work_X,
+   __global float *work_outlier,
    __global char *work_labels,
    __global Vector2 *work_means,
    __global char *result_K,
@@ -296,6 +298,15 @@ __kernel void computeKmeansBlock(
    // fetch data matrix X from expression matrix
    int numSamples = fetchData(expressions, size, pairs[i], minExpression, X, bestLabels);
 
+   // remove pre-clustering outliers
+   __global float *work = &work_outlier[i * size];
+
+   if ( removePreOutliers )
+   {
+      markOutliers(X, numSamples, 0, bestLabels, 0, -7, work);
+      markOutliers(X, numSamples, 1, bestLabels, 0, -7, work);
+   }
+
    // perform clustering only if there are enough samples
    *bestK = 0;
 
@@ -307,7 +318,7 @@ __kernel void computeKmeansBlock(
       {
          // run each clustering model
          float logL;
-         fit(X, numSamples, K, numInits, maxIterations, &logL, labels, means, y, y_next);
+         fit(X, numSamples, K, &logL, labels, means, y, y_next);
 
          // evaluate model
          float value = computeBIC(K, logL, numSamples, 2);
@@ -326,6 +337,19 @@ __kernel void computeKmeansBlock(
                   ++j;
                }
             }
+         }
+      }
+   }
+
+   if ( *bestK > 1 )
+   {
+      // remove post-clustering outliers
+      if ( removePostOutliers )
+      {
+         for ( char k = 0; k < *bestK; ++k )
+         {
+            markOutliers(X, numSamples, 0, bestLabels, k, -8, work);
+            markOutliers(X, numSamples, 1, bestLabels, k, -8, work);
          }
       }
    }

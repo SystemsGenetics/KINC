@@ -995,8 +995,8 @@ void Similarity::initializeOpenCL()
       _kernel1->setArgument(4, (cl_int)_minExpression);
       _kernel1->setArgument(5, (cl_char)_minClusters);
       _kernel1->setArgument(6, (cl_char)_maxClusters);
-      _kernel1->setArgument(7, (cl_int) 10);
-      _kernel1->setArgument(8, (cl_int) 300);
+      _kernel1->setArgument(7, (cl_int)_removePreOutliers);
+      _kernel1->setArgument(8, (cl_int)_removePostOutliers);
    }
 
    // make sure everything with kernel worked
@@ -1132,10 +1132,11 @@ void Similarity::runLoadBlock(Block& block)
       {
          _kernel1->setBuffer(2, block.pairs);
          _kernel1->setBuffer(9, block.work_X);
-         _kernel1->setBuffer(10, block.work_labels);
-         _kernel1->setBuffer(11, block.work_MP);
-         _kernel1->setBuffer(12, block.out_K);
-         _kernel1->setBuffer(13, block.out_labels);
+         _kernel1->setBuffer(10, block.work_loggamma);
+         _kernel1->setBuffer(11, block.work_labels);
+         _kernel1->setBuffer(12, block.work_MP);
+         _kernel1->setBuffer(13, block.out_K);
+         _kernel1->setBuffer(14, block.out_labels);
       }
 
       block.events.append(_kernel1->execute());
