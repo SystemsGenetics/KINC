@@ -24,7 +24,15 @@ namespace GenePair
       bool operator==(const Vector& object)
          { return _geneX == object._geneX && _geneY == object._geneY; }
       bool operator!=(const Vector& object)
-         { return _geneX != object._geneX || _geneY != object._geneY; }
+         { return !(*this == object); }
+      bool operator<(const Vector& object)
+         { return _geneX < object._geneX || (_geneX == object._geneX && _geneY < object._geneY); }
+      bool operator<=(const Vector& object)
+         { return *this < object || *this == object; }
+      bool operator>(const Vector& object)
+         { return !(*this <= object); }
+      bool operator>=(const Vector& object)
+         { return !(*this < object); }
       constexpr static qint8 MAX_CLUSTER_SIZE {64};
    private:
       qint32 _geneX {1};
