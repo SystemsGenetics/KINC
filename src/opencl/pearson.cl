@@ -63,7 +63,7 @@ float computeCluster(
 
 
 
-__kernel void calculatePearsonBlock(
+__kernel void computePearsonBlock(
    __global const float2 *in_data,
    char K,
    __global const char *in_labels, int N,

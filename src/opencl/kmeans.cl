@@ -1,5 +1,6 @@
 
-// #include "linalg.h"
+// #include "linalg.cl"
+// #include "outlier.cl"
 
 
 

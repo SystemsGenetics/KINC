@@ -838,6 +838,8 @@ void Similarity::initializeOpenCL()
 
    // add opencl c code
    _program->addFile(":/opencl/linalg.cl");
+   _program->addFile(":/opencl/sort.cl");
+   _program->addFile(":/opencl/outlier.cl");
 
    if ( _clusMethod == ClusteringMethod::GMM )
    {
@@ -894,11 +896,11 @@ void Similarity::initializeOpenCL()
 
    if ( _corrMethod == CorrelationMethod::Pearson )
    {
-      corrKernel = "calculatePearsonBlock";
+      corrKernel = "computePearsonBlock";
    }
    else if ( _corrMethod == CorrelationMethod::Spearman )
    {
-      corrKernel = "calculateSpearmanBlock";
+      corrKernel = "computeSpearmanBlock";
    }
 
    _kernel2 = _program->makeKernel(corrKernel).release();

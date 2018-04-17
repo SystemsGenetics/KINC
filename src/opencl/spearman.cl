@@ -1,4 +1,6 @@
 
+// #include "sort.cl"
+
 
 
 
@@ -13,116 +15,6 @@ int nextPower2(int n)
 	}
 
 	return pow2;
-}
-
-
-
-
-
-
-// Swap two floating point values.
-//
-// @param a First floating point value.
-// @param b Second floating point value.
-void swapF(__global float* a, __global float* b)
-{
-   float c = *a;
-   *a = *b;
-   *b = c;
-}
-
-
-
-
-
-
-// Sort a given list using the bitonic algorithm along with rearranging a second list with the same
-// operations that are done to sort the sorted list.
-//
-// @param size Size of lists. It MUST be a power of 2.
-// @param sortList The list to be sorted.
-// @param extraList The extra list that will be rearranged identical to the sorted list.
-void bitonicSortFF(int size, __global float* sortList, __global float* extraList)
-{
-   // initialize all variables
-   int bsize = size/2;
-   int ob,ib,i,dir,a,b,t;
-
-   // bitonic algorithm, starting with an outer block of 2 and working up to total size of list
-   for (ob = 2; ob <= size ;ob *= 2)
-   {
-      for (ib = ob; ib >= 2 ;ib /= 2)
-      {
-         t = ib/2;
-         for (i = 0; i < bsize ;++i)
-         {
-            dir = -((i/(ob/2))&0x1);
-            a = (i/t)*ib+(i%t);
-            b = a+t;
-            if ( ( ( sortList[a] > sortList[b] ) && !dir )
-                 || ( ( sortList[a] < sortList[b] ) && dir ) )
-            {
-               swapF(&sortList[a],&sortList[b]);
-               swapF(&extraList[a],&extraList[b]);
-            }
-         }
-      }
-   }
-}
-
-
-
-
-
-
-// Swap two integer values.
-//
-// @param a First integer value.
-// @param b Second integer value.
-void swapI(__global int* a, __global int* b)
-{
-   int c = *a;
-   *a = *b;
-   *b = c;
-}
-
-
-
-
-
-
-// Sort a given list using the bitonic algorithm along with rearranging a second list with the same
-// operations that are done to sort the sorted list.
-//
-// @param size Size of lists. It MUST be a power of 2.
-// @param sortList The list to be sorted.
-// @param extraList The extra list that will be rearranged identical to the sorted list.
-void bitonicSortFI(int size, __global float* sortList, __global int* extraList)
-{
-   // initialize all variables
-   int bsize = size/2;
-   int ob,ib,i,dir,a,b,t;
-
-   // bitonic algorithm, starting with an outer block of 2 and working up to total size of list
-   for (ob = 2; ob <= size ;ob *= 2)
-   {
-      for (ib = ob; ib >= 2 ;ib /= 2)
-      {
-         t = ib/2;
-         for (i = 0; i < bsize ;++i)
-         {
-            dir = -((i/(ob/2))&0x1);
-            a = (i/t)*ib+(i%t);
-            b = a+t;
-            if ( ( ( sortList[a] > sortList[b] ) && !dir )
-                 || ( ( sortList[a] < sortList[b] ) && dir ) )
-            {
-               swapF(&sortList[a],&sortList[b]);
-               swapI(&extraList[a],&extraList[b]);
-            }
-         }
-      }
-   }
 }
 
 
@@ -199,7 +91,7 @@ float computeCluster(
 
 
 
-__kernel void calculateSpearmanBlock(
+__kernel void computeSpearmanBlock(
    __global const float2 *in_data,
    char K,
    __global const char *in_labels, int N,
