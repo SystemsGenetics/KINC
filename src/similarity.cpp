@@ -213,8 +213,8 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       {
       case MinExpression: return +INFINITY;
       case MinSamples: return INT_MAX;
-      case MinClusters: return GenePair::Vector::MAX_CLUSTER_SIZE;
-      case MaxClusters: return GenePair::Vector::MAX_CLUSTER_SIZE;
+      case MinClusters: return GenePair::Index::MAX_CLUSTER_SIZE;
+      case MaxClusters: return GenePair::Index::MAX_CLUSTER_SIZE;
       case MinCorrelation: return 1.0;
       case MaxCorrelation: return 1.0;
       case BlockSize: return INT_MAX;
@@ -410,7 +410,7 @@ bool Similarity::initialize()
 
 
 
-void Similarity::savePair(GenePair::Vector vector, qint8 K, const qint8 *labels, int N, const float *correlations)
+void Similarity::savePair(GenePair::Index index, qint8 K, const qint8 *labels, int N, const float *correlations)
 {
    // get MPI instance
    Ace::QMPI& mpi {Ace::QMPI::initialize()};
@@ -441,7 +441,7 @@ void Similarity::savePair(GenePair::Vector vector, qint8 K, const qint8 *labels,
 
          if ( clusPair.clusterSize() > 0 )
          {
-            clusPair.write(vector);
+            clusPair.write(index);
          }
       }
 
@@ -464,7 +464,7 @@ void Similarity::savePair(GenePair::Vector vector, qint8 K, const qint8 *labels,
 
          if ( corrPair.clusterSize() > 0 )
          {
-            corrPair.write(vector);
+            corrPair.write(index);
          }
       }
    }
@@ -512,7 +512,7 @@ void Similarity::runSerial()
 
       // compute clusters
       _clusModel->compute(
-         _vector,
+         _index,
          _minSamples,
          _minExpression,
          _minClusters,
@@ -534,10 +534,10 @@ void Similarity::runSerial()
       );
 
       // save gene pair data
-      savePair(_vector, K, labels.data(), labels.size(), correlations.data());
+      savePair(_index, K, labels.data(), labels.size(), correlations.data());
 
       // increment to next pair
-      ++_vector;
+      ++_index;
 
       // increment steps and calculate percent complete
       ++_stepsComplete;
@@ -625,10 +625,10 @@ bool Similarity::readMPIBlock(const QByteArray& block)
       }
 
       // save results
-      savePair(_vector, K, labels.data(), labels.size(), correlations.data());
+      savePair(_index, K, labels.data(), labels.size(), correlations.data());
 
       // increment gene pair index
-      ++_vector;
+      ++_index;
       ++_stepsComplete;
    }
 
@@ -672,9 +672,9 @@ QByteArray Similarity::processMPIBlock(const QByteArray& block)
    // write block start and block size
    (*_mpiOut) << blockStart << blockSize;
 
-   // initialize gene pair vector and total steps
-   _vector = GenePair::Vector(blockStart);
-   _nextVector = _vector;
+   // initialize pairwise index and total steps
+   _index = GenePair::Index(blockStart);
+   _nextIndex = _index;
    _totalSteps = blockSize;
    _stepsStarted = 0;
    _stepsComplete = 0;
@@ -1057,14 +1057,14 @@ void Similarity::runStartBlock(Block& block)
    if ( _stepsStarted < _totalSteps )
    {
       // set block xy to beginning of read comparisons
-      block.vector = _vector;
+      block.index = _index;
 
       // copy list of pairs to be done on this run
       int index {0};
       while ( _stepsStarted + index < _totalSteps && index < _kernelSize )
       {
-         (*block.pairs)[index] = { _vector.geneX(), _vector.geneY() };
-         ++_vector;
+         (*block.pairs)[index] = { _index.getX(), _index.getY() };
+         ++_index;
          ++index;
       }
 
@@ -1249,7 +1249,7 @@ void Similarity::runExecute2Block(Block& block)
 void Similarity::runReadBlock(Block& block)
 {
    // check if read is complete and we are next in line
-   if ( !block.isWaiting() && _nextVector == block.vector )
+   if ( !block.isWaiting() && _nextIndex == block.index )
    {
       // make sure opencl events worked
       block.checkAllEvents();
@@ -1265,10 +1265,10 @@ void Similarity::runReadBlock(Block& block)
          float *correlations = &(*block.out_correlations)[index * _maxClusters];
 
          // save gene pair
-         savePair(block.vector, K, labels, N, correlations);
+         savePair(block.index, K, labels, N, correlations);
 
          // increment indices
-         ++block.vector;
+         ++block.index;
          ++index;
          ++_stepsComplete;
       }
@@ -1276,8 +1276,8 @@ void Similarity::runReadBlock(Block& block)
       // clear all opencl events
       block.events.clear();
 
-      // update next vector and change block state to start
-      _nextVector = block.vector;
+      // update next index and change block state to start
+      _nextIndex = block.index;
       block.state = Block::Start;
    }
 }

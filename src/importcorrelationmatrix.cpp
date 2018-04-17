@@ -1,6 +1,6 @@
 #include "importcorrelationmatrix.h"
 #include "datafactory.h"
-#include "genepair_vector.h"
+#include "genepair_index.h"
 
 
 
@@ -239,7 +239,7 @@ void ImportCorrelationMatrix::runSerial()
    _ccMatrix->initialize(metaGeneNames, metaSampleNames);
    _cMatrix->initialize(metaGeneNames, metaCorrelationNames);
 
-   GenePair::Vector vector;
+   GenePair::Index index;
    CCMatrix::Pair ccPair(_ccMatrix);
    CorrelationMatrix::Pair cPair(_cMatrix);
 
@@ -278,27 +278,27 @@ void ImportCorrelationMatrix::runSerial()
          }
 
          // save previous pair when new pair is read
-         GenePair::Vector nextVector(geneX, geneY);
+         GenePair::Index nextIndex(geneX, geneY);
 
-         if ( vector != nextVector )
+         if ( index != nextIndex )
          {
             // save pairs
             if ( ccPair.clusterSize() > 1 )
             {
-               ccPair.write(vector);
+               ccPair.write(index);
             }
 
             if ( cPair.clusterSize() > 0 )
             {
-               cPair.write(vector);
+               cPair.write(index);
             }
 
             // reset pairs
             ccPair.clearClusters();
             cPair.clearClusters();
 
-            // update vector
-            vector = nextVector;
+            // update index
+            index = nextIndex;
          }
 
          // append cluster and correlation to gene pair

@@ -76,7 +76,7 @@ private:
    static const char* BIC;
    static const char* ICL;
 
-   void savePair(GenePair::Vector vector, qint8 K, const qint8 *labels, int N, const float *correlations);
+   void savePair(GenePair::Index index, qint8 K, const qint8 *labels, int N, const float *correlations);
 
    struct Block
    {
@@ -163,7 +163,7 @@ private:
       }
 
       int state {Start};
-      GenePair::Vector vector;
+      GenePair::Index index;
       QVector<EOpenCLEvent> events;
 
       // clustering buffers
@@ -220,8 +220,8 @@ private:
 
    QDataStream *_mpiOut {nullptr};
 
-   GenePair::Vector _vector;
-   GenePair::Vector _nextVector;
+   GenePair::Index _index;
+   GenePair::Index _nextIndex;
    qint64 _totalSteps;
    qint64 _stepsStarted {0};
    qint64 _stepsComplete {0};

@@ -27,7 +27,7 @@ int rand(ulong *state)
  *
  * @param expressions
  * @param size
- * @param vector
+ * @param index
  * @param minExpression
  * @param X
  * @param labels
@@ -35,14 +35,14 @@ int rand(ulong *state)
  */
 int fetchData(
    __global const float *expressions, int size,
-   int2 vector,
+   int2 index,
    int minExpression,
    __global Vector2 *X,
    __global char *labels)
 {
    // index into gene expressions
-   __global const float *gene1 = &expressions[vector.x * size];
-   __global const float *gene2 = &expressions[vector.y * size];
+   __global const float *gene1 = &expressions[index.x * size];
+   __global const float *gene2 = &expressions[index.y * size];
 
    // populate X with shared expressions of gene pair
    int numSamples = 0;

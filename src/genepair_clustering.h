@@ -5,7 +5,7 @@
 #include "ccmatrix.h"
 #include "expressionmatrix.h"
 #include "genepair_linalg.h"
-#include "genepair_vector.h"
+#include "genepair_index.h"
 
 namespace GenePair
 {
@@ -20,7 +20,7 @@ namespace GenePair
    public:
       void initialize(ExpressionMatrix* input);
       void compute(
-         Vector vector,
+         Index index,
          int minSamples,
          int minExpression,
          qint8 minClusters,
@@ -40,7 +40,7 @@ namespace GenePair
       virtual float entropy() const = 0;
 
    private:
-      int fetchData(Vector vector, int minExpression, QVector<Vector2>& X, QVector<qint8>& labels);
+      int fetchData(Index index, int minExpression, QVector<Vector2>& X, QVector<qint8>& labels);
       void markOutliers(const QVector<Vector2>& X, int N, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker);
       float computeBIC(int K, float logL, int N, int D);
       float computeICL(int K, float logL, int N, int D, float E);

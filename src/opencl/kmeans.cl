@@ -27,7 +27,7 @@ int rand(ulong *state)
  *
  * @param expressions
  * @param size
- * @param pair
+ * @param index
  * @param minExpression
  * @param X
  * @param labels
@@ -35,22 +35,22 @@ int rand(ulong *state)
  */
 int fetchData(
    __global const float *expressions, int size,
-   int2 pair,
+   int2 index,
    int minExpression,
    __global Vector2 *X,
    __global char *labels)
 {
    int numSamples = 0;
 
-   pair.x *= size;
-   pair.y *= size;
+   index.x *= size;
+   index.y *= size;
 
    // build data matrix from expressions and indices
    for ( int i = 0; i < size; ++i )
    {
       float2 v = (float2) (
-         expressions[pair.x + i],
-         expressions[pair.y + i]
+         expressions[index.x + i],
+         expressions[index.y + i]
       );
 
       if ( isnan(v.x) || isnan(v.y) )

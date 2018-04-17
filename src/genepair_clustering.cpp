@@ -25,7 +25,7 @@ void Clustering::initialize(ExpressionMatrix* input)
 
 
 void Clustering::compute(
-   Vector vector,
+   Index index,
    int minSamples,
    int minExpression,
    qint8 minClusters,
@@ -35,7 +35,7 @@ void Clustering::compute(
    bool removePostOutliers)
 {
    // fetch data matrix X from expression matrix
-   int numSamples = fetchData(vector, minExpression, _X, _bestLabels);
+   int numSamples = fetchData(index, minExpression, _X, _bestLabels);
 
    // remove pre-clustering outliers
    if ( removePreOutliers )
@@ -111,14 +111,14 @@ void Clustering::compute(
 
 
 
-int Clustering::fetchData(Vector vector, int minExpression, QVector<Vector2>& X, QVector<qint8>& labels)
+int Clustering::fetchData(Index index, int minExpression, QVector<Vector2>& X, QVector<qint8>& labels)
 {
    // read in gene expressions
    ExpressionMatrix::Gene gene1(_input);
    ExpressionMatrix::Gene gene2(_input);
 
-   gene1.read(vector.geneX());
-   gene2.read(vector.geneY());
+   gene1.read(index.getX());
+   gene2.read(index.getY());
 
    // populate X with shared expressions of gene pair
    int numSamples = 0;

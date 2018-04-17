@@ -3,7 +3,7 @@
 #include <ace/core/AceCore.h>
 #include <ace/core/metadata.h>
 
-#include "genepair_vector.h"
+#include "genepair_index.h"
 
 
 
@@ -18,11 +18,11 @@ namespace GenePair
          Pair(Base* matrix):
             _matrix(matrix),
             _cMatrix(matrix),
-            _vector({matrix->_geneSize,0})
+            _index({matrix->_geneSize,0})
             {}
          Pair(const Base* matrix):
             _cMatrix(matrix),
-            _vector({matrix->_geneSize,0})
+            _index({matrix->_geneSize,0})
             {}
          Pair() {}
          Pair(const Pair&) = default;
@@ -31,12 +31,12 @@ namespace GenePair
          virtual void addCluster(int amount = 1) const = 0;
          virtual int clusterSize() const = 0;
          virtual bool isEmpty() const = 0;
-         void write(Vector index);
-         void read(Vector index) const;
-         void reset() const { _nextIndex = 0; };
+         void write(Index index);
+         void read(Index index) const;
+         void reset() const { _rawIndex = 0; };
          void readNext() const;
-         bool hasNext() const { return _nextIndex != _cMatrix->_clusterSize; }
-         const Vector& vector() const { return _vector; }
+         bool hasNext() const { return _rawIndex != _cMatrix->_clusterSize; }
+         const Index& index() const { return _index; }
          Pair& operator=(const Pair&) = default;
          Pair& operator=(Pair&&) = default;
       protected:
@@ -45,8 +45,8 @@ namespace GenePair
       private:
          Base* _matrix {nullptr};
          const Base* _cMatrix;
-         mutable qint64 _nextIndex {0};
-         mutable Vector _vector;
+         mutable qint64 _rawIndex {0};
+         mutable Index _index;
       };
       virtual void readData() override final;
       virtual quint64 getDataEnd() const override final
@@ -62,8 +62,8 @@ namespace GenePair
       virtual void readHeader() = 0;
       void initialize(const EMetadata& geneNames, int dataSize, int offset);
    private:
-      void write(Vector index, qint8 cluster);
-      Vector getPair(qint64 index, qint8* cluster) const;
+      void write(Index index, qint8 cluster);
+      Index getPair(qint64 index, qint8* cluster) const;
       qint64 findPair(qint64 indent, qint64 first, qint64 last) const;
       void seekPair(qint64 index) const;
       constexpr static int _headerSize {26};

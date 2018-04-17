@@ -167,7 +167,7 @@ void ExportCorrelationMatrix::runSerial()
 
       if ( pair.clusterSize() > 1 )
       {
-         ccPair.read(pair.vector());
+         ccPair.read(pair.index());
       }
 
       // write gene pair data to output file
@@ -221,8 +221,8 @@ void ExportCorrelationMatrix::runSerial()
 
          // write cluster to output file
          stream
-            << pair.vector().geneX()
-            << "\t" << pair.vector().geneY()
+            << pair.index().getX()
+            << "\t" << pair.index().getY()
             << "\t" << cluster
             << "\t" << pair.clusterSize()
             << "\t" << numSamples

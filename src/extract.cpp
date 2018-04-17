@@ -265,14 +265,14 @@ void Extract::runSerial()
 
       if ( pair.clusterSize() > 1 )
       {
-         ccPair.read(pair.vector());
+         ccPair.read(pair.index());
       }
 
       // write gene pair data to output file
       for ( int cluster = 0; cluster < pair.clusterSize(); cluster++ )
       {
-         QString& source(*geneNames->at(pair.vector().geneX())->toString());
-         QString& target(*geneNames->at(pair.vector().geneY())->toString());
+         QString& source(*geneNames->at(pair.index().getX())->toString());
+         QString& target(*geneNames->at(pair.index().getY())->toString());
          float correlation = pair.at(cluster, 0);
          QString interaction("co");
          int numSamples = 0;
@@ -327,8 +327,8 @@ void Extract::runSerial()
             ExpressionMatrix::Gene gene1(_eMatrix);
             ExpressionMatrix::Gene gene2(_eMatrix);
 
-            gene1.read(pair.vector().geneX());
-            gene2.read(pair.vector().geneY());
+            gene1.read(pair.index().getX());
+            gene2.read(pair.index().getY());
 
             // determine sample mask from expression data
             for ( int i = 0; i < _eMatrix->getSampleSize(); ++i )
@@ -419,14 +419,14 @@ void Extract::runSerial()
 
       if ( pair.clusterSize() > 1 )
       {
-         ccPair.read(pair.vector());
+         ccPair.read(pair.index());
       }
 
       // write gene pair edges to file
       for ( int cluster = 0; cluster < pair.clusterSize(); cluster++ )
       {
-         QString& source(*geneNames->at(pair.vector().geneX())->toString());
-         QString& target(*geneNames->at(pair.vector().geneY())->toString());
+         QString& source(*geneNames->at(pair.index().getX())->toString());
+         QString& target(*geneNames->at(pair.index().getY())->toString());
          float correlation = pair.at(cluster, 0);
 
          // exclude edge if correlation is not within thresholds
@@ -452,8 +452,8 @@ void Extract::runSerial()
             ExpressionMatrix::Gene gene1(_eMatrix);
             ExpressionMatrix::Gene gene2(_eMatrix);
 
-            gene1.read(pair.vector().geneX());
-            gene2.read(pair.vector().geneY());
+            gene1.read(pair.index().getX());
+            gene2.read(pair.index().getY());
 
             // determine sample mask from expression data
             for ( int i = 0; i < _eMatrix->getSampleSize(); ++i )

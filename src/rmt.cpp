@@ -332,8 +332,8 @@ void RMT::generateMaxCorrelations()
       // iterate through each cluster
       for ( int cluster = 0; cluster < pair.clusterSize(); ++cluster )
       {
-         int index1 = pair.vector().geneX() * _maxClusterSize + cluster;
-         int index2 = pair.vector().geneY() * _maxClusterSize + cluster;
+         int index1 = pair.index().getX() * _maxClusterSize + cluster;
+         int index2 = pair.index().getY() * _maxClusterSize + cluster;
          float correlation = fabs(pair.at(cluster, 0));
 
          // if value is greater than current max of gene x set it to new max
@@ -409,8 +409,8 @@ QVector<double> RMT::generatePruneMatrix(float threshold, int* size)
 
          if ( !isnan(correlation) && fabs(correlation) >= threshold )
          {
-            int i = indices[pair.vector().geneX() * _maxClusterSize + cluster];
-            int j = indices[pair.vector().geneY() * _maxClusterSize + cluster];
+            int i = indices[pair.index().getX() * _maxClusterSize + cluster];
+            int j = indices[pair.index().getY() * _maxClusterSize + cluster];
 
             pruneMatrix[i * numClusters + j] = correlation;
          }

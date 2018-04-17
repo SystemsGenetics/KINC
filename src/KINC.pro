@@ -66,7 +66,7 @@ SOURCES += \
     exportcorrelationmatrix.cpp \
     similarity.cpp \
     rmt.cpp \
-    genepair_vector.cpp \
+    genepair_index.cpp \
     genepair_base.cpp \
     genepair_clustering.cpp \
     genepair_gmm.cpp \
@@ -89,7 +89,7 @@ HEADERS += \
     exportcorrelationmatrix.h \
     similarity.h \
     rmt.h \
-    genepair_vector.h \
+    genepair_index.h \
     genepair_base.h \
     genepair_clustering.h \
     genepair_gmm.h \

@@ -128,7 +128,7 @@ void Base::initialize(const EMetadata& geneNames, int dataSize, int offset)
 
 
 
-void Base::write(Vector index, qint8 cluster)
+void Base::write(Index index, qint8 cluster)
 {
    // make sure this is new data object that can be written to
    if ( _lastWrite == -2 )
@@ -158,7 +158,7 @@ void Base::write(Vector index, qint8 cluster)
       e.setDetails(QObject::tr("Failed calling seek() on data object file."));
       throw e;
    }
-   stream() << index.geneX() << index.geneY() << cluster;
+   stream() << index.getX() << index.getY() << cluster;
 
    // make sure writing worked
    if ( !stream() )
@@ -179,7 +179,7 @@ void Base::write(Vector index, qint8 cluster)
 
 
 
-Vector Base::getPair(qint64 index, qint8* cluster) const
+Index Base::getPair(qint64 index, qint8* cluster) const
 {
    // seek to gene pair position and read item header data
    seekPair(index);
@@ -196,7 +196,7 @@ Vector Base::getPair(qint64 index, qint8* cluster) const
       throw e;
    }
 
-   // return gene pair's vector
+   // return gene pair index
    return {geneX,geneY};
 }
 
@@ -216,7 +216,7 @@ qint64 Base::findPair(qint64 indent, qint64 first, qint64 last) const
    qint32 geneY;
    qint8 cluster;
    stream() >> geneX >> geneY >> cluster;
-   Vector index(geneX,geneY);
+   Index index(geneX,geneY);
 
    // make sure reading worked
    if ( !stream() )
@@ -296,15 +296,15 @@ void Base::seekPair(qint64 index) const
 
 
 
-void Base::Pair::write(Vector index)
+void Base::Pair::write(Index index)
 {
    // make sure cluster size of gene pair does not exceed max
-   if ( clusterSize() > Vector::MAX_CLUSTER_SIZE )
+   if ( clusterSize() > Index::MAX_CLUSTER_SIZE )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Gene Pair Logical Error"));
       e.setDetails(QObject::tr("Cannot write gene pair with cluster size of %1 exceeding the max of"
-                               " %2.").arg(clusterSize()).arg(Vector::MAX_CLUSTER_SIZE));
+                               " %2.").arg(clusterSize()).arg(Index::MAX_CLUSTER_SIZE));
       throw e;
    }
 
@@ -324,18 +324,18 @@ void Base::Pair::write(Vector index)
 
 
 
-void Base::Pair::read(Vector index) const
+void Base::Pair::read(Index index) const
 {
    // clear any existing clusters
    clearClusters();
 
-   // attempt to find vector within data object
+   // attempt to find cluster index within data object
    qint64 clusterIndex;
    if ( _cMatrix->_clusterSize > 0
         && (clusterIndex = _cMatrix->findPair(index.indent(0),0,_cMatrix->_clusterSize - 1)) != -1 )
    {
-      // gene pair with vector found, read in all clusters
-      _nextIndex = clusterIndex;
+      // gene pair found, read in all clusters
+      _rawIndex = clusterIndex;
       readNext();
    }
 }
@@ -348,14 +348,14 @@ void Base::Pair::read(Vector index) const
 void Base::Pair::readNext() const
 {
    // make sure read next index is not already at end of data object
-   if ( _nextIndex < _cMatrix->_clusterSize )
+   if ( _rawIndex < _cMatrix->_clusterSize )
    {
       // clear any existing clusters
       clearClusters();
 
       // get to first cluster
       qint8 cluster;
-      Vector vector {_cMatrix->getPair(_nextIndex++,&cluster)};
+      Index index {_cMatrix->getPair(_rawIndex++,&cluster)};
 
       // make sure this is cluster 0
       if ( cluster != 0 )
@@ -366,27 +366,27 @@ void Base::Pair::readNext() const
          throw e;
       }
 
-      // add first cluster, read it in, and save what vector this gene pair is
+      // add first cluster, read it in, and save pairwise index
       addCluster();
       readCluster(_cMatrix->stream(),0);
-      _vector = vector;
+      _index = index;
 
       // read in remaining clusters for gene pair
       qint8 count {1};
-      while ( _nextIndex < _cMatrix->_clusterSize )
+      while ( _rawIndex < _cMatrix->_clusterSize )
       {
          // get next gene pair cluster
-         _cMatrix->getPair(_nextIndex++,&cluster);
+         _cMatrix->getPair(_rawIndex++,&cluster);
 
          // if cluster is zero this is the next gene pair so break from loop
          if ( cluster == 0 )
          {
-            --_nextIndex;
+            --_rawIndex;
             break;
          }
 
          // make sure max cluster size has not been exceeded
-         if ( ++count > Vector::MAX_CLUSTER_SIZE )
+         if ( ++count > Index::MAX_CLUSTER_SIZE )
          {
             E_MAKE_EXCEPTION(e);
             e.setTitle(QObject::tr("File IO Error"));
