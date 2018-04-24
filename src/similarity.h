@@ -204,7 +204,7 @@ private:
    float _minExpression {-INFINITY};
    qint8 _minClusters {1};
    qint8 _maxClusters {5};
-   GenePair::Criterion _criterion {GenePair::Criterion::BIC};
+   GenePair::Criterion _criterion {GenePair::Criterion::ICL};
    bool _removePreOutliers {false};
    bool _removePostOutliers {false};
    float _minCorrelation {0.5};

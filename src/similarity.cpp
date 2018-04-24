@@ -182,7 +182,7 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       case MinSamples: return 30;
       case MinClusters: return 1;
       case MaxClusters: return 5;
-      case CriterionArg: return tr(BIC);
+      case CriterionArg: return tr(ICL);
       case RemovePreOutliers: return false;
       case RemovePostOutliers: return false;
       case MinCorrelation: return 0.5;
