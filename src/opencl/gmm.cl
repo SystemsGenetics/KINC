@@ -1,4 +1,5 @@
 
+// #include "fetchpair.cl"
 // #include "linalg.cl"
 // #include "outlier.cl"
 
@@ -17,60 +18,6 @@ int rand(ulong *state)
    *state = (*state) * 1103515245 + 12345;
    return ((unsigned)((*state)/65536) % 32768);
 }
-
-
-
-
-
-/**
- * Fetch and build data matrix X for a pair of genes, skipping any expressions
- * that are missing for either gene.
- *
- * @param expressions
- * @param size
- * @param index
- * @param minExpression
- * @param X
- * @param labels
- * @return number of rows in X
- */
-int fetchData(
-   __global const float *expressions, int size,
-   int2 index,
-   int minExpression,
-   __global Vector2 *X,
-   __global char *labels)
-{
-   // index into gene expressions
-   __global const float *gene1 = &expressions[index.x * size];
-   __global const float *gene2 = &expressions[index.y * size];
-
-   // populate X with shared expressions of gene pair
-   int numSamples = 0;
-
-   for ( int i = 0; i < size; ++i )
-   {
-      if ( isnan(gene1[i]) || isnan(gene2[i]) )
-      {
-         labels[i] = -9;
-      }
-      else if ( gene1[i] < minExpression || gene2[i] < minExpression )
-      {
-         labels[i] = -6;
-      }
-      else
-      {
-         X[numSamples].v2 = (float2) ( gene1[i], gene2[i] );
-         numSamples++;
-
-         labels[i] = 0;
-      }
-   }
-
-   // return size of X
-   return numSamples;
-}
-
 
 
 
@@ -655,8 +602,8 @@ __kernel void computeGMMBlock(
    __global char *bestK = &result_K[i];
    __global char *bestLabels = &result_labels[i * size];
 
-   // fetch data matrix X from expression matrix
-   int numSamples = fetchData(expressions, size, pairs[i], minExpression, X, bestLabels);
+   // fetch pairwise data from expression matrix
+   int numSamples = fetchPair(expressions, size, pairs[i], minExpression, X, bestLabels);
 
    // remove pre-clustering outliers
    __global float *work = loggamma;

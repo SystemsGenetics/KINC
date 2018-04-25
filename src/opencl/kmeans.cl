@@ -1,4 +1,5 @@
 
+// #include "fetchpair.cl"
 // #include "linalg.cl"
 // #include "outlier.cl"
 
@@ -17,64 +18,6 @@ int rand(ulong *state)
    *state = (*state) * 1103515245 + 12345;
    return ((unsigned)((*state)/65536) % 32768);
 }
-
-
-
-
-
-/**
- * Fetch and build data matrix X for a pair of genes, skipping any expressions
- * that are missing for either gene.
- *
- * @param expressions
- * @param size
- * @param index
- * @param minExpression
- * @param X
- * @param labels
- * @return number of rows in X
- */
-int fetchData(
-   __global const float *expressions, int size,
-   int2 index,
-   int minExpression,
-   __global Vector2 *X,
-   __global char *labels)
-{
-   int numSamples = 0;
-
-   index.x *= size;
-   index.y *= size;
-
-   // build data matrix from expressions and indices
-   for ( int i = 0; i < size; ++i )
-   {
-      float2 v = (float2) (
-         expressions[index.x + i],
-         expressions[index.y + i]
-      );
-
-      if ( isnan(v.x) || isnan(v.y) )
-      {
-         labels[i] = -9;
-      }
-      else if ( v.x < minExpression || v.y < minExpression )
-      {
-         labels[i] = -6;
-      }
-      else
-      {
-         X[numSamples].v2 = v;
-         numSamples++;
-
-         labels[i] = 0;
-      }
-   }
-
-   // return size of X
-   return numSamples;
-}
-
 
 
 
@@ -295,8 +238,8 @@ __kernel void computeKmeansBlock(
    __global char *bestK = &result_K[i];
    __global char *bestLabels = &result_labels[i * size];
 
-   // fetch data matrix X from expression matrix
-   int numSamples = fetchData(expressions, size, pairs[i], minExpression, X, bestLabels);
+   // fetch pairwise data from expression matrix
+   int numSamples = fetchPair(expressions, size, pairs[i], minExpression, X, bestLabels);
 
    // remove pre-clustering outliers
    __global float *work = &work_outlier[i * size];

@@ -883,6 +883,7 @@ void Similarity::initializeOpenCL()
 
    // add opencl c code
    _program->addFile(":/opencl/linalg.cl");
+   _program->addFile(":/opencl/fetchpair.cl");
    _program->addFile(":/opencl/sort.cl");
    _program->addFile(":/opencl/outlier.cl");
 
