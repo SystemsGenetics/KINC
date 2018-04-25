@@ -7,7 +7,7 @@ namespace GenePair
    class Pearson : public Correlation
    {
    public:
-      void initialize(ExpressionMatrix* input);
+      void initialize(ExpressionMatrix* /*input*/) {}
       QString getName() const { return "pearson"; }
 
    protected:
@@ -17,10 +17,6 @@ namespace GenePair
          qint8 cluster,
          int minSamples
       );
-
-   private:
-      QVector<float> _x;
-      QVector<float> _y;
    };
 }
 

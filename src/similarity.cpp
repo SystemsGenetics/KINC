@@ -1217,9 +1217,7 @@ void Similarity::runExecute1Block(Block& block)
       {
          _kernel2->setBuffer(0, block.work_X);
          _kernel2->setBuffer(2, block.out_labels);
-         _kernel2->setBuffer(5, block.work_x);
-         _kernel2->setBuffer(6, block.work_y);
-         _kernel2->setBuffer(7, block.out_correlations);
+         _kernel2->setBuffer(5, block.out_correlations);
       }
       else if ( _corrMethod == CorrelationMethod::Spearman )
       {
