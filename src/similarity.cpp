@@ -410,6 +410,46 @@ bool Similarity::initialize()
 
 
 
+int Similarity::fetchPair(GenePair::Index index, QVector<GenePair::Vector2>& X, QVector<qint8>& labels)
+{
+   // read in gene expressions
+   ExpressionMatrix::Gene gene1(_input);
+   ExpressionMatrix::Gene gene2(_input);
+
+   gene1.read(index.getX());
+   gene2.read(index.getY());
+
+   // populate X with shared expressions of gene pair
+   int numSamples = 0;
+
+   for ( int i = 0; i < _input->getSampleSize(); ++i )
+   {
+      if ( std::isnan(gene1.at(i)) || std::isnan(gene2.at(i)) )
+      {
+         labels[i] = -9;
+      }
+      else if ( gene1.at(i) < _minExpression || gene2.at(i) < _minExpression )
+      {
+         labels[i] = -6;
+      }
+      else
+      {
+         X[numSamples] = { gene1.at(i), gene2.at(i) };
+         numSamples++;
+
+         labels[i] = 0;
+      }
+   }
+
+   // return size of X
+   return numSamples;
+}
+
+
+
+
+
+
 void Similarity::savePair(GenePair::Index index, qint8 K, const qint8 *labels, int N, const float *correlations)
 {
    // get MPI instance
@@ -501,6 +541,10 @@ void Similarity::runSerial()
    // initialize correlation model
    _corrModel->initialize(_input);
 
+   // initialize workspace
+   QVector<GenePair::Vector2> X(_input->getSampleSize());
+   QVector<qint8> labels(_input->getSampleSize());
+
    // iterate through all gene pairs
    while ( _stepsComplete < _totalSteps )
    {
@@ -510,11 +554,15 @@ void Similarity::runSerial()
          return;
       }
 
+      // fetch pairwise data
+      int numSamples = fetchPair(_index, X, labels);
+
       // compute clusters
-      _clusModel->compute(
-         _index,
+      qint8 K = _clusModel->compute(
+         X,
+         numSamples,
+         labels,
          _minSamples,
-         _minExpression,
          _minClusters,
          _maxClusters,
          _criterion,
@@ -522,12 +570,9 @@ void Similarity::runSerial()
          _removePostOutliers
       );
 
-      qint8 K {_clusModel->clusterSize()};
-      const QVector<qint8>& labels {_clusModel->labels()};
-
       // compute correlation
       QVector<float> correlations = _corrModel->compute(
-         _clusModel->dataMatrix(),
+         X,
          K,
          labels,
          _minSamples

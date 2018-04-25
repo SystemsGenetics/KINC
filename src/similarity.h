@@ -76,6 +76,7 @@ private:
    static const char* BIC;
    static const char* ICL;
 
+   int fetchPair(GenePair::Index index, QVector<GenePair::Vector2>& X, QVector<qint8>& labels);
    void savePair(GenePair::Index index, qint8 K, const qint8 *labels, int N, const float *correlations);
 
    struct Block

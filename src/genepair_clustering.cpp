@@ -11,12 +11,8 @@ using namespace GenePair;
 
 void Clustering::initialize(ExpressionMatrix* input)
 {
-   _input = input;
-
    // pre-allocate workspace
-   _X.resize(_input->getSampleSize());
-   _labels.resize(_input->getSampleSize());
-   _bestLabels.resize(_input->getSampleSize());
+   _workLabels.resize(input->getSampleSize());
 }
 
 
@@ -24,28 +20,26 @@ void Clustering::initialize(ExpressionMatrix* input)
 
 
 
-void Clustering::compute(
-   Index index,
+qint8 Clustering::compute(
+   const QVector<Vector2>& X,
+   int numSamples,
+   QVector<qint8>& labels,
    int minSamples,
-   int minExpression,
    qint8 minClusters,
    qint8 maxClusters,
    Criterion criterion,
    bool removePreOutliers,
    bool removePostOutliers)
 {
-   // fetch data matrix X from expression matrix
-   int numSamples = fetchData(index, minExpression, _X, _bestLabels);
-
    // remove pre-clustering outliers
    if ( removePreOutliers )
    {
-      markOutliers(_X, numSamples, 0, _bestLabels, 0, -7);
-      markOutliers(_X, numSamples, 1, _bestLabels, 0, -7);
+      markOutliers(X, numSamples, 0, labels, 0, -7);
+      markOutliers(X, numSamples, 1, labels, 0, -7);
    }
 
    // perform clustering only if there are enough samples
-   _bestK = 0;
+   qint8 bestK = 0;
 
    if ( numSamples >= minSamples )
    {
@@ -54,7 +48,7 @@ void Clustering::compute(
       for ( qint8 K = minClusters; K <= maxClusters; ++K )
       {
          // run each clustering model
-         bool success = fit(_X, numSamples, K, _labels);
+         bool success = fit(X, numSamples, K, _workLabels);
 
          if ( !success )
          {
@@ -77,14 +71,14 @@ void Clustering::compute(
          // save the best model
          if ( value < bestValue )
          {
-            _bestK = K;
+            bestK = K;
             bestValue = value;
 
             for ( int i = 0, j = 0; i < numSamples; ++i )
             {
-               if ( _bestLabels[i] >= 0 )
+               if ( labels[i] >= 0 )
                {
-                  _bestLabels[i] = _labels[j];
+                  labels[i] = _workLabels[j];
                   ++j;
                }
             }
@@ -92,58 +86,20 @@ void Clustering::compute(
       }
    }
 
-   if ( _bestK > 1 )
+   if ( bestK > 1 )
    {
       // remove post-clustering outliers
       if ( removePostOutliers )
       {
-         for ( qint8 k = 0; k < _bestK; ++k )
+         for ( qint8 k = 0; k < bestK; ++k )
          {
-            markOutliers(_X, numSamples, 0, _bestLabels, k, -8);
-            markOutliers(_X, numSamples, 1, _bestLabels, k, -8);
+            markOutliers(X, numSamples, 0, labels, k, -8);
+            markOutliers(X, numSamples, 1, labels, k, -8);
          }
       }
    }
-}
 
-
-
-
-
-
-int Clustering::fetchData(Index index, int minExpression, QVector<Vector2>& X, QVector<qint8>& labels)
-{
-   // read in gene expressions
-   ExpressionMatrix::Gene gene1(_input);
-   ExpressionMatrix::Gene gene2(_input);
-
-   gene1.read(index.getX());
-   gene2.read(index.getY());
-
-   // populate X with shared expressions of gene pair
-   int numSamples = 0;
-
-   for ( int i = 0; i < _input->getSampleSize(); ++i )
-   {
-      if ( std::isnan(gene1.at(i)) || std::isnan(gene2.at(i)) )
-      {
-         labels[i] = -9;
-      }
-      else if ( gene1.at(i) < minExpression || gene2.at(i) < minExpression )
-      {
-         labels[i] = -6;
-      }
-      else
-      {
-         X[numSamples] = { gene1.at(i), gene2.at(i) };
-         numSamples++;
-
-         labels[i] = 0;
-      }
-   }
-
-   // return size of X
-   return numSamples;
+   return bestK;
 }
 
 
