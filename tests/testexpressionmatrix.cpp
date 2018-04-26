@@ -19,7 +19,7 @@ void TestExpressionMatrix::test()
 	{
 		for ( int j = 0; j < numSamples; ++j )
 		{
-			testExpressions[i * numSamples + j] = -10 + rand() / 20;
+			testExpressions[i * numSamples + j] = -10 + rand() % 20;
 		}
 	}
 
