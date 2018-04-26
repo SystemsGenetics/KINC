@@ -46,6 +46,7 @@ SOURCES += \
    ../src/genepair_spearman.cpp \
    ../src/ccmatrix.cpp \
    ../src/extract.cpp \
+   testclustermatrix.cpp \
    testcorrelationmatrix.cpp \
    testexpressionmatrix.cpp \
    main.cpp
@@ -72,5 +73,6 @@ HEADERS += \
    ../src/genepair_spearman.h \
    ../src/ccmatrix.h \
    ../src/extract.h \
+   testclustermatrix.h \
    testcorrelationmatrix.h \
    testexpressionmatrix.h

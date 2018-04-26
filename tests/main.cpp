@@ -1,5 +1,6 @@
 #include "analyticfactory.h"
 #include "datafactory.h"
+#include "testclustermatrix.h"
 #include "testcorrelationmatrix.h"
 #include "testexpressionmatrix.h"
 
@@ -19,6 +20,7 @@ int main(int argc, char **argv)
 		delete object;
 	};
 
+	ASSERT_TEST(new TestClusterMatrix);
 	ASSERT_TEST(new TestCorrelationMatrix);
 	ASSERT_TEST(new TestExpressionMatrix);
 

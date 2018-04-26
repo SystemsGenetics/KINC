@@ -2,26 +2,27 @@
 #include <ace/core/datamanager.h>
 #include <ace/core/datareference.h>
 
-#include "testcorrelationmatrix.h"
-#include "correlationmatrix.h"
+#include "testclustermatrix.h"
+#include "ccmatrix.h"
 #include "datafactory.h"
 
 
 
-struct CorrelationPair
+struct ClusterPair
 {
 	GenePair::Index index;
-	QVector<float> clusters;
+	QVector<QVector<qint8>> clusters;
 };
 
 
 
-void TestCorrelationMatrix::test()
+void TestClusterMatrix::test()
 {
 	// create random correlation data
 	int numGenes = 10;
+	int numSamples = 5;
 	int maxClusters = 5;
-	QVector<CorrelationPair> testPairs;
+	QVector<ClusterPair> testPairs;
 
 	for ( int i = 0; i < numGenes; ++i )
 	{
@@ -31,11 +32,16 @@ void TestCorrelationMatrix::test()
 
 			if ( numClusters > 0 )
 			{
-				QVector<float> clusters(numClusters);
+				QVector<QVector<qint8>> clusters(numClusters);
 
 				for ( int k = 0; k < numClusters; ++k )
 				{
-					clusters[k] = -1.0 + 2.0 * rand() / ((2 << 31) - 1);
+					clusters[k].resize(numSamples);
+
+					for ( int n = 0; n < numSamples; ++n )
+					{
+						clusters[k][n] = rand() % 16;
+					}
 				}
 
 				testPairs.append({ { i, j }, clusters });
@@ -45,7 +51,7 @@ void TestCorrelationMatrix::test()
 
 	// create metadata
    EMetadata metaGeneNames(EMetadata::Array);
-   EMetadata metaCorrelationNames(EMetadata::Array);
+	EMetadata metaSampleNames(EMetadata::Array);
 
    for ( int i = 0; i < numGenes; ++i )
    {
@@ -54,23 +60,26 @@ void TestCorrelationMatrix::test()
       metaGeneNames.toArray()->append(name);
    }
 
-   EMetadata* name {new EMetadata(EMetadata::String)};
-   *(name->toString()) = "test";
-   metaCorrelationNames.toArray()->append(name);
+	for ( int i = 0; i < numSamples; ++i )
+   {
+      EMetadata* name {new EMetadata(EMetadata::String)};
+      *(name->toString()) = QString::number(i);
+      metaSampleNames.toArray()->append(name);
+   }
 
 	// create data object
-	QString path {QDir::tempPath() + "/test.cmx"};
+	QString path {QDir::tempPath() + "/test.ccm"};
 
 	std::unique_ptr<Ace::DataReference> dataRef {Ace::DataManager::getInstance().open(path)};
-   (*dataRef)->clear(DataFactory::CorrelationMatrixType);
+   (*dataRef)->clear(DataFactory::CCMatrixType);
 
-	CorrelationMatrix* matrix {dynamic_cast<CorrelationMatrix*>(&((*dataRef)->data()))};
+	CCMatrix* matrix {dynamic_cast<CCMatrix*>(&((*dataRef)->data()))};
 
 	// write data to file
-	matrix->initialize(metaGeneNames, metaCorrelationNames);
+	matrix->initialize(metaGeneNames, metaSampleNames);
 	matrix->prepare(false);
 
-	CorrelationMatrix::Pair pair(matrix);
+	CCMatrix::Pair pair(matrix);
 
 	for ( auto& testPair : testPairs )
 	{
@@ -79,7 +88,10 @@ void TestCorrelationMatrix::test()
 
 		for ( int k = 0; k < pair.clusterSize(); ++k )
 		{
-			pair.at(k, 0) = testPair.clusters.at(k);
+			for ( int n = 0; n < numSamples; ++n )
+			{
+				pair.at(k, n) = testPair.clusters.at(k).at(n);
+			}
 		}
 
 		pair.write(testPair.index);
@@ -98,7 +110,10 @@ void TestCorrelationMatrix::test()
 
 		for ( int k = 0; k < pair.clusterSize(); ++k )
 		{
-			Q_ASSERT(pair.at(k, 0) == testPair.clusters.at(k));
+			for ( int n = 0; n < numSamples; ++n )
+			{
+				Q_ASSERT(pair.at(k, n) == testPair.clusters.at(k).at(n));
+			}
 		}
 	}
 }
