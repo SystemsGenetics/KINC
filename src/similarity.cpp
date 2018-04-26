@@ -47,6 +47,7 @@ Similarity::~Similarity()
    delete _program;
    delete _kernel1;
    delete _kernel2;
+   delete _kernel3;
    delete _expressions;
 }
 
@@ -839,6 +840,9 @@ bool Similarity::runBlock(int index)
    case Block::Execute2:
       runExecute2Block(*_blocks[index]);
       break;
+   case Block::Execute3:
+      runExecute3Block(*_blocks[index]);
+      break;
    case Block::Read:
       runReadBlock(*_blocks[index]);
       break;
@@ -917,6 +921,15 @@ void Similarity::initializeOpenCL()
       throw e;
    }
 
+   // get fetch-pair kernel from compiled code making sure it worked
+   _kernel1 = _program->makeKernel("fetchPair").release();
+   if ( !*_program )
+   {
+      E_MAKE_EXCEPTION(e);
+      _program->fillException(e);
+      throw e;
+   }
+
    // get clustering kernel from compiled code making sure it worked
    QString clusKernel;
 
@@ -929,7 +942,7 @@ void Similarity::initializeOpenCL()
       clusKernel = "computeKmeansBlock";
    }
 
-   _kernel1 = _program->makeKernel(clusKernel).release();
+   _kernel2 = _program->makeKernel(clusKernel).release();
    if ( !*_program )
    {
       E_MAKE_EXCEPTION(e);
@@ -949,7 +962,7 @@ void Similarity::initializeOpenCL()
       corrKernel = "computeSpearmanBlock";
    }
 
-   _kernel2 = _program->makeKernel(corrKernel).release();
+   _kernel3 = _program->makeKernel(corrKernel).release();
    if ( !*_program )
    {
       E_MAKE_EXCEPTION(e);
@@ -1009,7 +1022,7 @@ void Similarity::initializeOpenCL()
    }
    _kernelSize = pow2;
 
-   // figure out workgroup size for clustering kernel
+   // figure out workgroup size for fetch-pair kernel
    int workgroupSize1 {_kernelSize};
    while ( workgroupSize1 > (int)_kernel1->getMaxWorkgroupSize() )
    {
@@ -1021,29 +1034,9 @@ void Similarity::initializeOpenCL()
    _kernel1->setGlobalSize(0, _kernelSize);
    _kernel1->setWorkgroupSize(0, workgroupSize1);
 
-   if ( _clusMethod == ClusteringMethod::GMM )
-   {
-      _kernel1->setBuffer(0, _expressions);
-      _kernel1->setArgument(1, (cl_int)_input->getSampleSize());
-      _kernel1->setArgument(3, (cl_int)_minSamples);
-      _kernel1->setArgument(4, (cl_int)_minExpression);
-      _kernel1->setArgument(5, (cl_char)_minClusters);
-      _kernel1->setArgument(6, (cl_char)_maxClusters);
-      _kernel1->setArgument(7, (cl_int)_criterion);
-      _kernel1->setArgument(8, (cl_int)_removePreOutliers);
-      _kernel1->setArgument(9, (cl_int)_removePostOutliers);
-   }
-   else if ( _clusMethod == ClusteringMethod::KMeans )
-   {
-      _kernel1->setBuffer(0, _expressions);
-      _kernel1->setArgument(1, (cl_int)_input->getSampleSize());
-      _kernel1->setArgument(3, (cl_int)_minSamples);
-      _kernel1->setArgument(4, (cl_int)_minExpression);
-      _kernel1->setArgument(5, (cl_char)_minClusters);
-      _kernel1->setArgument(6, (cl_char)_maxClusters);
-      _kernel1->setArgument(7, (cl_int)_removePreOutliers);
-      _kernel1->setArgument(8, (cl_int)_removePostOutliers);
-   }
+   _kernel1->setBuffer(0, _expressions);
+   _kernel1->setArgument(1, (cl_int)_input->getSampleSize());
+   _kernel1->setArgument(3, (cl_int)_minExpression);
 
    // make sure everything with kernel worked
    if ( !*_kernel1 )
@@ -1053,7 +1046,7 @@ void Similarity::initializeOpenCL()
       throw e;
    }
 
-   // figure out workgroup size for correlation kernel
+   // figure out workgroup size for clustering kernel
    int workgroupSize2 {_kernelSize};
    while ( workgroupSize2 > (int)_kernel2->getMaxWorkgroupSize() )
    {
@@ -1065,17 +1058,26 @@ void Similarity::initializeOpenCL()
    _kernel2->setGlobalSize(0, _kernelSize);
    _kernel2->setWorkgroupSize(0, workgroupSize2);
 
-   if ( _corrMethod == CorrelationMethod::Pearson )
+   if ( _clusMethod == ClusteringMethod::GMM )
    {
-      _kernel2->setArgument(1, (cl_char)_maxClusters);
-      _kernel2->setArgument(3, (cl_int)_input->getSampleSize());
-      _kernel2->setArgument(4, (cl_int)_minSamples);
+      _kernel2->setBuffer(0, _expressions);
+      _kernel2->setArgument(1, (cl_int)_input->getSampleSize());
+      _kernel2->setArgument(2, (cl_int)_minSamples);
+      _kernel2->setArgument(3, (cl_char)_minClusters);
+      _kernel2->setArgument(4, (cl_char)_maxClusters);
+      _kernel2->setArgument(5, (cl_int)_criterion);
+      _kernel2->setArgument(6, (cl_int)_removePreOutliers);
+      _kernel2->setArgument(7, (cl_int)_removePostOutliers);
    }
-   else if ( _corrMethod == CorrelationMethod::Spearman )
+   else if ( _clusMethod == ClusteringMethod::KMeans )
    {
-      _kernel2->setArgument(1, (cl_char)_maxClusters);
-      _kernel2->setArgument(3, (cl_int)_input->getSampleSize());
-      _kernel2->setArgument(4, (cl_int)_minSamples);
+      _kernel2->setBuffer(0, _expressions);
+      _kernel2->setArgument(1, (cl_int)_input->getSampleSize());
+      _kernel2->setArgument(2, (cl_int)_minSamples);
+      _kernel2->setArgument(3, (cl_char)_minClusters);
+      _kernel2->setArgument(4, (cl_char)_maxClusters);
+      _kernel2->setArgument(5, (cl_int)_removePreOutliers);
+      _kernel2->setArgument(6, (cl_int)_removePostOutliers);
    }
 
    // make sure everything with kernel worked
@@ -1083,6 +1085,39 @@ void Similarity::initializeOpenCL()
    {
       E_MAKE_EXCEPTION(e);
       _kernel2->fillException(e);
+      throw e;
+   }
+
+   // figure out workgroup size for correlation kernel
+   int workgroupSize3 {_kernelSize};
+   while ( workgroupSize3 > (int)_kernel3->getMaxWorkgroupSize() )
+   {
+      workgroupSize3 /= 2;
+   }
+
+   // set all static kernel arguments
+   _kernel3->setDimensionCount(1);
+   _kernel3->setGlobalSize(0, _kernelSize);
+   _kernel3->setWorkgroupSize(0, workgroupSize3);
+
+   if ( _corrMethod == CorrelationMethod::Pearson )
+   {
+      _kernel3->setArgument(1, (cl_char)_maxClusters);
+      _kernel3->setArgument(3, (cl_int)_input->getSampleSize());
+      _kernel3->setArgument(4, (cl_int)_minSamples);
+   }
+   else if ( _corrMethod == CorrelationMethod::Spearman )
+   {
+      _kernel3->setArgument(1, (cl_char)_maxClusters);
+      _kernel3->setArgument(3, (cl_int)_input->getSampleSize());
+      _kernel3->setArgument(4, (cl_int)_minSamples);
+   }
+
+   // make sure everything with kernel worked
+   if ( !*_kernel3 )
+   {
+      E_MAKE_EXCEPTION(e);
+      _kernel3->fillException(e);
       throw e;
    }
 
@@ -1111,7 +1146,7 @@ void Similarity::runStartBlock(Block& block)
       int index {0};
       while ( _stepsStarted + index < _totalSteps && index < _kernelSize )
       {
-         (*block.pairs)[index] = { _index.getX(), _index.getY() };
+         (*block.in_index)[index] = { _index.getX(), _index.getY() };
          ++_index;
          ++index;
       }
@@ -1122,16 +1157,16 @@ void Similarity::runStartBlock(Block& block)
       // copy any remaining and unused pairs to zero
       while ( index < _kernelSize )
       {
-         (*block.pairs)[index] = { 0, 0 };
+         (*block.in_index)[index] = { 0, 0 };
          ++index;
       }
 
       // write pairs to device making sure it worked
-      block.events.append(block.pairs->write());
-      if ( !*block.pairs )
+      block.events.append(block.in_index->write());
+      if ( !*block.in_index )
       {
          E_MAKE_EXCEPTION(e);
-         block.pairs->fillException(e);
+         block.in_index->fillException(e);
          throw e;
       }
 
@@ -1160,30 +1195,10 @@ void Similarity::runLoadBlock(Block& block)
       block.checkAllEvents();
 
       // set kernel arguments and execute it
-      if ( _clusMethod == ClusteringMethod::GMM )
-      {
-         _kernel1->setBuffer(2, block.pairs);
-         _kernel1->setBuffer(10, block.work_X);
-         _kernel1->setBuffer(11, block.work_labels);
-         _kernel1->setBuffer(12, block.work_components);
-         _kernel1->setBuffer(13, block.work_MP);
-         _kernel1->setBuffer(14, block.work_counts);
-         _kernel1->setBuffer(15, block.work_logpi);
-         _kernel1->setBuffer(16, block.work_loggamma);
-         _kernel1->setBuffer(17, block.work_logGamma);
-         _kernel1->setBuffer(18, block.out_K);
-         _kernel1->setBuffer(19, block.out_labels);
-      }
-      else if ( _clusMethod == ClusteringMethod::KMeans )
-      {
-         _kernel1->setBuffer(2, block.pairs);
-         _kernel1->setBuffer(9, block.work_X);
-         _kernel1->setBuffer(10, block.work_loggamma);
-         _kernel1->setBuffer(11, block.work_labels);
-         _kernel1->setBuffer(12, block.work_MP);
-         _kernel1->setBuffer(13, block.out_K);
-         _kernel1->setBuffer(14, block.out_labels);
-      }
+      _kernel1->setBuffer(2, block.in_index);
+      _kernel1->setBuffer(4, block.work_X);
+      _kernel1->setBuffer(5, block.work_N);
+      _kernel1->setBuffer(6, block.out_labels);
 
       block.events.append(_kernel1->execute());
 
@@ -1214,20 +1229,29 @@ void Similarity::runExecute1Block(Block& block)
       block.checkAllEvents();
 
       // set kernel arguments and execute it
-      if ( _corrMethod == CorrelationMethod::Pearson )
+      if ( _clusMethod == ClusteringMethod::GMM )
       {
-         _kernel2->setBuffer(0, block.work_X);
-         _kernel2->setBuffer(2, block.out_labels);
-         _kernel2->setBuffer(5, block.out_correlations);
+         _kernel2->setBuffer(8, block.work_X);
+         _kernel2->setBuffer(9, block.work_N);
+         _kernel2->setBuffer(10, block.work_labels);
+         _kernel2->setBuffer(11, block.work_components);
+         _kernel2->setBuffer(12, block.work_MP);
+         _kernel2->setBuffer(13, block.work_counts);
+         _kernel2->setBuffer(14, block.work_logpi);
+         _kernel2->setBuffer(15, block.work_loggamma);
+         _kernel2->setBuffer(16, block.work_logGamma);
+         _kernel2->setBuffer(17, block.out_K);
+         _kernel2->setBuffer(18, block.out_labels);
       }
-      else if ( _corrMethod == CorrelationMethod::Spearman )
+      else if ( _clusMethod == ClusteringMethod::KMeans )
       {
-         _kernel2->setBuffer(0, block.work_X);
-         _kernel2->setBuffer(2, block.out_labels);
-         _kernel2->setBuffer(5, block.work_x);
-         _kernel2->setBuffer(6, block.work_y);
-         _kernel2->setBuffer(7, block.work_rank);
-         _kernel2->setBuffer(8, block.out_correlations);
+         _kernel2->setBuffer(7, block.work_X);
+         _kernel2->setBuffer(8, block.work_N);
+         _kernel2->setBuffer(9, block.work_loggamma);
+         _kernel2->setBuffer(10, block.work_labels);
+         _kernel2->setBuffer(11, block.work_MP);
+         _kernel2->setBuffer(12, block.out_K);
+         _kernel2->setBuffer(13, block.out_labels);
       }
 
       block.events.append(_kernel2->execute());
@@ -1251,6 +1275,51 @@ void Similarity::runExecute1Block(Block& block)
 
 
 void Similarity::runExecute2Block(Block& block)
+{
+   // check to see if reference loading is complete
+   if ( !block.isWaiting() )
+   {
+      // make sure opencl events worked
+      block.checkAllEvents();
+
+      // set kernel arguments and execute it
+      if ( _corrMethod == CorrelationMethod::Pearson )
+      {
+         _kernel3->setBuffer(0, block.work_X);
+         _kernel3->setBuffer(2, block.out_labels);
+         _kernel3->setBuffer(5, block.out_correlations);
+      }
+      else if ( _corrMethod == CorrelationMethod::Spearman )
+      {
+         _kernel3->setBuffer(0, block.work_X);
+         _kernel3->setBuffer(2, block.out_labels);
+         _kernel3->setBuffer(5, block.work_x);
+         _kernel3->setBuffer(6, block.work_y);
+         _kernel3->setBuffer(7, block.work_rank);
+         _kernel3->setBuffer(8, block.out_correlations);
+      }
+
+      block.events.append(_kernel3->execute());
+
+      // make sure kernel worked
+      if ( !*_kernel3 )
+      {
+         E_MAKE_EXCEPTION(e);
+         _kernel3->fillException(e);
+         throw e;
+      }
+
+      // change block state to execute
+      block.state = Block::Execute3;
+   }
+}
+
+
+
+
+
+
+void Similarity::runExecute3Block(Block& block)
 {
    // check to see if kernel execution is complete
    if ( !block.isWaiting() )

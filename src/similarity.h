@@ -87,14 +87,16 @@ private:
          ,Load
          ,Execute1
          ,Execute2
+         ,Execute3
          ,Read
          ,Done
       };
 
       Block(EOpenCLDevice& device, int N, int N_pow2, int K, int kernelSize)
       {
-         pairs = device.makeBuffer<cl_int2>(1 * kernelSize).release();
+         in_index = device.makeBuffer<cl_int2>(1 * kernelSize).release();
          work_X = device.makeBuffer<GenePair::Vector2>(N * kernelSize).release();
+         work_N = device.makeBuffer<cl_int>(1 * kernelSize).release();
          work_labels = device.makeBuffer<cl_char>(N * kernelSize).release();
          work_components = device.makeBuffer<GenePair::GMM::Component>(K * kernelSize).release();
          work_MP = device.makeBuffer<GenePair::Vector2>(K * kernelSize).release();
@@ -119,8 +121,9 @@ private:
 
       ~Block()
       {
-         delete pairs;
+         delete in_index;
          delete work_X;
+         delete work_N;
          delete work_labels;
          delete work_components;
          delete work_MP;
@@ -168,8 +171,9 @@ private:
       QVector<EOpenCLEvent> events;
 
       // clustering buffers
-      EOpenCLBuffer<cl_int2>* pairs;
+      EOpenCLBuffer<cl_int2>* in_index;
       EOpenCLBuffer<GenePair::Vector2>* work_X;
+      EOpenCLBuffer<cl_int>* work_N;
       EOpenCLBuffer<cl_char>* work_labels;
       EOpenCLBuffer<GenePair::GMM::Component>* work_components;
       EOpenCLBuffer<GenePair::Vector2>* work_MP;
@@ -192,6 +196,7 @@ private:
    void runLoadBlock(Block& block);
    void runExecute1Block(Block& block);
    void runExecute2Block(Block& block);
+   void runExecute3Block(Block& block);
    void runReadBlock(Block& block);
 
    ExpressionMatrix* _input {nullptr};
@@ -217,6 +222,7 @@ private:
    EOpenCLProgram* _program {nullptr};
    EOpenCLKernel* _kernel1 {nullptr};
    EOpenCLKernel* _kernel2 {nullptr};
+   EOpenCLKernel* _kernel3 {nullptr};
    EOpenCLBuffer<cl_float>* _expressions {nullptr};
 
    QDataStream *_mpiOut {nullptr};

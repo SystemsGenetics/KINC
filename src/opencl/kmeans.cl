@@ -208,52 +208,44 @@ float computeBIC(int K, float logL, int N, int D)
  */
 __kernel void computeKmeansBlock(
    __global const float *expressions, int size,
-   __global const int2 *pairs,
    int minSamples,
-   int minExpression,
    char minClusters,
    char maxClusters,
    int removePreOutliers,
    int removePostOutliers,
    __global Vector2 *work_X,
+   __global int *work_N,
    __global float *work_outlier,
    __global char *work_labels,
    __global Vector2 *work_means,
-   __global char *result_K,
-   __global char *result_labels)
+   __global char *out_K,
+   __global char *out_labels)
 {
    int i = get_global_id(0);
 
-   if ( pairs[i].x == 0 && pairs[i].y == 0 )
-   {
-      return;
-   }
-
    // initialize workspace variables
    __global Vector2 *X = &work_X[i * size];
+   int N = work_N[i];
    __global char *labels = &work_labels[(3*i+0) * size];
    __global Vector2 *means = &work_means[i * maxClusters];
    __global char *y = &work_labels[(3*i+1) * size];
    __global char *y_next = &work_labels[(3*i+2) * size];
-   __global char *bestK = &result_K[i];
-   __global char *bestLabels = &result_labels[i * size];
-
-   // fetch pairwise data from expression matrix
-   int numSamples = fetchPair(expressions, size, pairs[i], minExpression, X, bestLabels);
+   __global char *bestK = &out_K[i];
+   __global char *bestLabels = &out_labels[i * size];
 
    // remove pre-clustering outliers
    __global float *work = &work_outlier[i * size];
 
    if ( removePreOutliers )
    {
-      markOutliers(X, numSamples, 0, bestLabels, 0, -7, work);
-      markOutliers(X, numSamples, 1, bestLabels, 0, -7, work);
+      markOutliers(X, N, 0, bestLabels, 0, -7, work);
+      markOutliers(X, N, 1, bestLabels, 0, -7, work);
    }
 
    // perform clustering only if there are enough samples
    *bestK = 0;
 
-   if ( numSamples >= minSamples )
+   if ( N >= minSamples )
    {
       float bestValue = INFINITY;
 
@@ -261,10 +253,10 @@ __kernel void computeKmeansBlock(
       {
          // run each clustering model
          float logL;
-         fit(X, numSamples, K, &logL, labels, means, y, y_next);
+         fit(X, N, K, &logL, labels, means, y, y_next);
 
          // evaluate model
-         float value = computeBIC(K, logL, numSamples, 2);
+         float value = computeBIC(K, logL, N, 2);
 
          // save the best model
          if ( value < bestValue )
@@ -272,7 +264,7 @@ __kernel void computeKmeansBlock(
             *bestK = K;
             bestValue = value;
 
-            for ( int i = 0, j = 0; i < numSamples; ++i )
+            for ( int i = 0, j = 0; i < N; ++i )
             {
                if ( bestLabels[i] >= 0 )
                {
@@ -291,8 +283,8 @@ __kernel void computeKmeansBlock(
       {
          for ( char k = 0; k < *bestK; ++k )
          {
-            markOutliers(X, numSamples, 0, bestLabels, k, -8, work);
-            markOutliers(X, numSamples, 1, bestLabels, k, -8, work);
+            markOutliers(X, N, 0, bestLabels, k, -8, work);
+            markOutliers(X, N, 1, bestLabels, k, -8, work);
          }
       }
    }

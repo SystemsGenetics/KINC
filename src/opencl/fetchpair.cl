@@ -12,25 +12,39 @@
  *
  * @param expressions
  * @param size
- * @param index
+ * @param in_index
  * @param minExpression
- * @param X
- * @param labels
- * @return number of rows in X
+ * @param out_X
+ * @param out_N
+ * @param out_labels
  */
-int fetchPair(
+__kernel void fetchPair(
    __global const float *expressions, int size,
-   int2 index,
+   __global const int2 *in_index,
    int minExpression,
-   __global Vector2 *X,
-   __global char *labels)
+   __global Vector2 *out_X,
+   __global int *out_N,
+   __global char *out_labels)
 {
+   int i = get_global_id(0);
+
+   // initialize variables
+   int2 index = in_index[i];
+   __global Vector2 *X = &out_X[i * size];
+   __global char *labels = &out_labels[i * size];
+   __global int *p_N = &out_N[i];
+
+   if ( index.x == 0 && index.y == 0 )
+   {
+      return;
+   }
+
    // index into gene expressions
    __global const float *gene1 = &expressions[index.x * size];
    __global const float *gene2 = &expressions[index.y * size];
 
    // populate X with shared expressions of gene pair
-   int numSamples = 0;
+   int N = 0;
 
    for ( int i = 0; i < size; ++i )
    {
@@ -44,13 +58,13 @@ int fetchPair(
       }
       else
       {
-         X[numSamples].v2 = (float2) ( gene1[i], gene2[i] );
-         numSamples++;
+         X[N].v2 = (float2) ( gene1[i], gene2[i] );
+         N++;
 
          labels[i] = 0;
       }
    }
 
    // return size of X
-   return numSamples;
+   *p_N = N;
 }

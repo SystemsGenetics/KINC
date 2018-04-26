@@ -564,15 +564,14 @@ float computeICL(int K, float logL, int N, int D, float E)
  */
 __kernel void computeGMMBlock(
    __global const float *expressions, int size,
-   __global const int2 *pairs,
    int minSamples,
-   int minExpression,
    char minClusters,
    char maxClusters,
    Criterion criterion,
    int removePreOutliers,
    int removePostOutliers,
    __global Vector2 *work_X,
+   __global int *work_N,
    __global char *work_labels,
    __global Component *work_components,
    __global Vector2 *work_MP,
@@ -580,18 +579,14 @@ __kernel void computeGMMBlock(
    __global float *work_logpi,
    __global float *work_loggamma,
    __global float *work_logGamma,
-   __global char *result_K,
-   __global char *result_labels)
+   __global char *out_K,
+   __global char *out_labels)
 {
    int i = get_global_id(0);
 
-   if ( pairs[i].x == 0 && pairs[i].y == 0 )
-   {
-      return;
-   }
-
    // initialize workspace variables
    __global Vector2 *X = &work_X[i * size];
+   int N = work_N[i];
    __global char *labels = &work_labels[i * size];
    __global Component *components = &work_components[i * maxClusters];
    __global Vector2 *MP = &work_MP[i * maxClusters];
@@ -599,25 +594,22 @@ __kernel void computeGMMBlock(
    __global float *logpi = &work_logpi[i * maxClusters];
    __global float *loggamma = &work_loggamma[i * maxClusters * size];
    __global float *logGamma = &work_logGamma[i * maxClusters];
-   __global char *bestK = &result_K[i];
-   __global char *bestLabels = &result_labels[i * size];
-
-   // fetch pairwise data from expression matrix
-   int numSamples = fetchPair(expressions, size, pairs[i], minExpression, X, bestLabels);
+   __global char *bestK = &out_K[i];
+   __global char *bestLabels = &out_labels[i * size];
 
    // remove pre-clustering outliers
    __global float *work = loggamma;
 
    if ( removePreOutliers )
    {
-      markOutliers(X, numSamples, 0, bestLabels, 0, -7, work);
-      markOutliers(X, numSamples, 1, bestLabels, 0, -7, work);
+      markOutliers(X, N, 0, bestLabels, 0, -7, work);
+      markOutliers(X, N, 1, bestLabels, 0, -7, work);
    }
 
    // perform clustering only if there are enough samples
    *bestK = 0;
 
-   if ( numSamples >= minSamples )
+   if ( N >= minSamples )
    {
       float bestValue = INFINITY;
 
@@ -628,7 +620,7 @@ __kernel void computeGMMBlock(
          float entropy;
 
          bool success = fit(
-            X, numSamples, K,
+            X, N, K,
             labels, &logL, &entropy,
             components,
             MP, counts,
@@ -646,10 +638,10 @@ __kernel void computeGMMBlock(
          switch (criterion)
          {
          case BIC:
-            value = computeBIC(K, logL, numSamples, 2);
+            value = computeBIC(K, logL, N, 2);
             break;
          case ICL:
-            value = computeICL(K, logL, numSamples, 2, entropy);
+            value = computeICL(K, logL, N, 2, entropy);
             break;
          }
 
@@ -659,7 +651,7 @@ __kernel void computeGMMBlock(
             *bestK = K;
             bestValue = value;
 
-            for ( int i = 0, j = 0; i < numSamples; ++i )
+            for ( int i = 0, j = 0; i < N; ++i )
             {
                if ( bestLabels[i] >= 0 )
                {
@@ -678,8 +670,8 @@ __kernel void computeGMMBlock(
       {
          for ( char k = 0; k < *bestK; ++k )
          {
-            markOutliers(X, numSamples, 0, bestLabels, k, -8, work);
-            markOutliers(X, numSamples, 1, bestLabels, k, -8, work);
+            markOutliers(X, N, 0, bestLabels, k, -8, work);
+            markOutliers(X, N, 1, bestLabels, k, -8, work);
          }
       }
    }
