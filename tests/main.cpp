@@ -3,6 +3,7 @@
 #include "testclustermatrix.h"
 #include "testcorrelationmatrix.h"
 #include "testexpressionmatrix.h"
+#include "testimportexpressionmatrix.h"
 
 
 
@@ -23,6 +24,7 @@ int main(int argc, char **argv)
 	ASSERT_TEST(new TestClusterMatrix);
 	ASSERT_TEST(new TestCorrelationMatrix);
 	ASSERT_TEST(new TestExpressionMatrix);
+	ASSERT_TEST(new TestImportExpressionMatrix);
 
 	return status;
 }

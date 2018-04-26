@@ -15,12 +15,9 @@ void TestExpressionMatrix::test()
 	int numSamples = 5;
 	QVector<float> testExpressions(numGenes * numSamples);
 
-	for ( int i = 0; i < numGenes; ++i )
+	for ( int i = 0; i < testExpressions.size(); ++i )
 	{
-		for ( int j = 0; j < numSamples; ++j )
-		{
-			testExpressions[i * numSamples + j] = -10 + rand() % 20;
-		}
+		testExpressions[i] = -10.0 + 20.0 * rand() / (1 << 31);
 	}
 
 	// create metadata
@@ -65,5 +62,5 @@ void TestExpressionMatrix::test()
 	std::unique_ptr<float> expressions {matrix->dumpRawData()};
 
 	// verify expression data
-	Q_ASSERT(!memcmp(testExpressions.data(), expressions.get(), numGenes * numSamples * sizeof(float)));
+	Q_ASSERT(!memcmp(testExpressions.data(), expressions.get(), testExpressions.size() * sizeof(float)));
 }

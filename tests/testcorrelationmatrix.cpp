@@ -35,7 +35,7 @@ void TestCorrelationMatrix::test()
 
 				for ( int k = 0; k < numClusters; ++k )
 				{
-					clusters[k] = -1.0 + 2.0 * rand() / ((2 << 31) - 1);
+					clusters[k] = -1.0 + 2.0 * rand() / (1 << 31);
 				}
 
 				testPairs.append({ { i, j }, clusters });
