@@ -16,6 +16,7 @@ using namespace std;
 
 
 
+const char* Similarity::None {QT_TR_NOOP("none")};
 const char* Similarity::GMM {QT_TR_NOOP("gmm")};
 const char* Similarity::KMeans {QT_TR_NOOP("kmeans")};
 const char* Similarity::Pearson {QT_TR_NOOP("pearson")};
@@ -167,7 +168,7 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       // if this is criterion argument return combo values else return nothing
       switch (argument)
       {
-      case ClusteringArg: return QStringList({ tr(GMM), tr(KMeans) });
+      case ClusteringArg: return QStringList({ tr(None), tr(GMM), tr(KMeans) });
       case CorrelationArg: return QStringList({ tr(Pearson), tr(Spearman) });
       case CriterionArg: return QStringList({ tr(BIC), tr(ICL) });
       default: return QStringList();
@@ -259,7 +260,12 @@ void Similarity::setArgument(int argument, QVariant value)
    case ClusteringArg:
       {
          const QString option = value.toString();
-         if ( option == tr(GMM) )
+         if ( option == tr(None) )
+         {
+            _clusMethod = ClusteringMethod::None;
+            _clusModel = nullptr;
+         }
+         else if ( option == tr(GMM) )
          {
             _clusMethod = ClusteringMethod::GMM;
             _clusModel = new GenePair::GMM();
@@ -537,7 +543,10 @@ void Similarity::savePair(GenePair::Index index, qint8 K, const qint8 *labels, i
 void Similarity::runSerial()
 {
    // initialize clustering model
-   _clusModel->initialize(_input);
+   if ( _clusMethod != ClusteringMethod::None )
+   {
+      _clusModel->initialize(_input);
+   }
 
    // initialize correlation model
    _corrModel->initialize(_input);
@@ -559,17 +568,22 @@ void Similarity::runSerial()
       int numSamples = fetchPair(_index, X, labels);
 
       // compute clusters
-      qint8 K = _clusModel->compute(
-         X,
-         numSamples,
-         labels,
-         _minSamples,
-         _minClusters,
-         _maxClusters,
-         _criterion,
-         _removePreOutliers,
-         _removePostOutliers
-      );
+      qint8 K {1};
+
+      if ( _clusMethod != ClusteringMethod::None )
+      {
+         K = _clusModel->compute(
+            X,
+            numSamples,
+            labels,
+            _minSamples,
+            _minClusters,
+            _maxClusters,
+            _criterion,
+            _removePreOutliers,
+            _removePostOutliers
+         );
+      }
 
       // compute correlation
       QVector<float> correlations = _corrModel->compute(
@@ -931,18 +945,15 @@ void Similarity::initializeOpenCL()
    }
 
    // get clustering kernel from compiled code making sure it worked
-   QString clusKernel;
-
    if ( _clusMethod == ClusteringMethod::GMM )
    {
-      clusKernel = "computeGMMBlock";
+      _kernel2 = _program->makeKernel("computeGMMBlock").release();
    }
    else if ( _clusMethod == ClusteringMethod::KMeans )
    {
-      clusKernel = "computeKmeansBlock";
+      _kernel2 = _program->makeKernel("computeKmeansBlock").release();
    }
 
-   _kernel2 = _program->makeKernel(clusKernel).release();
    if ( !*_program )
    {
       E_MAKE_EXCEPTION(e);
@@ -951,18 +962,15 @@ void Similarity::initializeOpenCL()
    }
 
    // get correlation kernel from compiled code making sure it worked
-   QString corrKernel;
-
    if ( _corrMethod == CorrelationMethod::Pearson )
    {
-      corrKernel = "computePearsonBlock";
+      _kernel3 = _program->makeKernel("computePearsonBlock").release();
    }
    else if ( _corrMethod == CorrelationMethod::Spearman )
    {
-      corrKernel = "computeSpearmanBlock";
+      _kernel3 = _program->makeKernel("computeSpearmanBlock").release();
    }
 
-   _kernel3 = _program->makeKernel(corrKernel).release();
    if ( !*_program )
    {
       E_MAKE_EXCEPTION(e);
@@ -1046,46 +1054,49 @@ void Similarity::initializeOpenCL()
       throw e;
    }
 
-   // figure out workgroup size for clustering kernel
-   int workgroupSize2 {_kernelSize};
-   while ( workgroupSize2 > (int)_kernel2->getMaxWorkgroupSize() )
+   if ( _clusMethod != ClusteringMethod::None )
    {
-      workgroupSize2 /= 2;
-   }
+      // figure out workgroup size for clustering kernel
+      int workgroupSize2 {_kernelSize};
+      while ( workgroupSize2 > (int)_kernel2->getMaxWorkgroupSize() )
+      {
+         workgroupSize2 /= 2;
+      }
 
-   // set all static kernel arguments
-   _kernel2->setDimensionCount(1);
-   _kernel2->setGlobalSize(0, _kernelSize);
-   _kernel2->setWorkgroupSize(0, workgroupSize2);
+      // set all static kernel arguments
+      _kernel2->setDimensionCount(1);
+      _kernel2->setGlobalSize(0, _kernelSize);
+      _kernel2->setWorkgroupSize(0, workgroupSize2);
 
-   if ( _clusMethod == ClusteringMethod::GMM )
-   {
-      _kernel2->setBuffer(0, _expressions);
-      _kernel2->setArgument(1, (cl_int)_input->getSampleSize());
-      _kernel2->setArgument(2, (cl_int)_minSamples);
-      _kernel2->setArgument(3, (cl_char)_minClusters);
-      _kernel2->setArgument(4, (cl_char)_maxClusters);
-      _kernel2->setArgument(5, (cl_int)_criterion);
-      _kernel2->setArgument(6, (cl_int)_removePreOutliers);
-      _kernel2->setArgument(7, (cl_int)_removePostOutliers);
-   }
-   else if ( _clusMethod == ClusteringMethod::KMeans )
-   {
-      _kernel2->setBuffer(0, _expressions);
-      _kernel2->setArgument(1, (cl_int)_input->getSampleSize());
-      _kernel2->setArgument(2, (cl_int)_minSamples);
-      _kernel2->setArgument(3, (cl_char)_minClusters);
-      _kernel2->setArgument(4, (cl_char)_maxClusters);
-      _kernel2->setArgument(5, (cl_int)_removePreOutliers);
-      _kernel2->setArgument(6, (cl_int)_removePostOutliers);
-   }
+      if ( _clusMethod == ClusteringMethod::GMM )
+      {
+         _kernel2->setBuffer(0, _expressions);
+         _kernel2->setArgument(1, (cl_int)_input->getSampleSize());
+         _kernel2->setArgument(2, (cl_int)_minSamples);
+         _kernel2->setArgument(3, (cl_char)_minClusters);
+         _kernel2->setArgument(4, (cl_char)_maxClusters);
+         _kernel2->setArgument(5, (cl_int)_criterion);
+         _kernel2->setArgument(6, (cl_int)_removePreOutliers);
+         _kernel2->setArgument(7, (cl_int)_removePostOutliers);
+      }
+      else if ( _clusMethod == ClusteringMethod::KMeans )
+      {
+         _kernel2->setBuffer(0, _expressions);
+         _kernel2->setArgument(1, (cl_int)_input->getSampleSize());
+         _kernel2->setArgument(2, (cl_int)_minSamples);
+         _kernel2->setArgument(3, (cl_char)_minClusters);
+         _kernel2->setArgument(4, (cl_char)_maxClusters);
+         _kernel2->setArgument(5, (cl_int)_removePreOutliers);
+         _kernel2->setArgument(6, (cl_int)_removePostOutliers);
+      }
 
-   // make sure everything with kernel worked
-   if ( !*_kernel2 )
-   {
-      E_MAKE_EXCEPTION(e);
-      _kernel2->fillException(e);
-      throw e;
+      // make sure everything with kernel worked
+      if ( !*_kernel2 )
+      {
+         E_MAKE_EXCEPTION(e);
+         _kernel2->fillException(e);
+         throw e;
+      }
    }
 
    // figure out workgroup size for correlation kernel
@@ -1228,40 +1239,60 @@ void Similarity::runExecute1Block(Block& block)
       // make sure opencl events worked
       block.checkAllEvents();
 
-      // set kernel arguments and execute it
-      if ( _clusMethod == ClusteringMethod::GMM )
+      if ( _clusMethod != ClusteringMethod::None )
       {
-         _kernel2->setBuffer(8, block.work_X);
-         _kernel2->setBuffer(9, block.work_N);
-         _kernel2->setBuffer(10, block.work_labels);
-         _kernel2->setBuffer(11, block.work_components);
-         _kernel2->setBuffer(12, block.work_MP);
-         _kernel2->setBuffer(13, block.work_counts);
-         _kernel2->setBuffer(14, block.work_logpi);
-         _kernel2->setBuffer(15, block.work_loggamma);
-         _kernel2->setBuffer(16, block.work_logGamma);
-         _kernel2->setBuffer(17, block.out_K);
-         _kernel2->setBuffer(18, block.out_labels);
-      }
-      else if ( _clusMethod == ClusteringMethod::KMeans )
-      {
-         _kernel2->setBuffer(7, block.work_X);
-         _kernel2->setBuffer(8, block.work_N);
-         _kernel2->setBuffer(9, block.work_loggamma);
-         _kernel2->setBuffer(10, block.work_labels);
-         _kernel2->setBuffer(11, block.work_MP);
-         _kernel2->setBuffer(12, block.out_K);
-         _kernel2->setBuffer(13, block.out_labels);
-      }
+         // set kernel arguments and execute it
+         if ( _clusMethod == ClusteringMethod::GMM )
+         {
+            _kernel2->setBuffer(8, block.work_X);
+            _kernel2->setBuffer(9, block.work_N);
+            _kernel2->setBuffer(10, block.work_labels);
+            _kernel2->setBuffer(11, block.work_components);
+            _kernel2->setBuffer(12, block.work_MP);
+            _kernel2->setBuffer(13, block.work_counts);
+            _kernel2->setBuffer(14, block.work_logpi);
+            _kernel2->setBuffer(15, block.work_loggamma);
+            _kernel2->setBuffer(16, block.work_logGamma);
+            _kernel2->setBuffer(17, block.out_K);
+            _kernel2->setBuffer(18, block.out_labels);
+         }
+         else if ( _clusMethod == ClusteringMethod::KMeans )
+         {
+            _kernel2->setBuffer(7, block.work_X);
+            _kernel2->setBuffer(8, block.work_N);
+            _kernel2->setBuffer(9, block.work_loggamma);
+            _kernel2->setBuffer(10, block.work_labels);
+            _kernel2->setBuffer(11, block.work_MP);
+            _kernel2->setBuffer(12, block.out_K);
+            _kernel2->setBuffer(13, block.out_labels);
+         }
 
-      block.events.append(_kernel2->execute());
+         block.events.append(_kernel2->execute());
 
-      // make sure kernel worked
-      if ( !*_kernel2 )
+         // make sure kernel worked
+         if ( !*_kernel2 )
+         {
+            E_MAKE_EXCEPTION(e);
+            _kernel2->fillException(e);
+            throw e;
+         }
+      }
+      else
       {
-         E_MAKE_EXCEPTION(e);
-         _kernel2->fillException(e);
-         throw e;
+         // set cluster size to 1 if clustering is disabled
+         for ( int i = 0; i < _kernelSize; ++i )
+         {
+            (*block.out_K)[i] = 1;
+         }
+
+         // write clusters sizes to device
+         block.events.append(block.out_K->write());
+         if ( !*block.out_K )
+         {
+            E_MAKE_EXCEPTION(e);
+            block.out_K->fillException(e);
+            throw e;
+         }
       }
 
       // change block state to execute

@@ -40,7 +40,8 @@ public:
 
    enum class ClusteringMethod
    {
-      GMM
+      None
+      ,GMM
       ,KMeans
    };
 
@@ -69,6 +70,7 @@ public:
    virtual QByteArray processMPIBlock(const QByteArray& block) override final;
 
 private:
+   static const char* None;
    static const char* GMM;
    static const char* KMeans;
    static const char* Pearson;
