@@ -47,7 +47,6 @@ void TestExpressionMatrix::test()
 	matrix->prepare(true);
 
 	ExpressionMatrix::Gene gene(matrix);
-
 	for ( int i = 0; i < matrix->getGeneSize(); ++i )
 	{
 		for ( int j = 0; j < matrix->getSampleSize(); ++j )
@@ -57,6 +56,9 @@ void TestExpressionMatrix::test()
 
 		gene.write(i);
 	}
+
+	matrix->finish();
+	(*dataRef)->writeMeta();
 
 	// read expression data from file
 	std::unique_ptr<float> expressions {matrix->dumpRawData()};

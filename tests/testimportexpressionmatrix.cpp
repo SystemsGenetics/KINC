@@ -36,8 +36,12 @@ void TestImportExpressionMatrix::test()
 		sampleNames.append(QString::number(i));
 	}
 
+	// initialize temp files
 	QString txtPath {QDir::tempPath() + "/test.txt"};
 	QString emxPath {QDir::tempPath() + "/test.emx"};
+
+	QFile(txtPath).remove();
+	QFile(emxPath).remove();
 
 	// create raw text file
 	QFile file(txtPath);
