@@ -44,25 +44,25 @@ void TestCorrelationMatrix::test()
 	}
 
 	// create metadata
-   EMetadata metaGeneNames(EMetadata::Array);
-   EMetadata metaCorrelationNames(EMetadata::Array);
+	EMetadata metaGeneNames(EMetadata::Array);
+	EMetadata metaCorrelationNames(EMetadata::Array);
 
-   for ( int i = 0; i < numGenes; ++i )
-   {
-      EMetadata* name {new EMetadata(EMetadata::String)};
-      *(name->toString()) = QString::number(i);
-      metaGeneNames.toArray()->append(name);
-   }
+	for ( int i = 0; i < numGenes; ++i )
+	{
+		EMetadata* name {new EMetadata(EMetadata::String)};
+		*(name->toString()) = QString::number(i);
+		metaGeneNames.toArray()->append(name);
+	}
 
-   EMetadata* name {new EMetadata(EMetadata::String)};
-   *(name->toString()) = "test";
-   metaCorrelationNames.toArray()->append(name);
+	EMetadata* name {new EMetadata(EMetadata::String)};
+	*(name->toString()) = "test";
+	metaCorrelationNames.toArray()->append(name);
 
 	// create data object
 	QString path {QDir::tempPath() + "/test.cmx"};
 
 	std::unique_ptr<Ace::DataReference> dataRef {Ace::DataManager::getInstance().open(path)};
-   (*dataRef)->clear(DataFactory::CorrelationMatrixType);
+	(*dataRef)->clear(DataFactory::CorrelationMatrixType);
 
 	CorrelationMatrix* matrix {dynamic_cast<CorrelationMatrix*>(&((*dataRef)->data()))};
 

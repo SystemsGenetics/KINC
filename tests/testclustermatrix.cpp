@@ -50,28 +50,28 @@ void TestClusterMatrix::test()
 	}
 
 	// create metadata
-   EMetadata metaGeneNames(EMetadata::Array);
+	EMetadata metaGeneNames(EMetadata::Array);
 	EMetadata metaSampleNames(EMetadata::Array);
 
-   for ( int i = 0; i < numGenes; ++i )
-   {
-      EMetadata* name {new EMetadata(EMetadata::String)};
-      *(name->toString()) = QString::number(i);
-      metaGeneNames.toArray()->append(name);
-   }
+	for ( int i = 0; i < numGenes; ++i )
+	{
+		EMetadata* name {new EMetadata(EMetadata::String)};
+		*(name->toString()) = QString::number(i);
+		metaGeneNames.toArray()->append(name);
+	}
 
 	for ( int i = 0; i < numSamples; ++i )
-   {
-      EMetadata* name {new EMetadata(EMetadata::String)};
-      *(name->toString()) = QString::number(i);
-      metaSampleNames.toArray()->append(name);
-   }
+	{
+		EMetadata* name {new EMetadata(EMetadata::String)};
+		*(name->toString()) = QString::number(i);
+		metaSampleNames.toArray()->append(name);
+	}
 
 	// create data object
 	QString path {QDir::tempPath() + "/test.ccm"};
 
 	std::unique_ptr<Ace::DataReference> dataRef {Ace::DataManager::getInstance().open(path)};
-   (*dataRef)->clear(DataFactory::CCMatrixType);
+	(*dataRef)->clear(DataFactory::CCMatrixType);
 
 	CCMatrix* matrix {dynamic_cast<CCMatrix*>(&((*dataRef)->data()))};
 

@@ -50,31 +50,31 @@ void TestImportExpressionMatrix::test()
 	QTextStream stream(&file);
 
 	for ( int i = 0; i < numSamples; i++ )
-   {
-      stream << sampleNames.at(i) << "\t";
-   }
-   stream << "\n";
+	{
+		stream << sampleNames.at(i) << "\t";
+	}
+	stream << "\n";
 
-   for ( int i = 0; i < numGenes; i++ )
-   {
-      stream << geneNames.at(i);
+	for ( int i = 0; i < numGenes; i++ )
+	{
+		stream << geneNames.at(i);
 
-      for ( int j = 0; j < numSamples; j++ )
-      {
-         float value = testExpressions[i * numSamples + j];
+		for ( int j = 0; j < numSamples; j++ )
+		{
+			float value = testExpressions[i * numSamples + j];
 
-         if ( std::isnan(value) )
-         {
-            stream << "\t" << noSampleToken;
-         }
-         else
-         {
-            stream << "\t" << value;
-         }
-      }
+			if ( std::isnan(value) )
+			{
+				stream << "\t" << noSampleToken;
+			}
+			else
+			{
+				stream << "\t" << value;
+			}
+		}
 
-      stream << "\n";
-   }
+		stream << "\n";
+	}
 
 	file.close();
 

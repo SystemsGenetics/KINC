@@ -11,9 +11,9 @@
 int main(int argc, char **argv)
 {
 	std::unique_ptr<EAbstractAnalyticFactory> analyticFactory(new AnalyticFactory);
-   std::unique_ptr<EAbstractDataFactory> dataFactory(new DataFactory);
-   EAbstractAnalyticFactory::setInstance(move(analyticFactory));
-   EAbstractDataFactory::setInstance(move(dataFactory));
+	std::unique_ptr<EAbstractDataFactory> dataFactory(new DataFactory);
+	EAbstractAnalyticFactory::setInstance(move(analyticFactory));
+	EAbstractDataFactory::setInstance(move(dataFactory));
 
 	int status {0};
 	auto ASSERT_TEST = [&status, argc, argv](QObject* object)

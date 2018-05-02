@@ -38,7 +38,7 @@ void TestExpressionMatrix::test()
 	QString path {QDir::tempPath() + "/test.emx"};
 
 	std::unique_ptr<Ace::DataReference> dataRef {Ace::DataManager::getInstance().open(path)};
-   (*dataRef)->clear(DataFactory::ExpressionMatrixType);
+	(*dataRef)->clear(DataFactory::ExpressionMatrixType);
 
 	ExpressionMatrix* matrix {dynamic_cast<ExpressionMatrix*>(&((*dataRef)->data()))};
 
