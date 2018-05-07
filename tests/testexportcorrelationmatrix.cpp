@@ -34,7 +34,7 @@ void TestExportCorrelationMatrix::test()
 
 					for ( int n = 0; n < numSamples; ++n )
 					{
-						clusters[k][n] = rand() % numClusters;
+						clusters[k][n] = rand() % 2;
 					}
 
 					correlations[k] = -1.0 + 2.0 * rand() / (1 << 31);
@@ -176,9 +176,12 @@ void TestExportCorrelationMatrix::test()
 			Q_ASSERT(testPair.clusters.size() == clusterSize);
 			Q_ASSERT(numSamples == sampleMask.size());
 
-			for ( int i = 0; i < sampleMask.size(); ++i )
+			if ( testPair.clusters.size() > 1 )
 			{
-				Q_ASSERT(testPair.clusters[k][i] == sampleMask[i].digitValue());
+				for ( int i = 0; i < sampleMask.size(); ++i )
+				{
+					Q_ASSERT(testPair.clusters[k][i] == sampleMask[i].digitValue());
+				}
 			}
 
 			error += fabs(testPair.correlations[k] - correlation);
