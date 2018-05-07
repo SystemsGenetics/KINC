@@ -7,6 +7,7 @@
 #include "testexpressionmatrix.h"
 #include "testimportcorrelationmatrix.h"
 #include "testimportexpressionmatrix.h"
+#include "testsimilarity.h"
 
 
 
@@ -33,6 +34,7 @@ int main(int argc, char **argv)
 		ASSERT_TEST(new TestExpressionMatrix);
 		ASSERT_TEST(new TestImportCorrelationMatrix);
 		ASSERT_TEST(new TestImportExpressionMatrix);
+		ASSERT_TEST(new TestSimilarity);
 	}
 	catch ( EException& e )
 	{
