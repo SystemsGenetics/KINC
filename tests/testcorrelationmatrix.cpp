@@ -77,6 +77,9 @@ void TestCorrelationMatrix::test()
 		pair.write(testPair.index);
 	}
 
+	matrix->finish();
+	(*dataRef)->writeMeta();
+
 	// read and verify correlation data from file
 	pair.reset();
 
