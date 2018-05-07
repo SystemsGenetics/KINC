@@ -48,6 +48,7 @@ SOURCES += \
 	../src/extract.cpp \
 	testclustermatrix.cpp \
 	testcorrelationmatrix.cpp \
+	testexportcorrelationmatrix.cpp \
 	testexportexpressionmatrix.cpp \
 	testexpressionmatrix.cpp \
 	testimportcorrelationmatrix.cpp \
@@ -78,6 +79,7 @@ HEADERS += \
 	../src/extract.h \
 	testclustermatrix.h \
 	testcorrelationmatrix.h \
+	testexportcorrelationmatrix.h \
 	testexportexpressionmatrix.h \
 	testexpressionmatrix.h \
 	testimportcorrelationmatrix.h \

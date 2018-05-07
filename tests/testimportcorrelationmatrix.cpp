@@ -34,7 +34,7 @@ void TestImportCorrelationMatrix::test()
 
 					for ( int n = 0; n < numSamples; ++n )
 					{
-						clusters[k][n] = rand() % 16;
+						clusters[k][n] = rand() % numClusters;
 					}
 
 					correlations[k] = -1.0 + 2.0 * rand() / (1 << 31);

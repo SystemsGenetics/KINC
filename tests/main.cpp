@@ -2,6 +2,7 @@
 #include "datafactory.h"
 #include "testclustermatrix.h"
 #include "testcorrelationmatrix.h"
+#include "testexportcorrelationmatrix.h"
 #include "testexportexpressionmatrix.h"
 #include "testexpressionmatrix.h"
 #include "testimportcorrelationmatrix.h"
@@ -27,6 +28,7 @@ int main(int argc, char **argv)
 	{
 		ASSERT_TEST(new TestClusterMatrix);
 		ASSERT_TEST(new TestCorrelationMatrix);
+		ASSERT_TEST(new TestExportCorrelationMatrix);
 		ASSERT_TEST(new TestExportExpressionMatrix);
 		ASSERT_TEST(new TestExpressionMatrix);
 		ASSERT_TEST(new TestImportCorrelationMatrix);
