@@ -35,8 +35,8 @@ public:
 
 private:
    QFile* _input {nullptr};
-   CCMatrix* _ccMatrix {nullptr};
-   CorrelationMatrix* _cMatrix {nullptr};
+   CCMatrix* _ccm {nullptr};
+   CorrelationMatrix* _cmx {nullptr};
    qint32 _geneSize {0};
    qint32 _sampleSize {0};
    QString _correlationName;

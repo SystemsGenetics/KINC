@@ -144,11 +144,11 @@ void Extract::setArgument(int argument, EAbstractData* data)
    }
    else if ( argument == ClusterData )
    {
-      _ccMatrix = dynamic_cast<CCMatrix*>(data);
+      _ccm = dynamic_cast<CCMatrix*>(data);
    }
    else if ( argument == CorrelationData )
    {
-      _cMatrix = dynamic_cast<CorrelationMatrix*>(data);
+      _cmx = dynamic_cast<CorrelationMatrix*>(data);
    }
 }
 
@@ -197,7 +197,7 @@ void Extract::setArgument(int argument, QVariant value)
 bool Extract::initialize()
 {
    // make sure input and output arguments were set
-   if ( !_eMatrix || !_ccMatrix || !_cMatrix || !_output )
+   if ( !_eMatrix || !_ccm || !_cmx || !_output )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
@@ -219,17 +219,17 @@ void Extract::runSerial()
    // initialize percent complete and steps
    int lastPercent {0};
    qint64 steps {0};
-   qint64 totalSteps {_cMatrix->size() * 2};
+   qint64 totalSteps {_cmx->size() * 2};
 
    // initialize pair iterators
-   CorrelationMatrix::Pair pair(_cMatrix);
-   CCMatrix::Pair ccPair(_ccMatrix);
+   CorrelationMatrix::Pair cmxPair(_cmx);
+   CCMatrix::Pair ccmPair(_ccm);
 
    // get gene names
-   const QList<EMetadata *> *geneNames = _cMatrix->geneNames().toArray();
+   const QList<EMetadata *> *geneNames = _cmx->geneNames().toArray();
 
    // initialize workspace
-   QString sampleMask(_ccMatrix->sampleSize(), '0');
+   QString sampleMask(_ccm->sampleSize(), '0');
 
    // create text stream to output file and write until end reached
    QTextStream stream(_output);
@@ -252,7 +252,7 @@ void Extract::runSerial()
       << "\n";
 
    // increment through all gene pairs
-   while ( pair.hasNext() )
+   while ( cmxPair.hasNext() )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -261,19 +261,19 @@ void Extract::runSerial()
       }
 
       // read next gene pair
-      pair.readNext();
+      cmxPair.readNext();
 
-      if ( pair.clusterSize() > 1 )
+      if ( cmxPair.clusterSize() > 1 )
       {
-         ccPair.read(pair.index());
+         ccmPair.read(cmxPair.index());
       }
 
       // write gene pair data to output file
-      for ( int cluster = 0; cluster < pair.clusterSize(); cluster++ )
+      for ( int cluster = 0; cluster < cmxPair.clusterSize(); cluster++ )
       {
-         QString& source(*geneNames->at(pair.index().getX())->toString());
-         QString& target(*geneNames->at(pair.index().getY())->toString());
-         float correlation = pair.at(cluster, 0);
+         QString& source(*geneNames->at(cmxPair.index().getX())->toString());
+         QString& target(*geneNames->at(cmxPair.index().getY())->toString());
+         float correlation = cmxPair.at(cluster, 0);
          QString interaction("co");
          int numSamples = 0;
          int numMissing = 0;
@@ -288,12 +288,12 @@ void Extract::runSerial()
          }
 
          // if there are multiple clusters then use cluster data
-         if ( pair.clusterSize() > 1 )
+         if ( cmxPair.clusterSize() > 1 )
          {
             // compute summary statistics
-            for ( int i = 0; i < _ccMatrix->sampleSize(); i++ )
+            for ( int i = 0; i < _ccm->sampleSize(); i++ )
             {
-               switch ( ccPair.at(cluster, i) )
+               switch ( ccmPair.at(cluster, i) )
                {
                case 1:
                   numSamples++;
@@ -314,9 +314,9 @@ void Extract::runSerial()
             }
 
             // write sample mask to string
-            for ( int i = 0; i < _ccMatrix->sampleSize(); i++ )
+            for ( int i = 0; i < _ccm->sampleSize(); i++ )
             {
-               sampleMask[i] = '0' + ccPair.at(cluster, i);
+               sampleMask[i] = '0' + ccmPair.at(cluster, i);
             }
          }
 
@@ -327,8 +327,8 @@ void Extract::runSerial()
             ExpressionMatrix::Gene gene1(_eMatrix);
             ExpressionMatrix::Gene gene2(_eMatrix);
 
-            gene1.read(pair.index().getX());
-            gene2.read(pair.index().getY());
+            gene1.read(cmxPair.index().getX());
+            gene2.read(cmxPair.index().getY());
 
             // determine sample mask from expression data
             for ( int i = 0; i < _eMatrix->getSampleSize(); ++i )
@@ -351,7 +351,7 @@ void Extract::runSerial()
             << "\t" << correlation
             << "\t" << interaction
             << "\t" << cluster
-            << "\t" << pair.clusterSize()
+            << "\t" << cmxPair.clusterSize()
             << "\t" << numSamples
             << "\t" << numMissing
             << "\t" << numPostOutliers
@@ -384,7 +384,7 @@ void Extract::runSerial()
    }
 
    // reset gene pair iterator
-   pair.reset();
+   cmxPair.reset();
 
    // create text stream to graphml file and write until end reached
    stream.setDevice(_graphml);
@@ -398,7 +398,7 @@ void Extract::runSerial()
       << "  <graph id=\"G\" edgedefault=\"undirected\">\n";
 
    // write each node to file
-   for ( int i = 0; i < _cMatrix->geneSize(); i++ )
+   for ( int i = 0; i < _cmx->geneSize(); i++ )
    {
       QString& id = *geneNames->at(i)->toString();
 
@@ -406,7 +406,7 @@ void Extract::runSerial()
    }
 
    // increment through all gene pairs
-   while ( pair.hasNext() )
+   while ( cmxPair.hasNext() )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -415,19 +415,19 @@ void Extract::runSerial()
       }
 
       // read next gene pair
-      pair.readNext();
+      cmxPair.readNext();
 
-      if ( pair.clusterSize() > 1 )
+      if ( cmxPair.clusterSize() > 1 )
       {
-         ccPair.read(pair.index());
+         ccmPair.read(cmxPair.index());
       }
 
       // write gene pair edges to file
-      for ( int cluster = 0; cluster < pair.clusterSize(); cluster++ )
+      for ( int cluster = 0; cluster < cmxPair.clusterSize(); cluster++ )
       {
-         QString& source(*geneNames->at(pair.index().getX())->toString());
-         QString& target(*geneNames->at(pair.index().getY())->toString());
-         float correlation = pair.at(cluster, 0);
+         QString& source(*geneNames->at(cmxPair.index().getX())->toString());
+         QString& target(*geneNames->at(cmxPair.index().getY())->toString());
+         float correlation = cmxPair.at(cluster, 0);
 
          // exclude edge if correlation is not within thresholds
          if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
@@ -436,12 +436,12 @@ void Extract::runSerial()
          }
 
          // if there are multiple clusters then use cluster data
-         if ( pair.clusterSize() > 1 )
+         if ( cmxPair.clusterSize() > 1 )
          {
             // write sample mask to string
-            for ( int i = 0; i < _ccMatrix->sampleSize(); i++ )
+            for ( int i = 0; i < _ccm->sampleSize(); i++ )
             {
-               sampleMask[i] = '0' + ccPair.at(cluster, i);
+               sampleMask[i] = '0' + ccmPair.at(cluster, i);
             }
          }
 
@@ -452,8 +452,8 @@ void Extract::runSerial()
             ExpressionMatrix::Gene gene1(_eMatrix);
             ExpressionMatrix::Gene gene2(_eMatrix);
 
-            gene1.read(pair.index().getX());
-            gene2.read(pair.index().getY());
+            gene1.read(cmxPair.index().getX());
+            gene2.read(cmxPair.index().getY());
 
             // determine sample mask from expression data
             for ( int i = 0; i < _eMatrix->getSampleSize(); ++i )

@@ -352,10 +352,10 @@ void Similarity::setArgument(int argument, EAbstractData *data)
       _input = dynamic_cast<ExpressionMatrix*>(data);
       break;
    case ClusterData:
-      _clusMatrix = dynamic_cast<CCMatrix*>(data);
+      _ccm = dynamic_cast<CCMatrix*>(data);
       break;
    case CorrelationData:
-      _corrMatrix = dynamic_cast<CorrelationMatrix*>(data);
+      _cmx = dynamic_cast<CorrelationMatrix*>(data);
       break;
    }
 }
@@ -368,7 +368,7 @@ void Similarity::setArgument(int argument, EAbstractData *data)
 bool Similarity::initialize()
 {
    // make sure there is valid input and output
-   if ( !_input || !_clusMatrix || !_corrMatrix )
+   if ( !_input || !_ccm || !_cmx )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
@@ -395,7 +395,7 @@ bool Similarity::initialize()
    }
 
    // initialize cluster matrix
-   _clusMatrix->initialize(_input->getGeneNames(), _input->getSampleNames());
+   _ccm->initialize(_input->getGeneNames(), _input->getSampleNames());
 
    // initialize correlation matrix
    EMetadata correlations(EMetadata::Array);
@@ -403,7 +403,7 @@ bool Similarity::initialize()
    *(name->toString()) = _corrModel->getName();
    correlations.toArray()->append(name);
 
-   _corrMatrix->initialize(_input->getGeneNames(), correlations);
+   _cmx->initialize(_input->getGeneNames(), correlations);
 
    // initialize total steps
    _totalSteps = (qint64) _input->getGeneSize() * (_input->getGeneSize() - 1) / 2;
@@ -467,7 +467,7 @@ void Similarity::savePair(GenePair::Index index, qint8 K, const qint8 *labels, i
       // save clusters whose correlations are within thresholds
       if ( K > 1 )
       {
-         CCMatrix::Pair clusPair(_clusMatrix);
+         CCMatrix::Pair ccmPair(_ccm);
 
          for ( qint8 k = 0; k < K; ++k )
          {
@@ -475,20 +475,20 @@ void Similarity::savePair(GenePair::Index index, qint8 K, const qint8 *labels, i
 
             if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
             {
-               clusPair.addCluster();
+               ccmPair.addCluster();
 
                for ( int i = 0; i < N; ++i )
                {
-                  clusPair.at(clusPair.clusterSize() - 1, i) = (labels[i] >= 0)
+                  ccmPair.at(ccmPair.clusterSize() - 1, i) = (labels[i] >= 0)
                      ? (k == labels[i])
                      : -labels[i];
                }
             }
          }
 
-         if ( clusPair.clusterSize() > 0 )
+         if ( ccmPair.clusterSize() > 0 )
          {
-            clusPair.write(index);
+            ccmPair.write(index);
          }
       }
 
@@ -496,7 +496,7 @@ void Similarity::savePair(GenePair::Index index, qint8 K, const qint8 *labels, i
       if ( K > 0 )
       {
          // save correlation data to output file
-         CorrelationMatrix::Pair corrPair(_corrMatrix);
+         CorrelationMatrix::Pair cmxPair(_cmx);
 
          for ( qint8 k = 0; k < K; ++k )
          {
@@ -504,14 +504,14 @@ void Similarity::savePair(GenePair::Index index, qint8 K, const qint8 *labels, i
 
             if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
             {
-               corrPair.addCluster();
-               corrPair.at(corrPair.clusterSize() - 1, 0) = corr;
+               cmxPair.addCluster();
+               cmxPair.at(cmxPair.clusterSize() - 1, 0) = corr;
             }
          }
 
-         if ( corrPair.clusterSize() > 0 )
+         if ( cmxPair.clusterSize() > 0 )
          {
-            corrPair.write(index);
+            cmxPair.write(index);
          }
       }
    }

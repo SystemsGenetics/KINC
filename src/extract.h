@@ -37,8 +37,8 @@ public:
 
 private:
    ExpressionMatrix* _eMatrix {nullptr};
-   CCMatrix* _ccMatrix {nullptr};
-   CorrelationMatrix* _cMatrix {nullptr};
+   CCMatrix* _ccm {nullptr};
+   CorrelationMatrix* _cmx {nullptr};
    QFile* _output {nullptr};
    QFile* _graphml {nullptr};
    float _minCorrelation {0.85};

@@ -88,11 +88,11 @@ void ExportCorrelationMatrix::setArgument(int argument, EAbstractData* data)
    // if argument is input data set it
    if ( argument == ClusterData )
    {
-      _ccMatrix = dynamic_cast<CCMatrix*>(data);
+      _ccm = dynamic_cast<CCMatrix*>(data);
    }
    else if ( argument == CorrelationData )
    {
-      _cMatrix = dynamic_cast<CorrelationMatrix*>(data);
+      _cmx = dynamic_cast<CorrelationMatrix*>(data);
    }
 }
 
@@ -118,7 +118,7 @@ void ExportCorrelationMatrix::setArgument(int argument, QFile* file)
 bool ExportCorrelationMatrix::initialize()
 {
    // make sure input and output arguments were set
-   if ( !_ccMatrix || !_cMatrix || !_output )
+   if ( !_ccm || !_cmx || !_output )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
@@ -140,21 +140,21 @@ void ExportCorrelationMatrix::runSerial()
    // initialize percent complete and steps
    int lastPercent {0};
    qint64 steps {0};
-   qint64 totalSteps {_cMatrix->size()};
+   qint64 totalSteps {_cmx->size()};
 
    // initialize pair iterators
-   CorrelationMatrix::Pair pair(_cMatrix);
-   CCMatrix::Pair ccPair(_ccMatrix);
+   CorrelationMatrix::Pair cmxPair(_cmx);
+   CCMatrix::Pair ccmPair(_ccm);
 
    // initialize workspace
-   QString sampleMask(_ccMatrix->sampleSize(), '0');
+   QString sampleMask(_ccm->sampleSize(), '0');
 
    // create text stream to output file and write until end reached
    QTextStream stream(_output);
    stream.setRealNumberPrecision(6);
 
    // increment through all gene pairs
-   while ( pair.hasNext() )
+   while ( cmxPair.hasNext() )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -163,17 +163,17 @@ void ExportCorrelationMatrix::runSerial()
       }
 
       // read next gene pair
-      pair.readNext();
+      cmxPair.readNext();
 
-      if ( pair.clusterSize() > 1 )
+      if ( cmxPair.clusterSize() > 1 )
       {
-         ccPair.read(pair.index());
+         ccmPair.read(cmxPair.index());
       }
 
       // write gene pair data to output file
-      for ( int cluster = 0; cluster < pair.clusterSize(); cluster++ )
+      for ( int cluster = 0; cluster < cmxPair.clusterSize(); cluster++ )
       {
-         float correlation = pair.at(cluster, 0);
+         float correlation = cmxPair.at(cluster, 0);
          int numSamples = 0;
          int numMissing = 0;
          int numPostOutliers = 0;
@@ -181,12 +181,12 @@ void ExportCorrelationMatrix::runSerial()
          int numThreshold = 0;
 
          // if there are multiple clusters then use cluster data
-         if ( pair.clusterSize() > 1 )
+         if ( cmxPair.clusterSize() > 1 )
          {
             // compute summary statistics
-            for ( int i = 0; i < _ccMatrix->sampleSize(); i++ )
+            for ( int i = 0; i < _ccm->sampleSize(); i++ )
             {
-               switch ( ccPair.at(cluster, i) )
+               switch ( ccmPair.at(cluster, i) )
                {
                case 1:
                   numSamples++;
@@ -207,9 +207,9 @@ void ExportCorrelationMatrix::runSerial()
             }
 
             // write sample mask to string
-            for ( int i = 0; i < _ccMatrix->sampleSize(); i++ )
+            for ( int i = 0; i < _ccm->sampleSize(); i++ )
             {
-               sampleMask[i] = '0' + ccPair.at(cluster, i);
+               sampleMask[i] = '0' + ccmPair.at(cluster, i);
             }
          }
 
@@ -221,10 +221,10 @@ void ExportCorrelationMatrix::runSerial()
 
          // write cluster to output file
          stream
-            << pair.index().getX()
-            << "\t" << pair.index().getY()
+            << cmxPair.index().getX()
+            << "\t" << cmxPair.index().getY()
             << "\t" << cluster
-            << "\t" << pair.clusterSize()
+            << "\t" << cmxPair.clusterSize()
             << "\t" << numSamples
             << "\t" << numMissing
             << "\t" << numPostOutliers

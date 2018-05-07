@@ -153,11 +153,11 @@ void ImportCorrelationMatrix::setArgument(int argument, EAbstractData* data)
    // if argument is output data set it
    if ( argument == ClusterData )
    {
-      _ccMatrix = dynamic_cast<CCMatrix*>(data);
+      _ccm = dynamic_cast<CCMatrix*>(data);
    }
    else if ( argument == CorrelationData )
    {
-      _cMatrix = dynamic_cast<CorrelationMatrix*>(data);
+      _cmx = dynamic_cast<CorrelationMatrix*>(data);
    }
 }
 
@@ -169,7 +169,7 @@ void ImportCorrelationMatrix::setArgument(int argument, EAbstractData* data)
 bool ImportCorrelationMatrix::initialize()
 {
    // make sure input and output arguments were set
-   if ( !_input || !_ccMatrix || !_cMatrix )
+   if ( !_input || !_ccm || !_cmx )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
@@ -236,12 +236,12 @@ void ImportCorrelationMatrix::runSerial()
    metaCorrelationNames.toArray()->append(name);
 
    // initialize output data
-   _ccMatrix->initialize(metaGeneNames, metaSampleNames);
-   _cMatrix->initialize(metaGeneNames, metaCorrelationNames);
+   _ccm->initialize(metaGeneNames, metaSampleNames);
+   _cmx->initialize(metaGeneNames, metaCorrelationNames);
 
    GenePair::Index index;
-   CCMatrix::Pair ccPair(_ccMatrix);
-   CorrelationMatrix::Pair cPair(_cMatrix);
+   CCMatrix::Pair ccmPair(_ccm);
+   CorrelationMatrix::Pair cmxPair(_cmx);
 
    // create text stream from input file and read until end reached
    QTextStream stream(_input);
@@ -283,36 +283,36 @@ void ImportCorrelationMatrix::runSerial()
          if ( index != nextIndex )
          {
             // save pairs
-            if ( ccPair.clusterSize() > 1 )
+            if ( ccmPair.clusterSize() > 1 )
             {
-               ccPair.write(index);
+               ccmPair.write(index);
             }
 
-            if ( cPair.clusterSize() > 0 )
+            if ( cmxPair.clusterSize() > 0 )
             {
-               cPair.write(index);
+               cmxPair.write(index);
             }
 
             // reset pairs
-            ccPair.clearClusters();
-            cPair.clearClusters();
+            ccmPair.clearClusters();
+            cmxPair.clearClusters();
 
             // update index
             index = nextIndex;
          }
 
          // append cluster and correlation to gene pair
-         int cluster = ccPair.clusterSize();
+         int cluster = ccmPair.clusterSize();
 
-         ccPair.addCluster();
-         cPair.addCluster();
+         ccmPair.addCluster();
+         cmxPair.addCluster();
 
          for ( int i = 0; i < sampleMask.size(); ++i )
          {
-            ccPair.at(cluster, i) = sampleMask[i].digitValue();
+            ccmPair.at(cluster, i) = sampleMask[i].digitValue();
          }
 
-         cPair.at(cluster, 0) = correlation;
+         cmxPair.at(cluster, 0) = correlation;
       }
       else if ( words.size() != 1 && words.size() != 0 )
       {

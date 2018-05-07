@@ -202,8 +202,8 @@ private:
    void runReadBlock(Block& block);
 
    ExpressionMatrix* _input {nullptr};
-   CCMatrix* _clusMatrix {nullptr};
-   CorrelationMatrix* _corrMatrix {nullptr};
+   CCMatrix* _ccm {nullptr};
+   CorrelationMatrix* _cmx {nullptr};
    ClusteringMethod _clusMethod {ClusteringMethod::GMM};
    CorrelationMethod _corrMethod {CorrelationMethod::Pearson};
    GenePair::Clustering* _clusModel {nullptr};
