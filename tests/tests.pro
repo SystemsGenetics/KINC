@@ -50,6 +50,7 @@ SOURCES += \
 	testcorrelationmatrix.cpp \
 	testexportexpressionmatrix.cpp \
 	testexpressionmatrix.cpp \
+	testimportcorrelationmatrix.cpp \
 	testimportexpressionmatrix.cpp \
 	main.cpp
 
@@ -79,4 +80,5 @@ HEADERS += \
 	testcorrelationmatrix.h \
 	testexportexpressionmatrix.h \
 	testexpressionmatrix.h \
+	testimportcorrelationmatrix.h \
 	testimportexpressionmatrix.h

@@ -18,7 +18,7 @@ struct ClusterPair
 
 void TestClusterMatrix::test()
 {
-	// create random correlation data
+	// create random cluster data
 	int numGenes = 10;
 	int numSamples = 5;
 	int maxClusters = 5;

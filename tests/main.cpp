@@ -4,6 +4,7 @@
 #include "testcorrelationmatrix.h"
 #include "testexportexpressionmatrix.h"
 #include "testexpressionmatrix.h"
+#include "testimportcorrelationmatrix.h"
 #include "testimportexpressionmatrix.h"
 
 
@@ -28,6 +29,7 @@ int main(int argc, char **argv)
 		ASSERT_TEST(new TestCorrelationMatrix);
 		ASSERT_TEST(new TestExportExpressionMatrix);
 		ASSERT_TEST(new TestExpressionMatrix);
+		ASSERT_TEST(new TestImportCorrelationMatrix);
 		ASSERT_TEST(new TestImportExpressionMatrix);
 	}
 	catch ( EException& e )
