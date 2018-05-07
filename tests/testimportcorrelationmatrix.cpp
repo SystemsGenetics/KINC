@@ -9,15 +9,6 @@
 
 
 
-struct Pair
-{
-	GenePair::Index index;
-	QVector<QVector<qint8>> clusters;
-	QVector<float> correlations;
-};
-
-
-
 void TestImportCorrelationMatrix::test()
 {
 	// create random correlation data

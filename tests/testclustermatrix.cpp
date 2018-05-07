@@ -8,21 +8,13 @@
 
 
 
-struct ClusterPair
-{
-	GenePair::Index index;
-	QVector<QVector<qint8>> clusters;
-};
-
-
-
 void TestClusterMatrix::test()
 {
 	// create random cluster data
 	int numGenes = 10;
 	int numSamples = 5;
 	int maxClusters = 5;
-	QVector<ClusterPair> testPairs;
+	QVector<Pair> testPairs;
 
 	for ( int i = 0; i < numGenes; ++i )
 	{

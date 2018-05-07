@@ -8,20 +8,12 @@
 
 
 
-struct CorrelationPair
-{
-	GenePair::Index index;
-	QVector<float> clusters;
-};
-
-
-
 void TestCorrelationMatrix::test()
 {
 	// create random correlation data
 	int numGenes = 10;
 	int maxClusters = 5;
-	QVector<CorrelationPair> testPairs;
+	QVector<Pair> testPairs;
 
 	for ( int i = 0; i < numGenes; ++i )
 	{
