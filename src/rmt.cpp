@@ -236,7 +236,7 @@ void RMT::runSerial()
       }
 
       // output to log file
-      qInfo() << threshold << "\t" << previousChi.back() << "\t" << chi << "\t" << size << "\n";
+      stream << threshold << "\t" << previousChi.back() << "\t" << chi << "\t" << size << "\n";
 
       // decrement threshold by step and make sure minimum is not reached
       threshold -= _thresholdStep;
@@ -382,8 +382,6 @@ QVector<double> RMT::generatePruneMatrix(float threshold, int* size)
          ++numClusters;
       }
    }
-
-   qInfo("generating pruned matrix (%d x %d)", numClusters, numClusters);
 
    // allocate new pruned matrix with cluster size
    QVector<double> pruneMatrix(numClusters * numClusters);

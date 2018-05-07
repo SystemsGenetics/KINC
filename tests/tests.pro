@@ -53,6 +53,7 @@ SOURCES += \
 	testexpressionmatrix.cpp \
 	testimportcorrelationmatrix.cpp \
 	testimportexpressionmatrix.cpp \
+	testrmt.cpp \
 	testsimilarity.cpp \
 	main.cpp
 
@@ -85,4 +86,5 @@ HEADERS += \
 	testexpressionmatrix.h \
 	testimportcorrelationmatrix.h \
 	testimportexpressionmatrix.h \
+	testrmt.h \
 	testsimilarity.h
