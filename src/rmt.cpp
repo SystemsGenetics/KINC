@@ -192,7 +192,7 @@ bool RMT::initialize()
 void RMT::runSerial()
 {
    // generate list of maximum correlations for each gene
-   generateMaxCorrelations();
+   computeGeneThresholds();
 
    // initialize log text stream
    QTextStream stream(_logfile);
@@ -216,9 +216,36 @@ void RMT::runSerial()
          return;
       }
 
-      // add new raw chi value to queue
+      // compute pruned matrix based on threshold
       int size;
-      previousChi.enqueue(determineChi(threshold,&size));
+      QVector<double> pruneMatrix {computePruneMatrix(threshold,&size)};
+
+      // use chi-square value of zero if matrix is empty
+      float newChi = 0;
+
+      if ( size > 0 )
+      {
+         // make sure interruption is not requested
+         if ( isInterruptionRequested() )
+         {
+            return;
+         }
+
+         // compute eigenvalues of pruned matrix
+         QVector<double> eigens {computeEigenvalues(&pruneMatrix,size)};
+
+         // make sure interruption is not requested
+         if ( isInterruptionRequested() )
+         {
+            return;
+         }
+
+         // compute chi-square value from NNSD of eigenvalues
+         newChi = computeChiSquare(&eigens);
+      }
+
+      // add new chi-square value to queue
+      previousChi.enqueue(newChi);
 
       // check if queue has enough samples
       if ( previousChi.size() > _filterSize )
@@ -271,41 +298,7 @@ void RMT::runSerial()
 
 
 
-float RMT::determineChi(float threshold, int* size)
-{
-   // initialize size and generate pruned matrix based off threshold
-   QVector<double> pruneMatrix {generatePruneMatrix(threshold,size)};
-
-   // check and make sure matrix is not empty
-   if ( *size > 0 )
-   {
-      // make sure interruption is not requested
-      if ( isInterruptionRequested() )
-      {
-         return 0.0;
-      }
-
-      // generate eigen vector of pruned matrix and make sure interruption is not requested
-      QVector<double> eigens {generateMatrixEigens(&pruneMatrix,*size)};
-      if ( isInterruptionRequested() )
-      {
-         return 0.0;
-      }
-
-      // generate chi from eigen vector and return it
-      return getChiSquare(&eigens);
-   }
-
-   // if no real chi was found return zero
-   return 0.0;
-}
-
-
-
-
-
-
-void RMT::generateMaxCorrelations()
+void RMT::computeGeneThresholds()
 {
    // initialize percent complete and steps
    int lastPercent {0};
@@ -368,7 +361,7 @@ void RMT::generateMaxCorrelations()
 
 
 
-QVector<double> RMT::generatePruneMatrix(float threshold, int* size)
+QVector<double> RMT::computePruneMatrix(float threshold, int* size)
 {
    // generate vector of cluster indexes that have max threshold above given threshold
    int numClusters = 0;
@@ -425,7 +418,7 @@ QVector<double> RMT::generatePruneMatrix(float threshold, int* size)
 
 
 
-QVector<double> RMT::generateMatrixEigens(QVector<double>* pruneMatrix, int size)
+QVector<double> RMT::computeEigenvalues(QVector<double>* pruneMatrix, int size)
 {
    // using declarations for gsl resources
    using gsl_vector_ptr = unique_ptr<gsl_vector,decltype(&gsl_vector_free)>;
@@ -459,7 +452,7 @@ QVector<double> RMT::generateMatrixEigens(QVector<double>* pruneMatrix, int size
 
 
 
-float RMT::getChiSquare(QVector<double>* eigens)
+float RMT::computeChiSquare(QVector<double>* eigens)
 {
    // initialize chi value and degenerate eigen vector
    float chi {0.0};
@@ -475,7 +468,7 @@ float RMT::getChiSquare(QVector<double>* eigens)
          // if ??? increment chi value with paced chi square value and increment test count
          if ( (eigens->size()/pace) >= 5 )
          {
-            chi += getPaceChiSquare(*eigens,pace);
+            chi += computePaceChiSquare(*eigens,pace);
             ++chiTestCount;
          }
       }
@@ -499,7 +492,7 @@ float RMT::getChiSquare(QVector<double>* eigens)
 
 
 
-float RMT::getPaceChiSquare(const QVector<double>& eigens, int pace)
+float RMT::computePaceChiSquare(const QVector<double>& eigens, int pace)
 {
    // initialize chi value that will be returned and get unfolded vector
    float chi {0.0};
@@ -527,6 +520,44 @@ float RMT::getPaceChiSquare(const QVector<double>& eigens, int pace)
 
    // return chi value
    return chi;
+}
+
+
+
+
+
+
+void RMT::degenerate(QVector<double>* eigens)
+{
+   // iterate through all eigen values
+   for (auto& eigen : *eigens)
+   {
+      // if eigen value is less than minimum set it to zero
+      if ( eigen < _minimumEigenValue )
+      {
+         eigen = 0.0;
+      }
+   }
+
+   // sort all eigen values
+   sort(eigens->begin(),eigens->end());
+
+   // iterate through eigen values until second to last is reached
+   int i {0};
+   while ( (i + 1) < eigens->size() )
+   {
+      // if next eigen value equals current eigen value remove current value
+      if ( eigens->at(i) == eigens->at(i + 1) )
+      {
+         eigens->removeAt(i);
+      }
+
+      // else iterate to next value
+      else
+      {
+         ++i;
+      }
+   }
 }
 
 
@@ -581,42 +612,4 @@ QVector<double> RMT::unfold(const QVector<double>& eigens, int pace)
    // sort unfolding vector and return it
    sort(ret.begin(),ret.end());
    return ret;
-}
-
-
-
-
-
-
-void RMT::degenerate(QVector<double>* eigens)
-{
-   // iterate through all eigen values
-   for (auto& eigen : *eigens)
-   {
-      // if eigen value is less than minimum set it to zero
-      if ( eigen < _minimumEigenValue )
-      {
-         eigen = 0.0;
-      }
-   }
-
-   // sort all eigen values
-   sort(eigens->begin(),eigens->end());
-
-   // iterate through eigen values until second to last is reached
-   int i {0};
-   while ( (i + 1) < eigens->size() )
-   {
-      // if next eigen value equals current eigen value remove current value
-      if ( eigens->at(i) == eigens->at(i + 1) )
-      {
-         eigens->removeAt(i);
-      }
-
-      // else iterate to next value
-      else
-      {
-         ++i;
-      }
-   }
 }

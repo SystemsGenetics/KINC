@@ -28,14 +28,13 @@ public:
    virtual bool initialize() override final;
    virtual void runSerial() override final;
 private:
-   float determineChi(float threshold, int* size);
-   void generateMaxCorrelations();
-   QVector<double> generatePruneMatrix(float threshold, int* size);
-   QVector<double> generateMatrixEigens(QVector<double>* pruneMatrix, int size);
-   float getChiSquare(QVector<double>* eigens);
-   float getPaceChiSquare(const QVector<double>& eigens, int pace);
-   QVector<double> unfold(const QVector<double>& eigens, int pace);
+   void computeGeneThresholds();
+   QVector<double> computePruneMatrix(float threshold, int* size);
+   QVector<double> computeEigenvalues(QVector<double>* pruneMatrix, int size);
+   float computeChiSquare(QVector<double>* eigens);
+   float computePaceChiSquare(const QVector<double>& eigens, int pace);
    void degenerate(QVector<double>* eigens);
+   QVector<double> unfold(const QVector<double>& eigens, int pace);
    constexpr static float _nnsdHistogramBin {0.05};
    constexpr static int _minUnfoldingPace {10};
    constexpr static int _maxUnfoldingPace {41};
