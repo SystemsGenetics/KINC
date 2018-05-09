@@ -1,63 +1,69 @@
 
-# Coding for KINC on Ubuntu 16.04
-To begin development work in KINC on Ubuntu 16.04 the following steps can be used to setup your coding environment:
+# Development on Ubuntu 16.04
+
+Use the following steps to setup KINC for development on Ubuntu 16.04:
 
 ## Step 1: Install Dependencies
-This document assumes you already have the g++ compiler installed.
 
-### OpenCL
-First we need to instal the OpenCL development libraries.  
-
+Most of the dependencies are available as packages:
 ```bash
-sudo apt install ocl-icd-libopencl1
-sudo apt install opencl-headers
-sudo apt install clinfo
-sudo apt install ocl-icd-opencl-dev
-```
-For Intel or NVidia drivers see the respective drivers.
-
-### OpenMPI
-Next, we need to install the OpenMPI library
-
-```bash
-sudo apt-get install openmpi-bin libopenmpi-dev openmpi-common
+sudo apt install g++ libgsl-dev libopenmpi-dev ocl-icd-opencl-dev
 ```
 
-### QT 5.7 or greater
-First identify the most recent version of QT at http://download.qt.io/official_releases/qt and adjust the commands below accordingly:
+For device drivers (AMD, Intel, NVIDIA, etc), refer to the manufacturer's website.
+
+### Qt (>=5.7)
+
+Select a suitable version of Qt at http://download.qt.io/official_releases/qt and install Qt:
 
 ```bash
-wget http://download.qt.io/official_releases/qt/5.10/5.10.0/qt-opensource-linux-x64-5.10.0.run
-./qt-opensource-linux-x64-5.7.0.run
+wget http://download.qt.io/official_releases/qt/5.7/5.7.1/qt-opensource-linux-x64-5.7.1.run
+sh ./qt-opensource-linux-x64-5.7.1.run
+```
 
+If you install Qt locally then you must add Qt to the executable path:
+
+```bash
+# append to ~/.bashrc
+export QTDIR="$HOME/Qt/5.10.1/gcc_64"
+export PATH="$QTDIR/bin:$PATH"
+```
 
 ## Step 2: Download ACE and KINC
-Use Git to clone the ACE and ACE repositories and switch to the develop branch
+
+Clone the ACE and KINC repositories from Github and switch to the `develop` branches.
 
 ```bash
 git clone git@github.com:SystemsGenetics/ACE.git
 cd ACE
-git checkout develop 
+git checkout develop
 
 cd ../
 git clone git@github.com:SystemsGenetics/KINC.git
 cd KINC
 git checkout develop
 ```
-### Step 3: Compile ACE and KINC on the command-line
-Compile ACE according to its own instructions.  If you install ACE locally you'll have to add the following to your LD_LIBRARY_PATH environment variable.
+## Step 3: Build ACE and KINC
+
+Follow the ACE instructions to build ACE. If you install ACE locally then you must add ACE to the linker path:
 
 ```bash
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${HOME}/software/lib"
+# append to ~/.bashrc
+export INSTALL_PREFIX="$HOME/software"
+export LD_LIBRARY_PATH="$INSTALL_PREFIX/lib:$LD_LIBRARY_PATH"
 ```
 
-To Compile KINC run these command inside the build directory:
+Build KINC:
 
 ```bash
-qmake ../src/KINC.pro
+mkdir build
+cd build
+qmake ../src
 make
 ```
-You can now run KINC.
 
-### Step 4: Use QTCreator for Coding
-First add ACE. Click **File** > **Open File or Project** and then navigate in the file browser to the ACE directory and click the ACE.pro file. Navigate through configure setup.  Do the same for KINC.
+You should now be able to run KINC.
+
+## (Optional) Use QtCreator
+
+Select **File** > **Open File or Project** and then navigate in the file browser to the ACE directory and select the ACE.pro file. Navigate through configure setup. Repeat for KINC.
