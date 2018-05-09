@@ -1,4 +1,4 @@
-#include "genepair_correlation.h"
+#include "pairwise_correlation.h"
 
 
 

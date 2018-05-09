@@ -66,15 +66,15 @@ SOURCES += \
     exportcorrelationmatrix.cpp \
     similarity.cpp \
     rmt.cpp \
-    genepair_index.cpp \
-    genepair_base.cpp \
-    genepair_clustering.cpp \
-    genepair_gmm.cpp \
-    genepair_kmeans.cpp \
-    genepair_linalg.cpp \
-    genepair_correlation.cpp \
-    genepair_pearson.cpp \
-    genepair_spearman.cpp \
+    pairwise_index.cpp \
+    pairwise_base.cpp \
+    pairwise_clustering.cpp \
+    pairwise_gmm.cpp \
+    pairwise_kmeans.cpp \
+    pairwise_linalg.cpp \
+    pairwise_correlation.cpp \
+    pairwise_pearson.cpp \
+    pairwise_spearman.cpp \
     ccmatrix.cpp \
     extract.cpp
 
@@ -89,15 +89,15 @@ HEADERS += \
     exportcorrelationmatrix.h \
     similarity.h \
     rmt.h \
-    genepair_index.h \
-    genepair_base.h \
-    genepair_clustering.h \
-    genepair_gmm.h \
-    genepair_kmeans.h \
-    genepair_linalg.h \
-    genepair_correlation.h \
-    genepair_pearson.h \
-    genepair_spearman.h \
+    pairwise_index.h \
+    pairwise_base.h \
+    pairwise_clustering.h \
+    pairwise_gmm.h \
+    pairwise_kmeans.h \
+    pairwise_linalg.h \
+    pairwise_correlation.h \
+    pairwise_pearson.h \
+    pairwise_spearman.h \
     ccmatrix.h \
     extract.h
 

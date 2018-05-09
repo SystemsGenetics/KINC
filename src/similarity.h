@@ -6,9 +6,9 @@
 #include "expressionmatrix.h"
 #include "ccmatrix.h"
 #include "correlationmatrix.h"
-#include "genepair_clustering.h"
-#include "genepair_correlation.h"
-#include "genepair_gmm.h"
+#include "pairwise_clustering.h"
+#include "pairwise_correlation.h"
+#include "pairwise_gmm.h"
 
 
 

@@ -1,6 +1,6 @@
 #ifndef CCMATRIX_H
 #define CCMATRIX_H
-#include "genepair_base.h"
+#include "pairwise_base.h"
 
 
 

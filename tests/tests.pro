@@ -35,15 +35,15 @@ SOURCES += \
 	../src/exportcorrelationmatrix.cpp \
 	../src/similarity.cpp \
 	../src/rmt.cpp \
-	../src/genepair_index.cpp \
-	../src/genepair_base.cpp \
-	../src/genepair_clustering.cpp \
-	../src/genepair_gmm.cpp \
-	../src/genepair_kmeans.cpp \
-	../src/genepair_linalg.cpp \
-	../src/genepair_correlation.cpp \
-	../src/genepair_pearson.cpp \
-	../src/genepair_spearman.cpp \
+	../src/pairwise_index.cpp \
+	../src/pairwise_base.cpp \
+	../src/pairwise_clustering.cpp \
+	../src/pairwise_gmm.cpp \
+	../src/pairwise_kmeans.cpp \
+	../src/pairwise_linalg.cpp \
+	../src/pairwise_correlation.cpp \
+	../src/pairwise_pearson.cpp \
+	../src/pairwise_spearman.cpp \
 	../src/ccmatrix.cpp \
 	../src/extract.cpp \
 	testclustermatrix.cpp \
@@ -68,15 +68,15 @@ HEADERS += \
 	../src/exportcorrelationmatrix.h \
 	../src/similarity.h \
 	../src/rmt.h \
-	../src/genepair_index.h \
-	../src/genepair_base.h \
-	../src/genepair_clustering.h \
-	../src/genepair_gmm.h \
-	../src/genepair_kmeans.h \
-	../src/genepair_linalg.h \
-	../src/genepair_correlation.h \
-	../src/genepair_pearson.h \
-	../src/genepair_spearman.h \
+	../src/pairwise_index.h \
+	../src/pairwise_base.h \
+	../src/pairwise_clustering.h \
+	../src/pairwise_gmm.h \
+	../src/pairwise_kmeans.h \
+	../src/pairwise_linalg.h \
+	../src/pairwise_correlation.h \
+	../src/pairwise_pearson.h \
+	../src/pairwise_spearman.h \
 	../src/ccmatrix.h \
 	../src/extract.h \
 	testclustermatrix.h \

@@ -1,6 +1,6 @@
 #ifndef PAIRWISE_KMEANS_H
 #define PAIRWISE_KMEANS_H
-#include "genepair_clustering.h"
+#include "pairwise_clustering.h"
 
 namespace Pairwise
 {

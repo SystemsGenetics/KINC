@@ -4,7 +4,7 @@
 
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
-#include "genepair_linalg.h"
+#include "pairwise_linalg.h"
 
 namespace Pairwise
 {

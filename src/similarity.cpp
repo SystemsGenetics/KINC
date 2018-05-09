@@ -2,10 +2,10 @@
 
 #include "similarity.h"
 #include "datafactory.h"
-#include "genepair_gmm.h"
-#include "genepair_kmeans.h"
-#include "genepair_pearson.h"
-#include "genepair_spearman.h"
+#include "pairwise_gmm.h"
+#include "pairwise_kmeans.h"
+#include "pairwise_pearson.h"
+#include "pairwise_spearman.h"
 
 
 

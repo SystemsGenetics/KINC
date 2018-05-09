@@ -1,6 +1,6 @@
 #include <ace/core/metadata.h>
 
-#include "genepair_pearson.h"
+#include "pairwise_pearson.h"
 
 
 

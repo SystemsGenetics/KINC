@@ -1,6 +1,6 @@
 #ifndef PAIRWISE_SPEARMAN_H
 #define PAIRWISE_SPEARMAN_H
-#include "genepair_correlation.h"
+#include "pairwise_correlation.h"
 
 namespace Pairwise
 {

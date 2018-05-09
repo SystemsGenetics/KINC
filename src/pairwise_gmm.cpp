@@ -1,4 +1,4 @@
-#include "genepair_gmm.h"
+#include "pairwise_gmm.h"
 
 
 

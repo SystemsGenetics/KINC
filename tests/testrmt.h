@@ -2,7 +2,7 @@
 #define TESTRMT_H
 #include <QtTest/QtTest>
 
-#include "genepair_index.h"
+#include "pairwise_index.h"
 
 
 

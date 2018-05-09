@@ -1,6 +1,6 @@
 #include "importcorrelationmatrix.h"
 #include "datafactory.h"
-#include "genepair_index.h"
+#include "pairwise_index.h"
 
 
 

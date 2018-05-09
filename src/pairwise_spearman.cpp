@@ -1,6 +1,6 @@
 #include <ace/core/metadata.h>
 
-#include "genepair_spearman.h"
+#include "pairwise_spearman.h"
 
 
 

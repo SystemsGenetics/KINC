@@ -3,7 +3,7 @@
 #include <ace/core/AceCore.h>
 #include <ace/core/metadata.h>
 
-#include "genepair_index.h"
+#include "pairwise_index.h"
 
 
 

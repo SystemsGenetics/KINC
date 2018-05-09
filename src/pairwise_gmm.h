@@ -1,6 +1,6 @@
 #ifndef PAIRWISE_GMM_H
 #define PAIRWISE_GMM_H
-#include "genepair_clustering.h"
+#include "pairwise_clustering.h"
 
 namespace Pairwise
 {

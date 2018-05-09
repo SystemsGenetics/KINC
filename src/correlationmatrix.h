@@ -1,6 +1,6 @@
 #ifndef CORRELATIONMATRIX_H
 #define CORRELATIONMATRIX_H
-#include "genepair_base.h"
+#include "pairwise_base.h"
 
 
 

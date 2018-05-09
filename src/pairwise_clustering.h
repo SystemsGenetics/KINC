@@ -4,8 +4,8 @@
 
 #include "ccmatrix.h"
 #include "expressionmatrix.h"
-#include "genepair_linalg.h"
-#include "genepair_index.h"
+#include "pairwise_linalg.h"
+#include "pairwise_index.h"
 
 namespace Pairwise
 {
