@@ -15,13 +15,16 @@ public:
    {
       InputData = 0
       ,LogFile
+      ,ThresholdStart
+      ,ThresholdStep
+      ,ThresholdStop
       ,Total
    };
 
    virtual int getArgumentCount() override final { return Total; }
    virtual ArgumentType getArgumentData(int argument) override final;
    virtual QVariant getArgumentData(int argument, Role role) override final;
-   virtual void setArgument(int /*argument*/, QVariant /*value*/) override final {};
+   virtual void setArgument(int argument, QVariant value) override final;
    virtual void setArgument(int argument, QFile* file) override final;
    virtual void setArgument(int argument, EAbstractData* data) override final;
    virtual quint32 getCapabilities() const override final { return Capabilities::Serial; }
@@ -41,7 +44,7 @@ private:
    QFile* _logfile {nullptr};
    float _thresholdStart {0.99};
    float _thresholdStep {0.001};
-   float _thresholdMinimum {0.5};
+   float _thresholdStop {0.5};
    float _chiSquareThreshold1 {99.607};
    float _chiSquareThreshold2 {200};
    int _minEigenvalueSize {50};

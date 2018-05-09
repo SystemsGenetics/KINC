@@ -54,6 +54,9 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       {
       case InputData: return QString("input");
       case LogFile: return QString("log");
+      case ThresholdStart: return QString("tstart");
+      case ThresholdStep: return QString("tstep");
+      case ThresholdStop: return QString("tstop");
       default: return QVariant();
       }
    case Role::Title:
@@ -62,15 +65,50 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       {
       case InputData: return tr("Input:");
       case LogFile: return tr("Log File:");
+      case ThresholdStart: return tr("Threshold Start:");
+      case ThresholdStep: return tr("Threshold Step:");
+      case ThresholdStop: return tr("Threshold Stop:");
       default: return QVariant();
       }
    case Role::WhatsThis:
       // figure out which argument is being queried and return "What's This?" text
       switch (argument)
       {
-      case InputData: return tr("Input correlation matrix that will be used to output correlation"
-                                " above a threshold determined by Random Matrix Theory.");
-      case LogFile: return tr("Output text file that logs all chi trials.");
+      case InputData: return tr("Correlation matrix for which an appropriate correlation threshold will be found.");
+      case LogFile: return tr("Output text file that logs all results.");
+      case ThresholdStart: return tr("Starting threshold.");
+      case ThresholdStep: return tr("Threshold step size.");
+      case ThresholdStop: return tr("Stopping threshold.");
+      default: return QVariant();
+      }
+   case Role::DefaultValue:
+      // figure out which argument is being queried and if applicable return default value else
+      // return nothing
+      switch (argument)
+      {
+      case ThresholdStart: return 0.99;
+      case ThresholdStep: return 0.001;
+      case ThresholdStop: return 0.5;
+      default: return QVariant();
+      }
+   case Role::Minimum:
+      // figure out which argument is being queried and if applicable return minimum value else
+      // return nothing
+      switch (argument)
+      {
+      case ThresholdStart: return 0;
+      case ThresholdStep: return 0;
+      case ThresholdStop: return 0;
+      default: return QVariant();
+      }
+   case Role::Maximum:
+      // figure out which argument is being queried and if applicable return maximum value else
+      // return nothing
+      switch (argument)
+      {
+      case ThresholdStart: return 1;
+      case ThresholdStep: return 1;
+      case ThresholdStop: return 1;
       default: return QVariant();
       }
    case Role::DataType:
@@ -89,6 +127,28 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       }
    default:
       return QVariant();
+   }
+}
+
+
+
+
+
+
+void RMT::setArgument(int argument, QVariant value)
+{
+   // figure out which argument is being set and set it
+   switch (argument)
+   {
+   case ThresholdStart:
+      _thresholdStart = value.toDouble();
+      break;
+   case ThresholdStep:
+      _thresholdStep = value.toDouble();
+      break;
+   case ThresholdStop:
+      _thresholdStop = value.toDouble();
+      break;
    }
 }
 
@@ -134,10 +194,18 @@ bool RMT::initialize()
    // make sure input and output were set properly
    if ( !_input || !_logfile )
    {
-      // report argument error and fail
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
       e.setDetails(QObject::tr("Did not get valid input or logfile arguments."));
+      throw e;
+   }
+
+   // make sure threshold arguments are valid
+   if ( _thresholdStart <= _thresholdStop )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("Argument Error"));
+      e.setDetails(QObject::tr("Starting threshold must be greater than stopping threshold."));
       throw e;
    }
 
@@ -168,7 +236,7 @@ void RMT::runSerial()
    // initialize last percent, steps, and total steps
    int lastPercent {10};
    int steps {0};
-   int totalSteps = (_thresholdStart - _thresholdMinimum) / _thresholdStep;
+   int totalSteps = (_thresholdStart - _thresholdStop) / _thresholdStep;
 
    // continue while max chi is less than final threshold
    while ( maxChi < _chiSquareThreshold2 )
@@ -229,11 +297,11 @@ void RMT::runSerial()
 
       // decrement threshold and fail if minimum threshold is reached
       threshold -= _thresholdStep;
-      if ( threshold < _thresholdMinimum )
+      if ( threshold < _thresholdStop )
       {
          E_MAKE_EXCEPTION(e);
          e.setTitle(QObject::tr("RMT Threshold Error"));
-         e.setDetails(QObject::tr("Could not find non-random threshold above minimum."));
+         e.setDetails(QObject::tr("Could not find non-random threshold above stopping threshold."));
          throw e;
       }
 
@@ -459,7 +527,7 @@ float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
    // compute nearest-neighbor spacing distribution
    const float histogramMin {0};
    const float histogramMax {3};
-   QVector<float> histogram((int)((histogramMax - histogramMin) / _chiSquareBinSize))
+   QVector<float> histogram((int)((histogramMax - histogramMin) / _chiSquareBinSize));
 
    for ( auto& spacing : spacings )
    {
