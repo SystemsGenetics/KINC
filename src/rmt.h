@@ -31,11 +31,11 @@ public:
 private:
    void computeGeneThresholds();
    QVector<double> computePruneMatrix(float threshold, int* size);
-   QVector<double> computeEigenvalues(QVector<double>* pruneMatrix, int size);
-   float computeChiSquare(QVector<double>* eigens);
-   float computePaceChiSquare(const QVector<double>& eigens, int pace);
-   void degenerate(QVector<double>* eigens);
-   QVector<double> unfold(const QVector<double>& eigens, int pace);
+   QVector<float> computeEigenvalues(QVector<double>* pruneMatrix, int size);
+   float computeChiSquare(QVector<float>* eigens);
+   float computePaceChiSquare(const QVector<float>& eigens, int pace);
+   void degenerate(QVector<float>* eigens);
+   QVector<float> unfold(const QVector<float>& eigens, int pace);
 
    CorrelationMatrix* _input {nullptr};
    QFile* _logfile {nullptr};
@@ -48,7 +48,6 @@ private:
    int _minUnfoldingPace {10};
    int _maxUnfoldingPace {40};
    float _chiSquareBinSize {0.05};
-   double _minEigenvalue {0.000001};
    int _maxClusterSize {5};
    QVector<float> _maxCorrelations;
 };
