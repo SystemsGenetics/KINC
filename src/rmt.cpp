@@ -166,7 +166,7 @@ void RMT::runSerial()
    float threshold {_thresholdStart};
 
    // initialize last percent, steps, and total steps
-   int lastPercent {50};
+   int lastPercent {10};
    int steps {0};
    int totalSteps = (_thresholdStart - _thresholdMinimum) / _thresholdStep;
 
@@ -238,7 +238,7 @@ void RMT::runSerial()
       }
 
       // determine new percent complete and check if it is new
-      int newPercent {50 + 50*steps/totalSteps};
+      int newPercent {10 + 90*steps/totalSteps};
       if ( newPercent != lastPercent )
       {
          // update new percentage and emit progressed signal
@@ -305,7 +305,7 @@ void RMT::computeGeneThresholds()
 
       // increment steps and compute new percent complete
       ++steps;
-      qint64 newPercent {50*steps/totalSteps};
+      qint64 newPercent {10*steps/totalSteps};
 
       // check to see if percent complete changed
       if ( newPercent != lastPercent )
