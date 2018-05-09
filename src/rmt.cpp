@@ -456,20 +456,26 @@ float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
    // compute eigenvalue spacings
    QVector<float> spacings {unfold(eigens, pace)};
 
+   // compute nearest-neighbor spacing distribution
+   const float histogramMin {0};
+   const float histogramMax {3};
+   QVector<float> histogram((int)((histogramMax - histogramMin) / _chiSquareBinSize))
+
+   for ( auto& spacing : spacings )
+   {
+      if ( histogramMin <= spacing && spacing < histogramMax )
+      {
+         ++histogram[(spacing - histogramMin) / _chiSquareBinSize];
+      }
+   }
+
    // compute chi-square value from nearest-neighbor spacing distribution
    float chi {0.0};
 
-   for ( int i = 0; i < ((int)(3.0 / _chiSquareBinSize) + 1); ++i )
+   for ( int i = 0; i < histogram.size(); ++i )
    {
-      // compute O_i, the number of spacings in bin i
-      int O_i {0};
-      for ( auto& spacing : spacings )
-      {
-         if ( i * _chiSquareBinSize <= spacing && spacing < (i + 1) * _chiSquareBinSize )
-         {
-            ++O_i;
-         }
-      }
+      // compute O_i, the number of elements in bin i
+      float O_i {histogram[i]};
 
       // compute E_i, the expected value of Poisson distribution for bin i
       float E_i {(exp(-i * _chiSquareBinSize) - exp(-(i + 1) * _chiSquareBinSize)) * eigens.size()};
@@ -525,7 +531,7 @@ QVector<float> RMT::unfold(const QVector<float>& eigens, int pace)
    using gsl_spline_ptr = unique_ptr<gsl_spline, decltype(&gsl_spline_free)>;
 
    // extract eigenvalues for spline based on pace
-   int splineSize {eigens.size()/pace};
+   int splineSize {eigens.size() / pace};
    unique_ptr<double[]> x(new double[splineSize]);
    unique_ptr<double[]> y(new double[splineSize]);
 
