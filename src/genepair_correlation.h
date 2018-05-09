@@ -1,12 +1,12 @@
-#ifndef GENEPAIR_CORRELATION_H
-#define GENEPAIR_CORRELATION_H
+#ifndef PAIRWISE_CORRELATION_H
+#define PAIRWISE_CORRELATION_H
 #include <ace/core/AceCore.h>
 
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
 #include "genepair_linalg.h"
 
-namespace GenePair
+namespace Pairwise
 {
    class Correlation
    {

@@ -1,8 +1,8 @@
-#ifndef GENEPAIR_KMEANS_H
-#define GENEPAIR_KMEANS_H
+#ifndef PAIRWISE_KMEANS_H
+#define PAIRWISE_KMEANS_H
 #include "genepair_clustering.h"
 
-namespace GenePair
+namespace Pairwise
 {
    class KMeans : public Clustering
    {

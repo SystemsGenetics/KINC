@@ -239,7 +239,7 @@ void ImportCorrelationMatrix::runSerial()
    _ccm->initialize(metaGeneNames, metaSampleNames);
    _cmx->initialize(metaGeneNames, metaCorrelationNames);
 
-   GenePair::Index index;
+   Pairwise::Index index;
    CCMatrix::Pair ccmPair(_ccm);
    CorrelationMatrix::Pair cmxPair(_cmx);
 
@@ -278,7 +278,7 @@ void ImportCorrelationMatrix::runSerial()
          }
 
          // save previous pair when new pair is read
-         GenePair::Index nextIndex(geneX, geneY);
+         Pairwise::Index nextIndex(geneX, geneY);
 
          if ( index != nextIndex )
          {

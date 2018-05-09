@@ -1,8 +1,8 @@
-#ifndef GENEPAIR_LINALG_H
-#define GENEPAIR_LINALG_H
+#ifndef PAIRWISE_LINALG_H
+#define PAIRWISE_LINALG_H
 #include <ace/core/AceCore.h>
 
-namespace GenePair
+namespace Pairwise
 {
    typedef union {
       float s[2];

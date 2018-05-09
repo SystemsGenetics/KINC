@@ -2,7 +2,7 @@
 
 
 
-namespace GenePair {
+namespace Pairwise {
 
 
 

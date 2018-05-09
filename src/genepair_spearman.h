@@ -1,8 +1,8 @@
-#ifndef GENEPAIR_SPEARMAN_H
-#define GENEPAIR_SPEARMAN_H
+#ifndef PAIRWISE_SPEARMAN_H
+#define PAIRWISE_SPEARMAN_H
 #include "genepair_correlation.h"
 
-namespace GenePair
+namespace Pairwise
 {
    class Spearman : public Correlation
    {

@@ -215,8 +215,8 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       {
       case MinExpression: return +INFINITY;
       case MinSamples: return INT_MAX;
-      case MinClusters: return GenePair::Index::MAX_CLUSTER_SIZE;
-      case MaxClusters: return GenePair::Index::MAX_CLUSTER_SIZE;
+      case MinClusters: return Pairwise::Index::MAX_CLUSTER_SIZE;
+      case MaxClusters: return Pairwise::Index::MAX_CLUSTER_SIZE;
       case MinCorrelation: return 1.0;
       case MaxCorrelation: return 1.0;
       case BlockSize: return INT_MAX;
@@ -268,12 +268,12 @@ void Similarity::setArgument(int argument, QVariant value)
          else if ( option == tr(GMM) )
          {
             _clusMethod = ClusteringMethod::GMM;
-            _clusModel = new GenePair::GMM();
+            _clusModel = new Pairwise::GMM();
          }
          else if ( option == tr(KMeans) )
          {
             _clusMethod = ClusteringMethod::KMeans;
-            _clusModel = new GenePair::KMeans();
+            _clusModel = new Pairwise::KMeans();
          }
       }
       break;
@@ -283,12 +283,12 @@ void Similarity::setArgument(int argument, QVariant value)
          if ( option == tr(Pearson) )
          {
             _corrMethod = CorrelationMethod::Pearson;
-            _corrModel = new GenePair::Pearson();
+            _corrModel = new Pairwise::Pearson();
          }
          else if ( option == tr(Spearman) )
          {
             _corrMethod = CorrelationMethod::Spearman;
-            _corrModel = new GenePair::Spearman();
+            _corrModel = new Pairwise::Spearman();
          }
       }
       break;
@@ -309,11 +309,11 @@ void Similarity::setArgument(int argument, QVariant value)
          const QString option = value.toString();
          if ( option == tr(BIC) )
          {
-            _criterion = GenePair::Criterion::BIC;
+            _criterion = Pairwise::Criterion::BIC;
          }
          else if ( option == tr(ICL) )
          {
-            _criterion = GenePair::Criterion::ICL;
+            _criterion = Pairwise::Criterion::ICL;
          }
       }
       break;
@@ -417,7 +417,7 @@ bool Similarity::initialize()
 
 
 
-int Similarity::fetchPair(GenePair::Index index, QVector<GenePair::Vector2>& X, QVector<qint8>& labels)
+int Similarity::fetchPair(Pairwise::Index index, QVector<Pairwise::Vector2>& X, QVector<qint8>& labels)
 {
    // read in gene expressions
    ExpressionMatrix::Gene gene1(_input);
@@ -457,7 +457,7 @@ int Similarity::fetchPair(GenePair::Index index, QVector<GenePair::Vector2>& X, 
 
 
 
-void Similarity::savePair(GenePair::Index index, qint8 K, const qint8 *labels, int N, const float *correlations)
+void Similarity::savePair(Pairwise::Index index, qint8 K, const qint8 *labels, int N, const float *correlations)
 {
    // get MPI instance
    Ace::QMPI& mpi {Ace::QMPI::initialize()};
@@ -552,7 +552,7 @@ void Similarity::runSerial()
    _corrModel->initialize(_input);
 
    // initialize workspace
-   QVector<GenePair::Vector2> X(_input->getSampleSize());
+   QVector<Pairwise::Vector2> X(_input->getSampleSize());
    QVector<qint8> labels(_input->getSampleSize());
 
    // iterate through all gene pairs
@@ -733,7 +733,7 @@ QByteArray Similarity::processMPIBlock(const QByteArray& block)
    (*_mpiOut) << blockStart << blockSize;
 
    // initialize pairwise index and total steps
-   _index = GenePair::Index(blockStart);
+   _index = Pairwise::Index(blockStart);
    _nextIndex = _index;
    _totalSteps = blockSize;
    _stepsStarted = 0;

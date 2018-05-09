@@ -4,7 +4,7 @@
 
 
 
-class CorrelationMatrix : public QAbstractTableModel, public GenePair::Base
+class CorrelationMatrix : public QAbstractTableModel, public Pairwise::Base
 {
    Q_OBJECT
 public:

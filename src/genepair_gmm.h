@@ -1,8 +1,8 @@
-#ifndef GENEPAIR_GMM_H
-#define GENEPAIR_GMM_H
+#ifndef PAIRWISE_GMM_H
+#define PAIRWISE_GMM_H
 #include "genepair_clustering.h"
 
-namespace GenePair
+namespace Pairwise
 {
    class GMM : public Clustering
    {

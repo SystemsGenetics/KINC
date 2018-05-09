@@ -1,5 +1,5 @@
-#ifndef GENEPAIR_CLUSTERING_H
-#define GENEPAIR_CLUSTERING_H
+#ifndef PAIRWISE_CLUSTERING_H
+#define PAIRWISE_CLUSTERING_H
 #include <ace/core/AceCore.h>
 
 #include "ccmatrix.h"
@@ -7,7 +7,7 @@
 #include "genepair_linalg.h"
 #include "genepair_index.h"
 
-namespace GenePair
+namespace Pairwise
 {
    enum class Criterion
    {

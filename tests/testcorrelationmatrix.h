@@ -13,7 +13,7 @@ class TestCorrelationMatrix : public QObject
 private:
 	struct Pair
 	{
-		GenePair::Index index;
+		Pairwise::Index index;
 		QVector<float> clusters;
 	};
 

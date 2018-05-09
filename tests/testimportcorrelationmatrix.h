@@ -13,7 +13,7 @@ class TestImportCorrelationMatrix : public QObject
 private:
 	struct Pair
 	{
-		GenePair::Index index;
+		Pairwise::Index index;
 		QVector<QVector<qint8>> clusters;
 		QVector<float> correlations;
 	};

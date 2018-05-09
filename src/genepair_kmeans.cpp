@@ -2,7 +2,7 @@
 
 
 
-using namespace GenePair;
+using namespace Pairwise;
 
 
 

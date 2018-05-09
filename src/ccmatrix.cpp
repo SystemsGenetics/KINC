@@ -3,7 +3,7 @@
 
 
 using namespace std;
-using namespace GenePair;
+using namespace Pairwise;
 
 
 

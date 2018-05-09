@@ -78,8 +78,8 @@ private:
    static const char* BIC;
    static const char* ICL;
 
-   int fetchPair(GenePair::Index index, QVector<GenePair::Vector2>& X, QVector<qint8>& labels);
-   void savePair(GenePair::Index index, qint8 K, const qint8 *labels, int N, const float *correlations);
+   int fetchPair(Pairwise::Index index, QVector<Pairwise::Vector2>& X, QVector<qint8>& labels);
+   void savePair(Pairwise::Index index, qint8 K, const qint8 *labels, int N, const float *correlations);
 
    struct Block
    {
@@ -97,11 +97,11 @@ private:
       Block(EOpenCLDevice& device, int N, int N_pow2, int K, int kernelSize)
       {
          in_index = device.makeBuffer<cl_int2>(1 * kernelSize).release();
-         work_X = device.makeBuffer<GenePair::Vector2>(N * kernelSize).release();
+         work_X = device.makeBuffer<Pairwise::Vector2>(N * kernelSize).release();
          work_N = device.makeBuffer<cl_int>(1 * kernelSize).release();
          work_labels = device.makeBuffer<cl_char>(N * kernelSize).release();
-         work_components = device.makeBuffer<GenePair::GMM::Component>(K * kernelSize).release();
-         work_MP = device.makeBuffer<GenePair::Vector2>(K * kernelSize).release();
+         work_components = device.makeBuffer<Pairwise::GMM::Component>(K * kernelSize).release();
+         work_MP = device.makeBuffer<Pairwise::Vector2>(K * kernelSize).release();
          work_counts = device.makeBuffer<cl_int>(K * kernelSize).release();
          work_logpi = device.makeBuffer<cl_float>(K * kernelSize).release();
          work_loggamma = device.makeBuffer<cl_float>(N * K * kernelSize).release();
@@ -169,16 +169,16 @@ private:
       }
 
       int state {Start};
-      GenePair::Index index;
+      Pairwise::Index index;
       QVector<EOpenCLEvent> events;
 
       // clustering buffers
       EOpenCLBuffer<cl_int2>* in_index;
-      EOpenCLBuffer<GenePair::Vector2>* work_X;
+      EOpenCLBuffer<Pairwise::Vector2>* work_X;
       EOpenCLBuffer<cl_int>* work_N;
       EOpenCLBuffer<cl_char>* work_labels;
-      EOpenCLBuffer<GenePair::GMM::Component>* work_components;
-      EOpenCLBuffer<GenePair::Vector2>* work_MP;
+      EOpenCLBuffer<Pairwise::GMM::Component>* work_components;
+      EOpenCLBuffer<Pairwise::Vector2>* work_MP;
       EOpenCLBuffer<cl_int>* work_counts;
       EOpenCLBuffer<cl_float>* work_logpi;
       EOpenCLBuffer<cl_float>* work_loggamma;
@@ -206,13 +206,13 @@ private:
    CorrelationMatrix* _cmx {nullptr};
    ClusteringMethod _clusMethod {ClusteringMethod::GMM};
    CorrelationMethod _corrMethod {CorrelationMethod::Pearson};
-   GenePair::Clustering* _clusModel {nullptr};
-   GenePair::Correlation* _corrModel {nullptr};
+   Pairwise::Clustering* _clusModel {nullptr};
+   Pairwise::Correlation* _corrModel {nullptr};
    int _minSamples {30};
    float _minExpression {-INFINITY};
    qint8 _minClusters {1};
    qint8 _maxClusters {5};
-   GenePair::Criterion _criterion {GenePair::Criterion::ICL};
+   Pairwise::Criterion _criterion {Pairwise::Criterion::ICL};
    bool _removePreOutliers {false};
    bool _removePostOutliers {false};
    float _minCorrelation {0.5};
@@ -229,8 +229,8 @@ private:
 
    QDataStream *_mpiOut {nullptr};
 
-   GenePair::Index _index;
-   GenePair::Index _nextIndex;
+   Pairwise::Index _index;
+   Pairwise::Index _nextIndex;
    qint64 _totalSteps;
    qint64 _stepsStarted {0};
    qint64 _stepsComplete {0};

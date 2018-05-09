@@ -1,5 +1,5 @@
-#ifndef GENEPAIR_BASE_H
-#define GENEPAIR_BASE_H
+#ifndef PAIRWISE_BASE_H
+#define PAIRWISE_BASE_H
 #include <ace/core/AceCore.h>
 #include <ace/core/metadata.h>
 
@@ -7,7 +7,7 @@
 
 
 
-namespace GenePair
+namespace Pairwise
 {
    class Base : public EAbstractData
    {

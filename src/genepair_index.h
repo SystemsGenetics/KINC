@@ -1,10 +1,10 @@
-#ifndef GENEPAIR_INDEX_H
-#define GENEPAIR_INDEX_H
+#ifndef PAIRWISE_INDEX_H
+#define PAIRWISE_INDEX_H
 #include <ace/core/AceCore.h>
 
 
 
-namespace GenePair
+namespace Pairwise
 {
    class Index
    {

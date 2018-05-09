@@ -1,8 +1,8 @@
-#ifndef GENEPAIR_PEARSON_H
-#define GENEPAIR_PEARSON_H
+#ifndef PAIRWISE_PEARSON_H
+#define PAIRWISE_PEARSON_H
 #include "genepair_correlation.h"
 
-namespace GenePair
+namespace Pairwise
 {
    class Pearson : public Correlation
    {

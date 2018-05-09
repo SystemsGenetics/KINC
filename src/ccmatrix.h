@@ -4,7 +4,7 @@
 
 
 
-class CCMatrix : public QAbstractTableModel, public GenePair::Base
+class CCMatrix : public QAbstractTableModel, public Pairwise::Base
 {
    Q_OBJECT
 public:
