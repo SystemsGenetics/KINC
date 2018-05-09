@@ -31,7 +31,6 @@ EAbstractAnalytic::ArgumentType RMT::getArgumentData(int argument)
    {
    case InputData: return Type::DataIn;
    case LogFile: return Type::FileOut;
-   case FilterSize: return Type::Integer;
    default: return Type::Bool;
    }
 }
@@ -55,7 +54,6 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       {
       case InputData: return QString("input");
       case LogFile: return QString("log");
-      case FilterSize: return QString("filter");
       default: return QVariant();
       }
    case Role::Title:
@@ -64,7 +62,6 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       {
       case InputData: return tr("Input:");
       case LogFile: return tr("Log File:");
-      case FilterSize: return tr("Filter Size:");
       default: return QVariant();
       }
    case Role::WhatsThis:
@@ -74,7 +71,6 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case InputData: return tr("Input correlation matrix that will be used to output correlation"
                                 " above a threshold determined by Random Matrix Theory.");
       case LogFile: return tr("Output text file that logs all chi trials.");
-      case FilterSize: return tr("Sample size for low pass filter of chi results.");
       default: return QVariant();
       }
    case Role::DataType:
@@ -91,43 +87,8 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case LogFile: return tr("Text File %1").arg("(*.txt)");
       default: return QVariant();
       }
-   case Role::DefaultValue:
-      // see if this is filter size and return default else return nothing
-      switch (argument)
-      {
-      case FilterSize: return 10;
-      default: return QVariant();
-      }
-   case Role::Minimum:
-      // see if this is filter size and return minimum else return nothing
-      switch (argument)
-      {
-      case FilterSize: return 5;
-      default: return QVariant();
-      }
-   case Role::Maximum:
-      // see if this is filter size and return maximum else return nothing
-      switch (argument)
-      {
-      case FilterSize: return 200;
-      default: return QVariant();
-      }
    default:
       return QVariant();
-   }
-}
-
-
-
-
-
-
-void RMT::setArgument(int argument, QVariant value)
-{
-   // set filter size if this is correct argument
-   if ( argument == FilterSize )
-   {
-      _filterSize = value.toInt();
    }
 }
 
@@ -197,18 +158,20 @@ void RMT::runSerial()
    // initialize log text stream
    QTextStream stream(_logfile);
 
-   // initialize chi, threshold, and history of both
-   float chi {0.0};
-   float threshold {_initialThreshold};
-   QQueue<float> previousChi;
+   // initialize helper variables
+   float finalThreshold {0};
+   float finalChi {INFINITY};
+   float maxChi {-INFINITY};
+
+   float threshold {_thresholdStart};
 
    // initialize last percent, steps, and total steps
    int lastPercent {50};
    int steps {0};
-   int totalSteps = (_initialThreshold - _thresholdMinimum)/_thresholdStep;
+   int totalSteps = (_thresholdStart - _thresholdMinimum) / _thresholdStep;
 
-   // continue while chi is less than 200
-   while ( chi < 100.0 )
+   // continue while max chi is less than final threshold
+   while ( maxChi < _chiSquareThreshold2 )
    {
       // make sure interruption is not requested
       if ( isInterruptionRequested() )
@@ -221,7 +184,7 @@ void RMT::runSerial()
       QVector<double> pruneMatrix {computePruneMatrix(threshold,&size)};
 
       // use chi-square value of zero if matrix is empty
-      float newChi = 0;
+      float chi = 0;
 
       if ( size > 0 )
       {
@@ -241,29 +204,24 @@ void RMT::runSerial()
          }
 
          // compute chi-square value from NNSD of eigenvalues
-         newChi = computeChiSquare(&eigens);
+         chi = computeChiSquare(&eigens);
       }
 
-      // add new chi-square value to queue
-      previousChi.enqueue(newChi);
-
-      // check if queue has enough samples
-      if ( previousChi.size() > _filterSize )
+      // save the most recent chi-square value less than critical value
+      if ( chi < _chiSquareThreshold1 )
       {
-         // remove last chi in queue and get sum of all chi samples
-         previousChi.dequeue();
-         float sum {0};
-         for (const auto& chi : previousChi)
-         {
-            sum += chi;
-         }
+         finalChi = chi;
+         finalThreshold = threshold;
+      }
 
-         // divide the sum by total number of samples and set that to filtered chi
-         chi = sum/(float)_filterSize;
+      // save the largest chi-square value which occurs after finalChi
+      if ( finalChi < _chiSquareThreshold1 && chi > finalChi )
+      {
+         maxChi = chi;
       }
 
       // output to log file
-      stream << threshold << "\t" << previousChi.back() << "\t" << chi << "\t" << size << "\n";
+      stream << threshold << "\t" << size << "\t" << chi << "\n";
 
       // decrement threshold by step and make sure minimum is not reached
       threshold -= _thresholdStep;
@@ -289,8 +247,8 @@ void RMT::runSerial()
       ++steps;
    }
 
-   // write threshold where chi was first above 100
-   stream << threshold - _thresholdStep << "\n";
+   // write threshold where chi was first above final threshold
+   stream << finalThreshold << "\n";
 }
 
 
@@ -459,11 +417,11 @@ float RMT::computeChiSquare(QVector<double>* eigens)
    degenerate(eigens);
 
    // make sure new size of eigen vector is minimum size
-   if ( eigens->size() >= _minEigenVectorSize )
+   if ( eigens->size() >= _minEigenvalueSize )
    {
       // initialize chi test count and iterate through all paces
       int chiTestCount {0};
-      for (int pace = _minUnfoldingPace; pace < _maxUnfoldingPace ;++pace)
+      for (int pace = _minUnfoldingPace; pace <= _maxUnfoldingPace ;++pace)
       {
          // if ??? increment chi value with paced chi square value and increment test count
          if ( (eigens->size()/pace) >= 5 )
@@ -533,7 +491,7 @@ void RMT::degenerate(QVector<double>* eigens)
    for (auto& eigen : *eigens)
    {
       // if eigen value is less than minimum set it to zero
-      if ( eigen < _minimumEigenValue )
+      if ( fabs(eigen) < _minEigenvalue )
       {
          eigen = 0.0;
       }
