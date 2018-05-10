@@ -31,6 +31,11 @@ EAbstractAnalytic::ArgumentType RMT::getArgumentData(int argument)
    {
    case InputData: return Type::DataIn;
    case LogFile: return Type::FileOut;
+   case ThresholdStart: return Type::Double;
+   case ThresholdStep: return Type::Double;
+   case ThresholdStop: return Type::Double;
+   case MinUnfoldingPace: return Type::Integer;
+   case MaxUnfoldingPace: return Type::Integer;
    default: return Type::Bool;
    }
 }
@@ -57,6 +62,8 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case ThresholdStart: return QString("tstart");
       case ThresholdStep: return QString("tstep");
       case ThresholdStop: return QString("tstop");
+      case MinUnfoldingPace: return QString("minpace");
+      case MaxUnfoldingPace: return QString("maxpace");
       default: return QVariant();
       }
    case Role::Title:
@@ -68,6 +75,8 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case ThresholdStart: return tr("Threshold Start:");
       case ThresholdStep: return tr("Threshold Step:");
       case ThresholdStop: return tr("Threshold Stop:");
+      case MinUnfoldingPace: return tr("Minimum Unfolding Pace:");
+      case MaxUnfoldingPace: return tr("Maximum Unfolding Pace:");
       default: return QVariant();
       }
    case Role::WhatsThis:
@@ -79,6 +88,8 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case ThresholdStart: return tr("Starting threshold.");
       case ThresholdStep: return tr("Threshold step size.");
       case ThresholdStop: return tr("Stopping threshold.");
+      case MinUnfoldingPace: return tr("The minimum pace with which to perform unfolding.");
+      case MaxUnfoldingPace: return tr("The maximum pace with which to perform unfolding.");
       default: return QVariant();
       }
    case Role::DefaultValue:
@@ -89,6 +100,8 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case ThresholdStart: return 0.99;
       case ThresholdStep: return 0.001;
       case ThresholdStop: return 0.5;
+      case MinUnfoldingPace: return 10;
+      case MaxUnfoldingPace: return 40;
       default: return QVariant();
       }
    case Role::Minimum:
@@ -99,6 +112,8 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case ThresholdStart: return 0;
       case ThresholdStep: return 0;
       case ThresholdStop: return 0;
+      case MinUnfoldingPace: return 1;
+      case MaxUnfoldingPace: return 1;
       default: return QVariant();
       }
    case Role::Maximum:
@@ -109,6 +124,8 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case ThresholdStart: return 1;
       case ThresholdStep: return 1;
       case ThresholdStop: return 1;
+      case MinUnfoldingPace: return INT_MAX;
+      case MaxUnfoldingPace: return INT_MAX;
       default: return QVariant();
       }
    case Role::DataType:
@@ -148,6 +165,12 @@ void RMT::setArgument(int argument, QVariant value)
       break;
    case ThresholdStop:
       _thresholdStop = value.toDouble();
+      break;
+   case MinUnfoldingPace:
+      _minUnfoldingPace = value.toInt();
+      break;
+   case MaxUnfoldingPace:
+      _maxUnfoldingPace = value.toInt();
       break;
    }
 }
@@ -206,6 +229,15 @@ bool RMT::initialize()
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
       e.setDetails(QObject::tr("Starting threshold must be greater than stopping threshold."));
+      throw e;
+   }
+
+   // make sure pace arguments are valid
+   if ( _minUnfoldingPace >= _maxUnfoldingPace )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(QObject::tr("Argument Error"));
+      e.setDetails(QObject::tr("Minimum unfolding pace must be less than maximum unfolding pace."));
       throw e;
    }
 

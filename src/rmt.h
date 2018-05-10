@@ -18,6 +18,8 @@ public:
       ,ThresholdStart
       ,ThresholdStep
       ,ThresholdStop
+      ,MinUnfoldingPace
+      ,MaxUnfoldingPace
       ,Total
    };
 
