@@ -309,7 +309,7 @@ void RMT::runSerial()
          }
 
          // compute chi-square value from NNSD of eigenvalues
-         chi = computeChiSquare(&eigens);
+         chi = computeChiSquare(eigens);
 
          qInfo("chi-square: %g", chi);
       }
@@ -512,15 +512,15 @@ QVector<float> RMT::computeEigenvalues(QVector<float>* pruneMatrix, int size)
 
 
 
-float RMT::computeChiSquare(QVector<float>* eigens)
+float RMT::computeChiSquare(const QVector<float>& eigens)
 {
-   // remove duplicate eigenvalues
-   degenerate(eigens);
+   // compute unique eigenvalues
+   QVector<float> unique {degenerate(eigens)};
 
-   qInfo("unique eigenvalues: %d", eigens->size());
+   qInfo("unique eigenvalues: %d", unique.size());
 
    // make sure there are enough unique eigenvalues
-   if ( eigens->size() < _minEigenvalueSize )
+   if ( unique.size() < _minEigenvalueSize )
    {
       return -1;
    }
@@ -532,12 +532,12 @@ float RMT::computeChiSquare(QVector<float>* eigens)
    for ( int pace = _minUnfoldingPace; pace <= _maxUnfoldingPace; ++pace )
    {
       // perform test only if there are enough eigenvalues for pace
-      if ( eigens->size() / pace < 5 )
+      if ( unique.size() / pace < 5 )
       {
          break;
       }
 
-      chi += computePaceChiSquare(*eigens, pace);
+      chi += computePaceChiSquare(unique, pace);
       ++chiTestCount;
    }
 
@@ -596,19 +596,20 @@ float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
 
 
 
-void RMT::degenerate(QVector<float>* eigens)
+QVector<float> RMT::degenerate(const QVector<float>& eigens)
 {
    const float EPSILON {1e-6};
+   QVector<float> unique;
 
-   // remove duplicate eigenvalues
-   for ( int i = 0; i + 1 < eigens->size(); ++i )
+   for ( int i = 1; i < eigens.size(); ++i )
    {
-      if ( fabs(eigens->at(i) - eigens->at(i + 1)) < EPSILON )
+      if ( unique.isEmpty() || fabs(eigens.at(i) - unique.last()) > EPSILON )
       {
-         eigens->removeAt(i);
-         --i;
+         unique.append(eigens.at(i));
       }
    }
+
+   return unique;
 }
 
 
