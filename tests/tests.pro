@@ -8,7 +8,7 @@ QT += core testlib
 
 # ACE and other external libraries
 unix {
-	LIBS += -lOpenCL -L/usr/local/lib64/ -L$$(HOME)/software/lib -lacecore -lgsl -llapacke
+	LIBS += -lOpenCL -L/usr/local/lib64/ -L$$(HOME)/software/lib -lacecore -lgsl -lgslcblas -llapack -llapacke
 	INCLUDEPATH += $$(HOME)'/software/include'
 }
 
