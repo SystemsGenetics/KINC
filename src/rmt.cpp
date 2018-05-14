@@ -34,6 +34,7 @@ EAbstractAnalytic::ArgumentType RMT::getArgumentData(int argument)
    case ThresholdStop: return Type::Double;
    case MinUnfoldingPace: return Type::Integer;
    case MaxUnfoldingPace: return Type::Integer;
+   case HistogramBinSize: return Type::Integer;
    default: return Type::Bool;
    }
 }
@@ -62,6 +63,7 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case ThresholdStop: return QString("tstop");
       case MinUnfoldingPace: return QString("minpace");
       case MaxUnfoldingPace: return QString("maxpace");
+      case HistogramBinSize: return QString("bins");
       default: return QVariant();
       }
    case Role::Title:
@@ -75,6 +77,7 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case ThresholdStop: return tr("Threshold Stop:");
       case MinUnfoldingPace: return tr("Minimum Unfolding Pace:");
       case MaxUnfoldingPace: return tr("Maximum Unfolding Pace:");
+      case HistogramBinSize: return tr("Histogram Bin Size:");
       default: return QVariant();
       }
    case Role::WhatsThis:
@@ -88,6 +91,7 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case ThresholdStop: return tr("Stopping threshold.");
       case MinUnfoldingPace: return tr("The minimum pace with which to perform unfolding.");
       case MaxUnfoldingPace: return tr("The maximum pace with which to perform unfolding.");
+      case HistogramBinSize: return tr("The number of bins for the nearest-neighbor spacing histogram.");
       default: return QVariant();
       }
    case Role::DefaultValue:
@@ -100,6 +104,7 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case ThresholdStop: return 0.5;
       case MinUnfoldingPace: return 10;
       case MaxUnfoldingPace: return 40;
+      case HistogramBinSize: return 60;
       default: return QVariant();
       }
    case Role::Minimum:
@@ -112,6 +117,7 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case ThresholdStop: return 0;
       case MinUnfoldingPace: return 1;
       case MaxUnfoldingPace: return 1;
+      case HistogramBinSize: return 1;
       default: return QVariant();
       }
    case Role::Maximum:
@@ -124,6 +130,7 @@ QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
       case ThresholdStop: return 1;
       case MinUnfoldingPace: return INT_MAX;
       case MaxUnfoldingPace: return INT_MAX;
+      case HistogramBinSize: return INT_MAX;
       default: return QVariant();
       }
    case Role::DataType:
@@ -169,6 +176,9 @@ void RMT::setArgument(int argument, QVariant value)
       break;
    case MaxUnfoldingPace:
       _maxUnfoldingPace = value.toInt();
+      break;
+   case HistogramBinSize:
+      _histogramBinSize = value.toInt();
       break;
    }
 }
@@ -561,13 +571,14 @@ float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
    // compute nearest-neighbor spacing distribution
    const float histogramMin {0};
    const float histogramMax {3};
-   QVector<float> histogram((int)((histogramMax - histogramMin) / _chiSquareBinSize));
+   const float histogramBinWidth {(histogramMax - histogramMin) / _histogramBinSize};
+   QVector<float> histogram(_histogramBinSize);
 
    for ( auto& spacing : spacings )
    {
       if ( histogramMin <= spacing && spacing < histogramMax )
       {
-         ++histogram[(spacing - histogramMin) / _chiSquareBinSize];
+         ++histogram[(spacing - histogramMin) / histogramBinWidth];
       }
    }
 
@@ -580,7 +591,7 @@ float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
       float O_i {histogram[i]};
 
       // compute E_i, the expected value of Poisson distribution for bin i
-      float E_i {(exp(-i * _chiSquareBinSize) - exp(-(i + 1) * _chiSquareBinSize)) * eigens.size()};
+      float E_i {(exp(-i * histogramBinWidth) - exp(-(i + 1) * histogramBinWidth)) * eigens.size()};
 
       // update chi-square value based on difference between O_i and E_i
       chi += (O_i - E_i) * (O_i - E_i) / E_i;

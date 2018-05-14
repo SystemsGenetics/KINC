@@ -20,6 +20,7 @@ public:
       ,ThresholdStop
       ,MinUnfoldingPace
       ,MaxUnfoldingPace
+      ,HistogramBinSize
       ,Total
    };
 
@@ -52,7 +53,7 @@ private:
    int _minEigenvalueSize {50};
    int _minUnfoldingPace {10};
    int _maxUnfoldingPace {40};
-   float _chiSquareBinSize {0.05};
+   int _histogramBinSize {60};
    int _maxClusterSize {5};
    QVector<float> _maxCorrelations;
 };
