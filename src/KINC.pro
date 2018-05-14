@@ -22,7 +22,7 @@ equals(GUI, 1) {
 
 # ACE and other external libraries
 unix {
-   LIBS += -lOpenCL -L/usr/local/lib64/ -L$$(HOME)/software/lib -lacecore -lgsl -lgslcblas
+   LIBS += -lOpenCL -L/usr/local/lib64/ -L$$(HOME)/software/lib -lacecore -lgsl -llapacke
    INCLUDEPATH += $$(HOME)'/software/include'
 
    equals(GUI, 1) {

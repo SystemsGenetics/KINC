@@ -35,8 +35,8 @@ public:
 
 private:
    void computeGeneThresholds();
-   QVector<double> computePruneMatrix(float threshold, int* size);
-   QVector<float> computeEigenvalues(QVector<double>* pruneMatrix, int size);
+   QVector<float> computePruneMatrix(float threshold, int* size);
+   QVector<float> computeEigenvalues(QVector<float>* pruneMatrix, int size);
    float computeChiSquare(QVector<float>* eigens);
    float computePaceChiSquare(const QVector<float>& eigens, int pace);
    void degenerate(QVector<float>* eigens);

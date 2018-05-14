@@ -2,9 +2,7 @@
 #include <random>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_eigen.h>
-#include <gsl/gsl_matrix.h>
+#include <lapacke.h>
 #include <ace/core/metadata.h>
 
 #include "rmt.h"
@@ -279,9 +277,14 @@ void RMT::runSerial()
          return;
       }
 
+      qInfo("\n");
+      qInfo("threshold: %g", threshold);
+
       // compute pruned matrix based on threshold
       int size;
-      QVector<double> pruneMatrix {computePruneMatrix(threshold, &size)};
+      QVector<float> pruneMatrix {computePruneMatrix(threshold, &size)};
+
+      qInfo("prune matrix: %d", size);
 
       // make sure that pruned matrix is not empty
       float chi = -1;
@@ -297,6 +300,8 @@ void RMT::runSerial()
          // compute eigenvalues of pruned matrix
          QVector<float> eigens {computeEigenvalues(&pruneMatrix, size)};
 
+         qInfo("eigenvalues: %d", eigens.size());
+
          // make sure interruption is not requested
          if ( isInterruptionRequested() )
          {
@@ -305,6 +310,8 @@ void RMT::runSerial()
 
          // compute chi-square value from NNSD of eigenvalues
          chi = computeChiSquare(&eigens);
+
+         qInfo("chi-square: %g", chi);
       }
 
       // make sure that chi-square test succeeded
@@ -422,7 +429,7 @@ void RMT::computeGeneThresholds()
 
 
 
-QVector<double> RMT::computePruneMatrix(float threshold, int* size)
+QVector<float> RMT::computePruneMatrix(float threshold, int* size)
 {
    // generate vector of cluster indexes that have a correlation above threshold
    int numClusters = 0;
@@ -438,7 +445,7 @@ QVector<double> RMT::computePruneMatrix(float threshold, int* size)
    }
 
    // allocate new pruned matrix with cluster size
-   QVector<double> pruneMatrix(numClusters * numClusters);
+   QVector<float> pruneMatrix(numClusters * numClusters);
 
    // initialize diagonal
    for ( int i = 0; i < numClusters; ++i )
@@ -465,6 +472,7 @@ QVector<double> RMT::computePruneMatrix(float threshold, int* size)
             int j = indices[pair.index().getY() * _maxClusterSize + cluster];
 
             pruneMatrix[i * numClusters + j] = correlation;
+            pruneMatrix[j * numClusters + i] = correlation;
          }
       }
    }
@@ -479,31 +487,23 @@ QVector<double> RMT::computePruneMatrix(float threshold, int* size)
 
 
 
-QVector<float> RMT::computeEigenvalues(QVector<double>* pruneMatrix, int size)
+QVector<float> RMT::computeEigenvalues(QVector<float>* pruneMatrix, int size)
 {
-   // using declarations for gsl resources
-   using gsl_vector_ptr = unique_ptr<gsl_vector, decltype(&gsl_vector_free)>;
-   using gsl_matrix_ptr = unique_ptr<gsl_matrix, decltype(&gsl_matrix_free)>;
-   using gsl_eigen_symmv_workspace_ptr = unique_ptr<gsl_eigen_symmv_workspace, decltype(&gsl_eigen_symmv_free)>;
-
-   // initialize gsl eigen resources
-   gsl_matrix_view view = gsl_matrix_view_array(pruneMatrix->data(), size, size);
-   gsl_vector_ptr eval (gsl_vector_alloc(size), &gsl_vector_free);
-   gsl_matrix_ptr evec (gsl_matrix_alloc(size, size), &gsl_matrix_free);
-   gsl_eigen_symmv_workspace_ptr work (gsl_eigen_symmv_alloc(size), &gsl_eigen_symmv_free);
-
-   // compute eigenvalues for the pruned matrix
-   gsl_eigen_symmv(&view.matrix, eval.get(), evec.get(), work.get());
-   gsl_eigen_symmv_sort(eval.get(), evec.get(), GSL_EIGEN_SORT_ABS_ASC);
-
-   // copy eigenvalues from gsl vector
    QVector<float> eigens(size);
-   for (int i = 0; i < size; ++i )
+   QVector<float> work(5 * size);
+
+   int info = LAPACKE_ssyev_work(
+      LAPACK_COL_MAJOR, 'N', 'U',
+      size, pruneMatrix->data(), size,
+      eigens.data(),
+      work.data(), work.size()
+   );
+
+   if ( info != 0 )
    {
-      eigens[i] = gsl_vector_get(eval.get(), i);
+      qInfo("warning: ssyev returned %d", info);
    }
 
-   // return eigenvalues
    return eigens;
 }
 
@@ -516,6 +516,8 @@ float RMT::computeChiSquare(QVector<float>* eigens)
 {
    // remove duplicate eigenvalues
    degenerate(eigens);
+
+   qInfo("unique eigenvalues: %d", eigens->size());
 
    // make sure there are enough unique eigenvalues
    if ( eigens->size() < _minEigenvalueSize )
@@ -532,7 +534,7 @@ float RMT::computeChiSquare(QVector<float>* eigens)
       // perform test only if there are enough eigenvalues for pace
       if ( eigens->size() / pace < 5 )
       {
-         continue;
+         break;
       }
 
       chi += computePaceChiSquare(*eigens, pace);
@@ -584,6 +586,8 @@ float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
       chi += (O_i - E_i) * (O_i - E_i) / E_i;
    }
 
+   qInfo("pace: %d, chi: %g", pace, chi);
+
    return chi;
 }
 
@@ -595,18 +599,6 @@ float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
 void RMT::degenerate(QVector<float>* eigens)
 {
    const float EPSILON {1e-6};
-
-   // set extremely small eigenvalues to zero
-   for ( auto& eigen : *eigens )
-   {
-      if ( fabs(eigen) < EPSILON )
-      {
-         eigen = 0.0;
-      }
-   }
-
-   // sort all eigenvalues
-   sort(eigens->begin(), eigens->end());
 
    // remove duplicate eigenvalues
    for ( int i = 0; i + 1 < eigens->size(); ++i )
