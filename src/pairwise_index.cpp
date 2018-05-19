@@ -73,7 +73,7 @@ qint64 Index::indent(qint8 cluster) const
    }
 
    // compute indent with given cluster and return it
-   qint64 index {_x * (_x - 1) / 2 + _y};
+   qint64 index {(qint64)_x * (_x - 1) / 2 + _y};
    return index * MAX_CLUSTER_SIZE + cluster;
 }
 
