@@ -17,11 +17,7 @@ void CorrelationMatrix::Pair::addCluster(int amount) const
    // keep adding a new list of floats for given amount
    while ( amount-- > 0 )
    {
-      _correlations.push_back({});
-      for (int i = 0; i < _cMatrix->_correlationSize ;++i)
-      {
-         _correlations.back().push_back(NAN);
-      }
+      _correlations.append(QVector<float>(_cMatrix->_correlationSize, NAN));
    }
 }
 
@@ -86,16 +82,15 @@ void CorrelationMatrix::Pair::readCluster(const EDataStream& stream, int cluster
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _correlations.size() )
    {
-      // clear cluster and reserve for given size
-      _correlations[cluster].clear();
-      _correlations[cluster].reserve(_cMatrix->_correlationSize);
+      // resize cluster to given size
+      _correlations[cluster].resize(_cMatrix->_correlationSize);
 
       // read in number of correlations per cluster and add to list
       for (int i = 0; i < _cMatrix->_correlationSize ;++i)
       {
          float value;
          stream >> value;
-         _correlations[cluster].push_back(value);
+         _correlations[cluster][i] = value;
       }
    }
 }

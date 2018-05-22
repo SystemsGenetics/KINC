@@ -15,12 +15,7 @@ void CCMatrix::Pair::addCluster(int amount) const
    // keep adding a new list of sample masks for given amount
    while ( amount-- > 0 )
    {
-      _sampleMasks.push_back({});
-      _sampleMasks.back().reserve(_cMatrix->_sampleSize);
-      for (int i = 0; i < _cMatrix->_sampleSize ;++i)
-      {
-         _sampleMasks.back().push_back(0);
-      }
+      _sampleMasks.append(QVector<qint8>(_cMatrix->_sampleSize, 0));
    }
 }
 
@@ -39,11 +34,11 @@ QString CCMatrix::Pair::toString() const
 
    // initialize list of strings and iterate through all clusters
    QStringList ret;
-   for (const auto& cluster : _sampleMasks)
+   for (const auto& sampleMask : _sampleMasks)
    {
-      // initialize list of strings for cluster and iterate through each sample
+      // initialize list of strings for sample mask and iterate through each sample
       QString clusterString("(");
-      for (const auto& sample : cluster)
+      for (const auto& sample : sampleMask)
       {
          // add new sample token as hexadecimal allowing 16 different possible values
          switch (sample)
@@ -117,16 +112,15 @@ void CCMatrix::Pair::readCluster(const EDataStream &stream, int cluster) const
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _sampleMasks.size() )
    {
-      // clear cluster and reserve for given size
-      _sampleMasks[cluster].clear();
-      _sampleMasks[cluster].reserve(_cMatrix->_sampleSize);
+      // resize cluster to given size
+      _sampleMasks[cluster].resize(_cMatrix->_sampleSize);
 
       // read in number of samples per cluster and add to list
       for (int i = 0; i < _cMatrix->_sampleSize ;++i)
       {
          qint8 value;
          stream >> value;
-         _sampleMasks[cluster].push_back(value);
+         _sampleMasks[cluster][i] = value;
       }
    }
 }
@@ -208,7 +202,7 @@ void CCMatrix::initialize(const EMetadata &geneNames, const EMetadata &sampleNam
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Correlation names metadata is not an array or empty."));
+      e.setDetails(tr("Sample names metadata is not an array or empty."));
       throw e;
    }
 

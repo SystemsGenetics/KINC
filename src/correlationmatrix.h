@@ -31,7 +31,7 @@ public:
    private:
       virtual void writeCluster(EDataStream& stream, int cluster);
       virtual void readCluster(const EDataStream& stream, int cluster) const;
-      mutable QList<QList<float>> _correlations;
+      mutable QVector<QVector<float>> _correlations;
       const CorrelationMatrix* _cMatrix;
    };
    virtual QAbstractTableModel* getModel() override final { return this; }

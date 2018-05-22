@@ -30,7 +30,7 @@ public:
    private:
       virtual void writeCluster(EDataStream& stream, int cluster);
       virtual void readCluster(const EDataStream& stream, int cluster) const;
-      mutable QList<QList<qint8>> _sampleMasks;
+      mutable QVector<QVector<qint8>> _sampleMasks;
       const CCMatrix* _cMatrix;
    };
    virtual QAbstractTableModel* getModel() override final { return this; }
