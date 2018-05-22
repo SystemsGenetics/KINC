@@ -1,4 +1,4 @@
-#include "pairwise_base.h"
+#include "pairwise_matrix.h"
 
 
 
@@ -9,7 +9,7 @@ using namespace Pairwise;
 
 
 
-void Base::readData()
+void Matrix::readData()
 {
    // seek to beginning of data object
    if ( !seek(0) )
@@ -39,7 +39,7 @@ void Base::readData()
 
 
 
-void Base::newData()
+void Matrix::newData()
 {
    // seek to beginning of data and make sure it worked
    if ( !seek(0) )
@@ -69,7 +69,7 @@ void Base::newData()
 
 
 
-const EMetadata& Base::geneNames() const
+const EMetadata& Matrix::geneNames() const
 {
    // get metadata root and make sure genes key exist
    const EMetadata::Map* map {meta().toObject()};
@@ -90,7 +90,7 @@ const EMetadata& Base::geneNames() const
 
 
 
-void Base::initialize(const EMetadata& geneNames, int dataSize, int offset)
+void Matrix::initialize(const EMetadata& geneNames, int dataSize, int offset)
 {
    // make sure gene names metadata is an array and is not empty
    if ( !geneNames.isArray() || geneNames.toArray()->isEmpty() )
@@ -105,7 +105,7 @@ void Base::initialize(const EMetadata& geneNames, int dataSize, int offset)
    if ( dataSize < 1 || offset < 0 )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Gene Pair Base Initialization Error"));
+      e.setTitle(QObject::tr("Pairwise Matrix Initialization Error"));
       e.setDetails(QObject::tr("An integer argument given is less than the minimum."));
       throw e;
    }
@@ -128,13 +128,13 @@ void Base::initialize(const EMetadata& geneNames, int dataSize, int offset)
 
 
 
-void Base::write(Index index, qint8 cluster)
+void Matrix::write(Index index, qint8 cluster)
 {
    // make sure this is new data object that can be written to
    if ( _lastWrite == -2 )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Gene Pair Base Logical Error"));
+      e.setTitle(QObject::tr("Pairwise Matrix Logical Error"));
       e.setDetails(QObject::tr("Attempting to write data to uninitialized object."));
       throw e;
    }
@@ -144,7 +144,7 @@ void Base::write(Index index, qint8 cluster)
    if ( index.indent(cluster) <= _lastWrite )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Gene Pair Base Logical Error"));
+      e.setTitle(QObject::tr("Pairwise Matrix Logical Error"));
       e.setDetails(QObject::tr("Attempting to write indent %1 when last written is %2.")
                    .arg(index.indent(0)).arg(_lastWrite));
       throw e;
@@ -179,7 +179,7 @@ void Base::write(Index index, qint8 cluster)
 
 
 
-Index Base::getPair(qint64 index, qint8* cluster) const
+Index Matrix::getPair(qint64 index, qint8* cluster) const
 {
    // seek to gene pair position and read item header data
    seekPair(index);
@@ -205,7 +205,7 @@ Index Base::getPair(qint64 index, qint8* cluster) const
 
 
 
-qint64 Base::findPair(qint64 indent, qint64 first, qint64 last) const
+qint64 Matrix::findPair(qint64 indent, qint64 first, qint64 last) const
 {
    // calculate the midway pivot point and seek to it
    qint64 pivot {first + (last - first)/2};
@@ -269,7 +269,7 @@ qint64 Base::findPair(qint64 indent, qint64 first, qint64 last) const
 
 
 
-void Base::seekPair(qint64 index) const
+void Matrix::seekPair(qint64 index) const
 {
    // make sure index is within range
    if ( index < 0 || index >= _clusterSize )
@@ -296,13 +296,13 @@ void Base::seekPair(qint64 index) const
 
 
 
-void Base::Pair::write(Index index)
+void Matrix::Pair::write(Index index)
 {
    // make sure cluster size of gene pair does not exceed max
    if ( clusterSize() > Index::MAX_CLUSTER_SIZE )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Gene Pair Logical Error"));
+      e.setTitle(QObject::tr("Pairwise Logical Error"));
       e.setDetails(QObject::tr("Cannot write gene pair with cluster size of %1 exceeding the max of"
                                " %2.").arg(clusterSize()).arg(Index::MAX_CLUSTER_SIZE));
       throw e;
@@ -324,7 +324,7 @@ void Base::Pair::write(Index index)
 
 
 
-void Base::Pair::read(Index index) const
+void Matrix::Pair::read(Index index) const
 {
    // clear any existing clusters
    clearClusters();
@@ -345,7 +345,7 @@ void Base::Pair::read(Index index) const
 
 
 
-void Base::Pair::readNext() const
+void Matrix::Pair::readNext() const
 {
    // make sure read next index is not already at end of data object
    if ( _rawIndex < _cMatrix->_clusterSize )

@@ -36,7 +36,7 @@ SOURCES += \
 	../src/similarity.cpp \
 	../src/rmt.cpp \
 	../src/pairwise_index.cpp \
-	../src/pairwise_base.cpp \
+	../src/pairwise_matrix.cpp \
 	../src/pairwise_clustering.cpp \
 	../src/pairwise_gmm.cpp \
 	../src/pairwise_kmeans.cpp \
@@ -69,7 +69,7 @@ HEADERS += \
 	../src/similarity.h \
 	../src/rmt.h \
 	../src/pairwise_index.h \
-	../src/pairwise_base.h \
+	../src/pairwise_matrix.h \
 	../src/pairwise_clustering.h \
 	../src/pairwise_gmm.h \
 	../src/pairwise_kmeans.h \

@@ -1,22 +1,22 @@
 #ifndef CCMATRIX_H
 #define CCMATRIX_H
-#include "pairwise_base.h"
+#include "pairwise_matrix.h"
 
 
 
-class CCMatrix : public QAbstractTableModel, public Pairwise::Base
+class CCMatrix : public QAbstractTableModel, public Pairwise::Matrix
 {
    Q_OBJECT
 public:
-   class Pair : public Base::Pair
+   class Pair : public Matrix::Pair
    {
    public:
       Pair(CCMatrix* matrix):
-         Base::Pair(matrix),
+         Matrix::Pair(matrix),
          _cMatrix(matrix)
          {}
       Pair(const CCMatrix* matrix):
-         Base::Pair(matrix),
+         Matrix::Pair(matrix),
          _cMatrix(matrix)
          {}
       Pair() {}

@@ -218,7 +218,7 @@ void CCMatrix::initialize(const EMetadata &geneNames, const EMetadata &sampleNam
 
    // save sample size and initialize base class
    _sampleSize = sampleNames.toArray()->size();
-   Base::initialize(geneNames,_sampleSize,DATA_OFFSET);
+   Matrix::initialize(geneNames,_sampleSize,DATA_OFFSET);
 }
 
 

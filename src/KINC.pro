@@ -67,7 +67,7 @@ SOURCES += \
     similarity.cpp \
     rmt.cpp \
     pairwise_index.cpp \
-    pairwise_base.cpp \
+    pairwise_matrix.cpp \
     pairwise_clustering.cpp \
     pairwise_gmm.cpp \
     pairwise_kmeans.cpp \
@@ -90,7 +90,7 @@ HEADERS += \
     similarity.h \
     rmt.h \
     pairwise_index.h \
-    pairwise_base.h \
+    pairwise_matrix.h \
     pairwise_clustering.h \
     pairwise_gmm.h \
     pairwise_kmeans.h \

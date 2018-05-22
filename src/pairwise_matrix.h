@@ -9,18 +9,18 @@
 
 namespace Pairwise
 {
-   class Base : public EAbstractData
+   class Matrix : public EAbstractData
    {
    public:
       class Pair
       {
       public:
-         Pair(Base* matrix):
+         Pair(Matrix* matrix):
             _matrix(matrix),
             _cMatrix(matrix),
             _index({matrix->_geneSize,0})
             {}
-         Pair(const Base* matrix):
+         Pair(const Matrix* matrix):
             _cMatrix(matrix),
             _index({matrix->_geneSize,0})
             {}
@@ -43,8 +43,8 @@ namespace Pairwise
          virtual void writeCluster(EDataStream& stream, int cluster) = 0;
          virtual void readCluster(const EDataStream& stream, int cluster) const = 0;
       private:
-         Base* _matrix {nullptr};
-         const Base* _cMatrix;
+         Matrix* _matrix {nullptr};
+         const Matrix* _cMatrix;
          mutable qint64 _rawIndex {0};
          mutable Index _index;
       };

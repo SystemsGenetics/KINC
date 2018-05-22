@@ -187,7 +187,7 @@ void CorrelationMatrix::initialize(const EMetadata &geneNames, const EMetadata &
 
    // save correlation size and initialize base class
    _correlationSize = correlationNames.toArray()->size();
-   Base::initialize(geneNames,sizeof(float)*_correlationSize,DATA_OFFSET);
+   Matrix::initialize(geneNames,sizeof(float)*_correlationSize,DATA_OFFSET);
 }
 
 

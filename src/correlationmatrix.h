@@ -1,22 +1,22 @@
 #ifndef CORRELATIONMATRIX_H
 #define CORRELATIONMATRIX_H
-#include "pairwise_base.h"
+#include "pairwise_matrix.h"
 
 
 
-class CorrelationMatrix : public QAbstractTableModel, public Pairwise::Base
+class CorrelationMatrix : public QAbstractTableModel, public Pairwise::Matrix
 {
    Q_OBJECT
 public:
-   class Pair : public Base::Pair
+   class Pair : public Matrix::Pair
    {
    public:
       Pair(CorrelationMatrix* matrix):
-         Base::Pair(matrix),
+         Matrix::Pair(matrix),
          _cMatrix(matrix)
          {}
       Pair(const CorrelationMatrix* matrix):
-         Base::Pair(matrix),
+         Matrix::Pair(matrix),
          _cMatrix(matrix)
          {}
       Pair() {}

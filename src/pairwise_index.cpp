@@ -18,7 +18,7 @@ Index::Index(qint32 x, qint32 y):
    if ( x < 1 || y < 0 || x <= y )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Gene Pair Index Error"));
+      e.setTitle(QObject::tr("Pairwise Index Error"));
       e.setDetails(QObject::tr("Cannot initialize pairwise index (%1, %2).").arg(x).arg(y));
       throw e;
    }
@@ -37,7 +37,7 @@ Index::Index(qint64 index):
    if ( index < 0 )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Gene Pair Index Error"));
+      e.setTitle(QObject::tr("Pairwise Index Error"));
       e.setDetails(QObject::tr("Cannot initialize pairwise index from %1.").arg(index));
       throw e;
    }
@@ -67,7 +67,7 @@ qint64 Index::indent(qint8 cluster) const
    if ( cluster < 0 || cluster >= MAX_CLUSTER_SIZE )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Gene Pair Index Error"));
+      e.setTitle(QObject::tr("Pairwise Index Error"));
       e.setDetails(QObject::tr("Cluster %1 is outside limits.").arg(cluster));
       throw e;
    }
