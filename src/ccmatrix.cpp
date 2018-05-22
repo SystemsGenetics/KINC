@@ -94,10 +94,19 @@ void CCMatrix::Pair::writeCluster(EDataStream &stream, int cluster)
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _sampleMasks.size() )
    {
-      // iterate through each correlation and write to object
-      for (const auto& sample : _sampleMasks.at(cluster))
+      // write each sample to output stream
+      auto& samples {_sampleMasks.at(cluster)};
+
+      for ( int i = 0; i < samples.size(); i += 2 )
       {
-         stream << sample;
+         qint8 value {(qint8)(samples[i] & 0x0F)};
+
+         if ( i + 1 < samples.size() )
+         {
+            value |= (samples[i + 1] << 4);
+         }
+
+         stream << value;
       }
    }
 }
@@ -112,15 +121,20 @@ void CCMatrix::Pair::readCluster(const EDataStream &stream, int cluster) const
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _sampleMasks.size() )
    {
-      // resize cluster to given size
-      _sampleMasks[cluster].resize(_cMatrix->_sampleSize);
+      // read each sample from input stream
+      auto& samples {_sampleMasks[cluster]};
 
-      // read in number of samples per cluster and add to list
-      for (int i = 0; i < _cMatrix->_sampleSize ;++i)
+      for ( int i = 0; i < samples.size(); i += 2 )
       {
          qint8 value;
          stream >> value;
-         _sampleMasks[cluster][i] = value;
+
+         samples[i] = value & 0x0F;
+
+         if ( i + 1 < samples.size() )
+         {
+            samples[i + 1] = (value >> 4) & 0x0F;
+         }
       }
    }
 }
@@ -212,7 +226,7 @@ void CCMatrix::initialize(const EMetadata &geneNames, const EMetadata &sampleNam
 
    // save sample size and initialize base class
    _sampleSize = sampleNames.toArray()->size();
-   Matrix::initialize(geneNames,_sampleSize,DATA_OFFSET);
+   Matrix::initialize(geneNames, (_sampleSize + 1) / 2, DATA_OFFSET);
 }
 
 

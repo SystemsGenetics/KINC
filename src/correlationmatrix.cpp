@@ -64,7 +64,7 @@ void CorrelationMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _correlations.size() )
    {
-      // iterate through each correlation and write to object
+      // write correlations per cluster to output stream
       for (const auto& correlation : _correlations.at(cluster))
       {
          stream << correlation;
@@ -82,10 +82,7 @@ void CorrelationMatrix::Pair::readCluster(const EDataStream& stream, int cluster
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _correlations.size() )
    {
-      // resize cluster to given size
-      _correlations[cluster].resize(_cMatrix->_correlationSize);
-
-      // read in number of correlations per cluster and add to list
+      // read correlations per cluster from input stream
       for (int i = 0; i < _cMatrix->_correlationSize ;++i)
       {
          float value;
