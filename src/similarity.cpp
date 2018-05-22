@@ -178,7 +178,7 @@ QVariant Similarity::getArgumentData(int argument, Role role)
       // return nothing
       switch (argument)
       {
-      case ClusteringArg: return tr(GMM);
+      case ClusteringArg: return tr(None);
       case CorrelationArg: return tr(Pearson);
       case MinExpression: return -INFINITY;
       case MinSamples: return 30;

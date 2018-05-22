@@ -9,6 +9,7 @@
 #include "pairwise_clustering.h"
 #include "pairwise_correlation.h"
 #include "pairwise_gmm.h"
+#include "pairwise_pearson.h"
 
 
 
@@ -204,10 +205,10 @@ private:
    ExpressionMatrix* _input {nullptr};
    CCMatrix* _ccm {nullptr};
    CorrelationMatrix* _cmx {nullptr};
-   ClusteringMethod _clusMethod {ClusteringMethod::GMM};
+   ClusteringMethod _clusMethod {ClusteringMethod::None};
    CorrelationMethod _corrMethod {CorrelationMethod::Pearson};
    Pairwise::Clustering* _clusModel {nullptr};
-   Pairwise::Correlation* _corrModel {nullptr};
+   Pairwise::Correlation* _corrModel {new Pairwise::Pearson()};
    int _minSamples {30};
    float _minExpression {-INFINITY};
    qint8 _minClusters {1};
