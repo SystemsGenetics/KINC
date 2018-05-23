@@ -1,7 +1,7 @@
 #ifdef ACE_GUI
-   #include <ace/gui/Application.h>
+   #include <ace/gui/eapplication.h>
 #else
-   #include <ace/console/Application.h>
+   #include <ace/console/eapplication.h>
 #endif
 
 #include "analyticfactory.h"
@@ -13,12 +13,18 @@ using namespace std;
 
 
 
+
+
+
 int main(int argc, char *argv[])
 {
-   unique_ptr<EAbstractAnalyticFactory> analyticFactory(new AnalyticFactory);
-   unique_ptr<EAbstractDataFactory> dataFactory(new DataFactory);
-   EAbstractAnalyticFactory::setInstance(move(analyticFactory));
-   EAbstractDataFactory::setInstance(move(dataFactory));
-   EApplication a(argc,argv,"KINC","kinc");
-   return a.exec();
+   EApplication app(
+      "", "kinc",
+      3, 1, 2,
+      unique_ptr<DataFactory>(new DataFactory),
+      unique_ptr<AnalyticFactory>(new AnalyticFactory),
+      argc, argv
+   );
+
+   return app.exec();
 }

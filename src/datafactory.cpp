@@ -1,7 +1,7 @@
 #include "datafactory.h"
 #include "expressionmatrix.h"
-#include "ccmatrix.h"
-#include "correlationmatrix.h"
+// #include "ccmatrix.h"
+// #include "correlationmatrix.h"
 
 
 
@@ -12,14 +12,23 @@ using namespace std;
 
 
 
-QString DataFactory::getName(quint16 type)
+quint16 DataFactory::size() const
 {
-   // figure out what data type is being queried and return name
+   return Total;
+}
+
+
+
+
+
+
+QString DataFactory::name(quint16 type) const
+{
    switch (type)
    {
-   case ExpressionMatrixType: return QObject::tr("Expression Matrix");
-   case CCMatrixType: return QObject::tr("Cluster Matrix");
-   case CorrelationMatrixType: return QObject::tr("Correlation Matrix");
+   case ExpressionMatrixType: return "Expression Matrix";
+   // case CCMatrixType: return "Cluster Matrix";
+   // case CorrelationMatrixType: return "Correlation Matrix";
    default: return QString();
    }
 }
@@ -29,14 +38,13 @@ QString DataFactory::getName(quint16 type)
 
 
 
-QString DataFactory::getFileExtension(quint16 type)
+QString DataFactory::fileExtension(quint16 type) const
 {
-   // figure out what data type is being queried and return extension
    switch (type)
    {
-   case ExpressionMatrixType: return QString("emx");
-   case CCMatrixType: return QString("ccm");
-   case CorrelationMatrixType: return QString("cmx");
+   case ExpressionMatrixType: return "emx";
+   // case CCMatrixType: return "ccm";
+   // case CorrelationMatrixType: return "cmx";
    default: return QString();
    }
 }
@@ -46,14 +54,13 @@ QString DataFactory::getFileExtension(quint16 type)
 
 
 
-unique_ptr<EAbstractData> DataFactory::make(quint16 type)
+unique_ptr<EAbstractData> DataFactory::make(quint16 type) const
 {
-   // figure out which data type is being requested and return new object
    switch (type)
    {
    case ExpressionMatrixType: return unique_ptr<EAbstractData>(new ExpressionMatrix);
-   case CCMatrixType: return unique_ptr<EAbstractData>(new CCMatrix);
-   case CorrelationMatrixType: return unique_ptr<EAbstractData>(new CorrelationMatrix);
+   // case CCMatrixType: return unique_ptr<EAbstractData>(new CCMatrix);
+   // case CorrelationMatrixType: return unique_ptr<EAbstractData>(new CorrelationMatrix);
    default: return nullptr;
    }
 }

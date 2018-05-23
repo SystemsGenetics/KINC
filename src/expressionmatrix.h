@@ -1,11 +1,11 @@
 #ifndef EXPRESSIONMATRIX_H
 #define EXPRESSIONMATRIX_H
-#include <ace/core/AceCore.h>
-#include <ace/core/metadata.h>
+#include <ace/core/core.h>
+#include <ace/core/emetadata.h>
 
 
 
-class ExpressionMatrix : public QAbstractTableModel, public EAbstractData
+class ExpressionMatrix : public EAbstractData
 {
    Q_OBJECT
 public:
@@ -36,15 +36,14 @@ public:
       ExpressionMatrix* _matrix;
    };
    virtual void readData() override final;
-   virtual quint64 getDataEnd() const override final;
-   virtual void newData() override final;
-   virtual void prepare(bool preAllocate) override final;
-   virtual void finish() override final { newData(); }
-   virtual QAbstractTableModel* getModel() override final { return this; }
-   virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-   virtual int rowCount(const QModelIndex& parent) const override final;
-   virtual int columnCount(const QModelIndex& parent) const override final;
-   virtual QVariant data(const QModelIndex& index, int role) const override final;
+   virtual qint64 dataEnd() const override final;
+   virtual void writeNewData() override final;
+   virtual void finish() override final;
+   virtual QAbstractTableModel* model() override final;
+   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+   int rowCount(const QModelIndex& parent) const;
+   int columnCount(const QModelIndex& parent) const;
+   QVariant data(const QModelIndex& index, int role) const;
    void initialize(QStringList geneNames, QStringList sampleNames);
    Transform getTransform() const;
    void setTransform(Transform scale);
@@ -52,11 +51,11 @@ public:
    qint32 getSampleSize() const { return _sampleSize; }
    qint64 getRawSize() const;
    Expression* dumpRawData() const;
-   const EMetadata& getGeneNames() const;
-   const EMetadata& getSampleNames() const;
+   EMetadata getGeneNames() const;
+   EMetadata getSampleNames() const;
 private:
-   void readGene(int index, Expression* _expressions) const;
-   void writeGene(int index, const Expression* _expressions);
+   void readGene(int index, Expression* expressions) const;
+   void writeGene(int index, const Expression* expressions);
    static const int DATA_OFFSET {8};
    qint32 _geneSize {0};
    qint32 _sampleSize {0};

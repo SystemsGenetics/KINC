@@ -6,7 +6,7 @@ BUILD_GUI = build-gui
 BUILD_TESTS = build-tests
 SRC = src
 TESTS = tests
-BINS = kinc-cli kinc-gui $(BUILD_TESTS)/tests
+BINS = kinc-cli
 
 all: $(BINS)
 

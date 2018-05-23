@@ -1,3 +1,6 @@
+#include <ace/core/emetaarray.h>
+#include <ace/core/emetaobject.h>
+
 #include "expressionmatrix.h"
 
 
@@ -7,24 +10,11 @@
 
 void ExpressionMatrix::readData()
 {
-   // seek to beginning to data
-   if ( !seek(0) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed calling seek() on data object file."));
-      throw e;
-   }
+   // seek to beginning of data
+   seek(0);
 
    // read header
    stream() >> _geneSize >> _sampleSize;
-   if ( !stream() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed reading from data object file."));
-      throw e;
-   }
 }
 
 
@@ -32,7 +22,7 @@ void ExpressionMatrix::readData()
 
 
 
-quint64 ExpressionMatrix::getDataEnd() const
+qint64 ExpressionMatrix::dataEnd() const
 {
    // calculate and return end of data
    qint64 geneSize {_geneSize};
@@ -45,26 +35,13 @@ quint64 ExpressionMatrix::getDataEnd() const
 
 
 
-void ExpressionMatrix::newData()
+void ExpressionMatrix::writeNewData()
 {
    // seek to beginning of data
-   if ( !seek(0) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed calling seek() on data object file."));
-      throw e;
-   }
+   seek(0);
 
    // write gene and sample sizes of 0
    stream() << _geneSize << _sampleSize;
-   if ( !stream() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed writing to data object file."));
-      throw e;
-   }
 }
 
 
@@ -72,29 +49,19 @@ void ExpressionMatrix::newData()
 
 
 
-void ExpressionMatrix::prepare(bool preAllocate)
+void ExpressionMatrix::finish()
 {
-   // check if pre-allocation is requested
-   if ( preAllocate )
-   {
-      // seek to beginning of data
-      if ( !seek(0) )
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("File IO Error"));
-         e.setDetails(tr("Failed calling seek() on data object file."));
-         throw e;
-      }
+   writeNewData();
+}
 
-      // allocate total size needed for data
-      if ( !allocate(getDataEnd()) )
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("File IO Error"));
-         e.setDetails(tr("Failed allocating space in data object file."));
-         throw e;
-      }
-   }
+
+
+
+
+
+QAbstractTableModel* ExpressionMatrix::model()
+{
+   return nullptr;
 }
 
 
@@ -111,47 +78,43 @@ QVariant ExpressionMatrix::headerData(int section, Qt::Orientation orientation, 
    }
 
    // get metadata root and figure out orientation
-   const EMetadata::Map* map {meta().toObject()};
+   const EMetaObject& object {meta().toObject()};
    switch (orientation)
    {
    case Qt::Vertical:
-      // make sure metadata contains gene names
-      if ( map->contains("genes") )
+   {
+      // get gene names and make sure it is array
+      const EMetadata& genes {object["genes"]};
+      if ( genes.isArray() )
       {
-         // get gene names and make sure it is array
-         EMetadata* genes {(*map)["genes"]};
-         if ( genes->isArray() )
+         // make sure section is within limits of array
+         if ( section >= 0 && section < genes.toArray().size() )
          {
-            // make sure section is within limits of array
-            if ( section >= 0 && section < genes->toArray()->size() )
-            {
-               // return gene name
-               return genes->toArray()->at(section)->toVariant();
-            }
+            // return gene name
+            return genes.toArray().at(section).toString();
          }
       }
 
       // if no gene name found return nothing
       return QVariant();
+   }
    case Qt::Horizontal:
-      // make sure metadata contains sample names
-      if ( map->contains("samples") )
+   {
+      // get sample names and make sure it is array
+      const EMetadata& samples {object["samples"]};
+      if ( samples.isArray() )
       {
-         // get sample names and make sure it is array
-         EMetadata* samples {(*map)["samples"]};
-         if ( samples->isArray() )
+         // make sure section is within limits of array
+         if ( section >= 0 && section < samples.toArray().size() )
          {
-            // make sure section is within limits of array
-            if ( section >= 0 && section < samples->toArray()->size() )
-            {
-               // return sample name
-               return samples->toArray()->at(section)->toVariant();
-            }
+            // return sample name
+            return samples.toArray().at(section).toString();
          }
       }
 
       // if no sample name found return nothing
       return QVariant();
+   }
    default:
       // unknown orientation so return nothing
       return QVariant();
@@ -203,23 +166,10 @@ QVariant ExpressionMatrix::data(const QModelIndex& index, int role) const
 
    // make input variable and seek to position of queried expression
    Expression value;
-   if ( !seek(DATA_OFFSET+(((index.row()*_sampleSize)+index.column())*sizeof(Expression))) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed calling seek() on data object file."));
-      throw e;
-   }
+   seek(DATA_OFFSET+(((index.row()*_sampleSize)+index.column())*sizeof(Expression)));
 
    // read expression from file
    stream() >> value;
-   if ( !stream() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed reading from data object file."));
-      throw e;
-   }
 
    // return expression
    return value;
@@ -233,29 +183,25 @@ QVariant ExpressionMatrix::data(const QModelIndex& index, int role) const
 void ExpressionMatrix::initialize(QStringList geneNames, QStringList sampleNames)
 {
    // get metadata root of data object
-   EMetadata::Map* map {meta().toObject()};
+   EMetaObject& object {meta().toObject()};
 
    // create new metadata array that stores gene names and populate it
-   EMetadata* metaGeneNames {new EMetadata(EMetadata::Array)};
+   EMetaArray metaGeneNames;
    for (auto i = geneNames.constBegin(); i != geneNames.constEnd() ;++i)
    {
-      EMetadata* name {new EMetadata(EMetadata::String)};
-      *(name->toString()) = *i;
-      metaGeneNames->toArray()->append(name);
+      metaGeneNames.append(*i);
    }
 
    // create new metadata array that stores sample names and populate it
-   EMetadata* metaSampleNames {new EMetadata(EMetadata::Array)};
+   EMetaArray metaSampleNames;
    for (auto i = sampleNames.constBegin(); i != sampleNames.constEnd() ;++i)
    {
-      EMetadata* name {new EMetadata(EMetadata::String)};
-      *(name->toString()) = *i;
-      metaSampleNames->toArray()->append(name);
+      metaSampleNames.append(*i);
    }
 
    // insert both gene and sample names to data object's metadata
-   map->insert("genes",metaGeneNames);
-   map->insert("samples",metaSampleNames);
+   object.insert("genes",metaGeneNames);
+   object.insert("samples",metaSampleNames);
 
    // set gene and sample size from size of name lists
    _geneSize = geneNames.size();
@@ -270,8 +216,8 @@ void ExpressionMatrix::initialize(QStringList geneNames, QStringList sampleNames
 ExpressionMatrix::Transform ExpressionMatrix::getTransform() const
 {
    // get metadata root of data object
-   const EMetadata::Map* map {meta().toObject()};
-   QString transformName = *(*map)["transform"]->toString();
+   const EMetaObject& object {meta().toObject()};
+   QString transformName = object["transform"].toString();
 
    // get transform type according to transform string
    if ( transformName == "none" ) {
@@ -298,34 +244,28 @@ ExpressionMatrix::Transform ExpressionMatrix::getTransform() const
 void ExpressionMatrix::setTransform(ExpressionMatrix::Transform transform)
 {
    // get metadata root of data object and create new string
-   EMetadata::Map* map {meta().toObject()};
-   EMetadata* meta {new EMetadata(EMetadata::String)};
+   EMetaObject& object {meta().toObject()};
+   EMetadata meta;
 
    // set new transform string according to transform type
    switch (transform)
    {
    case Transform::None:
-      *(meta->toString()) = tr("none");
+      meta = tr("none");
       break;
    case Transform::NLog:
-      *(meta->toString()) = tr("natural logarithm");
+      meta = tr("natural logarithm");
       break;
    case Transform::Log2:
-      *(meta->toString()) = tr("logarithm base 2");
+      meta = tr("logarithm base 2");
       break;
    case Transform::Log10:
-      *(meta->toString()) = tr("logarithm base 10");
+      meta = tr("logarithm base 10");
       break;
-   }
-
-   // if transform key already exists in metadata remove it
-   if ( map->contains("transform") )
-   {
-      delete map->take("transform");
    }
 
    // add new transform key to metadata
-   map->insert("transform",meta);
+   object.insert("transform",meta);
 }
 
 
@@ -370,20 +310,9 @@ ExpressionMatrix::Expression* ExpressionMatrix::dumpRawData() const
 
 
 
-const EMetadata& ExpressionMatrix::getGeneNames() const
+EMetadata ExpressionMatrix::getGeneNames() const
 {
-   // get metadata root and make sure genes key exist
-   const EMetadata::Map* map {meta().toObject()};
-   if ( !map->contains("genes") )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Null Return Reference"));
-      e.setDetails(tr("Requesting reference to gene names when none exists."));
-      throw e;
-   }
-
-   // return gene names list
-   return *(*map)["genes"];
+   return meta().toObject().at("genes");
 }
 
 
@@ -391,20 +320,9 @@ const EMetadata& ExpressionMatrix::getGeneNames() const
 
 
 
-const EMetadata& ExpressionMatrix::getSampleNames() const
+EMetadata ExpressionMatrix::getSampleNames() const
 {
-   // get metadata root and make sure samples key exist
-   const EMetadata::Map* map {meta().toObject()};
-   if ( !map->contains("samples") )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Null Return Reference"));
-      e.setDetails(tr("Requesting reference to sample names when none exists."));
-      throw e;
-   }
-
-   // return sample names list
-   return *(*map)["samples"];
+   return meta().toObject().at("samples");
 }
 
 
@@ -415,22 +333,12 @@ const EMetadata& ExpressionMatrix::getSampleNames() const
 void ExpressionMatrix::readGene(int index, Expression* expressions) const
 {
    // seek to position of beginning of gene's expressions
-   if ( !seek(DATA_OFFSET+(index*_sampleSize*sizeof(Expression))) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed calling seek() on data object file."));
-      throw e;
-   }
+   seek(DATA_OFFSET + (index * _sampleSize * sizeof(Expression)));
 
    // read in all expressions for gene as block of floats
-   stream().read(expressions,_sampleSize);
-   if ( !stream() )
+   for ( int i = 0; i < _sampleSize; ++i )
    {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed reading from data object file."));
-      throw e;
+      stream() >> expressions[i];
    }
 }
 
@@ -442,22 +350,12 @@ void ExpressionMatrix::readGene(int index, Expression* expressions) const
 void ExpressionMatrix::writeGene(int index, const Expression* expressions)
 {
    // seek to position of beginning of gene's expressions
-   if ( !seek(DATA_OFFSET+(index*_sampleSize*sizeof(Expression))) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed calling seek() on data object file."));
-      throw e;
-   }
+   seek(DATA_OFFSET + (index * _sampleSize * sizeof(Expression)));
 
    // overwrite all expressions for gene as block of floats
-   stream().write(expressions,_sampleSize);
-   if ( !stream() )
+   for ( int i = 0; i < _sampleSize; ++i )
    {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Failed writing to data object file."));
-      throw e;
+      stream() << expressions[i];
    }
 }
 
