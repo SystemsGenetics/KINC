@@ -43,8 +43,7 @@ To build KINC, simply run `make`:
 
 ### Singularity Image
 
-A Singularity recipe for building a KINC image is available in the file "kinc-recipe"
-Use "singularity exec kinc.simg kinc" to view options 
+A Singularity recipe for building a KINC image is available in the file "kinc-recipe".  Once the image is built, you can use "singularity exec kinc.simg kinc" to execute kinc.  
 
 ## Usage
 
