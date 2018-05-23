@@ -41,7 +41,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_PREFIX/lib
 
 To build KINC, simply run `make`:
 
-# Singularity Image
+### Singularity Image
 
 A Singularity recipe for building a KINC image is available in the file "kinc-recipe"
 Use "singularity exec kinc.simg kinc" to view options 
