@@ -162,7 +162,7 @@ QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
 
 
 
-void CorrelationMatrix::initialize(const EMetadata &geneNames, const EMetadata &correlationNames)
+void CorrelationMatrix::initialize(const EMetadata &geneNames, int maxClusterSize, const EMetadata &correlationNames)
 {
    // make sure correlation names is an array and is not empty
    if ( !correlationNames.isArray() || correlationNames.toArray()->isEmpty() )
@@ -179,7 +179,7 @@ void CorrelationMatrix::initialize(const EMetadata &geneNames, const EMetadata &
 
    // save correlation size and initialize base class
    _correlationSize = correlationNames.toArray()->size();
-   Matrix::initialize(geneNames,sizeof(float)*_correlationSize,DATA_OFFSET);
+   Matrix::initialize(geneNames, maxClusterSize, _correlationSize * sizeof(float), DATA_OFFSET);
 }
 
 
@@ -187,7 +187,6 @@ void CorrelationMatrix::initialize(const EMetadata &geneNames, const EMetadata &
 
 
 
-const EMetadata &CorrelationMatrix::correlationNames() const
 {
    // get metadata root and make sure correlations key exist
    const EMetadata::Map* map {meta().toObject()};

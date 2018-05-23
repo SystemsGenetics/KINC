@@ -102,6 +102,7 @@ void TestImportCorrelationMatrix::test()
 	analytic->addDataOut(ImportCorrelationMatrix::ClusterData, ccmPath, DataFactory::CCMatrixType);
 	analytic->addDataOut(ImportCorrelationMatrix::CorrelationData, cmxPath, DataFactory::CorrelationMatrixType);
 	analytic->setArgument(ImportCorrelationMatrix::GeneSize, numGenes);
+	analytic->setArgument(ImportCorrelationMatrix::MaxClusterSize, maxClusters);
 	analytic->setArgument(ImportCorrelationMatrix::SampleSize, numSamples);
 	analytic->setArgument(ImportCorrelationMatrix::CorrelationName, "test");
 

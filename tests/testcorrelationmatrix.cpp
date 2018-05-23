@@ -59,7 +59,7 @@ void TestCorrelationMatrix::test()
 	CorrelationMatrix* matrix {dynamic_cast<CorrelationMatrix*>(&((*dataRef)->data()))};
 
 	// write data to file
-	matrix->initialize(metaGeneNames, metaCorrelationNames);
+	matrix->initialize(metaGeneNames, maxClusters, metaCorrelationNames);
 	matrix->prepare(false);
 
 	CorrelationMatrix::Pair pair(matrix);

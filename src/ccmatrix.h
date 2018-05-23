@@ -38,7 +38,7 @@ public:
    virtual int rowCount(const QModelIndex&) const override final { return geneSize(); }
    virtual int columnCount(const QModelIndex&) const override final { return geneSize(); }
    virtual QVariant data(const QModelIndex& index, int role) const override final;
-   void initialize(const EMetadata& geneNames, const EMetadata& sampleNames);
+   void initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& sampleNames);
    const EMetadata& sampleNames() const;
    int sampleSize() const { return _sampleSize; }
 private:

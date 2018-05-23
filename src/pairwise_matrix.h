@@ -55,20 +55,22 @@ namespace Pairwise
       virtual void prepare(bool) override final {}
       virtual void finish() override final { newData(); }
       int geneSize() const { return _geneSize; }
+      int maxClusterSize() const { return _maxClusterSize; }
       qint64 size() const { return _pairSize; }
       const EMetadata& geneNames() const;
    protected:
       virtual void writeHeader() = 0;
       virtual void readHeader() = 0;
-      void initialize(const EMetadata& geneNames, int dataSize, int offset);
+      void initialize(const EMetadata& geneNames, int maxClusterSize, int dataSize, int offset);
    private:
       void write(Index index, qint8 cluster);
       Index getPair(qint64 index, qint8* cluster) const;
       qint64 findPair(qint64 indent, qint64 first, qint64 last) const;
       void seekPair(qint64 index) const;
-      constexpr static int _headerSize {26};
+      constexpr static int _headerSize {30};
       constexpr static int _itemHeaderSize {9};
       qint32 _geneSize {0};
+      qint32 _maxClusterSize {0};
       qint32 _dataSize {0};
       qint64 _pairSize {0};
       qint64 _clusterSize {0};

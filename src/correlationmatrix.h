@@ -39,7 +39,7 @@ public:
    virtual int rowCount(const QModelIndex&) const override final { return geneSize(); }
    virtual int columnCount(const QModelIndex&) const override final { return geneSize(); }
    virtual QVariant data(const QModelIndex& index, int role) const override final;
-   void initialize(const EMetadata& geneNames, const EMetadata& correlationNames);
+   void initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& correlationNames);
    const EMetadata& correlationNames() const;
 private:
    virtual void writeHeader() { stream() << _correlationSize; }

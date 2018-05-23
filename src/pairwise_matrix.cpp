@@ -21,7 +21,7 @@ void Matrix::readData()
    }
 
    // read in all data
-   stream() >> _geneSize >> _dataSize >> _pairSize >> _clusterSize >> _offset;
+   stream() >> _geneSize >> _maxClusterSize >> _dataSize >> _pairSize >> _clusterSize >> _offset;
    readHeader();
 
    // make sure reading worked
@@ -51,7 +51,7 @@ void Matrix::newData()
    }
 
    // write out all header information
-   stream() << _geneSize << _dataSize << _pairSize << _clusterSize << _offset;
+   stream() << _geneSize << _maxClusterSize << _dataSize << _pairSize << _clusterSize << _offset;
    writeHeader();
 
    // make sure writing worked
@@ -90,7 +90,7 @@ const EMetadata& Matrix::geneNames() const
 
 
 
-void Matrix::initialize(const EMetadata& geneNames, int dataSize, int offset)
+void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int dataSize, int offset)
 {
    // make sure gene names metadata is an array and is not empty
    if ( !geneNames.isArray() || geneNames.toArray()->isEmpty() )
@@ -102,7 +102,7 @@ void Matrix::initialize(const EMetadata& geneNames, int dataSize, int offset)
    }
 
    // make sure arguments are valid
-   if ( dataSize < 1 || offset < 0 )
+   if ( maxClusterSize < 1 || dataSize < 1 || offset < 0 )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Pairwise Matrix Initialization Error"));
@@ -116,6 +116,7 @@ void Matrix::initialize(const EMetadata& geneNames, int dataSize, int offset)
 
    // initiailze new data within object
    _geneSize = geneNames.toArray()->size();
+   _maxClusterSize = maxClusterSize;
    _dataSize = dataSize;
    _offset = offset;
    _pairSize = 0;

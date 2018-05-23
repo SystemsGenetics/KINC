@@ -395,7 +395,7 @@ bool Similarity::initialize()
    }
 
    // initialize cluster matrix
-   _ccm->initialize(_input->getGeneNames(), _input->getSampleNames());
+   _ccm->initialize(_input->getGeneNames(), _maxClusters, _input->getSampleNames());
 
    // initialize correlation matrix
    EMetadata correlations(EMetadata::Array);
@@ -403,7 +403,7 @@ bool Similarity::initialize()
    *(name->toString()) = _corrModel->getName();
    correlations.toArray()->append(name);
 
-   _cmx->initialize(_input->getGeneNames(), correlations);
+   _cmx->initialize(_input->getGeneNames(), _maxClusters, correlations);
 
    // initialize total steps
    _totalSteps = (qint64) _input->getGeneSize() * (_input->getGeneSize() - 1) / 2;

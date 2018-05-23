@@ -209,7 +209,7 @@ QVariant CCMatrix::data(const QModelIndex &index, int role) const
 
 
 
-void CCMatrix::initialize(const EMetadata &geneNames, const EMetadata &sampleNames)
+void CCMatrix::initialize(const EMetadata &geneNames, int maxClusterSize, const EMetadata &sampleNames)
 {
    // make sure sample names is an array and is not empty
    if ( !sampleNames.isArray() || sampleNames.toArray()->isEmpty() )
@@ -226,7 +226,7 @@ void CCMatrix::initialize(const EMetadata &geneNames, const EMetadata &sampleNam
 
    // save sample size and initialize base class
    _sampleSize = sampleNames.toArray()->size();
-   Matrix::initialize(geneNames, (_sampleSize + 1) / 2, DATA_OFFSET);
+   Matrix::initialize(geneNames, maxClusterSize, (_sampleSize + 1) / 2 * sizeof(qint8), DATA_OFFSET);
 }
 
 

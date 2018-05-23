@@ -54,7 +54,6 @@ private:
    int _minUnfoldingPace {10};
    int _maxUnfoldingPace {40};
    int _histogramBinSize {60};
-   int _maxClusterSize {5};
    QVector<float> _maxCorrelations;
 };
 

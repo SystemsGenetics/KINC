@@ -68,7 +68,7 @@ void TestClusterMatrix::test()
 	CCMatrix* matrix {dynamic_cast<CCMatrix*>(&((*dataRef)->data()))};
 
 	// write data to file
-	matrix->initialize(metaGeneNames, metaSampleNames);
+	matrix->initialize(metaGeneNames, maxClusters, metaSampleNames);
 	matrix->prepare(false);
 
 	CCMatrix::Pair pair(matrix);

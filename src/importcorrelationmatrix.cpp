@@ -16,6 +16,7 @@ EAbstractAnalytic::ArgumentType ImportCorrelationMatrix::getArgumentData(int arg
    case ClusterData: return Type::DataOut;
    case CorrelationData: return Type::DataOut;
    case GeneSize: return Type::Integer;
+   case MaxClusterSize: return Type::Integer;
    case SampleSize: return Type::Integer;
    case CorrelationName: return Type::String;
    default: return Type::Bool;
@@ -43,6 +44,7 @@ QVariant ImportCorrelationMatrix::getArgumentData(int argument, Role role)
       case ClusterData: return QString("clus");
       case CorrelationData: return QString("corr");
       case GeneSize: return QString("genes");
+      case MaxClusterSize: return QString("maxclusters");
       case SampleSize: return QString("samples");
       case CorrelationName: return QString("corrname");
       default: return QString();
@@ -55,6 +57,7 @@ QVariant ImportCorrelationMatrix::getArgumentData(int argument, Role role)
       case ClusterData: return tr("Cluster Matrix:");
       case CorrelationData: return tr("Correlation Matrix:");
       case GeneSize: return tr("Gene Size:");
+      case MaxClusterSize: return tr("Maximum Cluster Size:");
       case SampleSize: return tr("Sample Size:");
       case CorrelationName: return tr("Correlation Name:");
       default: return QString();
@@ -67,6 +70,7 @@ QVariant ImportCorrelationMatrix::getArgumentData(int argument, Role role)
       case ClusterData: return tr("Output cluster matrix that will contain cluster composition data.");
       case CorrelationData: return tr("Output correlation matrix that will contain correlation data.");
       case GeneSize: return tr("Number of genes.");
+      case MaxClusterSize: return tr("Maximum number of clusters per pair.");
       case SampleSize: return tr("Number of samples.");
       case CorrelationName: return tr("Name of correlation method.");
       default: return QString();
@@ -76,6 +80,7 @@ QVariant ImportCorrelationMatrix::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case GeneSize: return 1;
+      case MaxClusterSize: return 1;
       case SampleSize: return 1;
       default: return QVariant();
       }
@@ -84,6 +89,7 @@ QVariant ImportCorrelationMatrix::getArgumentData(int argument, Role role)
       switch (argument)
       {
       case GeneSize: return INT_MAX;
+      case MaxClusterSize: return Pairwise::Index::MAX_CLUSTER_SIZE;
       case SampleSize: return INT_MAX;
       default: return QVariant();
       }
@@ -119,6 +125,9 @@ void ImportCorrelationMatrix::setArgument(int argument, QVariant value)
    {
    case GeneSize:
       _geneSize = value.toInt();
+      break;
+   case MaxClusterSize:
+      _maxClusterSize = value.toInt();
       break;
    case SampleSize:
       _sampleSize = value.toInt();
@@ -177,8 +186,8 @@ bool ImportCorrelationMatrix::initialize()
       throw e;
    }
 
-   // make sure gene size and sample size are positive
-   if ( _geneSize <= 0 || _sampleSize <= 0 )
+   // make sure gene size, cluster size, and sample size are positive
+   if ( _geneSize < 1 || _maxClusterSize < 1 || _sampleSize < 1 )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Argument Error"));
@@ -236,8 +245,8 @@ void ImportCorrelationMatrix::runSerial()
    metaCorrelationNames.toArray()->append(name);
 
    // initialize output data
-   _ccm->initialize(metaGeneNames, metaSampleNames);
-   _cmx->initialize(metaGeneNames, metaCorrelationNames);
+   _ccm->initialize(metaGeneNames, _maxClusterSize, metaSampleNames);
+   _cmx->initialize(metaGeneNames, _maxClusterSize, metaCorrelationNames);
 
    Pairwise::Index index;
    CCMatrix::Pair ccmPair(_ccm);

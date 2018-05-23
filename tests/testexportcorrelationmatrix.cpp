@@ -82,7 +82,7 @@ void TestExportCorrelationMatrix::test()
 	(*ccmDataRef)->clear(DataFactory::CCMatrixType);
 
 	CCMatrix* ccm {dynamic_cast<CCMatrix*>(&((*ccmDataRef)->data()))};
-	ccm->initialize(metaGeneNames, metaSampleNames);
+	ccm->initialize(metaGeneNames, maxClusters, metaSampleNames);
 	ccm->prepare(false);
 
 	CCMatrix::Pair ccmPair(ccm);
@@ -111,7 +111,7 @@ void TestExportCorrelationMatrix::test()
 	(*cmxDataRef)->clear(DataFactory::CorrelationMatrixType);
 
 	CorrelationMatrix* cmx {dynamic_cast<CorrelationMatrix*>(&((*cmxDataRef)->data()))};
-	cmx->initialize(metaGeneNames, metaCorrelationNames);
+	cmx->initialize(metaGeneNames, maxClusters, metaCorrelationNames);
 	cmx->prepare(false);
 
 	CorrelationMatrix::Pair cmxPair(cmx);

@@ -384,7 +384,7 @@ void RMT::computeGeneThresholds()
    qint64 totalSteps {_input->size()};
 
    // initialize elements to minimum value
-   _maxCorrelations.fill(0, _input->geneSize() * _maxClusterSize);
+   _maxCorrelations.fill(0, _input->geneSize() * _input->maxClusterSize());
 
    // iterate through all gene pairs
    CorrelationMatrix::Pair pair(_input);
@@ -403,8 +403,8 @@ void RMT::computeGeneThresholds()
       // iterate through each cluster
       for ( int cluster = 0; cluster < pair.clusterSize(); ++cluster )
       {
-         int index1 = pair.index().getX() * _maxClusterSize + cluster;
-         int index2 = pair.index().getY() * _maxClusterSize + cluster;
+         int index1 = pair.index().getX() * _input->maxClusterSize() + cluster;
+         int index2 = pair.index().getY() * _input->maxClusterSize() + cluster;
          float correlation = fabs(pair.at(cluster, 0));
 
          // if value is greater than current max of gene x set it to new max
@@ -443,7 +443,7 @@ QVector<float> RMT::computePruneMatrix(float threshold, int* size)
 {
    // generate vector of cluster indexes that have a correlation above threshold
    int numClusters = 0;
-   QVector<int> indices(_input->geneSize() * _maxClusterSize, -1);
+   QVector<int> indices(_input->geneSize() * _input->maxClusterSize(), -1);
 
    for ( int i = 0; i < indices.size(); ++i )
    {
@@ -478,8 +478,8 @@ QVector<float> RMT::computePruneMatrix(float threshold, int* size)
 
          if ( !isnan(correlation) && fabs(correlation) >= threshold )
          {
-            int i = indices[pair.index().getX() * _maxClusterSize + cluster];
-            int j = indices[pair.index().getY() * _maxClusterSize + cluster];
+            int i = indices[pair.index().getX() * _input->maxClusterSize() + cluster];
+            int j = indices[pair.index().getY() * _input->maxClusterSize() + cluster];
 
             pruneMatrix[i * numClusters + j] = correlation;
             pruneMatrix[j * numClusters + i] = correlation;

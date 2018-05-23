@@ -73,7 +73,7 @@ void TestRMT::test()
 	(*cmxDataRef)->clear(DataFactory::CorrelationMatrixType);
 
 	CorrelationMatrix* cmx {dynamic_cast<CorrelationMatrix*>(&((*cmxDataRef)->data()))};
-	cmx->initialize(metaGeneNames, metaCorrelationNames);
+	cmx->initialize(metaGeneNames, maxClusters, metaCorrelationNames);
 	cmx->prepare(false);
 
 	CorrelationMatrix::Pair cmxPair(cmx);

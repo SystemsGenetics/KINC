@@ -18,6 +18,7 @@ public:
       ,ClusterData
       ,CorrelationData
       ,GeneSize
+      ,MaxClusterSize
       ,SampleSize
       ,CorrelationName
       ,Total
@@ -38,6 +39,7 @@ private:
    CCMatrix* _ccm {nullptr};
    CorrelationMatrix* _cmx {nullptr};
    qint32 _geneSize {0};
+   qint32 _maxClusterSize {1};
    qint32 _sampleSize {0};
    QString _correlationName;
 };
