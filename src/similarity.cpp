@@ -394,6 +394,13 @@ bool Similarity::initialize()
       throw e;
    }
 
+   // reset cluster range if clustering is disabled
+   if ( _clusMethod == ClusteringMethod::None )
+   {
+      _minClusters = 1;
+      _maxClusters = 1;
+   }
+
    // initialize cluster matrix
    _ccm->initialize(_input->getGeneNames(), _maxClusters, _input->getSampleNames());
 
