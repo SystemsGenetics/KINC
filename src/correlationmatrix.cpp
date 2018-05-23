@@ -187,6 +187,7 @@ void CorrelationMatrix::initialize(const EMetadata &geneNames, int maxClusterSiz
 
 
 
+const EMetadata& CorrelationMatrix::correlationNames() const
 {
    // get metadata root and make sure correlations key exist
    const EMetadata::Map* map {meta().toObject()};
@@ -200,4 +201,44 @@ void CorrelationMatrix::initialize(const EMetadata &geneNames, int maxClusterSiz
 
    // return correlation names list
    return *(*map)["correlations"];
+}
+
+
+
+
+
+
+QVector<float> CorrelationMatrix::dumpRawData() const
+{
+   // if there are no genes do nothing
+   if ( geneSize() == 0 )
+   {
+      return QVector<float>();
+   }
+
+   // create new correlation matrix
+   QVector<float> data(geneSize() * geneSize() * maxClusterSize());
+
+   // iterate through all pairs
+   Pair pair(this);
+
+   while ( pair.hasNext() )
+   {
+      // read in next pair
+      pair.readNext();
+
+      // load cluster data
+      int i = pair.index().getX();
+      int j = pair.index().getY();
+
+      for ( int k = 0; k < pair.clusterSize(); ++k )
+      {
+         float correlation = pair.at(k, 0);
+
+         data[i * geneSize() * maxClusterSize() + j * maxClusterSize() + k] = correlation;
+         data[j * geneSize() * maxClusterSize() + i * maxClusterSize() + k] = correlation;
+      }
+   }
+
+   return data;
 }

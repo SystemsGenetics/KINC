@@ -234,7 +234,7 @@ void CCMatrix::initialize(const EMetadata &geneNames, int maxClusterSize, const 
 
 
 
-const EMetadata &CCMatrix::sampleNames() const
+const EMetadata& CCMatrix::sampleNames() const
 {
    // get metadata root and make sure samples key exist
    const EMetadata::Map* map {meta().toObject()};

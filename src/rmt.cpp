@@ -260,9 +260,6 @@ bool RMT::initialize()
 
 void RMT::runSerial()
 {
-   // generate list of maximum correlations for each gene
-   computeGeneThresholds();
-
    // initialize log text stream
    QTextStream stream(_logfile);
 
@@ -274,9 +271,13 @@ void RMT::runSerial()
    float threshold {_thresholdStart};
 
    // initialize last percent, steps, and total steps
-   int lastPercent {10};
+   int lastPercent {0};
    int steps {0};
    int totalSteps = (_thresholdStart - _thresholdStop) / _thresholdStep;
+
+   // load raw correlation data, row-wise maximums
+   QVector<float> matrix {_input->dumpRawData()};
+   QVector<float> maximums {computeMaximums(matrix)};
 
    // continue while max chi is less than final threshold
    while ( maxChi < _chiSquareThreshold2 )
@@ -292,7 +293,7 @@ void RMT::runSerial()
 
       // compute pruned matrix based on threshold
       int size;
-      QVector<float> pruneMatrix {computePruneMatrix(threshold, &size)};
+      QVector<float> pruneMatrix {computePruneMatrix(matrix, maximums, threshold, &size)};
 
       qInfo("prune matrix: %d", size);
 
@@ -355,7 +356,7 @@ void RMT::runSerial()
       }
 
       // determine new percent complete and check if it is new
-      int newPercent {10 + 90*steps/totalSteps};
+      int newPercent {100*steps/totalSteps};
       if ( newPercent != lastPercent )
       {
          // update new percentage and emit progressed signal
@@ -376,62 +377,37 @@ void RMT::runSerial()
 
 
 
-void RMT::computeGeneThresholds()
+QVector<float> RMT::computeMaximums(const QVector<float>& matrix)
 {
-   // initialize percent complete and steps
-   int lastPercent {0};
-   qint64 steps {0};
-   qint64 totalSteps {_input->size()};
+   const int N {_input->geneSize()};
+   const int K {_input->maxClusterSize()};
 
    // initialize elements to minimum value
-   _maxCorrelations.fill(0, _input->geneSize() * _input->maxClusterSize());
+   QVector<float> maximums(N * K, 0);
 
-   // iterate through all gene pairs
-   CorrelationMatrix::Pair pair(_input);
-
-   while ( pair.hasNext() )
+   // compute maximum of each row/column
+   for ( int i = 0; i < N; ++i )
    {
-      // make sure interruption is not requested
-      if ( isInterruptionRequested() )
+      for ( int j = 0; j < i; ++j )
       {
-         return;
-      }
-
-      // read in next gene pair
-      pair.readNext();
-
-      // iterate through each cluster
-      for ( int cluster = 0; cluster < pair.clusterSize(); ++cluster )
-      {
-         int index1 = pair.index().getX() * _input->maxClusterSize() + cluster;
-         int index2 = pair.index().getY() * _input->maxClusterSize() + cluster;
-         float correlation = fabs(pair.at(cluster, 0));
-
-         // if value is greater than current max of gene x set it to new max
-         if ( _maxCorrelations[index1] < correlation )
+         for ( int k = 0; k < K; ++k )
          {
-            _maxCorrelations[index1] = correlation;
+            float correlation = fabs(matrix[i * N * K + j * K + k]);
+
+            if ( maximums[i * K + k] < correlation )
+            {
+               maximums[i * K + k] = correlation;
+            }
+
+            if ( maximums[j * K + k] < correlation )
+            {
+               maximums[j * K + k] = correlation;
+            }
          }
-
-         // if value is greater than current max of gene y set it to new max
-         if ( _maxCorrelations[index2] < correlation )
-         {
-            _maxCorrelations[index2] = correlation;
-         }
-      }
-
-      // increment steps and compute new percent complete
-      ++steps;
-      qint64 newPercent {10*steps/totalSteps};
-
-      // check to see if percent complete changed
-      if ( newPercent != lastPercent )
-      {
-         // update percent complete and emit progressed signal
-         lastPercent = newPercent;
-         emit progressed(lastPercent);
       }
    }
+
+   return maximums;
 }
 
 
@@ -439,56 +415,48 @@ void RMT::computeGeneThresholds()
 
 
 
-QVector<float> RMT::computePruneMatrix(float threshold, int* size)
+QVector<float> RMT::computePruneMatrix(const QVector<float>& matrix, const QVector<float>& maximums, float threshold, int* size)
 {
-   // generate vector of cluster indexes that have a correlation above threshold
-   int numClusters = 0;
-   QVector<int> indices(_input->geneSize() * _input->maxClusterSize(), -1);
+   const int N {_input->geneSize()};
+   const int K {_input->maxClusterSize()};
+
+   // generate vector of row/column indices that have a correlation above threshold
+   QVector<int> indices;
+
+   for ( int i = 0; i < maximums.size(); ++i )
+   {
+      if ( maximums[i] >= threshold )
+      {
+         indices.append(i);
+      }
+   }
+
+   // extract pruned matrix from correlation matrix
+   QVector<float> pruneMatrix(indices.size() * indices.size());
 
    for ( int i = 0; i < indices.size(); ++i )
    {
-      if ( _maxCorrelations.at(i) >= threshold )
+      for ( int j = 0; j < i; ++j )
       {
-         indices[i] = numClusters;
-         ++numClusters;
-      }
-   }
-
-   // allocate new pruned matrix with cluster size
-   QVector<float> pruneMatrix(numClusters * numClusters);
-
-   // initialize diagonal
-   for ( int i = 0; i < numClusters; ++i )
-   {
-      pruneMatrix[i * numClusters + i] = 1;
-   }
-
-   // iterate through all gene pairs
-   CorrelationMatrix::Pair pair(_input);
-
-   while ( pair.hasNext() )
-   {
-      // read in next gene pair
-      pair.readNext();
-
-      // iterate through each cluster
-      for ( int cluster = 0; cluster < pair.clusterSize(); ++cluster )
-      {
-         float correlation = pair.at(cluster, 0);
-
-         if ( !isnan(correlation) && fabs(correlation) >= threshold )
+         if ( indices[i] % K != indices[j] % K )
          {
-            int i = indices[pair.index().getX() * _input->maxClusterSize() + cluster];
-            int j = indices[pair.index().getY() * _input->maxClusterSize() + cluster];
+            continue;
+         }
 
-            pruneMatrix[i * numClusters + j] = correlation;
-            pruneMatrix[j * numClusters + i] = correlation;
+         float correlation = matrix[indices[i]/K * N * K + indices[j]/K * K + indices[i] % K];
+
+         if ( fabs(correlation) >= threshold )
+         {
+            pruneMatrix[i * indices.size() + j] = correlation;
          }
       }
+
+      pruneMatrix[i * indices.size() + i] = 1;
    }
 
-   // set size to size of pruned matrix and return pointer
-   *size = numClusters;
+   // save size of pruned matrix
+   *size = indices.size();
+
    return pruneMatrix;
 }
 

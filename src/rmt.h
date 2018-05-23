@@ -35,8 +35,8 @@ public:
    virtual void runSerial() override final;
 
 private:
-   void computeGeneThresholds();
-   QVector<float> computePruneMatrix(float threshold, int* size);
+   QVector<float> computeMaximums(const QVector<float>& matrix);
+   QVector<float> computePruneMatrix(const QVector<float>& matrix, const QVector<float>& maximums, float threshold, int* size);
    QVector<float> computeEigenvalues(QVector<float>* pruneMatrix, int size);
    float computeChiSquare(const QVector<float>& eigens);
    float computePaceChiSquare(const QVector<float>& eigens, int pace);
@@ -54,7 +54,6 @@ private:
    int _minUnfoldingPace {10};
    int _maxUnfoldingPace {40};
    int _histogramBinSize {60};
-   QVector<float> _maxCorrelations;
 };
 
 

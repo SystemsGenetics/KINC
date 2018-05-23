@@ -7,7 +7,7 @@ Use the following steps to setup KINC for development on Ubuntu 16.04:
 
 Most of the dependencies are available as packages:
 ```bash
-sudo apt install g++ libgsl-dev libopenmpi-dev ocl-icd-opencl-dev
+sudo apt install g++ libgsl-dev libopenblas-dev libopenmpi-dev ocl-icd-opencl-dev
 ```
 
 For device drivers (AMD, Intel, NVIDIA, etc), refer to the manufacturer's website.

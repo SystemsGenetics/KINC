@@ -41,6 +41,7 @@ public:
    virtual QVariant data(const QModelIndex& index, int role) const override final;
    void initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& correlationNames);
    const EMetadata& correlationNames() const;
+   QVector<float> dumpRawData() const;
 private:
    virtual void writeHeader() { stream() << _correlationSize; }
    virtual void readHeader() { stream() >> _correlationSize; }
