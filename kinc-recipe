@@ -1,0 +1,49 @@
+BootStrap: debootstrap
+OSVersion: trusty
+MirrorURL: http://us.archive.ubuntu.com/ubuntu/
+
+%environment
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/bin:/usr/local/bin/include:/usr/local/bin/lib
+export PATH=$PATH:/usr/local/bin:/usr/local/bin/include:/usr/local/bin/lib
+
+%runscript
+echo "Please run "singularity exec kinc.simg kinc" to view options"
+
+%post
+
+# set bind points for directories on host filesystems
+
+mkdir /cvmfs /oasis /projects /scratch /scratch2 /scratch3 /zfs  
+
+# install libraries 
+
+echo "Installing software dependencies"
+apt-get -y --force-yes install build-essential wget git cmake libblas-dev liblapack-dev libgsl0-dev
+
+
+# download and extract mixmod source
+wget http://www.mixmod.org/IMG/tgz/libmixmod_3.2.2_src.tgz
+tar -xvf libmixmod_3.2.2_src.tgz
+rm libmixmod_3.2.2_src.tgz
+
+# build and install libmixmod
+cd libmixmod_3.2.2/BUILD
+cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local/bin
+make
+make install
+cd
+
+export INSTALL_PREFIX=/usr/local/bin
+export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$INSTALL_PREFIX/include
+export LIBRARY_PATH=$LIBRARY_PATH:$INSTALL_PREFIX/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$INSTALL_PREFIX/lib
+
+
+echo "cloning the version1 branch of KINC and compiling"
+
+git clone https://github.com/SystemsGenetics/KINC.git
+cd KINC
+make
+chmod +x kinc
+cp kinc /usr/local/bin
