@@ -14,7 +14,7 @@ private:
 	struct Pair
 	{
 		Pairwise::Index index;
-		QVector<QVector<qint8>> clusters;
+		QVector<QVector<qint8>> sampleMasks;
 		QVector<float> correlations;
 	};
 

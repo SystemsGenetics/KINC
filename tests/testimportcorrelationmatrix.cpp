@@ -25,22 +25,22 @@ void TestImportCorrelationMatrix::test()
 
 			if ( numClusters > 0 )
 			{
-				QVector<QVector<qint8>> clusters(numClusters);
+				QVector<QVector<qint8>> sampleMasks(numClusters);
 				QVector<float> correlations(numClusters);
 
 				for ( int k = 0; k < numClusters; ++k )
 				{
-					clusters[k].resize(numSamples);
+					sampleMasks[k].resize(numSamples);
 
 					for ( int n = 0; n < numSamples; ++n )
 					{
-						clusters[k][n] = rand() % 2;
+						sampleMasks[k][n] = rand() % 2;
 					}
 
 					correlations[k] = -1.0 + 2.0 * rand() / (1 << 31);
 				}
 
-				testPairs.append({ { i, j }, clusters, correlations });
+				testPairs.append({ { i, j }, sampleMasks, correlations });
 			}
 		}
 	}
@@ -62,7 +62,7 @@ void TestImportCorrelationMatrix::test()
 
 	for ( auto& testPair : testPairs )
 	{
-		for ( int k = 0; k < testPair.clusters.size(); k++ )
+		for ( int k = 0; k < testPair.sampleMasks.size(); k++ )
 		{
 			int numSamples = 0;
 			int numMissing = 0;
@@ -73,14 +73,14 @@ void TestImportCorrelationMatrix::test()
 
 			for ( int i = 0; i < numSamples; i++ )
 			{
-				sampleMask[i] = '0' + testPair.clusters[k][i];
+				sampleMask[i] = '0' + testPair.sampleMasks[k][i];
 			}
 
 			stream
 				<< testPair.index.getX()
 				<< "\t" << testPair.index.getY()
 				<< "\t" << k
-				<< "\t" << testPair.clusters.size()
+				<< "\t" << testPair.sampleMasks.size()
 				<< "\t" << numSamples
 				<< "\t" << numMissing
 				<< "\t" << numPostOutliers

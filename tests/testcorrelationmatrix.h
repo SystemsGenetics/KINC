@@ -14,7 +14,7 @@ private:
 	struct Pair
 	{
 		Pairwise::Index index;
-		QVector<float> clusters;
+		QVector<float> correlations;
 	};
 
 private slots:

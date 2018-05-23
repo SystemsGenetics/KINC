@@ -14,7 +14,6 @@ void TestRMT::test()
 {
 	// create random correlation data
 	int numGenes = 10;
-	int numSamples = 5;
 	int maxClusters = 5;
 	QVector<Pair> testPairs;
 
@@ -26,22 +25,14 @@ void TestRMT::test()
 
 			if ( numClusters > 0 )
 			{
-				QVector<QVector<qint8>> clusters(numClusters);
 				QVector<float> correlations(numClusters);
 
 				for ( int k = 0; k < numClusters; ++k )
 				{
-					clusters[k].resize(numSamples);
-
-					for ( int n = 0; n < numSamples; ++n )
-					{
-						clusters[k][n] = rand() % 2;
-					}
-
 					correlations[k] = -1.0 + 2.0 * rand() / (1 << 31);
 				}
 
-				testPairs.append({ { i, j }, clusters, correlations });
+				testPairs.append({ { i, j }, correlations });
 			}
 		}
 	}

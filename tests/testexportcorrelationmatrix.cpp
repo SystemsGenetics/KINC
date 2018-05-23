@@ -25,22 +25,22 @@ void TestExportCorrelationMatrix::test()
 
 			if ( numClusters > 0 )
 			{
-				QVector<QVector<qint8>> clusters(numClusters);
+				QVector<QVector<qint8>> sampleMasks(numClusters);
 				QVector<float> correlations(numClusters);
 
 				for ( int k = 0; k < numClusters; ++k )
 				{
-					clusters[k].resize(numSamples);
+					sampleMasks[k].resize(numSamples);
 
 					for ( int n = 0; n < numSamples; ++n )
 					{
-						clusters[k][n] = rand() % 2;
+						sampleMasks[k][n] = rand() % 2;
 					}
 
 					correlations[k] = -1.0 + 2.0 * rand() / (1 << 31);
 				}
 
-				testPairs.append({ { i, j }, clusters, correlations });
+				testPairs.append({ { i, j }, sampleMasks, correlations });
 			}
 		}
 	}
@@ -90,13 +90,13 @@ void TestExportCorrelationMatrix::test()
 	for ( auto& testPair : testPairs )
 	{
 		ccmPair.clearClusters();
-		ccmPair.addCluster(testPair.clusters.size());
+		ccmPair.addCluster(testPair.sampleMasks.size());
 
 		for ( int k = 0; k < ccmPair.clusterSize(); ++k )
 		{
 			for ( int n = 0; n < numSamples; ++n )
 			{
-				ccmPair.at(k, n) = testPair.clusters.at(k).at(n);
+				ccmPair.at(k, n) = testPair.sampleMasks.at(k).at(n);
 			}
 		}
 
@@ -154,7 +154,7 @@ void TestExportCorrelationMatrix::test()
 
 	for ( auto& testPair : testPairs )
 	{
-		for ( int k = 0; k < testPair.clusters.size(); ++k )
+		for ( int k = 0; k < testPair.sampleMasks.size(); ++k )
 		{
 			Q_ASSERT(!stream.atEnd());
 
@@ -173,14 +173,14 @@ void TestExportCorrelationMatrix::test()
 			Q_ASSERT(testPair.index.getX() == geneX);
 			Q_ASSERT(testPair.index.getY() == geneY);
 			Q_ASSERT(k == cluster);
-			Q_ASSERT(testPair.clusters.size() == clusterSize);
+			Q_ASSERT(testPair.sampleMasks.size() == clusterSize);
 			Q_ASSERT(numSamples == sampleMask.size());
 
-			if ( testPair.clusters.size() > 1 )
+			if ( testPair.sampleMasks.size() > 1 )
 			{
 				for ( int i = 0; i < sampleMask.size(); ++i )
 				{
-					Q_ASSERT(testPair.clusters[k][i] == sampleMask[i].digitValue());
+					Q_ASSERT(testPair.sampleMasks[k][i] == sampleMask[i].digitValue());
 				}
 			}
 

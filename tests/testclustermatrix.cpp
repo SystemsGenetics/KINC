@@ -24,19 +24,19 @@ void TestClusterMatrix::test()
 
 			if ( numClusters > 0 )
 			{
-				QVector<QVector<qint8>> clusters(numClusters);
+				QVector<QVector<qint8>> sampleMasks(numClusters);
 
 				for ( int k = 0; k < numClusters; ++k )
 				{
-					clusters[k].resize(numSamples);
+					sampleMasks[k].resize(numSamples);
 
 					for ( int n = 0; n < numSamples; ++n )
 					{
-						clusters[k][n] = rand() % 16;
+						sampleMasks[k][n] = rand() % 16;
 					}
 				}
 
-				testPairs.append({ { i, j }, clusters });
+				testPairs.append({ { i, j }, sampleMasks });
 			}
 		}
 	}
@@ -76,13 +76,13 @@ void TestClusterMatrix::test()
 	for ( auto& testPair : testPairs )
 	{
 		pair.clearClusters();
-		pair.addCluster(testPair.clusters.size());
+		pair.addCluster(testPair.sampleMasks.size());
 
 		for ( int k = 0; k < pair.clusterSize(); ++k )
 		{
 			for ( int n = 0; n < numSamples; ++n )
 			{
-				pair.at(k, n) = testPair.clusters.at(k).at(n);
+				pair.at(k, n) = testPair.sampleMasks.at(k).at(n);
 			}
 		}
 
@@ -101,13 +101,13 @@ void TestClusterMatrix::test()
 		pair.readNext();
 
 		Q_ASSERT(testPair.index == pair.index());
-		Q_ASSERT(pair.clusterSize() == testPair.clusters.size());
+		Q_ASSERT(pair.clusterSize() == testPair.sampleMasks.size());
 
 		for ( int k = 0; k < pair.clusterSize(); ++k )
 		{
 			for ( int n = 0; n < numSamples; ++n )
 			{
-				Q_ASSERT(pair.at(k, n) == testPair.clusters.at(k).at(n));
+				Q_ASSERT(pair.at(k, n) == testPair.sampleMasks.at(k).at(n));
 			}
 		}
 	}

@@ -23,14 +23,14 @@ void TestCorrelationMatrix::test()
 
 			if ( numClusters > 0 )
 			{
-				QVector<float> clusters(numClusters);
+				QVector<float> correlations(numClusters);
 
 				for ( int k = 0; k < numClusters; ++k )
 				{
-					clusters[k] = -1.0 + 2.0 * rand() / (1 << 31);
+					correlations[k] = -1.0 + 2.0 * rand() / (1 << 31);
 				}
 
-				testPairs.append({ { i, j }, clusters });
+				testPairs.append({ { i, j }, correlations });
 			}
 		}
 	}
@@ -67,11 +67,11 @@ void TestCorrelationMatrix::test()
 	for ( auto& testPair : testPairs )
 	{
 		pair.clearClusters();
-		pair.addCluster(testPair.clusters.size());
+		pair.addCluster(testPair.correlations.size());
 
 		for ( int k = 0; k < pair.clusterSize(); ++k )
 		{
-			pair.at(k, 0) = testPair.clusters.at(k);
+			pair.at(k, 0) = testPair.correlations.at(k);
 		}
 
 		pair.write(testPair.index);
@@ -89,11 +89,11 @@ void TestCorrelationMatrix::test()
 		pair.readNext();
 
 		Q_ASSERT(testPair.index == pair.index());
-		Q_ASSERT(pair.clusterSize() == testPair.clusters.size());
+		Q_ASSERT(pair.clusterSize() == testPair.correlations.size());
 
 		for ( int k = 0; k < pair.clusterSize(); ++k )
 		{
-			Q_ASSERT(pair.at(k, 0) == testPair.clusters.at(k));
+			Q_ASSERT(pair.at(k, 0) == testPair.correlations.at(k));
 		}
 	}
 }
