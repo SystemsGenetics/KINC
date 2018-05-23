@@ -1,3 +1,6 @@
+#include <ace/core/emetaarray.h>
+#include <ace/core/emetaobject.h>
+
 #include "pairwise_matrix.h"
 
 
@@ -12,26 +15,11 @@ using namespace Pairwise;
 void Matrix::readData()
 {
    // seek to beginning of data object
-   if ( !seek(0) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("File IO Error"));
-      e.setDetails(QObject::tr("Failed calling seek() on data object file."));
-      throw e;
-   }
+   seek(0);
 
    // read in all data
    stream() >> _geneSize >> _maxClusterSize >> _dataSize >> _pairSize >> _clusterSize >> _offset;
    readHeader();
-
-   // make sure reading worked
-   if ( !stream() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("File IO Error"));
-      e.setDetails(QObject::tr("Failed reading in data object file."));
-      throw e;
-   }
 }
 
 
@@ -39,29 +27,24 @@ void Matrix::readData()
 
 
 
-void Matrix::newData()
+qint64 Matrix::dataEnd() const
+{
+   return _headerSize + _offset + _clusterSize * (_dataSize + _itemHeaderSize);
+}
+
+
+
+
+
+
+void Matrix::writeNewData()
 {
    // seek to beginning of data and make sure it worked
-   if ( !seek(0) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("File IO Error"));
-      e.setDetails(QObject::tr("Failed calling seek() on data object file."));
-      throw e;
-   }
+   seek(0);
 
    // write out all header information
    stream() << _geneSize << _maxClusterSize << _dataSize << _pairSize << _clusterSize << _offset;
    writeHeader();
-
-   // make sure writing worked
-   if ( !stream() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("File IO Error"));
-      e.setDetails(QObject::tr("Failed writing to data object file."));
-      throw e;
-   }
 }
 
 
@@ -69,20 +52,19 @@ void Matrix::newData()
 
 
 
-const EMetadata& Matrix::geneNames() const
+void Matrix::finish()
 {
-   // get metadata root and make sure genes key exist
-   const EMetadata::Map* map {meta().toObject()};
-   if ( !map->contains("genes") )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Null Return Reference"));
-      e.setDetails(QObject::tr("Requesting reference to gene names when none exists."));
-      throw e;
-   }
+   writeNewData();
+}
 
-   // return gene names list
-   return *(*map)["genes"];
+
+
+
+
+
+EMetadata Matrix::geneNames() const
+{
+   return meta().toObject().at("genes");
 }
 
 
@@ -93,11 +75,11 @@ const EMetadata& Matrix::geneNames() const
 void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int dataSize, int offset)
 {
    // make sure gene names metadata is an array and is not empty
-   if ( !geneNames.isArray() || geneNames.toArray()->isEmpty() )
+   if ( !geneNames.isArray() || geneNames.toArray().isEmpty() )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(QObject::tr("Domain Error"));
-      e.setDetails(QObject::tr("Gene names metadata is not an array or empty."));
+      e.setDetails(QObject::tr("Gene names metadata is not an array or is empty."));
       throw e;
    }
 
@@ -110,12 +92,11 @@ void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int data
       throw e;
    }
 
-   // get map of metadata root and make copy of gene names
-   EMetadata::Map* map {meta().toObject()};
-   map->insert("genes",new EMetadata(geneNames));
+   // save gene names to metadata
+   meta().toObject().insert("genes", geneNames);
 
    // initiailze new data within object
-   _geneSize = geneNames.toArray()->size();
+   _geneSize = geneNames.toArray().size();
    _maxClusterSize = maxClusterSize;
    _dataSize = dataSize;
    _offset = offset;
@@ -152,23 +133,8 @@ void Matrix::write(Index index, qint8 cluster)
    }
 
    // seek to position for next gene pair and write indent value
-   if ( !seek(_headerSize + _offset + _clusterSize*(_dataSize + _itemHeaderSize)) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("File IO Error"));
-      e.setDetails(QObject::tr("Failed calling seek() on data object file."));
-      throw e;
-   }
+   seek(_headerSize + _offset + _clusterSize * (_dataSize + _itemHeaderSize));
    stream() << index.getX() << index.getY() << cluster;
-
-   // make sure writing worked
-   if ( !stream() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("File IO Error"));
-      e.setDetails(QObject::tr("Failed writing to data object file."));
-      throw e;
-   }
 
    // increment cluster size and set new last index
    ++_clusterSize;
@@ -187,15 +153,6 @@ Index Matrix::getPair(qint64 index, qint8* cluster) const
    qint32 geneX;
    qint32 geneY;
    stream() >> geneX >> geneY >> *cluster;
-
-   // make sure reading worked
-   if ( !stream() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("File IO Error"));
-      e.setDetails(QObject::tr("Failed reading in gene pair indent."));
-      throw e;
-   }
 
    // return gene pair index
    return {geneX,geneY};
@@ -218,15 +175,6 @@ qint64 Matrix::findPair(qint64 indent, qint64 first, qint64 last) const
    qint8 cluster;
    stream() >> geneX >> geneY >> cluster;
    Index index(geneX,geneY);
-
-   // make sure reading worked
-   if ( !stream() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("File IO Error"));
-      e.setDetails(QObject::tr("Failed reading in gene pair indent."));
-      throw e;
-   }
 
    // if indent values match return index
    if ( index.indent(cluster) == indent )
@@ -283,13 +231,7 @@ void Matrix::seekPair(qint64 index) const
    }
 
    // seek to gene pair index requested making sure it worked
-   if ( !seek(_headerSize + _offset + index*(_dataSize + _itemHeaderSize)) )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("File IO Error"));
-      e.setDetails(QObject::tr("Failed calling seek() on data object file."));
-      throw e;
-   }
+   seek(_headerSize + _offset + index * (_dataSize + _itemHeaderSize));
 }
 
 

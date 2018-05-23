@@ -1,7 +1,7 @@
 #ifndef PAIRWISE_BASE_H
 #define PAIRWISE_BASE_H
-#include <ace/core/AceCore.h>
-#include <ace/core/metadata.h>
+#include <ace/core/core.h>
+#include <ace/core/emetadata.h>
 
 #include "pairwise_index.h"
 
@@ -49,15 +49,13 @@ namespace Pairwise
          mutable Index _index;
       };
       virtual void readData() override final;
-      virtual quint64 getDataEnd() const override final
-         { return _headerSize + _offset + _clusterSize*(_dataSize + _itemHeaderSize); }
-      virtual void newData() override final;
-      virtual void prepare(bool) override final {}
-      virtual void finish() override final { newData(); }
+      virtual qint64 dataEnd() const override final;
+      virtual void writeNewData() override final;
+      virtual void finish() override final;
       int geneSize() const { return _geneSize; }
       int maxClusterSize() const { return _maxClusterSize; }
       qint64 size() const { return _pairSize; }
-      const EMetadata& geneNames() const;
+      EMetadata geneNames() const;
    protected:
       virtual void writeHeader() = 0;
       virtual void readHeader() = 0;

@@ -10,8 +10,8 @@ public:
    enum Type
    {
       ExpressionMatrixType = 0
-      // ,CCMatrixType
-      // ,CorrelationMatrixType
+      ,CCMatrixType
+      ,CorrelationMatrixType
       ,Total
    };
    virtual quint16 size() const override final;

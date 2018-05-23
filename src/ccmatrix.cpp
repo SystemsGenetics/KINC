@@ -1,3 +1,6 @@
+#include <ace/core/emetaarray.h>
+#include <ace/core/emetaobject.h>
+
 #include "ccmatrix.h"
 
 
@@ -144,6 +147,16 @@ void CCMatrix::Pair::readCluster(const EDataStream &stream, int cluster) const
 
 
 
+QAbstractTableModel* CCMatrix::model()
+{
+   return nullptr;
+}
+
+
+
+
+
+
 QVariant CCMatrix::headerData(int section, Qt::Orientation orientation, int role) const
 {
    // orientation is not used
@@ -160,15 +173,35 @@ QVariant CCMatrix::headerData(int section, Qt::Orientation orientation, int role
    if ( genes.isArray() )
    {
       // make sure section is within limits of gene name array
-      if ( section >= 0 && section < genes.toArray()->size() )
+      if ( section >= 0 && section < genes.toArray().size() )
       {
          // return gene name
-         return genes.toArray()->at(section)->toVariant();
+         return genes.toArray().at(section).toString();
       }
    }
 
    // no gene found return nothing
    return QVariant();
+}
+
+
+
+
+
+
+int CCMatrix::rowCount(const QModelIndex&) const
+{
+   return geneSize();
+}
+
+
+
+
+
+
+int CCMatrix::columnCount(const QModelIndex&) const
+{
+   return geneSize();
 }
 
 
@@ -212,20 +245,19 @@ QVariant CCMatrix::data(const QModelIndex &index, int role) const
 void CCMatrix::initialize(const EMetadata &geneNames, int maxClusterSize, const EMetadata &sampleNames)
 {
    // make sure sample names is an array and is not empty
-   if ( !sampleNames.isArray() || sampleNames.toArray()->isEmpty() )
+   if ( !sampleNames.isArray() || sampleNames.toArray().isEmpty() )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Sample names metadata is not an array or empty."));
+      e.setDetails(tr("Sample names metadata is not an array or is empty."));
       throw e;
    }
 
-   // get map of metadata root and make copy of sample names
-   EMetadata::Map* map {meta().toObject()};
-   map->insert("samples",new EMetadata(sampleNames));
+   // save sample names to metadata
+   meta().toObject().insert("samples", sampleNames);
 
    // save sample size and initialize base class
-   _sampleSize = sampleNames.toArray()->size();
+   _sampleSize = sampleNames.toArray().size();
    Matrix::initialize(geneNames, maxClusterSize, (_sampleSize + 1) / 2 * sizeof(qint8), DATA_OFFSET);
 }
 
@@ -234,18 +266,7 @@ void CCMatrix::initialize(const EMetadata &geneNames, int maxClusterSize, const 
 
 
 
-const EMetadata& CCMatrix::sampleNames() const
+EMetadata CCMatrix::sampleNames() const
 {
-   // get metadata root and make sure samples key exist
-   const EMetadata::Map* map {meta().toObject()};
-   if ( !map->contains("samples") )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Null Return Reference"));
-      e.setDetails(QObject::tr("Requesting reference to sample names when none exists."));
-      throw e;
-   }
-
-   // return correlation names list
-   return *(*map)["samples"];
+   return meta().toObject().at("samples");
 }

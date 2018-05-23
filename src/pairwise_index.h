@@ -1,6 +1,6 @@
 #ifndef PAIRWISE_INDEX_H
 #define PAIRWISE_INDEX_H
-#include <ace/core/AceCore.h>
+#include <ace/core/core.h>
 
 
 

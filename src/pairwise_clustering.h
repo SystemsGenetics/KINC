@@ -1,6 +1,6 @@
 #ifndef PAIRWISE_CLUSTERING_H
 #define PAIRWISE_CLUSTERING_H
-#include <ace/core/AceCore.h>
+#include <ace/core/core.h>
 
 #include "ccmatrix.h"
 #include "expressionmatrix.h"

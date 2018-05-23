@@ -1,4 +1,5 @@
-#include <ace/core/metadata.h>
+#include <ace/core/emetaarray.h>
+#include <ace/core/emetaobject.h>
 
 #include "correlationmatrix.h"
 
@@ -97,6 +98,16 @@ void CorrelationMatrix::Pair::readCluster(const EDataStream& stream, int cluster
 
 
 
+QAbstractTableModel* CorrelationMatrix::model()
+{
+   return nullptr;
+}
+
+
+
+
+
+
 QVariant CorrelationMatrix::headerData(int section, Qt::Orientation orientation, int role) const
 {
    // orientation is not used
@@ -113,10 +124,10 @@ QVariant CorrelationMatrix::headerData(int section, Qt::Orientation orientation,
    if ( genes.isArray() )
    {
       // make sure section is within limits of gene name array
-      if ( section >= 0 && section < genes.toArray()->size() )
+      if ( section >= 0 && section < genes.toArray().size() )
       {
          // return gene name
-         return genes.toArray()->at(section)->toVariant();
+         return genes.toArray().at(section).toString();
       }
    }
 
@@ -162,23 +173,42 @@ QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
 
 
 
+int CorrelationMatrix::rowCount(const QModelIndex&) const
+{
+   return geneSize();
+}
+
+
+
+
+
+
+int CorrelationMatrix::columnCount(const QModelIndex&) const
+{
+   return geneSize();
+}
+
+
+
+
+
+
 void CorrelationMatrix::initialize(const EMetadata &geneNames, int maxClusterSize, const EMetadata &correlationNames)
 {
    // make sure correlation names is an array and is not empty
-   if ( !correlationNames.isArray() || correlationNames.toArray()->isEmpty() )
+   if ( !correlationNames.isArray() || correlationNames.toArray().isEmpty() )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Correlation names metadata is not an array or empty."));
+      e.setDetails(tr("Correlation names metadata is not an array or is empty."));
       throw e;
    }
 
-   // get map of metadata root and make copy of gene and correlation names
-   EMetadata::Map* map {meta().toObject()};
-   map->insert("correlations",new EMetadata(correlationNames));
+   // save correlation names to metadata
+   meta().toObject().insert("correlations", correlationNames);
 
    // save correlation size and initialize base class
-   _correlationSize = correlationNames.toArray()->size();
+   _correlationSize = correlationNames.toArray().size();
    Matrix::initialize(geneNames, maxClusterSize, _correlationSize * sizeof(float), DATA_OFFSET);
 }
 
@@ -187,20 +217,9 @@ void CorrelationMatrix::initialize(const EMetadata &geneNames, int maxClusterSiz
 
 
 
-const EMetadata& CorrelationMatrix::correlationNames() const
+EMetadata CorrelationMatrix::correlationNames() const
 {
-   // get metadata root and make sure correlations key exist
-   const EMetadata::Map* map {meta().toObject()};
-   if ( !map->contains("correlations") )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Null Return Reference"));
-      e.setDetails(QObject::tr("Requesting reference to correlation names when none exists."));
-      throw e;
-   }
-
-   // return correlation names list
-   return *(*map)["correlations"];
+   return meta().toObject().at("correlations");
 }
 
 

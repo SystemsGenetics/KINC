@@ -1,5 +1,3 @@
-#include <ace/core/metadata.h>
-
 #include "pairwise_spearman.h"
 
 

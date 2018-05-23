@@ -1,6 +1,6 @@
 #ifndef PAIRWISE_CORRELATION_H
 #define PAIRWISE_CORRELATION_H
-#include <ace/core/AceCore.h>
+#include <ace/core/core.h>
 
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"

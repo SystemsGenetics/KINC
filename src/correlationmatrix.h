@@ -4,7 +4,7 @@
 
 
 
-class CorrelationMatrix : public QAbstractTableModel, public Pairwise::Matrix
+class CorrelationMatrix : public Pairwise::Matrix
 {
    Q_OBJECT
 public:
@@ -34,13 +34,13 @@ public:
       mutable QVector<QVector<float>> _correlations;
       const CorrelationMatrix* _cMatrix;
    };
-   virtual QAbstractTableModel* getModel() override final { return this; }
-   virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-   virtual int rowCount(const QModelIndex&) const override final { return geneSize(); }
-   virtual int columnCount(const QModelIndex&) const override final { return geneSize(); }
-   virtual QVariant data(const QModelIndex& index, int role) const override final;
+   virtual QAbstractTableModel* model() override final;
+   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+   int rowCount(const QModelIndex&) const;
+   int columnCount(const QModelIndex&) const;
+   QVariant data(const QModelIndex& index, int role) const;
    void initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& correlationNames);
-   const EMetadata& correlationNames() const;
+   EMetadata correlationNames() const;
    QVector<float> dumpRawData() const;
 private:
    virtual void writeHeader() { stream() << _correlationSize; }

@@ -29,8 +29,8 @@ equals(GUI, 1) {
 # Source files
 SOURCES += \
    analyticfactory.cpp \
-   # ccmatrix.cpp \
-   # correlationmatrix.cpp \
+   ccmatrix.cpp \
+   correlationmatrix.cpp \
    datafactory.cpp \
    # exportcorrelationmatrix.cpp \
    # exportexpressionmatrix.cpp \
@@ -39,22 +39,22 @@ SOURCES += \
    # importcorrelationmatrix.cpp \
    # importexpressionmatrix.cpp \
    main.cpp \
-   # pairwise_clustering.cpp \
-   # pairwise_correlation.cpp \
-   # pairwise_gmm.cpp \
-   # pairwise_index.cpp \
-   # pairwise_kmeans.cpp \
-   # pairwise_linalg.cpp \
-   # pairwise_matrix.cpp \
-   # pairwise_pearson.cpp \
-   # pairwise_spearman.cpp \
+   pairwise_clustering.cpp \
+   pairwise_correlation.cpp \
+   pairwise_gmm.cpp \
+   pairwise_index.cpp \
+   pairwise_kmeans.cpp \
+   pairwise_linalg.cpp \
+   pairwise_matrix.cpp \
+   pairwise_pearson.cpp \
+   pairwise_spearman.cpp \
    # rmt.cpp \
    # similarity.cpp
 
 HEADERS += \
    analyticfactory.h \
-   # ccmatrix.h \
-   # correlationmatrix.h \
+   ccmatrix.h \
+   correlationmatrix.h \
    datafactory.h \
    # exportcorrelationmatrix.h \
    # exportexpressionmatrix.h \
@@ -62,15 +62,15 @@ HEADERS += \
    # extract.h \
    # importcorrelationmatrix.h \
    # importexpressionmatrix.h \
-   # pairwise_clustering.h \
-   # pairwise_correlation.h \
-   # pairwise_gmm.h \
-   # pairwise_index.h \
-   # pairwise_kmeans.h \
-   # pairwise_linalg.h \
-   # pairwise_matrix.h \
-   # pairwise_pearson.h \
-   # pairwise_spearman.h \
+   pairwise_clustering.h \
+   pairwise_correlation.h \
+   pairwise_gmm.h \
+   pairwise_index.h \
+   pairwise_kmeans.h \
+   pairwise_linalg.h \
+   pairwise_matrix.h \
+   pairwise_pearson.h \
+   pairwise_spearman.h \
    # rmt.h \
    # similarity.h
 

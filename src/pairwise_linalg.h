@@ -1,6 +1,6 @@
 #ifndef PAIRWISE_LINALG_H
 #define PAIRWISE_LINALG_H
-#include <ace/core/AceCore.h>
+#include <ace/core/core.h>
 
 namespace Pairwise
 {
