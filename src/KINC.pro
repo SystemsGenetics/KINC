@@ -32,12 +32,14 @@ SOURCES += \
    ccmatrix.cpp \
    correlationmatrix.cpp \
    datafactory.cpp \
-   # exportcorrelationmatrix.cpp \
+   exportcorrelationmatrix_input.cpp \
+   exportcorrelationmatrix.cpp \
    exportexpressionmatrix_input.cpp \
    exportexpressionmatrix.cpp \
    expressionmatrix.cpp \
    # extract.cpp \
-   # importcorrelationmatrix.cpp \
+   importcorrelationmatrix_input.cpp \
+   importcorrelationmatrix.cpp \
    importexpressionmatrix_input.cpp \
    importexpressionmatrix.cpp \
    main.cpp \
@@ -58,12 +60,14 @@ HEADERS += \
    ccmatrix.h \
    correlationmatrix.h \
    datafactory.h \
-   # exportcorrelationmatrix.h \
+   exportcorrelationmatrix_input.h \
+   exportcorrelationmatrix.h \
    exportexpressionmatrix_input.h \
    exportexpressionmatrix.h \
    expressionmatrix.h \
    # extract.h \
-   # importcorrelationmatrix.h \
+   importcorrelationmatrix_input.h \
+   importcorrelationmatrix.h \
    importexpressionmatrix_input.h \
    importexpressionmatrix.h \
    pairwise_clustering.h \

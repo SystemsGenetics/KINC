@@ -1,0 +1,114 @@
+#include "exportcorrelationmatrix_input.h"
+#include "datafactory.h"
+
+
+
+ExportCorrelationMatrix::Input::Input(ExportCorrelationMatrix* parent):
+   EAbstractAnalytic::Input(parent),
+   _base(parent)
+{}
+
+
+
+
+
+
+int ExportCorrelationMatrix::Input::size() const
+{
+   return Total;
+}
+
+
+
+
+
+
+EAbstractAnalytic::Input::Type ExportCorrelationMatrix::Input::type(int index) const
+{
+   switch (index)
+   {
+   case ClusterData: return Type::DataIn;
+   case CorrelationData: return Type::DataIn;
+   case OutputFile: return Type::FileOut;
+   default: return Type::Boolean;
+   }
+}
+
+
+
+
+
+
+QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
+{
+   switch (index)
+   {
+   case ClusterData:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("ccm");
+      case Role::Title: return tr("Cluster Matrix:");
+      case Role::WhatsThis: return tr("Input cluster matrix containing cluster composition data.");
+      case Role::DataType: return DataFactory::CCMatrixType;
+      default: return QVariant();
+      }
+   case CorrelationData:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("cmx");
+      case Role::Title: return tr("Correlation Matrix:");
+      case Role::WhatsThis: return tr("Input correlation matrix containing correlation data.");
+      case Role::DataType: return DataFactory::CorrelationMatrixType;
+      default: return QVariant();
+      }
+   case OutputFile:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("output");
+      case Role::Title: return tr("Output File:");
+      case Role::WhatsThis: return tr("Raw output text file that will contain pairwise correlation data.");
+      case Role::FileFilters: return tr("Raw text file %1").arg("(*.txt)");
+      default: return QVariant();
+      }
+   default: return QVariant();
+   }
+}
+
+
+
+
+
+
+void ExportCorrelationMatrix::Input::set(int /*index*/, const QVariant& /*value*/)
+{
+}
+
+
+
+
+
+
+void ExportCorrelationMatrix::Input::set(int index, EAbstractData* data)
+{
+   if ( index == ClusterData )
+   {
+      _base->_ccm = qobject_cast<CCMatrix*>(data);
+   }
+   else if ( index == CorrelationData )
+   {
+      _base->_cmx = qobject_cast<CorrelationMatrix*>(data);
+   }
+}
+
+
+
+
+
+
+void ExportCorrelationMatrix::Input::set(int index, QFile* file)
+{
+   if ( index == OutputFile )
+   {
+      _base->_output = file;
+   }
+}

@@ -1,21 +1,12 @@
 #include "exportcorrelationmatrix.h"
+#include "exportcorrelationmatrix_input.h"
 #include "datafactory.h"
 
 
 
-EAbstractAnalytic::ArgumentType ExportCorrelationMatrix::getArgumentData(int argument)
+int ExportCorrelationMatrix::size() const
 {
-   // use type declaration
-   using Type = EAbstractAnalytic::ArgumentType;
-
-   // figure out which argument is being queried and return its type
-   switch (argument)
-   {
-   case ClusterData: return Type::DataIn;
-   case CorrelationData: return Type::DataIn;
-   case OutputFile: return Type::FileOut;
-   default: return Type::Bool;
-   }
+   return 1;
 }
 
 
@@ -23,125 +14,8 @@ EAbstractAnalytic::ArgumentType ExportCorrelationMatrix::getArgumentData(int arg
 
 
 
-QVariant ExportCorrelationMatrix::getArgumentData(int argument, Role role)
+void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block* /*result*/)
 {
-   // use role declaration
-   using Role = EAbstractAnalytic::Role;
-
-   // figure out which role is being queried
-   switch (role)
-   {
-   case Role::CommandLineName:
-      // figure out which argument is being queried and return command line name
-      switch (argument)
-      {
-      case ClusterData: return QString("clus");
-      case CorrelationData: return QString("corr");
-      case OutputFile: return QString("output");
-      default: return QString();
-      }
-   case Role::Title:
-      // figure out which argument is being queried and return title
-      switch (argument)
-      {
-      case ClusterData: return tr("Cluster Matrix:");
-      case CorrelationData: return tr("Correlation Matrix:");
-      case OutputFile: return tr("Output File:");
-      default: return QString();
-      }
-   case Role::WhatsThis:
-      // figure out which argument is being queried and return "What's This?" text
-      switch (argument)
-      {
-      case ClusterData: return tr("Input cluster matrix containing cluster composition data.");
-      case CorrelationData: return tr("Input correlation matrix containing correlation data.");
-      case OutputFile: return tr("Raw output text file that will contain gene pair correlation data.");
-      default: return QString();
-      }
-   case Role::DataType:
-      // if this is input data argument return data type else return nothing
-      switch (argument)
-      {
-      case ClusterData: return DataFactory::CCMatrixType;
-      case CorrelationData: return DataFactory::CorrelationMatrixType;
-      default: return QString();
-      }
-   case Role::FileFilters:
-      // if this is output file argument return file filter else return nothing
-      switch (argument)
-      {
-      case OutputFile: return tr("Raw text file %1").arg("(*.txt)");
-      default: return QString();
-      }
-   default:
-      return QVariant();
-   }
-}
-
-
-
-
-
-
-void ExportCorrelationMatrix::setArgument(int argument, EAbstractData* data)
-{
-   // if argument is input data set it
-   if ( argument == ClusterData )
-   {
-      _ccm = dynamic_cast<CCMatrix*>(data);
-   }
-   else if ( argument == CorrelationData )
-   {
-      _cmx = dynamic_cast<CorrelationMatrix*>(data);
-   }
-}
-
-
-
-
-
-
-void ExportCorrelationMatrix::setArgument(int argument, QFile* file)
-{
-   // if argument is output file set it
-   if ( argument == OutputFile )
-   {
-      _output = file;
-   }
-}
-
-
-
-
-
-
-bool ExportCorrelationMatrix::initialize()
-{
-   // make sure input and output arguments were set
-   if ( !_ccm || !_cmx || !_output )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Argument Error"));
-      e.setDetails(tr("Did not get valid input and/or output arguments."));
-      throw e;
-   }
-
-   // do not have data pre-allocate
-   return false;
-}
-
-
-
-
-
-
-void ExportCorrelationMatrix::runSerial()
-{
-   // initialize percent complete and steps
-   int lastPercent {0};
-   qint64 steps {0};
-   qint64 totalSteps {_cmx->size()};
-
    // initialize pair iterators
    CorrelationMatrix::Pair cmxPair(_cmx);
    CCMatrix::Pair ccmPair(_ccm);
@@ -153,16 +27,10 @@ void ExportCorrelationMatrix::runSerial()
    QTextStream stream(_output);
    stream.setRealNumberPrecision(6);
 
-   // increment through all gene pairs
+   // iterate through all pairs
    while ( cmxPair.hasNext() )
    {
-      // make sure interruption is not requested
-      if ( isInterruptionRequested() )
-      {
-         return;
-      }
-
-      // read next gene pair
+      // read next pair
       cmxPair.readNext();
 
       if ( cmxPair.clusterSize() > 1 )
@@ -170,10 +38,10 @@ void ExportCorrelationMatrix::runSerial()
          ccmPair.read(cmxPair.index());
       }
 
-      // write gene pair data to output file
-      for ( int cluster = 0; cluster < cmxPair.clusterSize(); cluster++ )
+      // write pairwise data to output file
+      for ( int k = 0; k < cmxPair.clusterSize(); k++ )
       {
-         float correlation = cmxPair.at(cluster, 0);
+         float correlation = cmxPair.at(k, 0);
          int numSamples = 0;
          int numMissing = 0;
          int numPostOutliers = 0;
@@ -186,7 +54,7 @@ void ExportCorrelationMatrix::runSerial()
             // compute summary statistics
             for ( int i = 0; i < _ccm->sampleSize(); i++ )
             {
-               switch ( ccmPair.at(cluster, i) )
+               switch ( ccmPair.at(k, i) )
                {
                case 1:
                   numSamples++;
@@ -209,7 +77,7 @@ void ExportCorrelationMatrix::runSerial()
             // write sample mask to string
             for ( int i = 0; i < _ccm->sampleSize(); i++ )
             {
-               sampleMask[i] = '0' + ccmPair.at(cluster, i);
+               sampleMask[i] = '0' + ccmPair.at(k, i);
             }
          }
 
@@ -223,7 +91,7 @@ void ExportCorrelationMatrix::runSerial()
          stream
             << cmxPair.index().getX()
             << "\t" << cmxPair.index().getY()
-            << "\t" << cluster
+            << "\t" << k
             << "\t" << cmxPair.clusterSize()
             << "\t" << numSamples
             << "\t" << numMissing
@@ -234,18 +102,6 @@ void ExportCorrelationMatrix::runSerial()
             << "\t" << sampleMask
             << "\n";
       }
-
-      // increment steps and calculate percent complete
-      ++steps;
-      qint64 newPercent {100*steps/totalSteps};
-
-      // check to see if percent has changed
-      if ( newPercent != lastPercent )
-      {
-         // update percent complete and emit progressed signal
-         lastPercent = newPercent;
-         emit progressed(lastPercent);
-      }
    }
 
    // make sure writing output file worked
@@ -254,6 +110,32 @@ void ExportCorrelationMatrix::runSerial()
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("File IO Error"));
       e.setDetails(tr("Qt Text Stream encountered an unknown error."));
+      throw e;
+   }
+}
+
+
+
+
+
+
+EAbstractAnalytic::Input* ExportCorrelationMatrix::makeInput()
+{
+   return new Input(this);
+}
+
+
+
+
+
+
+void ExportCorrelationMatrix::initialize()
+{
+   if ( !_ccm || !_cmx || !_output )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Invalid Argument"));
+      e.setDetails(tr("Did not get valid input and/or output arguments."));
       throw e;
    }
 }

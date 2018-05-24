@@ -11,8 +11,8 @@ public:
    {
       ImportExpressionMatrixType = 0
       ,ExportExpressionMatrixType
-      // ,ImportCorrelationMatrixType
-      // ,ExportCorrelationMatrixType
+      ,ImportCorrelationMatrixType
+      ,ExportCorrelationMatrixType
       // ,SimilarityType
       // ,RMTType
       // ,ExtractType

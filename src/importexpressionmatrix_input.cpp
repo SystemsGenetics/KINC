@@ -77,9 +77,9 @@ QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
    case SampleSize:
       switch (role)
       {
-      case Role::CommandLineName: return QString("size");
+      case Role::CommandLineName: return QString("samples");
       case Role::Title: return tr("Sample Size:");
-      case Role::WhatsThis: return tr("Total number of samples per gene. 0 indicates the text file contains a header of sample names to be read to determine size.");
+      case Role::WhatsThis: return tr("Number of samples. 0 indicates the text file contains a header of sample names to be read to determine size.");
       case Role::Minimum: return 0;
       case Role::Maximum: return std::numeric_limits<int>::max();
       default: return QVariant();
