@@ -1,7 +1,6 @@
 #ifndef PAIRWISE_BASE_H
 #define PAIRWISE_BASE_H
 #include <ace/core/core.h>
-#include <ace/core/emetadata.h>
 
 #include "pairwise_index.h"
 

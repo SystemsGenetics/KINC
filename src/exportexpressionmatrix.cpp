@@ -1,5 +1,3 @@
-#include <ace/core/emetaarray.h>
-
 #include "exportexpressionmatrix.h"
 #include "exportexpressionmatrix_input.h"
 #include "datafactory.h"
@@ -26,24 +24,9 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* /*result*/)
    using Transform = ExpressionMatrix::Transform;
 
    // get gene names, sample names, and transform
-   // const EMetaArray& geneNames = _input->getGeneNames().toArray();
-   // const EMetaArray& sampleNames = _input->getSampleNames().toArray();
-   // Transform transform = _input->getTransform();
-
-   // HACK: workaround for the user-meta bug
-   EMetaArray geneNames;
-   for ( int i = 0; i < _input->getGeneSize(); i++ )
-   {
-      geneNames.append(QString::number(i));
-   }
-
-   EMetaArray sampleNames;
-   for ( int i = 0; i < _input->getSampleSize(); i++ )
-   {
-      sampleNames.append(QString::number(i));
-   }
-
-   Transform transform {Transform::None};
+   const EMetaArray& geneNames = _input->getGeneNames().toArray();
+   const EMetaArray& sampleNames = _input->getSampleNames().toArray();
+   Transform transform = _input->getTransform();
 
    // create text stream to output file
    QTextStream stream(_output);

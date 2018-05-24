@@ -1,6 +1,3 @@
-#include <ace/core/emetaarray.h>
-#include <ace/core/emetaobject.h>
-
 #include "expressionmatrix.h"
 
 
@@ -34,10 +31,8 @@ qint64 ExpressionMatrix::dataEnd() const
 
 void ExpressionMatrix::readData()
 {
-   // seek to beginning of data
-   seek(0);
-
    // read header
+   seek(0);
    stream() >> _geneSize >> _sampleSize;
 }
 
@@ -48,10 +43,11 @@ void ExpressionMatrix::readData()
 
 void ExpressionMatrix::writeNewData()
 {
-   // seek to beginning of data
-   seek(0);
+   // initialize metadata
+   setMeta(EMetadata(EMetadata::Object));
 
-   // write header
+   // initialize header
+   seek(0);
    stream() << _geneSize << _sampleSize;
 }
 
@@ -72,7 +68,9 @@ QAbstractTableModel* ExpressionMatrix::model()
 
 void ExpressionMatrix::finish()
 {
-   writeNewData();
+   // write header
+   seek(0);
+   stream() << _geneSize << _sampleSize;
 }
 
 
@@ -207,8 +205,8 @@ void ExpressionMatrix::initialize(QStringList geneNames, QStringList sampleNames
    }
 
    // insert gene and sample names to data object's metadata
-   // meta().toObject().insert("genes", metaGeneNames);
-   // meta().toObject().insert("samples", metaSampleNames);
+   meta().toObject().insert("genes", metaGeneNames);
+   meta().toObject().insert("samples", metaSampleNames);
 
    // set gene and sample size
    _geneSize = geneNames.size();
@@ -222,7 +220,7 @@ void ExpressionMatrix::initialize(QStringList geneNames, QStringList sampleNames
 
 ExpressionMatrix::Transform ExpressionMatrix::getTransform() const
 {
-   QString transformName = meta().toObject().at("transform").toString();
+   auto& transformName {meta().toObject().at("transform").toString()};
    return static_cast<Transform>(TRANSFORM_NAMES.indexOf(transformName));
 }
 
@@ -233,7 +231,8 @@ ExpressionMatrix::Transform ExpressionMatrix::getTransform() const
 
 void ExpressionMatrix::setTransform(ExpressionMatrix::Transform transform)
 {
-   // meta().toObject().insert("transform", TRANSFORM_NAMES.at(static_cast<int>(transform)));
+   auto& transformName {TRANSFORM_NAMES.at(static_cast<int>(transform))};
+   meta().toObject().insert("transform", transformName);
 }
 
 

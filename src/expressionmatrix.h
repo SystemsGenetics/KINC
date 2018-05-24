@@ -1,7 +1,6 @@
 #ifndef EXPRESSIONMATRIX_H
 #define EXPRESSIONMATRIX_H
 #include <ace/core/core.h>
-#include <ace/core/emetadata.h>
 
 
 

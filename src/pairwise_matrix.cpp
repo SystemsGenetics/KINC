@@ -1,6 +1,3 @@
-#include <ace/core/emetaarray.h>
-#include <ace/core/emetaobject.h>
-
 #include "pairwise_matrix.h"
 
 
@@ -24,10 +21,8 @@ qint64 Matrix::dataEnd() const
 
 void Matrix::readData()
 {
-   // seek to beginning of data object
+   // read header
    seek(0);
-
-   // read in all data
    stream() >> _geneSize >> _maxClusterSize >> _dataSize >> _pairSize >> _clusterSize >> _offset;
    readHeader();
 }
@@ -39,10 +34,11 @@ void Matrix::readData()
 
 void Matrix::writeNewData()
 {
-   // seek to beginning of data and make sure it worked
-   seek(0);
+   // initialize metadata
+   setMeta(EMetadata(EMetadata::Object));
 
-   // write out all header information
+   // initialize header
+   seek(0);
    stream() << _geneSize << _maxClusterSize << _dataSize << _pairSize << _clusterSize << _offset;
    writeHeader();
 }
@@ -54,7 +50,10 @@ void Matrix::writeNewData()
 
 void Matrix::finish()
 {
-   writeNewData();
+   // initialize header
+   seek(0);
+   stream() << _geneSize << _maxClusterSize << _dataSize << _pairSize << _clusterSize << _offset;
+   writeHeader();
 }
 
 
@@ -93,7 +92,7 @@ void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int data
    }
 
    // save gene names to metadata
-   // meta().toObject().insert("genes", geneNames);
+   meta().toObject().insert("genes", geneNames);
 
    // initiailze new data within object
    _geneSize = geneNames.toArray().size();

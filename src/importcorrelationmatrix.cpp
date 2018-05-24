@@ -1,5 +1,3 @@
-#include <ace/core/emetaarray.h>
-
 #include "importcorrelationmatrix.h"
 #include "importcorrelationmatrix_input.h"
 #include "datafactory.h"

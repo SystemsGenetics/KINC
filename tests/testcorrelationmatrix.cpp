@@ -1,6 +1,5 @@
 #include <ace/core/core.h>
 #include <ace/core/ace_dataobject.h>
-#include <ace/core/emetaarray.h>
 
 #include "testcorrelationmatrix.h"
 #include "correlationmatrix.h"
