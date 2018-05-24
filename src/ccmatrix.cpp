@@ -251,7 +251,9 @@ void CCMatrix::initialize(const EMetadata &geneNames, int maxClusterSize, const 
    }
 
    // save sample names to metadata
-   meta().toObject().insert("samples", sampleNames);
+   EMetaObject metaObject {meta().toObject()};
+   metaObject.insert("samples", sampleNames);
+   setMeta(metaObject);
 
    // save sample size and initialize base class
    _sampleSize = sampleNames.toArray().size();

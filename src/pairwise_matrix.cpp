@@ -92,7 +92,9 @@ void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int data
    }
 
    // save gene names to metadata
-   meta().toObject().insert("genes", geneNames);
+   EMetaObject metaObject {meta().toObject()};
+   metaObject.insert("genes", geneNames);
+   setMeta(metaObject);
 
    // initiailze new data within object
    _geneSize = geneNames.toArray().size();

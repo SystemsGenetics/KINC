@@ -24,8 +24,8 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* /*result*/)
    using Transform = ExpressionMatrix::Transform;
 
    // get gene names, sample names, and transform
-   const EMetaArray& geneNames = _input->getGeneNames().toArray();
-   const EMetaArray& sampleNames = _input->getSampleNames().toArray();
+   EMetaArray geneNames = _input->getGeneNames().toArray();
+   EMetaArray sampleNames = _input->getSampleNames().toArray();
    Transform transform = _input->getTransform();
 
    // create text stream to output file

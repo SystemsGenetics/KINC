@@ -92,7 +92,7 @@ QVariant ExpressionMatrix::headerData(int section, Qt::Orientation orientation, 
    case Qt::Vertical:
    {
       // get gene names and make sure it is array
-      const EMetadata& genes {meta().toObject().at("genes")};
+      EMetadata genes {meta().toObject().at("genes")};
       if ( genes.isArray() )
       {
          // make sure section is within limits of array
@@ -109,7 +109,7 @@ QVariant ExpressionMatrix::headerData(int section, Qt::Orientation orientation, 
    case Qt::Horizontal:
    {
       // get sample names and make sure it is array
-      const EMetadata& samples {meta().toObject().at("samples")};
+      EMetadata samples {meta().toObject().at("samples")};
       if ( samples.isArray() )
       {
          // make sure section is within limits of array
@@ -205,8 +205,10 @@ void ExpressionMatrix::initialize(QStringList geneNames, QStringList sampleNames
    }
 
    // insert gene and sample names to data object's metadata
-   meta().toObject().insert("genes", metaGeneNames);
-   meta().toObject().insert("samples", metaSampleNames);
+   EMetaObject metaObject {meta().toObject()};
+   metaObject.insert("genes", metaGeneNames);
+   metaObject.insert("samples", metaSampleNames);
+   setMeta(metaObject);
 
    // set gene and sample size
    _geneSize = geneNames.size();
@@ -232,7 +234,10 @@ ExpressionMatrix::Transform ExpressionMatrix::getTransform() const
 void ExpressionMatrix::setTransform(ExpressionMatrix::Transform transform)
 {
    auto& transformName {TRANSFORM_NAMES.at(static_cast<int>(transform))};
-   meta().toObject().insert("transform", transformName);
+
+   EMetaObject metaObject {meta().toObject()};
+   metaObject.insert("transform", transformName);
+   setMeta(metaObject);
 }
 
 
