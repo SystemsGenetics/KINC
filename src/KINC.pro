@@ -37,7 +37,8 @@ SOURCES += \
    expressionmatrix.cpp \
    # extract.cpp \
    # importcorrelationmatrix.cpp \
-   # importexpressionmatrix.cpp \
+   importexpressionmatrix_input.cpp \
+   importexpressionmatrix.cpp \
    main.cpp \
    pairwise_clustering.cpp \
    pairwise_correlation.cpp \
@@ -61,7 +62,8 @@ HEADERS += \
    expressionmatrix.h \
    # extract.h \
    # importcorrelationmatrix.h \
-   # importexpressionmatrix.h \
+   importexpressionmatrix_input.h \
+   importexpressionmatrix.h \
    pairwise_clustering.h \
    pairwise_correlation.h \
    pairwise_gmm.h \

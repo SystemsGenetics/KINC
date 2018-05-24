@@ -10,6 +10,7 @@ class ExpressionMatrix : public EAbstractData
    Q_OBJECT
 public:
    using Expression = float;
+   static const QStringList TRANSFORM_NAMES;
    enum class Transform
    {
       None
@@ -35,11 +36,11 @@ public:
       Expression* _expressions;
       ExpressionMatrix* _matrix;
    };
-   virtual void readData() override final;
    virtual qint64 dataEnd() const override final;
+   virtual void readData() override final;
    virtual void writeNewData() override final;
-   virtual void finish() override final;
    virtual QAbstractTableModel* model() override final;
+   virtual void finish() override final;
    QVariant headerData(int section, Qt::Orientation orientation, int role) const;
    int rowCount(const QModelIndex& parent) const;
    int columnCount(const QModelIndex& parent) const;

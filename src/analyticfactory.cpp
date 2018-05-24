@@ -1,5 +1,5 @@
 #include "analyticfactory.h"
-// #include "importexpressionmatrix.h"
+#include "importexpressionmatrix.h"
 // #include "exportexpressionmatrix.h"
 // #include "importcorrelationmatrix.h"
 // #include "exportcorrelationmatrix.h"
@@ -30,7 +30,7 @@ QString AnalyticFactory::name(quint16 type) const
 {
    switch (type)
    {
-   // case ImportExpressionMatrixType: return "Import Expression Matrix";
+   case ImportExpressionMatrixType: return "Import Expression Matrix";
    // case ExportExpressionMatrixType: return "Export Expression Matrix";
    // case ImportCorrelationMatrixType: return "Import Correlation Matrix";
    // case ExportCorrelationMatrixType: return "Export Correlation Matrix";
@@ -50,7 +50,7 @@ QString AnalyticFactory::commandName(quint16 type) const
 {
    switch (type)
    {
-   // case ImportExpressionMatrixType: return "import_emx";
+   case ImportExpressionMatrixType: return "import-emx";
    // case ExportExpressionMatrixType: return "export_emx";
    // case ImportCorrelationMatrixType: return "import_cmx";
    // case ExportCorrelationMatrixType: return "export_cmx";
@@ -70,7 +70,7 @@ std::unique_ptr<EAbstractAnalytic> AnalyticFactory::make(quint16 type) const
 {
    switch (type)
    {
-   // case ImportExpressionMatrixType: return unique_ptr<EAbstractAnalytic>(new ImportExpressionMatrix);
+   case ImportExpressionMatrixType: return unique_ptr<EAbstractAnalytic>(new ImportExpressionMatrix);
    // case ExportExpressionMatrixType: return unique_ptr<EAbstractAnalytic>(new ExportExpressionMatrix);
    // case ImportCorrelationMatrixType: return unique_ptr<EAbstractAnalytic>(new ImportCorrelationMatrix);
    // case ExportCorrelationMatrixType: return unique_ptr<EAbstractAnalytic>(new ExportCorrelationMatrix);

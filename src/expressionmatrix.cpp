@@ -8,6 +8,30 @@
 
 
 
+const QStringList ExpressionMatrix::TRANSFORM_NAMES
+{
+   "none"
+   ,"natural logarithm"
+   ,"logarithm base 2"
+   ,"logarithm base 10"
+};
+
+
+
+
+
+
+qint64 ExpressionMatrix::dataEnd() const
+{
+   // calculate and return end of data
+   return DATA_OFFSET + ((qint64)_geneSize * (qint64)_sampleSize * sizeof(Expression));
+}
+
+
+
+
+
+
 void ExpressionMatrix::readData()
 {
    // seek to beginning of data
@@ -22,36 +46,13 @@ void ExpressionMatrix::readData()
 
 
 
-qint64 ExpressionMatrix::dataEnd() const
-{
-   // calculate and return end of data
-   qint64 geneSize {_geneSize};
-   qint64 sampleSize {_sampleSize};
-   return DATA_OFFSET+(geneSize*sampleSize*sizeof(Expression));
-}
-
-
-
-
-
-
 void ExpressionMatrix::writeNewData()
 {
    // seek to beginning of data
    seek(0);
 
-   // write gene and sample sizes of 0
+   // write header
    stream() << _geneSize << _sampleSize;
-}
-
-
-
-
-
-
-void ExpressionMatrix::finish()
-{
-   writeNewData();
 }
 
 
@@ -69,6 +70,16 @@ QAbstractTableModel* ExpressionMatrix::model()
 
 
 
+void ExpressionMatrix::finish()
+{
+   writeNewData();
+}
+
+
+
+
+
+
 QVariant ExpressionMatrix::headerData(int section, Qt::Orientation orientation, int role) const
 {
    // if this is not display role return nothing
@@ -78,13 +89,12 @@ QVariant ExpressionMatrix::headerData(int section, Qt::Orientation orientation, 
    }
 
    // get metadata root and figure out orientation
-   const EMetaObject& object {meta().toObject()};
    switch (orientation)
    {
    case Qt::Vertical:
    {
       // get gene names and make sure it is array
-      const EMetadata& genes {object["genes"]};
+      const EMetadata& genes {meta().toObject().at("genes")};
       if ( genes.isArray() )
       {
          // make sure section is within limits of array
@@ -101,7 +111,7 @@ QVariant ExpressionMatrix::headerData(int section, Qt::Orientation orientation, 
    case Qt::Horizontal:
    {
       // get sample names and make sure it is array
-      const EMetadata& samples {object["samples"]};
+      const EMetadata& samples {meta().toObject().at("samples")};
       if ( samples.isArray() )
       {
          // make sure section is within limits of array
@@ -182,28 +192,25 @@ QVariant ExpressionMatrix::data(const QModelIndex& index, int role) const
 
 void ExpressionMatrix::initialize(QStringList geneNames, QStringList sampleNames)
 {
-   // get metadata root of data object
-   EMetaObject& object {meta().toObject()};
-
-   // create new metadata array that stores gene names and populate it
+   // create metadata array of gene names
    EMetaArray metaGeneNames;
-   for (auto i = geneNames.constBegin(); i != geneNames.constEnd() ;++i)
+   for ( auto& geneName : geneNames )
    {
-      metaGeneNames.append(*i);
+      metaGeneNames.append(geneName);
    }
 
-   // create new metadata array that stores sample names and populate it
+   // create metadata array of sample names
    EMetaArray metaSampleNames;
-   for (auto i = sampleNames.constBegin(); i != sampleNames.constEnd() ;++i)
+   for ( auto& sampleName : sampleNames )
    {
-      metaSampleNames.append(*i);
+      metaSampleNames.append(sampleName);
    }
 
-   // insert both gene and sample names to data object's metadata
-   object.insert("genes",metaGeneNames);
-   object.insert("samples",metaSampleNames);
+   // insert gene and sample names to data object's metadata
+   // meta().toObject().insert("genes", metaGeneNames);
+   // meta().toObject().insert("samples", metaSampleNames);
 
-   // set gene and sample size from size of name lists
+   // set gene and sample size
    _geneSize = geneNames.size();
    _sampleSize = sampleNames.size();
 }
@@ -215,25 +222,8 @@ void ExpressionMatrix::initialize(QStringList geneNames, QStringList sampleNames
 
 ExpressionMatrix::Transform ExpressionMatrix::getTransform() const
 {
-   // get metadata root of data object
-   const EMetaObject& object {meta().toObject()};
-   QString transformName = object["transform"].toString();
-
-   // get transform type according to transform string
-   if ( transformName == "none" ) {
-      return Transform::None;
-   }
-   else if ( transformName == "natural logarithm" ) {
-      return Transform::NLog;
-   }
-   else if ( transformName == "logarithm base 2" ) {
-      return Transform::Log2;
-   }
-   else if ( transformName == "logarithm base 10" ) {
-      return Transform::Log10;
-   }
-
-   return Transform::None;
+   QString transformName = meta().toObject().at("transform").toString();
+   return static_cast<Transform>(TRANSFORM_NAMES.indexOf(transformName));
 }
 
 
@@ -243,29 +233,7 @@ ExpressionMatrix::Transform ExpressionMatrix::getTransform() const
 
 void ExpressionMatrix::setTransform(ExpressionMatrix::Transform transform)
 {
-   // get metadata root of data object and create new string
-   EMetaObject& object {meta().toObject()};
-   EMetadata meta;
-
-   // set new transform string according to transform type
-   switch (transform)
-   {
-   case Transform::None:
-      meta = tr("none");
-      break;
-   case Transform::NLog:
-      meta = tr("natural logarithm");
-      break;
-   case Transform::Log2:
-      meta = tr("logarithm base 2");
-      break;
-   case Transform::Log10:
-      meta = tr("logarithm base 10");
-      break;
-   }
-
-   // add new transform key to metadata
-   object.insert("transform",meta);
+   // meta().toObject().insert("transform", TRANSFORM_NAMES.at(static_cast<int>(transform)));
 }
 
 
@@ -275,10 +243,7 @@ void ExpressionMatrix::setTransform(ExpressionMatrix::Transform transform)
 
 qint64 ExpressionMatrix::getRawSize() const
 {
-   // calculate total number of floating point epxressions and return it
-   qint64 geneSize {_geneSize};
-   qint64 sampleSize {_sampleSize};
-   return geneSize*sampleSize;
+   return (qint64)_geneSize * (qint64)_sampleSize;
 }
 
 
