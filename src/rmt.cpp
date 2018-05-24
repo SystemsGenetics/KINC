@@ -226,8 +226,8 @@ bool RMT::initialize()
    if ( !_input || !_logfile )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Argument Error"));
-      e.setDetails(QObject::tr("Did not get valid input or logfile arguments."));
+      e.setTitle(tr("Argument Error"));
+      e.setDetails(tr("Did not get valid input or logfile arguments."));
       throw e;
    }
 
@@ -235,8 +235,8 @@ bool RMT::initialize()
    if ( _thresholdStart <= _thresholdStop )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Argument Error"));
-      e.setDetails(QObject::tr("Starting threshold must be greater than stopping threshold."));
+      e.setTitle(tr("Argument Error"));
+      e.setDetails(tr("Starting threshold must be greater than stopping threshold."));
       throw e;
    }
 
@@ -244,8 +244,8 @@ bool RMT::initialize()
    if ( _minUnfoldingPace >= _maxUnfoldingPace )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Argument Error"));
-      e.setDetails(QObject::tr("Minimum unfolding pace must be less than maximum unfolding pace."));
+      e.setTitle(tr("Argument Error"));
+      e.setDetails(tr("Minimum unfolding pace must be less than maximum unfolding pace."));
       throw e;
    }
 
@@ -350,8 +350,8 @@ void RMT::runSerial()
       if ( threshold < _thresholdStop )
       {
          E_MAKE_EXCEPTION(e);
-         e.setTitle(QObject::tr("RMT Threshold Error"));
-         e.setDetails(QObject::tr("Could not find non-random threshold above stopping threshold."));
+         e.setTitle(tr("RMT Threshold Error"));
+         e.setDetails(tr("Could not find non-random threshold above stopping threshold."));
          throw e;
       }
 

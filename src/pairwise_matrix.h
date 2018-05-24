@@ -48,8 +48,8 @@ namespace Pairwise
          mutable qint64 _rawIndex {0};
          mutable Index _index;
       };
-      virtual void readData() override final;
       virtual qint64 dataEnd() const override final;
+      virtual void readData() override final;
       virtual void writeNewData() override final;
       virtual void finish() override final;
       int geneSize() const { return _geneSize; }

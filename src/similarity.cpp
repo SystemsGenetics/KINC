@@ -371,8 +371,8 @@ bool Similarity::initialize()
    if ( !_input || !_ccm || !_cmx )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Argument Error"));
-      e.setDetails(QObject::tr("Did not get valid input and/or output arguments."));
+      e.setTitle(tr("Argument Error"));
+      e.setDetails(tr("Did not get valid input and/or output arguments."));
       throw e;
    }
 
@@ -380,8 +380,8 @@ bool Similarity::initialize()
    if ( _minSamples < 1 )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Argument Error"));
-      e.setDetails(QObject::tr("Minimum sample size must be at least 1 or greater."));
+      e.setTitle(tr("Argument Error"));
+      e.setDetails(tr("Minimum sample size must be at least 1 or greater."));
       throw e;
    }
 
@@ -389,8 +389,8 @@ bool Similarity::initialize()
    if ( _maxClusters < _minClusters )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Argument Error"));
-      e.setDetails(QObject::tr("Minimum clusters must be less than or equal to maximum clusters."));
+      e.setTitle(tr("Argument Error"));
+      e.setDetails(tr("Minimum clusters must be less than or equal to maximum clusters."));
       throw e;
    }
 

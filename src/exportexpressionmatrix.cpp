@@ -135,8 +135,8 @@ bool ExportExpressionMatrix::initialize()
    if ( !_input || !_output )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Argument Error"));
-      e.setDetails(QObject::tr("Did not get valid input and/or output arguments."));
+      e.setTitle(tr("Argument Error"));
+      e.setDetails(tr("Did not get valid input and/or output arguments."));
       throw e;
    }
 

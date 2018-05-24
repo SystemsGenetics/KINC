@@ -12,6 +12,16 @@ using namespace Pairwise;
 
 
 
+qint64 Matrix::dataEnd() const
+{
+   return _headerSize + _offset + _clusterSize * (_dataSize + _itemHeaderSize);
+}
+
+
+
+
+
+
 void Matrix::readData()
 {
    // seek to beginning of data object
@@ -20,16 +30,6 @@ void Matrix::readData()
    // read in all data
    stream() >> _geneSize >> _maxClusterSize >> _dataSize >> _pairSize >> _clusterSize >> _offset;
    readHeader();
-}
-
-
-
-
-
-
-qint64 Matrix::dataEnd() const
-{
-   return _headerSize + _offset + _clusterSize * (_dataSize + _itemHeaderSize);
 }
 
 
@@ -78,8 +78,8 @@ void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int data
    if ( !geneNames.isArray() || geneNames.toArray().isEmpty() )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Domain Error"));
-      e.setDetails(QObject::tr("Gene names metadata is not an array or is empty."));
+      e.setTitle(tr("Domain Error"));
+      e.setDetails(tr("Gene names metadata is not an array or is empty."));
       throw e;
    }
 
@@ -87,8 +87,8 @@ void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int data
    if ( maxClusterSize < 1 || dataSize < 1 || offset < 0 )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Pairwise Matrix Initialization Error"));
-      e.setDetails(QObject::tr("An integer argument given is less than the minimum."));
+      e.setTitle(tr("Pairwise Matrix Initialization Error"));
+      e.setDetails(tr("An integer argument given is less than the minimum."));
       throw e;
    }
 
@@ -116,8 +116,8 @@ void Matrix::write(Index index, qint8 cluster)
    if ( _lastWrite == -2 )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Pairwise Matrix Logical Error"));
-      e.setDetails(QObject::tr("Attempting to write data to uninitialized object."));
+      e.setTitle(tr("Pairwise Matrix Logical Error"));
+      e.setDetails(tr("Attempting to write data to uninitialized object."));
       throw e;
    }
 
@@ -126,8 +126,8 @@ void Matrix::write(Index index, qint8 cluster)
    if ( index.indent(cluster) <= _lastWrite )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Pairwise Matrix Logical Error"));
-      e.setDetails(QObject::tr("Attempting to write indent %1 when last written is %2.")
+      e.setTitle(tr("Pairwise Matrix Logical Error"));
+      e.setDetails(tr("Attempting to write indent %1 when last written is %2.")
                    .arg(index.indent(0)).arg(_lastWrite));
       throw e;
    }
@@ -224,8 +224,8 @@ void Matrix::seekPair(qint64 index) const
    if ( index < 0 || index >= _clusterSize )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Domain Error"));
-      e.setDetails(QObject::tr("Attempting to seek to cluster index %1 when total size is %2.")
+      e.setTitle(tr("Domain Error"));
+      e.setDetails(tr("Attempting to seek to cluster index %1 when total size is %2.")
                    .arg(index).arg(_clusterSize));
       throw e;
    }
@@ -245,8 +245,8 @@ void Matrix::Pair::write(Index index)
    if ( clusterSize() > Index::MAX_CLUSTER_SIZE )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Pairwise Logical Error"));
-      e.setDetails(QObject::tr("Cannot write gene pair with cluster size of %1 exceeding the max of"
+      e.setTitle(tr("Pairwise Logical Error"));
+      e.setDetails(tr("Cannot write gene pair with cluster size of %1 exceeding the max of"
                                " %2.").arg(clusterSize()).arg(Index::MAX_CLUSTER_SIZE));
       throw e;
    }
@@ -304,8 +304,8 @@ void Matrix::Pair::readNext() const
       if ( cluster != 0 )
       {
          E_MAKE_EXCEPTION(e);
-         e.setTitle(QObject::tr("File IO Error"));
-         e.setDetails(QObject::tr("Reading gene pair failed because first cluster is not 0."));
+         e.setTitle(tr("File IO Error"));
+         e.setDetails(tr("Reading gene pair failed because first cluster is not 0."));
          throw e;
       }
 
@@ -332,8 +332,8 @@ void Matrix::Pair::readNext() const
          if ( ++count > Index::MAX_CLUSTER_SIZE )
          {
             E_MAKE_EXCEPTION(e);
-            e.setTitle(QObject::tr("File IO Error"));
-            e.setDetails(QObject::tr("Reading gene pair failed because it exceeds the max number of"
+            e.setTitle(tr("File IO Error"));
+            e.setDetails(tr("Reading gene pair failed because it exceeds the max number of"
                                      " clusters."));
             throw e;
          }

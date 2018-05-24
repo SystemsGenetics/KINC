@@ -181,8 +181,8 @@ bool ImportCorrelationMatrix::initialize()
    if ( !_input || !_ccm || !_cmx )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Argument Error"));
-      e.setDetails(QObject::tr("Did not get valid input and/or output arguments."));
+      e.setTitle(tr("Argument Error"));
+      e.setDetails(tr("Did not get valid input and/or output arguments."));
       throw e;
    }
 
@@ -190,8 +190,8 @@ bool ImportCorrelationMatrix::initialize()
    if ( _geneSize < 1 || _maxClusterSize < 1 || _sampleSize < 1 )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Argument Error"));
-      e.setDetails(QObject::tr("Gene size and sample size must be positive."));
+      e.setTitle(tr("Argument Error"));
+      e.setDetails(tr("Gene size and sample size must be positive."));
       throw e;
    }
 
@@ -199,8 +199,8 @@ bool ImportCorrelationMatrix::initialize()
    if ( _correlationName.isEmpty() )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Argument Error"));
-      e.setDetails(QObject::tr("Correlation name is required."));
+      e.setTitle(tr("Argument Error"));
+      e.setDetails(tr("Correlation name is required."));
       throw e;
    }
 
