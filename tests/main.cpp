@@ -6,7 +6,7 @@
 // #include "testexportexpressionmatrix.h"
 #include "testexpressionmatrix.h"
 // #include "testimportcorrelationmatrix.h"
-// #include "testimportexpressionmatrix.h"
+#include "testimportexpressionmatrix.h"
 // #include "testrmt.h"
 // #include "testsimilarity.h"
 

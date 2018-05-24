@@ -1,11 +1,11 @@
-#include <ace/core/AceCore.h>
-#include <ace/core/datamanager.h>
-#include <ace/core/datareference.h>
+#include <ace/core/core.h>
+#include <ace/core/ace_analytic_single.h>
+#include <ace/core/ace_dataobject.h>
 
 #include "testimportexpressionmatrix.h"
 #include "analyticfactory.h"
 #include "datafactory.h"
-#include "importexpressionmatrix.h"
+#include "importexpressionmatrix_input.h"
 
 
 
@@ -47,6 +47,7 @@ void TestImportExpressionMatrix::test()
 	QFile file(txtPath);
 	Q_ASSERT(file.open(QIODevice::ReadWrite));
 
+	// write expression data to text file
 	QTextStream stream(&file);
 
 	for ( int i = 0; i < numSamples; i++ )
@@ -78,22 +79,21 @@ void TestImportExpressionMatrix::test()
 
 	file.close();
 
-	// create analytic object
-	EAbstractAnalyticFactory& factory {EAbstractAnalyticFactory::getInstance()};
-	std::unique_ptr<EAbstractAnalytic> analytic {factory.make(AnalyticFactory::ImportExpressionMatrixType)};
-
-	analytic->addFileIn(ImportExpressionMatrix::InputFile, txtPath);
-	analytic->addDataOut(ImportExpressionMatrix::OutputData, emxPath, DataFactory::ExpressionMatrixType);
-	analytic->setArgument(ImportExpressionMatrix::NoSampleToken, noSampleToken);
+	// create analytic manager
+	auto abstractManager = Ace::Analytic::AbstractManager::makeManager(AnalyticFactory::ImportExpressionMatrixType, 0, 1);
+	auto manager = qobject_cast<Ace::Analytic::Single*>(abstractManager.release());
+	manager->set(ImportExpressionMatrix::Input::InputFile, txtPath);
+	manager->set(ImportExpressionMatrix::Input::OutputData, emxPath);
+	manager->set(ImportExpressionMatrix::Input::NoSampleToken, noSampleToken);
 
 	// run analytic
-	analytic->run();
+	manager->initialize();
+
+	// TODO: wait for analytic to finish properly
 
 	// read expression data from file
-	std::unique_ptr<Ace::DataReference> dataRef {Ace::DataManager::getInstance().open(emxPath)};
-	(*dataRef)->open();
-
-	ExpressionMatrix* matrix {dynamic_cast<ExpressionMatrix*>(&((*dataRef)->data()))};
+	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(emxPath)};
+	ExpressionMatrix* matrix {qobject_cast<ExpressionMatrix*>(dataRef->data())};
 	std::unique_ptr<float> expressions {matrix->dumpRawData()};
 
 	// verify expression data
