@@ -33,7 +33,8 @@ SOURCES += \
    correlationmatrix.cpp \
    datafactory.cpp \
    # exportcorrelationmatrix.cpp \
-   # exportexpressionmatrix.cpp \
+   exportexpressionmatrix_input.cpp \
+   exportexpressionmatrix.cpp \
    expressionmatrix.cpp \
    # extract.cpp \
    # importcorrelationmatrix.cpp \
@@ -58,7 +59,8 @@ HEADERS += \
    correlationmatrix.h \
    datafactory.h \
    # exportcorrelationmatrix.h \
-   # exportexpressionmatrix.h \
+   exportexpressionmatrix_input.h \
+   exportexpressionmatrix.h \
    expressionmatrix.h \
    # extract.h \
    # importcorrelationmatrix.h \

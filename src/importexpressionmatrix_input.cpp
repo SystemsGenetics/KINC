@@ -70,7 +70,7 @@ QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
       switch (role)
       {
       case Role::CommandLineName: return QString("nan");
-      case Role::Title: return tr("NaN Token:");
+      case Role::Title: return tr("No Sample Token:");
       case Role::WhatsThis: return tr("Expected token for expressions that have no value.");
       default: return QVariant();
       }

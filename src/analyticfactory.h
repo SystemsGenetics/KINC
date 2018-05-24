@@ -10,7 +10,7 @@ public:
    enum Type
    {
       ImportExpressionMatrixType = 0
-      // ,ExportExpressionMatrixType
+      ,ExportExpressionMatrixType
       // ,ImportCorrelationMatrixType
       // ,ExportCorrelationMatrixType
       // ,SimilarityType
