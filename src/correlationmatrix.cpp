@@ -205,7 +205,7 @@ void CorrelationMatrix::initialize(const EMetadata &geneNames, int maxClusterSiz
    }
 
    // save correlation names to metadata
-   meta().toObject().insert("correlations", correlationNames);
+   // meta().toObject().insert("correlations", correlationNames);
 
    // save correlation size and initialize base class
    _correlationSize = correlationNames.toArray().size();

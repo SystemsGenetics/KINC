@@ -6,7 +6,7 @@ BUILD_GUI = build-gui
 BUILD_TESTS = build-tests
 SRC = src
 TESTS = tests
-BINS = kinc-cli
+BINS = kinc-cli kinc-tests
 
 all: $(BINS)
 
@@ -20,9 +20,10 @@ kinc-gui: $(SRC)/*.h $(SRC)/*.cpp $(SRC)/opencl/*.cl
 	+$(MAKE) -C $(BUILD_GUI)
 	cp $(BUILD_GUI)/kinc $@
 
-$(BUILD_TESTS)/tests: $(TESTS)/*.h $(TESTS)/*.cpp
+kinc-tests: $(TESTS)/*.h $(TESTS)/*.cpp
 	cd $(BUILD_TESTS) && qmake ../$(TESTS)
 	+$(MAKE) -C $(BUILD_TESTS)
+	cp $(BUILD_TESTS)/tests $@
 
 clean:
 	rm -f $(BUILD_CLI)/* $(BUILD_GUI)/* $(BUILD_TESTS)/* $(BINS)

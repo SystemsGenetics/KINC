@@ -1,6 +1,6 @@
-#include <ace/core/AceCore.h>
-#include <ace/core/datamanager.h>
-#include <ace/core/datareference.h>
+#include <ace/core/core.h>
+#include <ace/core/ace_dataobject.h>
+#include <ace/core/emetaarray.h>
 
 #include "testclustermatrix.h"
 #include "ccmatrix.h"
@@ -42,34 +42,26 @@ void TestClusterMatrix::test()
 	}
 
 	// create metadata
-	EMetadata metaGeneNames(EMetadata::Array);
-	EMetadata metaSampleNames(EMetadata::Array);
-
+	EMetaArray metaGeneNames;
 	for ( int i = 0; i < numGenes; ++i )
 	{
-		EMetadata* name {new EMetadata(EMetadata::String)};
-		*(name->toString()) = QString::number(i);
-		metaGeneNames.toArray()->append(name);
+		metaGeneNames.append(QString::number(i));
 	}
 
+	EMetaArray metaSampleNames;
 	for ( int i = 0; i < numSamples; ++i )
 	{
-		EMetadata* name {new EMetadata(EMetadata::String)};
-		*(name->toString()) = QString::number(i);
-		metaSampleNames.toArray()->append(name);
+		metaSampleNames.append(QString::number(i));
 	}
 
 	// create data object
 	QString path {QDir::tempPath() + "/test.ccm"};
 
-	std::unique_ptr<Ace::DataReference> dataRef {Ace::DataManager::getInstance().open(path)};
-	(*dataRef)->clear(DataFactory::CCMatrixType);
-
-	CCMatrix* matrix {dynamic_cast<CCMatrix*>(&((*dataRef)->data()))};
+	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(path, DataFactory::CCMatrixType, EMetadata(EMetadata::Object))};
+	CCMatrix* matrix {qobject_cast<CCMatrix*>(dataRef->data())};
 
 	// write data to file
 	matrix->initialize(metaGeneNames, maxClusters, metaSampleNames);
-	matrix->prepare(false);
 
 	CCMatrix::Pair pair(matrix);
 
@@ -90,7 +82,6 @@ void TestClusterMatrix::test()
 	}
 
 	matrix->finish();
-	(*dataRef)->writeMeta();
 
 	// read and verify correlation data from file
 	pair.reset();

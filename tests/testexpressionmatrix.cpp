@@ -1,6 +1,5 @@
-#include <ace/core/AceCore.h>
-#include <ace/core/datamanager.h>
-#include <ace/core/datareference.h>
+#include <ace/core/core.h>
+#include <ace/core/ace_dataobject.h>
 
 #include "testexpressionmatrix.h"
 #include "datafactory.h"
@@ -22,13 +21,12 @@ void TestExpressionMatrix::test()
 
 	// create metadata
 	QStringList geneNames;
-	QStringList sampleNames;
-
 	for ( int i = 0; i < numGenes; ++i )
 	{
 		geneNames.append(QString::number(i));
 	}
 
+	QStringList sampleNames;
 	for ( int i = 0; i < numSamples; ++i )
 	{
 		sampleNames.append(QString::number(i));
@@ -37,14 +35,11 @@ void TestExpressionMatrix::test()
 	// create data object
 	QString path {QDir::tempPath() + "/test.emx"};
 
-	std::unique_ptr<Ace::DataReference> dataRef {Ace::DataManager::getInstance().open(path)};
-	(*dataRef)->clear(DataFactory::ExpressionMatrixType);
-
-	ExpressionMatrix* matrix {dynamic_cast<ExpressionMatrix*>(&((*dataRef)->data()))};
+	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(path, DataFactory::ExpressionMatrixType, EMetadata(EMetadata::Object))};
+	ExpressionMatrix* matrix {qobject_cast<ExpressionMatrix*>(dataRef->data())};
 
 	// write data to file
 	matrix->initialize(geneNames, sampleNames);
-	matrix->prepare(true);
 
 	ExpressionMatrix::Gene gene(matrix);
 	for ( int i = 0; i < matrix->getGeneSize(); ++i )
@@ -58,7 +53,6 @@ void TestExpressionMatrix::test()
 	}
 
 	matrix->finish();
-	(*dataRef)->writeMeta();
 
 	// read expression data from file
 	std::unique_ptr<float> expressions {matrix->dumpRawData()};

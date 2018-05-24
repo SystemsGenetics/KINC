@@ -1,6 +1,6 @@
-#include <ace/core/AceCore.h>
-#include <ace/core/datamanager.h>
-#include <ace/core/datareference.h>
+#include <ace/core/core.h>
+#include <ace/core/ace_dataobject.h>
+#include <ace/core/emetaarray.h>
 
 #include "testcorrelationmatrix.h"
 #include "correlationmatrix.h"
@@ -36,31 +36,23 @@ void TestCorrelationMatrix::test()
 	}
 
 	// create metadata
-	EMetadata metaGeneNames(EMetadata::Array);
-	EMetadata metaCorrelationNames(EMetadata::Array);
-
+	EMetaArray metaGeneNames;
 	for ( int i = 0; i < numGenes; ++i )
 	{
-		EMetadata* name {new EMetadata(EMetadata::String)};
-		*(name->toString()) = QString::number(i);
-		metaGeneNames.toArray()->append(name);
+		metaGeneNames.append(QString::number(i));
 	}
 
-	EMetadata* name {new EMetadata(EMetadata::String)};
-	*(name->toString()) = "test";
-	metaCorrelationNames.toArray()->append(name);
+	EMetaArray metaCorrelationNames;
+	metaCorrelationNames.append(QString("test"));
 
 	// create data object
 	QString path {QDir::tempPath() + "/test.cmx"};
 
-	std::unique_ptr<Ace::DataReference> dataRef {Ace::DataManager::getInstance().open(path)};
-	(*dataRef)->clear(DataFactory::CorrelationMatrixType);
-
-	CorrelationMatrix* matrix {dynamic_cast<CorrelationMatrix*>(&((*dataRef)->data()))};
+	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(path, DataFactory::CorrelationMatrixType, EMetadata(EMetadata::Object))};
+	CorrelationMatrix* matrix {qobject_cast<CorrelationMatrix*>(dataRef->data())};
 
 	// write data to file
 	matrix->initialize(metaGeneNames, maxClusters, metaCorrelationNames);
-	matrix->prepare(false);
 
 	CorrelationMatrix::Pair pair(matrix);
 
@@ -78,7 +70,6 @@ void TestCorrelationMatrix::test()
 	}
 
 	matrix->finish();
-	(*dataRef)->writeMeta();
 
 	// read and verify correlation data from file
 	pair.reset();
