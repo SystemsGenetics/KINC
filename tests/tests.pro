@@ -28,7 +28,8 @@ SOURCES += \
 	../src/exportexpressionmatrix_input.cpp \
 	../src/exportexpressionmatrix.cpp \
 	../src/expressionmatrix.cpp \
-	# ../src/extract.cpp \
+	../src/extract_input.cpp \
+	../src/extract.cpp \
 	../src/importcorrelationmatrix_input.cpp \
 	../src/importcorrelationmatrix.cpp \
 	../src/importexpressionmatrix_input.cpp \
@@ -42,7 +43,8 @@ SOURCES += \
 	../src/pairwise_matrix.cpp \
 	../src/pairwise_pearson.cpp \
 	../src/pairwise_spearman.cpp \
-	# ../src/rmt.cpp \
+	../src/rmt_input.cpp \
+	../src/rmt.cpp \
 	# ../src/similarity.cpp \
 	testclustermatrix.cpp \
 	testcorrelationmatrix.cpp \
@@ -61,7 +63,8 @@ HEADERS += \
 	../src/correlationmatrix.h \
 	../src/datafactory.h \
 	../src/expressionmatrix.h \
-	# ../src/extract.h \
+	../src/extract_input.h \
+	../src/extract.h \
 	../src/exportcorrelationmatrix_input.h \
 	../src/exportcorrelationmatrix.h \
 	../src/exportexpressionmatrix_input.h \
@@ -79,7 +82,8 @@ HEADERS += \
 	../src/pairwise_matrix.h \
 	../src/pairwise_pearson.h \
 	../src/pairwise_spearman.h \
-	# ../src/rmt.h \
+	../src/rmt_input.h \
+	../src/rmt.h \
 	# ../src/similarity.h \
 	testclustermatrix.h \
 	testcorrelationmatrix.h \

@@ -53,8 +53,8 @@ QVariant ImportCorrelationMatrix::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("input");
       case Role::Title: return tr("Input File:");
-      case Role::WhatsThis: tr("Raw input text file containing pairwise correlation data.");
-      case Role::FileFilters: return tr("Raw text file %1").arg("(*.txt)");
+      case Role::WhatsThis: tr("Input text file containing pairwise correlation data.");
+      case Role::FileFilters: return tr("Text file %1").arg("(*.txt)");
       default: return QVariant();
       }
    case ClusterData:

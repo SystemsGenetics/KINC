@@ -179,7 +179,7 @@ void ImportCorrelationMatrix::initialize()
    if ( _correlationName.isEmpty() )
    {
       E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Argument Error"));
+      e.setTitle(tr("Invalid Argument"));
       e.setDetails(tr("Correlation name is required."));
       throw e;
    }

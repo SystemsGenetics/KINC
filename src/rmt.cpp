@@ -3,12 +3,11 @@
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
 #include <lapacke.h>
-#include <ace/core/metadata.h>
 
 #include "rmt.h"
+#include "rmt_input.h"
 #include "correlationmatrix.h"
 #include "datafactory.h"
-#include <iostream>
 
 
 
@@ -19,24 +18,9 @@ using namespace std;
 
 
 
-EAbstractAnalytic::ArgumentType RMT::getArgumentData(int argument)
+int RMT::size() const
 {
-   // use type declaration
-   using Type = EAbstractAnalytic::ArgumentType;
-
-   // figure out which argument is being queried and return its type
-   switch (argument)
-   {
-   case InputData: return Type::DataIn;
-   case LogFile: return Type::FileOut;
-   case ThresholdStart: return Type::Double;
-   case ThresholdStep: return Type::Double;
-   case ThresholdStop: return Type::Double;
-   case MinUnfoldingPace: return Type::Integer;
-   case MaxUnfoldingPace: return Type::Integer;
-   case HistogramBinSize: return Type::Integer;
-   default: return Type::Bool;
-   }
+   return 1;
 }
 
 
@@ -44,221 +28,7 @@ EAbstractAnalytic::ArgumentType RMT::getArgumentData(int argument)
 
 
 
-QVariant RMT::getArgumentData(int argument, EAbstractAnalytic::Role role)
-{
-   // use role declaration
-   using Role = EAbstractAnalytic::Role;
-
-   // figure out which role is being queried
-   switch (role)
-   {
-   case Role::CommandLineName:
-      // figure out which argument is being queried and return command line name
-      switch (argument)
-      {
-      case InputData: return QString("input");
-      case LogFile: return QString("log");
-      case ThresholdStart: return QString("tstart");
-      case ThresholdStep: return QString("tstep");
-      case ThresholdStop: return QString("tstop");
-      case MinUnfoldingPace: return QString("minpace");
-      case MaxUnfoldingPace: return QString("maxpace");
-      case HistogramBinSize: return QString("bins");
-      default: return QVariant();
-      }
-   case Role::Title:
-      // figure out which argument is being queried and return title
-      switch (argument)
-      {
-      case InputData: return tr("Input:");
-      case LogFile: return tr("Log File:");
-      case ThresholdStart: return tr("Threshold Start:");
-      case ThresholdStep: return tr("Threshold Step:");
-      case ThresholdStop: return tr("Threshold Stop:");
-      case MinUnfoldingPace: return tr("Minimum Unfolding Pace:");
-      case MaxUnfoldingPace: return tr("Maximum Unfolding Pace:");
-      case HistogramBinSize: return tr("Histogram Bin Size:");
-      default: return QVariant();
-      }
-   case Role::WhatsThis:
-      // figure out which argument is being queried and return "What's This?" text
-      switch (argument)
-      {
-      case InputData: return tr("Correlation matrix for which an appropriate correlation threshold will be found.");
-      case LogFile: return tr("Output text file that logs all results.");
-      case ThresholdStart: return tr("Starting threshold.");
-      case ThresholdStep: return tr("Threshold step size.");
-      case ThresholdStop: return tr("Stopping threshold.");
-      case MinUnfoldingPace: return tr("The minimum pace with which to perform unfolding.");
-      case MaxUnfoldingPace: return tr("The maximum pace with which to perform unfolding.");
-      case HistogramBinSize: return tr("The number of bins for the nearest-neighbor spacing histogram.");
-      default: return QVariant();
-      }
-   case Role::DefaultValue:
-      // figure out which argument is being queried and if applicable return default value else
-      // return nothing
-      switch (argument)
-      {
-      case ThresholdStart: return 0.99;
-      case ThresholdStep: return 0.001;
-      case ThresholdStop: return 0.5;
-      case MinUnfoldingPace: return 10;
-      case MaxUnfoldingPace: return 40;
-      case HistogramBinSize: return 60;
-      default: return QVariant();
-      }
-   case Role::Minimum:
-      // figure out which argument is being queried and if applicable return minimum value else
-      // return nothing
-      switch (argument)
-      {
-      case ThresholdStart: return 0;
-      case ThresholdStep: return 0;
-      case ThresholdStop: return 0;
-      case MinUnfoldingPace: return 1;
-      case MaxUnfoldingPace: return 1;
-      case HistogramBinSize: return 1;
-      default: return QVariant();
-      }
-   case Role::Maximum:
-      // figure out which argument is being queried and if applicable return maximum value else
-      // return nothing
-      switch (argument)
-      {
-      case ThresholdStart: return 1;
-      case ThresholdStep: return 1;
-      case ThresholdStop: return 1;
-      case MinUnfoldingPace: return INT_MAX;
-      case MaxUnfoldingPace: return INT_MAX;
-      case HistogramBinSize: return INT_MAX;
-      default: return QVariant();
-      }
-   case Role::DataType:
-      // see if this is input data and return type else return nothing
-      switch (argument)
-      {
-      case InputData: return DataFactory::CorrelationMatrixType;
-      default: return QVariant();
-      }
-   case Role::FileFilters:
-      // figure out which argument is being queried and return file filters
-      switch (argument)
-      {
-      case LogFile: return tr("Text File %1").arg("(*.txt)");
-      default: return QVariant();
-      }
-   default:
-      return QVariant();
-   }
-}
-
-
-
-
-
-
-void RMT::setArgument(int argument, QVariant value)
-{
-   // figure out which argument is being set and set it
-   switch (argument)
-   {
-   case ThresholdStart:
-      _thresholdStart = value.toDouble();
-      break;
-   case ThresholdStep:
-      _thresholdStep = value.toDouble();
-      break;
-   case ThresholdStop:
-      _thresholdStop = value.toDouble();
-      break;
-   case MinUnfoldingPace:
-      _minUnfoldingPace = value.toInt();
-      break;
-   case MaxUnfoldingPace:
-      _maxUnfoldingPace = value.toInt();
-      break;
-   case HistogramBinSize:
-      _histogramBinSize = value.toInt();
-      break;
-   }
-}
-
-
-
-
-
-
-void RMT::setArgument(int argument, QFile* file)
-{
-   // figure out which argument is being queried and set file pointer
-   switch (argument)
-   {
-   case LogFile:
-      _logfile = file;
-      break;
-   }
-}
-
-
-
-
-
-
-void RMT::setArgument(int argument, EAbstractData* data)
-{
-   // figure out which argument is being queried and set data pointer
-   switch (argument)
-   {
-   case InputData:
-      _input = dynamic_cast<CorrelationMatrix*>(data);
-      break;
-   }
-}
-
-
-
-
-
-
-bool RMT::initialize()
-{
-   // make sure input and output were set properly
-   if ( !_input || !_logfile )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Argument Error"));
-      e.setDetails(tr("Did not get valid input or logfile arguments."));
-      throw e;
-   }
-
-   // make sure threshold arguments are valid
-   if ( _thresholdStart <= _thresholdStop )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Argument Error"));
-      e.setDetails(tr("Starting threshold must be greater than stopping threshold."));
-      throw e;
-   }
-
-   // make sure pace arguments are valid
-   if ( _minUnfoldingPace >= _maxUnfoldingPace )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Argument Error"));
-      e.setDetails(tr("Minimum unfolding pace must be less than maximum unfolding pace."));
-      throw e;
-   }
-
-   // nothing to pre-allocate
-   return false;
-}
-
-
-
-
-
-
-void RMT::runSerial()
+void RMT::process(const EAbstractAnalytic::Block* /*result*/)
 {
    // initialize log text stream
    QTextStream stream(_logfile);
@@ -270,11 +40,6 @@ void RMT::runSerial()
 
    float threshold {_thresholdStart};
 
-   // initialize last percent, steps, and total steps
-   int lastPercent {0};
-   int steps {0};
-   int totalSteps = (_thresholdStart - _thresholdStop) / _thresholdStep;
-
    // load raw correlation data, row-wise maximums
    QVector<float> matrix {_input->dumpRawData()};
    QVector<float> maximums {computeMaximums(matrix)};
@@ -282,12 +47,6 @@ void RMT::runSerial()
    // continue while max chi is less than final threshold
    while ( maxChi < _chiSquareThreshold2 )
    {
-      // make sure interruption is not requested
-      if ( isInterruptionRequested() )
-      {
-         return;
-      }
-
       qInfo("\n");
       qInfo("threshold: %g", threshold);
 
@@ -302,22 +61,10 @@ void RMT::runSerial()
 
       if ( size > 0 )
       {
-         // make sure interruption is not requested
-         if ( isInterruptionRequested() )
-         {
-            return;
-         }
-
          // compute eigenvalues of pruned matrix
          QVector<float> eigens {computeEigenvalues(&pruneMatrix, size)};
 
          qInfo("eigenvalues: %d", eigens.size());
-
-         // make sure interruption is not requested
-         if ( isInterruptionRequested() )
-         {
-            return;
-         }
 
          // compute chi-square value from NNSD of eigenvalues
          chi = computeChiSquare(eigens);
@@ -354,22 +101,55 @@ void RMT::runSerial()
          e.setDetails(tr("Could not find non-random threshold above stopping threshold."));
          throw e;
       }
-
-      // determine new percent complete and check if it is new
-      int newPercent {100*steps/totalSteps};
-      if ( newPercent != lastPercent )
-      {
-         // update new percentage and emit progressed signal
-         lastPercent = newPercent;
-         emit progressed(lastPercent);
-      }
-
-      // increment steps taken
-      ++steps;
    }
 
    // write threshold where chi was first above final threshold
    stream << finalThreshold << "\n";
+}
+
+
+
+
+
+
+EAbstractAnalytic::Input* RMT::makeInput()
+{
+   return new Input(this);
+}
+
+
+
+
+
+
+void RMT::initialize()
+{
+   // make sure input and output were set properly
+   if ( !_input || !_logfile )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Invalid Argument"));
+      e.setDetails(tr("Did not get valid input or logfile arguments."));
+      throw e;
+   }
+
+   // make sure threshold arguments are valid
+   if ( _thresholdStart <= _thresholdStop )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Invalid Argument"));
+      e.setDetails(tr("Starting threshold must be greater than stopping threshold."));
+      throw e;
+   }
+
+   // make sure pace arguments are valid
+   if ( _minUnfoldingPace >= _maxUnfoldingPace )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Invalid Argument"));
+      e.setDetails(tr("Minimum unfolding pace must be less than maximum unfolding pace."));
+      throw e;
+   }
 }
 
 

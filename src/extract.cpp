@@ -1,4 +1,5 @@
 #include "extract.h"
+#include "extract_input.h"
 #include "datafactory.h"
 
 
@@ -10,23 +11,9 @@ using namespace std;
 
 
 
-EAbstractAnalytic::ArgumentType Extract::getArgumentData(int argument)
+int Extract::size() const
 {
-   // use type declaration
-   using Type = EAbstractAnalytic::ArgumentType;
-
-   // figure out which argument is being queried and return its type
-   switch (argument)
-   {
-   case ExpressionData: return Type::DataIn;
-   case ClusterData: return Type::DataIn;
-   case CorrelationData: return Type::DataIn;
-   case OutputFile: return Type::FileOut;
-   case GraphMLFile: return Type::FileOut;
-   case MinCorrelation: return Type::Double;
-   case MaxCorrelation: return Type::Double;
-   default: return Type::Bool;
-   }
+   return 1;
 }
 
 
@@ -34,199 +21,14 @@ EAbstractAnalytic::ArgumentType Extract::getArgumentData(int argument)
 
 
 
-QVariant Extract::getArgumentData(int argument, Role role)
+void Extract::process(const EAbstractAnalytic::Block* /*result*/)
 {
-   // use role declaration
-   using Role = EAbstractAnalytic::Role;
-
-   // figure out which role is being queried
-   switch (role)
-   {
-   case Role::CommandLineName:
-      // figure out which argument is being queried and return command line name
-      switch (argument)
-      {
-      case ExpressionData: return QString("expr");
-      case ClusterData: return QString("clus");
-      case CorrelationData: return QString("corr");
-      case OutputFile: return QString("output");
-      case GraphMLFile: return QString("graphml");
-      case MinCorrelation: return QString("mincorr");
-      case MaxCorrelation: return QString("maxcorr");
-      default: return QString();
-      }
-   case Role::Title:
-      // figure out which argument is being queried and return title
-      switch (argument)
-      {
-      case ExpressionData: return tr("Expression Matrix:");
-      case ClusterData: return tr("Cluster Matrix:");
-      case CorrelationData: return tr("Correlation Matrix:");
-      case OutputFile: return tr("Output File:");
-      case GraphMLFile: return tr("GraphML File:");
-      case MinCorrelation: return tr("Minimum Correlation:");
-      case MaxCorrelation: return tr("Maximum Correlation:");
-      default: return QString();
-      }
-   case Role::WhatsThis:
-      // figure out which argument is being queried and return "What's This?" text
-      switch (argument)
-      {
-      case ExpressionData: return tr("Input expression matrix containing gene expression data.");
-      case ClusterData: return tr("Input cluster matrix containing cluster composition data.");
-      case CorrelationData: return tr("Input correlation matrix containing correlation data.");
-      case OutputFile: return tr("Raw output text file that will contain network edges.");
-      case GraphMLFile: return tr("Raw output text file that will contain network in GraphML format.");
-      case MinCorrelation: return tr("Minimum (absolute) correlation threshold for gene pairs.");
-      case MaxCorrelation: return tr("Maximum (absolute) correlation threshold for gene pairs.");
-      default: return QString();
-      }
-   case Role::DefaultValue:
-      // figure out which argument is being queried and if applicable return default value else
-      // return nothing
-      switch (argument)
-      {
-      case MinCorrelation: return 0.85;
-      case MaxCorrelation: return 1.00;
-      default: return QVariant();
-      }
-   case Role::Minimum:
-      // figure out which argument is being queried and if applicable return minimum value else
-      // return nothing
-      switch (argument)
-      {
-      case MinCorrelation: return 0.0;
-      case MaxCorrelation: return 0.0;
-      default: return QVariant();
-      }
-   case Role::Maximum:
-      // figure out which argument is being queried and if applicable return maximum value else
-      // return nothing
-      switch (argument)
-      {
-      case MinCorrelation: return 1.0;
-      case MaxCorrelation: return 1.0;
-      default: return QVariant();
-      }
-   case Role::DataType:
-      // if this is input data argument return data type else return nothing
-      switch (argument)
-      {
-      case ExpressionData: return DataFactory::ExpressionMatrixType;
-      case ClusterData: return DataFactory::CCMatrixType;
-      case CorrelationData: return DataFactory::CorrelationMatrixType;
-      default: return QString();
-      }
-   case Role::FileFilters:
-      // if this is output file argument return file filter else return nothing
-      switch (argument)
-      {
-      case OutputFile: return tr("Raw text file %1").arg("(*.txt)");
-      case GraphMLFile: return tr("GraphML file %1").arg("(*.graphml)");
-      default: return QString();
-      }
-   default:
-      return QVariant();
-   }
-}
-
-
-
-
-
-
-void Extract::setArgument(int argument, EAbstractData* data)
-{
-   // if argument is input data set it
-   if ( argument == ExpressionData )
-   {
-      _eMatrix = dynamic_cast<ExpressionMatrix*>(data);
-   }
-   else if ( argument == ClusterData )
-   {
-      _ccm = dynamic_cast<CCMatrix*>(data);
-   }
-   else if ( argument == CorrelationData )
-   {
-      _cmx = dynamic_cast<CorrelationMatrix*>(data);
-   }
-}
-
-
-
-
-
-
-void Extract::setArgument(int argument, QFile* file)
-{
-   // figure out which argument is being set and set it
-   if ( argument == OutputFile )
-   {
-      _output = file;
-   }
-   else if ( argument == GraphMLFile )
-   {
-      _graphml = file;
-   }
-}
-
-
-
-
-
-
-void Extract::setArgument(int argument, QVariant value)
-{
-   // figure out which argument is being set and set it
-   switch (argument)
-   {
-   case MinCorrelation:
-      _minCorrelation = value.toFloat();
-      break;
-   case MaxCorrelation:
-      _maxCorrelation = value.toFloat();
-      break;
-   }
-}
-
-
-
-
-
-
-bool Extract::initialize()
-{
-   // make sure input and output arguments were set
-   if ( !_eMatrix || !_ccm || !_cmx || !_output )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Argument Error"));
-      e.setDetails(tr("Did not get valid input and/or output arguments."));
-      throw e;
-   }
-
-   // do not have data pre-allocate
-   return false;
-}
-
-
-
-
-
-
-void Extract::runSerial()
-{
-   // initialize percent complete and steps
-   int lastPercent {0};
-   qint64 steps {0};
-   qint64 totalSteps {_cmx->size() * 2};
-
    // initialize pair iterators
    CorrelationMatrix::Pair cmxPair(_cmx);
    CCMatrix::Pair ccmPair(_ccm);
 
    // get gene names
-   const QList<EMetadata *> *geneNames = _cmx->geneNames().toArray();
+   EMetaArray geneNames {_cmx->geneNames().toArray()};
 
    // initialize workspace
    QString sampleMask(_ccm->sampleSize(), '0');
@@ -254,12 +56,6 @@ void Extract::runSerial()
    // increment through all gene pairs
    while ( cmxPair.hasNext() )
    {
-      // make sure interruption is not requested
-      if ( isInterruptionRequested() )
-      {
-         return;
-      }
-
       // read next gene pair
       cmxPair.readNext();
 
@@ -269,17 +65,17 @@ void Extract::runSerial()
       }
 
       // write gene pair data to output file
-      for ( int cluster = 0; cluster < cmxPair.clusterSize(); cluster++ )
+      for ( int k = 0; k < cmxPair.clusterSize(); k++ )
       {
-         QString& source(*geneNames->at(cmxPair.index().getX())->toString());
-         QString& target(*geneNames->at(cmxPair.index().getY())->toString());
-         float correlation = cmxPair.at(cluster, 0);
-         QString interaction("co");
-         int numSamples = 0;
-         int numMissing = 0;
-         int numPostOutliers = 0;
-         int numPreOutliers = 0;
-         int numThreshold = 0;
+         auto& source {geneNames.at(cmxPair.index().getX()).toString()};
+         auto& target {geneNames.at(cmxPair.index().getY()).toString()};
+         float correlation {cmxPair.at(k, 0)};
+         QString interaction {"co"};
+         int numSamples {0};
+         int numMissing {0};
+         int numPostOutliers {0};
+         int numPreOutliers {0};
+         int numThreshold {0};
 
          // exclude cluster if correlation is not within thresholds
          if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
@@ -293,7 +89,7 @@ void Extract::runSerial()
             // compute summary statistics
             for ( int i = 0; i < _ccm->sampleSize(); i++ )
             {
-               switch ( ccmPair.at(cluster, i) )
+               switch ( ccmPair.at(k, i) )
                {
                case 1:
                   numSamples++;
@@ -316,7 +112,7 @@ void Extract::runSerial()
             // write sample mask to string
             for ( int i = 0; i < _ccm->sampleSize(); i++ )
             {
-               sampleMask[i] = '0' + ccmPair.at(cluster, i);
+               sampleMask[i] = '0' + ccmPair.at(k, i);
             }
          }
 
@@ -324,14 +120,14 @@ void Extract::runSerial()
          else
          {
             // read in gene expressions
-            ExpressionMatrix::Gene gene1(_eMatrix);
-            ExpressionMatrix::Gene gene2(_eMatrix);
+            ExpressionMatrix::Gene gene1(_emx);
+            ExpressionMatrix::Gene gene2(_emx);
 
             gene1.read(cmxPair.index().getX());
             gene2.read(cmxPair.index().getY());
 
             // determine sample mask from expression data
-            for ( int i = 0; i < _eMatrix->getSampleSize(); ++i )
+            for ( int i = 0; i < _emx->getSampleSize(); ++i )
             {
                if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
                {
@@ -350,7 +146,7 @@ void Extract::runSerial()
             << "\t" << target
             << "\t" << correlation
             << "\t" << interaction
-            << "\t" << cluster
+            << "\t" << k
             << "\t" << cmxPair.clusterSize()
             << "\t" << numSamples
             << "\t" << numMissing
@@ -359,18 +155,6 @@ void Extract::runSerial()
             << "\t" << numThreshold
             << "\t" << sampleMask
             << "\n";
-      }
-
-      // increment steps and calculate percent complete
-      ++steps;
-      qint64 newPercent {50*steps/totalSteps};
-
-      // check to see if percent has changed
-      if ( newPercent != lastPercent )
-      {
-         // update percent complete and emit progressed signal
-         lastPercent = newPercent;
-         emit progressed(lastPercent);
       }
    }
 
@@ -400,7 +184,7 @@ void Extract::runSerial()
    // write each node to file
    for ( int i = 0; i < _cmx->geneSize(); i++ )
    {
-      QString& id = *geneNames->at(i)->toString();
+      auto& id {geneNames.at(i).toString()};
 
       stream << "    <node id=\"" << id << "\"/>\n";
    }
@@ -408,12 +192,6 @@ void Extract::runSerial()
    // increment through all gene pairs
    while ( cmxPair.hasNext() )
    {
-      // make sure interruption is not requested
-      if ( isInterruptionRequested() )
-      {
-         return;
-      }
-
       // read next gene pair
       cmxPair.readNext();
 
@@ -423,11 +201,11 @@ void Extract::runSerial()
       }
 
       // write gene pair edges to file
-      for ( int cluster = 0; cluster < cmxPair.clusterSize(); cluster++ )
+      for ( int k = 0; k < cmxPair.clusterSize(); k++ )
       {
-         QString& source(*geneNames->at(cmxPair.index().getX())->toString());
-         QString& target(*geneNames->at(cmxPair.index().getY())->toString());
-         float correlation = cmxPair.at(cluster, 0);
+         auto& source {geneNames.at(cmxPair.index().getX()).toString()};
+         auto& target {geneNames.at(cmxPair.index().getY()).toString()};
+         float correlation {cmxPair.at(k, 0)};
 
          // exclude edge if correlation is not within thresholds
          if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
@@ -441,7 +219,7 @@ void Extract::runSerial()
             // write sample mask to string
             for ( int i = 0; i < _ccm->sampleSize(); i++ )
             {
-               sampleMask[i] = '0' + ccmPair.at(cluster, i);
+               sampleMask[i] = '0' + ccmPair.at(k, i);
             }
          }
 
@@ -449,14 +227,14 @@ void Extract::runSerial()
          else
          {
             // read in gene expressions
-            ExpressionMatrix::Gene gene1(_eMatrix);
-            ExpressionMatrix::Gene gene2(_eMatrix);
+            ExpressionMatrix::Gene gene1(_emx);
+            ExpressionMatrix::Gene gene2(_emx);
 
             gene1.read(cmxPair.index().getX());
             gene2.read(cmxPair.index().getY());
 
             // determine sample mask from expression data
-            for ( int i = 0; i < _eMatrix->getSampleSize(); ++i )
+            for ( int i = 0; i < _emx->getSampleSize(); ++i )
             {
                if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
                {
@@ -477,18 +255,6 @@ void Extract::runSerial()
             << " samples=\"" << sampleMask << "\""
             << "/>\n";
       }
-
-      // increment steps and calculate percent complete
-      ++steps;
-      qint64 newPercent {50 + 50*steps/totalSteps};
-
-      // check to see if percent has changed
-      if ( newPercent != lastPercent )
-      {
-         // update percent complete and emit progressed signal
-         lastPercent = newPercent;
-         emit progressed(lastPercent);
-      }
    }
 
    // write footer to file
@@ -502,6 +268,32 @@ void Extract::runSerial()
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("File IO Error"));
       e.setDetails(tr("Qt Text Stream encountered an unknown error."));
+      throw e;
+   }
+}
+
+
+
+
+
+
+EAbstractAnalytic::Input* Extract::makeInput()
+{
+   return new Input(this);
+}
+
+
+
+
+
+
+void Extract::initialize()
+{
+   if ( !_emx || !_ccm || !_cmx || !_output )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Invalid Argument"));
+      e.setDetails(tr("Did not get valid input and/or output arguments."));
       throw e;
    }
 }

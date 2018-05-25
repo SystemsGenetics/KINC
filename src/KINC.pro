@@ -37,7 +37,8 @@ SOURCES += \
    exportexpressionmatrix_input.cpp \
    exportexpressionmatrix.cpp \
    expressionmatrix.cpp \
-   # extract.cpp \
+   extract_input.cpp \
+   extract.cpp \
    importcorrelationmatrix_input.cpp \
    importcorrelationmatrix.cpp \
    importexpressionmatrix_input.cpp \
@@ -52,7 +53,8 @@ SOURCES += \
    pairwise_matrix.cpp \
    pairwise_pearson.cpp \
    pairwise_spearman.cpp \
-   # rmt.cpp \
+   rmt_input.cpp \
+   rmt.cpp \
    # similarity.cpp
 
 HEADERS += \
@@ -65,7 +67,8 @@ HEADERS += \
    exportexpressionmatrix_input.h \
    exportexpressionmatrix.h \
    expressionmatrix.h \
-   # extract.h \
+   extract_input.h \
+   extract.h \
    importcorrelationmatrix_input.h \
    importcorrelationmatrix.h \
    importexpressionmatrix_input.h \
@@ -79,7 +82,8 @@ HEADERS += \
    pairwise_matrix.h \
    pairwise_pearson.h \
    pairwise_spearman.h \
-   # rmt.h \
+   rmt_input.h \
+   rmt.h \
    # similarity.h
 
 RESOURCES += \

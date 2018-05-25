@@ -4,8 +4,8 @@
 #include "importcorrelationmatrix.h"
 #include "exportcorrelationmatrix.h"
 // #include "similarity.h"
-// #include "rmt.h"
-// #include "extract.h"
+#include "rmt.h"
+#include "extract.h"
 
 
 
@@ -35,8 +35,8 @@ QString AnalyticFactory::name(quint16 type) const
    case ImportCorrelationMatrixType: return "Import Correlation Matrix";
    case ExportCorrelationMatrixType: return "Export Correlation Matrix";
    // case SimilarityType: return "Similarity";
-   // case RMTType: return "RMT Thresholding";
-   // case ExtractType: return "Extract Network";
+   case RMTType: return "RMT Thresholding";
+   case ExtractType: return "Extract Network";
    default: return QString();
    }
 }
@@ -55,8 +55,8 @@ QString AnalyticFactory::commandName(quint16 type) const
    case ImportCorrelationMatrixType: return "import-cmx";
    case ExportCorrelationMatrixType: return "export-cmx";
    // case SimilarityType: return "similarity";
-   // case RMTType: return "rmt";
-   // case ExtractType: return "extract";
+   case RMTType: return "rmt";
+   case ExtractType: return "extract";
    default: return QString();
    }
 }
@@ -75,8 +75,8 @@ std::unique_ptr<EAbstractAnalytic> AnalyticFactory::make(quint16 type) const
    case ImportCorrelationMatrixType: return unique_ptr<EAbstractAnalytic>(new ImportCorrelationMatrix);
    case ExportCorrelationMatrixType: return unique_ptr<EAbstractAnalytic>(new ExportCorrelationMatrix);
    // case SimilarityType: return unique_ptr<EAbstractAnalytic>(new Similarity);
-   // case RMTType: return unique_ptr<EAbstractAnalytic>(new RMT);
-   // case ExtractType: return unique_ptr<EAbstractAnalytic>(new Extract);
+   case RMTType: return unique_ptr<EAbstractAnalytic>(new RMT);
+   case ExtractType: return unique_ptr<EAbstractAnalytic>(new Extract);
    default: return nullptr;
    }
 }

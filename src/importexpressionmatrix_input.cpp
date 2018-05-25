@@ -54,7 +54,7 @@ QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
       case Role::CommandLineName: return QString("input");
       case Role::Title: return tr("Input:");
       case Role::WhatsThis: return tr("Input text file containing space/tab delimited gene expression data.");
-      case Role::FileFilters: return tr("Raw text file %1").arg("(*.txt)");
+      case Role::FileFilters: return tr("Text file %1").arg("(*.txt)");
       default: return QVariant();
       }
    case OutputData:
@@ -80,6 +80,7 @@ QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
       case Role::CommandLineName: return QString("samples");
       case Role::Title: return tr("Sample Size:");
       case Role::WhatsThis: return tr("Number of samples. 0 indicates the text file contains a header of sample names to be read to determine size.");
+      case Role::Default: return 0;
       case Role::Minimum: return 0;
       case Role::Maximum: return std::numeric_limits<int>::max();
       default: return QVariant();

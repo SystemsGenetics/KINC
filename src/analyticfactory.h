@@ -14,8 +14,8 @@ public:
       ,ImportCorrelationMatrixType
       ,ExportCorrelationMatrixType
       // ,SimilarityType
-      // ,RMTType
-      // ,ExtractType
+      ,RMTType
+      ,ExtractType
       ,Total
    };
    virtual quint16 size() const override final;

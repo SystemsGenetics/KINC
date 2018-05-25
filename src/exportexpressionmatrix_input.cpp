@@ -60,8 +60,8 @@ QVariant ExportExpressionMatrix::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("output");
       case Role::Title: return tr("Output:");
-      case Role::WhatsThis: return tr("Raw output text file that will contain space/tab divided gene expression data.");
-      case Role::FileFilters: return tr("Raw text file %1").arg("(*.txt)");
+      case Role::WhatsThis: return tr("Output text file that will contain space/tab divided gene expression data.");
+      case Role::FileFilters: return tr("Text file %1").arg("(*.txt)");
       default: return QVariant();
       }
    case NoSampleToken:

@@ -1,6 +1,6 @@
 #ifndef RMT_H
 #define RMT_H
-#include <ace/core/AceCore.h>
+#include <ace/core/core.h>
 
 
 
@@ -10,30 +10,13 @@ class CorrelationMatrix;
 
 class RMT : public EAbstractAnalytic
 {
+   Q_OBJECT
 public:
-   enum Arguments
-   {
-      InputData = 0
-      ,LogFile
-      ,ThresholdStart
-      ,ThresholdStep
-      ,ThresholdStop
-      ,MinUnfoldingPace
-      ,MaxUnfoldingPace
-      ,HistogramBinSize
-      ,Total
-   };
-
-   virtual int getArgumentCount() override final { return Total; }
-   virtual ArgumentType getArgumentData(int argument) override final;
-   virtual QVariant getArgumentData(int argument, Role role) override final;
-   virtual void setArgument(int argument, QVariant value) override final;
-   virtual void setArgument(int argument, QFile* file) override final;
-   virtual void setArgument(int argument, EAbstractData* data) override final;
-   virtual quint32 getCapabilities() const override final { return Capabilities::Serial; }
-   virtual bool initialize() override final;
-   virtual void runSerial() override final;
-
+   class Input;
+   virtual int size() const override final;
+   virtual void process(const EAbstractAnalytic::Block* result) override final;
+   virtual EAbstractAnalytic::Input* makeInput() override final;
+   virtual void initialize();
 private:
    QVector<float> computeMaximums(const QVector<float>& matrix);
    QVector<float> computePruneMatrix(const QVector<float>& matrix, const QVector<float>& maximums, float threshold, int* size);
