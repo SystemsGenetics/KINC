@@ -55,7 +55,11 @@ SOURCES += \
    pairwise_spearman.cpp \
    rmt_input.cpp \
    rmt.cpp \
-   # similarity.cpp
+   similarity_input.cpp \
+   similarity_resultblock.cpp \
+   similarity_serial.cpp \
+   similarity_workblock.cpp \
+   similarity.cpp
 
 HEADERS += \
    analyticfactory.h \
@@ -84,7 +88,11 @@ HEADERS += \
    pairwise_spearman.h \
    rmt_input.h \
    rmt.h \
-   # similarity.h
+   similarity_input.h \
+   similarity_resultblock.h \
+   similarity_serial.h \
+   similarity_workblock.h \
+   similarity.h
 
 RESOURCES += \
    opencl.qrc

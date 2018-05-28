@@ -13,7 +13,7 @@ public:
       ,ExportExpressionMatrixType
       ,ImportCorrelationMatrixType
       ,ExportCorrelationMatrixType
-      // ,SimilarityType
+      ,SimilarityType
       ,RMTType
       ,ExtractType
       ,Total

@@ -45,7 +45,11 @@ SOURCES += \
 	../src/pairwise_spearman.cpp \
 	../src/rmt_input.cpp \
 	../src/rmt.cpp \
-	# ../src/similarity.cpp \
+	../src/similarity_input.cpp \
+	../src/similarity_resultblock.cpp \
+	../src/similarity_serial.cpp \
+	../src/similarity_workblock.cpp \
+	../src/similarity.cpp \
 	testclustermatrix.cpp \
 	testcorrelationmatrix.cpp \
 	# testexportcorrelationmatrix.cpp \
@@ -84,7 +88,11 @@ HEADERS += \
 	../src/pairwise_spearman.h \
 	../src/rmt_input.h \
 	../src/rmt.h \
-	# ../src/similarity.h \
+	../src/similarity_input.h \
+	../src/similarity_resultblock.h \
+	../src/similarity_serial.h \
+	../src/similarity_workblock.h \
+	../src/similarity.h \
 	testclustermatrix.h \
 	testcorrelationmatrix.h \
 	# testexportcorrelationmatrix.h \
