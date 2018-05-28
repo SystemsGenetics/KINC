@@ -222,7 +222,7 @@ void ExpressionMatrix::initialize(QStringList geneNames, QStringList sampleNames
 
 ExpressionMatrix::Transform ExpressionMatrix::getTransform() const
 {
-   auto& transformName {meta().toObject().at("transform").toString()};
+   QString transformName {meta().toObject().at("transform").toString()};
    return static_cast<Transform>(TRANSFORM_NAMES.indexOf(transformName));
 }
 

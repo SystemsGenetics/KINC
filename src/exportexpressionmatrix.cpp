@@ -54,7 +54,7 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
       // write expression values
       for ( int j = 0; j < _input->getSampleSize(); j++ )
       {
-         Expression value = gene.at(j);
+         Expression value {gene.at(j)};
 
          // if value is NAN use the no sample token
          if ( std::isnan(value) )
