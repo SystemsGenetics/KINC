@@ -79,8 +79,10 @@ QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
 
 
 
-void ExportCorrelationMatrix::Input::set(int /*index*/, const QVariant& /*value*/)
+void ExportCorrelationMatrix::Input::set(int index, const QVariant& value)
 {
+   Q_UNUSED(index);
+   Q_UNUSED(value);
 }
 
 
@@ -92,11 +94,11 @@ void ExportCorrelationMatrix::Input::set(int index, EAbstractData* data)
 {
    if ( index == ClusterData )
    {
-      _base->_ccm = qobject_cast<CCMatrix*>(data);
+      _base->_ccm = data->cast<CCMatrix>();
    }
    else if ( index == CorrelationData )
    {
-      _base->_cmx = qobject_cast<CorrelationMatrix*>(data);
+      _base->_cmx = data->cast<CorrelationMatrix>();
    }
 }
 

@@ -19,8 +19,10 @@ int ImportCorrelationMatrix::size() const
 
 
 
-void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block* /*result*/)
+void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
 {
+   Q_UNUSED(result);
+
    // build gene name metadata
    EMetaArray metaGeneNames;
    for ( int i = 0; i < _geneSize; ++i )

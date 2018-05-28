@@ -100,7 +100,7 @@ void ExportExpressionMatrix::Input::set(int index, EAbstractData* data)
 {
    if ( index == InputData )
    {
-      _base->_input = qobject_cast<ExpressionMatrix*>(data);
+      _base->_input = data->cast<ExpressionMatrix>();
    }
 }
 

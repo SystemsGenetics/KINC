@@ -192,6 +192,6 @@ void RMT::Input::set(int index, EAbstractData* data)
 {
    if ( index == InputData )
    {
-      _base->_input = qobject_cast<CorrelationMatrix*>(data);
+      _base->_input = data->cast<CorrelationMatrix>();
    }
 }

@@ -142,6 +142,6 @@ void ImportExpressionMatrix::Input::set(int index, EAbstractData* data)
 {
    if ( index == OutputData )
    {
-      _base->_output = qobject_cast<ExpressionMatrix*>(data);
+      _base->_output = data->cast<ExpressionMatrix>();
    }
 }

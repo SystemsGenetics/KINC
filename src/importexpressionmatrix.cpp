@@ -17,8 +17,10 @@ int ImportExpressionMatrix::size() const
 
 
 
-void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* /*result*/)
+void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 {
+   Q_UNUSED(result);
+
    // use expression declaration
    using Expression = ExpressionMatrix::Expression;
 

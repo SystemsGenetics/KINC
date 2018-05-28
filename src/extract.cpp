@@ -21,8 +21,10 @@ int Extract::size() const
 
 
 
-void Extract::process(const EAbstractAnalytic::Block* /*result*/)
+void Extract::process(const EAbstractAnalytic::Block* result)
 {
+   Q_UNUSED(result);
+
    // initialize pair iterators
    CorrelationMatrix::Pair cmxPair(_cmx);
    CCMatrix::Pair ccmPair(_ccm);

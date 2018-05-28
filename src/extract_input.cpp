@@ -152,15 +152,15 @@ void Extract::Input::set(int index, EAbstractData* data)
 {
    if ( index == ExpressionData )
    {
-      _base->_emx = qobject_cast<ExpressionMatrix*>(data);
+      _base->_emx = data->cast<ExpressionMatrix>();
    }
    else if ( index == ClusterData )
    {
-      _base->_ccm = qobject_cast<CCMatrix*>(data);
+      _base->_ccm = data->cast<CCMatrix>();
    }
    else if ( index == CorrelationData )
    {
-      _base->_cmx = qobject_cast<CorrelationMatrix*>(data);
+      _base->_cmx = data->cast<CorrelationMatrix>();
    }
 }
 

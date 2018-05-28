@@ -28,8 +28,10 @@ int RMT::size() const
 
 
 
-void RMT::process(const EAbstractAnalytic::Block* /*result*/)
+void RMT::process(const EAbstractAnalytic::Block* result)
 {
+   Q_UNUSED(result);
+
    // initialize log text stream
    QTextStream stream(_logfile);
 

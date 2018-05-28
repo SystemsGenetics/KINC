@@ -14,8 +14,10 @@ int ExportCorrelationMatrix::size() const
 
 
 
-void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block* /*result*/)
+void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
 {
+   Q_UNUSED(result);
+
    // initialize pair iterators
    CorrelationMatrix::Pair cmxPair(_cmx);
    CCMatrix::Pair ccmPair(_ccm);
