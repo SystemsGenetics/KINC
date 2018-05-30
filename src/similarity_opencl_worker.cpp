@@ -103,8 +103,6 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
 
    for ( int i = 0; i < workBlock->size(); i += _base->_kernelSize )
    {
-      qInfo("%16s %4d / %4lld", "loading", i, workBlock->size());
-
       // write input buffers to device
       int steps {min(_base->_kernelSize, (int)workBlock->size() - i)};
 
@@ -123,8 +121,6 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
 
       _buffers.in_index.unmap(_queue).wait();
 
-      qInfo("%16s %4d / %4lld", "fetchPair", i, workBlock->size());
-
       // execute fetch-pair kernel
       _kernels.fetchPair->execute(
          _queue,
@@ -141,8 +137,6 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
       // execute clustering kernel
       if ( _base->_clusMethod == ClusteringMethod::GMM )
       {
-         qInfo("%16s %4d / %4lld", "gmm", i, workBlock->size());
-
          _kernels.gmm->execute(
             _queue,
             _base->_kernelSize,
@@ -169,8 +163,6 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
       }
       else if ( _base->_clusMethod == ClusteringMethod::KMeans )
       {
-         qInfo("%16s %4d / %4lld", "kmeans", i, workBlock->size());
-
          _kernels.kmeans->execute(
             _queue,
             _base->_kernelSize,
@@ -206,8 +198,6 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
       // execute correlation kernel
       if ( _base->_corrMethod == CorrelationMethod::Pearson )
       {
-         qInfo("%16s %4d / %4lld", "pearson", i, workBlock->size());
-
          _kernels.pearson->execute(
             _queue,
             _base->_kernelSize,
@@ -221,8 +211,6 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
       }
       else if ( _base->_corrMethod == CorrelationMethod::Spearman )
       {
-         qInfo("%16s %4d / %4lld", "spearman", i, workBlock->size());
-
          _kernels.spearman->execute(
             _queue,
             _base->_kernelSize,
@@ -237,8 +225,6 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             &_buffers.out_correlations
          );
       }
-
-      qInfo("%16s %4d / %4lld", "reading", i, workBlock->size());
 
       // read results from device
       auto e1 {_buffers.out_K.mapRead(_queue)};

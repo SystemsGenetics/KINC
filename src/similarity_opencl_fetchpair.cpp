@@ -44,8 +44,7 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
    setBuffer(OutLabels, out_labels);
 
    // set kernel sizes
-   int workgroupSize {min(kernelSize, maxWorkGroupSize(queue->device())) / workGroupMultiple(queue->device()) * workGroupMultiple(queue->device())};
-   setSizes(0, kernelSize, workgroupSize);
+   setSizes(0, kernelSize, min(kernelSize, maxWorkGroupSize(queue->device())));
 
    // execute kernel
    return ::OpenCL::Kernel::execute(queue);

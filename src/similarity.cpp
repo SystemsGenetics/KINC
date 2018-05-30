@@ -186,21 +186,6 @@ void Similarity::initialize()
       throw e;
    }
 
-   // make sure kernel size is a power of 2
-   int pow2 {1};
-   while ( pow2 < _kernelSize )
-   {
-      pow2 *= 2;
-   }
-
-   if ( _kernelSize != pow2 )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Kernel size must be a power of two."));
-      throw e;
-   }
-
    // initialize cluster matrix
    _ccm->initialize(_input->getGeneNames(), _maxClusters, _input->getSampleNames());
 
