@@ -75,15 +75,15 @@ void TestCorrelationMatrix::test()
 
 	for ( auto& testPair : testPairs )
 	{
-		Q_ASSERT(pair.hasNext());
+		QVERIFY(pair.hasNext());
 		pair.readNext();
 
-		Q_ASSERT(testPair.index == pair.index());
-		Q_ASSERT(pair.clusterSize() == testPair.correlations.size());
+		QCOMPARE(pair.index(), testPair.index);
+		QCOMPARE(pair.clusterSize(), testPair.correlations.size());
 
 		for ( int k = 0; k < pair.clusterSize(); ++k )
 		{
-			Q_ASSERT(pair.at(k, 0) == testPair.correlations.at(k));
+			QCOMPARE(pair.at(k, 0), testPair.correlations.at(k));
 		}
 	}
 }

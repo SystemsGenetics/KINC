@@ -148,7 +148,7 @@ void TestExportCorrelationMatrix::test()
 	int numClusters = 0;
 
 	QFile file(txtPath);
-	Q_ASSERT(file.open(QIODevice::ReadOnly));
+	QVERIFY(file.open(QIODevice::ReadOnly));
 
 	QTextStream stream(&file);
 
@@ -156,12 +156,12 @@ void TestExportCorrelationMatrix::test()
 	{
 		for ( int k = 0; k < testPair.sampleMasks.size(); ++k )
 		{
-			Q_ASSERT(!stream.atEnd());
+			QVERIFY(!stream.atEnd());
 
 			QString line = stream.readLine();
 			auto words = line.splitRef(QRegExp("\\s+"), QString::SkipEmptyParts);
 
-			Q_ASSERT(words.size() == 11);
+			QCOMPARE(words.size(), 11);
 
 			int geneX = words[0].toInt();
 			int geneY = words[1].toInt();
@@ -170,17 +170,17 @@ void TestExportCorrelationMatrix::test()
 			float correlation = words[9].toFloat();
 			QStringRef sampleMask = words[10];
 
-			Q_ASSERT(testPair.index.getX() == geneX);
-			Q_ASSERT(testPair.index.getY() == geneY);
-			Q_ASSERT(k == cluster);
-			Q_ASSERT(testPair.sampleMasks.size() == clusterSize);
-			Q_ASSERT(numSamples == sampleMask.size());
+			QCOMPARE(geneX, testPair.index.getX());
+			QCOMPARE(geneY, testPair.index.getY());
+			QCOMPARE(cluster, k);
+			QCOMPARE(clusterSize, testPair.sampleMasks.size());
+			QCOMPARE(sampleMask.size(), numSamples);
 
 			if ( testPair.sampleMasks.size() > 1 )
 			{
 				for ( int i = 0; i < sampleMask.size(); ++i )
 				{
-					Q_ASSERT(testPair.sampleMasks[k][i] == sampleMask[i].digitValue());
+					QCOMPARE(sampleMask[i].digitValue(), testPair.sampleMasks[k][i]);
 				}
 			}
 
@@ -191,5 +191,5 @@ void TestExportCorrelationMatrix::test()
 
 	error /= numClusters;
 
-	Q_ASSERT(error < 1e-3);
+	QVERIFY(error < 1e-3);
 }

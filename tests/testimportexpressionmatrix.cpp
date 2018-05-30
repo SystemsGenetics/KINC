@@ -45,7 +45,7 @@ void TestImportExpressionMatrix::test()
 
 	// create raw text file
 	QFile file(txtPath);
-	Q_ASSERT(file.open(QIODevice::ReadWrite));
+	QVERIFY(file.open(QIODevice::ReadWrite));
 
 	// write expression data to text file
 	QTextStream stream(&file);
@@ -106,5 +106,5 @@ void TestImportExpressionMatrix::test()
 
 	error /= testExpressions.size();
 
-	Q_ASSERT(error < 1e-3);
+	QVERIFY(error < 1e-3);
 }

@@ -80,25 +80,25 @@ void TestExportExpressionMatrix::test()
 
 	// read expression data from raw file
 	QFile file(txtPath);
-	Q_ASSERT(file.open(QIODevice::ReadOnly));
+	QVERIFY(file.open(QIODevice::ReadOnly));
 
 	QVector<float> expressions(numGenes * numSamples);
 
 	QTextStream stream(&file);
 	for ( int i = 0; i < numGenes + 1; ++i )
 	{
-		Q_ASSERT(!stream.atEnd());
+		QVERIFY(!stream.atEnd());
 
 		QString line = stream.readLine();
 		auto words = line.splitRef(QRegExp("\\s+"),QString::SkipEmptyParts);
 
 		if ( i == 0 )
 		{
-			Q_ASSERT(words.size() == numSamples);
+			QCOMPARE(words.size(), numSamples);
 		}
 		else
 		{
-			Q_ASSERT(words.size() == numSamples + 1);
+			QCOMPARE(words.size(), numSamples + 1);
 
 			for ( int j = 1; j < words.size(); ++j )
 			{
@@ -111,7 +111,7 @@ void TestExportExpressionMatrix::test()
 					bool ok;
 					float value = words.at(j).toDouble(&ok);
 
-					Q_ASSERT(ok);
+					QVERIFY(ok);
 
 					expressions[(i - 1) * numSamples + (j - 1)] = value;
 				}
@@ -129,5 +129,5 @@ void TestExportExpressionMatrix::test()
 
 	error /= testExpressions.size();
 
-	Q_ASSERT(error < 1e-3);
+	QVERIFY(error < 1e-3);
 }

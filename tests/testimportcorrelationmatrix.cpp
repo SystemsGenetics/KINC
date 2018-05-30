@@ -56,7 +56,7 @@ void TestImportCorrelationMatrix::test()
 
 	// create raw text file
 	QFile file(txtPath);
-	Q_ASSERT(file.open(QIODevice::ReadWrite));
+	QVERIFY(file.open(QIODevice::ReadWrite));
 
 	QTextStream stream(&file);
 

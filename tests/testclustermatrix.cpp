@@ -87,17 +87,17 @@ void TestClusterMatrix::test()
 
 	for ( auto& testPair : testPairs )
 	{
-		Q_ASSERT(pair.hasNext());
+		QVERIFY(pair.hasNext());
 		pair.readNext();
 
-		Q_ASSERT(testPair.index == pair.index());
-		Q_ASSERT(pair.clusterSize() == testPair.sampleMasks.size());
+		QCOMPARE(pair.index(), testPair.index);
+		QCOMPARE(pair.clusterSize(), testPair.sampleMasks.size());
 
 		for ( int k = 0; k < pair.clusterSize(); ++k )
 		{
 			for ( int n = 0; n < numSamples; ++n )
 			{
-				Q_ASSERT(pair.at(k, n) == testPair.sampleMasks.at(k).at(n));
+				QCOMPARE(pair.at(k, n), testPair.sampleMasks.at(k).at(n));
 			}
 		}
 	}

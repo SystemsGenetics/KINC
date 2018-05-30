@@ -58,5 +58,5 @@ void TestExpressionMatrix::test()
 	std::unique_ptr<float> expressions {matrix->dumpRawData()};
 
 	// verify expression data
-	Q_ASSERT(!memcmp(testExpressions.data(), expressions.get(), testExpressions.size() * sizeof(float)));
+	QVERIFY(!memcmp(testExpressions.data(), expressions.get(), testExpressions.size() * sizeof(float)));
 }
