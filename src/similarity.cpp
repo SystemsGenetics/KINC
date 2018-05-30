@@ -163,6 +163,11 @@ EAbstractAnalytic::OpenCL* Similarity::makeOpenCL()
 
 void Similarity::initialize()
 {
+   if ( !isMaster() )
+   {
+      return;
+   }
+
    // make sure input and output are valid
    if ( !_input || !_ccm || !_cmx )
    {

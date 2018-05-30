@@ -68,7 +68,6 @@ private:
    bool _removePostOutliers {false};
    float _minCorrelation {0.5};
    float _maxCorrelation {1.0};
-   int _blockSize {4};
    int _kernelSize {4096};
 };
 
