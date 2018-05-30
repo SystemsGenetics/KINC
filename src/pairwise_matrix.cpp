@@ -91,6 +91,14 @@ void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int data
       throw e;
    }
 
+   if ( maxClusterSize > Index::MAX_CLUSTER_SIZE )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Pairwise Matrix Initialization Error"));
+      e.setDetails(tr("The max cluster size cannot be larger than MAX_CLUSTER_SIZE."));
+      throw e;
+   }
+
    // save gene names to metadata
    EMetaObject metaObject {meta().toObject()};
    metaObject.insert("genes", geneNames);
@@ -122,7 +130,7 @@ void Matrix::write(Index index, qint8 cluster)
       throw e;
    }
 
-   // make sure the new gene pair has a higher indent than the previous written so the list of
+   // make sure the new pair has a higher indent than the previous written so the list of
    // all indents are sorted
    if ( index.indent(cluster) <= _lastWrite )
    {
@@ -133,7 +141,7 @@ void Matrix::write(Index index, qint8 cluster)
       throw e;
    }
 
-   // seek to position for next gene pair and write indent value
+   // seek to position for next pair and write indent value
    seek(_headerSize + _offset + _clusterSize * (_dataSize + _itemHeaderSize));
    stream() << index.getX() << index.getY() << cluster;
 
@@ -149,13 +157,13 @@ void Matrix::write(Index index, qint8 cluster)
 
 Index Matrix::getPair(qint64 index, qint8* cluster) const
 {
-   // seek to gene pair position and read item header data
+   // seek to pairwise index and read item header data
    seekPair(index);
    qint32 geneX;
    qint32 geneY;
    stream() >> geneX >> geneY >> *cluster;
 
-   // return gene pair index
+   // return pairwise index
    return {geneX,geneY};
 }
 
@@ -170,7 +178,7 @@ qint64 Matrix::findPair(qint64 indent, qint64 first, qint64 last) const
    qint64 pivot {first + (last - first)/2};
    seekPair(pivot);
 
-   // read in gene pair item header
+   // read in pairwise item header
    qint32 geneX;
    qint32 geneY;
    qint8 cluster;
@@ -207,7 +215,7 @@ qint64 Matrix::findPair(qint64 indent, qint64 first, qint64 last) const
       }
    }
 
-   // else no gene pair with given indent exists so return failure
+   // else no pair with given indent exists so return failure
    else
    {
       return -1;
@@ -231,7 +239,7 @@ void Matrix::seekPair(qint64 index) const
       throw e;
    }
 
-   // seek to gene pair index requested making sure it worked
+   // seek to pairwise index requested making sure it worked
    seek(_headerSize + _offset + index * (_dataSize + _itemHeaderSize));
 }
 
@@ -242,13 +250,14 @@ void Matrix::seekPair(qint64 index) const
 
 void Matrix::Pair::write(Index index)
 {
-   // make sure cluster size of gene pair does not exceed max
-   if ( clusterSize() > Index::MAX_CLUSTER_SIZE )
+   // make sure cluster size of pair does not exceed max
+   if ( clusterSize() > _matrix->_maxClusterSize )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Pairwise Logical Error"));
-      e.setDetails(tr("Cannot write gene pair with cluster size of %1 exceeding the max of"
-                               " %2.").arg(clusterSize()).arg(Index::MAX_CLUSTER_SIZE));
+      e.setDetails(tr("Cannot write pair with cluster size %1 exceeding the max of %2.")
+         .arg(clusterSize())
+         .arg(_matrix->_maxClusterSize));
       throw e;
    }
 
@@ -278,7 +287,7 @@ void Matrix::Pair::read(Index index) const
    if ( _cMatrix->_clusterSize > 0
         && (clusterIndex = _cMatrix->findPair(index.indent(0),0,_cMatrix->_clusterSize - 1)) != -1 )
    {
-      // gene pair found, read in all clusters
+      // pair found, read in all clusters
       _rawIndex = clusterIndex;
       readNext();
    }
@@ -306,7 +315,7 @@ void Matrix::Pair::readNext() const
       {
          E_MAKE_EXCEPTION(e);
          e.setTitle(tr("File IO Error"));
-         e.setDetails(tr("Reading gene pair failed because first cluster is not 0."));
+         e.setDetails(tr("Reading pair failed because first cluster is not 0."));
          throw e;
       }
 
@@ -315,14 +324,14 @@ void Matrix::Pair::readNext() const
       readCluster(_cMatrix->stream(),0);
       _index = index;
 
-      // read in remaining clusters for gene pair
+      // read in remaining clusters for pair
       qint8 count {1};
       while ( _rawIndex < _cMatrix->_clusterSize )
       {
-         // get next gene pair cluster
+         // get next pair cluster
          _cMatrix->getPair(_rawIndex++,&cluster);
 
-         // if cluster is zero this is the next gene pair so break from loop
+         // if cluster is zero this is the next pair so break from loop
          if ( cluster == 0 )
          {
             --_rawIndex;
@@ -330,12 +339,13 @@ void Matrix::Pair::readNext() const
          }
 
          // make sure max cluster size has not been exceeded
-         if ( ++count > Index::MAX_CLUSTER_SIZE )
+         if ( ++count > _cMatrix->_maxClusterSize )
          {
             E_MAKE_EXCEPTION(e);
-            e.setTitle(tr("File IO Error"));
-            e.setDetails(tr("Reading gene pair failed because it exceeds the max number of"
-                                     " clusters."));
+            e.setTitle(tr("Pairwise Logical Error"));
+            e.setDetails(tr("Cannot read pair with cluster size %1 exceeding the max of %2.")
+               .arg(count)
+               .arg(_matrix->_maxClusterSize));
             throw e;
          }
 

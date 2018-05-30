@@ -17,24 +17,7 @@ public:
       ,Log2
       ,Log10
    };
-   class Gene
-   {
-   public:
-      Gene(ExpressionMatrix* matrix):
-         _expressions(new Expression[matrix->_sampleSize]),
-         _matrix(matrix)
-         {}
-      Gene(const Gene&) = delete;
-      ~Gene() { delete _expressions; }
-      void read(int index) const;
-      void write(int index);
-      Expression& at(int index);
-      const Expression& at(int index) const;
-      Expression& operator[](int index) { return _expressions[index]; }
-   private:
-      Expression* _expressions;
-      ExpressionMatrix* _matrix;
-   };
+   class Gene;
    virtual qint64 dataEnd() const override final;
    virtual void readData() override final;
    virtual void writeNewData() override final;
@@ -59,6 +42,27 @@ private:
    static const int DATA_OFFSET {8};
    qint32 _geneSize {0};
    qint32 _sampleSize {0};
+};
+
+
+
+class ExpressionMatrix::Gene
+{
+public:
+   Gene(ExpressionMatrix* matrix):
+      _expressions(new Expression[matrix->_sampleSize]),
+      _matrix(matrix)
+      {}
+   Gene(const Gene&) = delete;
+   ~Gene() { delete _expressions; }
+   void read(int index) const;
+   void write(int index);
+   Expression& at(int index);
+   const Expression& at(int index) const;
+   Expression& operator[](int index) { return _expressions[index]; }
+private:
+   Expression* _expressions;
+   ExpressionMatrix* _matrix;
 };
 
 
