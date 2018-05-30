@@ -27,12 +27,12 @@ void Spearman::initialize(ExpressionMatrix* input)
 float Spearman::computeCluster(
    const QVector<Vector2>& data,
    const QVector<qint8>& labels,
-	qint8 cluster,
+   qint8 cluster,
    int minSamples)
 {
    // extract samples in gene pair cluster
    int N_pow2 = nextPower2(labels.size());
-	int n = 0;
+   int n = 0;
 
    for ( int i = 0, j = 0; i < labels.size(); ++i )
    {
@@ -92,13 +92,13 @@ float Spearman::computeCluster(
 
 int Spearman::nextPower2(int n)
 {
-	int pow2 = 2;
-	while ( pow2 < n )
-	{
-		pow2 *= 2;
-	}
+   int pow2 = 2;
+   while ( pow2 < n )
+   {
+      pow2 *= 2;
+   }
 
-	return pow2;
+   return pow2;
 }
 
 

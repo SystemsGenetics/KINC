@@ -24,7 +24,6 @@ public:
       ,RemovePostOutliers
       ,MinCorrelation
       ,MaxCorrelation
-      ,BlockSize
       ,KernelSize
       ,Total
    };

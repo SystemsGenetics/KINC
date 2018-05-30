@@ -60,7 +60,7 @@ private:
    Pairwise::Clustering* _clusModel {nullptr};
    Pairwise::Correlation* _corrModel {new Pairwise::Pearson()};
    int _minSamples {30};
-   float _minExpression {-INFINITY};
+   float _minExpression {-std::numeric_limits<float>::infinity()};
    qint8 _minClusters {1};
    qint8 _maxClusters {5};
    Pairwise::Criterion _criterion {Pairwise::Criterion::ICL};

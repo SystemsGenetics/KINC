@@ -37,8 +37,8 @@ void RMT::process(const EAbstractAnalytic::Block* result)
 
    // initialize helper variables
    float finalThreshold {0};
-   float finalChi {INFINITY};
-   float maxChi {-INFINITY};
+   float finalChi {numeric_limits<float>::infinity()};
+   float maxChi {-numeric_limits<float>::infinity()};
 
    float threshold {_thresholdStart};
 

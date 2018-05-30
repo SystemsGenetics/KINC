@@ -15,6 +15,14 @@ Similarity::Serial::Serial(Similarity* parent):
    EAbstractAnalytic::Serial(parent),
    _base(parent)
 {
+   // initialize clustering model
+   if ( _base->_clusMethod != ClusteringMethod::None )
+   {
+      _base->_clusModel->initialize(_base->_input);
+   }
+
+   // initialize correlation model
+   _base->_corrModel->initialize(_base->_input);
 }
 
 
@@ -29,15 +37,6 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
 
    // initialize result block
    ResultBlock* resultBlock {new ResultBlock(workBlock->index(), workBlock->start())};
-
-   // initialize clustering model
-   if ( _base->_clusMethod != ClusteringMethod::None )
-   {
-      _base->_clusModel->initialize(_base->_input);
-   }
-
-   // initialize correlation model
-   _base->_corrModel->initialize(_base->_input);
 
    // initialize workspace
    QVector<Pairwise::Vector2> X(_base->_input->getSampleSize());

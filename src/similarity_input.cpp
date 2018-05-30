@@ -83,7 +83,6 @@ EAbstractAnalytic::Input::Type Similarity::Input::type(int index) const
    case RemovePostOutliers: return Type::Boolean;
    case MinCorrelation: return Type::Double;
    case MaxCorrelation: return Type::Double;
-   case BlockSize: return Type::Integer;
    case KernelSize: return Type::Integer;
    default: return Type::Boolean;
    }
@@ -239,17 +238,6 @@ QVariant Similarity::Input::data(int index, Role role) const
       case Role::Maximum: return 1;
       default: return QVariant();
       }
-   case BlockSize:
-      switch (role)
-      {
-      case Role::CommandLineName: return QString("bsize");
-      case Role::Title: return tr("Block Size:");
-      case Role::WhatsThis: return tr("(OpenCL) Total number of blocks to run.");
-      case Role::Default: return 4;
-      case Role::Minimum: return 1;
-      case Role::Maximum: return std::numeric_limits<int>::max();
-      default: return QVariant();
-      }
    case KernelSize:
       switch (role)
       {
@@ -329,9 +317,6 @@ void Similarity::Input::set(int index, const QVariant& value)
       break;
    case MaxCorrelation:
       _base->_maxCorrelation = value.toDouble();
-      break;
-   case BlockSize:
-      _base->_blockSize = value.toInt();
       break;
    case KernelSize:
       _base->_kernelSize = value.toInt();
