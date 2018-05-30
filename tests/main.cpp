@@ -2,13 +2,13 @@
 #include "datafactory.h"
 #include "testclustermatrix.h"
 #include "testcorrelationmatrix.h"
-// #include "testexportcorrelationmatrix.h"
-// #include "testexportexpressionmatrix.h"
+#include "testexportcorrelationmatrix.h"
+#include "testexportexpressionmatrix.h"
 #include "testexpressionmatrix.h"
-// #include "testimportcorrelationmatrix.h"
+#include "testimportcorrelationmatrix.h"
 #include "testimportexpressionmatrix.h"
-// #include "testrmt.h"
-// #include "testsimilarity.h"
+#include "testrmt.h"
+#include "testsimilarity.h"
 
 
 

@@ -1,11 +1,11 @@
-#include <ace/core/AceCore.h>
-#include <ace/core/datamanager.h>
-#include <ace/core/datareference.h>
+#include <ace/core/core.h>
+#include <ace/core/ace_analytic_single.h>
+#include <ace/core/ace_dataobject.h>
 
 #include "testexportcorrelationmatrix.h"
 #include "analyticfactory.h"
 #include "datafactory.h"
-#include "exportcorrelationmatrix.h"
+#include "exportcorrelationmatrix_input.h"
 
 
 
@@ -46,27 +46,20 @@ void TestExportCorrelationMatrix::test()
 	}
 
 	// create metadata
-	EMetadata metaGeneNames(EMetadata::Array);
-	EMetadata metaSampleNames(EMetadata::Array);
-	EMetadata metaCorrelationNames(EMetadata::Array);
-
+	EMetaArray metaGeneNames;
 	for ( int i = 0; i < numGenes; ++i )
 	{
-		EMetadata* name {new EMetadata(EMetadata::String)};
-		*(name->toString()) = QString::number(i);
-		metaGeneNames.toArray()->append(name);
+		metaGeneNames.append(QString::number(i));
 	}
 
+	EMetaArray metaSampleNames;
 	for ( int i = 0; i < numSamples; ++i )
 	{
-		EMetadata* name {new EMetadata(EMetadata::String)};
-		*(name->toString()) = QString::number(i);
-		metaSampleNames.toArray()->append(name);
+		metaSampleNames.append(QString::number(i));
 	}
 
-	EMetadata* name {new EMetadata(EMetadata::String)};
-	*(name->toString()) = "test";
-	metaCorrelationNames.toArray()->append(name);
+	EMetaArray metaCorrelationNames;
+	metaCorrelationNames.append(QString("test"));
 
 	// initialize temp files
 	QString txtPath {QDir::tempPath() + "/test.txt"};
@@ -78,15 +71,12 @@ void TestExportCorrelationMatrix::test()
 	QFile(cmxPath).remove();
 
 	// create cluster matrix
-	std::unique_ptr<Ace::DataReference> ccmDataRef {Ace::DataManager::getInstance().open(ccmPath)};
-	(*ccmDataRef)->clear(DataFactory::CCMatrixType);
+	std::unique_ptr<Ace::DataObject> ccmDataRef {new Ace::DataObject(ccmPath)};
+	CCMatrix* ccm {ccmDataRef->data()->cast<CCMatrix>()};
 
-	CCMatrix* ccm {dynamic_cast<CCMatrix*>(&((*ccmDataRef)->data()))};
 	ccm->initialize(metaGeneNames, maxClusters, metaSampleNames);
-	ccm->prepare(false);
 
 	CCMatrix::Pair ccmPair(ccm);
-
 	for ( auto& testPair : testPairs )
 	{
 		ccmPair.clearClusters();
@@ -103,19 +93,16 @@ void TestExportCorrelationMatrix::test()
 		ccmPair.write(testPair.index);
 	}
 
-	ccm->finish();
-	(*ccmDataRef)->writeMeta();
+	ccmDataRef->data()->finish();
+	ccmDataRef->finalize();
 
 	// create correlation matrix
-	std::unique_ptr<Ace::DataReference> cmxDataRef {Ace::DataManager::getInstance().open(cmxPath)};
-	(*cmxDataRef)->clear(DataFactory::CorrelationMatrixType);
+	std::unique_ptr<Ace::DataObject> cmxDataRef {new Ace::DataObject(cmxPath)};
+	CorrelationMatrix* cmx {cmxDataRef->data()->cast<CorrelationMatrix>()};
 
-	CorrelationMatrix* cmx {dynamic_cast<CorrelationMatrix*>(&((*cmxDataRef)->data()))};
 	cmx->initialize(metaGeneNames, maxClusters, metaCorrelationNames);
-	cmx->prepare(false);
 
 	CorrelationMatrix::Pair cmxPair(cmx);
-
 	for ( auto& testPair : testPairs )
 	{
 		cmxPair.clearClusters();
@@ -129,19 +116,20 @@ void TestExportCorrelationMatrix::test()
 		cmxPair.write(testPair.index);
 	}
 
-	cmx->finish();
-	(*cmxDataRef)->writeMeta();
+	cmxDataRef->data()->finish();
+	cmxDataRef->finalize();
 
-	// create analytic object
-	EAbstractAnalyticFactory& factory {EAbstractAnalyticFactory::getInstance()};
-	std::unique_ptr<EAbstractAnalytic> analytic {factory.make(AnalyticFactory::ExportCorrelationMatrixType)};
-
-	analytic->addDataIn(ExportCorrelationMatrix::ClusterData, ccmPath, DataFactory::CCMatrixType);
-	analytic->addDataIn(ExportCorrelationMatrix::CorrelationData, cmxPath, DataFactory::CorrelationMatrixType);
-	analytic->addFileOut(ExportCorrelationMatrix::OutputFile, txtPath);
+	// create analytic manager
+	auto abstractManager = Ace::Analytic::AbstractManager::makeManager(AnalyticFactory::ExportCorrelationMatrixType, 0, 1);
+	auto manager = qobject_cast<Ace::Analytic::Single*>(abstractManager.release());
+	manager->set(ExportCorrelationMatrix::Input::ClusterData, ccmPath);
+	manager->set(ExportCorrelationMatrix::Input::CorrelationData, cmxPath);
+	manager->set(ExportCorrelationMatrix::Input::OutputFile, txtPath);
 
 	// run analytic
-	analytic->run();
+	manager->initialize();
+
+	// TODO: wait for analytic to finish properly
 
 	// read and verify data from raw file
 	float error = 0;
@@ -151,7 +139,6 @@ void TestExportCorrelationMatrix::test()
 	QVERIFY(file.open(QIODevice::ReadOnly));
 
 	QTextStream stream(&file);
-
 	for ( auto& testPair : testPairs )
 	{
 		for ( int k = 0; k < testPair.sampleMasks.size(); ++k )

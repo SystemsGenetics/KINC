@@ -1,11 +1,11 @@
-#include <ace/core/AceCore.h>
-#include <ace/core/datamanager.h>
-#include <ace/core/datareference.h>
+#include <ace/core/core.h>
+#include <ace/core/ace_analytic_single.h>
+#include <ace/core/ace_dataobject.h>
 
 #include "testexportexpressionmatrix.h"
 #include "analyticfactory.h"
 #include "datafactory.h"
-#include "exportexpressionmatrix.h"
+#include "exportexpressionmatrix_input.h"
 
 
 
@@ -44,12 +44,10 @@ void TestExportExpressionMatrix::test()
 	QFile(emxPath).remove();
 
 	// create expression matrix
-	std::unique_ptr<Ace::DataReference> dataRef {Ace::DataManager::getInstance().open(emxPath)};
-	(*dataRef)->clear(DataFactory::ExpressionMatrixType);
+	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(emxPath)};
+	ExpressionMatrix* matrix {dataRef->data()->cast<ExpressionMatrix>()};
 
-	ExpressionMatrix* matrix {dynamic_cast<ExpressionMatrix*>(&((*dataRef)->data()))};
 	matrix->initialize(geneNames, sampleNames);
-	matrix->prepare(true);
 
 	ExpressionMatrix::Gene gene(matrix);
 	for ( int i = 0; i < matrix->getGeneSize(); ++i )
@@ -64,19 +62,20 @@ void TestExportExpressionMatrix::test()
 
 	matrix->setTransform(ExpressionMatrix::Transform::None);
 
-	matrix->finish();
-	(*dataRef)->writeMeta();
+	dataRef->data()->finish();
+	dataRef->finalize();
 
-	// create analytic object
-	EAbstractAnalyticFactory& factory {EAbstractAnalyticFactory::getInstance()};
-	std::unique_ptr<EAbstractAnalytic> analytic {factory.make(AnalyticFactory::ExportExpressionMatrixType)};
-
-	analytic->addDataIn(ExportExpressionMatrix::InputData, emxPath, DataFactory::ExpressionMatrixType);
-	analytic->addFileOut(ExportExpressionMatrix::OutputFile, txtPath);
-	analytic->setArgument(ExportExpressionMatrix::NoSampleToken, noSampleToken);
+	// create analytic manager
+	auto abstractManager = Ace::Analytic::AbstractManager::makeManager(AnalyticFactory::ExportExpressionMatrixType, 0, 1);
+	auto manager = qobject_cast<Ace::Analytic::Single*>(abstractManager.release());
+	manager->set(ExportExpressionMatrix::Input::InputData, emxPath);
+	manager->set(ExportExpressionMatrix::Input::OutputFile, txtPath);
+	manager->set(ExportExpressionMatrix::Input::NoSampleToken, noSampleToken);
 
 	// run analytic
-	analytic->run();
+	manager->initialize();
+
+	// TODO: wait for analytic to finish properly
 
 	// read expression data from raw file
 	QFile file(txtPath);

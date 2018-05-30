@@ -1,11 +1,11 @@
-#include <ace/core/AceCore.h>
-#include <ace/core/datamanager.h>
-#include <ace/core/datareference.h>
+#include <ace/core/core.h>
+#include <ace/core/ace_analytic_single.h>
+#include <ace/core/ace_dataobject.h>
 
 #include "testrmt.h"
 #include "analyticfactory.h"
 #include "datafactory.h"
-#include "rmt.h"
+#include "rmt_input.h"
 #include "correlationmatrix.h"
 
 
@@ -38,19 +38,14 @@ void TestRMT::test()
 	}
 
 	// create metadata
-	EMetadata metaGeneNames(EMetadata::Array);
-	EMetadata metaCorrelationNames(EMetadata::Array);
-
+	EMetaArray metaGeneNames;
 	for ( int i = 0; i < numGenes; ++i )
 	{
-		EMetadata* name {new EMetadata(EMetadata::String)};
-		*(name->toString()) = QString::number(i);
-		metaGeneNames.toArray()->append(name);
+		metaGeneNames.append(QString::number(i));
 	}
 
-	EMetadata* name {new EMetadata(EMetadata::String)};
-	*(name->toString()) = "test";
-	metaCorrelationNames.toArray()->append(name);
+	EMetaArray metaCorrelationNames;
+	metaCorrelationNames.append(QString("test"));
 
 	// initialize temp files
 	QString cmxPath {QDir::tempPath() + "/test.cmx"};
@@ -60,15 +55,12 @@ void TestRMT::test()
 	QFile(logPath).remove();
 
 	// create correlation matrix
-	std::unique_ptr<Ace::DataReference> cmxDataRef {Ace::DataManager::getInstance().open(cmxPath)};
-	(*cmxDataRef)->clear(DataFactory::CorrelationMatrixType);
+	std::unique_ptr<Ace::DataObject> cmxDataRef {new Ace::DataObject(cmxPath)};
+	CorrelationMatrix* cmx {cmxDataRef->data()->cast<CorrelationMatrix>()};
 
-	CorrelationMatrix* cmx {dynamic_cast<CorrelationMatrix*>(&((*cmxDataRef)->data()))};
 	cmx->initialize(metaGeneNames, maxClusters, metaCorrelationNames);
-	cmx->prepare(false);
 
 	CorrelationMatrix::Pair cmxPair(cmx);
-
 	for ( auto& testPair : testPairs )
 	{
 		cmxPair.clearClusters();
@@ -82,16 +74,17 @@ void TestRMT::test()
 		cmxPair.write(testPair.index);
 	}
 
-	cmx->finish();
-	(*cmxDataRef)->writeMeta();
+	cmxDataRef->data()->finish();
+	cmxDataRef->finalize();
 
-	// create analytic object
-	EAbstractAnalyticFactory& factory {EAbstractAnalyticFactory::getInstance()};
-	std::unique_ptr<EAbstractAnalytic> analytic {factory.make(AnalyticFactory::RMTType)};
-
-	analytic->addDataIn(RMT::InputData, cmxPath, DataFactory::CorrelationMatrixType);
-	analytic->addFileOut(RMT::LogFile, logPath);
+	// create analytic manager
+	auto abstractManager = Ace::Analytic::AbstractManager::makeManager(AnalyticFactory::RMTType, 0, 1);
+	auto manager = qobject_cast<Ace::Analytic::Single*>(abstractManager.release());
+	manager->set(RMT::Input::InputData, cmxPath);
+	manager->set(RMT::Input::LogFile, logPath);
 
 	// run analytic
-	analytic->run();
+	manager->initialize();
+
+	// TODO: wait for analytic to finish properly
 }

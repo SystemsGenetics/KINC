@@ -1,11 +1,11 @@
-#include <ace/core/AceCore.h>
-#include <ace/core/datamanager.h>
-#include <ace/core/datareference.h>
+#include <ace/core/core.h>
+#include <ace/core/ace_analytic_single.h>
+#include <ace/core/ace_dataobject.h>
 
 #include "testsimilarity.h"
 #include "analyticfactory.h"
 #include "datafactory.h"
-#include "similarity.h"
+#include "similarity_input.h"
 
 
 
@@ -46,12 +46,10 @@ void TestSimilarity::test()
 	QFile(emxPath).remove();
 
 	// create expression matrix
-	std::unique_ptr<Ace::DataReference> emxDataRef {Ace::DataManager::getInstance().open(emxPath)};
-	(*emxDataRef)->clear(DataFactory::ExpressionMatrixType);
+	std::unique_ptr<Ace::DataObject> emxDataRef {new Ace::DataObject(emxPath)};
+	ExpressionMatrix* emx {emxDataRef->data()->cast<ExpressionMatrix>()};
 
-	ExpressionMatrix* emx {dynamic_cast<ExpressionMatrix*>(&((*emxDataRef)->data()))};
 	emx->initialize(geneNames, sampleNames);
-	emx->prepare(true);
 
 	ExpressionMatrix::Gene gene(emx);
 	for ( int i = 0; i < emx->getGeneSize(); ++i )
@@ -66,21 +64,22 @@ void TestSimilarity::test()
 
 	emx->setTransform(ExpressionMatrix::Transform::None);
 
-	emx->finish();
-	(*emxDataRef)->writeMeta();
+	emxDataRef->data()->finish();
+	emxDataRef->finalize();
 
-	// create analytic object
-	EAbstractAnalyticFactory& factory {EAbstractAnalyticFactory::getInstance()};
-	std::unique_ptr<EAbstractAnalytic> analytic {factory.make(AnalyticFactory::SimilarityType)};
-
-	analytic->addDataIn(Similarity::InputData, emxPath, DataFactory::ExpressionMatrixType);
-	analytic->addDataOut(Similarity::ClusterData, ccmPath, DataFactory::CCMatrixType);
-	analytic->addDataOut(Similarity::CorrelationData, cmxPath, DataFactory::CorrelationMatrixType);
-	analytic->setArgument(Similarity::ClusteringArg, "gmm");
-	analytic->setArgument(Similarity::CorrelationArg, "pearson");
+	// create analytic manager
+	auto abstractManager = Ace::Analytic::AbstractManager::makeManager(AnalyticFactory::SimilarityType, 0, 1);
+	auto manager = qobject_cast<Ace::Analytic::Single*>(abstractManager.release());
+	manager->set(Similarity::Input::InputData, emxPath);
+	manager->set(Similarity::Input::ClusterData, ccmPath);
+	manager->set(Similarity::Input::CorrelationData, cmxPath);
+	manager->set(Similarity::Input::ClusteringType, "gmm");
+	manager->set(Similarity::Input::CorrelationType, "pearson");
 
 	// run analytic
-	analytic->run();
+	manager->initialize();
+
+	// TODO: wait for analytic to finish properly
 
 	// TODO: read and verify cluster data
 	// TODO: read and verify correlation data

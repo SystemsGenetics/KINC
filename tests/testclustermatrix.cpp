@@ -57,7 +57,7 @@ void TestClusterMatrix::test()
 	QString path {QDir::tempPath() + "/test.ccm"};
 
 	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(path, DataFactory::CCMatrixType, EMetadata(EMetadata::Object))};
-	CCMatrix* matrix {qobject_cast<CCMatrix*>(dataRef->data())};
+	CCMatrix* matrix {dataRef->data()->cast<CCMatrix>()};
 
 	// write data to file
 	matrix->initialize(metaGeneNames, maxClusters, metaSampleNames);

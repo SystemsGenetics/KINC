@@ -21,7 +21,7 @@ namespace Pairwise
       Index& operator=(Index&&) = default;
       void operator++();
       Index operator++(int);
-      bool operator==(const Index& object)
+      bool operator==(const Index& object) const
          { return _x == object._x && _y == object._y; }
       bool operator!=(const Index& object)
          { return !(*this == object); }

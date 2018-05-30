@@ -93,7 +93,7 @@ void TestImportExpressionMatrix::test()
 
 	// read expression data from file
 	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(emxPath)};
-	ExpressionMatrix* matrix {qobject_cast<ExpressionMatrix*>(dataRef->data())};
+	ExpressionMatrix* matrix {dataRef->data()->cast<ExpressionMatrix>()};
 	std::unique_ptr<float> expressions {matrix->dumpRawData()};
 
 	// verify expression data

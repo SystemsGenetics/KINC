@@ -36,7 +36,7 @@ void TestExpressionMatrix::test()
 	QString path {QDir::tempPath() + "/test.emx"};
 
 	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(path, DataFactory::ExpressionMatrixType, EMetadata(EMetadata::Object))};
-	ExpressionMatrix* matrix {qobject_cast<ExpressionMatrix*>(dataRef->data())};
+	ExpressionMatrix* matrix {dataRef->data()->cast<ExpressionMatrix>()};
 
 	// write data to file
 	matrix->initialize(geneNames, sampleNames);

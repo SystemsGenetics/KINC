@@ -59,13 +59,13 @@ SOURCES += \
 	../src/similarity.cpp \
 	testclustermatrix.cpp \
 	testcorrelationmatrix.cpp \
-	# testexportcorrelationmatrix.cpp \
-	# testexportexpressionmatrix.cpp \
+	testexportcorrelationmatrix.cpp \
+	testexportexpressionmatrix.cpp \
 	testexpressionmatrix.cpp \
-	# testimportcorrelationmatrix.cpp \
+	testimportcorrelationmatrix.cpp \
 	testimportexpressionmatrix.cpp \
-	# testrmt.cpp \
-	# testsimilarity.cpp \
+	testrmt.cpp \
+	testsimilarity.cpp \
 	main.cpp
 
 HEADERS += \
@@ -102,17 +102,17 @@ HEADERS += \
    ../src/similarity_opencl_pearson.h \
    ../src/similarity_opencl_spearman.h \
    ../src/similarity_opencl_worker.h \
-   ../src/similarity_opencl.cpp \
+   ../src/similarity_opencl.h \
 	../src/similarity_resultblock.h \
 	../src/similarity_serial.h \
 	../src/similarity_workblock.h \
 	../src/similarity.h \
 	testclustermatrix.h \
 	testcorrelationmatrix.h \
-	# testexportcorrelationmatrix.h \
-	# testexportexpressionmatrix.h \
+	testexportcorrelationmatrix.h \
+	testexportexpressionmatrix.h \
 	testexpressionmatrix.h \
-	# testimportcorrelationmatrix.h \
-	testimportexpressionmatrix.h
-	# testrmt.h \
-	# testsimilarity.h
+	testimportcorrelationmatrix.h \
+	testimportexpressionmatrix.h \
+	testrmt.h \
+	testsimilarity.h

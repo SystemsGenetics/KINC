@@ -1,11 +1,11 @@
-#include <ace/core/AceCore.h>
-#include <ace/core/datamanager.h>
-#include <ace/core/datareference.h>
+#include <ace/core/core.h>
+#include <ace/core/ace_analytic_single.h>
+#include <ace/core/ace_dataobject.h>
 
 #include "testimportcorrelationmatrix.h"
 #include "analyticfactory.h"
 #include "datafactory.h"
-#include "importcorrelationmatrix.h"
+#include "importcorrelationmatrix_input.h"
 
 
 
@@ -58,6 +58,7 @@ void TestImportCorrelationMatrix::test()
 	QFile file(txtPath);
 	QVERIFY(file.open(QIODevice::ReadWrite));
 
+	// write correlation data to text file
 	QTextStream stream(&file);
 
 	for ( auto& testPair : testPairs )
@@ -94,20 +95,21 @@ void TestImportCorrelationMatrix::test()
 
 	file.close();
 
-	// create analytic object
-	EAbstractAnalyticFactory& factory {EAbstractAnalyticFactory::getInstance()};
-	std::unique_ptr<EAbstractAnalytic> analytic {factory.make(AnalyticFactory::ImportCorrelationMatrixType)};
-
-	analytic->addFileIn(ImportCorrelationMatrix::InputFile, txtPath);
-	analytic->addDataOut(ImportCorrelationMatrix::ClusterData, ccmPath, DataFactory::CCMatrixType);
-	analytic->addDataOut(ImportCorrelationMatrix::CorrelationData, cmxPath, DataFactory::CorrelationMatrixType);
-	analytic->setArgument(ImportCorrelationMatrix::GeneSize, numGenes);
-	analytic->setArgument(ImportCorrelationMatrix::MaxClusterSize, maxClusters);
-	analytic->setArgument(ImportCorrelationMatrix::SampleSize, numSamples);
-	analytic->setArgument(ImportCorrelationMatrix::CorrelationName, "test");
+	// create analytic manager
+	auto abstractManager = Ace::Analytic::AbstractManager::makeManager(AnalyticFactory::ImportCorrelationMatrixType, 0, 1);
+	auto manager = qobject_cast<Ace::Analytic::Single*>(abstractManager.release());
+	manager->set(ImportCorrelationMatrix::Input::InputFile, txtPath);
+	manager->set(ImportCorrelationMatrix::Input::ClusterData, ccmPath);
+	manager->set(ImportCorrelationMatrix::Input::CorrelationData, cmxPath);
+	manager->set(ImportCorrelationMatrix::Input::GeneSize, numGenes);
+	manager->set(ImportCorrelationMatrix::Input::MaxClusterSize, maxClusters);
+	manager->set(ImportCorrelationMatrix::Input::SampleSize, numSamples);
+	manager->set(ImportCorrelationMatrix::Input::CorrelationName, "test");
 
 	// run analytic
-	analytic->run();
+	manager->initialize();
+
+	// TODO: wait for analytic to finish properly
 
 	// TODO: read and verify cluster data
 	// TODO: read and verify correlation data
