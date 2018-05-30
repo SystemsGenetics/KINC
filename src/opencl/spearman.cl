@@ -22,7 +22,7 @@ int nextPower2(int n)
 
 
 
-float computeCluster(
+float Spearman_computeCluster(
    __global const float2 *data,
    __global const char *labels, int N,
    char cluster,
@@ -91,10 +91,11 @@ float computeCluster(
 
 
 
-__kernel void computeSpearmanBlock(
+__kernel void Spearman_compute(
    __global const float2 *in_data,
-   char K,
-   __global const char *in_labels, int N,
+   char clusterSize,
+   __global const char *in_labels,
+	int sampleSize,
    int minSamples,
    __global float *work_x,
    __global float *work_y,
@@ -102,17 +103,17 @@ __kernel void computeSpearmanBlock(
    __global float *out_correlations)
 {
    int i = get_global_id(0);
-	int N_pow2 = nextPower2(N);
+	int N_pow2 = nextPower2(sampleSize);
 
-   __global const float2 *data = &in_data[i * N];
-   __global const char *labels = &in_labels[i * N];
+   __global const float2 *data = &in_data[i * sampleSize];
+   __global const char *labels = &in_labels[i * sampleSize];
    __global float *x = &work_x[i * N_pow2];
    __global float *y = &work_y[i * N_pow2];
    __global int *rank = &work_rank[i * N_pow2];
-   __global float *correlations = &out_correlations[i * K];
+   __global float *correlations = &out_correlations[i * clusterSize];
 
-   for ( char k = 0; k < K; ++k )
+   for ( char k = 0; k < clusterSize; ++k )
    {
-      correlations[k] = computeCluster(data, labels, N, k, minSamples, x, y, rank);
+      correlations[k] = Spearman_computeCluster(data, labels, sampleSize, k, minSamples, x, y, rank);
    }
 }

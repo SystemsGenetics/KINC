@@ -8,21 +8,6 @@
 
 
 
-/**
- * Implementation of rand(), taken from POSIX example.
- *
- * @param state
- */
-int rand(ulong *state)
-{
-   *state = (*state) * 1103515245 + 12345;
-   return ((unsigned)((*state)/65536) % 32768);
-}
-
-
-
-
-
 typedef struct
 {
    float pi;
@@ -37,7 +22,7 @@ typedef struct
 
 
 
-void Component_initialize(
+void GMM_Component_initialize(
    __global Component *component,
    float pi,
    __global const Vector2 *mu)
@@ -60,7 +45,7 @@ void Component_initialize(
 
 
 
-bool Component_prepareCovariance(__global Component *component)
+bool GMM_Component_prepareCovariance(__global Component *component)
 {
    const int D = 2;
 
@@ -85,7 +70,7 @@ bool Component_prepareCovariance(__global Component *component)
 
 
 
-void Component_calcLogMvNorm(
+void GMM_Component_calcLogMvNorm(
    __global const Component *component,
    __global const Vector2 *X, int N,
    __global float *logP)
@@ -118,7 +103,7 @@ void Component_calcLogMvNorm(
 
 
 
-void kmeans(
+void GMM_kmeans(
    __global Component *components, int K,
    __global const Vector2 *X, int N,
    __global Vector2 *MP,
@@ -182,14 +167,14 @@ void kmeans(
 
 
 
-void calcLogMvNorm(
+void GMM_calcLogMvNorm(
    __global const Component *components, int K,
    __global const Vector2 *X, int N,
    __global float *loggamma)
 {
    for ( int k = 0; k < K; ++k )
    {
-      Component_calcLogMvNorm(&components[k], X, N, &loggamma[k * N]);
+      GMM_Component_calcLogMvNorm(&components[k], X, N, &loggamma[k * N]);
    }
 }
 
@@ -198,7 +183,7 @@ void calcLogMvNorm(
 
 
 
-void calcLogLikelihoodAndGammaNK(
+void GMM_calcLogLikelihoodAndGammaNK(
    __global const float *logpi, int K,
    __global float *loggamma, int N,
    float *logL)
@@ -237,7 +222,7 @@ void calcLogLikelihoodAndGammaNK(
 
 
 
-void calcLogGammaK(
+void GMM_calcLogGammaK(
    __global const float *loggamma, int N, int K,
    __global float *logGamma)
 {
@@ -271,7 +256,7 @@ void calcLogGammaK(
 
 
 
-float calcLogGammaSum(
+float GMM_calcLogGammaSum(
    __global const float *logpi, int K,
    __global const float *logGamma)
 {
@@ -300,7 +285,7 @@ float calcLogGammaSum(
 
 
 
-bool performMStep(
+bool GMM_performMStep(
    __global Component *components, int K,
    __global float *logpi,
    __global float *loggamma,
@@ -365,7 +350,7 @@ bool performMStep(
 
       matrixScale(sigma, 1.0f / logGamma[k]);
 
-      bool success = Component_prepareCovariance(&components[k]);
+      bool success = GMM_Component_prepareCovariance(&components[k]);
 
       if ( !success )
       {
@@ -381,7 +366,7 @@ bool performMStep(
 
 
 
-void calcLabels(
+void GMM_calcLabels(
    __global const float *loggamma, int N, int K,
    __global char *labels)
 {
@@ -408,7 +393,7 @@ void calcLabels(
 
 
 
-float calcEntropy(
+float GMM_calcEntropy(
    __global const float *loggamma, int N,
    __global const char *labels)
 {
@@ -432,7 +417,7 @@ float calcEntropy(
 /**
  * Compute a Gaussian mixture model from a dataset.
  */
-bool fit(
+bool GMM_fit(
    __global const Vector2 *X, int N, int K,
    __global char *labels,
    float *logL,
@@ -452,12 +437,12 @@ bool fit(
       // use uniform mixture proportion and randomly sampled mean
       int i = rand(&state) % N;
 
-      Component_initialize(&components[k], 1.0f / K, &X[i]);
-      Component_prepareCovariance(&components[k]);
+      GMM_Component_initialize(&components[k], 1.0f / K, &X[i]);
+      GMM_Component_prepareCovariance(&components[k]);
    }
 
    // initialize means with k-means
-   kmeans(components, K, X, N, MP, counts);
+   GMM_kmeans(components, K, X, N, MP, counts);
 
    // initialize workspace
    for (int k = 0; k < K; ++k)
@@ -475,10 +460,10 @@ bool fit(
    {
       // E step
       // compute gamma, log-likelihood
-      calcLogMvNorm(components, K, X, N, loggamma);
+      GMM_calcLogMvNorm(components, K, X, N, loggamma);
 
       prevLogL = currentLogL;
-      calcLogLikelihoodAndGammaNK(logpi, K, loggamma, N, &currentLogL);
+      GMM_calcLogLikelihoodAndGammaNK(logpi, K, loggamma, N, &currentLogL);
 
       // check for convergence
       if ( fabs(currentLogL - prevLogL) < TOLERANCE )
@@ -488,12 +473,12 @@ bool fit(
 
       // M step
       // Let Gamma[k] = \Sum_i gamma[k, i]
-      calcLogGammaK(loggamma, N, K, logGamma);
+      GMM_calcLogGammaK(loggamma, N, K, logGamma);
 
-      float logGammaSum = calcLogGammaSum(logpi, K, logGamma);
+      float logGammaSum = GMM_calcLogGammaSum(logpi, K, logGamma);
 
       // Update parameters
-      bool success = performMStep(components, K, logpi, loggamma, logGamma, logGammaSum, X, N);
+      bool success = GMM_performMStep(components, K, logpi, loggamma, logGamma, logGammaSum, X, N);
 
       if ( !success )
       {
@@ -503,8 +488,8 @@ bool fit(
 
    // save outputs
    *logL = currentLogL;
-   calcLabels(loggamma, N, K, labels);
-   *entropy = calcEntropy(loggamma, N, labels);
+   GMM_calcLabels(loggamma, N, K, labels);
+   *entropy = GMM_calcEntropy(loggamma, N, labels);
 
    return true;
 }
@@ -528,7 +513,7 @@ typedef enum
 /**
  * Compute the Bayes Information Criterion of a GMM.
  */
-float computeBIC(int K, float logL, int N, int D)
+float GMM_computeBIC(int K, float logL, int N, int D)
 {
    int p = K * (1 + D + D * D);
 
@@ -543,7 +528,7 @@ float computeBIC(int K, float logL, int N, int D)
 /**
  * Compute the Integrated Completed Likelihood of a GMM.
  */
-float computeICL(int K, float logL, int N, int D, float E)
+float GMM_computeICL(int K, float logL, int N, int D, float E)
 {
    int p = K * (1 + D + D * D);
 
@@ -562,8 +547,9 @@ float computeICL(int K, float logL, int N, int D, float E)
  * is selected according to a criterion (BIC). The selected K and the
  * resulting sample mask for each pair is returned.
  */
-__kernel void computeGMMBlock(
-   __global const float *expressions, int size,
+__kernel void GMM_compute(
+   __global const float *expressions,
+   int sampleSize,
    int minSamples,
    char minClusters,
    char maxClusters,
@@ -585,17 +571,17 @@ __kernel void computeGMMBlock(
    int i = get_global_id(0);
 
    // initialize workspace variables
-   __global Vector2 *X = &work_X[i * size];
+   __global Vector2 *X = &work_X[i * sampleSize];
    int N = work_N[i];
-   __global char *labels = &work_labels[i * size];
+   __global char *labels = &work_labels[i * sampleSize];
    __global Component *components = &work_components[i * maxClusters];
    __global Vector2 *MP = &work_MP[i * maxClusters];
    __global int *counts = &work_counts[i * maxClusters];
    __global float *logpi = &work_logpi[i * maxClusters];
-   __global float *loggamma = &work_loggamma[i * maxClusters * size];
+   __global float *loggamma = &work_loggamma[i * maxClusters * sampleSize];
    __global float *logGamma = &work_logGamma[i * maxClusters];
    __global char *bestK = &out_K[i];
-   __global char *bestLabels = &out_labels[i * size];
+   __global char *bestLabels = &out_labels[i * sampleSize];
 
    // remove pre-clustering outliers
    __global float *work = loggamma;
@@ -619,7 +605,7 @@ __kernel void computeGMMBlock(
          float logL;
          float entropy;
 
-         bool success = fit(
+         bool success = GMM_fit(
             X, N, K,
             labels, &logL, &entropy,
             components,
@@ -638,10 +624,10 @@ __kernel void computeGMMBlock(
          switch (criterion)
          {
          case BIC:
-            value = computeBIC(K, logL, N, 2);
+            value = GMM_computeBIC(K, logL, N, 2);
             break;
          case ICL:
-            value = computeICL(K, logL, N, 2, entropy);
+            value = GMM_computeICL(K, logL, N, 2, entropy);
             break;
          }
 

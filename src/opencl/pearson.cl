@@ -4,7 +4,7 @@
 
 
 
-float computeCluster(
+float Pearson_computeCluster(
    __global const float2 *data,
    __global const char *labels, int N,
    char cluster,
@@ -51,21 +51,22 @@ float computeCluster(
 
 
 
-__kernel void computePearsonBlock(
+__kernel void Pearson_compute(
    __global const float2 *in_data,
-   char K,
-   __global const char *in_labels, int N,
+   char clusterSize,
+   __global const char *in_labels,
+   int sampleSize,
    int minSamples,
    __global float *out_correlations)
 {
    int i = get_global_id(0);
 
-   __global const float2 *data = &in_data[i * N];
-   __global const char *labels = &in_labels[i * N];
-   __global float *correlations = &out_correlations[i * K];
+   __global const float2 *data = &in_data[i * sampleSize];
+   __global const char *labels = &in_labels[i * sampleSize];
+   __global float *correlations = &out_correlations[i * clusterSize];
 
-   for ( char k = 0; k < K; ++k )
+   for ( char k = 0; k < clusterSize; ++k )
    {
-      correlations[k] = computeCluster(data, labels, N, k, minSamples);
+      correlations[k] = Pearson_computeCluster(data, labels, sampleSize, k, minSamples);
    }
 }

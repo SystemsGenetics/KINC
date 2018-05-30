@@ -9,21 +9,6 @@
 
 
 /**
- * Implementation of rand(), taken from POSIX example.
- *
- * @param state
- */
-int rand(ulong *state)
-{
-   *state = (*state) * 1103515245 + 12345;
-   return ((unsigned)((*state)/65536) % 32768);
-}
-
-
-
-
-
-/**
  * Compute the log-likelihood of a K-means model given data X.
  *
  * @param X
@@ -32,7 +17,7 @@ int rand(ulong *state)
  * @param means
  * @param K
  */
-float computeLogLikelihood(
+float KMeans_computeLogLikelihood(
    __global const Vector2 *X, int N,
    __global const char *y,
    __global const Vector2 *means, int K)
@@ -66,7 +51,7 @@ float computeLogLikelihood(
 /**
  * Compute a K-means clustering model from a dataset.
  */
-void fit(
+void KMeans_fit(
    __global const Vector2 *X, int N, int K,
    float *logL,
    __global char *labels,
@@ -160,7 +145,7 @@ void fit(
       }
 
       // save the run with the greatest log-likelihood
-      float nextLogL = computeLogLikelihood(X, N, y, means, K);
+      float nextLogL = KMeans_computeLogLikelihood(X, N, y, means, K);
 
       if ( *logL < nextLogL )
       {
@@ -187,7 +172,7 @@ void fit(
  * @param N
  * @param D
  */
-float computeBIC(int K, float logL, int N, int D)
+float KMeans_computeBIC(int K, float logL, int N, int D)
 {
    int p = K * D;
 
@@ -206,8 +191,9 @@ float computeBIC(int K, float logL, int N, int D)
  * is selected according to a criterion (BIC). The selected K and the
  * resulting sample mask for each pair is returned.
  */
-__kernel void computeKmeansBlock(
-   __global const float *expressions, int size,
+__kernel void KMeans_compute(
+   __global const float *expressions,
+   int sampleSize,
    int minSamples,
    char minClusters,
    char maxClusters,
@@ -224,17 +210,17 @@ __kernel void computeKmeansBlock(
    int i = get_global_id(0);
 
    // initialize workspace variables
-   __global Vector2 *X = &work_X[i * size];
+   __global Vector2 *X = &work_X[i * sampleSize];
    int N = work_N[i];
-   __global char *labels = &work_labels[(3*i+0) * size];
+   __global char *labels = &work_labels[(3*i+0) * sampleSize];
    __global Vector2 *means = &work_means[i * maxClusters];
-   __global char *y = &work_labels[(3*i+1) * size];
-   __global char *y_next = &work_labels[(3*i+2) * size];
+   __global char *y = &work_labels[(3*i+1) * sampleSize];
+   __global char *y_next = &work_labels[(3*i+2) * sampleSize];
    __global char *bestK = &out_K[i];
-   __global char *bestLabels = &out_labels[i * size];
+   __global char *bestLabels = &out_labels[i * sampleSize];
 
    // remove pre-clustering outliers
-   __global float *work = &work_outlier[i * size];
+   __global float *work = &work_outlier[i * sampleSize];
 
    if ( removePreOutliers )
    {
@@ -253,10 +239,10 @@ __kernel void computeKmeansBlock(
       {
          // run each clustering model
          float logL;
-         fit(X, N, K, &logL, labels, means, y, y_next);
+         KMeans_fit(X, N, K, &logL, labels, means, y, y_next);
 
          // evaluate model
-         float value = computeBIC(K, logL, N, 2);
+         float value = KMeans_computeBIC(K, logL, N, 2);
 
          // save the best model
          if ( value < bestValue )

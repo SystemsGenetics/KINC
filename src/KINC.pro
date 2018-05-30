@@ -13,7 +13,7 @@ isEmpty(GUI) {
 QT += core
 
 # external libraries
-LIBS += -L$$(HOME)/software/lib -lacecore -laceconsole -lgsl -lgslcblas -llapack -llapacke
+LIBS += -lOpenCL -L/usr/local/lib64/ -L$$(HOME)/software/lib -lacecore -laceconsole -lgsl -lgslcblas -llapack -llapacke
 INCLUDEPATH += $$(HOME)/software/include
 
 # HACK
@@ -56,6 +56,13 @@ SOURCES += \
    rmt_input.cpp \
    rmt.cpp \
    similarity_input.cpp \
+   similarity_opencl_fetchpair.cpp \
+   similarity_opencl_gmm.cpp \
+   similarity_opencl_kmeans.cpp \
+   similarity_opencl_pearson.cpp \
+   similarity_opencl_spearman.cpp \
+   similarity_opencl_worker.cpp \
+   similarity_opencl.cpp \
    similarity_resultblock.cpp \
    similarity_serial.cpp \
    similarity_workblock.cpp \
@@ -89,6 +96,13 @@ HEADERS += \
    rmt_input.h \
    rmt.h \
    similarity_input.h \
+   similarity_opencl_fetchpair.h \
+   similarity_opencl_gmm.h \
+   similarity_opencl_kmeans.h \
+   similarity_opencl_pearson.h \
+   similarity_opencl_spearman.h \
+   similarity_opencl_worker.h \
+   similarity_opencl.h \
    similarity_resultblock.h \
    similarity_serial.h \
    similarity_workblock.h \

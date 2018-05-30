@@ -46,6 +46,13 @@ SOURCES += \
 	../src/rmt_input.cpp \
 	../src/rmt.cpp \
 	../src/similarity_input.cpp \
+	../src/similarity_opencl_fetchpair.cpp \
+   ../src/similarity_opencl_gmm.cpp \
+   ../src/similarity_opencl_kmeans.cpp \
+   ../src/similarity_opencl_pearson.cpp \
+   ../src/similarity_opencl_spearman.cpp \
+   ../src/similarity_opencl_worker.cpp \
+   ../src/similarity_opencl.cpp \
 	../src/similarity_resultblock.cpp \
 	../src/similarity_serial.cpp \
 	../src/similarity_workblock.cpp \
@@ -89,6 +96,13 @@ HEADERS += \
 	../src/rmt_input.h \
 	../src/rmt.h \
 	../src/similarity_input.h \
+	../src/similarity_opencl_fetchpair.h \
+   ../src/similarity_opencl_gmm.h \
+   ../src/similarity_opencl_kmeans.h \
+   ../src/similarity_opencl_pearson.h \
+   ../src/similarity_opencl_spearman.h \
+   ../src/similarity_opencl_worker.h \
+   ../src/similarity_opencl.cpp \
 	../src/similarity_resultblock.h \
 	../src/similarity_serial.h \
 	../src/similarity_workblock.h \

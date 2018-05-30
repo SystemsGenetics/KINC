@@ -7,6 +7,21 @@
 
 
 /**
+ * Implementation of rand(), taken from POSIX example.
+ *
+ * @param state
+ */
+int rand(ulong *state)
+{
+   *state = (*state) * 1103515245 + 12345;
+   return ((unsigned)((*state)/65536) % 32768);
+}
+
+
+
+
+
+/**
  * Remove outliers from a gene in a gene pair.
  *
  * @param X

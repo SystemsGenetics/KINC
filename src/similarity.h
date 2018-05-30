@@ -27,7 +27,7 @@ public:
    class WorkBlock;
    class ResultBlock;
    class Serial;
-   // class OpenCL;
+   class OpenCL;
    virtual int size() const override final;
    virtual std::unique_ptr<EAbstractAnalytic::Block> makeWork(int index) const override final;
    virtual std::unique_ptr<EAbstractAnalytic::Block> makeWork() const override final;
@@ -35,7 +35,7 @@ public:
    virtual void process(const EAbstractAnalytic::Block* result) override final;
    virtual EAbstractAnalytic::Input* makeInput() override final;
    virtual EAbstractAnalytic::Serial* makeSerial() override final;
-   // virtual EAbstractAnalytic::OpenCL* makeOpenCL() override final;
+   virtual EAbstractAnalytic::OpenCL* makeOpenCL() override final;
    virtual void initialize() override final;
 
 private:

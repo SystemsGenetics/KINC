@@ -11,7 +11,7 @@
  * below a threshold are excluded.
  *
  * @param expressions
- * @param size
+ * @param sampleSize
  * @param in_index
  * @param minExpression
  * @param out_X
@@ -19,7 +19,8 @@
  * @param out_labels
  */
 __kernel void fetchPair(
-   __global const float *expressions, int size,
+   __global const float *expressions,
+   int sampleSize,
    __global const int2 *in_index,
    int minExpression,
    __global Vector2 *out_X,
@@ -30,8 +31,8 @@ __kernel void fetchPair(
 
    // initialize variables
    int2 index = in_index[i];
-   __global Vector2 *X = &out_X[i * size];
-   __global char *labels = &out_labels[i * size];
+   __global Vector2 *X = &out_X[i * sampleSize];
+   __global char *labels = &out_labels[i * sampleSize];
    __global int *p_N = &out_N[i];
 
    if ( index.x == 0 && index.y == 0 )
@@ -40,13 +41,13 @@ __kernel void fetchPair(
    }
 
    // index into gene expressions
-   __global const float *gene1 = &expressions[index.x * size];
-   __global const float *gene2 = &expressions[index.y * size];
+   __global const float *gene1 = &expressions[index.x * sampleSize];
+   __global const float *gene2 = &expressions[index.y * sampleSize];
 
    // populate X with shared expressions of gene pair
    int N = 0;
 
-   for ( int i = 0; i < size; ++i )
+   for ( int i = 0; i < sampleSize; ++i )
    {
       if ( isnan(gene1[i]) || isnan(gene2[i]) )
       {

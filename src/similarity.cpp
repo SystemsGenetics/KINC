@@ -3,7 +3,7 @@
 #include "similarity_resultblock.h"
 #include "similarity_serial.h"
 #include "similarity_workblock.h"
-// #include "similarity_opencl.h"
+#include "similarity_opencl.h"
 
 
 
@@ -151,10 +151,10 @@ EAbstractAnalytic::Serial* Similarity::makeSerial()
 
 
 
-// EAbstractAnalytic::OpenCL* Similarity::makeOpenCL()
-// {
-//    return new OpenCL(this);
-// }
+EAbstractAnalytic::OpenCL* Similarity::makeOpenCL()
+{
+   return new OpenCL(this);
+}
 
 
 
@@ -181,11 +181,19 @@ void Similarity::initialize()
       throw e;
    }
 
-   // reset cluster range if clustering is disabled (reduce memory overhead)
-   if ( _clusMethod == ClusteringMethod::None )
+   // make sure kernel size is a power of 2
+   int pow2 {1};
+   while ( pow2 < _kernelSize )
    {
-      _minClusters = 1;
-      _maxClusters = 1;
+      pow2 *= 2;
+   }
+
+   if ( _kernelSize != pow2 )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Invalid Argument"));
+      e.setDetails(tr("Kernel size must be a power of two."));
+      throw e;
    }
 
    // initialize cluster matrix
