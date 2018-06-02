@@ -11,21 +11,21 @@ if __name__ == "__main__":
 		sys.exit(1)
 
 	# load data
-	df = pd.read_csv(sys.argv[1], sep="\t")
+	emx = pd.read_csv(sys.argv[1], sep="\t")
 
 	# iterate through each pair
-	for i in xrange(len(df.index)):
+	for i in xrange(len(emx.index)):
 		for j in xrange(i):
 			# extract pairwise data
-			X = df.iloc[[i, j]].dropna(axis=1, how="any")
+			X = emx.iloc[[i, j]].dropna(axis=1, how="any")
 			X = X.values.T
 			N = X.shape[0]
 
 			# make sure there are enough samples
-			min_K = -1
+			min_K = 0
 			min_crit = float("inf")
 
-			if N > 30:
+			if N >= 30:
 				# initialize clustering models
 				models = [sklearn.mixture.GaussianMixture(n_components=n+1) for n in xrange(5)]
 
@@ -51,8 +51,8 @@ if __name__ == "__main__":
 					plt.subplot(1, len(models), k + 1)
 					plt.scatter(X[:, 0], X[:, 1], s=20, c=y, cmap="brg")
 					plt.title("N = %d, K = %d, crit = %g" % (N, K, crit))
-					plt.xlabel(df.index[i])
-					plt.ylabel(df.index[j])
+					plt.xlabel(emx.index[i])
+					plt.ylabel(emx.index[j])
 
 				plt.show()
 
