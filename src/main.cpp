@@ -1,11 +1,10 @@
-#ifdef ACE_GUI
-   #include <ace/gui/eapplication.h>
+#if(GUI == 0)
+#include <ace/console/eapplication.h>
 #else
-   #include <ace/console/eapplication.h>
+#include <ace/gui/eapplication.h>
 #endif
-
-#include "analyticfactory.h"
-#include "datafactory.h"
+#include "core/analyticfactory.h"
+#include "core/datafactory.h"
 
 
 
@@ -18,13 +17,14 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-   EApplication app(
-      "", "kinc",
-      3, 1, 2,
-      unique_ptr<DataFactory>(new DataFactory),
-      unique_ptr<AnalyticFactory>(new AnalyticFactory),
-      argc, argv
-   );
-
-   return app.exec();
+   EApplication application(""
+                            ,"kinc"
+                            ,MAJOR_VERSION
+                            ,MINOR_VERSION
+                            ,REVISION
+                            ,unique_ptr<DataFactory>(new DataFactory)
+                            ,unique_ptr<AnalyticFactory>(new AnalyticFactory)
+                            ,argc
+                            ,argv);
+   return application.exec();
 }

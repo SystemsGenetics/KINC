@@ -2,7 +2,9 @@
 #include <random>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
-#include <lapacke.h>
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_eigen.h>
 
 #include "rmt.h"
 #include "rmt_input.h"
@@ -249,22 +251,34 @@ QVector<float> RMT::computePruneMatrix(const QVector<float>& matrix, const QVect
 
 QVector<float> RMT::computeEigenvalues(QVector<float>* pruneMatrix, int size)
 {
-   QVector<float> eigens(size);
-   QVector<float> work(5 * size);
+   // using declarations for gsl resources
+   using gsl_vector_ptr = unique_ptr<gsl_vector,decltype(&gsl_vector_free)>;
+   using gsl_matrix_ptr = unique_ptr<gsl_matrix,decltype(&gsl_matrix_free)>;
+   using gsl_eigen_symmv_workspace_ptr = unique_ptr<gsl_eigen_symmv_workspace
+      ,decltype(&gsl_eigen_symmv_free)>;
 
-   int info = LAPACKE_ssyev_work(
-      LAPACK_COL_MAJOR, 'N', 'U',
-      size, pruneMatrix->data(), size,
-      eigens.data(),
-      work.data(), work.size()
-   );
+   QVector<double> temp;
+   for (auto val: *pruneMatrix) temp.append(val);
 
-   if ( info != 0 )
+   // make and initialize gsl eigen resources
+   gsl_matrix_view view = gsl_matrix_view_array(temp.data(),size,size);
+   gsl_vector_ptr eval (gsl_vector_alloc(size),&gsl_vector_free);
+   gsl_matrix_ptr evec (gsl_matrix_alloc(size,size),&gsl_matrix_free);
+   gsl_eigen_symmv_workspace_ptr work (gsl_eigen_symmv_alloc(size),&gsl_eigen_symmv_free);
+
+   // have gsl compute eigen values for the pruned matrix
+   gsl_eigen_symmv(&view.matrix,eval.get(),evec.get(),work.get());
+   gsl_eigen_symmv_sort(eval.get(),evec.get(),GSL_EIGEN_SORT_ABS_ASC);
+
+   // create return vector and get eigen values from gsl
+   QVector<float> ret(size);
+   for (int i = 0; i < size ;i++)
    {
-      qInfo("warning: ssyev returned %d", info);
+      ret[i] = gsl_vector_get(eval.get(),i);
    }
 
-   return eigens;
+   // return eigen values vector
+   return ret;
 }
 
 
