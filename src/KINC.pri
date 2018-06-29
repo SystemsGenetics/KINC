@@ -3,9 +3,9 @@
 isEmpty(MPICXX) { MPICXX = "yes" }
 
 # Versions
-MAJOR_VERSION = 0
-MINOR_VERSION = 0
-REVISION = 999
+MAJOR_VERSION = 3
+MINOR_VERSION = 2
+REVISION = 0
 VERSION = $${MAJOR_VERSION}.$${MINOR_VERSION}.$${REVISION}
 
 # Version compiler defines
