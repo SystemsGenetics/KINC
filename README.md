@@ -20,25 +20,19 @@ This software uses GSL, OpenCL, and [ACE](https://github.com/SystemsGenetics/ACE
 sudo apt install libgsl2 ocl-icd-opencl-dev libopenmpi-dev
 ```
 
-To build KINC:
+To build & install KINC:
 ```
 cd build
-qmake ../src
+qmake ../src/KINC.pro
+make qmake_all
 make
-cd ..
-```
-To compile a command-line version (without the graphical interface):
-```
-export GUI=0
-cd build-cli
-qmake ../src
-make
-cd ..
+make qmake_all
+make install
 ```
 
 ## Using the KINC GUI or Console
 
-ACE provides two different libraries for GUI and console applications. The `GUI` variable in `KINC.pro` controls which library KINC uses. By default, KINC is built as a GUI application. When run as a GUI application, KINC prints the console equivalent of every analytic as it is run.
+ACE provides two different libraries for GUI and console applications. The `kinc` executable is the console or command line version and the `qkinc` executable is the GUI version.
 
 # Usage
 

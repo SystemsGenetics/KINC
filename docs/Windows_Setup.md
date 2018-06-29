@@ -1,3 +1,6 @@
+# WARNING
+Windows is temporarily not supported because there is no OpenMPI library for the windows platform. This will be changed in the future when MPI becomes optional at compile time.
+
 # Coding for KINC in Windows
 To begin development work in KINC on Windows the following steps can be used to setup your coding environment:
 
@@ -11,13 +14,7 @@ Use the Git Bash tool to clone the ACE and ACE repositories and switch to the de
 
 ```bash
 git clone git@github.com:SystemsGenetics/ACE.git
-cd ACE
-git checkout develop 
-
-cd ../
 git clone git@github.com:SystemsGenetics/KINC.git
-cd KINC
-git checkout develop
 ```
 
 ## Step 3: Setup ACE and KINC in QTCreator

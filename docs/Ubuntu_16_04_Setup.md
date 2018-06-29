@@ -31,18 +31,13 @@ export PATH="$QTDIR/bin:$PATH"
 
 ## Step 2: Download ACE and KINC
 
-Clone the ACE and KINC repositories from Github and switch to the `develop` branches.
+Clone the ACE and KINC repositories from Github.
 
 ```bash
 git clone git@github.com:SystemsGenetics/ACE.git
-cd ACE
-git checkout develop
-
-cd ../
 git clone git@github.com:SystemsGenetics/KINC.git
-cd KINC
-git checkout develop
 ```
+
 ## Step 3: Build ACE and KINC
 
 Follow the ACE instructions to build ACE. If you install ACE locally then you must add ACE to the linker path:
@@ -53,13 +48,15 @@ export INSTALL_PREFIX="$HOME/software"
 export LD_LIBRARY_PATH="$INSTALL_PREFIX/lib:$LD_LIBRARY_PATH"
 ```
 
-Build KINC:
+Build & install KINC:
 
 ```bash
-mkdir build
 cd build
-qmake ../src
+qmake ../src/KINC.pro
+make qmake_all
 make
+make qmake_all
+make install
 ```
 
 You should now be able to run KINC.
