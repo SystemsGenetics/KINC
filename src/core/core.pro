@@ -54,7 +54,10 @@ SOURCES += \
    similarity_resultblock.cpp \
    similarity_serial.cpp \
    similarity_workblock.cpp \
-   similarity.cpp
+   similarity.cpp \
+    expressionmatrix_model.cpp \
+    expressionmatrix_gene.cpp \
+    expressionmatrix_constgene.cpp
 
 # Header files
 HEADERS += \
@@ -95,4 +98,7 @@ HEADERS += \
    similarity_resultblock.h \
    similarity_serial.h \
    similarity_workblock.h \
-   similarity.h
+   similarity.h \
+    expressionmatrix_model.h \
+    expressionmatrix_gene.h \
+    expressionmatrix_constgene.h
