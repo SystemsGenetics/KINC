@@ -16,7 +16,7 @@ using namespace std;
 
 int Similarity::size() const
 {
-   const qint64 totalPairs {(qint64) _input->getGeneSize() * (_input->getGeneSize() - 1) / 2};
+   const qint64 totalPairs {(qint64) _input->geneSize() * (_input->geneSize() - 1) / 2};
    const qint64 WORK_BLOCK_SIZE { 32 * 1024 };
 
    return (totalPairs + WORK_BLOCK_SIZE - 1) / WORK_BLOCK_SIZE;
@@ -29,7 +29,7 @@ int Similarity::size() const
 
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
 {
-   const qint64 totalPairs {(qint64) _input->getGeneSize() * (_input->getGeneSize() - 1) / 2};
+   const qint64 totalPairs {(qint64) _input->geneSize() * (_input->geneSize() - 1) / 2};
    const qint64 WORK_BLOCK_SIZE { 32 * 1024 };
 
    qint64 start {index * WORK_BLOCK_SIZE};
@@ -85,7 +85,7 @@ void Similarity::process(const EAbstractAnalytic::Block* result)
             {
                ccmPair.addCluster();
 
-               for ( int i = 0; i < _input->getSampleSize(); ++i )
+               for ( int i = 0; i < _input->sampleSize(); ++i )
                {
                   ccmPair.at(ccmPair.clusterSize() - 1, i) = (pair.labels[i] >= 0)
                      ? (k == pair.labels[i])
@@ -187,11 +187,11 @@ void Similarity::initialize()
    }
 
    // initialize cluster matrix
-   _ccm->initialize(_input->getGeneNames(), _maxClusters, _input->getSampleNames());
+   _ccm->initialize(_input->geneNames(), _maxClusters, _input->sampleNames());
 
    // initialize correlation matrix
    EMetaArray correlations;
    correlations.append(_corrModel->getName());
 
-   _cmx->initialize(_input->getGeneNames(), _maxClusters, correlations);
+   _cmx->initialize(_input->geneNames(), _maxClusters, correlations);
 }

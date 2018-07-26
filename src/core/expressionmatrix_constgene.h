@@ -1,5 +1,6 @@
 #ifndef EXPRESSIONMATRIX_CONSTGENE_H
 #define EXPRESSIONMATRIX_CONSTGENE_H
+#include "expressionmatrix.h"
 //
 
 
@@ -9,11 +10,11 @@
 class ExpressionMatrix::ConstGene
 {
 public:
-   ConstGene(const ExpressionMatrix* matrix, bool read = false);
+   ConstGene(const ExpressionMatrix* matrix, bool isInitialized = false);
    ~ConstGene();
    void read(int index);
-   void readNext();
-   const float& at() const;
+   bool readNext();
+   float at(int index) const;
 private:
    /*!
     */
@@ -23,7 +24,7 @@ private:
    int _index {0};
    /*!
     */
-   int _expressions;
+   float* _expressions;
 };
 
 

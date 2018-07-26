@@ -1,6 +1,7 @@
 #include "similarity_serial.h"
 #include "similarity_resultblock.h"
 #include "similarity_workblock.h"
+#include "expressionmatrix_gene.h"
 
 
 
@@ -39,8 +40,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
    ResultBlock* resultBlock {new ResultBlock(workBlock->index(), workBlock->start())};
 
    // initialize workspace
-   QVector<Pairwise::Vector2> X(_base->_input->getSampleSize());
-   QVector<qint8> labels(_base->_input->getSampleSize());
+   QVector<Pairwise::Vector2> X(_base->_input->sampleSize());
+   QVector<qint8> labels(_base->_input->sampleSize());
 
    // iterate through all pairs
    Pairwise::Index index {workBlock->start()};
@@ -117,7 +118,7 @@ int Similarity::Serial::fetchPair(Pairwise::Index index, QVector<Pairwise::Vecto
    // populate X with shared expressions of gene pair
    int numSamples = 0;
 
-   for ( int i = 0; i < _base->_input->getSampleSize(); ++i )
+   for ( int i = 0; i < _base->_input->sampleSize(); ++i )
    {
       if ( std::isnan(gene1.at(i)) || std::isnan(gene2.at(i)) )
       {

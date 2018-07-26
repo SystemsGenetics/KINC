@@ -12,7 +12,7 @@ using namespace Pairwise;
 void Spearman::initialize(ExpressionMatrix* input)
 {
    // pre-allocate workspace
-   int workSize = nextPower2(input->getSampleSize());
+   int workSize = nextPower2(input->sampleSize());
 
    _x.resize(workSize);
    _y.resize(workSize);

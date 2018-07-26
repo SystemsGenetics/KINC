@@ -8,12 +8,44 @@
 
 /*!
  *
+ * @param index  
+ */
+float& ExpressionMatrix::Gene::operator[](int index)
+{
+   // 
+   if ( index < 0 || index >= _matrix->_sampleSize )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Domain Error"));
+      e.setDetails(tr("Attempting to access gene expression %1 when maximum is %2.").arg(index)
+                   .arg(_matrix->_sampleSize-1));
+      throw e;
+   }
+
+   // 
+   return _expressions[index];
+}
+
+
+
+
+
+
+/*!
+ *
  * @param matrix  
  *
- * @param read  
+ * @param isInitialized  
  */
-ExpressionMatrix::Gene::Gene(ExpressionMatrix* matrix, bool read)
-{}
+ExpressionMatrix::Gene::Gene(ExpressionMatrix* matrix, bool isInitialized):
+   _matrix(matrix),
+   _expressions(new float[matrix->sampleSize()])
+{
+   if ( isInitialized )
+   {
+      read(_index);
+   }
+}
 
 
 
@@ -23,19 +55,9 @@ ExpressionMatrix::Gene::Gene(ExpressionMatrix* matrix, bool read)
 /*!
  */
 ExpressionMatrix::Gene::~Gene()
-{}
-
-
-
-
-
-
-/*!
- *
- * @param index  
- */
-float& ExpressionMatrix::Gene::operator[](int index)
-{}
+{
+   delete[] _expressions;
+}
 
 
 
@@ -47,7 +69,22 @@ float& ExpressionMatrix::Gene::operator[](int index)
  * @param index  
  */
 void ExpressionMatrix::Gene::read(int index)
-{}
+{
+   if ( index < 0 || index >= _matrix->_geneSize )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Domain Error"));
+      e.setDetails(tr("Attempting to read gene %1 when maximum is %2.").arg(index)
+                   .arg(_matrix->_geneSize-1));
+      throw e;
+   }
+   _matrix->seekExpression(index,0);
+   for (int i = 0; i < _matrix->sampleSize() ;++i)
+   {
+      _matrix->stream() >> _expressions[i];
+   }
+   _index = index;
+}
 
 
 
@@ -56,8 +93,15 @@ void ExpressionMatrix::Gene::read(int index)
 
 /*!
  */
-void ExpressionMatrix::Gene::readNext()
-{}
+bool ExpressionMatrix::Gene::readNext()
+{
+   if ( (_index + 1 ) >= _matrix->_geneSize )
+   {
+      return false;
+   }
+   read(_index + 1);
+   return true;
+}
 
 
 
@@ -70,7 +114,6 @@ void ExpressionMatrix::Gene::readNext()
  */
 void ExpressionMatrix::Gene::write(int index)
 {
-   // make sure given gene index is within range
    if ( index < 0 || index >= _matrix->_geneSize )
    {
       E_MAKE_EXCEPTION(e);
@@ -79,9 +122,12 @@ void ExpressionMatrix::Gene::write(int index)
                    .arg(_matrix->_geneSize-1));
       throw e;
    }
-
-   // write gene expressions to data object
-   _matrix->writeGene(index,_expressions);
+   _matrix->seekExpression(index,0);
+   for (int i = 0; i < _matrix->sampleSize() ;++i)
+   {
+      _matrix->stream() << _expressions[i];
+   }
+   _index = index;
 }
 
 
@@ -91,8 +137,15 @@ void ExpressionMatrix::Gene::write(int index)
 
 /*!
  */
-void ExpressionMatrix::Gene::writeNext()
-{}
+bool ExpressionMatrix::Gene::writeNext()
+{
+   if ( (_index + 1 ) >= _matrix->_geneSize )
+   {
+      return false;
+   }
+   write(_index + 1);
+   return true;
+}
 
 
 
@@ -103,40 +156,9 @@ void ExpressionMatrix::Gene::writeNext()
  *
  * @param index  
  */
-const float& ExpressionMatrix::Gene::at(int index) const
-{}
-
-
-
-
-
-
-/*! !!! UNKNOWN FUNCTION !!! */
-void ExpressionMatrix::Gene::read(int index) const
+float ExpressionMatrix::Gene::at(int index) const
 {
-   // make sure given gene index is within range
-   if ( index < 0 || index >= _matrix->_geneSize )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Attempting to read gene %1 when maximum is %2.").arg(index)
-                   .arg(_matrix->_geneSize-1));
-      throw e;
-   }
-
-   // read gene expressions from data object
-   _matrix->readGene(index,_expressions);
-}
-
-
-
-
-
-
-/*! !!! UNKNOWN FUNCTION !!! */
-ExpressionMatrix::Expression& ExpressionMatrix::Gene::at(int index)
-{
-   // make sure given sample index is within range
+   // 
    if ( index < 0 || index >= _matrix->_sampleSize )
    {
       E_MAKE_EXCEPTION(e);
@@ -146,6 +168,6 @@ ExpressionMatrix::Expression& ExpressionMatrix::Gene::at(int index)
       throw e;
    }
 
-   // return gene expression
+   // 
    return _expressions[index];
 }

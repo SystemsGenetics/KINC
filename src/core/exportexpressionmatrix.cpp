@@ -1,6 +1,7 @@
 #include "exportexpressionmatrix.h"
 #include "exportexpressionmatrix_input.h"
 #include "datafactory.h"
+#include "expressionmatrix_gene.h"
 
 
 
@@ -22,20 +23,19 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
    Q_UNUSED(result);
 
    // use expression declaration
-   using Expression = ExpressionMatrix::Expression;
    using Transform = ExpressionMatrix::Transform;
 
    // get gene names, sample names, and transform
-   EMetaArray geneNames = _input->getGeneNames().toArray();
-   EMetaArray sampleNames = _input->getSampleNames().toArray();
-   Transform transform = _input->getTransform();
+   EMetaArray geneNames = _input->geneNames().toArray();
+   EMetaArray sampleNames = _input->sampleNames().toArray();
+   Transform transform = _input->transform();
 
    // create text stream to output file
    QTextStream stream(_output);
    stream.setRealNumberPrecision(12);
 
    // write sample names
-   for ( int i = 0; i < _input->getSampleSize(); i++ )
+   for ( int i = 0; i < _input->sampleSize(); i++ )
    {
       stream << sampleNames.at(i).toString() << "\t";
    }
@@ -43,7 +43,7 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 
    // write each gene to a line in output file
    ExpressionMatrix::Gene gene(_input);
-   for ( int i = 0; i < _input->getGeneSize(); i++ )
+   for ( int i = 0; i < _input->geneSize(); i++ )
    {
       // load gene from expression matrix
       gene.read(i);
@@ -52,9 +52,9 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
       stream << geneNames.at(i).toString();
 
       // write expression values
-      for ( int j = 0; j < _input->getSampleSize(); j++ )
+      for ( int j = 0; j < _input->sampleSize(); j++ )
       {
-         Expression value {gene.at(j)};
+         float value {gene.at(j)};
 
          // if value is NAN use the no sample token
          if ( std::isnan(value) )
@@ -70,7 +70,7 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
             {
             case Transform::None:
                break;
-            case Transform::NLog:
+            case Transform::NatLog:
                value = exp(value);
                break;
             case Transform::Log2:

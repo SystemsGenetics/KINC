@@ -61,7 +61,7 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
 
    // initialize buffers
    int kernelSize {_base->_kernelSize};
-   int N {_base->_input->getSampleSize()};
+   int N {_base->_input->sampleSize()};
    int N_pow2 {nextPower2(N)};
    int K {_base->_maxClusters};
 
@@ -126,7 +126,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
          _queue,
          _base->_kernelSize,
          &_baseOpenCL->_expressions,
-         _base->_input->getSampleSize(),
+         _base->_input->sampleSize(),
          &_buffers.in_index,
          _base->_minExpression,
          &_buffers.work_X,
@@ -141,7 +141,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             _queue,
             _base->_kernelSize,
             &_baseOpenCL->_expressions,
-            _base->_input->getSampleSize(),
+            _base->_input->sampleSize(),
             _base->_minSamples,
             _base->_minClusters,
             _base->_maxClusters,
@@ -167,7 +167,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             _queue,
             _base->_kernelSize,
             &_baseOpenCL->_expressions,
-            _base->_input->getSampleSize(),
+            _base->_input->sampleSize(),
             _base->_minSamples,
             _base->_minClusters,
             _base->_maxClusters,
@@ -204,7 +204,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             &_buffers.work_X,
             _base->_maxClusters,
             &_buffers.out_labels,
-            _base->_input->getSampleSize(),
+            _base->_input->sampleSize(),
             _base->_minSamples,
             &_buffers.out_correlations
          );
@@ -217,7 +217,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             &_buffers.work_X,
             _base->_maxClusters,
             &_buffers.out_labels,
-            _base->_input->getSampleSize(),
+            _base->_input->sampleSize(),
             _base->_minSamples,
             &_buffers.work_x,
             &_buffers.work_y,
@@ -238,7 +238,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
       // save results
       for ( int j = 0; j < steps; ++j )
       {
-         const qint8 *labels = &_buffers.out_labels.at(j * _base->_input->getSampleSize());
+         const qint8 *labels = &_buffers.out_labels.at(j * _base->_input->sampleSize());
          const float *correlations = &_buffers.out_correlations.at(j * _base->_maxClusters);
 
          Pair pair;
@@ -246,7 +246,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
 
          if ( pair.K > 1 )
          {
-            pair.labels = createVector(labels, _base->_input->getSampleSize());
+            pair.labels = createVector(labels, _base->_input->sampleSize());
          }
 
          if ( pair.K > 0 )

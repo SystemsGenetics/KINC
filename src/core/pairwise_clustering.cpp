@@ -12,7 +12,7 @@ using namespace Pairwise;
 void Clustering::initialize(ExpressionMatrix* input)
 {
    // pre-allocate workspace
-   _workLabels.resize(input->getSampleSize());
+   _workLabels.resize(input->sampleSize());
 }
 
 

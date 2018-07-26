@@ -45,13 +45,13 @@ public:
    EMetadata sampleNames() const;
    QVector<float> dumpRawData() const;
    void initialize(const QStringList& geneNames, const QStringList& sampleNames, Transform transform);
+   /*!
+    */
+   static const QStringList _transformNames;
 private:
    class Model;
 private:
    void seekExpression(int gene, int sample) const;
-   /*!
-    */
-   static const QStringList _transformNames;
    /*!
     */
    static const qint64 _dataOffset;

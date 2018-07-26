@@ -27,7 +27,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # External libraries
 LIBS += -lmpi
 equals(MPICXX,"yes") { LIBS += -lmpi_cxx }
-LIBS += -lacecore -lOpenCL -lgsl -lgslcblas -L$${PWD}/../../build/libs -lkinccore
+LIBS += -lacecore -lOpenCL -lgsl -lgslcblas -L$${PWD}/../build/libs -lkinccore
 
 # Used to ignore useless warnings with OpenCL
 QMAKE_CXXFLAGS += -Wno-ignored-attributes

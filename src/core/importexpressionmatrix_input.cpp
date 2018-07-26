@@ -91,8 +91,8 @@ QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
       case Role::CommandLineName: return QString("transform");
       case Role::Title: return tr("Transform:");
       case Role::WhatsThis: return tr("Element-wise transformation to apply to expression data.");
-      case Role::Default: return ExpressionMatrix::TRANSFORM_NAMES.first();
-      case Role::SelectionValues: return ExpressionMatrix::TRANSFORM_NAMES;
+      case Role::Default: return ExpressionMatrix::_transformNames.first();
+      case Role::SelectionValues: return ExpressionMatrix::_transformNames;
       default: return QVariant();
       }
    default: return QVariant();
@@ -115,7 +115,7 @@ void ImportExpressionMatrix::Input::set(int index, const QVariant& value)
       _base->_noSampleToken = value.toString();
       break;
    case TransformType:
-      _base->_transform = static_cast<Transform>(ExpressionMatrix::TRANSFORM_NAMES.indexOf(value.toString()));
+      _base->_transform = static_cast<Transform>(ExpressionMatrix::_transformNames.indexOf(value.toString()));
       break;
    }
 }

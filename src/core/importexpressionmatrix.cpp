@@ -1,6 +1,7 @@
 #include "importexpressionmatrix.h"
 #include "importexpressionmatrix_input.h"
 #include "datafactory.h"
+#include "expressionmatrix_gene.h"
 
 
 
@@ -21,22 +22,19 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 {
    Q_UNUSED(result);
 
-   // use expression declaration
-   using Expression = ExpressionMatrix::Expression;
-
    // structure for building list of genes
    struct Gene
    {
       Gene(int size)
       {
-         expressions = new Expression[size];
+         expressions = new float[size];
       }
       ~Gene()
       {
          delete[] expressions;
       }
 
-      Expression* expressions;
+      float* expressions;
    };
 
    // initialize gene expression linked list
@@ -92,7 +90,7 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
             {
                // read in the floating point value
                bool ok;
-               Expression value = words.at(i).toDouble(&ok);
+               float value = words.at(i).toDouble(&ok);
 
                // make sure reading worked
                if ( !ok )
@@ -110,7 +108,7 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
                case Transform::None:
                   gene->expressions[i-1] = value;
                   break;
-               case Transform::NLog:
+               case Transform::NatLog:
                   gene->expressions[i-1] = log(value);
                   break;
                case Transform::Log2:
@@ -150,23 +148,20 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
    }
 
    // initialize expression matrix
-   _output->initialize(geneNames, sampleNames);
+   _output->initialize(geneNames, sampleNames,_transform);
 
    // iterate through each gene
    ExpressionMatrix::Gene gene(_output);
-   for ( int i = 0; i < _output->getGeneSize(); ++i )
+   for ( int i = 0; i < _output->geneSize(); ++i )
    {
       // save each gene to expression matrix
-      for ( int j = 0; j < _output->getSampleSize(); ++j )
+      for ( int j = 0; j < _output->sampleSize(); ++j )
       {
          gene[j] = genes[i]->expressions[j];
       }
 
       gene.write(i);
    }
-
-   // set transform used in expression matrix
-   _output->setTransform(_transform);
 }
 
 

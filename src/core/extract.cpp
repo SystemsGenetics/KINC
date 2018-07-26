@@ -1,6 +1,7 @@
 #include "extract.h"
 #include "extract_input.h"
 #include "datafactory.h"
+#include "expressionmatrix_gene.h"
 
 
 
@@ -129,7 +130,7 @@ void Extract::process(const EAbstractAnalytic::Block* result)
             gene2.read(cmxPair.index().getY());
 
             // determine sample mask from expression data
-            for ( int i = 0; i < _emx->getSampleSize(); ++i )
+            for ( int i = 0; i < _emx->sampleSize(); ++i )
             {
                if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
                {
@@ -236,7 +237,7 @@ void Extract::process(const EAbstractAnalytic::Block* result)
             gene2.read(cmxPair.index().getY());
 
             // determine sample mask from expression data
-            for ( int i = 0; i < _emx->getSampleSize(); ++i )
+            for ( int i = 0; i < _emx->sampleSize(); ++i )
             {
                if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
                {

@@ -1,6 +1,6 @@
 #ifndef EXPRESSIONMATRIX_GENE_H
 #define EXPRESSIONMATRIX_GENE_H
-#endif // EXPRESSIONMATRIX_GENE_H
+#include "expressionmatrix.h"
 //
 
 
@@ -10,14 +10,15 @@
 class ExpressionMatrix::Gene
 {
 public:
-   Gene(ExpressionMatrix* matrix, bool read = false);
-   ~Gene();
    float& operator[](int index);
+public:
+   Gene(ExpressionMatrix* matrix, bool isInitialized = false);
+   ~Gene();
    void read(int index);
-   void readNext();
+   bool readNext();
    void write(int index);
-   void writeNext();
-   const float& at(int index) const;
+   bool writeNext();
+   float at(int index) const;
 private:
    /*!
     */

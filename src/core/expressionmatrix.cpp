@@ -26,7 +26,7 @@ const qint64 ExpressionMatrix::_dataOffset {8};
  */
 qint64 ExpressionMatrix::dataEnd() const
 {
-   // calculate and return end of data
+   // 
    return _dataOffset + (qint64)_geneSize*(qint64)_sampleSize*sizeof(float);
 }
 
@@ -39,7 +39,7 @@ qint64 ExpressionMatrix::dataEnd() const
  */
 void ExpressionMatrix::readData()
 {
-   // read header
+   // 
    seek(0);
    stream() >> _geneSize >> _sampleSize;
 }
@@ -53,10 +53,10 @@ void ExpressionMatrix::readData()
  */
 void ExpressionMatrix::writeNewData()
 {
-   // initialize metadata
+   // 
    setMeta(EMetadata(EMetadata::Object));
 
-   // initialize header
+   // 
    seek(0);
    stream() << _geneSize << _sampleSize;
 }
@@ -70,7 +70,7 @@ void ExpressionMatrix::writeNewData()
  */
 void ExpressionMatrix::finish()
 {
-   // write header
+   // 
    seek(0);
    stream() << _geneSize << _sampleSize;
 }
@@ -181,13 +181,13 @@ EMetadata ExpressionMatrix::sampleNames() const
  */
 QVector<float> ExpressionMatrix::dumpRawData() const
 {
-   // if there are no genes do nothing
+   // 
    if ( _geneSize == 0 )
    {
       return QVector<float>();
    }
 
-   // create new floating point array and populate with all gene expressions
+   // 
    QVector<float> ret(_geneSize*_sampleSize);
    seekExpression(0,0);
    for (float& sample: ret)
@@ -195,7 +195,7 @@ QVector<float> ExpressionMatrix::dumpRawData() const
       stream() >> sample;
    }
 
-   // return new float array
+   // 
    return ret;
 }
 
@@ -214,28 +214,28 @@ QVector<float> ExpressionMatrix::dumpRawData() const
  */
 void ExpressionMatrix::initialize(const QStringList& geneNames, const QStringList& sampleNames, Transform transform)
 {
-   // create metadata array of gene names
+   // 
    EMetaArray metaGeneNames;
    for ( auto& geneName : geneNames )
    {
       metaGeneNames.append(geneName);
    }
 
-   // create metadata array of sample names
+   // 
    EMetaArray metaSampleNames;
    for ( auto& sampleName : sampleNames )
    {
       metaSampleNames.append(sampleName);
    }
 
-   // insert gene and sample names to data object's metadata
+   // 
    EMetaObject metaObject {meta().toObject()};
    metaObject.insert("genes",metaGeneNames);
    metaObject.insert("samples",metaSampleNames);
    metaObject.insert("transform",_transformNames.at(static_cast<int>(transform)));
    setMeta(metaObject);
 
-   // set gene and sample size
+   // 
    _geneSize = geneNames.size();
    _sampleSize = sampleNames.size();
 }
