@@ -268,7 +268,7 @@ QVector<float> RMT::computeEigenvalues(QVector<float>* pruneMatrix, int size)
 
    // have gsl compute eigen values for the pruned matrix
    gsl_eigen_symmv(&view.matrix,eval.get(),evec.get(),work.get());
-   gsl_eigen_symmv_sort(eval.get(),evec.get(),GSL_EIGEN_SORT_ABS_ASC);
+   gsl_eigen_symmv_sort(eval.get(),evec.get(),GSL_EIGEN_SORT_VAL_ASC);
 
    // create return vector and get eigen values from gsl
    QVector<float> ret(size);
