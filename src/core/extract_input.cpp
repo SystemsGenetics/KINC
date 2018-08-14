@@ -3,13 +3,6 @@
 
 
 
-using namespace std;
-
-
-
-
-
-
 Extract::Input::Input(Extract* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)

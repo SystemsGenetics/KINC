@@ -192,10 +192,10 @@ void Extract::process(const EAbstractAnalytic::Block* result)
       stream << "    <node id=\"" << id << "\"/>\n";
    }
 
-   // increment through all gene pairs
+   // iterate through all pairs
    while ( cmxPair.hasNext() )
    {
-      // read next gene pair
+      // read next pair
       cmxPair.readNext();
 
       if ( cmxPair.clusterSize() > 1 )
@@ -203,7 +203,7 @@ void Extract::process(const EAbstractAnalytic::Block* result)
          ccmPair.read(cmxPair.index());
       }
 
-      // write gene pair edges to file
+      // write pairwise data to net file
       for ( int k = 0; k < cmxPair.clusterSize(); k++ )
       {
          auto& source {geneNames.at(cmxPair.index().getX()).toString()};

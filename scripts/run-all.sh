@@ -33,7 +33,7 @@ $KINC run rmt --input $CMX_FILE --log $LOG_FILE
 # export cmx
 OUTFILE="$DATA/$(basename $CMX_FILE .cmx)-cmx.txt"
 
-$KINC run export-cmx --ccm $CCM_FILE --cmx $CMX_FILE --output $OUTFILE
+$KINC run export-cmx --emx $EMX_FILE --ccm $CCM_FILE --cmx $CMX_FILE --output $OUTFILE
 
 # extract
 NET_FILE="$DATA/$(basename $EMX_FILE .emx)-net.txt"

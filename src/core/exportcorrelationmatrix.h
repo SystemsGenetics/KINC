@@ -4,6 +4,7 @@
 
 #include "ccmatrix.h"
 #include "correlationmatrix.h"
+#include "expressionmatrix.h"
 
 
 
@@ -17,6 +18,7 @@ public:
    virtual EAbstractAnalytic::Input* makeInput() override final;
    virtual void initialize();
 private:
+   ExpressionMatrix* _emx {nullptr};
    CCMatrix* _ccm {nullptr};
    CorrelationMatrix* _cmx {nullptr};
    QFile* _output {nullptr};

@@ -10,7 +10,8 @@ class ExportCorrelationMatrix::Input : public EAbstractAnalytic::Input
 public:
    enum Argument
    {
-      ClusterData = 0
+      ExpressionData = 0
+      ,ClusterData
       ,CorrelationData
       ,OutputFile
       ,Total

@@ -1,6 +1,14 @@
 #include "exportcorrelationmatrix.h"
 #include "exportcorrelationmatrix_input.h"
 #include "datafactory.h"
+#include "expressionmatrix_gene.h"
+
+
+
+using namespace std;
+
+
+
 
 
 
@@ -83,10 +91,28 @@ void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
             }
          }
 
-         // else just initialize empty sample mask
+         // otherwise use expression data
          else
          {
-            sampleMask.fill('0');
+            // read in gene expressions
+            ExpressionMatrix::Gene gene1(_emx);
+            ExpressionMatrix::Gene gene2(_emx);
+
+            gene1.read(cmxPair.index().getX());
+            gene2.read(cmxPair.index().getY());
+
+            // determine sample mask from expression data
+            for ( int i = 0; i < _emx->sampleSize(); ++i )
+            {
+               if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
+               {
+                  sampleMask[i] = '9';
+               }
+               else
+               {
+                  sampleMask[i] = '1';
+               }
+            }
          }
 
          // write cluster to output file
@@ -133,7 +159,7 @@ EAbstractAnalytic::Input* ExportCorrelationMatrix::makeInput()
 
 void ExportCorrelationMatrix::initialize()
 {
-   if ( !_ccm || !_cmx || !_output )
+   if ( !_emx || !_ccm || !_cmx || !_output )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Invalid Argument"));

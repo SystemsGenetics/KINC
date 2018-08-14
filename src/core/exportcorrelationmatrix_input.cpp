@@ -27,6 +27,7 @@ EAbstractAnalytic::Input::Type ExportCorrelationMatrix::Input::type(int index) c
 {
    switch (index)
    {
+   case ExpressionData: return Type::DataIn;
    case ClusterData: return Type::DataIn;
    case CorrelationData: return Type::DataIn;
    case OutputFile: return Type::FileOut;
@@ -43,6 +44,15 @@ QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
 {
    switch (index)
    {
+   case ExpressionData:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("emx");
+      case Role::Title: return tr("Expression Matrix:");
+      case Role::WhatsThis: return tr("Input expression matrix containing gene expression data.");
+      case Role::DataType: return DataFactory::ExpressionMatrixType;
+      default: return QVariant();
+      }
    case ClusterData:
       switch (role)
       {
@@ -92,7 +102,11 @@ void ExportCorrelationMatrix::Input::set(int index, const QVariant& value)
 
 void ExportCorrelationMatrix::Input::set(int index, EAbstractData* data)
 {
-   if ( index == ClusterData )
+   if ( index == ExpressionData )
+   {
+      _base->_emx = data->cast<ExpressionMatrix>();
+   }
+   else if ( index == ClusterData )
    {
       _base->_ccm = data->cast<CCMatrix>();
    }

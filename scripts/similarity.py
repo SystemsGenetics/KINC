@@ -119,8 +119,8 @@ if __name__ == "__main__":
 					if args.MINCORR <= abs(corr) and abs(corr) <= args.MAXCORR and p <= args.MAXPVALUE:
 						# compute sample mask
 						y_k = np.copy(y)
-						y_k[(y_k >= 0) & (y_k != k)] == 0
-						y_k[y_k == k] == 1
+						y_k[(y_k >= 0) & (y_k != k)] = 0
+						y_k[y_k == k] = 1
 						y_k[y_k < 0] *= -1
 
 						cmx.write("%d\t%d\t%d\t%d\t%g\t%g\t%s\n" % (i, j, k, K, corr, p, "".join([str(y_i) for y_i in y_k])))
