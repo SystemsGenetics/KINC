@@ -3,6 +3,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pprint
 import scipy.interpolate
 import scipy.stats
 import seaborn as sns
@@ -209,8 +210,7 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 	# print arguments
-	for key, value in vars(args).iteritems():
-		print("%s: %s" % (key, str(value)))
+	pprint.pprint(vars(args))
 
 	# load data
 	cmx = pd.read_csv(args.INPUT, sep="\t")
