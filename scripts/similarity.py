@@ -47,8 +47,9 @@ if __name__ == "__main__":
 	# TODO: criterion type
 	# TODO: remove pre-outliers
 	# TODO: remove post-outliers
-	# TODO: min correlation
-	# TODO: max correlation
+	parser.add_argument("--mincorr", type=float, default=0, help="minimum absolute correlation threshold", dest="MINCORR")
+	parser.add_argument("--maxcorr", type=float, default=1, help="maximum absolute correlation threshold", dest="MAXCORR")
+	parser.add_argument("--pvalue", type=float, default=float("inf"), help="maximum p-value threshold for correlations", dest="MAXPVALUE")
 	parser.add_argument("--visualize", action="store_true", help="whether to visualize results", dest="VISUALIZE")
 
 	args = parser.parse_args()
@@ -114,13 +115,15 @@ if __name__ == "__main__":
 					# compute correlation
 					corr, p = corr_method(X_k[:, 0], X_k[:, 1])
 
-					# compute sample mask
-					y_k = np.copy(y)
-					y_k[(y_k >= 0) & (y_k != k)] == 0
-					y_k[y_k == k] == 1
-					y_k[y_k < 0] *= -1
+					# make sure correlation, p-value meets thresholds
+					if args.MINCORR <= abs(corr) and abs(corr) <= args.MAXCORR and p <= args.MAXPVALUE:
+						# compute sample mask
+						y_k = np.copy(y)
+						y_k[(y_k >= 0) & (y_k != k)] == 0
+						y_k[y_k == k] == 1
+						y_k[y_k < 0] *= -1
 
-					cmx.write("%d\t%d\t%d\t%d\t%g\t%g\t%s\n" % (i, j, k, K, corr, p, "".join([str(y_i) for y_i in y_k])))
+						cmx.write("%d\t%d\t%d\t%d\t%g\t%g\t%s\n" % (i, j, k, K, corr, p, "".join([str(y_i) for y_i in y_k])))
 
 					# plot results
 					if args.VISUALIZE:
