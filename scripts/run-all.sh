@@ -18,10 +18,11 @@ CCM_FILE="$DATA/$(basename $EMX_FILE .emx).ccm"
 CMX_FILE="$DATA/$(basename $EMX_FILE .emx).cmx"
 CLUSMETHOD="none"
 CORRMETHOD="pearson"
+MINEXPR=-inf
 MINCORR=0
 MAXCORR=1
 
-$KINC run similarity --input $EMX_FILE --ccm $CCM_FILE --cmx $CMX_FILE --clusmethod $CLUSMETHOD --corrmethod $CORRMETHOD --mincorr $MINCORR --maxcorr $MAXCORR
+$KINC run similarity --input $EMX_FILE --ccm $CCM_FILE --cmx $CMX_FILE --clusmethod $CLUSMETHOD --corrmethod $CORRMETHOD --minexpr $MINEXPR --mincorr $MINCORR --maxcorr $MAXCORR
 
 # threshold
 LOG_FILE="$LOGS/$(basename $CMX_FILE .cmx).txt"

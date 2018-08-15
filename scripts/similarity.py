@@ -20,12 +20,15 @@ def create_kmeans(n_clusters):
 
 
 
-def fetch_pair(emx, i, j):
+def fetch_pair(emx, i, j, min_expression):
 	# extract pairwise data
 	X = emx.iloc[[i, j]].values.T
 
 	# initialize labels
 	y = np.zeros((X.shape[0],), dtype=int)
+
+	# mark thresholded samples
+	y[(X[:, 0] < min_expression) | (X[:, 1] < min_expression)] = -6
 
 	# mark nan samples
 	y[np.isnan(X[:, 0]) | np.isnan(X[:, 1])] = -9
@@ -105,7 +108,7 @@ if __name__ == "__main__":
 	parser.add_argument("-o", "--output", required=True, help="correlation file", dest="OUTPUT")
 	parser.add_argument("--clusmethod", default="none", choices=["none", "gmm", "kmeans"], help="clustering method", dest="CLUSMETHOD")
 	parser.add_argument("--corrmethod", default="pearson", choices=["kendall", "pearson", "spearman"], help="correlation method", dest="CORRMETHOD")
-	# TODO: min expression
+	parser.add_argument("--minexpr", type=float, default=-float("inf"), help="minimum expression threshold", dest="MINEXPR")
 	parser.add_argument("--minsamp", type=int, default=30, help="minimum sample size", dest="MINSAMP")
 	parser.add_argument("--minclus", type=int, default=1, help="minimum clusters", dest="MINCLUS")
 	parser.add_argument("--maxclus", type=int, default=5, help="maximum clusters", dest="MAXCLUS")
@@ -129,7 +132,7 @@ if __name__ == "__main__":
 	# iterate through each pair
 	for i in xrange(len(emx.index)):
 		for j in xrange(i):
-			X, y = fetch_pair(emx, i, j)
+			X, y = fetch_pair(emx, i, j, args.MINEXPR)
 
 			# perform clustering
 			K = 1
