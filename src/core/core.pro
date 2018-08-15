@@ -18,13 +18,18 @@ QMAKE_CXXFLAGS += -Wno-ignored-attributes
 # Source files
 SOURCES += \
    analyticfactory.cpp \
+   ccmatrix_pair.cpp \
    ccmatrix.cpp \
+   correlationmatrix_pair.cpp \
    correlationmatrix.cpp \
    datafactory.cpp \
    exportcorrelationmatrix_input.cpp \
    exportcorrelationmatrix.cpp \
    exportexpressionmatrix_input.cpp \
    exportexpressionmatrix.cpp \
+   expressionmatrix_constgene.cpp \
+   expressionmatrix_gene.cpp \
+   expressionmatrix_model.cpp \
    expressionmatrix.cpp \
    extract_input.cpp \
    extract.cpp \
@@ -54,21 +59,23 @@ SOURCES += \
    similarity_resultblock.cpp \
    similarity_serial.cpp \
    similarity_workblock.cpp \
-   similarity.cpp \
-    expressionmatrix_model.cpp \
-    expressionmatrix_gene.cpp \
-    expressionmatrix_constgene.cpp
+   similarity.cpp
 
 # Header files
 HEADERS += \
    analyticfactory.h \
+   ccmatrix_pair.h \
    ccmatrix.h \
+   correlationmatrix_pair.h \
    correlationmatrix.h \
    datafactory.h \
    exportcorrelationmatrix_input.h \
    exportcorrelationmatrix.h \
    exportexpressionmatrix_input.h \
    exportexpressionmatrix.h \
+   expressionmatrix_constgene.h \
+   expressionmatrix_gene.h \
+   expressionmatrix_model.h \
    expressionmatrix.h \
    extract_input.h \
    extract.h \
@@ -98,7 +105,4 @@ HEADERS += \
    similarity_resultblock.h \
    similarity_serial.h \
    similarity_workblock.h \
-   similarity.h \
-    expressionmatrix_model.h \
-    expressionmatrix_gene.h \
-    expressionmatrix_constgene.h
+   similarity.h

@@ -1,5 +1,7 @@
 #include "exportcorrelationmatrix.h"
 #include "exportcorrelationmatrix_input.h"
+#include "ccmatrix_pair.h"
+#include "correlationmatrix_pair.h"
 #include "datafactory.h"
 #include "expressionmatrix_gene.h"
 

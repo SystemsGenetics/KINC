@@ -4,6 +4,8 @@
 #include "similarity_serial.h"
 #include "similarity_workblock.h"
 #include "similarity_opencl.h"
+#include "ccmatrix_pair.h"
+#include "correlationmatrix_pair.h"
 
 
 

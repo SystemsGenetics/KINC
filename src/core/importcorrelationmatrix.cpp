@@ -1,5 +1,7 @@
 #include "importcorrelationmatrix.h"
 #include "importcorrelationmatrix_input.h"
+#include "ccmatrix_pair.h"
+#include "correlationmatrix_pair.h"
 #include "datafactory.h"
 #include "pairwise_index.h"
 
