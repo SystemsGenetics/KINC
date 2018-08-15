@@ -198,7 +198,7 @@ if __name__ == "__main__":
 
 	# parse command-line arguments
 	parser = argparse.ArgumentParser()
-	parser.add_argument("-i", "--input", required=True, help="correlation file", dest="INPUT")
+	parser.add_argument("-i", "--input", required=True, help="correlation matrix file", dest="INPUT")
 	parser.add_argument("--genes", type=int, required=True, help="number of genes", dest="NUM_GENES")
 	parser.add_argument("--method", default="rmt", choices=["powerlaw", "rmt"], help="thresholding method", dest="METHOD")
 	parser.add_argument("--tstart", type=float, default=0.99, help="starting threshold", dest="TSTART")
