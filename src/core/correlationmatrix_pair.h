@@ -1,6 +1,7 @@
 #ifndef CORRELATIONMATRIX_PAIR_H
 #define CORRELATIONMATRIX_PAIR_H
 #include "correlationmatrix.h"
+#include "pairwise_matrix_pair.h"
 
 
 

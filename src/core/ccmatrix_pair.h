@@ -1,6 +1,7 @@
 #ifndef CCMATRIX_PAIR_H
 #define CCMATRIX_PAIR_H
 #include "ccmatrix.h"
+#include "pairwise_matrix_pair.h"
 
 
 

@@ -45,6 +45,7 @@ SOURCES += \
    pairwise_index.cpp \
    pairwise_kmeans.cpp \
    pairwise_linalg.cpp \
+   pairwise_matrix_pair.cpp \
    pairwise_matrix.cpp \
    pairwise_pearson.cpp \
    pairwise_spearman.cpp \
@@ -93,6 +94,7 @@ HEADERS += \
    pairwise_index.h \
    pairwise_kmeans.h \
    pairwise_linalg.h \
+   pairwise_matrix_pair.h \
    pairwise_matrix.h \
    pairwise_pearson.h \
    pairwise_spearman.h \

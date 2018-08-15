@@ -1,5 +1,5 @@
-#ifndef PAIRWISE_BASE_H
-#define PAIRWISE_BASE_H
+#ifndef PAIRWISE_MATRIX_H
+#define PAIRWISE_MATRIX_H
 #include <ace/core/core.h>
 
 #include "pairwise_index.h"
@@ -12,10 +12,12 @@ namespace Pairwise
    {
    public:
       class Pair;
+   public:
       virtual qint64 dataEnd() const override final;
       virtual void readData() override final;
       virtual void writeNewData() override final;
       virtual void finish() override final;
+   public:
       int geneSize() const { return _geneSize; }
       int maxClusterSize() const { return _maxClusterSize; }
       qint64 size() const { return _pairSize; }
@@ -38,45 +40,6 @@ namespace Pairwise
       qint64 _clusterSize {0};
       qint16 _offset {0};
       qint64 _lastWrite {-2};
-   };
-
-
-
-   class Matrix::Pair
-   {
-   public:
-      Pair(Matrix* matrix):
-         _matrix(matrix),
-         _cMatrix(matrix),
-         _index({matrix->_geneSize,0})
-         {}
-      Pair(const Matrix* matrix):
-         _cMatrix(matrix),
-         _index({matrix->_geneSize,0})
-         {}
-      Pair() = default;
-      Pair(const Pair&) = default;
-      Pair(Pair&&) = default;
-      virtual void clearClusters() const = 0;
-      virtual void addCluster(int amount = 1) const = 0;
-      virtual int clusterSize() const = 0;
-      virtual bool isEmpty() const = 0;
-      void write(Index index);
-      void read(Index index) const;
-      void reset() const { _rawIndex = 0; };
-      void readNext() const;
-      bool hasNext() const { return _rawIndex != _cMatrix->_clusterSize; }
-      const Index& index() const { return _index; }
-      Pair& operator=(const Pair&) = default;
-      Pair& operator=(Pair&&) = default;
-   protected:
-      virtual void writeCluster(EDataStream& stream, int cluster) = 0;
-      virtual void readCluster(const EDataStream& stream, int cluster) const = 0;
-   private:
-      Matrix* _matrix {nullptr};
-      const Matrix* _cMatrix;
-      mutable qint64 _rawIndex {0};
-      mutable Index _index;
    };
 }
 
