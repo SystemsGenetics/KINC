@@ -38,6 +38,6 @@ $KINC run export-cmx --emx $EMX_FILE --ccm $CCM_FILE --cmx $CMX_FILE --output $O
 # extract
 NET_FILE="$DATA/$(basename $EMX_FILE .emx)-net.txt"
 GML_FILE="$DATA/$(basename $EMX_FILE .emx).graphml"
-THRESHOLD=0.85
+THRESHOLD=0
 
 $KINC run extract --emx $EMX_FILE --ccm $CCM_FILE --cmx $CMX_FILE --output $NET_FILE --graphml $GML_FILE --mincorr $THRESHOLD
