@@ -131,16 +131,18 @@ void Extract::process(const EAbstractAnalytic::Block* result)
             gene1.read(cmxPair.index().getX());
             gene2.read(cmxPair.index().getY());
 
-            // determine sample mask from expression data
+            // determine sample mask, summary statistics from expression data
             for ( int i = 0; i < _emx->sampleSize(); ++i )
             {
                if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
                {
                   sampleMask[i] = '9';
+                  numMissing++;
                }
                else
                {
                   sampleMask[i] = '1';
+                  numSamples++;
                }
             }
          }

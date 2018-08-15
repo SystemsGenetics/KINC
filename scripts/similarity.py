@@ -123,7 +123,16 @@ if __name__ == "__main__":
 						y_k[y_k == k] = 1
 						y_k[y_k < 0] *= -1
 
-						cmx.write("%d\t%d\t%d\t%d\t%g\t%g\t%s\n" % (i, j, k, K, corr, p, "".join([str(y_i) for y_i in y_k])))
+						sample_mask = "".join([str(y_i) for y_i in y_k])
+
+						# compute summary statistics
+						num_samples = sum(y_k == 1)
+						num_threshold = sum(y_k == 6)
+						num_preout = sum(y_k == 7)
+						num_postout = sum(y_k == 8)
+						num_missing = sum(y_k == 9)
+
+						cmx.write("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%g\t%s\n" % (i, j, k, K, num_samples, num_missing, num_postout, num_preout, num_threshold, corr, sample_mask))
 
 					# plot results
 					if args.VISUALIZE:
