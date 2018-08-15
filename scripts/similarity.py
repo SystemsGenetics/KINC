@@ -20,6 +20,70 @@ def create_kmeans(n_clusters):
 
 
 
+def fetch_pair(emx, i, j):
+	# extract pairwise data
+	X = emx.iloc[[i, j]].values.T
+
+	# initialize labels
+	y = np.zeros((X.shape[0],), dtype=int)
+
+	# mark nan samples
+	y[np.isnan(X[:, 0]) | np.isnan(X[:, 1])] = -9
+
+	return (X, y)
+
+
+
+def compute_clustering(X, y, create_model, min_samples, min_clusters, max_clusters):
+	# extract clean pairwise data
+	mask = (y == 0)
+	X_clean = X[mask]
+	N = X_clean.shape[0]
+
+	# make sure there are enough samples
+	K = 0
+
+	if N >= min_samples:
+		# initialize clustering models
+		models = [create_model(K) for K in xrange(min_clusters, max_clusters+1)]
+		min_crit = float("inf")
+
+		# identify number of clusters
+		for model in models:
+			# fit model
+			model.fit(X_clean)
+
+			# save the best model
+			crit = model.bic(X_clean)
+			if crit < min_crit:
+				min_crit = crit
+				K = len(model.weights_)
+				y[mask] = model.predict(X_clean)
+
+	return K, y
+
+
+
+def compute_correlation(X, y, k, method, min_samples, visualize):
+	# extract samples in cluster k
+	X_k = X[y == k]
+
+	# make sure there are enough samples
+	if X_k.shape[0] < min_samples:
+		return None, None
+
+	# compute correlation
+	corr, p = method(X_k[:, 0], X_k[:, 1])
+	
+	# plot results
+	if visualize:
+		sns.jointplot(x=X_k[:, 0], y=X_k[:, 1], kind="reg", stat_func=method)
+		plt.show()
+
+	return corr, p
+
+
+
 if __name__ == "__main__":
 	# define clustering methods
 	CLUSTERING_METHODS = {
@@ -62,79 +126,38 @@ if __name__ == "__main__":
 	emx = pd.read_csv(args.INPUT, sep="\t")
 	cmx = open(args.OUTPUT, "w");
 
-	# initialize methods
-	clus_method = CLUSTERING_METHODS[args.CLUSMETHOD]
-	corr_method = CORRELATION_METHODS[args.CORRMETHOD]
-
 	# iterate through each pair
 	for i in xrange(len(emx.index)):
 		for j in xrange(i):
-			# extract pairwise data
-			X = emx.iloc[[i, j]].values.T
-			mask = ~np.isnan(X[:, 0]) & ~np.isnan(X[:, 1])
+			X, y = fetch_pair(emx, i, j)
 
-			# initialize labels
-			y = np.zeros((X.shape[0],), dtype=int)
-			y[~mask] = -9
-
-			# extract clean pairwise data
-			X_clean = X[mask]
-			N = X_clean.shape[0]
-
-			# peform clustering
+			# perform clustering
 			K = 1
 
 			if args.CLUSMETHOD != "none":
-				# make sure there are enough samples
-				if N >= args.MINSAMP:
-					# initialize clustering models
-					models = [clus_method(n) for n in xrange(args.MINCLUS, args.MAXCLUS+1)]
-					min_crit = float("inf")
-
-					# identify number of clusters
-					for model in models:
-						# fit model
-						model.fit(X_clean)
-
-						# save the best model
-						crit = model.bic(X_clean)
-						if crit < min_crit:
-							min_crit = crit
-							K = len(model.weights_)
-							y[mask] = model.predict(X_clean)
+				K, y = compute_clustering(X, y, CLUSTERING_METHODS[args.CLUSMETHOD], args.MINSAMP, args.MINCLUS, args.MAXCLUS)
 
 			print("%4d %4d %d" % (i, j, K))
 
 			# perform correlation
 			for k in xrange(K):
-				# extract samples in cluster k
-				X_k = X[y == k]
+				corr, p = compute_correlation(X, y, k, CORRELATION_METHODS[args.CORRMETHOD], args.MINSAMP, args.VISUALIZE)
 
-				# make sure there are enough samples
-				if X_k.shape[0] >= args.MINSAMP:
-					# compute correlation
-					corr, p = corr_method(X_k[:, 0], X_k[:, 1])
+				# make sure correlation, p-value meets thresholds
+				if corr != None and args.MINCORR <= abs(corr) and abs(corr) <= args.MAXCORR and p <= args.MAXPVALUE:
+					# compute sample mask
+					y_k = np.copy(y)
+					y_k[(y_k >= 0) & (y_k != k)] = 0
+					y_k[y_k == k] = 1
+					y_k[y_k < 0] *= -1
 
-					# make sure correlation, p-value meets thresholds
-					if args.MINCORR <= abs(corr) and abs(corr) <= args.MAXCORR and p <= args.MAXPVALUE:
-						# compute sample mask
-						y_k = np.copy(y)
-						y_k[(y_k >= 0) & (y_k != k)] = 0
-						y_k[y_k == k] = 1
-						y_k[y_k < 0] *= -1
+					sample_mask = "".join([str(y_i) for y_i in y_k])
 
-						sample_mask = "".join([str(y_i) for y_i in y_k])
+					# compute summary statistics
+					num_samples = sum(y_k == 1)
+					num_threshold = sum(y_k == 6)
+					num_preout = sum(y_k == 7)
+					num_postout = sum(y_k == 8)
+					num_missing = sum(y_k == 9)
 
-						# compute summary statistics
-						num_samples = sum(y_k == 1)
-						num_threshold = sum(y_k == 6)
-						num_preout = sum(y_k == 7)
-						num_postout = sum(y_k == 8)
-						num_missing = sum(y_k == 9)
-
-						cmx.write("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%g\t%s\n" % (i, j, k, K, num_samples, num_missing, num_postout, num_preout, num_threshold, corr, sample_mask))
-
-					# plot results
-					if args.VISUALIZE:
-						sns.jointplot(x=X_k[:, 0], y=X_k[:, 1], kind="reg", stat_func=corr_method)
-						plt.show()
+					cmx.write("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%g\t%s\n" % (i, j, k, K, num_samples, num_missing, num_postout, num_preout, num_threshold, corr, sample_mask))
