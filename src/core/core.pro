@@ -18,8 +18,10 @@ QMAKE_CXXFLAGS += -Wno-ignored-attributes
 # Source files
 SOURCES += \
    analyticfactory.cpp \
+   ccmatrix_model.cpp \
    ccmatrix_pair.cpp \
    ccmatrix.cpp \
+   correlationmatrix_model.cpp \
    correlationmatrix_pair.cpp \
    correlationmatrix.cpp \
    datafactory.cpp \
@@ -64,8 +66,10 @@ SOURCES += \
 # Header files
 HEADERS += \
    analyticfactory.h \
+   ccmatrix_model.h \
    ccmatrix_pair.h \
    ccmatrix.h \
+   correlationmatrix_model.h \
    correlationmatrix_pair.h \
    correlationmatrix.h \
    datafactory.h \

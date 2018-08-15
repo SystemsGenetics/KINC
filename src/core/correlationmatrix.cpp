@@ -1,103 +1,16 @@
 #include "correlationmatrix.h"
+#include "correlationmatrix_model.h"
 #include "correlationmatrix_pair.h"
-
-
-
-using namespace std;
-
-
-
 
 
 
 QAbstractTableModel* CorrelationMatrix::model()
 {
-   return nullptr;
-}
-
-
-
-
-
-
-QVariant CorrelationMatrix::headerData(int section, Qt::Orientation orientation, int role) const
-{
-   // orientation is not used
-   Q_UNUSED(orientation);
-
-   // if role is not display return nothing
-   if ( role != Qt::DisplayRole )
+   if ( !_model )
    {
-      return QVariant();
+      _model = new Model(this);
    }
-
-   // get genes metadata and make sure it is an array
-   const EMetadata& genes {geneNames()};
-   if ( genes.isArray() )
-   {
-      // make sure section is within limits of gene name array
-      if ( section >= 0 && section < genes.toArray().size() )
-      {
-         // return gene name
-         return genes.toArray().at(section).toString();
-      }
-   }
-
-   // no gene found return nothing
-   return QVariant();
-}
-
-
-
-
-
-
-QVariant CorrelationMatrix::data(const QModelIndex& index, int role) const
-{
-   // if role is not display return nothing
-   if ( role != Qt::DisplayRole )
-   {
-      return QVariant();
-   }
-
-   // if row and column are equal return one
-   if ( index.row() == index.column() )
-   {
-      return "1";
-   }
-
-   // get constant pair and read in values
-   const Pair pair(this);
-   int x {index.row()};
-   int y {index.column()};
-   if ( y > x )
-   {
-      swap(x,y);
-   }
-   pair.read({x,y});
-
-   // Return value of pair as a string
-   return pair.toString();
-}
-
-
-
-
-
-
-int CorrelationMatrix::rowCount(const QModelIndex&) const
-{
-   return geneSize();
-}
-
-
-
-
-
-
-int CorrelationMatrix::columnCount(const QModelIndex&) const
-{
-   return geneSize();
+   return _model;
 }
 
 
