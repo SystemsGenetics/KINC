@@ -20,6 +20,26 @@ void Clustering::initialize(ExpressionMatrix* input)
 
 
 
+/*!
+ * Compute clusters for a given dataset. Several clustering models, each one
+ * having a different number of clusters, are fit to the data and the model
+ * with the best criterion value is selected.
+ *
+ * Note that the dataset contains only those samples which were not removed
+ * by pre-processing, while the labels contains all samples from the original
+ * expression matrix.
+ *
+ * @param X
+ * @param numSamples
+ * @param labels
+ * @param minSamples
+ * @param minSamples
+ * @param minClusters
+ * @param maxClusters
+ * @param criterion
+ * @param removePreOutliers
+ * @param removePostOutliers
+ */
 qint8 Clustering::compute(
    const QVector<Vector2>& X,
    int numSamples,
