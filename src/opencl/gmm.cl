@@ -501,6 +501,7 @@ bool GMM_fit(
 
 typedef enum
 {
+   AIC,
    BIC,
    ICL
 } Criterion;
@@ -511,9 +512,24 @@ typedef enum
 
 
 /**
+ * Compute the Akaike Information Criterion of a GMM.
+ */
+float GMM_computeAIC(int K, int D, float logL)
+{
+   int p = K * (1 + D + D * D);
+
+   return 2 * p - 2 * logL;
+}
+
+
+
+
+
+
+/**
  * Compute the Bayes Information Criterion of a GMM.
  */
-float GMM_computeBIC(int K, float logL, int N, int D)
+float GMM_computeBIC(int K, int D, float logL, int N)
 {
    int p = K * (1 + D + D * D);
 
@@ -528,7 +544,7 @@ float GMM_computeBIC(int K, float logL, int N, int D)
 /**
  * Compute the Integrated Completed Likelihood of a GMM.
  */
-float GMM_computeICL(int K, float logL, int N, int D, float E)
+float GMM_computeICL(int K, int D, float logL, int N, float E)
 {
    int p = K * (1 + D + D * D);
 
@@ -623,11 +639,14 @@ __kernel void GMM_compute(
 
          switch (criterion)
          {
+         case AIC:
+            value = GMM_computeAIC(K, 2, logL);
+            break;
          case BIC:
-            value = GMM_computeBIC(K, logL, N, 2);
+            value = GMM_computeBIC(K, 2, logL, N);
             break;
          case ICL:
-            value = GMM_computeICL(K, logL, N, 2, entropy);
+            value = GMM_computeICL(K, 2, logL, N, entropy);
             break;
          }
 

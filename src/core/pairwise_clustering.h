@@ -11,7 +11,8 @@ namespace Pairwise
 {
    enum class Criterion
    {
-      BIC
+      AIC
+      ,BIC
       ,ICL
    };
 
@@ -38,8 +39,9 @@ namespace Pairwise
 
    private:
       void markOutliers(const QVector<Vector2>& X, int N, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker);
-      float computeBIC(int K, float logL, int N, int D);
-      float computeICL(int K, float logL, int N, int D, float E);
+      float computeAIC(int K, int D, float logL);
+      float computeBIC(int K, int D, float logL, int N);
+      float computeICL(int K, int D, float logL, int N, float E);
 
       QVector<qint8> _workLabels;
    };

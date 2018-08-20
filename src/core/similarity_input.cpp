@@ -33,7 +33,8 @@ const QStringList Similarity::Input::CORRELATION_NAMES
 
 const QStringList Similarity::Input::CRITERION_NAMES
 {
-   "BIC"
+   "AIC"
+   ,"BIC"
    ,"ICL"
 };
 

@@ -60,11 +60,14 @@ qint8 Clustering::compute(
 
          switch (criterion)
          {
+         case Criterion::AIC:
+            value = computeAIC(K, 2, logLikelihood());
+            break;
          case Criterion::BIC:
-            value = computeBIC(K, logLikelihood(), numSamples, 2);
+            value = computeBIC(K, 2, logLikelihood(), numSamples);
             break;
          case Criterion::ICL:
-            value = computeICL(K, logLikelihood(), numSamples, 2, entropy());
+            value = computeICL(K, 2, logLikelihood(), numSamples, entropy());
             break;
          }
 
@@ -152,7 +155,19 @@ void Clustering::markOutliers(const QVector<Vector2>& X, int N, int j, QVector<q
 
 
 
-float Clustering::computeBIC(int K, float logL, int N, int D)
+float Clustering::computeAIC(int K, int D, float logL)
+{
+   int p = K * (1 + D + D * D);
+
+   return 2 * p - 2 * logL;
+}
+
+
+
+
+
+
+float Clustering::computeBIC(int K, int D, float logL, int N)
 {
    int p = K * (1 + D + D * D);
 
@@ -164,7 +179,7 @@ float Clustering::computeBIC(int K, float logL, int N, int D)
 
 
 
-float Clustering::computeICL(int K, float logL, int N, int D, float E)
+float Clustering::computeICL(int K, int D, float logL, int N, float E)
 {
    int p = K * (1 + D + D * D);
 
