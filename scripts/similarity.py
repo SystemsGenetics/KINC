@@ -37,7 +37,7 @@ def fetch_pair(emx, i, j, min_expression):
 
 
 
-def compute_clustering(X, y, create_model, min_samples, min_clusters, max_clusters):
+def compute_clustering(X, y, create_model, min_samples, min_clusters, max_clusters, criterion):
 	# extract clean pairwise data
 	mask = (y == 0)
 	X_clean = X[mask]
@@ -56,8 +56,13 @@ def compute_clustering(X, y, create_model, min_samples, min_clusters, max_cluste
 			# fit model
 			model.fit(X_clean)
 
+			# compute criterion value
+			if criterion == "aic":
+				crit = model.aic(X_clean)
+			elif criterion == "bic":
+				crit = model.bic(X_clean)
+
 			# save the best model
-			crit = model.bic(X_clean)
 			if crit < min_crit:
 				min_crit = crit
 				K = len(model.weights_)
@@ -112,7 +117,7 @@ if __name__ == "__main__":
 	parser.add_argument("--minsamp", type=int, default=30, help="minimum sample size", dest="MINSAMP")
 	parser.add_argument("--minclus", type=int, default=1, help="minimum clusters", dest="MINCLUS")
 	parser.add_argument("--maxclus", type=int, default=5, help="maximum clusters", dest="MAXCLUS")
-	# TODO: criterion type
+	parser.add_argument("--crit", default="bic", choices=["aic", "bic"], help="model selection criterion", dest="CRITERION")
 	# TODO: remove pre-outliers
 	# TODO: remove post-outliers
 	parser.add_argument("--mincorr", type=float, default=0, help="minimum absolute correlation threshold", dest="MINCORR")
@@ -138,7 +143,7 @@ if __name__ == "__main__":
 			K = 1
 
 			if args.CLUSMETHOD != "none":
-				K, y = compute_clustering(X, y, CLUSTERING_METHODS[args.CLUSMETHOD], args.MINSAMP, args.MINCLUS, args.MAXCLUS)
+				K, y = compute_clustering(X, y, CLUSTERING_METHODS[args.CLUSMETHOD], args.MINSAMP, args.MINCLUS, args.MAXCLUS, args.CRITERION)
 
 			print("%4d %4d %d" % (i, j, K))
 
