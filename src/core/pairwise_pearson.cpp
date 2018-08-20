@@ -9,6 +9,18 @@ using namespace Pairwise;
 
 
 
+/*!
+ * Compute the Pearson correlation for a cluster of a given dataset.
+ *
+ * Note that the dataset contains only those samples which were not removed
+ * by pre-processing, while the labels contains all samples from the original
+ * expression matrix.
+ *
+ * @param data
+ * @param labels
+ * @param cluster
+ * @param minSamples
+ */
 float Pearson::computeCluster(
    const QVector<Vector2>& data,
    const QVector<qint8>& labels,
@@ -27,8 +39,8 @@ float Pearson::computeCluster(
    {
       if ( labels[i] == cluster )
       {
-         float x_i = data[i].s[0];
-         float y_i = data[i].s[1];
+         float x_i = data[n].s[0];
+         float y_i = data[n].s[1];
 
          sumx += x_i;
          sumy += y_i;

@@ -24,6 +24,18 @@ void Spearman::initialize(ExpressionMatrix* input)
 
 
 
+/*!
+ * Compute the Spearman correlation for a cluster of a given dataset.
+ *
+ * Note that the dataset contains only those samples which were not removed
+ * by pre-processing, while the labels contains all samples from the original
+ * expression matrix.
+ *
+ * @param data
+ * @param labels
+ * @param cluster
+ * @param minSamples
+ */
 float Spearman::computeCluster(
    const QVector<Vector2>& data,
    const QVector<qint8>& labels,

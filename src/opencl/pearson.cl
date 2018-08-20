@@ -22,8 +22,8 @@ float Pearson_computeCluster(
    {
       if ( labels[i] == cluster )
       {
-         float x_i = data[i].x;
-         float y_i = data[i].y;
+         float x_i = data[n].x;
+         float y_i = data[n].y;
 
          sumx += x_i;
          sumy += y_i;
