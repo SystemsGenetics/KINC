@@ -19,7 +19,6 @@ private:
    {
       OpenCL::FetchPair* fetchPair;
       OpenCL::GMM* gmm;
-      OpenCL::KMeans* kmeans;
       OpenCL::Pearson* pearson;
       OpenCL::Spearman* spearman;
    } _kernels;

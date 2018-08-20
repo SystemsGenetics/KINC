@@ -1,7 +1,6 @@
 #include "similarity_opencl_worker.h"
 #include "similarity_opencl_fetchpair.h"
 #include "similarity_opencl_gmm.h"
-#include "similarity_opencl_kmeans.h"
 #include "similarity_opencl_pearson.h"
 #include "similarity_opencl_spearman.h"
 #include "similarity_resultblock.h"
@@ -55,7 +54,6 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    // initialize kernels
    _kernels.fetchPair = new OpenCL::FetchPair(program, this);
    _kernels.gmm = new OpenCL::GMM(program, this);
-   _kernels.kmeans = new OpenCL::KMeans(program, this);
    _kernels.pearson = new OpenCL::Pearson(program, this);
    _kernels.spearman = new OpenCL::Spearman(program, this);
 
@@ -157,27 +155,6 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             &_buffers.work_logpi,
             &_buffers.work_loggamma,
             &_buffers.work_logGamma,
-            &_buffers.out_K,
-            &_buffers.out_labels
-         ).wait();
-      }
-      else if ( _base->_clusMethod == ClusteringMethod::KMeans )
-      {
-         _kernels.kmeans->execute(
-            _queue,
-            _base->_kernelSize,
-            &_baseOpenCL->_expressions,
-            _base->_input->sampleSize(),
-            _base->_minSamples,
-            _base->_minClusters,
-            _base->_maxClusters,
-            _base->_removePreOutliers,
-            _base->_removePostOutliers,
-            &_buffers.work_X,
-            &_buffers.work_N,
-            &_buffers.work_loggamma,
-            &_buffers.work_labels,
-            &_buffers.work_MP,
             &_buffers.out_K,
             &_buffers.out_labels
          ).wait();

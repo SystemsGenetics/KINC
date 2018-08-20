@@ -12,7 +12,6 @@ class Similarity::OpenCL : public EAbstractAnalytic::OpenCL
 public:
    class FetchPair;
    class GMM;
-   class KMeans;
    class Pearson;
    class Spearman;
    class Worker;

@@ -43,7 +43,6 @@ private:
    {
       None
       ,GMM
-      ,KMeans
    };
 
    enum class CorrelationMethod

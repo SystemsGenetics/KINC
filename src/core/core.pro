@@ -43,7 +43,6 @@ SOURCES += \
    pairwise_correlation.cpp \
    pairwise_gmm.cpp \
    pairwise_index.cpp \
-   pairwise_kmeans.cpp \
    pairwise_linalg.cpp \
    pairwise_matrix_pair.cpp \
    pairwise_matrix.cpp \
@@ -54,7 +53,6 @@ SOURCES += \
    similarity_input.cpp \
    similarity_opencl_fetchpair.cpp \
    similarity_opencl_gmm.cpp \
-   similarity_opencl_kmeans.cpp \
    similarity_opencl_pearson.cpp \
    similarity_opencl_spearman.cpp \
    similarity_opencl_worker.cpp \
@@ -92,7 +90,6 @@ HEADERS += \
    pairwise_correlation.h \
    pairwise_gmm.h \
    pairwise_index.h \
-   pairwise_kmeans.h \
    pairwise_linalg.h \
    pairwise_matrix_pair.h \
    pairwise_matrix.h \
@@ -103,7 +100,6 @@ HEADERS += \
    similarity_input.h \
    similarity_opencl_fetchpair.h \
    similarity_opencl_gmm.h \
-   similarity_opencl_kmeans.h \
    similarity_opencl_pearson.h \
    similarity_opencl_spearman.h \
    similarity_opencl_worker.h \

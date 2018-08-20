@@ -41,7 +41,6 @@ void Similarity::OpenCL::initialize(::OpenCL::Context* context)
       ":/opencl/sort.cl",
       ":/opencl/outlier.cl",
       ":/opencl/gmm.cl",
-      ":/opencl/kmeans.cl",
       ":/opencl/pearson.cl",
       ":/opencl/spearman.cl"
    };

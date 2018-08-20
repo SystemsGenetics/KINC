@@ -1,7 +1,6 @@
 #include "similarity_input.h"
 #include "datafactory.h"
 #include "pairwise_gmm.h"
-#include "pairwise_kmeans.h"
 #include "pairwise_pearson.h"
 #include "pairwise_spearman.h"
 
@@ -14,7 +13,6 @@ const QStringList Similarity::Input::CLUSTERING_NAMES
 {
    "none"
    ,"gmm"
-   ,"kmeans"
 };
 
 
@@ -272,9 +270,6 @@ void Similarity::Input::set(int index, const QVariant& value)
          break;
       case ClusteringMethod::GMM:
          _base->_clusModel = new Pairwise::GMM();
-         break;
-      case ClusteringMethod::KMeans:
-         _base->_clusModel = new Pairwise::KMeans();
          break;
       }
       break;
