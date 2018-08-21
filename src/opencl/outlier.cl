@@ -35,7 +35,7 @@ int rand(ulong *state)
  * @param x_sorted
  * @param y_sorted
  */
-void markOutliers(
+int markOutliers(
    __global const Vector2 *data,
    int N,
    __global char *labels,
@@ -60,7 +60,7 @@ void markOutliers(
    // return if the given cluster is empty
    if ( n == 0 )
    {
-      return;
+      return 0;
    }
 
    // sort samples for each axis
@@ -79,6 +79,8 @@ void markOutliers(
    float T_y_max = Q3_y + 1.5f * (Q3_y - Q1_y);
 
    // mark outliers
+   int numOutliers = 0;
+
    for ( int i = 0; i < N; ++i )
    {
       if ( labels[i] == cluster )
@@ -90,7 +92,11 @@ void markOutliers(
          if ( outlier_x || outlier_y )
          {
             labels[i] = marker;
+            ++numOutliers;
          }
       }
    }
+   
+   // return number of outliers
+   return numOutliers;
 }

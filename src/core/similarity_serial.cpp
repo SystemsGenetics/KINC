@@ -185,7 +185,7 @@ int Similarity::Serial::fetchPair(Pairwise::Index index, QVector<Pairwise::Vecto
  * @param cluster
  * @param marker
  */
-void Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& data, int N, QVector<qint8>& labels, qint8 cluster, qint8 marker)
+int Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& data, int N, QVector<qint8>& labels, qint8 cluster, qint8 marker)
 {
    // extract univariate data from the given cluster
    QVector<float> x_sorted;
@@ -206,7 +206,7 @@ void Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& data, in
    // return if the given cluster is empty
    if ( x_sorted.size() == 0 || y_sorted.size() == 0 )
    {
-      return;
+      return 0;
    }
 
    // sort samples for each axis
@@ -227,6 +227,8 @@ void Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& data, in
    float T_y_max = Q3_y + 1.5f * (Q3_y - Q1_y);
 
    // mark outliers
+   int numOutliers = 0;
+
    for ( int i = 0; i < N; ++i )
    {
       if ( labels[i] == cluster )
@@ -238,7 +240,11 @@ void Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& data, in
          if ( outlier_x || outlier_y )
          {
             labels[i] = marker;
+            ++numOutliers;
          }
       }
    }
+   
+   // return number of outliers
+   return numOutliers;
 }
