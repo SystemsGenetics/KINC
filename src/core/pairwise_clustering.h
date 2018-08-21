@@ -27,9 +27,7 @@ namespace Pairwise
          int minSamples,
          qint8 minClusters,
          qint8 maxClusters,
-         Criterion criterion,
-         bool removePreOutliers,
-         bool removePostOutliers
+         Criterion criterion
       );
 
    protected:
@@ -38,7 +36,6 @@ namespace Pairwise
       virtual float entropy() const = 0;
 
    private:
-      void markOutliers(const QVector<Vector2>& X, int N, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker);
       float computeAIC(int K, int D, float logL);
       float computeBIC(int K, int D, float logL, int N);
       float computeICL(int K, int D, float logL, int N, float E);

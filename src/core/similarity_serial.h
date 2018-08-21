@@ -12,6 +12,7 @@ public:
    virtual std::unique_ptr<EAbstractAnalytic::Block> execute(const EAbstractAnalytic::Block* block) override final;
 private:
    int fetchPair(Pairwise::Index index, QVector<Pairwise::Vector2>& X, QVector<qint8>& labels);
+   void markOutliers(const QVector<Pairwise::Vector2>& X, int N, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker);
 
    Similarity* _base;
 };

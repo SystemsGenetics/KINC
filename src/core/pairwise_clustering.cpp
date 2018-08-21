@@ -37,8 +37,6 @@ void Clustering::initialize(ExpressionMatrix* input)
  * @param minClusters
  * @param maxClusters
  * @param criterion
- * @param removePreOutliers
- * @param removePostOutliers
  */
 qint8 Clustering::compute(
    const QVector<Vector2>& X,
@@ -47,17 +45,8 @@ qint8 Clustering::compute(
    int minSamples,
    qint8 minClusters,
    qint8 maxClusters,
-   Criterion criterion,
-   bool removePreOutliers,
-   bool removePostOutliers)
+   Criterion criterion)
 {
-   // remove pre-clustering outliers
-   if ( removePreOutliers )
-   {
-      markOutliers(X, numSamples, 0, labels, 0, -7);
-      markOutliers(X, numSamples, 1, labels, 0, -7);
-   }
-
    // perform clustering only if there are enough samples
    qint8 bestK = 0;
 
@@ -109,65 +98,7 @@ qint8 Clustering::compute(
       }
    }
 
-   if ( bestK > 1 )
-   {
-      // remove post-clustering outliers
-      if ( removePostOutliers )
-      {
-         for ( qint8 k = 0; k < bestK; ++k )
-         {
-            markOutliers(X, numSamples, 0, labels, k, -8);
-            markOutliers(X, numSamples, 1, labels, k, -8);
-         }
-      }
-   }
-
    return bestK;
-}
-
-
-
-
-
-
-void Clustering::markOutliers(const QVector<Vector2>& X, int N, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker)
-{
-   // compute x_sorted = X[:, j], filtered and sorted
-   QVector<float> x_sorted;
-   x_sorted.reserve(N);
-
-   for ( int i = 0; i < N; i++ )
-   {
-      if ( labels[i] == cluster || labels[i] == marker )
-      {
-         x_sorted.append(X[i].s[j]);
-      }
-   }
-
-   if ( x_sorted.size() == 0 )
-   {
-      return;
-   }
-
-   std::sort(x_sorted.begin(), x_sorted.end());
-
-   // compute quartiles, interquartile range, upper and lower bounds
-   const int n = x_sorted.size();
-
-   float Q1 = x_sorted[n * 1 / 4];
-   float Q3 = x_sorted[n * 3 / 4];
-
-   float T_min = Q1 - 1.5f * (Q3 - Q1);
-   float T_max = Q3 + 1.5f * (Q3 - Q1);
-
-   // mark outliers
-   for ( int i = 0; i < N; ++i )
-   {
-      if ( labels[i] == cluster && (X[i].s[j] < T_min || T_max < X[i].s[j]) )
-      {
-         labels[i] = marker;
-      }
-   }
 }
 
 

@@ -51,6 +51,13 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
       // fetch pairwise input data
       int numSamples = fetchPair(index, X, labels);
 
+      // remove pre-clustering outliers
+      if ( _base->_removePreOutliers )
+      {
+         markOutliers(X, numSamples, 0, labels, 0, -7);
+         markOutliers(X, numSamples, 1, labels, 0, -7);
+      }
+
       // compute clusters
       qint8 K {1};
 
@@ -63,10 +70,18 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
             _base->_minSamples,
             _base->_minClusters,
             _base->_maxClusters,
-            _base->_criterion,
-            _base->_removePreOutliers,
-            _base->_removePostOutliers
+            _base->_criterion
          );
+      }
+
+      // remove post-clustering outliers
+      if ( K > 1 && _base->_removePostOutliers )
+      {
+         for ( qint8 k = 0; k < K; ++k )
+         {
+            markOutliers(X, numSamples, 0, labels, k, -8);
+            markOutliers(X, numSamples, 1, labels, k, -8);
+         }
       }
 
       // compute correlations
@@ -139,4 +154,49 @@ int Similarity::Serial::fetchPair(Pairwise::Index index, QVector<Pairwise::Vecto
 
    // return size of X
    return numSamples;
+}
+
+
+
+
+
+
+void Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& X, int N, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker)
+{
+   // compute x_sorted = X[:, j], filtered and sorted
+   QVector<float> x_sorted;
+   x_sorted.reserve(N);
+
+   for ( int i = 0; i < N; i++ )
+   {
+      if ( labels[i] == cluster || labels[i] == marker )
+      {
+         x_sorted.append(X[i].s[j]);
+      }
+   }
+
+   if ( x_sorted.size() == 0 )
+   {
+      return;
+   }
+
+   std::sort(x_sorted.begin(), x_sorted.end());
+
+   // compute quartiles, interquartile range, upper and lower bounds
+   const int n = x_sorted.size();
+
+   float Q1 = x_sorted[n * 1 / 4];
+   float Q3 = x_sorted[n * 3 / 4];
+
+   float T_min = Q1 - 1.5f * (Q3 - Q1);
+   float T_max = Q3 + 1.5f * (Q3 - Q1);
+
+   // mark outliers
+   for ( int i = 0; i < N; ++i )
+   {
+      if ( labels[i] == cluster && (X[i].s[j] < T_min || T_max < X[i].s[j]) )
+      {
+         labels[i] = marker;
+      }
+   }
 }
