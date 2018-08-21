@@ -29,7 +29,7 @@ void Clustering::initialize(ExpressionMatrix* input)
  * by pre-processing, while the labels contains all samples from the original
  * expression matrix.
  *
- * @param X
+ * @param data
  * @param numSamples
  * @param labels
  * @param minSamples
@@ -39,7 +39,7 @@ void Clustering::initialize(ExpressionMatrix* input)
  * @param criterion
  */
 qint8 Clustering::compute(
-   const QVector<Vector2>& X,
+   const QVector<Vector2>& data,
    int numSamples,
    QVector<qint8>& labels,
    int minSamples,
@@ -57,7 +57,7 @@ qint8 Clustering::compute(
       for ( qint8 K = minClusters; K <= maxClusters; ++K )
       {
          // run each clustering model
-         bool success = fit(X, numSamples, K, _workLabels);
+         bool success = fit(data, numSamples, K, _workLabels);
 
          if ( !success )
          {

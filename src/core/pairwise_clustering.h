@@ -21,7 +21,7 @@ namespace Pairwise
    public:
       void initialize(ExpressionMatrix* input);
       qint8 compute(
-         const QVector<Vector2>& X,
+         const QVector<Vector2>& data,
          int numSamples,
          QVector<qint8>& labels,
          int minSamples,

@@ -6,7 +6,7 @@
 
 
 
-/**
+/*!
  * Implementation of rand(), taken from POSIX example.
  *
  * @param state
@@ -21,7 +21,7 @@ int rand(ulong *state)
 
 
 
-/**
+/*!
  * Remove outliers from a gene in a gene pair.
  *
  * @param X

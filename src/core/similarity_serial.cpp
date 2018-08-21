@@ -40,7 +40,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
    ResultBlock* resultBlock {new ResultBlock(workBlock->index(), workBlock->start())};
 
    // initialize workspace
-   QVector<Pairwise::Vector2> X(_base->_input->sampleSize());
+   QVector<Pairwise::Vector2> data(_base->_input->sampleSize());
    QVector<qint8> labels(_base->_input->sampleSize());
 
    // iterate through all pairs
@@ -49,13 +49,13 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
    for ( int i = 0; i < workBlock->size(); ++i )
    {
       // fetch pairwise input data
-      int numSamples = fetchPair(index, X, labels);
+      int numSamples = fetchPair(index, data, labels);
 
       // remove pre-clustering outliers
       if ( _base->_removePreOutliers )
       {
-         markOutliers(X, numSamples, 0, labels, 0, -7);
-         markOutliers(X, numSamples, 1, labels, 0, -7);
+         markOutliers(data, numSamples, 0, labels, 0, -7);
+         markOutliers(data, numSamples, 1, labels, 0, -7);
       }
 
       // compute clusters
@@ -64,7 +64,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
       if ( _base->_clusMethod != ClusteringMethod::None )
       {
          K = _base->_clusModel->compute(
-            X,
+            data,
             numSamples,
             labels,
             _base->_minSamples,
@@ -79,14 +79,14 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
       {
          for ( qint8 k = 0; k < K; ++k )
          {
-            markOutliers(X, numSamples, 0, labels, k, -8);
-            markOutliers(X, numSamples, 1, labels, k, -8);
+            markOutliers(data, numSamples, 0, labels, k, -8);
+            markOutliers(data, numSamples, 1, labels, k, -8);
          }
       }
 
       // compute correlations
       QVector<float> correlations = _base->_corrModel->compute(
-         X,
+         data,
          K,
          labels,
          _base->_minSamples
@@ -121,7 +121,16 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
 
 
 
-int Similarity::Serial::fetchPair(Pairwise::Index index, QVector<Pairwise::Vector2>& X, QVector<qint8>& labels)
+/*!
+ * Extract pairwise data from an expression matrix given a pairwise index. Samples
+ * with missing values and samples that fall below the expression threshold are
+ * excluded. The number of extracted samples is returned.
+ *
+ * @param index
+ * @param data
+ * @param labels
+ */
+int Similarity::Serial::fetchPair(Pairwise::Index index, QVector<Pairwise::Vector2>& data, QVector<qint8>& labels)
 {
    // read in gene expressions
    ExpressionMatrix::Gene gene1(_base->_input);
@@ -130,29 +139,34 @@ int Similarity::Serial::fetchPair(Pairwise::Index index, QVector<Pairwise::Vecto
    gene1.read(index.getX());
    gene2.read(index.getY());
 
-   // populate X with shared expressions of gene pair
+   // extract pairwise samples
    int numSamples = 0;
 
    for ( int i = 0; i < _base->_input->sampleSize(); ++i )
    {
+      // exclude samples with missing values
       if ( std::isnan(gene1.at(i)) || std::isnan(gene2.at(i)) )
       {
          labels[i] = -9;
       }
+
+      // exclude samples which fall below the expression threshold
       else if ( gene1.at(i) < _base->_minExpression || gene2.at(i) < _base->_minExpression )
       {
          labels[i] = -6;
       }
+
+      // include any remaining samples
       else
       {
-         X[numSamples] = { gene1.at(i), gene2.at(i) };
+         data[numSamples] = { gene1.at(i), gene2.at(i) };
          numSamples++;
 
          labels[i] = 0;
       }
    }
 
-   // return size of X
+   // return number of extracted samples
    return numSamples;
 }
 
@@ -161,9 +175,22 @@ int Similarity::Serial::fetchPair(Pairwise::Index index, QVector<Pairwise::Vecto
 
 
 
-void Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& X, int N, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker)
+/*!
+ * Mark outliers in a vector of pairwise data. Outliers are detected independently
+ * on each axis using the Tukey method, and marked with the given marker. If a
+ * non-zero cluster label is provided, only those samples in the given cluster are
+ * used for outlier detection.
+ *
+ * @param data
+ * @param N
+ * @param j
+ * @param labels
+ * @param cluster
+ * @param marker
+ */
+void Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& data, int N, int j, QVector<qint8>& labels, qint8 cluster, qint8 marker)
 {
-   // compute x_sorted = X[:, j], filtered and sorted
+   // compute x_sorted = data[:, j], filtered and sorted
    QVector<float> x_sorted;
    x_sorted.reserve(N);
 
@@ -171,7 +198,7 @@ void Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& X, int N
    {
       if ( labels[i] == cluster || labels[i] == marker )
       {
-         x_sorted.append(X[i].s[j]);
+         x_sorted.append(data[i].s[j]);
       }
    }
 
@@ -194,7 +221,7 @@ void Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& X, int N
    // mark outliers
    for ( int i = 0; i < N; ++i )
    {
-      if ( labels[i] == cluster && (X[i].s[j] < T_min || T_max < X[i].s[j]) )
+      if ( labels[i] == cluster && (data[i].s[j] < T_min || T_max < data[i].s[j]) )
       {
          labels[i] = marker;
       }

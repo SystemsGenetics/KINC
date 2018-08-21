@@ -414,7 +414,7 @@ float GMM_calcEntropy(
 
 
 
-/**
+/*!
  * Compute a Gaussian mixture model from a dataset.
  */
 bool GMM_fit(
@@ -511,7 +511,7 @@ typedef enum
 
 
 
-/**
+/*!
  * Compute the Akaike Information Criterion of a GMM.
  */
 float GMM_computeAIC(int K, int D, float logL)
@@ -526,7 +526,7 @@ float GMM_computeAIC(int K, int D, float logL)
 
 
 
-/**
+/*!
  * Compute the Bayes Information Criterion of a GMM.
  */
 float GMM_computeBIC(int K, int D, float logL, int N)
@@ -541,7 +541,7 @@ float GMM_computeBIC(int K, int D, float logL, int N)
 
 
 
-/**
+/*!
  * Compute the Integrated Completed Likelihood of a GMM.
  */
 float GMM_computeICL(int K, int D, float logL, int N, float E)
@@ -556,7 +556,7 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
 
 
 
-/**
+/*!
  * Compute a block of GMMs given a block of gene pairs.
  *
  * For each gene pair, several models are computed and the best model

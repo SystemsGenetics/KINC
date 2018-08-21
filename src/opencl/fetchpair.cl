@@ -6,7 +6,7 @@
 
 
 
-/**
+/*!
  * Fetch pairwise data for a pair of genes. Samples which are nan or are
  * below a threshold are excluded.
  *
