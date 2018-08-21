@@ -8,6 +8,9 @@ LOGS="logs"
 
 INFILE="$1"
 
+# apply settings
+$KINC settings set opencl none
+
 # import emx
 EMX_FILE="$DATA/$(basename $INFILE .txt).emx"
 
@@ -21,10 +24,12 @@ CLUSMETHOD="none"
 CORRMETHOD="pearson"
 MINEXPR=-inf
 CRITERION="BIC"
+PREOUT="--preout"
+POSTOUT="--postout"
 MINCORR=0
 MAXCORR=1
 
-mpirun -np $NP $KINC run similarity --input $EMX_FILE --ccm $CCM_FILE --cmx $CMX_FILE --clusmethod $CLUSMETHOD --corrmethod $CORRMETHOD --minexpr $MINEXPR --crit $CRITERION --mincorr $MINCORR --maxcorr $MAXCORR
+mpirun -np $NP $KINC run similarity --input $EMX_FILE --ccm $CCM_FILE --cmx $CMX_FILE --clusmethod $CLUSMETHOD --corrmethod $CORRMETHOD --minexpr $MINEXPR --crit $CRITERION $PREOUT $POSTOUT --mincorr $MINCORR --maxcorr $MAXCORR
 
 # threshold
 LOG_FILE="$LOGS/$(basename $CMX_FILE .cmx).txt"

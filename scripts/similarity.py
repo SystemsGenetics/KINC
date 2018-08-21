@@ -37,6 +37,37 @@ def fetch_pair(emx, i, j, min_expression):
 
 
 
+def mark_outliers(X, y, k, marker):
+	# extract samples in cluster k
+	X_k = X[y == k]
+
+	# make sure cluster is not empty
+	if X_k.shape[0] == 0:
+		return
+
+	# compute quartiles for each axis
+	Q = np.percentile(X_k, [25, 75], axis=0, overwrite_input=True)
+
+	# compute thresholds for each axis
+	Q1_x, Q3_x = Q[0, 0], Q[1, 0]
+	T_x_min = Q1_x - 1.5 * (Q3_x - Q1_x)
+	T_x_max = Q3_x + 1.5 * (Q3_x - Q1_x)
+
+	Q1_y, Q3_y = Q[0, 1], Q[1, 1]
+	T_y_min = Q1_y - 1.5 * (Q3_y - Q1_y)
+	T_y_max = Q3_y + 1.5 * (Q3_y - Q1_y)
+
+	# mark outliers
+	for i in xrange(len(y)):
+		if y[i] == k:
+			outlier_x = (X[i, 0] < T_x_min or T_x_max < X[i, 0])
+			outlier_y = (X[i, 1] < T_y_min or T_y_max < X[i, 1])
+
+			if outlier_x or outlier_y:
+				y[i] = marker
+
+
+
 def compute_clustering(X, y, create_model, min_samples, min_clusters, max_clusters, criterion):
 	# extract clean pairwise data
 	mask = (y == 0)
@@ -82,7 +113,7 @@ def compute_correlation(X, y, k, method, min_samples, visualize):
 
 	# compute correlation
 	corr, p = method(X_k[:, 0], X_k[:, 1])
-	
+
 	# plot results
 	if visualize:
 		sns.jointplot(x=X_k[:, 0], y=X_k[:, 1], kind="reg", stat_func=method)
@@ -118,8 +149,8 @@ if __name__ == "__main__":
 	parser.add_argument("--minclus", type=int, default=1, help="minimum clusters", dest="MINCLUS")
 	parser.add_argument("--maxclus", type=int, default=5, help="maximum clusters", dest="MAXCLUS")
 	parser.add_argument("--crit", default="bic", choices=["aic", "bic"], help="model selection criterion", dest="CRITERION")
-	# TODO: remove pre-outliers
-	# TODO: remove post-outliers
+	parser.add_argument("--preout", action="store_true", help="whether to remove pre-clustering outliers", dest="PREOUT")
+	parser.add_argument("--postout", action="store_true", help="whether to remove post-clustering outliers", dest="POSTOUT")
 	parser.add_argument("--mincorr", type=float, default=0, help="minimum absolute correlation threshold", dest="MINCORR")
 	parser.add_argument("--maxcorr", type=float, default=1, help="maximum absolute correlation threshold", dest="MAXCORR")
 	parser.add_argument("--pvalue", type=float, default=float("inf"), help="maximum p-value threshold for correlations", dest="MAXPVALUE")
@@ -137,7 +168,12 @@ if __name__ == "__main__":
 	# iterate through each pair
 	for i in xrange(len(emx.index)):
 		for j in xrange(i):
+			# fetch pairwise input data
 			X, y = fetch_pair(emx, i, j, args.MINEXPR)
+
+			# remove pre-clustering outliers
+			if args.PREOUT:
+				mark_outliers(X, y, 0, -7)
 
 			# perform clustering
 			K = 1
@@ -146,6 +182,11 @@ if __name__ == "__main__":
 				K, y = compute_clustering(X, y, CLUSTERING_METHODS[args.CLUSMETHOD], args.MINSAMP, args.MINCLUS, args.MAXCLUS, args.CRITERION)
 
 			print("%4d %4d %d" % (i, j, K))
+
+			# remove post-clustering outliers
+			if K > 1 and args.POSTOUT:
+				for k in xrange(K):
+					mark_outliers(X, y, k, -8)
 
 			# perform correlation
 			for k in xrange(K):

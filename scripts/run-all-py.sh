@@ -10,10 +10,12 @@ CMX_FILE="$DATA/$(basename $EMX_FILE .txt)-cmx-py.txt"
 CLUSMETHOD="none"
 CORRMETHOD="pearson"
 CRITERION="bic"
+PREOUT="--preout"
+POSTOUT="--postout"
 MINCORR=0
 MAXCORR=1
 
-python scripts/similarity.py -i $EMX_FILE -o $CMX_FILE --clusmethod $CLUSMETHOD --corrmethod $CORRMETHOD --crit $CRITERION --mincorr $MINCORR --maxcorr $MAXCORR
+python scripts/similarity.py -i $EMX_FILE -o $CMX_FILE --clusmethod $CLUSMETHOD --corrmethod $CORRMETHOD --crit $CRITERION $PREOUT $POSTOUT --mincorr $MINCORR --maxcorr $MAXCORR
 
 # threshold
 NUM_GENES=$(expr $(cat $EMX_FILE | wc -l) - 1)
