@@ -209,6 +209,7 @@ void Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& data, in
       return;
    }
 
+   // sort samples for each axis
    std::sort(x_sorted.begin(), x_sorted.end());
    std::sort(y_sorted.begin(), y_sorted.end());
 

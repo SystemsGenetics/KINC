@@ -574,6 +574,8 @@ __kernel void GMM_compute(
    int removePostOutliers,
    __global Vector2 *work_X,
    __global int *work_N,
+   __global float *work_x,
+   __global float *work_y,
    __global char *work_labels,
    __global Component *work_components,
    __global Vector2 *work_MP,
@@ -589,6 +591,8 @@ __kernel void GMM_compute(
    // initialize workspace variables
    __global Vector2 *X = &work_X[i * sampleSize];
    int N = work_N[i];
+   __global float *x_sorted = &work_x[i * sampleSize];
+   __global float *y_sorted = &work_y[i * sampleSize];
    __global char *labels = &work_labels[i * sampleSize];
    __global Component *components = &work_components[i * maxClusters];
    __global Vector2 *MP = &work_MP[i * maxClusters];
@@ -600,12 +604,9 @@ __kernel void GMM_compute(
    __global char *bestLabels = &out_labels[i * sampleSize];
 
    // remove pre-clustering outliers
-   __global float *work = loggamma;
-
    if ( removePreOutliers )
    {
-      markOutliers(X, N, 0, bestLabels, 0, -7, work);
-      markOutliers(X, N, 1, bestLabels, 0, -7, work);
+      markOutliers(X, N, bestLabels, 0, -7, x_sorted, y_sorted);
    }
 
    // perform clustering only if there are enough samples
@@ -668,16 +669,12 @@ __kernel void GMM_compute(
       }
    }
 
-   if ( *bestK > 1 )
+   // remove post-clustering outliers
+   if ( *bestK > 1 && removePostOutliers )
    {
-      // remove post-clustering outliers
-      if ( removePostOutliers )
+      for ( char k = 0; k < *bestK; ++k )
       {
-         for ( char k = 0; k < *bestK; ++k )
-         {
-            markOutliers(X, N, 0, bestLabels, k, -8, work);
-            markOutliers(X, N, 1, bestLabels, k, -8, work);
-         }
+         markOutliers(X, N, bestLabels, k, -8, x_sorted, y_sorted);
       }
    }
 }

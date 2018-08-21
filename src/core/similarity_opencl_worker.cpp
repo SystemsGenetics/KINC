@@ -148,6 +148,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             _base->_removePostOutliers,
             &_buffers.work_X,
             &_buffers.work_N,
+            &_buffers.work_x,
+            &_buffers.work_y,
             &_buffers.work_labels,
             &_buffers.work_components,
             &_buffers.work_MP,

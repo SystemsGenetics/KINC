@@ -20,6 +20,8 @@ public:
       ,RemovePostOutliers
       ,WorkX
       ,WorkN
+      ,WorkXSorted
+      ,WorkYSorted
       ,WorkLabels
       ,WorkComponents
       ,WorkMP
@@ -44,6 +46,8 @@ public:
       cl_int removePostOutliers,
       ::OpenCL::Buffer<Pairwise::Vector2>* work_X,
       ::OpenCL::Buffer<cl_int>* work_N,
+      ::OpenCL::Buffer<cl_float>* work_x,
+      ::OpenCL::Buffer<cl_float>* work_y,
       ::OpenCL::Buffer<cl_char>* work_labels,
       ::OpenCL::Buffer<Pairwise::GMM::Component>* work_components,
       ::OpenCL::Buffer<Pairwise::Vector2>* work_MP,

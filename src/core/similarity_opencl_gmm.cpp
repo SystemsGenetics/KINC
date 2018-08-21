@@ -32,6 +32,8 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    cl_int removePostOutliers,
    ::OpenCL::Buffer<Pairwise::Vector2>* work_X,
    ::OpenCL::Buffer<cl_int>* work_N,
+   ::OpenCL::Buffer<cl_float>* work_x,
+   ::OpenCL::Buffer<cl_float>* work_y,
    ::OpenCL::Buffer<cl_char>* work_labels,
    ::OpenCL::Buffer<Pairwise::GMM::Component>* work_components,
    ::OpenCL::Buffer<Pairwise::Vector2>* work_MP,
@@ -57,6 +59,8 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    setArgument(RemovePostOutliers, removePostOutliers);
    setBuffer(WorkX, work_X);
    setBuffer(WorkN, work_N);
+   setBuffer(WorkXSorted, work_x);
+   setBuffer(WorkYSorted, work_y);
    setBuffer(WorkLabels, work_labels);
    setBuffer(WorkComponents, work_components);
    setBuffer(WorkMP, work_MP);
