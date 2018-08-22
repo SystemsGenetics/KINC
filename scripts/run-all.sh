@@ -22,11 +22,11 @@ CCM_FILE="$DATA/$(basename $EMX_FILE .emx).ccm"
 CMX_FILE="$DATA/$(basename $EMX_FILE .emx).cmx"
 CLUSMETHOD="none"
 CORRMETHOD="pearson"
-MINEXPR=-inf
+MINEXPR="-inf"
 CRITERION="BIC"
 PREOUT="--preout"
 POSTOUT="--postout"
-MINCORR=0
+MINCORR=0.5
 MAXCORR=1
 
 mpirun -np $NP $KINC run similarity --input $EMX_FILE --ccm $CCM_FILE --cmx $CMX_FILE --clusmethod $CLUSMETHOD --corrmethod $CORRMETHOD --minexpr $MINEXPR --crit $CRITERION $PREOUT $POSTOUT --mincorr $MINCORR --maxcorr $MAXCORR
