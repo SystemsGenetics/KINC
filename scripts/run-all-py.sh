@@ -21,8 +21,11 @@ python scripts/similarity.py -i $EMX_FILE -o $CMX_FILE --clusmethod $CLUSMETHOD 
 # threshold
 NUM_GENES=$(expr $(cat $EMX_FILE | wc -l) - 1)
 METHOD="rmt"
+TSTART=0.99
+TSTEP=0.001
+TSTOP=0.50
 
-python scripts/threshold.py -i $CMX_FILE --genes $NUM_GENES --method $METHOD
+python scripts/threshold.py -i $CMX_FILE --genes $NUM_GENES --method $METHOD --tstart $TSTART --tstep $TSTEP --tstop $TSTOP
 
 # extract
 NET_FILE="$DATA/$(basename $EMX_FILE .txt)-net-py.txt"

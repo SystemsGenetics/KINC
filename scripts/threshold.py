@@ -41,7 +41,60 @@ def compute_pruned_matrix(S, threshold):
 
 
 def powerlaw(args):
-	return 0
+	# load correlation matrix
+	S = load_cmx(args.INPUT, args.NUM_GENES, args.MAX_CLUSTERS)
+
+	# iterate until network is sufficiently scale-free
+	threshold = args.TSTART
+
+	while True:
+		# compute thresholded adjacency matrix
+		A = (abs(S) >= threshold)
+
+		# compute degree of each node
+		for i in xrange(A.shape[0]):
+			A[i, i] = 0
+
+		degrees = np.array([sum(A[i]) for i in xrange(A.shape[0])])
+
+		# compute degree distribution
+		bins = max(5, degrees.max())
+		hist, _ = np.histogram(degrees, bins=bins, range=(1, bins))
+		bin_edges = range(1, len(hist) + 1)
+
+		# modify histogram values to work with loglog plot
+		hist += 1
+
+		# plot degree distribution
+		if args.VISUALIZE:
+			plt.subplots(1, 2, figsize=(10, 5))
+			plt.subplot(121)
+			plt.plot(bin_edges, hist, "ko")
+			plt.subplot(122)
+			plt.loglog(bin_edges, hist, "ko")
+			plt.savefig("plots/powerlaw/%03d.png" % (int(threshold * 100)))
+			plt.close()
+
+		# compute correlation
+		x = np.log(bin_edges)
+		y = np.log(hist)
+
+		r, p = scipy.stats.pearsonr(x, y)
+
+		# output results of threshold test
+		print("%g\t%g\t%g" % (threshold, r, p))
+
+		# break if power law is satisfied
+		if r < 0 and p < 1e-20:
+			break
+
+		# decrement threshold and fail if minimum threshold is reached
+		threshold -= args.TSTEP
+		if threshold < args.TSTOP:
+			print("error: could not find an adequate threshold above stopping threshold")
+			sys.exit(0)
+
+	return threshold
 
 
 
@@ -140,17 +193,15 @@ def compute_chi_square(eigens):
 
 
 def rmt(args):
-	# initialize helper variables
-	final_threshold = 0
-	final_chi = float("inf")
-	max_chi = -float("inf")
-
-	threshold = args.TSTART
-
 	# load correlation matrix
 	S = load_cmx(args.INPUT, args.NUM_GENES, args.MAX_CLUSTERS)
 
-	# iterate until max chi goes below then above 200
+	# iterate until chi value goes below 99.607 then above 200
+	final_threshold = 0
+	final_chi = float("inf")
+	max_chi = -float("inf")
+	threshold = args.TSTART
+
 	while max_chi < 200:
 		# compute pruned matrix
 		S_pruned = compute_pruned_matrix(S, threshold)
@@ -161,7 +212,7 @@ def rmt(args):
 		if S_pruned.shape[0] > 0:
 			# compute eigenvalues of pruned matrix
 			eigens, _ = np.linalg.eigh(S_pruned)
-			
+
 			# compute chi-square value from NNSD of eigenvalues
 			chi = compute_chi_square(eigens)
 
@@ -182,7 +233,7 @@ def rmt(args):
 		# decrement threshold and fail if minimum threshold is reached
 		threshold -= args.TSTEP
 		if threshold < args.TSTOP:
-			print("error: could not find non-random threshold above stopping threshold")
+			print("error: could not find an adequate threshold above stopping threshold")
 			sys.exit(0)
 
 	return final_threshold
@@ -206,6 +257,7 @@ if __name__ == "__main__":
 	parser.add_argument("--tstop", type=float, default=0.5, help="stopping threshold", dest="TSTOP")
 	parser.add_argument("--minclus", type=int, default=1, help="minimum clusters", dest="MIN_CLUSTERS")
 	parser.add_argument("--maxclus", type=int, default=5, help="maximum clusters", dest="MAX_CLUSTERS")
+	parser.add_argument("--visualize", action="store_true", help="whether to visualize results", dest="VISUALIZE")
 
 	args = parser.parse_args()
 
