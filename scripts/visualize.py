@@ -37,16 +37,9 @@ def load_netlist(filename):
 
 
 if __name__ ==  "__main__":
-	# define plotting methods
-	METHODS = {
-		"kde": sns.kdeplot,
-		"scatter": plt.scatter
-	}
-
 	# parse command-line arguments
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-e", "--emx", required=True, help="expression matrix file", dest="EMX")
-	parser.add_argument("-m", "--method", default="scatter", choices=["kde", "scatter"], help="plotting method", dest="METHOD")
 	parser.add_argument("-n", "--netlist", required=True, help="netlist file", dest="NETLIST")
 	parser.add_argument("-o", "--output", required=True, help="output directory", dest="OUTPUT")
 	parser.add_argument("-s", "--scale", action="store_true", help="use a uniform global scale", dest="SCALE")
@@ -56,9 +49,6 @@ if __name__ ==  "__main__":
 	# load input data
 	emx = load_ematrix(args.EMX)
 	netlist = load_netlist(args.NETLIST)
-
-	# select plotting method
-	joint_func = METHODS[args.METHOD]
 
 	# setup plot limits
 	if args.SCALE:
@@ -80,6 +70,9 @@ if __name__ ==  "__main__":
 
 		print x, y, k
 
+		# extract pairwise data
+		data = emx[[x, y]].dropna(axis=0, how="any")
+
 		# highlight samples in the edge
 		colors = []
 		for s in samples:
@@ -90,17 +83,24 @@ if __name__ ==  "__main__":
 			else:
 				colors.append("k")
 
-		# create joint plot
-		g = sns.JointGrid(x=x, y=y, data=emx, xlim=limits, ylim=limits)
-		g = g.plot_joint(joint_func, color="w", edgecolor=colors)
-		g = g.plot_marginals(sns.distplot, kde=False, color="k")
+		# create figure
+		plt.subplots(1, 2, sharex=True, sharey=True, figsize=(10, 5))
 
-		# add correlation (might fail)
-		try:
-			g = g.annotate(scipy.stats.pearsonr)
-		except:
-			pass
+		# create density plot
+		plt.subplot(121)
+		plt.xlim(limits)
+		plt.ylim(limits)
+		sns.kdeplot(data[x], data[y], shade=True, shade_lowest=False)
+
+		# create scatter plot
+		plt.subplot(122)
+		plt.title("k=%d, samples=%d, r=%0.2f" % (k, edge["Cluster_Samples"], edge["sc"]))
+		plt.xlim(limits)
+		plt.ylim(limits)
+		plt.xlabel(x)
+		plt.ylabel(y)
+		plt.scatter(data[x], data[y], color="w", edgecolors=colors)
 
 		# save plot to file
-		g.savefig("%s/%s_%s_%d.png" % (args.OUTPUT, x, y, k))
+		plt.savefig("%s/%s_%s_%d.png" % (args.OUTPUT, x, y, k))
 		plt.close()
