@@ -14,6 +14,7 @@ public:
       ,ImportCorrelationMatrixType
       ,ExportCorrelationMatrixType
       ,SimilarityType
+      ,PowerLawType
       ,RMTType
       ,ExtractType
       ,Total

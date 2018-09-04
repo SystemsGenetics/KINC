@@ -30,16 +30,6 @@ def load_cmx(filename, num_genes, num_clusters):
 
 
 
-def compute_pruned_matrix(S, threshold):
-	S_pruned = np.copy(S)
-	S_pruned[abs(S) < threshold] = 0
-	S_pruned = S_pruned[~np.all(S_pruned == 0, axis=1)]
-	S_pruned = S_pruned[:, ~np.all(S_pruned == 0, axis=0)]
-
-	return S_pruned
-
-
-
 def powerlaw(args):
 	# load correlation matrix
 	S = load_cmx(args.INPUT, args.NUM_GENES, args.MAX_CLUSTERS)
@@ -95,6 +85,16 @@ def powerlaw(args):
 			sys.exit(0)
 
 	return threshold
+
+
+
+def compute_pruned_matrix(S, threshold):
+	S_pruned = np.copy(S)
+	S_pruned[abs(S) < threshold] = 0
+	S_pruned = S_pruned[~np.all(S_pruned == 0, axis=1)]
+	S_pruned = S_pruned[:, ~np.all(S_pruned == 0, axis=0)]
+
+	return S_pruned
 
 
 

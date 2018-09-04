@@ -48,6 +48,8 @@ SOURCES += \
    pairwise_matrix.cpp \
    pairwise_pearson.cpp \
    pairwise_spearman.cpp \
+   powerlaw_input.cpp \
+   powerlaw.cpp \
    rmt_input.cpp \
    rmt.cpp \
    similarity_input.cpp \
@@ -95,6 +97,8 @@ HEADERS += \
    pairwise_matrix.h \
    pairwise_pearson.h \
    pairwise_spearman.h \
+   powerlaw_input.h \
+   powerlaw.h \
    rmt_input.h \
    rmt.h \
    similarity_input.h \

@@ -1,5 +1,3 @@
-#include <memory>
-#include <random>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_vector.h>
@@ -9,7 +7,6 @@
 #include "rmt.h"
 #include "rmt_input.h"
 #include "correlationmatrix.h"
-#include "datafactory.h"
 
 
 
