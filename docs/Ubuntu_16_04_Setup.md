@@ -7,7 +7,7 @@ Use the following steps to setup KINC for development on Ubuntu 16.04:
 
 Most of the dependencies are available as packages:
 ```bash
-sudo apt install g++ libgsl-dev libopenblas-dev libopenmpi-dev ocl-icd-opencl-dev
+sudo apt install build-essential libgsl-dev libopenblas-dev libopenmpi-dev ocl-icd-opencl-dev
 ```
 
 For device drivers (AMD, Intel, NVIDIA, etc), refer to the manufacturer's website.
@@ -25,7 +25,7 @@ If you install Qt locally then you must add Qt to the executable path:
 
 ```bash
 # append to ~/.bashrc
-export QTDIR="$HOME/Qt/5.10.1/gcc_64"
+export QTDIR="$HOME/Qt/5.7.1/gcc_64"
 export PATH="$QTDIR/bin:$PATH"
 ```
 
@@ -45,6 +45,8 @@ Follow the ACE instructions to build ACE. If you install ACE locally then you mu
 ```bash
 # append to ~/.bashrc
 export INSTALL_PREFIX="$HOME/software"
+export CPLUS_INCLUDE_PATH="$INSTALL_PREFIX/include:$CPLUS_INCLUDE_PATH"
+export LIBRARY_PATH="$INSTALL_PREFIX/lib:$LIBRARY_PATH"
 export LD_LIBRARY_PATH="$INSTALL_PREFIX/lib:$LD_LIBRARY_PATH"
 ```
 
@@ -52,7 +54,7 @@ Build & install KINC:
 
 ```bash
 cd build
-qmake ../src/KINC.pro
+qmake ../src/KINC.pro PREFIX=$INSTALL_PREFIX
 make qmake_all
 make
 make qmake_all
