@@ -5,6 +5,7 @@
 #include "similarity_opencl_spearman.h"
 #include "similarity_resultblock.h"
 #include "similarity_workblock.h"
+#include <ace/core/elog.h>
 
 
 
@@ -90,6 +91,11 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
 
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(const EAbstractAnalytic::Block* block)
 {
+   if ( ELog::isActive() )
+   {
+      ELog() << tr("Executing(OpenCL) work index %1.\n").arg(block->index());
+   }
+
    // cast block to work block
    const WorkBlock* workBlock {block->cast<const WorkBlock>()};
 

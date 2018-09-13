@@ -2,6 +2,7 @@
 #include "similarity_resultblock.h"
 #include "similarity_workblock.h"
 #include "expressionmatrix_gene.h"
+#include <ace/core/elog.h>
 
 
 
@@ -33,6 +34,11 @@ Similarity::Serial::Serial(Similarity* parent):
 
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbstractAnalytic::Block* block)
 {
+   if ( ELog::isActive() )
+   {
+      ELog() << tr("Executing(serial) work index %1.\n").arg(block->index());
+   }
+
    // cast block to work block
    const WorkBlock* workBlock {block->cast<WorkBlock>()};
 

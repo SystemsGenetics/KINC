@@ -6,6 +6,7 @@
 #include "similarity_opencl.h"
 #include "ccmatrix_pair.h"
 #include "correlationmatrix_pair.h"
+#include <ace/core/elog.h>
 
 
 
@@ -31,6 +32,11 @@ int Similarity::size() const
 
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
 {
+   if ( ELog::isActive() )
+   {
+      ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
+   }
+
    const qint64 totalPairs {(qint64) _input->geneSize() * (_input->geneSize() - 1) / 2};
    const qint64 WORK_BLOCK_SIZE { 32 * 1024 };
 
@@ -67,6 +73,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeResult() const
 
 void Similarity::process(const EAbstractAnalytic::Block* result)
 {
+   if ( ELog::isActive() )
+   {
+      ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
+   }
+
    const ResultBlock* resultBlock {result->cast<ResultBlock>()};
 
    // iterate through all pairs in result block
