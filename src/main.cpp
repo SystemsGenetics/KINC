@@ -17,7 +17,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-   EApplication application(""
+   EApplication application("SystemsGenetics"
                             ,"kinc"
                             ,MAJOR_VERSION
                             ,MINOR_VERSION
