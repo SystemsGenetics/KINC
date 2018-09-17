@@ -5,6 +5,8 @@
 
 
 /*!
+ * String list of transforms for this data object corresponding to the
+ * Transform type.
  */
 const QStringList ExpressionMatrix::_transformNames
 {
@@ -14,6 +16,8 @@ const QStringList ExpressionMatrix::_transformNames
    ,"logarithm base 10"
 };
 /*!
+ * The header size (in bytes) at the beginning of the file. The header
+ * consists of the gene size and the sample size.
  */
 const qint64 ExpressionMatrix::_dataOffset {8};
 
@@ -23,10 +27,11 @@ const qint64 ExpressionMatrix::_dataOffset {8};
 
 
 /*!
+ * Return the index of the first byte in this data object after the end of
+ * the data section.
  */
 qint64 ExpressionMatrix::dataEnd() const
 {
-   // 
    return _dataOffset + (qint64)_geneSize*(qint64)_sampleSize*sizeof(float);
 }
 
@@ -36,11 +41,14 @@ qint64 ExpressionMatrix::dataEnd() const
 
 
 /*!
+ * Read in the data of an existing data object that was just opened.
  */
 void ExpressionMatrix::readData()
 {
-   // 
+   // seek to the beginning of the data
    seek(0);
+
+   // read the header
    stream() >> _geneSize >> _sampleSize;
 }
 
@@ -50,14 +58,17 @@ void ExpressionMatrix::readData()
 
 
 /*!
+ * Initialize this data object's data to a null state.
  */
 void ExpressionMatrix::writeNewData()
 {
-   // 
+   // initialize metadata object
    setMeta(EMetadata(EMetadata::Object));
 
-   // 
+   // seek to the beginning of the data
    seek(0);
+
+   // write the header
    stream() << _geneSize << _sampleSize;
 }
 
@@ -67,11 +78,15 @@ void ExpressionMatrix::writeNewData()
 
 
 /*!
+ * Finalize this data object's data after the analytic that created it has
+ * finished giving it new data.
  */
 void ExpressionMatrix::finish()
 {
-   // 
+   // seek to the beginning of the data
    seek(0);
+
+   // write the header
    stream() << _geneSize << _sampleSize;
 }
 
@@ -81,6 +96,7 @@ void ExpressionMatrix::finish()
 
 
 /*!
+ * Return a qt table model that represents this data object as a table.
  */
 QAbstractTableModel* ExpressionMatrix::model()
 {
@@ -97,6 +113,7 @@ QAbstractTableModel* ExpressionMatrix::model()
 
 
 /*!
+ * Return the transform that was applied to this expression matrix.
  */
 ExpressionMatrix::Transform ExpressionMatrix::transform() const
 {
@@ -118,6 +135,7 @@ ExpressionMatrix::Transform ExpressionMatrix::transform() const
 
 
 /*!
+ * Return the name of transform that was applied to this expression matrix.
  */
 QString ExpressionMatrix::transformString() const
 {
@@ -130,6 +148,7 @@ QString ExpressionMatrix::transformString() const
 
 
 /*!
+ * Return the number of genes (rows) in this expression matrix.
  */
 qint32 ExpressionMatrix::geneSize() const
 {
@@ -142,6 +161,7 @@ qint32 ExpressionMatrix::geneSize() const
 
 
 /*!
+ * Return the number of samples (columns) in this expression matrix.
  */
 qint32 ExpressionMatrix::sampleSize() const
 {
@@ -154,6 +174,7 @@ qint32 ExpressionMatrix::sampleSize() const
 
 
 /*!
+ * Return the list of gene names in this expression matrix.
  */
 EMetadata ExpressionMatrix::geneNames() const
 {
@@ -166,6 +187,7 @@ EMetadata ExpressionMatrix::geneNames() const
 
 
 /*!
+ * Return the list of sample names in this expression matrix.
  */
 EMetadata ExpressionMatrix::sampleNames() const
 {
@@ -178,24 +200,29 @@ EMetadata ExpressionMatrix::sampleNames() const
 
 
 /*!
+ * Return an array of this expression matrix's data in row-major form.
  */
 QVector<float> ExpressionMatrix::dumpRawData() const
 {
-   // 
+   // return empty array if expression matrix is empty
    if ( _geneSize == 0 )
    {
       return QVector<float>();
    }
 
-   // 
+   // allocate an array with the same size as the expression matrix
    QVector<float> ret(_geneSize*_sampleSize);
+
+   // seek to the beginning of the expression data
    seekExpression(0,0);
+
+   // write each expression to the array
    for (float& sample: ret)
    {
       stream() >> sample;
    }
 
-   // 
+   // return the array
    return ret;
 }
 
@@ -205,37 +232,37 @@ QVector<float> ExpressionMatrix::dumpRawData() const
 
 
 /*!
+ * Initialize this expression matrix with a list of gene names, a list of
+ * sample names, and a transform.
  *
- * @param geneNames  
- *
- * @param sampleNames  
- *
- * @param transform  
+ * @param geneNames
+ * @param sampleNames
+ * @param transform
  */
 void ExpressionMatrix::initialize(const QStringList& geneNames, const QStringList& sampleNames, Transform transform)
 {
-   // 
+   // create a metadata array of gene names
    EMetaArray metaGeneNames;
    for ( auto& geneName : geneNames )
    {
       metaGeneNames.append(geneName);
    }
 
-   // 
+   // create a metadata array of sample names
    EMetaArray metaSampleNames;
    for ( auto& sampleName : sampleNames )
    {
       metaSampleNames.append(sampleName);
    }
 
-   // 
+   // save the gene names, sample names, and transform to metadata
    EMetaObject metaObject {meta().toObject()};
    metaObject.insert("genes",metaGeneNames);
    metaObject.insert("samples",metaSampleNames);
    metaObject.insert("transform",_transformNames.at(static_cast<int>(transform)));
    setMeta(metaObject);
 
-   // 
+   // initialize the gene size and sample size accordingly
    _geneSize = geneNames.size();
    _sampleSize = sampleNames.size();
 }
@@ -246,13 +273,15 @@ void ExpressionMatrix::initialize(const QStringList& geneNames, const QStringLis
 
 
 /*!
+ * Seek to a particular expression in this expression matrix given a gene index
+ * and a sample index.
  *
- * @param gene  
- *
- * @param sample  
+ * @param gene
+ * @param sample
  */
 void ExpressionMatrix::seekExpression(int gene, int sample) const
 {
+   // make sure that the indices are valid
    if ( gene < 0 || gene >= _geneSize || sample < 0 || sample >= _sampleSize )
    {
       E_MAKE_EXCEPTION(e);
@@ -264,5 +293,7 @@ void ExpressionMatrix::seekExpression(int gene, int sample) const
                    .arg(_sampleSize));
       throw e;
    }
+
+   // seek to the specified position in the data
    seek(_dataOffset + ((qint64)gene*(qint64)_sampleSize + (qint64)sample)*sizeof(float));
 }

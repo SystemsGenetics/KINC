@@ -17,6 +17,9 @@ using namespace std;
 
 
 
+/*!
+ * Return the total number of analytic types that this program implements.
+ */
 quint16 AnalyticFactory::size() const
 {
    return Total;
@@ -27,6 +30,11 @@ quint16 AnalyticFactory::size() const
 
 
 
+/*!
+ * Return the display name for the given analytic type.
+ *
+ * @param type
+ */
 QString AnalyticFactory::name(quint16 type) const
 {
    switch (type)
@@ -48,6 +56,11 @@ QString AnalyticFactory::name(quint16 type) const
 
 
 
+/*!
+ * Return the command line name for the given analytic type.
+ *
+ * @param type
+ */
 QString AnalyticFactory::commandName(quint16 type) const
 {
    switch (type)
@@ -69,6 +82,11 @@ QString AnalyticFactory::commandName(quint16 type) const
 
 
 
+/*!
+ * Make and return a new abstract analytic object of the given type.
+ *
+ * @param type
+ */
 std::unique_ptr<EAbstractAnalytic> AnalyticFactory::make(quint16 type) const
 {
    switch (type)

@@ -7,12 +7,13 @@
 
 
 /*!
+ * Return the expression value at the given index.
  *
- * @param index  
+ * @param index
  */
 float& ExpressionMatrix::Gene::operator[](int index)
 {
-   // 
+   // make sure the index is valid
    if ( index < 0 || index >= _matrix->_sampleSize )
    {
       E_MAKE_EXCEPTION(e);
@@ -22,7 +23,7 @@ float& ExpressionMatrix::Gene::operator[](int index)
       throw e;
    }
 
-   // 
+   // return the specified value
    return _expressions[index];
 }
 
@@ -32,10 +33,11 @@ float& ExpressionMatrix::Gene::operator[](int index)
 
 
 /*!
+ * Construct a gene iterator for an expression matrix. Additionally, if the
+ * matrix is already initialized, read the first gene into memory.
  *
- * @param matrix  
- *
- * @param isInitialized  
+ * @param matrix
+ * @param isInitialized
  */
 ExpressionMatrix::Gene::Gene(ExpressionMatrix* matrix, bool isInitialized):
    _matrix(matrix),
@@ -53,6 +55,7 @@ ExpressionMatrix::Gene::Gene(ExpressionMatrix* matrix, bool isInitialized):
 
 
 /*!
+ * Destruct a gene iterator.
  */
 ExpressionMatrix::Gene::~Gene()
 {
@@ -65,11 +68,13 @@ ExpressionMatrix::Gene::~Gene()
 
 
 /*!
+ * Read a row of the expression matrix from the data object file into memory.
  *
- * @param index  
+ * @param index
  */
 void ExpressionMatrix::Gene::read(int index)
 {
+   // make sure the index is valid
    if ( index < 0 || index >= _matrix->_geneSize )
    {
       E_MAKE_EXCEPTION(e);
@@ -78,11 +83,17 @@ void ExpressionMatrix::Gene::read(int index)
                    .arg(_matrix->_geneSize-1));
       throw e;
    }
+
+   // seek to the beginning of the specified row in the data object file
    _matrix->seekExpression(index,0);
+
+   // read the entire row into memory
    for (int i = 0; i < _matrix->sampleSize() ;++i)
    {
       _matrix->stream() >> _expressions[i];
    }
+
+   // set the iterator's current index
    _index = index;
 }
 
@@ -92,14 +103,20 @@ void ExpressionMatrix::Gene::read(int index)
 
 
 /*!
+ * Read the next row of the expression matrix into memory.
  */
 bool ExpressionMatrix::Gene::readNext()
 {
-   if ( (_index + 1 ) >= _matrix->_geneSize )
+   // make sure that there is another row in the expression matrix
+   if ( (_index + 1) >= _matrix->_geneSize )
    {
       return false;
    }
+
+   // read the next row
    read(_index + 1);
+
+   // return success
    return true;
 }
 
@@ -109,11 +126,14 @@ bool ExpressionMatrix::Gene::readNext()
 
 
 /*!
+ * Write the iterator's row data to the data object file corresponding to
+ * the given row index.
  *
- * @param index  
+ * @param index
  */
 void ExpressionMatrix::Gene::write(int index)
 {
+   // make sure the index is valid
    if ( index < 0 || index >= _matrix->_geneSize )
    {
       E_MAKE_EXCEPTION(e);
@@ -122,11 +142,17 @@ void ExpressionMatrix::Gene::write(int index)
                    .arg(_matrix->_geneSize-1));
       throw e;
    }
+
+   // seek to the beginning of the specified row in the data object file
    _matrix->seekExpression(index,0);
+
+   // write the entire row to the data object
    for (int i = 0; i < _matrix->sampleSize() ;++i)
    {
       _matrix->stream() << _expressions[i];
    }
+
+   // set the iterator's current index
    _index = index;
 }
 
@@ -136,14 +162,20 @@ void ExpressionMatrix::Gene::write(int index)
 
 
 /*!
+ * Write the iterator's row data to the next row in the data object file.
  */
 bool ExpressionMatrix::Gene::writeNext()
 {
-   if ( (_index + 1 ) >= _matrix->_geneSize )
+   // make sure there is another row in the expression matrix
+   if ( (_index + 1) >= _matrix->_geneSize )
    {
       return false;
    }
+
+   // write to the next row
    write(_index + 1);
+
+   // return success
    return true;
 }
 
@@ -153,12 +185,13 @@ bool ExpressionMatrix::Gene::writeNext()
 
 
 /*!
+ * Return the expression value at the given index.
  *
- * @param index  
+ * @param index
  */
 float ExpressionMatrix::Gene::at(int index) const
 {
-   // 
+   // make sure the index is valid
    if ( index < 0 || index >= _matrix->_sampleSize )
    {
       E_MAKE_EXCEPTION(e);
@@ -168,6 +201,6 @@ float ExpressionMatrix::Gene::at(int index) const
       throw e;
    }
 
-   // 
+   // return the specified value
    return _expressions[index];
 }

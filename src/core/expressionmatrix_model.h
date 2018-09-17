@@ -6,6 +6,8 @@
 
 
 /*!
+ * This class implements the qt table model for the expression matrix
+ * data object, which represents the expression matrix as a table.
  */
 class ExpressionMatrix::Model : public QAbstractTableModel
 {
@@ -17,6 +19,7 @@ public:
    virtual QVariant data(const QModelIndex& index, int role) const override final;
 private:
    /*!
+    * Pointer to the data object for this table model.
     */
    ExpressionMatrix* _matrix;
 };
