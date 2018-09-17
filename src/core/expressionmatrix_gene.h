@@ -7,9 +7,9 @@
 
 /*!
  * This class implements the gene iterator for the expression matrix data
- * object. The gene iterator can iterate through each gene in the expression
- * matrix and read or write to each gene. The iterator stores only one row of
- * expression data in memory at a time.
+ * object. The gene iterator can read from or write to any gene (row) in the
+ * expression matrix, or simply iterate through each row. The iterator stores
+ * only one row of expression data in memory at a time.
  */
 class ExpressionMatrix::Gene
 {
@@ -29,7 +29,7 @@ private:
     */
    ExpressionMatrix* _matrix;
    /*!
-    * The iterator's current location in the expression matrix.
+    * The iterator's current position in the expression matrix.
     */
    int _index {0};
    /*!

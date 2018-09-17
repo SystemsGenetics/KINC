@@ -63,9 +63,10 @@ private:
 private:
    void seekExpression(int gene, int sample) const;
    /*!
-    * The header size (in bytes) at the beginning of the file.
+    * The header size (in bytes) at the beginning of the file. The header
+    * consists of the gene size and the sample size.
     */
-   static const qint64 _dataOffset;
+   constexpr static const qint64 _headerSize {8};
    /*!
     * The number of genes (rows) in the expression matrix.
     */

@@ -15,11 +15,6 @@ const QStringList ExpressionMatrix::_transformNames
    ,"logarithm base 2"
    ,"logarithm base 10"
 };
-/*!
- * The header size (in bytes) at the beginning of the file. The header
- * consists of the gene size and the sample size.
- */
-const qint64 ExpressionMatrix::_dataOffset {8};
 
 
 
@@ -28,11 +23,11 @@ const qint64 ExpressionMatrix::_dataOffset {8};
 
 /*!
  * Return the index of the first byte in this data object after the end of
- * the data section.
+ * the data section. Defined as the header size plus the size of the matrix data.
  */
 qint64 ExpressionMatrix::dataEnd() const
 {
-   return _dataOffset + (qint64)_geneSize*(qint64)_sampleSize*sizeof(float);
+   return _headerSize + (qint64)_geneSize * (qint64)_sampleSize * sizeof(float);
 }
 
 
@@ -200,7 +195,7 @@ EMetadata ExpressionMatrix::sampleNames() const
 
 
 /*!
- * Return an array of this expression matrix's data in row-major form.
+ * Return an array of this expression matrix's data in row-major order.
  */
 QVector<float> ExpressionMatrix::dumpRawData() const
 {
@@ -295,5 +290,5 @@ void ExpressionMatrix::seekExpression(int gene, int sample) const
    }
 
    // seek to the specified position in the data
-   seek(_dataOffset + ((qint64)gene*(qint64)_sampleSize + (qint64)sample)*sizeof(float));
+   seek(_headerSize + ((qint64)gene*(qint64)_sampleSize + (qint64)sample)*sizeof(float));
 }

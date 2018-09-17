@@ -9,6 +9,12 @@ using namespace Pairwise;
 
 
 
+/*!
+ * Write the iterator's pairwise data to the data object file with the given
+ * pairwise index.
+ *
+ * @param index
+ */
 void Matrix::Pair::write(Index index)
 {
    // make sure cluster size of pair does not exceed max
@@ -38,6 +44,11 @@ void Matrix::Pair::write(Index index)
 
 
 
+/*!
+ * Read the pair with the given pairwise index from the data object file.
+ *
+ * @param index
+ */
 void Matrix::Pair::read(Index index) const
 {
    // clear any existing clusters
@@ -59,6 +70,9 @@ void Matrix::Pair::read(Index index) const
 
 
 
+/*!
+ * Read the next pair in the data object file.
+ */
 void Matrix::Pair::readNext() const
 {
    // make sure read next index is not already at end of data object

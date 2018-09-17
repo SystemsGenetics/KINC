@@ -9,9 +9,14 @@ using namespace Pairwise;
 
 
 
+/*!
+ * Return the index of the first byte in this data object after the end of
+ * the data section. Defined as the size of the header and sub-header plus the
+ * total size of all pairs.
+ */
 qint64 Matrix::dataEnd() const
 {
-   return _headerSize + _offset + _clusterSize * (_dataSize + _itemHeaderSize);
+   return _headerSize + _subHeaderSize + _clusterSize * (_dataSize + _itemHeaderSize);
 }
 
 
@@ -19,11 +24,18 @@ qint64 Matrix::dataEnd() const
 
 
 
+/*!
+ * Read in the data of an existing data object that was just opened.
+ */
 void Matrix::readData()
 {
-   // read header
+   // seek to the beginning of the data
    seek(0);
-   stream() >> _geneSize >> _maxClusterSize >> _dataSize >> _pairSize >> _clusterSize >> _offset;
+
+   // read the header
+   stream() >> _geneSize >> _maxClusterSize >> _dataSize >> _pairSize >> _clusterSize >> _subHeaderSize;
+
+   // read the sub-header
    readHeader();
 }
 
@@ -32,14 +44,21 @@ void Matrix::readData()
 
 
 
+/*!
+ * Initialize this data object's data to a null state.
+ */
 void Matrix::writeNewData()
 {
    // initialize metadata
    setMeta(EMetadata(EMetadata::Object));
 
-   // initialize header
+   // seek to the beginning of the data
    seek(0);
-   stream() << _geneSize << _maxClusterSize << _dataSize << _pairSize << _clusterSize << _offset;
+
+   // write the header
+   stream() << _geneSize << _maxClusterSize << _dataSize << _pairSize << _clusterSize << _subHeaderSize;
+
+   // write the sub-header
    writeHeader();
 }
 
@@ -48,11 +67,19 @@ void Matrix::writeNewData()
 
 
 
+/*!
+ * Finalize this data object's data after the analytic that created it has
+ * finished giving it new data.
+ */
 void Matrix::finish()
 {
-   // initialize header
+   // seek to the beginning of the data
    seek(0);
-   stream() << _geneSize << _maxClusterSize << _dataSize << _pairSize << _clusterSize << _offset;
+
+   // write the header
+   stream() << _geneSize << _maxClusterSize << _dataSize << _pairSize << _clusterSize << _subHeaderSize;
+
+   // write the sub-header
    writeHeader();
 }
 
@@ -61,6 +88,9 @@ void Matrix::finish()
 
 
 
+/*!
+ * Return the list of gene names in this pairwise matrix.
+ */
 EMetadata Matrix::geneNames() const
 {
    return meta().toObject().at("genes");
@@ -71,7 +101,16 @@ EMetadata Matrix::geneNames() const
 
 
 
-void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int dataSize, int offset)
+/*!
+ * Initialize this pairwise matrix with a list of gene names, the max cluster
+ * size, the pairwise data size, and the sub-header size.
+ *
+ * @param geneNames
+ * @param maxClusterSize
+ * @param dataSize
+ * @param subHeaderSize
+ */
+void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int dataSize, int subHeaderSize)
 {
    // make sure gene names metadata is an array and is not empty
    if ( !geneNames.isArray() || geneNames.toArray().isEmpty() )
@@ -83,7 +122,7 @@ void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int data
    }
 
    // make sure arguments are valid
-   if ( maxClusterSize < 1 || dataSize < 1 || offset < 0 )
+   if ( maxClusterSize < 1 || dataSize < 1 || subHeaderSize < 0 )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Pairwise Matrix Initialization Error"));
@@ -108,7 +147,7 @@ void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int data
    _geneSize = geneNames.toArray().size();
    _maxClusterSize = maxClusterSize;
    _dataSize = dataSize;
-   _offset = offset;
+   _subHeaderSize = subHeaderSize;
    _pairSize = 0;
    _clusterSize = 0;
    _lastWrite = -1;
@@ -119,6 +158,12 @@ void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int data
 
 
 
+/*!
+ * Write the header of a new pair given a pairwise index and cluster index.
+ *
+ * @param index
+ * @param cluster
+ */
 void Matrix::write(Index index, qint8 cluster)
 {
    // make sure this is new data object that can be written to
@@ -142,7 +187,7 @@ void Matrix::write(Index index, qint8 cluster)
    }
 
    // seek to position for next pair and write indent value
-   seek(_headerSize + _offset + _clusterSize * (_dataSize + _itemHeaderSize));
+   seek(_headerSize + _subHeaderSize + _clusterSize * (_dataSize + _itemHeaderSize));
    stream() << index.getX() << index.getY() << cluster;
 
    // increment cluster size and set new last index
@@ -155,9 +200,16 @@ void Matrix::write(Index index, qint8 cluster)
 
 
 
+/*!
+ * Get a pair at the given index in the data object file and return the
+ * pairwise index and cluster index of that pair.
+ *
+ * @param index
+ * @param cluster
+ */
 Index Matrix::getPair(qint64 index, qint8* cluster) const
 {
-   // seek to pairwise index and read item header data
+   // seek to index and read item header data
    seekPair(index);
    qint32 geneX;
    qint32 geneY;
@@ -172,6 +224,13 @@ Index Matrix::getPair(qint64 index, qint8* cluster) const
 
 
 
+/*!
+ * Find a pair with a given indent value using binary search.
+ *
+ * @param indent
+ * @param first
+ * @param last
+ */
 qint64 Matrix::findPair(qint64 indent, qint64 first, qint64 last) const
 {
    // calculate the midway pivot point and seek to it
@@ -227,6 +286,11 @@ qint64 Matrix::findPair(qint64 indent, qint64 first, qint64 last) const
 
 
 
+/*!
+ * Seek to the pair at the given index in the data object file.
+ *
+ * @param index
+ */
 void Matrix::seekPair(qint64 index) const
 {
    // make sure index is within range
@@ -239,6 +303,6 @@ void Matrix::seekPair(qint64 index) const
       throw e;
    }
 
-   // seek to pairwise index requested making sure it worked
-   seek(_headerSize + _offset + index * (_dataSize + _itemHeaderSize));
+   // seek to the specified index
+   seek(_headerSize + _subHeaderSize + index * (_dataSize + _itemHeaderSize));
 }

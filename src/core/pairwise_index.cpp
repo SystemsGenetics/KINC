@@ -10,6 +10,13 @@ using namespace Pairwise;
 
 
 
+/*!
+ * Construct a pairwise index from a row index and a column index. The row
+ * index must be greater than the column index.
+ *
+ * @param x
+ * @param y
+ */
 Index::Index(qint32 x, qint32 y):
    _x(x),
    _y(y)
@@ -29,6 +36,12 @@ Index::Index(qint32 x, qint32 y):
 
 
 
+/*!
+ * Construct a pairwise index from a one-dimensional index, which corresponds
+ * to the i-th element in the lower triangle of a matrix using row-major order.
+ *
+ * @param index
+ */
 Index::Index(qint64 index):
    _x(1),
    _y(0)
@@ -61,6 +74,11 @@ Index::Index(qint64 index):
 
 
 
+/*!
+ * Return the indent value of this pairwise index with a given cluster index.
+ *
+ * @param cluster
+ */
 qint64 Index::indent(qint8 cluster) const
 {
    // make sure cluster given is valid
@@ -82,6 +100,9 @@ qint64 Index::indent(qint8 cluster) const
 
 
 
+/*!
+ * Increment a pairwise index to the next element.
+ */
 void Index::operator++()
 {
    // increment gene y and check if it reaches gene x
@@ -91,17 +112,4 @@ void Index::operator++()
       _y = 0;
       ++_x;
    }
-}
-
-
-
-
-
-
-Index Index::operator++(int)
-{
-   // save index value, increment it, and return previous value
-   Index ret {*this};
-   ++(*this);
-   return ret;
 }
