@@ -16,7 +16,6 @@ class ExpressionMatrix : public EAbstractData
    Q_OBJECT
 public:
    class Gene;
-   class ConstGene;
 public:
    virtual qint64 dataEnd() const override final;
    virtual void readData() override final;

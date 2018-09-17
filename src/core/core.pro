@@ -29,7 +29,6 @@ SOURCES += \
    exportcorrelationmatrix.cpp \
    exportexpressionmatrix_input.cpp \
    exportexpressionmatrix.cpp \
-   expressionmatrix_constgene.cpp \
    expressionmatrix_gene.cpp \
    expressionmatrix_model.cpp \
    expressionmatrix.cpp \
@@ -78,7 +77,6 @@ HEADERS += \
    exportcorrelationmatrix.h \
    exportexpressionmatrix_input.h \
    exportexpressionmatrix.h \
-   expressionmatrix_constgene.h \
    expressionmatrix_gene.h \
    expressionmatrix_model.h \
    expressionmatrix.h \
