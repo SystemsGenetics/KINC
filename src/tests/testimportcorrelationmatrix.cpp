@@ -3,9 +3,9 @@
 #include <ace/core/ace_dataobject.h>
 
 #include "testimportcorrelationmatrix.h"
-#include "analyticfactory.h"
-#include "datafactory.h"
-#include "importcorrelationmatrix_input.h"
+#include "../core/analyticfactory.h"
+#include "../core/datafactory.h"
+#include "../core/importcorrelationmatrix_input.h"
 
 
 

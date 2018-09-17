@@ -3,9 +3,9 @@
 #include <ace/core/ace_dataobject.h>
 
 #include "testimportexpressionmatrix.h"
-#include "analyticfactory.h"
-#include "datafactory.h"
-#include "importexpressionmatrix_input.h"
+#include "../core/analyticfactory.h"
+#include "../core/datafactory.h"
+#include "../core/importexpressionmatrix_input.h"
 
 
 
@@ -94,14 +94,14 @@ void TestImportExpressionMatrix::test()
 	// read expression data from file
 	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(emxPath)};
 	ExpressionMatrix* matrix {dataRef->data()->cast<ExpressionMatrix>()};
-	std::unique_ptr<float> expressions {matrix->dumpRawData()};
+	QVector<float> expressions {matrix->dumpRawData()};
 
 	// verify expression data
 	float error = 0;
 
 	for ( int i = 0; i < testExpressions.size(); ++i )
 	{
-		error += fabs(testExpressions[i] - expressions.get()[i]);
+		error += fabs(testExpressions[i] - expressions[i]);
 	}
 
 	error /= testExpressions.size();

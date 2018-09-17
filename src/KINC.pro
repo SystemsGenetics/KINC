@@ -8,10 +8,12 @@ TEMPLATE = subdirs
 # Subdir projects
 SUBDIRS += \
     core \
-    cli
+    cli \
+    tests
 
 # Dependencies
 cli.depends = core
+tests.depends = core
 
 # This is if GUI is enabled
 equals(GUI,"yes") {

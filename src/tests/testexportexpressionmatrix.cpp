@@ -3,9 +3,10 @@
 #include <ace/core/ace_dataobject.h>
 
 #include "testexportexpressionmatrix.h"
-#include "analyticfactory.h"
-#include "datafactory.h"
-#include "exportexpressionmatrix_input.h"
+#include "../core/analyticfactory.h"
+#include "../core/datafactory.h"
+#include "../core/exportexpressionmatrix_input.h"
+#include "../core/expressionmatrix_gene.h"
 
 
 
@@ -25,6 +26,7 @@ void TestExportExpressionMatrix::test()
 	QStringList geneNames;
 	QStringList sampleNames;
 	QString noSampleToken {"NA"};
+	auto transform {ExpressionMatrix::Transform::None};
 
 	for ( int i = 0; i < numGenes; ++i )
 	{
@@ -47,20 +49,18 @@ void TestExportExpressionMatrix::test()
 	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(emxPath)};
 	ExpressionMatrix* matrix {dataRef->data()->cast<ExpressionMatrix>()};
 
-	matrix->initialize(geneNames, sampleNames);
+	matrix->initialize(geneNames, sampleNames, transform);
 
 	ExpressionMatrix::Gene gene(matrix);
-	for ( int i = 0; i < matrix->getGeneSize(); ++i )
+	for ( int i = 0; i < matrix->geneSize(); ++i )
 	{
-		for ( int j = 0; j < matrix->getSampleSize(); ++j )
+		for ( int j = 0; j < matrix->sampleSize(); ++j )
 		{
 			gene[j] = testExpressions[i * numSamples + j];
 		}
 
 		gene.write(i);
 	}
-
-	matrix->setTransform(ExpressionMatrix::Transform::None);
 
 	dataRef->data()->finish();
 	dataRef->finalize();

@@ -3,9 +3,10 @@
 #include <ace/core/ace_dataobject.h>
 
 #include "testsimilarity.h"
-#include "analyticfactory.h"
-#include "datafactory.h"
-#include "similarity_input.h"
+#include "../core/analyticfactory.h"
+#include "../core/datafactory.h"
+#include "../core/similarity_input.h"
+#include "../core/expressionmatrix_gene.h"
 
 
 
@@ -24,7 +25,7 @@ void TestSimilarity::test()
 	// create metadata
 	QStringList geneNames;
 	QStringList sampleNames;
-	QString noSampleToken {"NA"};
+	auto transform {ExpressionMatrix::Transform::None};
 
 	for ( int i = 0; i < numGenes; ++i )
 	{
@@ -49,20 +50,18 @@ void TestSimilarity::test()
 	std::unique_ptr<Ace::DataObject> emxDataRef {new Ace::DataObject(emxPath)};
 	ExpressionMatrix* emx {emxDataRef->data()->cast<ExpressionMatrix>()};
 
-	emx->initialize(geneNames, sampleNames);
+	emx->initialize(geneNames, sampleNames, transform);
 
 	ExpressionMatrix::Gene gene(emx);
-	for ( int i = 0; i < emx->getGeneSize(); ++i )
+	for ( int i = 0; i < emx->geneSize(); ++i )
 	{
-		for ( int j = 0; j < emx->getSampleSize(); ++j )
+		for ( int j = 0; j < emx->sampleSize(); ++j )
 		{
 			gene[j] = testExpressions[i * numSamples + j];
 		}
 
 		gene.write(i);
 	}
-
-	emx->setTransform(ExpressionMatrix::Transform::None);
 
 	emxDataRef->data()->finish();
 	emxDataRef->finalize();

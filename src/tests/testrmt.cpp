@@ -3,10 +3,11 @@
 #include <ace/core/ace_dataobject.h>
 
 #include "testrmt.h"
-#include "analyticfactory.h"
-#include "datafactory.h"
-#include "rmt_input.h"
-#include "correlationmatrix.h"
+#include "../core/analyticfactory.h"
+#include "../core/datafactory.h"
+#include "../core/rmt_input.h"
+#include "../core/correlationmatrix.h"
+#include "../core/correlationmatrix_pair.h"
 
 
 

@@ -2,8 +2,9 @@
 #include <ace/core/ace_dataobject.h>
 
 #include "testexpressionmatrix.h"
-#include "datafactory.h"
-#include "expressionmatrix.h"
+#include "../core/datafactory.h"
+#include "../core/expressionmatrix.h"
+#include "../core/expressionmatrix_gene.h"
 
 
 
@@ -21,12 +22,14 @@ void TestExpressionMatrix::test()
 
 	// create metadata
 	QStringList geneNames;
+	QStringList sampleNames;
+	auto transform {ExpressionMatrix::Transform::None};
+
 	for ( int i = 0; i < numGenes; ++i )
 	{
 		geneNames.append(QString::number(i));
 	}
 
-	QStringList sampleNames;
 	for ( int i = 0; i < numSamples; ++i )
 	{
 		sampleNames.append(QString::number(i));
@@ -39,12 +42,12 @@ void TestExpressionMatrix::test()
 	ExpressionMatrix* matrix {dataRef->data()->cast<ExpressionMatrix>()};
 
 	// write data to file
-	matrix->initialize(geneNames, sampleNames);
+	matrix->initialize(geneNames, sampleNames, transform);
 
 	ExpressionMatrix::Gene gene(matrix);
-	for ( int i = 0; i < matrix->getGeneSize(); ++i )
+	for ( int i = 0; i < matrix->geneSize(); ++i )
 	{
-		for ( int j = 0; j < matrix->getSampleSize(); ++j )
+		for ( int j = 0; j < matrix->sampleSize(); ++j )
 		{
 			gene[j] = testExpressions[i * numSamples + j];
 		}
@@ -55,8 +58,8 @@ void TestExpressionMatrix::test()
 	matrix->finish();
 
 	// read expression data from file
-	std::unique_ptr<float> expressions {matrix->dumpRawData()};
+	QVector<float> expressions {matrix->dumpRawData()};
 
 	// verify expression data
-	QVERIFY(!memcmp(testExpressions.data(), expressions.get(), testExpressions.size() * sizeof(float)));
+	QVERIFY(!memcmp(testExpressions.data(), expressions.data(), testExpressions.size() * sizeof(float)));
 }

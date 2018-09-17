@@ -12,6 +12,10 @@ LIBS += -lacegui
 # Compiler defines
 DEFINES += GUI=1
 
+# Source files
+SOURCES += \
+    ../main.cpp
+
 # Installation instructions
 isEmpty(PREFIX) { PREFIX = /usr/local }
 program.path = $${PREFIX}/bin

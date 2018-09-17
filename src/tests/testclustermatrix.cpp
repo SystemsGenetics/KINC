@@ -2,8 +2,9 @@
 #include <ace/core/ace_dataobject.h>
 
 #include "testclustermatrix.h"
-#include "ccmatrix.h"
-#include "datafactory.h"
+#include "../core/ccmatrix.h"
+#include "../core/ccmatrix_pair.h"
+#include "../core/datafactory.h"
 
 
 

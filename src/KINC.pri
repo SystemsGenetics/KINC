@@ -31,10 +31,6 @@ equals(MPICXX,"yes") { LIBS += -lmpi_cxx }
 # Used to ignore useless warnings with OpenCL
 QMAKE_CXXFLAGS += -Wno-ignored-attributes
 
-# Source files
-SOURCES += \
-    ../main.cpp \
-
 # Resource files
 RESOURCES += \
     ../opencl.qrc

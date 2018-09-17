@@ -2,8 +2,9 @@
 #include <ace/core/ace_dataobject.h>
 
 #include "testcorrelationmatrix.h"
-#include "correlationmatrix.h"
-#include "datafactory.h"
+#include "../core/correlationmatrix.h"
+#include "../core/correlationmatrix_pair.h"
+#include "../core/datafactory.h"
 
 
 

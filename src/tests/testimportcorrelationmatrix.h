@@ -1,12 +1,12 @@
-#ifndef TESTEXPORTCORRELATIONMATRIX_H
-#define TESTEXPORTCORRELATIONMATRIX_H
+#ifndef TESTIMPORTCORRELATIONMATRIX_H
+#define TESTIMPORTCORRELATIONMATRIX_H
 #include <QtTest/QtTest>
 
-#include "pairwise_index.h"
+#include "../core/pairwise_index.h"
 
 
 
-class TestExportCorrelationMatrix : public QObject
+class TestImportCorrelationMatrix : public QObject
 {
 	Q_OBJECT
 

@@ -3,9 +3,11 @@
 #include <ace/core/ace_dataobject.h>
 
 #include "testexportcorrelationmatrix.h"
-#include "analyticfactory.h"
-#include "datafactory.h"
-#include "exportcorrelationmatrix_input.h"
+#include "../core/analyticfactory.h"
+#include "../core/datafactory.h"
+#include "../core/exportcorrelationmatrix_input.h"
+#include "../core/ccmatrix_pair.h"
+#include "../core/correlationmatrix_pair.h"
 
 
 
@@ -167,7 +169,7 @@ void TestExportCorrelationMatrix::test()
 			{
 				for ( int i = 0; i < sampleMask.size(); ++i )
 				{
-					QCOMPARE(sampleMask[i].digitValue(), testPair.sampleMasks[k][i]);
+					QCOMPARE((qint8) sampleMask[i].digitValue(), testPair.sampleMasks[k][i]);
 				}
 			}
 

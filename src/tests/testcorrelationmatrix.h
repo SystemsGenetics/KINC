@@ -2,7 +2,7 @@
 #define TESTCORRELATIONMATRIX_H
 #include <QtTest/QtTest>
 
-#include "pairwise_index.h"
+#include "../core/pairwise_index.h"
 
 
 

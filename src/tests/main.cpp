@@ -1,5 +1,5 @@
-#include "analyticfactory.h"
-#include "datafactory.h"
+#include "../core/analyticfactory.h"
+#include "../core/datafactory.h"
 #include "testclustermatrix.h"
 #include "testcorrelationmatrix.h"
 #include "testexportcorrelationmatrix.h"
