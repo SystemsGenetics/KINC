@@ -8,7 +8,7 @@
 /*!
  * This class implements the expression matrix data object. An expression matrix
  * is a matrix of real numbers whose rows represent genes and whose columns
- * represent samples. The matrix data can be accessed using the Gene interator,
+ * represent samples. The matrix data can be accessed using the gene interator,
  * which iterates through each gene (row) in the matrix.
  */
 class ExpressionMatrix : public EAbstractData

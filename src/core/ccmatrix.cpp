@@ -3,6 +3,9 @@
 
 
 
+/*!
+ * Return a qt table model that represents this data object as a table.
+ */
 QAbstractTableModel* CCMatrix::model()
 {
    if ( !_model )
@@ -17,7 +20,15 @@ QAbstractTableModel* CCMatrix::model()
 
 
 
-void CCMatrix::initialize(const EMetadata &geneNames, int maxClusterSize, const EMetadata &sampleNames)
+/*!
+ * Initialize this cluster matrix with a list of gene names, the max cluster
+ * size, and a list of sample names.
+ *
+ * @param geneNames
+ * @param maxClusterSize
+ * @param sampleNames
+ */
+void CCMatrix::initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& sampleNames)
 {
    // make sure sample names is an array and is not empty
    if ( !sampleNames.isArray() || sampleNames.toArray().isEmpty() )
@@ -35,7 +46,7 @@ void CCMatrix::initialize(const EMetadata &geneNames, int maxClusterSize, const 
 
    // save sample size and initialize base class
    _sampleSize = sampleNames.toArray().size();
-   Matrix::initialize(geneNames, maxClusterSize, (_sampleSize + 1) / 2 * sizeof(qint8), DATA_OFFSET);
+   Matrix::initialize(geneNames, maxClusterSize, (_sampleSize + 1) / 2 * sizeof(qint8), SUBHEADER_SIZE);
 }
 
 
@@ -43,6 +54,9 @@ void CCMatrix::initialize(const EMetadata &geneNames, int maxClusterSize, const 
 
 
 
+/*!
+ * Return the list of correlation names in this correlation matrix.
+ */
 EMetadata CCMatrix::sampleNames() const
 {
    return meta().toObject().at("samples");

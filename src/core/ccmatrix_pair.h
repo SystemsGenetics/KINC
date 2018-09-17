@@ -5,6 +5,11 @@
 
 
 
+/*!
+ * This class implements the pairwise iterator for the cluster matrix data
+ * object. This class extends the behavior of the base pairwise iterator to read
+ * and write sample masks.
+ */
 class CCMatrix::Pair : public Pairwise::Matrix::Pair
 {
 public:
@@ -27,7 +32,13 @@ public:
 private:
    virtual void writeCluster(EDataStream& stream, int cluster);
    virtual void readCluster(const EDataStream& stream, int cluster) const;
+   /*!
+    * Array of sample masks for the current pair.
+    */
    mutable QVector<QVector<qint8>> _sampleMasks;
+   /*!
+    * Constant pointer to parent cluster matrix.
+    */
    const CCMatrix* _cMatrix;
 };
 

@@ -2,6 +2,11 @@
 
 
 
+/*!
+ * Add one or more clusters to this pair.
+ *
+ * @param amount
+ */
 void CorrelationMatrix::Pair::addCluster(int amount) const
 {
    // keep adding a new list of floats for given amount
@@ -16,6 +21,10 @@ void CorrelationMatrix::Pair::addCluster(int amount) const
 
 
 
+/*!
+ * Return the string representation of this pair, which is a comma-delimited
+ * string of each correlation in the pair.
+ */
 QString CorrelationMatrix::Pair::toString() const
 {
    // if there are no correlations simply return null
@@ -49,6 +58,12 @@ QString CorrelationMatrix::Pair::toString() const
 
 
 
+/*!
+ * Write a cluster in the iterator's pairwise data to the data object file.
+ *
+ * @param stream
+ * @param cluster
+ */
 void CorrelationMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
 {
    // make sure cluster value is within range
@@ -67,6 +82,12 @@ void CorrelationMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
 
 
 
+/*!
+ * Read a cluster from the data object file into memory.
+ *
+ * @param stream
+ * @param cluster
+ */
 void CorrelationMatrix::Pair::readCluster(const EDataStream& stream, int cluster) const
 {
    // make sure cluster value is within range

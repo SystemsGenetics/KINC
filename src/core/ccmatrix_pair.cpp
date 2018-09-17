@@ -2,6 +2,11 @@
 
 
 
+/*!
+ * Add one or more clusters to this pair.
+ *
+ * @param amount
+ */
 void CCMatrix::Pair::addCluster(int amount) const
 {
    // keep adding a new list of sample masks for given amount
@@ -16,6 +21,10 @@ void CCMatrix::Pair::addCluster(int amount) const
 
 
 
+/*!
+ * Return the string representation of this pair, which is a comma-delimited
+ * string of each sample mask in the pair.
+ */
 QString CCMatrix::Pair::toString() const
 {
    // if there are no clusters return empty string
@@ -81,7 +90,13 @@ QString CCMatrix::Pair::toString() const
 
 
 
-void CCMatrix::Pair::writeCluster(EDataStream &stream, int cluster)
+/*!
+ * Write a cluster in the iterator's pairwise data to the data object file.
+ *
+ * @param stream
+ * @param cluster
+ */
+void CCMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
 {
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _sampleMasks.size() )
@@ -108,7 +123,13 @@ void CCMatrix::Pair::writeCluster(EDataStream &stream, int cluster)
 
 
 
-void CCMatrix::Pair::readCluster(const EDataStream &stream, int cluster) const
+/*!
+ * Read a cluster from the data object file into memory.
+ *
+ * @param stream
+ * @param cluster
+ */
+void CCMatrix::Pair::readCluster(const EDataStream& stream, int cluster) const
 {
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _sampleMasks.size() )

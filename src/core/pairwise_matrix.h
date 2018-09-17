@@ -10,10 +10,11 @@ namespace Pairwise
 {
    /*!
     * This class implements the abstract pairwise matrix data object, which can
-    * be extended to represent any pairwise matrix, including the correlation matrix
-    * and cluster matrix. Both the rows and columns correspond to genes, and each
-    * element (i, j) in the matrix contains pairwise data for genes i and j. This
-    * class stores matrix data as an ordered list of indexed pairs; therefore,
+    * be extended to represent any pairwise matrix. Both the rows and columns
+    * correspond to genes, and each element (i, j) in the matrix contains
+    * pairwise data for genes i and j. This pairwise data can have multiple clusters,
+    * and the structure of a "pair-cluster" is defined by the inheriting class.
+    * This class stores matrix data as an ordered list of indexed pairs; therefore,
     * pairwise data must be written in order and it should be sparse for the
     * storage format to be efficient.
     */

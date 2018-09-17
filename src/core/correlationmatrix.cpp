@@ -4,6 +4,9 @@
 
 
 
+/*!
+ * Return a qt table model that represents this data object as a table.
+ */
 QAbstractTableModel* CorrelationMatrix::model()
 {
    if ( !_model )
@@ -18,7 +21,15 @@ QAbstractTableModel* CorrelationMatrix::model()
 
 
 
-void CorrelationMatrix::initialize(const EMetadata &geneNames, int maxClusterSize, const EMetadata &correlationNames)
+/*!
+ * Initialize this correlation matrix with a list of gene names, the max cluster
+ * size, and a list of correlation names.
+ *
+ * @param geneNames
+ * @param maxClusterSize
+ * @param correlationNames
+ */
+void CorrelationMatrix::initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& correlationNames)
 {
    // make sure correlation names is an array and is not empty
    if ( !correlationNames.isArray() || correlationNames.toArray().isEmpty() )
@@ -36,7 +47,7 @@ void CorrelationMatrix::initialize(const EMetadata &geneNames, int maxClusterSiz
 
    // save correlation size and initialize base class
    _correlationSize = correlationNames.toArray().size();
-   Matrix::initialize(geneNames, maxClusterSize, _correlationSize * sizeof(float), DATA_OFFSET);
+   Matrix::initialize(geneNames, maxClusterSize, _correlationSize * sizeof(float), SUBHEADER_SIZE);
 }
 
 
@@ -44,6 +55,9 @@ void CorrelationMatrix::initialize(const EMetadata &geneNames, int maxClusterSiz
 
 
 
+/*!
+ * Return the list of correlation names in this correlation matrix.
+ */
 EMetadata CorrelationMatrix::correlationNames() const
 {
    return meta().toObject().at("correlations");
@@ -54,6 +68,9 @@ EMetadata CorrelationMatrix::correlationNames() const
 
 
 
+/*!
+ * Return an array of this correlation matrix's data in row-major order.
+ */
 QVector<float> CorrelationMatrix::dumpRawData() const
 {
    // if there are no genes do nothing

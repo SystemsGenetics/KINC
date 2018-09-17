@@ -4,6 +4,10 @@
 
 
 
+/*!
+ * This class implements the qt table model for the cluster matrix
+ * data object, which represents the cluster matrix as a table.
+ */
 class CCMatrix::Model : public QAbstractTableModel
 {
 public:
@@ -13,6 +17,9 @@ public:
    virtual int columnCount(const QModelIndex& parent) const override final;
    virtual QVariant data(const QModelIndex& index, int role) const override final;
 private:
+   /*!
+    * Pointer to the data object for this table model.
+    */
    CCMatrix* _matrix;
 };
 

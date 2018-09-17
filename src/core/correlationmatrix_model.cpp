@@ -10,6 +10,11 @@ using namespace std;
 
 
 
+/*!
+ * Construct a table model for a correlation matrix.
+ *
+ * @param matrix
+ */
 CorrelationMatrix::Model::Model(CorrelationMatrix* matrix):
    _matrix(matrix)
 {
@@ -21,6 +26,13 @@ CorrelationMatrix::Model::Model(CorrelationMatrix* matrix):
 
 
 
+/*!
+ * Return a header name for the table model using a given index.
+ *
+ * @param section
+ * @param orientation
+ * @param role
+ */
 QVariant CorrelationMatrix::Model::headerData(int section, Qt::Orientation orientation, int role) const
 {
    // orientation is not used
@@ -53,6 +65,9 @@ QVariant CorrelationMatrix::Model::headerData(int section, Qt::Orientation orien
 
 
 
+/*!
+ * Return the number of rows in the table model.
+ */
 int CorrelationMatrix::Model::rowCount(const QModelIndex&) const
 {
    return _matrix->geneSize();
@@ -63,6 +78,9 @@ int CorrelationMatrix::Model::rowCount(const QModelIndex&) const
 
 
 
+/*!
+ * Return the number of columns in the table model.
+ */
 int CorrelationMatrix::Model::columnCount(const QModelIndex&) const
 {
    return _matrix->geneSize();
@@ -73,7 +91,13 @@ int CorrelationMatrix::Model::columnCount(const QModelIndex&) const
 
 
 
-QVariant CorrelationMatrix::Model::data(const QModelIndex &index, int role) const
+/*!
+ * Return a data element in the table model using the given index.
+ *
+ * @param index
+ * @param role
+ */
+QVariant CorrelationMatrix::Model::data(const QModelIndex& index, int role) const
 {
    // if role is not display return nothing
    if ( role != Qt::DisplayRole )

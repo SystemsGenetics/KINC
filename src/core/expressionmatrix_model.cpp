@@ -88,12 +88,9 @@ QVariant ExpressionMatrix::Model::headerData(int section, Qt::Orientation orient
 
 /*!
  * Return the number of rows in the table model.
- *
- * @param parent
  */
-int ExpressionMatrix::Model::rowCount(const QModelIndex& parent) const
+int ExpressionMatrix::Model::rowCount(const QModelIndex&) const
 {
-   Q_UNUSED(parent);
    return _matrix->_geneSize;
 }
 
@@ -104,12 +101,9 @@ int ExpressionMatrix::Model::rowCount(const QModelIndex& parent) const
 
 /*!
  * Return the number of columns in the table model.
- *
- * @param parent
  */
-int ExpressionMatrix::Model::columnCount(const QModelIndex& parent) const
+int ExpressionMatrix::Model::columnCount(const QModelIndex&) const
 {
-   Q_UNUSED(parent);
    return _matrix->_sampleSize;
 }
 
