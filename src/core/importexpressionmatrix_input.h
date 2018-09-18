@@ -14,7 +14,6 @@ public:
       ,OutputData
       ,NoSampleToken
       ,SampleSize
-      ,TransformType
       ,Total
    };
    explicit Input(ImportExpressionMatrix* parent);

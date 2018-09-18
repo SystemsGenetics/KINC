@@ -26,7 +26,6 @@ void TestExportExpressionMatrix::test()
 	QStringList geneNames;
 	QStringList sampleNames;
 	QString noSampleToken {"NA"};
-	auto transform {ExpressionMatrix::Transform::None};
 
 	for ( int i = 0; i < numGenes; ++i )
 	{
@@ -49,7 +48,7 @@ void TestExportExpressionMatrix::test()
 	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(emxPath)};
 	ExpressionMatrix* matrix {dataRef->data()->cast<ExpressionMatrix>()};
 
-	matrix->initialize(geneNames, sampleNames, transform);
+	matrix->initialize(geneNames, sampleNames);
 
 	ExpressionMatrix::Gene gene(matrix);
 	for ( int i = 0; i < matrix->geneSize(); ++i )

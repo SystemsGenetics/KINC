@@ -90,7 +90,7 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
             {
                // read in the floating point value
                bool ok;
-               float value = words.at(i).toDouble(&ok);
+               gene->expressions[i-1] = words.at(i).toDouble(&ok);
 
                // make sure reading worked
                if ( !ok )
@@ -100,23 +100,6 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
                   e.setDetails(tr("Failed to read expression value \"%1\" for gene %2.")
                                .arg(words.at(i).toString()).arg(words.at(0).toString()));
                   throw e;
-               }
-
-               // apply transform and append expression to gene
-               switch (_transform)
-               {
-               case Transform::None:
-                  gene->expressions[i-1] = value;
-                  break;
-               case Transform::NatLog:
-                  gene->expressions[i-1] = log(value);
-                  break;
-               case Transform::Log2:
-                  gene->expressions[i-1] = log2(value);
-                  break;
-               case Transform::Log10:
-                  gene->expressions[i-1] = log10(value);
-                  break;
                }
             }
          }
@@ -148,7 +131,7 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
    }
 
    // initialize expression matrix
-   _output->initialize(geneNames, sampleNames,_transform);
+   _output->initialize(geneNames, sampleNames);
 
    // iterate through each gene
    ExpressionMatrix::Gene gene(_output);

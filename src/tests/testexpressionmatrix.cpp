@@ -23,7 +23,6 @@ void TestExpressionMatrix::test()
 	// create metadata
 	QStringList geneNames;
 	QStringList sampleNames;
-	auto transform {ExpressionMatrix::Transform::None};
 
 	for ( int i = 0; i < numGenes; ++i )
 	{
@@ -42,7 +41,7 @@ void TestExpressionMatrix::test()
 	ExpressionMatrix* matrix {dataRef->data()->cast<ExpressionMatrix>()};
 
 	// write data to file
-	matrix->initialize(geneNames, sampleNames, transform);
+	matrix->initialize(geneNames, sampleNames);
 
 	ExpressionMatrix::Gene gene(matrix);
 	for ( int i = 0; i < matrix->geneSize(); ++i )

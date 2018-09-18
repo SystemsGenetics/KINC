@@ -16,12 +16,10 @@ public:
    virtual EAbstractAnalytic::Input* makeInput() override final;
    virtual void initialize();
 private:
-   using Transform = ExpressionMatrix::Transform;
    QFile* _input {nullptr};
    ExpressionMatrix* _output {nullptr};
    QString _noSampleToken;
    qint32 _sampleSize {0};
-   Transform _transform {Transform::None};
 };
 
 

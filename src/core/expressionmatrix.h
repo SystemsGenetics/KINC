@@ -23,41 +23,12 @@ public:
    virtual void finish() override final;
    virtual QAbstractTableModel* model() override final;
 public:
-   /*!
-    * Defines the transforms that this data object supports.
-    */
-   enum class Transform
-   {
-      /*!
-       * no transform
-       */
-      None
-      /*!
-       * natural logarithm
-       */
-      ,NatLog
-      /*!
-       * base-2 logarithm
-       */
-      ,Log2
-      /*!
-       * base-10 logarithm
-       */
-      ,Log10
-   };
-   ExpressionMatrix::Transform transform() const;
-   QString transformString() const;
    qint32 geneSize() const;
    qint32 sampleSize() const;
    EMetadata geneNames() const;
    EMetadata sampleNames() const;
    QVector<float> dumpRawData() const;
-   void initialize(const QStringList& geneNames, const QStringList& sampleNames, Transform transform);
-   /*!
-    * String list of transforms for this data object corresponding to the
-    * Transform type.
-    */
-   static const QStringList _transformNames;
+   void initialize(const QStringList& geneNames, const QStringList& sampleNames);
 private:
    class Model;
 private:

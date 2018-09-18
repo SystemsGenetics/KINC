@@ -34,7 +34,6 @@ EAbstractAnalytic::Input::Type ImportExpressionMatrix::Input::type(int index) co
    case OutputData: return Type::DataOut;
    case NoSampleToken: return Type::String;
    case SampleSize: return Type::Integer;
-   case TransformType: return Type::Selection;
    default: return Type::Boolean;
    }
 }
@@ -85,16 +84,6 @@ QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
       case Role::Maximum: return std::numeric_limits<int>::max();
       default: return QVariant();
       }
-   case TransformType:
-      switch (role)
-      {
-      case Role::CommandLineName: return QString("transform");
-      case Role::Title: return tr("Transform:");
-      case Role::WhatsThis: return tr("Element-wise transformation to apply to expression data.");
-      case Role::Default: return ExpressionMatrix::_transformNames.first();
-      case Role::SelectionValues: return ExpressionMatrix::_transformNames;
-      default: return QVariant();
-      }
    default: return QVariant();
    }
 }
@@ -113,9 +102,6 @@ void ImportExpressionMatrix::Input::set(int index, const QVariant& value)
       break;
    case NoSampleToken:
       _base->_noSampleToken = value.toString();
-      break;
-   case TransformType:
-      _base->_transform = static_cast<Transform>(ExpressionMatrix::_transformNames.indexOf(value.toString()));
       break;
    }
 }

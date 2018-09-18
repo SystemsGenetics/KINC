@@ -22,13 +22,9 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 {
    Q_UNUSED(result);
 
-   // use expression declaration
-   using Transform = ExpressionMatrix::Transform;
-
-   // get gene names, sample names, and transform
+   // get gene names, sample names
    EMetaArray geneNames = _input->geneNames().toArray();
    EMetaArray sampleNames = _input->sampleNames().toArray();
-   Transform transform = _input->transform();
 
    // create text stream to output file
    QTextStream stream(_output);
@@ -65,22 +61,6 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
          // else this is a normal floating point expression
          else
          {
-            // apply transform and write value
-            switch (transform)
-            {
-            case Transform::None:
-               break;
-            case Transform::NatLog:
-               value = exp(value);
-               break;
-            case Transform::Log2:
-               value = pow(2, value);
-               break;
-            case Transform::Log10:
-               value = pow(10, value);
-               break;
-            }
-
             stream << "\t" << value;
          }
       }

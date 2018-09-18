@@ -25,7 +25,6 @@ void TestSimilarity::test()
 	// create metadata
 	QStringList geneNames;
 	QStringList sampleNames;
-	auto transform {ExpressionMatrix::Transform::None};
 
 	for ( int i = 0; i < numGenes; ++i )
 	{
@@ -50,7 +49,7 @@ void TestSimilarity::test()
 	std::unique_ptr<Ace::DataObject> emxDataRef {new Ace::DataObject(emxPath)};
 	ExpressionMatrix* emx {emxDataRef->data()->cast<ExpressionMatrix>()};
 
-	emx->initialize(geneNames, sampleNames, transform);
+	emx->initialize(geneNames, sampleNames);
 
 	ExpressionMatrix::Gene gene(emx);
 	for ( int i = 0; i < emx->geneSize(); ++i )

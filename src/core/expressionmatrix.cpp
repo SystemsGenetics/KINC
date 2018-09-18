@@ -5,23 +5,6 @@
 
 
 /*!
- * String list of transforms for this data object corresponding to the
- * Transform type.
- */
-const QStringList ExpressionMatrix::_transformNames
-{
-   "none"
-   ,"natural logarithm"
-   ,"logarithm base 2"
-   ,"logarithm base 10"
-};
-
-
-
-
-
-
-/*!
  * Return the index of the first byte in this data object after the end of
  * the data section. Defined as the header size plus the size of the matrix data.
  */
@@ -100,41 +83,6 @@ QAbstractTableModel* ExpressionMatrix::model()
       _model = new Model(this);
    }
    return _model;
-}
-
-
-
-
-
-
-/*!
- * Return the transform that was applied to this expression matrix.
- */
-ExpressionMatrix::Transform ExpressionMatrix::transform() const
-{
-   QString transformName {meta().toObject().at("transform").toString()};
-   int index {_transformNames.indexOf(transformName)};
-   if ( index == -1 )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Logic Error"));
-      e.setDetails(tr("Unknown transform name: %1.").arg(transformName));
-      throw e;
-   }
-   return static_cast<Transform>(index);
-}
-
-
-
-
-
-
-/*!
- * Return the name of transform that was applied to this expression matrix.
- */
-QString ExpressionMatrix::transformString() const
-{
-   return meta().toObject().at("transform").toString();
 }
 
 
@@ -227,14 +175,13 @@ QVector<float> ExpressionMatrix::dumpRawData() const
 
 
 /*!
- * Initialize this expression matrix with a list of gene names, a list of
- * sample names, and a transform.
+ * Initialize this expression matrix with a list of gene names and a list of
+ * sample names.
  *
  * @param geneNames
  * @param sampleNames
- * @param transform
  */
-void ExpressionMatrix::initialize(const QStringList& geneNames, const QStringList& sampleNames, Transform transform)
+void ExpressionMatrix::initialize(const QStringList& geneNames, const QStringList& sampleNames)
 {
    // create a metadata array of gene names
    EMetaArray metaGeneNames;
@@ -250,11 +197,10 @@ void ExpressionMatrix::initialize(const QStringList& geneNames, const QStringLis
       metaSampleNames.append(sampleName);
    }
 
-   // save the gene names, sample names, and transform to metadata
+   // save the gene names and sample names to metadata
    EMetaObject metaObject {meta().toObject()};
    metaObject.insert("genes",metaGeneNames);
    metaObject.insert("samples",metaSampleNames);
-   metaObject.insert("transform",_transformNames.at(static_cast<int>(transform)));
    setMeta(metaObject);
 
    // initialize the gene size and sample size accordingly
