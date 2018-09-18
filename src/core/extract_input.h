@@ -19,7 +19,7 @@ public:
       ExpressionData = 0
       ,ClusterData
       ,CorrelationData
-      ,OutputFile
+      ,TextFile
       ,GraphMLFile
       ,MinCorrelation
       ,MaxCorrelation

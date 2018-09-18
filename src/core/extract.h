@@ -27,6 +27,8 @@ public:
    virtual EAbstractAnalytic::Input* makeInput() override final;
    virtual void initialize();
 private:
+   void exportTextFile();
+   void exportGraphMLFile();
    /*!
     * Pointer to the input expression matrix.
     */
@@ -42,7 +44,7 @@ private:
    /*!
     * Pointer to the output text file.
     */
-   QFile* _output {nullptr};
+   QFile* _text {nullptr};
    /*!
     * Pointer to the output GraphML file.
     */

@@ -43,7 +43,7 @@ EAbstractAnalytic::Input::Type Extract::Input::type(int index) const
    case ExpressionData: return Type::DataIn;
    case ClusterData: return Type::DataIn;
    case CorrelationData: return Type::DataIn;
-   case OutputFile: return Type::FileOut;
+   case TextFile: return Type::FileOut;
    case GraphMLFile: return Type::FileOut;
    case MinCorrelation: return Type::Double;
    case MaxCorrelation: return Type::Double;
@@ -93,12 +93,12 @@ QVariant Extract::Input::data(int index, Role role) const
       case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
-   case OutputFile:
+   case TextFile:
       switch (role)
       {
-      case Role::CommandLineName: return QString("output");
+      case Role::CommandLineName: return QString("text");
       case Role::Title: return tr("Output File:");
-      case Role::WhatsThis: return tr("Output text file that will contain network edges.");
+      case Role::WhatsThis: return tr("Output file that will contain network as an edge list.");
       case Role::FileFilters: return tr("Text file %1").arg("(*.txt)");
       default: return QVariant();
       }
@@ -107,7 +107,7 @@ QVariant Extract::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("graphml");
       case Role::Title: return tr("GraphML File:");
-      case Role::WhatsThis: return tr("Output text file that will contain network in GraphML format.");
+      case Role::WhatsThis: return tr("Output file that will contain network in GraphML format.");
       case Role::FileFilters: return tr("GraphML file %1").arg("(*.graphml)");
       default: return QVariant();
       }
@@ -201,9 +201,9 @@ void Extract::Input::set(int index, EAbstractData* data)
  */
 void Extract::Input::set(int index, QFile* file)
 {
-   if ( index == OutputFile )
+   if ( index == TextFile )
    {
-      _base->_output = file;
+      _base->_text = file;
    }
    else if ( index == GraphMLFile )
    {

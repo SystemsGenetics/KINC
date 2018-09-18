@@ -38,6 +38,29 @@ void Extract::process(const EAbstractAnalytic::Block* result)
 {
    Q_UNUSED(result);
 
+   // if output text file was given then export a text file
+   if ( _text )
+   {
+      exportTextFile();
+   }
+
+   // if output graphml file was given then export a graphml file
+   if ( _graphml )
+   {
+      exportGraphMLFile();
+   }
+}
+
+
+
+
+
+
+/*!
+ * Export the correlation matrix to a text file.
+ */
+void Extract::exportTextFile()
+{
    // initialize pairwise iterators
    CorrelationMatrix::Pair cmxPair(_cmx);
    CCMatrix::Pair ccmPair(_ccm);
@@ -49,7 +72,7 @@ void Extract::process(const EAbstractAnalytic::Block* result)
    QString sampleMask(_ccm->sampleSize(), '0');
 
    // create text stream to output file and write until end reached
-   QTextStream stream(_output);
+   QTextStream stream(_text);
    stream.setRealNumberPrecision(6);
 
    // write header to file
@@ -183,12 +206,30 @@ void Extract::process(const EAbstractAnalytic::Block* result)
       e.setDetails(tr("Qt Text Stream encountered an unknown error."));
       throw e;
    }
+}
 
-   // reset gene pair iterator
-   cmxPair.reset();
 
-   // create text stream to graphml file and write until end reached
-   stream.setDevice(_graphml);
+
+
+
+
+/*!
+ * Export the correlation matrix to a GraphML file.
+ */
+void Extract::exportGraphMLFile()
+{
+   // initialize pairwise iterators
+   CorrelationMatrix::Pair cmxPair(_cmx);
+   CCMatrix::Pair ccmPair(_ccm);
+
+   // get gene names
+   EMetaArray geneNames {_cmx->geneNames().toArray()};
+
+   // initialize workspace
+   QString sampleMask(_ccm->sampleSize(), '0');
+
+   // create text stream to output file and write until end reached
+   QTextStream stream(_graphml);
 
    // write header to file
    stream
@@ -313,11 +354,19 @@ EAbstractAnalytic::Input* Extract::makeInput()
  */
 void Extract::initialize()
 {
-   if ( !_emx || !_ccm || !_cmx || !_output )
+   if ( !_emx || !_ccm || !_cmx )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Did not get valid input and/or output arguments."));
+      e.setDetails(tr("Did not get valid input arguments."));
+      throw e;
+   }
+
+   if ( !_text && !_graphml )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Invalid Argument"));
+      e.setDetails(tr("Did not get any valid output arguments."));
       throw e;
    }
 }
