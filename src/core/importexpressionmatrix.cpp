@@ -8,6 +8,10 @@
 
 
 
+/*!
+ * Return the total number of blocks this analytic must process as steps
+ * or blocks of work.
+ */
 int ImportExpressionMatrix::size() const
 {
    return 1;
@@ -18,6 +22,12 @@ int ImportExpressionMatrix::size() const
 
 
 
+/*!
+ * Process the given index with a possible block of results if this analytic
+ * produces work blocks. This analytic implementation has no work blocks.
+ *
+ * @param result
+ */
 void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 {
    Q_UNUSED(result);
@@ -55,6 +65,7 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 
    // create text stream from input file and read until end reached
    QTextStream stream(_input);
+
    while ( !stream.atEnd() )
    {
       // read a line from text file
@@ -80,7 +91,7 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
          for ( int i = 1; i < words.size(); ++i )
          {
             // if word matches no sample token string set it as such
-            if ( words.at(i) == _noSampleToken )
+            if ( words.at(i) == _nanToken )
             {
                gene->expressions[i-1] = NAN;
             }
@@ -135,6 +146,7 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 
    // iterate through each gene
    ExpressionMatrix::Gene gene(_output);
+
    for ( int i = 0; i < _output->geneSize(); ++i )
    {
       // save each gene to expression matrix
@@ -152,6 +164,9 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 
 
 
+/*!
+ * Make a new input object and return its pointer.
+ */
 EAbstractAnalytic::Input* ImportExpressionMatrix::makeInput()
 {
    return new Input(this);
@@ -162,6 +177,10 @@ EAbstractAnalytic::Input* ImportExpressionMatrix::makeInput()
 
 
 
+/*!
+ * Initialize this analytic. This implementation checks to make sure the input
+ * file and output data object have been set.
+ */
 void ImportExpressionMatrix::initialize()
 {
    if ( !_input || !_output )

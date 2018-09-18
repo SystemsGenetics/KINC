@@ -24,7 +24,7 @@ void TestImportExpressionMatrix::test()
 	// create metadata
 	QStringList geneNames;
 	QStringList sampleNames;
-	QString noSampleToken {"NA"};
+	QString nanToken {"NA"};
 
 	for ( int i = 0; i < numGenes; ++i )
 	{
@@ -66,7 +66,7 @@ void TestImportExpressionMatrix::test()
 
 			if ( std::isnan(value) )
 			{
-				stream << "\t" << noSampleToken;
+				stream << "\t" << nanToken;
 			}
 			else
 			{
@@ -84,7 +84,7 @@ void TestImportExpressionMatrix::test()
 	auto manager = qobject_cast<Ace::Analytic::Single*>(abstractManager.release());
 	manager->set(ImportExpressionMatrix::Input::InputFile, txtPath);
 	manager->set(ImportExpressionMatrix::Input::OutputData, emxPath);
-	manager->set(ImportExpressionMatrix::Input::NoSampleToken, noSampleToken);
+	manager->set(ImportExpressionMatrix::Input::NANToken, nanToken);
 
 	// run analytic
 	manager->initialize();

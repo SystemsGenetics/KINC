@@ -25,7 +25,7 @@ void TestExportExpressionMatrix::test()
 	// create metadata
 	QStringList geneNames;
 	QStringList sampleNames;
-	QString noSampleToken {"NA"};
+	QString nanToken {"NA"};
 
 	for ( int i = 0; i < numGenes; ++i )
 	{
@@ -69,7 +69,7 @@ void TestExportExpressionMatrix::test()
 	auto manager = qobject_cast<Ace::Analytic::Single*>(abstractManager.release());
 	manager->set(ExportExpressionMatrix::Input::InputData, emxPath);
 	manager->set(ExportExpressionMatrix::Input::OutputFile, txtPath);
-	manager->set(ExportExpressionMatrix::Input::NoSampleToken, noSampleToken);
+	manager->set(ExportExpressionMatrix::Input::NANToken, nanToken);
 
 	// run analytic
 	manager->initialize();
@@ -100,7 +100,7 @@ void TestExportExpressionMatrix::test()
 
 			for ( int j = 1; j < words.size(); ++j )
 			{
-				if ( words.at(j) == noSampleToken )
+				if ( words.at(j) == nanToken )
 				{
 					expressions[(i - 1) * numSamples + (j - 1)] = NAN;
 				}

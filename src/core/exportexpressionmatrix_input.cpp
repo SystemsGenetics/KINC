@@ -6,6 +6,11 @@
 
 
 
+/*!
+ * Constructs a new input object with the given analytic as its parent.
+ *
+ * @param parent
+ */
 ExportExpressionMatrix::Input::Input(ExportExpressionMatrix* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
@@ -16,6 +21,9 @@ ExportExpressionMatrix::Input::Input(ExportExpressionMatrix* parent):
 
 
 
+/*!
+ * Return the total number of arguments this analytic type contains.
+ */
 int ExportExpressionMatrix::Input::size() const
 {
    return Total;
@@ -26,13 +34,18 @@ int ExportExpressionMatrix::Input::size() const
 
 
 
+/*!
+ * Return the argument type for a given index.
+ *
+ * @param index
+ */
 EAbstractAnalytic::Input::Type ExportExpressionMatrix::Input::type(int index) const
 {
    switch (index)
    {
    case InputData: return Type::DataIn;
    case OutputFile: return Type::FileOut;
-   case NoSampleToken: return Type::String;
+   case NANToken: return Type::String;
    default: return Type::Boolean;
    }
 }
@@ -42,6 +55,12 @@ EAbstractAnalytic::Input::Type ExportExpressionMatrix::Input::type(int index) co
 
 
 
+/*!
+ * Return data for a given role on an argument with the given index.
+ *
+ * @param index
+ * @param role
+ */
 QVariant ExportExpressionMatrix::Input::data(int index, Role role) const
 {
    switch (index)
@@ -64,11 +83,11 @@ QVariant ExportExpressionMatrix::Input::data(int index, Role role) const
       case Role::FileFilters: return tr("Text file %1").arg("(*.txt)");
       default: return QVariant();
       }
-   case NoSampleToken:
+   case NANToken:
       switch (role)
       {
       case Role::CommandLineName: return QString("nan");
-      case Role::Title: return tr("No Sample Token:");
+      case Role::Title: return tr("NAN Token:");
       case Role::WhatsThis: return tr("Expected token for expressions that have no value.");
       default: return QVariant();
       }
@@ -81,12 +100,18 @@ QVariant ExportExpressionMatrix::Input::data(int index, Role role) const
 
 
 
+/*!
+ * Set an argument with the given index to the given value.
+ *
+ * @param index
+ * @param value
+ */
 void ExportExpressionMatrix::Input::set(int index, const QVariant& value)
 {
    switch (index)
    {
-   case NoSampleToken:
-      _base->_noSampleToken = value.toString();
+   case NANToken:
+      _base->_nanToken = value.toString();
       break;
    }
 }
@@ -96,6 +121,12 @@ void ExportExpressionMatrix::Input::set(int index, const QVariant& value)
 
 
 
+/*!
+ * Set a data argument with the given index to the given data object pointer.
+ *
+ * @param index
+ * @param data
+ */
 void ExportExpressionMatrix::Input::set(int index, EAbstractData* data)
 {
    if ( index == InputData )
@@ -109,6 +140,12 @@ void ExportExpressionMatrix::Input::set(int index, EAbstractData* data)
 
 
 
+/*!
+ * Set a file argument with the given index to the given qt file pointer.
+ *
+ * @param index
+ * @param file
+ */
 void ExportExpressionMatrix::Input::set(int index, QFile* file)
 {
    if ( index == OutputFile )
