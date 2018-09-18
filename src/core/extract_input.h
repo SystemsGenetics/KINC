@@ -4,10 +4,16 @@
 
 
 
+/*!
+ * This class implements the abstract input of the extract analytic.
+ */
 class Extract::Input : public EAbstractAnalytic::Input
 {
    Q_OBJECT
 public:
+   /*!
+    * Defines all input arguments for this analytic.
+    */
    enum Argument
    {
       ExpressionData = 0
@@ -27,6 +33,9 @@ public:
    virtual void set(int index, EAbstractData* data) override final;
    virtual void set(int index, QFile* file) override final;
 private:
+   /*!
+    * Pointer to the base analytic for this object.
+    */
    Extract* _base;
 };
 

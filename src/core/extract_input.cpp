@@ -3,6 +3,11 @@
 
 
 
+/*!
+ * Constructs a new input object with the given analytic as its parent.
+ *
+ * @param parent
+ */
 Extract::Input::Input(Extract* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
@@ -13,6 +18,9 @@ Extract::Input::Input(Extract* parent):
 
 
 
+/*!
+ * Return the total number of arguments this analytic type contains.
+ */
 int Extract::Input::size() const
 {
    return Total;
@@ -23,6 +31,11 @@ int Extract::Input::size() const
 
 
 
+/*!
+ * Return the argument type for a given index.
+ *
+ * @param index
+ */
 EAbstractAnalytic::Input::Type Extract::Input::type(int index) const
 {
    switch (index)
@@ -43,6 +56,12 @@ EAbstractAnalytic::Input::Type Extract::Input::type(int index) const
 
 
 
+/*!
+ * Return data for a given role on an argument with the given index.
+ *
+ * @param index
+ * @param role
+ */
 QVariant Extract::Input::data(int index, Role role) const
 {
    switch (index)
@@ -123,6 +142,12 @@ QVariant Extract::Input::data(int index, Role role) const
 
 
 
+/*!
+ * Set an argument with the given index to the given value.
+ *
+ * @param index
+ * @param value
+ */
 void Extract::Input::set(int index, const QVariant& value)
 {
    switch (index)
@@ -141,6 +166,12 @@ void Extract::Input::set(int index, const QVariant& value)
 
 
 
+/*!
+ * Set a data argument with the given index to the given data object pointer.
+ *
+ * @param index
+ * @param data
+ */
 void Extract::Input::set(int index, EAbstractData* data)
 {
    if ( index == ExpressionData )
@@ -162,6 +193,12 @@ void Extract::Input::set(int index, EAbstractData* data)
 
 
 
+/*!
+ * Set a file argument with the given index to the given qt file pointer.
+ *
+ * @param index
+ * @param file
+ */
 void Extract::Input::set(int index, QFile* file)
 {
    if ( index == OutputFile )

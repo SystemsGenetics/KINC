@@ -109,7 +109,8 @@ QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
 
 
 /*!
- * Set an argument with the given index to the given value.
+ * Set an argument with the given index to the given value. This analytic has
+ * no basic arguments so this function does nothing.
  *
  * @param index
  * @param value

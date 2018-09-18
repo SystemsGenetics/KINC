@@ -38,7 +38,7 @@ void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
 {
    Q_UNUSED(result);
 
-   // initialize pair iterators
+   // initialize pairwise iterators
    CorrelationMatrix::Pair cmxPair(_cmx);
    CCMatrix::Pair ccmPair(_ccm);
 

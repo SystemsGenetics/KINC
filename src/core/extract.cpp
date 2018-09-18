@@ -14,6 +14,10 @@ using namespace std;
 
 
 
+/*!
+ * Return the total number of blocks this analytic must process as steps
+ * or blocks of work.
+ */
 int Extract::size() const
 {
    return 1;
@@ -24,11 +28,17 @@ int Extract::size() const
 
 
 
+/*!
+ * Process the given index with a possible block of results if this analytic
+ * produces work blocks. This analytic implementation has no work blocks.
+ *
+ * @param result
+ */
 void Extract::process(const EAbstractAnalytic::Block* result)
 {
    Q_UNUSED(result);
 
-   // initialize pair iterators
+   // initialize pairwise iterators
    CorrelationMatrix::Pair cmxPair(_cmx);
    CCMatrix::Pair ccmPair(_ccm);
 
@@ -284,6 +294,9 @@ void Extract::process(const EAbstractAnalytic::Block* result)
 
 
 
+/*!
+ * Make a new input object and return its pointer.
+ */
 EAbstractAnalytic::Input* Extract::makeInput()
 {
    return new Input(this);
@@ -294,6 +307,10 @@ EAbstractAnalytic::Input* Extract::makeInput()
 
 
 
+/*!
+ * Initialize this analytic. This implementation checks to make sure the input
+ * data objects and output file have been set.
+ */
 void Extract::initialize()
 {
    if ( !_emx || !_ccm || !_cmx || !_output )
