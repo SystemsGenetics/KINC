@@ -3,6 +3,11 @@
 
 
 
+/*!
+ * Constructs a new input object with the given analytic as its parent.
+ *
+ * @param parent
+ */
 ExportCorrelationMatrix::Input::Input(ExportCorrelationMatrix* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
@@ -13,6 +18,9 @@ ExportCorrelationMatrix::Input::Input(ExportCorrelationMatrix* parent):
 
 
 
+/*!
+ * Return the total number of arguments this analytic type contains.
+ */
 int ExportCorrelationMatrix::Input::size() const
 {
    return Total;
@@ -23,6 +31,11 @@ int ExportCorrelationMatrix::Input::size() const
 
 
 
+/*!
+ * Return the argument type for a given index.
+ *
+ * @param index
+ */
 EAbstractAnalytic::Input::Type ExportCorrelationMatrix::Input::type(int index) const
 {
    switch (index)
@@ -40,6 +53,12 @@ EAbstractAnalytic::Input::Type ExportCorrelationMatrix::Input::type(int index) c
 
 
 
+/*!
+ * Return data for a given role on an argument with the given index.
+ *
+ * @param index
+ * @param role
+ */
 QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
 {
    switch (index)
@@ -89,6 +108,12 @@ QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
 
 
 
+/*!
+ * Set an argument with the given index to the given value.
+ *
+ * @param index
+ * @param value
+ */
 void ExportCorrelationMatrix::Input::set(int index, const QVariant& value)
 {
    Q_UNUSED(index);
@@ -100,6 +125,12 @@ void ExportCorrelationMatrix::Input::set(int index, const QVariant& value)
 
 
 
+/*!
+ * Set a data argument with the given index to the given data object pointer.
+ *
+ * @param index
+ * @param data
+ */
 void ExportCorrelationMatrix::Input::set(int index, EAbstractData* data)
 {
    if ( index == ExpressionData )
@@ -121,6 +152,12 @@ void ExportCorrelationMatrix::Input::set(int index, EAbstractData* data)
 
 
 
+/*!
+ * Set a file argument with the given index to the given qt file pointer.
+ *
+ * @param index
+ * @param file
+ */
 void ExportCorrelationMatrix::Input::set(int index, QFile* file)
 {
    if ( index == OutputFile )

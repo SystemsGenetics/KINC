@@ -4,6 +4,11 @@
 
 
 
+/*!
+ * Constructs a new input object with the given analytic as its parent.
+ *
+ * @param parent
+ */
 ImportCorrelationMatrix::Input::Input(ImportCorrelationMatrix* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
@@ -14,6 +19,9 @@ ImportCorrelationMatrix::Input::Input(ImportCorrelationMatrix* parent):
 
 
 
+/*!
+ * Return the total number of arguments this analytic type contains.
+ */
 int ImportCorrelationMatrix::Input::size() const
 {
    return Total;
@@ -24,6 +32,11 @@ int ImportCorrelationMatrix::Input::size() const
 
 
 
+/*!
+ * Return the argument type for a given index.
+ *
+ * @param index
+ */
 EAbstractAnalytic::Input::Type ImportCorrelationMatrix::Input::type(int index) const
 {
    switch (index)
@@ -44,6 +57,12 @@ EAbstractAnalytic::Input::Type ImportCorrelationMatrix::Input::type(int index) c
 
 
 
+/*!
+ * Return data for a given role on an argument with the given index.
+ *
+ * @param index
+ * @param role
+ */
 QVariant ImportCorrelationMatrix::Input::data(int index, Role role) const
 {
    switch (index)
@@ -122,6 +141,12 @@ QVariant ImportCorrelationMatrix::Input::data(int index, Role role) const
 
 
 
+/*!
+ * Set an argument with the given index to the given value.
+ *
+ * @param index
+ * @param value
+ */
 void ImportCorrelationMatrix::Input::set(int index, const QVariant& value)
 {
    switch (index)
@@ -146,6 +171,12 @@ void ImportCorrelationMatrix::Input::set(int index, const QVariant& value)
 
 
 
+/*!
+ * Set a file argument with the given index to the given qt file pointer.
+ *
+ * @param index
+ * @param file
+ */
 void ImportCorrelationMatrix::Input::set(int index, QFile* file)
 {
    if ( index == InputFile )
@@ -159,6 +190,12 @@ void ImportCorrelationMatrix::Input::set(int index, QFile* file)
 
 
 
+/*!
+ * Set a data argument with the given index to the given data object pointer.
+ *
+ * @param index
+ * @param data
+ */
 void ImportCorrelationMatrix::Input::set(int index, EAbstractData* data)
 {
    if ( index == ClusterData )

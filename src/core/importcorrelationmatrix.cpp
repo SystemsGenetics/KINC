@@ -10,6 +10,10 @@
 
 
 
+/*!
+ * Return the total number of blocks this analytic must process as steps
+ * or blocks of work.
+ */
 int ImportCorrelationMatrix::size() const
 {
    return 1;
@@ -21,6 +25,12 @@ int ImportCorrelationMatrix::size() const
 
 
 
+/*!
+ * Process the given index with a possible block of results if this analytic
+ * produces work blocks. This analytic implementation has no work blocks.
+ *
+ * @param result
+ */
 void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
 {
    Q_UNUSED(result);
@@ -47,12 +57,14 @@ void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
    _ccm->initialize(metaGeneNames, _maxClusterSize, metaSampleNames);
    _cmx->initialize(metaGeneNames, _maxClusterSize, metaCorrelationNames);
 
+   // initialize pairwise iterators
    Pairwise::Index index;
    CCMatrix::Pair ccmPair(_ccm);
    CorrelationMatrix::Pair cmxPair(_cmx);
 
    // create text stream from input file and read until end reached
    QTextStream stream(_input);
+
    while ( !stream.atEnd() )
    {
       // read a line from text file
@@ -160,6 +172,9 @@ void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
 
 
 
+/*!
+ * Make a new input object and return its pointer.
+ */
 EAbstractAnalytic::Input* ImportCorrelationMatrix::makeInput()
 {
    return new Input(this);
@@ -170,6 +185,11 @@ EAbstractAnalytic::Input* ImportCorrelationMatrix::makeInput()
 
 
 
+/*!
+ * Initialize this analytic. This implementation checks to make sure the input
+ * file and output data objects have been set, and that a correlation name was
+ * provided.
+ */
 void ImportCorrelationMatrix::initialize()
 {
    if ( !_input || !_ccm || !_cmx )

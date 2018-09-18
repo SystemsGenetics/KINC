@@ -14,6 +14,10 @@ using namespace std;
 
 
 
+/*!
+ * Return the total number of blocks this analytic must process as steps
+ * or blocks of work.
+ */
 int ExportCorrelationMatrix::size() const
 {
    return 1;
@@ -24,6 +28,12 @@ int ExportCorrelationMatrix::size() const
 
 
 
+/*!
+ * Process the given index with a possible block of results if this analytic
+ * produces work blocks. This analytic implementation has no work blocks.
+ *
+ * @param result
+ */
 void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
 {
    Q_UNUSED(result);
@@ -151,6 +161,9 @@ void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
 
 
 
+/*!
+ * Make a new input object and return its pointer.
+ */
 EAbstractAnalytic::Input* ExportCorrelationMatrix::makeInput()
 {
    return new Input(this);
@@ -161,6 +174,10 @@ EAbstractAnalytic::Input* ExportCorrelationMatrix::makeInput()
 
 
 
+/*!
+ * Initialize this analytic. This implementation checks to make sure the input
+ * data objects and output file have been set.
+ */
 void ExportCorrelationMatrix::initialize()
 {
    if ( !_emx || !_ccm || !_cmx || !_output )
