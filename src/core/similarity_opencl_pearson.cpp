@@ -9,6 +9,13 @@ using namespace std;
 
 
 
+/*!
+ * Construct a new Pearson kernel object with the given OpenCL program and
+ * qt parent.
+ *
+ * @param program
+ * @param parent
+ */
 Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent):
    ::OpenCL::Kernel(program, "Pearson_compute", parent)
 {
@@ -19,6 +26,20 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
 
 
 
+/*!
+ * Execute this kernel object's OpenCL kernel using the given OpenCL command
+ * queue and kernel arguments, returning the OpenCL event associated with the
+ * kernel execution.
+ *
+ * @param queue
+ * @param kernelSize
+ * @param in_data
+ * @param clusterSize
+ * @param in_labels
+ * @param sampleSize
+ * @param minSamples
+ * @param out_correlations
+ */
 ::OpenCL::Event Similarity::OpenCL::Pearson::execute(
    ::OpenCL::CommandQueue* queue,
    int kernelSize,

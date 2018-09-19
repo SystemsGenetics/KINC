@@ -7,6 +7,8 @@ namespace Pairwise
    class Spearman : public Correlation
    {
    public:
+      static int nextPower2(int n);
+
       void initialize(ExpressionMatrix* input);
       QString getName() const { return "spearman"; }
 
@@ -19,7 +21,6 @@ namespace Pairwise
       );
 
    private:
-      int nextPower2(int n);
       void bitonicSort(int size, QVector<float>& sortList, QVector<float>& extraList);
       void bitonicSort(int size, QVector<float>& sortList, QVector<int>& extraList);
 

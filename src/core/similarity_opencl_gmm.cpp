@@ -9,6 +9,12 @@ using namespace std;
 
 
 
+/*!
+ * Construct a new GMM kernel object with the given OpenCL program and qt parent.
+ *
+ * @param program
+ * @param parent
+ */
 Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    ::OpenCL::Kernel(program, "GMM_compute", parent)
 {
@@ -19,6 +25,35 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
 
 
 
+/*!
+ * Execute this kernel object's OpenCL kernel using the given OpenCL command
+ * queue and kernel arguments, returning the OpenCL event associated with the
+ * kernel execution.
+ *
+ * @param queue
+ * @param kernelSize
+ * @param expressions
+ * @param sampleSize
+ * @param minSamples
+ * @param minClusters
+ * @param maxClusters
+ * @param criterion
+ * @param removePreOutliers
+ * @param removePostOutliers
+ * @param work_X
+ * @param work_N
+ * @param work_x
+ * @param work_y
+ * @param work_labels
+ * @param work_components
+ * @param work_MP
+ * @param work_counts
+ * @param work_logpi
+ * @param work_loggamma
+ * @param work_logGamma
+ * @param out_K
+ * @param out_labels
+ */
 ::OpenCL::Event Similarity::OpenCL::GMM::execute(
    ::OpenCL::CommandQueue* queue,
    int kernelSize,

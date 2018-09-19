@@ -9,6 +9,13 @@ using namespace std;
 
 
 
+/*!
+ * Construct a new Spearman kernel object with the given OpenCL program and
+ * qt parent.
+ *
+ * @param program
+ * @param parent
+ */
 Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* parent):
    ::OpenCL::Kernel(program, "Spearman_compute", parent)
 {
@@ -19,6 +26,23 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
 
 
 
+/*!
+ * Execute this kernel object's OpenCL kernel using the given OpenCL command
+ * queue and kernel arguments, returning the OpenCL event associated with the
+ * kernel execution.
+ *
+ * @param queue
+ * @param kernelSize
+ * @param in_data
+ * @param clusterSize
+ * @param in_labels
+ * @param sampleSize
+ * @param minSamples
+ * @param work_x
+ * @param work_y
+ * @param work_rank
+ * @param out_correlations
+ */
 ::OpenCL::Event Similarity::OpenCL::Spearman::execute(
    ::OpenCL::CommandQueue* queue,
    int kernelSize,

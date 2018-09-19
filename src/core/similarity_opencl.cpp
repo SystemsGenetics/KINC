@@ -11,6 +11,11 @@ using namespace std;
 
 
 
+/*!
+ * Construct a new OpenCL object with the given analytic as its parent.
+ *
+ * @param parent
+ */
 Similarity::OpenCL::OpenCL(Similarity* parent):
    EAbstractAnalytic::OpenCL(parent),
    _base(parent)
@@ -22,6 +27,9 @@ Similarity::OpenCL::OpenCL(Similarity* parent):
 
 
 
+/*!
+ * Create and return a new OpenCL worker for the analytic.
+ */
 std::unique_ptr<EAbstractAnalytic::OpenCL::Worker> Similarity::OpenCL::makeWorker()
 {
    return unique_ptr<EAbstractAnalytic::OpenCL::Worker>(new Worker(_base, this, _context, _program));
@@ -32,6 +40,11 @@ std::unique_ptr<EAbstractAnalytic::OpenCL::Worker> Similarity::OpenCL::makeWorke
 
 
 
+/*!
+ * Initializes all OpenCL resources used by this object's implementation.
+ *
+ * @param context
+ */
 void Similarity::OpenCL::initialize(::OpenCL::Context* context)
 {
    // create list of opencl source files

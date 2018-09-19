@@ -6,6 +6,7 @@
 #include "similarity_resultblock.h"
 #include "similarity_workblock.h"
 #include <ace/core/elog.h>
+#include "pairwise_spearman.h"
 
 
 
@@ -17,36 +18,15 @@ using namespace std;
 
 
 
-int nextPower2(int n)
-{
-   int pow2 = 2;
-   while ( pow2 < n )
-   {
-      pow2 *= 2;
-   }
-
-   return pow2;
-}
-
-
-
-
-
-
-template<class T>
-QVector<T> createVector(const T* data, int size)
-{
-   QVector<T> v(size);
-
-   memcpy(v.data(), data, size * sizeof(T));
-   return v;
-}
-
-
-
-
-
-
+/*!
+ * Construct a new OpenCL worker with the given parent analytic, OpenCL object,
+ * OpenCL context, and OpenCL program.
+ *
+ * @param base
+ * @param baseOpenCL
+ * @param context
+ * @param program
+ */
 Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpenCL, ::OpenCL::Context* context, ::OpenCL::Program* program):
    _base(base),
    _baseOpenCL(baseOpenCL),
@@ -61,13 +41,14 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    // initialize buffers
    int kernelSize {_base->_kernelSize};
    int N {_base->_input->sampleSize()};
-   int N_pow2 {nextPower2(N)};
+   int N_pow2 {Pairwise::Spearman::nextPower2(N)};
    int K {_base->_maxClusters};
 
    _buffers.in_index = ::OpenCL::Buffer<cl_int2>(context, 1 * kernelSize);
-
    _buffers.work_X = ::OpenCL::Buffer<Pairwise::Vector2>(context, N * kernelSize);
    _buffers.work_N = ::OpenCL::Buffer<cl_int>(context, 1 * kernelSize);
+   _buffers.work_x = ::OpenCL::Buffer<cl_float>(context, N_pow2 * kernelSize);
+   _buffers.work_y = ::OpenCL::Buffer<cl_float>(context, N_pow2 * kernelSize);
    _buffers.work_labels = ::OpenCL::Buffer<cl_char>(context, N * kernelSize);
    _buffers.work_components = ::OpenCL::Buffer<Pairwise::GMM::Component>(context, K * kernelSize);
    _buffers.work_MP = ::OpenCL::Buffer<Pairwise::Vector2>(context, K * kernelSize);
@@ -75,12 +56,9 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    _buffers.work_logpi = ::OpenCL::Buffer<cl_float>(context, K * kernelSize);
    _buffers.work_loggamma = ::OpenCL::Buffer<cl_float>(context, N * K * kernelSize);
    _buffers.work_logGamma = ::OpenCL::Buffer<cl_float>(context, K * kernelSize);
+   _buffers.work_rank = ::OpenCL::Buffer<cl_int>(context, N_pow2 * kernelSize);
    _buffers.out_K = ::OpenCL::Buffer<cl_char>(context, 1 * kernelSize);
    _buffers.out_labels = ::OpenCL::Buffer<cl_char>(context, N * kernelSize);
-
-   _buffers.work_x = ::OpenCL::Buffer<cl_float>(context, N_pow2 * kernelSize);
-   _buffers.work_y = ::OpenCL::Buffer<cl_float>(context, N_pow2 * kernelSize);
-   _buffers.work_rank = ::OpenCL::Buffer<cl_int>(context, N_pow2 * kernelSize);
    _buffers.out_correlations = ::OpenCL::Buffer<cl_float>(context, K * kernelSize);
 }
 
@@ -89,6 +67,13 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
 
 
 
+/*!
+ * Read in the given work block, execute the algorithms necessary to produce
+ * results using OpenCL acceleration, and save those results in a new result
+ * block whose pointer is returned.
+ *
+ * @param block
+ */
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(const EAbstractAnalytic::Block* block)
 {
    if ( ELog::isActive() )
@@ -223,20 +208,25 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
       // save results
       for ( int j = 0; j < steps; ++j )
       {
+         // get pointers to the cluster labels and correlations for this pair
          const qint8 *labels = &_buffers.out_labels.at(j * _base->_input->sampleSize());
          const float *correlations = &_buffers.out_correlations.at(j * _base->_maxClusters);
 
          Pair pair;
+
+         // save the number of clusters
          pair.K = _buffers.out_K.at(j);
 
+         // save the cluster labels (if more than one cluster was found)
          if ( pair.K > 1 )
          {
-            pair.labels = createVector(labels, _base->_input->sampleSize());
+            pair.labels = ResultBlock::makeVector(labels, _base->_input->sampleSize());
          }
 
+         // save the correlations (if the pair was able to be processed)
          if ( pair.K > 0 )
          {
-            pair.correlations = createVector(correlations, _base->_maxClusters);
+            pair.correlations = ResultBlock::makeVector(correlations, _base->_maxClusters);
          }
 
          resultBlock->append(pair);

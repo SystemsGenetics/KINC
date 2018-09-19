@@ -9,6 +9,13 @@ using namespace std;
 
 
 
+/*!
+ * Construct a new fetch-pair kernel object with the given OpenCL program and
+ * qt parent.
+ *
+ * @param program
+ * @param parent
+ */
 Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* parent):
    ::OpenCL::Kernel(program, "fetchPair", parent)
 {
@@ -19,6 +26,21 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
 
 
 
+/*!
+ * Execute this kernel object's OpenCL kernel using the given OpenCL command
+ * queue and kernel arguments, returning the OpenCL event associated with the
+ * kernel execution.
+ *
+ * @param queue
+ * @param kernelSize
+ * @param expressions
+ * @param sampleSize
+ * @param in_index
+ * @param minExpression
+ * @param out_X
+ * @param out_N
+ * @param out_labels
+ */
 ::OpenCL::Event Similarity::OpenCL::FetchPair::execute(
    ::OpenCL::CommandQueue* queue,
    int kernelSize,

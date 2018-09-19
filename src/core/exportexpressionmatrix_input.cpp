@@ -7,7 +7,7 @@
 
 
 /*!
- * Constructs a new input object with the given analytic as its parent.
+ * Construct a new input object with the given analytic as its parent.
  *
  * @param parent
  */

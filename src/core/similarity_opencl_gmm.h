@@ -4,10 +4,18 @@
 
 
 
+/*!
+ * This class implements the GMM kernel for the similarity analytic. This
+ * kernel takes a list of pairwise data arrays and computes the number of
+ * clusters and a list of cluster labels for each pair.
+ */
 class Similarity::OpenCL::GMM : public ::OpenCL::Kernel
 {
    Q_OBJECT
 public:
+   /*!
+    * Defines the arguments passed to the OpenCL kernel.
+    */
    enum Argument
    {
       Expressions

@@ -9,6 +9,22 @@ using namespace Pairwise;
 
 
 
+int Spearman::nextPower2(int n)
+{
+   int pow2 = 2;
+   while ( pow2 < n )
+   {
+      pow2 *= 2;
+   }
+
+   return pow2;
+}
+
+
+
+
+
+
 void Spearman::initialize(ExpressionMatrix* input)
 {
    // pre-allocate workspace
@@ -95,22 +111,6 @@ float Spearman::computeCluster(
    }
 
    return result;
-}
-
-
-
-
-
-
-int Spearman::nextPower2(int n)
-{
-   int pow2 = 2;
-   while ( pow2 < n )
-   {
-      pow2 *= 2;
-   }
-
-   return pow2;
 }
 
 

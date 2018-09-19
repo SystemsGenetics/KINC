@@ -17,12 +17,15 @@ using namespace std;
 
 
 
-int Similarity::size() const
+/*!
+ * Return the total number of pairs that must be processed for a given
+ * expression matrix.
+ *
+ * @param emx
+ */
+qint64 Similarity::totalPairs(const ExpressionMatrix* emx) const
 {
-   const qint64 totalPairs {(qint64) _input->geneSize() * (_input->geneSize() - 1) / 2};
-   const qint64 WORK_BLOCK_SIZE { 32 * 1024 };
-
-   return (totalPairs + WORK_BLOCK_SIZE - 1) / WORK_BLOCK_SIZE;
+   return (qint64) emx->geneSize() * (emx->geneSize() - 1) / 2;
 }
 
 
@@ -30,6 +33,26 @@ int Similarity::size() const
 
 
 
+/*!
+ * Return the total number of blocks this analytic must process as blocks of work.
+ */
+int Similarity::size() const
+{
+   return (totalPairs(_input) + WORK_BLOCK_SIZE - 1) / WORK_BLOCK_SIZE;
+}
+
+
+
+
+
+
+/*!
+ * Create and return a work block for this analytic with the given index. This
+ * implementation creates a work block with a start index and size denoting the
+ * number of pairs to process.
+ *
+ * @param index
+ */
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
 {
    if ( ELog::isActive() )
@@ -37,11 +60,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
       ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
    }
 
-   const qint64 totalPairs {(qint64) _input->geneSize() * (_input->geneSize() - 1) / 2};
-   const qint64 WORK_BLOCK_SIZE { 32 * 1024 };
-
    qint64 start {index * WORK_BLOCK_SIZE};
-   qint64 size {min(totalPairs - start, WORK_BLOCK_SIZE)};
+   qint64 size {min(totalPairs(_input) - start, WORK_BLOCK_SIZE)};
 
    return unique_ptr<EAbstractAnalytic::Block>(new WorkBlock(index, start, size));
 }
@@ -51,6 +71,9 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
 
 
 
+/*!
+ * Create an empty and uninitialized work block.
+ */
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork() const
 {
    return unique_ptr<EAbstractAnalytic::Block>(new WorkBlock);
@@ -61,6 +84,9 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork() const
 
 
 
+/*!
+ * Create an empty and uninitialized result block.
+ */
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeResult() const
 {
    return unique_ptr<EAbstractAnalytic::Block>(new ResultBlock);
@@ -71,6 +97,13 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeResult() const
 
 
 
+/*!
+ * Read in a block of results made from a block of work with the corresponding
+ * index. This implementation takes the Pair objects in the result block and
+ * saves them to the output correlation matrix and cluster matrix.
+ *
+ * @param result
+ */
 void Similarity::process(const EAbstractAnalytic::Block* result)
 {
    if ( ELog::isActive() )
@@ -144,6 +177,9 @@ void Similarity::process(const EAbstractAnalytic::Block* result)
 
 
 
+/*!
+ * Make a new input object and return its pointer.
+ */
 EAbstractAnalytic::Input* Similarity::makeInput()
 {
    return new Input(this);
@@ -154,6 +190,9 @@ EAbstractAnalytic::Input* Similarity::makeInput()
 
 
 
+/*!
+ * Make a new serial object and return its pointer.
+ */
 EAbstractAnalytic::Serial* Similarity::makeSerial()
 {
    return new Serial(this);
@@ -164,6 +203,9 @@ EAbstractAnalytic::Serial* Similarity::makeSerial()
 
 
 
+/*!
+ * Make a new OpenCL object and return its pointer.
+ */
 EAbstractAnalytic::OpenCL* Similarity::makeOpenCL()
 {
    return new OpenCL(this);
@@ -174,6 +216,10 @@ EAbstractAnalytic::OpenCL* Similarity::makeOpenCL()
 
 
 
+/*!
+ * Initialize this analytic. This implementation checks to make sure that valid
+ * arguments were provided, and then it initializes the output data objects.
+ */
 void Similarity::initialize()
 {
    if ( !isMaster() )

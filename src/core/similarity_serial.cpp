@@ -13,6 +13,11 @@ using namespace std;
 
 
 
+/*!
+ * Construct a new serial object with the given analytic as its parent.
+ *
+ * @param parent
+ */
 Similarity::Serial::Serial(Similarity* parent):
    EAbstractAnalytic::Serial(parent),
    _base(parent)
@@ -32,6 +37,13 @@ Similarity::Serial::Serial(Similarity* parent):
 
 
 
+/*!
+ * Read in the given work block and save the results in a new result block. This
+ * implementation takes the starting pairwise index and pair size from the work
+ * block and processes those pairs.
+ *
+ * @param block
+ */
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbstractAnalytic::Block* block)
 {
    if ( ELog::isActive() )
@@ -250,7 +262,7 @@ int Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& data, int
          }
       }
    }
-   
+
    // return number of outliers
    return numOutliers;
 }
