@@ -34,11 +34,11 @@ qint64 Similarity::totalPairs(const ExpressionMatrix* emx) const
 
 
 /*!
- * Return the total number of blocks this analytic must process as blocks of work.
+ * Return the total number of work blocks this analytic must process.
  */
 int Similarity::size() const
 {
-   return (totalPairs(_input) + WORK_BLOCK_SIZE - 1) / WORK_BLOCK_SIZE;
+   return (totalPairs(_input) + _workBlockSize - 1) / _workBlockSize;
 }
 
 
@@ -60,8 +60,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
       ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
    }
 
-   qint64 start {index * WORK_BLOCK_SIZE};
-   qint64 size {min(totalPairs(_input) - start, WORK_BLOCK_SIZE)};
+   qint64 start {index * _workBlockSize};
+   qint64 size {min(totalPairs(_input) - start, (qint64) _workBlockSize)};
 
    return unique_ptr<EAbstractAnalytic::Block>(new WorkBlock(index, start, size));
 }

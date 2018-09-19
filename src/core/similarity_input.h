@@ -30,6 +30,7 @@ public:
       ,RemovePostOutliers
       ,MinCorrelation
       ,MaxCorrelation
+      ,WorkBlockSize
       ,KernelSize
       ,Total
    };

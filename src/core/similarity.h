@@ -98,10 +98,6 @@ private:
 private:
    qint64 totalPairs(const ExpressionMatrix* emx) const;
    /*!
-    * The size of each work block.
-    */
-   constexpr static const qint64 WORK_BLOCK_SIZE {32 * 1024};
-   /*!
     * Pointer to the input expression matrix.
     */
    ExpressionMatrix* _input {nullptr};
@@ -165,6 +161,10 @@ private:
     * The maximum (absolute) correlation threshold to save a correlation.
     */
    float _maxCorrelation {1.0};
+   /*!
+    * The number of pairs to process in each work block.
+    */
+   int _workBlockSize {32768};
    /*!
     * The number of kernels to run in parallel for each OpenCL worker.
     */

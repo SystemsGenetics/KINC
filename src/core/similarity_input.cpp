@@ -110,6 +110,7 @@ EAbstractAnalytic::Input::Type Similarity::Input::type(int index) const
    case RemovePostOutliers: return Type::Boolean;
    case MinCorrelation: return Type::Double;
    case MaxCorrelation: return Type::Double;
+   case WorkBlockSize: return Type::Integer;
    case KernelSize: return Type::Integer;
    default: return Type::Boolean;
    }
@@ -271,12 +272,23 @@ QVariant Similarity::Input::data(int index, Role role) const
       case Role::Maximum: return 1;
       default: return QVariant();
       }
+   case WorkBlockSize:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("bsize");
+      case Role::Title: return tr("Work Block Size:");
+      case Role::WhatsThis: return tr("Number of pairs to process in each work block.");
+      case Role::Default: return 32768;
+      case Role::Minimum: return 1;
+      case Role::Maximum: return std::numeric_limits<int>::max();
+      default: return QVariant();
+      }
    case KernelSize:
       switch (role)
       {
       case Role::CommandLineName: return QString("ksize");
       case Role::Title: return tr("Kernel Size:");
-      case Role::WhatsThis: return tr("(OpenCL) Total number of kernels to run per block.");
+      case Role::WhatsThis: return tr("Number of kernels to run in parallel for each OpenCL worker.");
       case Role::Default: return 4096;
       case Role::Minimum: return 1;
       case Role::Maximum: return std::numeric_limits<int>::max();
@@ -353,6 +365,9 @@ void Similarity::Input::set(int index, const QVariant& value)
       break;
    case MaxCorrelation:
       _base->_maxCorrelation = value.toDouble();
+      break;
+   case WorkBlockSize:
+      _base->_workBlockSize = value.toInt();
       break;
    case KernelSize:
       _base->_kernelSize = value.toInt();
