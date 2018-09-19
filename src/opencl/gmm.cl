@@ -564,7 +564,6 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
  * resulting sample mask for each pair is returned.
  */
 __kernel void GMM_compute(
-   __global const float *expressions,
    int sampleSize,
    int minSamples,
    char minClusters,

@@ -32,7 +32,6 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
  *
  * @param queue
  * @param kernelSize
- * @param expressions
  * @param sampleSize
  * @param minSamples
  * @param minClusters
@@ -57,7 +56,6 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
 ::OpenCL::Event Similarity::OpenCL::GMM::execute(
    ::OpenCL::CommandQueue* queue,
    int kernelSize,
-   ::OpenCL::Buffer<cl_float>* expressions,
    cl_int sampleSize,
    cl_int minSamples,
    cl_char minClusters,
@@ -84,7 +82,6 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    Locker locker {lock()};
 
    // set kernel arguments
-   setBuffer(Expressions, expressions);
    setArgument(SampleSize, sampleSize);
    setArgument(MinSamples, minSamples);
    setArgument(MinClusters, minClusters);

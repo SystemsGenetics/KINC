@@ -129,7 +129,6 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
          _kernels.gmm->execute(
             _queue,
             _base->_kernelSize,
-            &_baseOpenCL->_expressions,
             _base->_input->sampleSize(),
             _base->_minSamples,
             _base->_minClusters,

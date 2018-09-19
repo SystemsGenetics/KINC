@@ -18,8 +18,7 @@ public:
     */
    enum Argument
    {
-      Expressions
-      ,SampleSize
+      SampleSize
       ,MinSamples
       ,MinClusters
       ,MaxClusters
@@ -44,7 +43,6 @@ public:
    ::OpenCL::Event execute(
       ::OpenCL::CommandQueue* queue,
       int kernelSize,
-      ::OpenCL::Buffer<cl_float>* expressions,
       cl_int sampleSize,
       cl_int minSamples,
       cl_char minClusters,
