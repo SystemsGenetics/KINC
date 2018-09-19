@@ -1,6 +1,7 @@
 #ifndef SIMILARITY_OPENCL_WORKER_H
 #define SIMILARITY_OPENCL_WORKER_H
 #include "similarity_opencl.h"
+#include "pairwise_gmm.h"
 
 
 

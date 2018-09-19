@@ -9,8 +9,7 @@ namespace Pairwise
    public:
       static int nextPower2(int n);
 
-      void initialize(ExpressionMatrix* input);
-      QString getName() const { return "spearman"; }
+      Spearman(ExpressionMatrix* input);
 
    protected:
       float computeCluster(

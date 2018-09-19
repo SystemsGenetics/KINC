@@ -9,7 +9,7 @@ using namespace Pairwise;
 
 
 
-void Clustering::initialize(ExpressionMatrix* input)
+Clustering::Clustering(ExpressionMatrix* input)
 {
    // pre-allocate workspace
    _workLabels.resize(input->sampleSize());

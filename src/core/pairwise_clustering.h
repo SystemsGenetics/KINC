@@ -19,7 +19,7 @@ namespace Pairwise
    class Clustering
    {
    public:
-      void initialize(ExpressionMatrix* input);
+      Clustering(ExpressionMatrix* input);
       qint8 compute(
          const QVector<Vector2>& data,
          int numSamples,

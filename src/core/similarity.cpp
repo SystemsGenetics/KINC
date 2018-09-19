@@ -250,7 +250,7 @@ void Similarity::initialize()
 
    // initialize correlation matrix
    EMetaArray correlations;
-   correlations.append(_corrModel->getName());
+   correlations.append(_corrName);
 
    _cmx->initialize(_input->geneNames(), _maxClusters, correlations);
 }

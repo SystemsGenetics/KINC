@@ -6,10 +6,6 @@ namespace Pairwise
 {
    class Pearson : public Correlation
    {
-   public:
-      void initialize(ExpressionMatrix* /*input*/) {}
-      QString getName() const { return "pearson"; }
-
    protected:
       float computeCluster(
          const QVector<Vector2>& data,

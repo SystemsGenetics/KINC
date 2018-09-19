@@ -2,6 +2,9 @@
 #include "similarity_resultblock.h"
 #include "similarity_workblock.h"
 #include "expressionmatrix_gene.h"
+#include "pairwise_gmm.h"
+#include "pairwise_pearson.h"
+#include "pairwise_spearman.h"
 #include <ace/core/elog.h>
 
 
@@ -23,13 +26,26 @@ Similarity::Serial::Serial(Similarity* parent):
    _base(parent)
 {
    // initialize clustering model
-   if ( _base->_clusMethod != ClusteringMethod::None )
+   switch ( _base->_clusMethod )
    {
-      _base->_clusModel->initialize(_base->_input);
+   case ClusteringMethod::None:
+      _clusModel = nullptr;
+      break;
+   case ClusteringMethod::GMM:
+      _clusModel = new Pairwise::GMM(_base->_input);
+      break;
    }
 
    // initialize correlation model
-   _base->_corrModel->initialize(_base->_input);
+   switch ( _base->_corrMethod )
+   {
+   case CorrelationMethod::Pearson:
+      _corrModel = new Pairwise::Pearson();
+      break;
+   case CorrelationMethod::Spearman:
+      _corrModel = new Pairwise::Spearman(_base->_input);
+      break;
+   }
 }
 
 
@@ -80,7 +96,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
 
       if ( _base->_clusMethod != ClusteringMethod::None )
       {
-         K = _base->_clusModel->compute(
+         K = _clusModel->compute(
             data,
             numSamples,
             labels,
@@ -101,7 +117,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
       }
 
       // compute correlations
-      QVector<float> correlations = _base->_corrModel->compute(
+      QVector<float> correlations = _corrModel->compute(
          data,
          K,
          labels,

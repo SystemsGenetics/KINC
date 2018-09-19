@@ -6,9 +6,6 @@
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
 #include "pairwise_clustering.h"
-#include "pairwise_correlation.h"
-#include "pairwise_gmm.h"
-#include "pairwise_pearson.h"
 
 
 
@@ -118,13 +115,9 @@ private:
     */
    CorrelationMethod _corrMethod {CorrelationMethod::Pearson};
    /*!
-    * Pointer to the clustering model to use.
+    * The name of the correlation method.
     */
-   Pairwise::Clustering* _clusModel {nullptr};
-   /*!
-    * Pointer to the correlation model to use.
-    */
-   Pairwise::Correlation* _corrModel {new Pairwise::Pearson()};
+   QString _corrName;
    /*!
     * The minimum number of clean samples required to consider a pair.
     */

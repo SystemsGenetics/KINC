@@ -25,7 +25,7 @@ int Spearman::nextPower2(int n)
 
 
 
-void Spearman::initialize(ExpressionMatrix* input)
+Spearman::Spearman(ExpressionMatrix* input)
 {
    // pre-allocate workspace
    int workSize = nextPower2(input->sampleSize());

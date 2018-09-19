@@ -1,8 +1,5 @@
 #include "similarity_input.h"
 #include "datafactory.h"
-#include "pairwise_gmm.h"
-#include "pairwise_pearson.h"
-#include "pairwise_spearman.h"
 
 
 
@@ -315,29 +312,10 @@ void Similarity::Input::set(int index, const QVariant& value)
    {
    case ClusteringType:
       _base->_clusMethod = static_cast<ClusteringMethod>(CLUSTERING_NAMES.indexOf(value.toString()));
-
-      switch ( _base->_clusMethod )
-      {
-      case ClusteringMethod::None:
-         _base->_clusModel = nullptr;
-         break;
-      case ClusteringMethod::GMM:
-         _base->_clusModel = new Pairwise::GMM();
-         break;
-      }
       break;
    case CorrelationType:
       _base->_corrMethod = static_cast<CorrelationMethod>(CORRELATION_NAMES.indexOf(value.toString()));
-
-      switch ( _base->_corrMethod )
-      {
-      case CorrelationMethod::Pearson:
-         _base->_corrModel = new Pairwise::Pearson();
-         break;
-      case CorrelationMethod::Spearman:
-         _base->_corrModel = new Pairwise::Spearman();
-         break;
-      }
+      _base->_corrName = value.toString();
       break;
    case MinExpression:
       _base->_minExpression = value.toDouble();

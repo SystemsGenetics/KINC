@@ -8,6 +8,16 @@ using namespace Pairwise;
 
 
 
+GMM::GMM(ExpressionMatrix* input):
+   Clustering(input)
+{
+}
+
+
+
+
+
+
 void GMM::Component::initialize(float pi, const Vector2& mu)
 {
    // initialize pi and mu as given

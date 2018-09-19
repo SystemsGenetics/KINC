@@ -7,7 +7,7 @@ namespace Pairwise
    class GMM : public Clustering
    {
    public:
-      GMM() = default;
+      GMM(ExpressionMatrix* input);
 
       class Component
       {

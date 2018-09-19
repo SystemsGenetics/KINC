@@ -1,6 +1,8 @@
 #ifndef SIMILARITY_SERIAL_H
 #define SIMILARITY_SERIAL_H
 #include "similarity.h"
+#include "pairwise_clustering.h"
+#include "pairwise_correlation.h"
 
 
 
@@ -20,6 +22,14 @@ private:
     * Pointer to the base analytic for this object.
     */
    Similarity* _base;
+   /*!
+    * Pointer to the clustering model to use.
+    */
+   Pairwise::Clustering* _clusModel {nullptr};
+   /*!
+    * Pointer to the correlation model to use.
+    */
+   Pairwise::Correlation* _corrModel {nullptr};
 };
 
 

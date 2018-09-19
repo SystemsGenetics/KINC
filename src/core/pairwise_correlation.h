@@ -11,9 +11,6 @@ namespace Pairwise
    class Correlation
    {
    public:
-      virtual void initialize(ExpressionMatrix* input) = 0;
-      virtual QString getName() const = 0;
-
       QVector<float> compute(
          const QVector<Vector2>& data,
          int K,
