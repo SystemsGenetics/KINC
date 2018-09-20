@@ -77,8 +77,13 @@ void RMT::process(const EAbstractAnalytic::Block* result)
 
          qInfo("eigenvalues: %d", eigens.size());
 
+         // compute unique eigenvalues
+         QVector<float> unique {degenerate(eigens)};
+
+         qInfo("unique eigenvalues: %d", unique.size());
+
          // compute chi-square value from NNSD of eigenvalues
-         chi = computeChiSquare(eigens);
+         chi = computeChiSquare(unique);
 
          qInfo("chi-square: %g", chi);
       }
@@ -323,19 +328,15 @@ QVector<float> RMT::computeEigenvalues(QVector<float>* matrix, int size)
 /*!
  * Compute the chi-squared test for the nearest-neighbor spacing distribution
  * (NNSD) of a list of eigenvalues as the average of several chi-squared tests,
- * in which the unfolding pace is varied.
+ * in which the unfolding pace is varied. The list of eigenvalues should be sorted
+ * and should contain only unique values.
  *
  * @param eigens
  */
 float RMT::computeChiSquare(const QVector<float>& eigens)
 {
-   // compute unique eigenvalues
-   QVector<float> unique {degenerate(eigens)};
-
-   qInfo("unique eigenvalues: %d", unique.size());
-
-   // make sure there are enough unique eigenvalues
-   if ( unique.size() < _minEigenvalueSize )
+   // make sure there are enough eigenvalues
+   if ( eigens.size() < _minEigenvalueSize )
    {
       return -1;
    }
@@ -347,12 +348,12 @@ float RMT::computeChiSquare(const QVector<float>& eigens)
    for ( int pace = _minUnfoldingPace; pace <= _maxUnfoldingPace; ++pace )
    {
       // perform test only if there are enough eigenvalues for pace
-      if ( unique.size() / pace < 5 )
+      if ( eigens.size() / pace < 5 )
       {
          break;
       }
 
-      chi += computePaceChiSquare(unique, pace);
+      chi += computePaceChiSquare(eigens, pace);
       ++chiTestCount;
    }
 
