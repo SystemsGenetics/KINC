@@ -21,6 +21,7 @@ public:
       ,ThresholdStart
       ,ThresholdStep
       ,ThresholdStop
+      ,SplineInterpolation
       ,MinSplinePace
       ,MaxSplinePace
       ,HistogramBinSize

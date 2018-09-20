@@ -82,23 +82,23 @@ void RMT::process(const EAbstractAnalytic::Block* result)
 
          qInfo("unique eigenvalues: %d", unique.size());
 
-         // compute chi-square value from NNSD of eigenvalues
+         // compute chi-squared value from NNSD of eigenvalues
          chi = computeChiSquare(unique);
 
-         qInfo("chi-square: %g", chi);
+         qInfo("chi-squared: %g", chi);
       }
 
-      // make sure that chi-square test succeeded
+      // make sure that chi-squared test succeeded
       if ( chi != -1 )
       {
-         // save the most recent chi-square value less than critical value
+         // save the most recent chi-squared value less than critical value
          if ( chi < _chiSquareThreshold1 )
          {
             finalChi = chi;
             finalThreshold = threshold;
          }
 
-         // save the largest chi-square value which occurs after finalChi
+         // save the largest chi-squared value which occurs after finalChi
          if ( finalChi < _chiSquareThreshold1 && chi > finalChi )
          {
             maxChi = chi;
@@ -356,9 +356,11 @@ QVector<float> RMT::computeUnique(const QVector<float>& values)
 
 /*!
  * Compute the chi-squared test for the nearest-neighbor spacing distribution
- * (NNSD) of a list of eigenvalues as the average of several chi-squared tests,
- * in which the spline pace is varied. The list of eigenvalues should be sorted
- * and should contain only unique values.
+ * (NNSD) of a list of eigenvalues. The list should be sorted and should contain
+ * only unique values. If spline interpolation is enabled, the chi-squared value
+ * is an average of several chi-squared tests, in which splines of varying pace
+ * are applied to the eigenvalues. Otherwise, a single chi-squared test is
+ * performed directly on the eigenvalues.
  *
  * @param eigens
  */
@@ -370,27 +372,42 @@ float RMT::computeChiSquare(const QVector<float>& eigens)
       return -1;
    }
 
-   // perform several chi-square tests by varying the pace
-   float chi {0.0};
-   int chiTestCount {0};
-
-   for ( int pace = _minSplinePace; pace <= _maxSplinePace; ++pace )
+   // determine whether spline interpolation is enabled
+   if ( _splineInterpolation )
    {
-      // perform test only if there are enough eigenvalues for pace
-      if ( eigens.size() / pace < 5 )
+      // perform several chi-squared tests with spline interpolation by varying the pace
+      float chi {0.0};
+      int chiTestCount {0};
+
+      for ( int pace = _minSplinePace; pace <= _maxSplinePace; ++pace )
       {
-         break;
+         // perform test only if there are enough eigenvalues for pace
+         if ( eigens.size() / pace < 5 )
+         {
+            break;
+         }
+
+         // compute spline-interpolated eigenvalues
+         QVector<float> splineEigens {computeSpline(eigens, pace)};
+
+         // compute chi-squared value
+         float chiPace {computeChiSquareHelper(splineEigens)};
+
+         qInfo("pace: %d, chi-squared: %g", pace, chiPace);
+
+         // append chi-squared value to running sum
+         chi += chiPace;
+         ++chiTestCount;
       }
 
-      chi += computePaceChiSquare(eigens, pace);
-      ++chiTestCount;
+      // return average of chi-squared tests
+      return chi / chiTestCount;
    }
-
-   // compute average of chi-square tests
-   chi /= chiTestCount;
-
-   // return chi value
-   return chi;
+   else
+   {
+      // perform a single chi-squared test without spline interpolation
+      return computeChiSquareHelper(eigens);
+   }
 }
 
 
@@ -400,17 +417,17 @@ float RMT::computeChiSquare(const QVector<float>& eigens)
 
 /*!
  * Compute the chi-squared test for the nearest-neighbor spacing distribution
- * (NNSD) of a list of eigenvalues, with the given spline pace.
+ * (NNSD) of a list of values. The list should be sorted and should contain only
+ * unique values.
  *
- * @param eigens
- * @param pace
+ * @param values
  */
-float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
+float RMT::computeChiSquareHelper(const QVector<float>& values)
 {
-   // compute eigenvalue spacings
-   QVector<float> spacings {computeSpacings(eigens, pace)};
+   // compute spacings
+   QVector<float> spacings {computeSpacings(values)};
 
-   // compute nearest-neighbor spacing distribution
+   // compute histogram of spacings
    const float histogramMin {0};
    const float histogramMax {3};
    const float histogramBinWidth {(histogramMax - histogramMin) / _histogramBinSize};
@@ -424,7 +441,7 @@ float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
       }
    }
 
-   // compute chi-square value from nearest-neighbor spacing distribution
+   // compute chi-squared value from the histogram
    float chi {0.0};
 
    for ( int i = 0; i < histogram.size(); ++i )
@@ -433,13 +450,11 @@ float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
       float O_i {histogram[i]};
 
       // compute E_i, the expected value of Poisson distribution for bin i
-      float E_i {(exp(-i * histogramBinWidth) - exp(-(i + 1) * histogramBinWidth)) * eigens.size()};
+      float E_i {(exp(-i * histogramBinWidth) - exp(-(i + 1) * histogramBinWidth)) * values.size()};
 
-      // update chi-square value based on difference between O_i and E_i
+      // update chi-squared value based on difference between O_i and E_i
       chi += (O_i - E_i) * (O_i - E_i) / E_i;
    }
-
-   qInfo("pace: %d, chi: %g", pace, chi);
 
    return chi;
 }
@@ -450,33 +465,31 @@ float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
 
 
 /*!
- * Compute the spacings of a list of eigenvalues using the given pace. The list
- * of eigenvalues should be sorted and should contain unique values. This function
- * computes a spline interpolation of the eigenvalues and uses points from the
- * spline in order to compute the spacings. The pace determines the ratio of
- * eigenvalues which are used as points to create the spline; for example, a pace
- * value of 10 means that every 10th eigenvalue is used to create the spline.
+ * Compute a spline interpolation of a list of values using the given pace. The
+ * list should be sorted and should contain only unique values. The pace determines
+ * the ratio of values which are used as points to create the spline; for example,
+ * a pace of 10 means that every 10th value is used to create the spline.
  *
- * @param eigens
+ * @param values
  * @param pace
  */
-QVector<float> RMT::computeSpacings(const QVector<float>& eigens, int pace)
+QVector<float> RMT::computeSpline(const QVector<float>& values, int pace)
 {
    // using declarations for gsl resource pointers
    using gsl_interp_accel_ptr = unique_ptr<gsl_interp_accel, decltype(&gsl_interp_accel_free)>;
    using gsl_spline_ptr = unique_ptr<gsl_spline, decltype(&gsl_spline_free)>;
 
    // extract eigenvalues for spline based on pace
-   int splineSize {eigens.size() / pace};
+   int splineSize {values.size() / pace};
    unique_ptr<double[]> x(new double[splineSize]);
    unique_ptr<double[]> y(new double[splineSize]);
 
    for ( int i = 0; i < splineSize; ++i )
    {
-      x[i] = (double)eigens.at(i*pace);
-      y[i] = (double)(i*pace + 1) / eigens.size();
+      x[i] = (double)values.at(i*pace);
+      y[i] = (double)(i*pace + 1) / values.size();
    }
-   x[splineSize - 1] = eigens.back();
+   x[splineSize - 1] = values.back();
    y[splineSize - 1] = 1.0;
 
    // initialize gsl spline
@@ -485,22 +498,39 @@ QVector<float> RMT::computeSpacings(const QVector<float>& eigens, int pace)
    gsl_spline_init(spline.get(), x.get(), y.get(), splineSize);
 
    // extract interpolated eigenvalues from spline
-   QVector<float> splineEigens(eigens.size());
+   QVector<float> splineValues(values.size());
 
-   splineEigens[0] = 0.0;
-   splineEigens[eigens.size() - 1] = 1.0;
+   splineValues[0] = 0.0;
+   splineValues[values.size() - 1] = 1.0;
 
-   for ( int i = 1; i < eigens.size() - 1; ++i )
+   for ( int i = 1; i < values.size() - 1; ++i )
    {
-      splineEigens[i] = gsl_spline_eval(spline.get(), eigens.at(i), interp.get());
+      splineValues[i] = gsl_spline_eval(spline.get(), values.at(i), interp.get());
    }
 
+   // return interpolated values
+   return splineValues;
+}
+
+
+
+
+
+
+/*!
+ * Compute the spacings of a list of values. The list should be sorted and should
+ * contain only unique values.
+ *
+ * @param values
+ */
+QVector<float> RMT::computeSpacings(const QVector<float>& values)
+{
    // compute spacings between interpolated eigenvalues
-   QVector<float> spacings(eigens.size() - 1);
+   QVector<float> spacings(values.size() - 1);
 
    for ( int i = 0; i < spacings.size(); ++i )
    {
-      spacings[i] = (splineEigens.at(i + 1) - splineEigens.at(i)) * eigens.size();
+      spacings[i] = (values.at(i + 1) - values.at(i)) * values.size();
    }
 
    return spacings;

@@ -49,6 +49,7 @@ EAbstractAnalytic::Input::Type RMT::Input::type(int index) const
    case ThresholdStart: return Type::Double;
    case ThresholdStep: return Type::Double;
    case ThresholdStop: return Type::Double;
+   case SplineInterpolation: return Type::Boolean;
    case MinSplinePace: return Type::Integer;
    case MaxSplinePace: return Type::Integer;
    case HistogramBinSize: return Type::Integer;
@@ -122,6 +123,15 @@ QVariant RMT::Input::data(int index, Role role) const
       case Role::Maximum: return 1;
       default: return QVariant();
       }
+   case SplineInterpolation:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("spline");
+      case Role::Title: return tr("Use Spline Interpolation:");
+      case Role::WhatsThis: return tr("Whether to perform spline interpolation on each set of eigenvalues.");
+      case Role::Default: return true;
+      default: return QVariant();
+      }
    case MinSplinePace:
       switch (role)
       {
@@ -182,6 +192,9 @@ void RMT::Input::set(int index, const QVariant& value)
       break;
    case ThresholdStop:
       _base->_thresholdStop = value.toDouble();
+      break;
+   case SplineInterpolation:
+      _base->_splineInterpolation = value.toBool();
       break;
    case MinSplinePace:
       _base->_minSplinePace = value.toInt();

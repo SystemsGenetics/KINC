@@ -37,8 +37,9 @@ private:
    QVector<float> computeEigenvalues(QVector<float>* pruneMatrix, int size);
    QVector<float> computeUnique(const QVector<float>& values);
    float computeChiSquare(const QVector<float>& eigens);
-   float computePaceChiSquare(const QVector<float>& eigens, int pace);
-   QVector<float> computeSpacings(const QVector<float>& eigens, int pace);
+   float computeChiSquareHelper(const QVector<float>& values);
+   QVector<float> computeSpline(const QVector<float>& values, int pace);
+   QVector<float> computeSpacings(const QVector<float>& values);
    /*!
     * Pointer to the input correlation matrix.
     */
@@ -81,13 +82,19 @@ private:
     */
    int _minEigenvalueSize {50};
    /*!
-    * The minimum spline pace for the chi-squared test. The spline pace
-    * controls the spline interpolation of the eigenvalues which occurs before
-    * computing the eigenvalue spacings.
+    * Whether to perform spline interpolation on each set of eigenvalues before
+    * computing the spacings. If this option is enabled then the chi-squared value
+    * for each set of eigenvalues will be the average of multiple tests in which
+    * the spline pace is varied (according to the minimum and maximum spline pace);
+    * otherwise, only one test is performed for each set of eigenvalues.
+    */
+   bool _splineInterpolation {true};
+   /*!
+    * The minimum pace of the spline interpolation.
     */
    int _minSplinePace {10};
    /*!
-    * The maximum spline pace for the chi-squared test.
+    * The maximum pace of the spline interpolation.
     */
    int _maxSplinePace {40};
    /*!
