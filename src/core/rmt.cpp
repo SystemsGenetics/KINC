@@ -17,6 +17,10 @@ using namespace std;
 
 
 
+/*!
+ * Return the total number of blocks this analytic must process as steps
+ * or blocks of work.
+ */
 int RMT::size() const
 {
    return 1;
@@ -27,6 +31,12 @@ int RMT::size() const
 
 
 
+/*!
+ * Process the given index with a possible block of results if this analytic
+ * produces work blocks. This analytic implementation has no work blocks.
+ *
+ * @param result
+ */
 void RMT::process(const EAbstractAnalytic::Block* result)
 {
    Q_UNUSED(result);
@@ -113,6 +123,9 @@ void RMT::process(const EAbstractAnalytic::Block* result)
 
 
 
+/*!
+ * Make a new input object and return its pointer.
+ */
 EAbstractAnalytic::Input* RMT::makeInput()
 {
    return new Input(this);
@@ -123,6 +136,11 @@ EAbstractAnalytic::Input* RMT::makeInput()
 
 
 
+/*!
+ * Initialize this analytic. This implementation checks to make sure the input
+ * data object and output log file have been set, and that various integer
+ * arguments are valid.
+ */
 void RMT::initialize()
 {
    // make sure input and output were set properly
@@ -158,6 +176,11 @@ void RMT::initialize()
 
 
 
+/*!
+ * Compute the row-wise maximums of a correlation matrix.
+ *
+ * @param matrix
+ */
 QVector<float> RMT::computeMaximums(const QVector<float>& matrix)
 {
    const int N {_input->geneSize()};
@@ -166,7 +189,7 @@ QVector<float> RMT::computeMaximums(const QVector<float>& matrix)
    // initialize elements to minimum value
    QVector<float> maximums(N * K, 0);
 
-   // compute maximum of each row/column
+   // compute maximum correlation of each row
    for ( int i = 0; i < N; ++i )
    {
       for ( int j = 0; j < i; ++j )
@@ -188,6 +211,7 @@ QVector<float> RMT::computeMaximums(const QVector<float>& matrix)
       }
    }
 
+   // return row-wise maximums
    return maximums;
 }
 
@@ -196,6 +220,18 @@ QVector<float> RMT::computeMaximums(const QVector<float>& matrix)
 
 
 
+/*!
+ * Compute the pruned matrix of a correlation matrix with a given threshold. This
+ * function uses the pre-computed row-wise maximums for faster computation. The
+ * returned matrix is equivalent to the correlation matrix with all correlations
+ * below the given threshold removed, and all zero-columns removed. Additionally,
+ * the number of rows in the pruned matrix is returned as a pointer argument.
+ *
+ * @param matrix
+ * @param maximums
+ * @param threshold
+ * @param size
+ */
 QVector<float> RMT::computePruneMatrix(const QVector<float>& matrix, const QVector<float>& maximums, float threshold, int* size)
 {
    const int N {_input->geneSize()};
@@ -246,7 +282,13 @@ QVector<float> RMT::computePruneMatrix(const QVector<float>& matrix, const QVect
 
 
 
-QVector<float> RMT::computeEigenvalues(QVector<float>* pruneMatrix, int size)
+/*!
+ * Compute the eigenvalues of a correlation matrix.
+ *
+ * @param matrix
+ * @param size
+ */
+QVector<float> RMT::computeEigenvalues(QVector<float>* matrix, int size)
 {
    // using declarations for gsl resources
    using gsl_vector_ptr = unique_ptr<gsl_vector,decltype(&gsl_vector_free)>;
@@ -255,7 +297,7 @@ QVector<float> RMT::computeEigenvalues(QVector<float>* pruneMatrix, int size)
       ,decltype(&gsl_eigen_symmv_free)>;
 
    QVector<double> temp;
-   for (auto val: *pruneMatrix) temp.append(val);
+   for (auto val: *matrix) temp.append(val);
 
    // make and initialize gsl eigen resources
    gsl_matrix_view view = gsl_matrix_view_array(temp.data(),size,size);
@@ -283,6 +325,13 @@ QVector<float> RMT::computeEigenvalues(QVector<float>* pruneMatrix, int size)
 
 
 
+/*!
+ * Compute the chi-squared test for the nearest-neighbor spacing distribution
+ * (NNSD) of a list of eigenvalues as the average of several chi-squared tests,
+ * in which the unfolding pace is varied.
+ *
+ * @param eigens
+ */
 float RMT::computeChiSquare(const QVector<float>& eigens)
 {
    // compute unique eigenvalues
@@ -324,6 +373,13 @@ float RMT::computeChiSquare(const QVector<float>& eigens)
 
 
 
+/*!
+ * Compute the chi-squared test for the nearest-neighbor spacing distribution
+ * (NNSD) of a list of eigenvalues, with the given unfolding pace.
+ *
+ * @param eigens
+ * @param pace
+ */
 float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
 {
    // compute eigenvalue spacings
@@ -368,6 +424,11 @@ float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
 
 
 
+/*!
+ * Return the unique values of a sorted list of eigenvalues.
+ *
+ * @param eigens
+ */
 QVector<float> RMT::degenerate(const QVector<float>& eigens)
 {
    const float EPSILON {1e-6};
@@ -389,6 +450,18 @@ QVector<float> RMT::degenerate(const QVector<float>& eigens)
 
 
 
+
+/*!
+ * Compute the spacings of a list of eigenvalues using the given pace. The list
+ * of eigenvalues should be sorted and should contain unique values. This function
+ * computes a spline interpolation of the eigenvalues and uses points from the
+ * spline in order to compute the spacings. The pace determines the ratio of
+ * eigenvalues which are used as points to create the spline; for example, a pace
+ * value of 10 means that every 10th eigenvalue is used to create the spline.
+ *
+ * @param eigens
+ * @param pace
+ */
 QVector<float> RMT::unfold(const QVector<float>& eigens, int pace)
 {
    // using declarations for gsl resource pointers

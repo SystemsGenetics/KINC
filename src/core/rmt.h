@@ -8,6 +8,20 @@ class CorrelationMatrix;
 
 
 
+/*!
+ * This class implements the RMT analytic. This analytic takes a correlation
+ * matrix and attempts to find a threshold which, when applied to the correlation
+ * matrix, produces a scale-free network. This analytic uses Random Matrix Theory
+ * (RMT), which involves computing the eigenvalues of a thresholded correlation
+ * matrix, computing the nearest-neighbor spacing distribution (NNSD) of the eigenvalues,
+ * and comparing the distribution to a Poisson distribution using a chi-squared
+ * test. This process is repeated at each threshold step from the starting threshold;
+ * as the threshold decreases, the NNSD changes from a Poisson distribution to
+ * a Gaussian orthogonal ensemble (GOE) distribution, so the chi-squared value
+ * decreases. When the threshold approaches the scale-free threshold, the chi-squared
+ * value increases sharply, and the final threshold is chosen as the lowest threshold
+ * which produced a chi-squared value below the critical value.
+ */
 class RMT : public EAbstractAnalytic
 {
    Q_OBJECT
@@ -25,17 +39,62 @@ private:
    float computePaceChiSquare(const QVector<float>& eigens, int pace);
    QVector<float> degenerate(const QVector<float>& eigens);
    QVector<float> unfold(const QVector<float>& eigens, int pace);
-
+   /*!
+    * Pointer to the input correlation matrix.
+    */
    CorrelationMatrix* _input {nullptr};
+   /*!
+    * Pointer to the output log file.
+    */
    QFile* _logfile {nullptr};
+   /*!
+    * The starting threshold.
+    */
    float _thresholdStart {0.99};
+   /*!
+    * The threshold decrement.
+    */
    float _thresholdStep {0.001};
+   /*!
+    * The stopping threshold. The analytic will fail if it cannot find a
+    * proper threshold before reaching the stopping threshold.
+    */
    float _thresholdStop {0.5};
+   /*!
+    * The critical value for the chi-squared test, which is dependent on the
+    * degrees of freedom and the alpha-value of the test. This particular
+    * value is based on df = 60 and alpha = 0.001. Note that since the degrees
+    * of freedom corresponds to the number of histogram bins, this value
+    * must be re-calculated if the number of histogram bins is changed.
+    */
    float _chiSquareThreshold1 {99.607};
+   /*!
+    * The final chi-squared threshold. Once the chi-squared test goes below the
+    * chi-squared critical value, it must go above this value in order for the
+    * analytic to find a proper threshold.
+    */
    float _chiSquareThreshold2 {200};
+   /*!
+    * The minimum number of unique eigenvalues which must exist in a pruned matrix
+    * for the analytic to compute the NNSD of the eigenvalues. If the number of
+    * unique eigenvalues is less, the chi-squared test for that threshold is skipped.
+    */
    int _minEigenvalueSize {50};
+   /*!
+    * The minimum unfolding pace for the chi-squared test. The unfolding pace
+    * controls the spline interpolation of the eigenvalues which occurs before
+    * computing the eigenvalue spacings.
+    */
    int _minUnfoldingPace {10};
+   /*!
+    * The maximum unfolding pace for the chi-squared test.
+    */
    int _maxUnfoldingPace {40};
+   /*!
+    * The number of histogram bins in the NNSD of eigenvalues. This value
+    * corresponds to the degrees of freedom in the chi-squared test, therefore
+    * it affects the setting of the chi-squared critical value.
+    */
    int _histogramBinSize {60};
 };
 
