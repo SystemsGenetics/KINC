@@ -35,10 +35,10 @@ private:
    QVector<float> computeMaximums(const QVector<float>& matrix);
    QVector<float> computePruneMatrix(const QVector<float>& matrix, const QVector<float>& maximums, float threshold, int* size);
    QVector<float> computeEigenvalues(QVector<float>* pruneMatrix, int size);
+   QVector<float> computeUnique(const QVector<float>& values);
    float computeChiSquare(const QVector<float>& eigens);
    float computePaceChiSquare(const QVector<float>& eigens, int pace);
-   QVector<float> degenerate(const QVector<float>& eigens);
-   QVector<float> unfold(const QVector<float>& eigens, int pace);
+   QVector<float> computeSpacings(const QVector<float>& eigens, int pace);
    /*!
     * Pointer to the input correlation matrix.
     */
@@ -81,15 +81,15 @@ private:
     */
    int _minEigenvalueSize {50};
    /*!
-    * The minimum unfolding pace for the chi-squared test. The unfolding pace
+    * The minimum spline pace for the chi-squared test. The spline pace
     * controls the spline interpolation of the eigenvalues which occurs before
     * computing the eigenvalue spacings.
     */
-   int _minUnfoldingPace {10};
+   int _minSplinePace {10};
    /*!
-    * The maximum unfolding pace for the chi-squared test.
+    * The maximum spline pace for the chi-squared test.
     */
-   int _maxUnfoldingPace {40};
+   int _maxSplinePace {40};
    /*!
     * The number of histogram bins in the NNSD of eigenvalues. This value
     * corresponds to the degrees of freedom in the chi-squared test, therefore

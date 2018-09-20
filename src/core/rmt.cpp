@@ -78,7 +78,7 @@ void RMT::process(const EAbstractAnalytic::Block* result)
          qInfo("eigenvalues: %d", eigens.size());
 
          // compute unique eigenvalues
-         QVector<float> unique {degenerate(eigens)};
+         QVector<float> unique {computeUnique(eigens)};
 
          qInfo("unique eigenvalues: %d", unique.size());
 
@@ -167,11 +167,11 @@ void RMT::initialize()
    }
 
    // make sure pace arguments are valid
-   if ( _minUnfoldingPace >= _maxUnfoldingPace )
+   if ( _minSplinePace >= _maxSplinePace )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Minimum unfolding pace must be less than maximum unfolding pace."));
+      e.setDetails(tr("Minimum spline pace must be less than maximum spline pace."));
       throw e;
    }
 }
@@ -326,9 +326,38 @@ QVector<float> RMT::computeEigenvalues(QVector<float>* matrix, int size)
 
 
 /*!
+ * Return the unique values of a sorted list of real numbers. Two real numbers
+ * are unique if their absolute difference is greater than some small value
+ * epsilon.
+ *
+ * @param values
+ */
+QVector<float> RMT::computeUnique(const QVector<float>& values)
+{
+   const float EPSILON {1e-6};
+   QVector<float> unique;
+
+   for ( int i = 1; i < values.size(); ++i )
+   {
+      if ( unique.isEmpty() || fabs(values.at(i) - unique.last()) > EPSILON )
+      {
+         unique.append(values.at(i));
+      }
+   }
+
+   return unique;
+}
+
+
+
+
+
+
+
+/*!
  * Compute the chi-squared test for the nearest-neighbor spacing distribution
  * (NNSD) of a list of eigenvalues as the average of several chi-squared tests,
- * in which the unfolding pace is varied. The list of eigenvalues should be sorted
+ * in which the spline pace is varied. The list of eigenvalues should be sorted
  * and should contain only unique values.
  *
  * @param eigens
@@ -345,7 +374,7 @@ float RMT::computeChiSquare(const QVector<float>& eigens)
    float chi {0.0};
    int chiTestCount {0};
 
-   for ( int pace = _minUnfoldingPace; pace <= _maxUnfoldingPace; ++pace )
+   for ( int pace = _minSplinePace; pace <= _maxSplinePace; ++pace )
    {
       // perform test only if there are enough eigenvalues for pace
       if ( eigens.size() / pace < 5 )
@@ -371,7 +400,7 @@ float RMT::computeChiSquare(const QVector<float>& eigens)
 
 /*!
  * Compute the chi-squared test for the nearest-neighbor spacing distribution
- * (NNSD) of a list of eigenvalues, with the given unfolding pace.
+ * (NNSD) of a list of eigenvalues, with the given spline pace.
  *
  * @param eigens
  * @param pace
@@ -379,7 +408,7 @@ float RMT::computeChiSquare(const QVector<float>& eigens)
 float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
 {
    // compute eigenvalue spacings
-   QVector<float> spacings {unfold(eigens, pace)};
+   QVector<float> spacings {computeSpacings(eigens, pace)};
 
    // compute nearest-neighbor spacing distribution
    const float histogramMin {0};
@@ -421,33 +450,6 @@ float RMT::computePaceChiSquare(const QVector<float>& eigens, int pace)
 
 
 /*!
- * Return the unique values of a sorted list of eigenvalues.
- *
- * @param eigens
- */
-QVector<float> RMT::degenerate(const QVector<float>& eigens)
-{
-   const float EPSILON {1e-6};
-   QVector<float> unique;
-
-   for ( int i = 1; i < eigens.size(); ++i )
-   {
-      if ( unique.isEmpty() || fabs(eigens.at(i) - unique.last()) > EPSILON )
-      {
-         unique.append(eigens.at(i));
-      }
-   }
-
-   return unique;
-}
-
-
-
-
-
-
-
-/*!
  * Compute the spacings of a list of eigenvalues using the given pace. The list
  * of eigenvalues should be sorted and should contain unique values. This function
  * computes a spline interpolation of the eigenvalues and uses points from the
@@ -458,7 +460,7 @@ QVector<float> RMT::degenerate(const QVector<float>& eigens)
  * @param eigens
  * @param pace
  */
-QVector<float> RMT::unfold(const QVector<float>& eigens, int pace)
+QVector<float> RMT::computeSpacings(const QVector<float>& eigens, int pace)
 {
    // using declarations for gsl resource pointers
    using gsl_interp_accel_ptr = unique_ptr<gsl_interp_accel, decltype(&gsl_interp_accel_free)>;

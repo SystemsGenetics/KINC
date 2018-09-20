@@ -21,8 +21,8 @@ public:
       ,ThresholdStart
       ,ThresholdStep
       ,ThresholdStop
-      ,MinUnfoldingPace
-      ,MaxUnfoldingPace
+      ,MinSplinePace
+      ,MaxSplinePace
       ,HistogramBinSize
       ,Total
    };

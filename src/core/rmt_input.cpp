@@ -49,8 +49,8 @@ EAbstractAnalytic::Input::Type RMT::Input::type(int index) const
    case ThresholdStart: return Type::Double;
    case ThresholdStep: return Type::Double;
    case ThresholdStop: return Type::Double;
-   case MinUnfoldingPace: return Type::Integer;
-   case MaxUnfoldingPace: return Type::Integer;
+   case MinSplinePace: return Type::Integer;
+   case MaxSplinePace: return Type::Integer;
    case HistogramBinSize: return Type::Integer;
    default: return Type::Boolean;
    }
@@ -122,23 +122,23 @@ QVariant RMT::Input::data(int index, Role role) const
       case Role::Maximum: return 1;
       default: return QVariant();
       }
-   case MinUnfoldingPace:
+   case MinSplinePace:
       switch (role)
       {
       case Role::CommandLineName: return QString("minpace");
-      case Role::Title: return tr("Minimum Unfolding Pace:");
-      case Role::WhatsThis: return tr("The minimum pace with which to perform unfolding.");
+      case Role::Title: return tr("Minimum Spline Pace:");
+      case Role::WhatsThis: return tr("The minimum pace of the spline interpolation.");
       case Role::Default: return 10;
       case Role::Minimum: return 1;
       case Role::Maximum: return std::numeric_limits<int>::max();
       default: return QVariant();
       }
-   case MaxUnfoldingPace:
+   case MaxSplinePace:
       switch (role)
       {
       case Role::CommandLineName: return QString("maxpace");
-      case Role::Title: return tr("Maximum Unfolding Pace:");
-      case Role::WhatsThis: return tr("The maximum pace with which to perform unfolding.");
+      case Role::Title: return tr("Maximum Spline Pace:");
+      case Role::WhatsThis: return tr("The maximum pace of the spline interpolation.");
       case Role::Default: return 40;
       case Role::Minimum: return 1;
       case Role::Maximum: return std::numeric_limits<int>::max();
@@ -183,11 +183,11 @@ void RMT::Input::set(int index, const QVariant& value)
    case ThresholdStop:
       _base->_thresholdStop = value.toDouble();
       break;
-   case MinUnfoldingPace:
-      _base->_minUnfoldingPace = value.toInt();
+   case MinSplinePace:
+      _base->_minSplinePace = value.toInt();
       break;
-   case MaxUnfoldingPace:
-      _base->_maxUnfoldingPace = value.toInt();
+   case MaxSplinePace:
+      _base->_maxSplinePace = value.toInt();
       break;
    case HistogramBinSize:
       _base->_histogramBinSize = value.toInt();
