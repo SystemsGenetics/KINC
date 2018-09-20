@@ -192,7 +192,7 @@ QVector<float> RMT::computeMaximums(const QVector<float>& matrix)
    // compute maximum correlation of each row
    for ( int i = 0; i < N; ++i )
    {
-      for ( int j = 0; j < i; ++j )
+      for ( int j = 0; j < N; ++j )
       {
          for ( int k = 0; k < K; ++k )
          {
@@ -201,11 +201,6 @@ QVector<float> RMT::computeMaximums(const QVector<float>& matrix)
             if ( maximums[i * K + k] < correlation )
             {
                maximums[i * K + k] = correlation;
-            }
-
-            if ( maximums[j * K + k] < correlation )
-            {
-               maximums[j * K + k] = correlation;
             }
          }
       }
