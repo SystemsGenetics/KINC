@@ -13,6 +13,8 @@
  */
 float& ExpressionMatrix::Gene::operator[](int index)
 {
+   EDEBUG_FUNC(this,index);
+
    // make sure the index is valid
    if ( index < 0 || index >= _matrix->_sampleSize )
    {
@@ -43,6 +45,8 @@ ExpressionMatrix::Gene::Gene(ExpressionMatrix* matrix, bool isInitialized):
    _matrix(matrix),
    _expressions(new float[matrix->sampleSize()])
 {
+   EDEBUG_FUNC(this,matrix,isInitialized);
+
    if ( isInitialized )
    {
       read(_index);
@@ -59,6 +63,8 @@ ExpressionMatrix::Gene::Gene(ExpressionMatrix* matrix, bool isInitialized):
  */
 ExpressionMatrix::Gene::~Gene()
 {
+   EDEBUG_FUNC(this);
+
    delete[] _expressions;
 }
 
@@ -74,6 +80,8 @@ ExpressionMatrix::Gene::~Gene()
  */
 void ExpressionMatrix::Gene::read(int index)
 {
+   EDEBUG_FUNC(this,index);
+
    // make sure the index is valid
    if ( index < 0 || index >= _matrix->_geneSize )
    {
@@ -107,6 +115,8 @@ void ExpressionMatrix::Gene::read(int index)
  */
 bool ExpressionMatrix::Gene::readNext()
 {
+   EDEBUG_FUNC(this);
+
    // make sure that there is another row in the expression matrix
    if ( (_index + 1) >= _matrix->_geneSize )
    {
@@ -133,6 +143,8 @@ bool ExpressionMatrix::Gene::readNext()
  */
 void ExpressionMatrix::Gene::write(int index)
 {
+   EDEBUG_FUNC(this,index);
+
    // make sure the index is valid
    if ( index < 0 || index >= _matrix->_geneSize )
    {
@@ -166,6 +178,8 @@ void ExpressionMatrix::Gene::write(int index)
  */
 bool ExpressionMatrix::Gene::writeNext()
 {
+   EDEBUG_FUNC(this);
+
    // make sure there is another row in the expression matrix
    if ( (_index + 1) >= _matrix->_geneSize )
    {
@@ -191,6 +205,8 @@ bool ExpressionMatrix::Gene::writeNext()
  */
 float ExpressionMatrix::Gene::at(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    // make sure the index is valid
    if ( index < 0 || index >= _matrix->_sampleSize )
    {

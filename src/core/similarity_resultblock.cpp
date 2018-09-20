@@ -15,6 +15,7 @@ Similarity::ResultBlock::ResultBlock(int index, qint64 start):
    EAbstractAnalytic::Block(index),
    _start(start)
 {
+   EDEBUG_FUNC(this,index,start);
 }
 
 
@@ -29,6 +30,8 @@ Similarity::ResultBlock::ResultBlock(int index, qint64 start):
  */
 void Similarity::ResultBlock::append(const Pair& pair)
 {
+   EDEBUG_FUNC(this,pair);
+
    _pairs.append(pair);
 }
 
@@ -44,6 +47,8 @@ void Similarity::ResultBlock::append(const Pair& pair)
  */
 void Similarity::ResultBlock::write(QDataStream& stream) const
 {
+   EDEBUG_FUNC(this,stream);
+
    stream << _start;
    stream << _pairs.size();
 
@@ -67,6 +72,8 @@ void Similarity::ResultBlock::write(QDataStream& stream) const
  */
 void Similarity::ResultBlock::read(QDataStream& stream)
 {
+   EDEBUG_FUNC(this,stream);
+
    stream >> _start;
 
    int size;

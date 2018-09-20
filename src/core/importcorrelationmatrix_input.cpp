@@ -12,7 +12,9 @@
 ImportCorrelationMatrix::Input::Input(ImportCorrelationMatrix* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
-{}
+{
+   EDEBUG_FUNC(this,parent);
+}
 
 
 
@@ -24,6 +26,8 @@ ImportCorrelationMatrix::Input::Input(ImportCorrelationMatrix* parent):
  */
 int ImportCorrelationMatrix::Input::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -39,6 +43,8 @@ int ImportCorrelationMatrix::Input::size() const
  */
 EAbstractAnalytic::Input::Type ImportCorrelationMatrix::Input::type(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    switch (index)
    {
    case InputFile: return Type::FileIn;
@@ -65,6 +71,8 @@ EAbstractAnalytic::Input::Type ImportCorrelationMatrix::Input::type(int index) c
  */
 QVariant ImportCorrelationMatrix::Input::data(int index, Role role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    switch (index)
    {
    case InputFile:
@@ -149,6 +157,8 @@ QVariant ImportCorrelationMatrix::Input::data(int index, Role role) const
  */
 void ImportCorrelationMatrix::Input::set(int index, const QVariant& value)
 {
+   EDEBUG_FUNC(this,index,value);
+
    switch (index)
    {
    case GeneSize:
@@ -179,6 +189,8 @@ void ImportCorrelationMatrix::Input::set(int index, const QVariant& value)
  */
 void ImportCorrelationMatrix::Input::set(int index, QFile* file)
 {
+   EDEBUG_FUNC(this,index,file);
+
    if ( index == InputFile )
    {
       _base->_input = file;
@@ -198,6 +210,8 @@ void ImportCorrelationMatrix::Input::set(int index, QFile* file)
  */
 void ImportCorrelationMatrix::Input::set(int index, EAbstractData* data)
 {
+   EDEBUG_FUNC(this,index,data);
+
    if ( index == ClusterData )
    {
       _base->_ccm = data->cast<CCMatrix>();

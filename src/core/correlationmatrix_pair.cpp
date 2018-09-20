@@ -9,6 +9,8 @@
  */
 void CorrelationMatrix::Pair::addCluster(int amount) const
 {
+   EDEBUG_FUNC(this,amount);
+
    // keep adding a new list of floats for given amount
    while ( amount-- > 0 )
    {
@@ -27,6 +29,8 @@ void CorrelationMatrix::Pair::addCluster(int amount) const
  */
 QString CorrelationMatrix::Pair::toString() const
 {
+   EDEBUG_FUNC(this);
+
    // if there are no correlations simply return null
    if ( _correlations.isEmpty() )
    {
@@ -66,6 +70,8 @@ QString CorrelationMatrix::Pair::toString() const
  */
 void CorrelationMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
 {
+   EDEBUG_FUNC(this,stream,cluster);
+
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _correlations.size() )
    {
@@ -90,6 +96,8 @@ void CorrelationMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
  */
 void CorrelationMatrix::Pair::readCluster(const EDataStream& stream, int cluster) const
 {
+   EDEBUG_FUNC(this,stream,cluster);
+
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _correlations.size() )
    {

@@ -16,6 +16,8 @@ using namespace Pairwise;
  */
 qint64 Matrix::dataEnd() const
 {
+   EDEBUG_FUNC(this);
+
    return _headerSize + _subHeaderSize + _clusterSize * (_dataSize + _itemHeaderSize);
 }
 
@@ -29,6 +31,8 @@ qint64 Matrix::dataEnd() const
  */
 void Matrix::readData()
 {
+   EDEBUG_FUNC(this);
+
    // seek to the beginning of the data
    seek(0);
 
@@ -49,6 +53,8 @@ void Matrix::readData()
  */
 void Matrix::writeNewData()
 {
+   EDEBUG_FUNC(this);
+
    // initialize metadata
    setMeta(EMetadata(EMetadata::Object));
 
@@ -73,6 +79,8 @@ void Matrix::writeNewData()
  */
 void Matrix::finish()
 {
+   EDEBUG_FUNC(this);
+
    // seek to the beginning of the data
    seek(0);
 
@@ -93,6 +101,8 @@ void Matrix::finish()
  */
 EMetadata Matrix::geneNames() const
 {
+   EDEBUG_FUNC(this);
+
    return meta().toObject().at("genes");
 }
 
@@ -112,6 +122,8 @@ EMetadata Matrix::geneNames() const
  */
 void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int dataSize, int subHeaderSize)
 {
+   EDEBUG_FUNC(this,geneNames,maxClusterSize,dataSize,subHeaderSize);
+
    // make sure gene names metadata is an array and is not empty
    if ( !geneNames.isArray() || geneNames.toArray().isEmpty() )
    {
@@ -166,6 +178,8 @@ void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int data
  */
 void Matrix::write(Index index, qint8 cluster)
 {
+   EDEBUG_FUNC(this,index,cluster);
+
    // make sure this is new data object that can be written to
    if ( _lastWrite == -2 )
    {
@@ -209,6 +223,8 @@ void Matrix::write(Index index, qint8 cluster)
  */
 Index Matrix::getPair(qint64 index, qint8* cluster) const
 {
+   EDEBUG_FUNC(this,index,cluster);
+
    // seek to index and read item header data
    seekPair(index);
    qint32 geneX;
@@ -233,6 +249,8 @@ Index Matrix::getPair(qint64 index, qint8* cluster) const
  */
 qint64 Matrix::findPair(qint64 indent, qint64 first, qint64 last) const
 {
+   EDEBUG_FUNC(this,indent,first,last);
+
    // calculate the midway pivot point and seek to it
    qint64 pivot {first + (last - first)/2};
    seekPair(pivot);
@@ -293,6 +311,8 @@ qint64 Matrix::findPair(qint64 indent, qint64 first, qint64 last) const
  */
 void Matrix::seekPair(qint64 index) const
 {
+   EDEBUG_FUNC(this,index);
+
    // make sure index is within range
    if ( index < 0 || index >= _clusterSize )
    {

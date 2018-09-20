@@ -20,6 +20,8 @@ using namespace std;
  */
 int ExportCorrelationMatrix::size() const
 {
+   EDEBUG_FUNC(this);
+
    return 1;
 }
 
@@ -34,9 +36,9 @@ int ExportCorrelationMatrix::size() const
  *
  * @param result
  */
-void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
+void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block*)
 {
-   Q_UNUSED(result);
+   EDEBUG_FUNC(this);
 
    // initialize pairwise iterators
    CorrelationMatrix::Pair cmxPair(_cmx);
@@ -166,6 +168,8 @@ void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
  */
 EAbstractAnalytic::Input* ExportCorrelationMatrix::makeInput()
 {
+   EDEBUG_FUNC(this);
+
    return new Input(this);
 }
 
@@ -180,6 +184,8 @@ EAbstractAnalytic::Input* ExportCorrelationMatrix::makeInput()
  */
 void ExportCorrelationMatrix::initialize()
 {
+   EDEBUG_FUNC(this);
+
    if ( !_emx || !_ccm || !_cmx || !_output )
    {
       E_MAKE_EXCEPTION(e);

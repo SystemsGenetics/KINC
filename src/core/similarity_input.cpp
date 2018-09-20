@@ -64,6 +64,7 @@ Similarity::Input::Input(Similarity* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
 {
+   EDEBUG_FUNC(this,parent);
 }
 
 
@@ -76,6 +77,8 @@ Similarity::Input::Input(Similarity* parent):
  */
 int Similarity::Input::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -91,6 +94,8 @@ int Similarity::Input::size() const
  */
 EAbstractAnalytic::Input::Type Similarity::Input::type(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    switch (index)
    {
    case InputData: return Type::DataIn;
@@ -126,6 +131,8 @@ EAbstractAnalytic::Input::Type Similarity::Input::type(int index) const
  */
 QVariant Similarity::Input::data(int index, Role role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    switch (index)
    {
    case InputData:
@@ -308,6 +315,8 @@ QVariant Similarity::Input::data(int index, Role role) const
  */
 void Similarity::Input::set(int index, const QVariant& value)
 {
+   EDEBUG_FUNC(this,index,value);
+
    switch (index)
    {
    case ClusteringType:
@@ -365,10 +374,9 @@ void Similarity::Input::set(int index, const QVariant& value)
  * @param index
  * @param file
  */
-void Similarity::Input::set(int index, QFile* file)
+void Similarity::Input::set(int, QFile*)
 {
-   Q_UNUSED(index)
-   Q_UNUSED(file)
+   EDEBUG_FUNC(this);
 }
 
 
@@ -384,6 +392,8 @@ void Similarity::Input::set(int index, QFile* file)
  */
 void Similarity::Input::set(int index, EAbstractData *data)
 {
+   EDEBUG_FUNC(this,index,data);
+
    switch (index)
    {
    case InputData:

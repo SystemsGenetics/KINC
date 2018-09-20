@@ -18,6 +18,7 @@ using namespace std;
 Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    ::OpenCL::Kernel(program, "GMM_compute", parent)
 {
+   EDEBUG_FUNC(this,program,parent);
 }
 
 
@@ -78,6 +79,30 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    ::OpenCL::Buffer<cl_char>* out_labels
 )
 {
+   EDEBUG_FUNC(this,
+      queue,
+      kernelSize,
+      sampleSize,
+      minSamples,
+      minClusters,
+      maxClusters,
+      criterion,
+      removePreOutliers,
+      removePostOutliers,
+      work_X,
+      work_N,
+      work_x,
+      work_y,
+      work_labels,
+      work_components,
+      work_MP,
+      work_counts,
+      work_logpi,
+      work_loggamma,
+      work_logGamma,
+      out_K,
+      out_labels);
+
    // acquire lock for this kernel
    Locker locker {lock()};
 

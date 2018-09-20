@@ -16,6 +16,8 @@
  */
 int ImportCorrelationMatrix::size() const
 {
+   EDEBUG_FUNC(this);
+
    return 1;
 }
 
@@ -31,9 +33,9 @@ int ImportCorrelationMatrix::size() const
  *
  * @param result
  */
-void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
+void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block*)
 {
-   Q_UNUSED(result);
+   EDEBUG_FUNC(this);
 
    // build gene name metadata
    EMetaArray metaGeneNames;
@@ -177,6 +179,8 @@ void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
  */
 EAbstractAnalytic::Input* ImportCorrelationMatrix::makeInput()
 {
+   EDEBUG_FUNC(this);
+
    return new Input(this);
 }
 
@@ -192,6 +196,8 @@ EAbstractAnalytic::Input* ImportCorrelationMatrix::makeInput()
  */
 void ImportCorrelationMatrix::initialize()
 {
+   EDEBUG_FUNC(this);
+
    if ( !_input || !_ccm || !_cmx )
    {
       E_MAKE_EXCEPTION(e);

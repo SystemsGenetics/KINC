@@ -17,6 +17,8 @@ using namespace Pairwise;
  */
 void Matrix::Pair::write(Index index)
 {
+   EDEBUG_FUNC(this,index);
+
    // make sure cluster size of pair does not exceed max
    if ( clusterSize() > _matrix->_maxClusterSize )
    {
@@ -51,6 +53,8 @@ void Matrix::Pair::write(Index index)
  */
 void Matrix::Pair::read(Index index) const
 {
+   EDEBUG_FUNC(this,index);
+
    // clear any existing clusters
    clearClusters();
 
@@ -75,6 +79,8 @@ void Matrix::Pair::read(Index index) const
  */
 void Matrix::Pair::readNext() const
 {
+   EDEBUG_FUNC(this);
+
    // make sure read next index is not already at end of data object
    if ( _rawIndex < _cMatrix->_clusterSize )
    {

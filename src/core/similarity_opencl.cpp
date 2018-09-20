@@ -20,6 +20,7 @@ Similarity::OpenCL::OpenCL(Similarity* parent):
    EAbstractAnalytic::OpenCL(parent),
    _base(parent)
 {
+   EDEBUG_FUNC(this,parent);
 }
 
 
@@ -32,6 +33,8 @@ Similarity::OpenCL::OpenCL(Similarity* parent):
  */
 std::unique_ptr<EAbstractAnalytic::OpenCL::Worker> Similarity::OpenCL::makeWorker()
 {
+   EDEBUG_FUNC(this);
+
    return unique_ptr<EAbstractAnalytic::OpenCL::Worker>(new Worker(_base, this, _context, _program));
 }
 
@@ -47,6 +50,8 @@ std::unique_ptr<EAbstractAnalytic::OpenCL::Worker> Similarity::OpenCL::makeWorke
  */
 void Similarity::OpenCL::initialize(::OpenCL::Context* context)
 {
+   EDEBUG_FUNC(this,context);
+
    // create list of opencl source files
    QStringList paths {
       ":/opencl/linalg.cl",

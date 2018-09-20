@@ -14,7 +14,9 @@
 ExportExpressionMatrix::Input::Input(ExportExpressionMatrix* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
-{}
+{
+   EDEBUG_FUNC(this,parent);
+}
 
 
 
@@ -26,6 +28,8 @@ ExportExpressionMatrix::Input::Input(ExportExpressionMatrix* parent):
  */
 int ExportExpressionMatrix::Input::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -41,6 +45,8 @@ int ExportExpressionMatrix::Input::size() const
  */
 EAbstractAnalytic::Input::Type ExportExpressionMatrix::Input::type(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    switch (index)
    {
    case InputData: return Type::DataIn;
@@ -63,6 +69,8 @@ EAbstractAnalytic::Input::Type ExportExpressionMatrix::Input::type(int index) co
  */
 QVariant ExportExpressionMatrix::Input::data(int index, Role role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    switch (index)
    {
    case InputData:
@@ -108,6 +116,8 @@ QVariant ExportExpressionMatrix::Input::data(int index, Role role) const
  */
 void ExportExpressionMatrix::Input::set(int index, const QVariant& value)
 {
+   EDEBUG_FUNC(this,index,value);
+
    switch (index)
    {
    case NANToken:
@@ -129,6 +139,8 @@ void ExportExpressionMatrix::Input::set(int index, const QVariant& value)
  */
 void ExportExpressionMatrix::Input::set(int index, EAbstractData* data)
 {
+   EDEBUG_FUNC(this,index,data);
+
    if ( index == InputData )
    {
       _base->_input = data->cast<ExpressionMatrix>();
@@ -148,6 +160,8 @@ void ExportExpressionMatrix::Input::set(int index, EAbstractData* data)
  */
 void ExportExpressionMatrix::Input::set(int index, QFile* file)
 {
+   EDEBUG_FUNC(this,index,file);
+
    if ( index == OutputFile )
    {
       _base->_output = file;

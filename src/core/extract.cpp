@@ -20,6 +20,8 @@ using namespace std;
  */
 int Extract::size() const
 {
+   EDEBUG_FUNC(this);
+
    return 1;
 }
 
@@ -34,9 +36,9 @@ int Extract::size() const
  *
  * @param result
  */
-void Extract::process(const EAbstractAnalytic::Block* result)
+void Extract::process(const EAbstractAnalytic::Block*)
 {
-   Q_UNUSED(result);
+   EDEBUG_FUNC(this);
 
    // if output text file was given then export a text file
    if ( _text )
@@ -61,6 +63,8 @@ void Extract::process(const EAbstractAnalytic::Block* result)
  */
 void Extract::exportTextFile()
 {
+   EDEBUG_FUNC(this);
+
    // initialize pairwise iterators
    CorrelationMatrix::Pair cmxPair(_cmx);
    CCMatrix::Pair ccmPair(_ccm);
@@ -218,6 +222,8 @@ void Extract::exportTextFile()
  */
 void Extract::exportGraphMLFile()
 {
+   EDEBUG_FUNC(this);
+
    // initialize pairwise iterators
    CorrelationMatrix::Pair cmxPair(_cmx);
    CCMatrix::Pair ccmPair(_ccm);
@@ -340,6 +346,8 @@ void Extract::exportGraphMLFile()
  */
 EAbstractAnalytic::Input* Extract::makeInput()
 {
+   EDEBUG_FUNC(this);
+
    return new Input(this);
 }
 
@@ -354,6 +362,8 @@ EAbstractAnalytic::Input* Extract::makeInput()
  */
 void Extract::initialize()
 {
+   EDEBUG_FUNC(this);
+
    if ( !_emx || !_ccm || !_cmx )
    {
       E_MAKE_EXCEPTION(e);

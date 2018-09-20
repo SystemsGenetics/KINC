@@ -25,6 +25,8 @@ using namespace std;
  */
 qint64 Similarity::totalPairs(const ExpressionMatrix* emx) const
 {
+   EDEBUG_FUNC(this,emx);
+
    return (qint64) emx->geneSize() * (emx->geneSize() - 1) / 2;
 }
 
@@ -38,6 +40,8 @@ qint64 Similarity::totalPairs(const ExpressionMatrix* emx) const
  */
 int Similarity::size() const
 {
+   EDEBUG_FUNC(this);
+
    return (totalPairs(_input) + _workBlockSize - 1) / _workBlockSize;
 }
 
@@ -55,6 +59,8 @@ int Similarity::size() const
  */
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    if ( ELog::isActive() )
    {
       ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
@@ -76,6 +82,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
  */
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork() const
 {
+   EDEBUG_FUNC(this);
+
    return unique_ptr<EAbstractAnalytic::Block>(new WorkBlock);
 }
 
@@ -89,6 +97,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork() const
  */
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeResult() const
 {
+   EDEBUG_FUNC(this);
+
    return unique_ptr<EAbstractAnalytic::Block>(new ResultBlock);
 }
 
@@ -106,6 +116,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeResult() const
  */
 void Similarity::process(const EAbstractAnalytic::Block* result)
 {
+   EDEBUG_FUNC(this,result);
+
    if ( ELog::isActive() )
    {
       ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
@@ -182,6 +194,8 @@ void Similarity::process(const EAbstractAnalytic::Block* result)
  */
 EAbstractAnalytic::Input* Similarity::makeInput()
 {
+   EDEBUG_FUNC(this);
+
    return new Input(this);
 }
 
@@ -195,6 +209,8 @@ EAbstractAnalytic::Input* Similarity::makeInput()
  */
 EAbstractAnalytic::Serial* Similarity::makeSerial()
 {
+   EDEBUG_FUNC(this);
+
    return new Serial(this);
 }
 
@@ -208,6 +224,8 @@ EAbstractAnalytic::Serial* Similarity::makeSerial()
  */
 EAbstractAnalytic::OpenCL* Similarity::makeOpenCL()
 {
+   EDEBUG_FUNC(this);
+
    return new OpenCL(this);
 }
 
@@ -222,6 +240,8 @@ EAbstractAnalytic::OpenCL* Similarity::makeOpenCL()
  */
 void Similarity::initialize()
 {
+   EDEBUG_FUNC(this);
+
    if ( !isMaster() )
    {
       return;

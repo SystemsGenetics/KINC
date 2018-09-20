@@ -21,6 +21,8 @@ Index::Index(qint32 x, qint32 y):
    _x(x),
    _y(y)
 {
+   EDEBUG_FUNC(this,x,y);
+
    // make sure pairwise index is valid
    if ( x < 1 || y < 0 || x <= y )
    {
@@ -46,6 +48,8 @@ Index::Index(qint64 index):
    _x(1),
    _y(0)
 {
+   EDEBUG_FUNC(this,index);
+
    // make sure index is valid
    if ( index < 0 )
    {
@@ -81,6 +85,8 @@ Index::Index(qint64 index):
  */
 qint64 Index::indent(qint8 cluster) const
 {
+   EDEBUG_FUNC(this,cluster);
+
    // make sure cluster given is valid
    if ( cluster < 0 || cluster >= MAX_CLUSTER_SIZE )
    {
@@ -105,6 +111,8 @@ qint64 Index::indent(qint8 cluster) const
  */
 void Index::operator++()
 {
+   EDEBUG_FUNC(this);
+
    // increment gene y and check if it reaches gene x
    if ( ++_y >= _x )
    {

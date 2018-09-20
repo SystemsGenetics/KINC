@@ -14,7 +14,9 @@
 ImportExpressionMatrix::Input::Input(ImportExpressionMatrix* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
-{}
+{
+   EDEBUG_FUNC(this,parent);
+}
 
 
 
@@ -26,6 +28,8 @@ ImportExpressionMatrix::Input::Input(ImportExpressionMatrix* parent):
  */
 int ImportExpressionMatrix::Input::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -41,6 +45,8 @@ int ImportExpressionMatrix::Input::size() const
  */
 EAbstractAnalytic::Input::Type ImportExpressionMatrix::Input::type(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    switch (index)
    {
    case InputFile: return Type::FileIn;
@@ -64,6 +70,8 @@ EAbstractAnalytic::Input::Type ImportExpressionMatrix::Input::type(int index) co
  */
 QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    switch (index)
    {
    case InputFile:
@@ -121,6 +129,8 @@ QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
  */
 void ImportExpressionMatrix::Input::set(int index, const QVariant& value)
 {
+   EDEBUG_FUNC(this,index,value);
+
    switch (index)
    {
    case SampleSize:
@@ -145,6 +155,8 @@ void ImportExpressionMatrix::Input::set(int index, const QVariant& value)
  */
 void ImportExpressionMatrix::Input::set(int index, QFile* file)
 {
+   EDEBUG_FUNC(this,index,file);
+
    if ( index == InputFile )
    {
       _base->_input = file;
@@ -164,6 +176,8 @@ void ImportExpressionMatrix::Input::set(int index, QFile* file)
  */
 void ImportExpressionMatrix::Input::set(int index, EAbstractData* data)
 {
+   EDEBUG_FUNC(this,index,data);
+
    if ( index == OutputData )
    {
       _base->_output = data->cast<ExpressionMatrix>();

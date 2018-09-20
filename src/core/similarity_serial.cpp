@@ -25,6 +25,8 @@ Similarity::Serial::Serial(Similarity* parent):
    EAbstractAnalytic::Serial(parent),
    _base(parent)
 {
+   EDEBUG_FUNC(this,parent);
+
    // initialize clustering model
    switch ( _base->_clusMethod )
    {
@@ -62,6 +64,8 @@ Similarity::Serial::Serial(Similarity* parent):
  */
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbstractAnalytic::Block* block)
 {
+   EDEBUG_FUNC(this,block);
+
    if ( ELog::isActive() )
    {
       ELog() << tr("Executing(serial) work index %1.\n").arg(block->index());
@@ -164,6 +168,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
  */
 int Similarity::Serial::fetchPair(Pairwise::Index index, QVector<Pairwise::Vector2>& data, QVector<qint8>& labels)
 {
+   EDEBUG_FUNC(this,index,data,labels);
+
    // read in gene expressions
    ExpressionMatrix::Gene gene1(_base->_input);
    ExpressionMatrix::Gene gene2(_base->_input);
@@ -221,6 +227,8 @@ int Similarity::Serial::fetchPair(Pairwise::Index index, QVector<Pairwise::Vecto
  */
 int Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& data, int N, QVector<qint8>& labels, qint8 cluster, qint8 marker)
 {
+   EDEBUG_FUNC(this,data,N,labels,cluster,marker);
+
    // extract univariate data from the given cluster
    QVector<float> x_sorted;
    QVector<float> y_sorted;

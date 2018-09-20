@@ -19,6 +19,7 @@ using namespace std;
 Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent):
    ::OpenCL::Kernel(program, "Pearson_compute", parent)
 {
+   EDEBUG_FUNC(this,program,parent);
 }
 
 
@@ -51,6 +52,16 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
    ::OpenCL::Buffer<cl_float>* out_correlations
 )
 {
+   EDEBUG_FUNC(this,
+      queue,
+      kernelSize,
+      in_data,
+      clusterSize,
+      in_labels,
+      sampleSize,
+      minSamples,
+      out_correlations);
+
    // acquire lock for this kernel
    Locker locker {lock()};
 

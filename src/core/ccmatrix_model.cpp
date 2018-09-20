@@ -18,6 +18,8 @@ using namespace std;
 CCMatrix::Model::Model(CCMatrix* matrix):
    _matrix(matrix)
 {
+   EDEBUG_FUNC(this,matrix);
+
    setParent(matrix);
 }
 
@@ -35,6 +37,8 @@ CCMatrix::Model::Model(CCMatrix* matrix):
  */
 QVariant CCMatrix::Model::headerData(int section, Qt::Orientation orientation, int role) const
 {
+   EDEBUG_FUNC(this,section,orientation,role);
+
    // orientation is not used
    Q_UNUSED(orientation);
 
@@ -70,6 +74,8 @@ QVariant CCMatrix::Model::headerData(int section, Qt::Orientation orientation, i
  */
 int CCMatrix::Model::rowCount(const QModelIndex&) const
 {
+   EDEBUG_FUNC(this);
+
    return _matrix->geneSize();
 }
 
@@ -83,6 +89,8 @@ int CCMatrix::Model::rowCount(const QModelIndex&) const
  */
 int CCMatrix::Model::columnCount(const QModelIndex&) const
 {
+   EDEBUG_FUNC(this);
+
    return _matrix->geneSize();
 }
 
@@ -99,6 +107,8 @@ int CCMatrix::Model::columnCount(const QModelIndex&) const
  */
 QVariant CCMatrix::Model::data(const QModelIndex& index, int role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    // if role is not display return nothing
    if ( role != Qt::DisplayRole )
    {

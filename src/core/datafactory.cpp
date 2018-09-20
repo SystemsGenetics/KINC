@@ -17,6 +17,8 @@ using namespace std;
  */
 quint16 DataFactory::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -32,6 +34,8 @@ quint16 DataFactory::size() const
  */
 QString DataFactory::name(quint16 type) const
 {
+   EDEBUG_FUNC(this,type);
+
    switch (type)
    {
    case ExpressionMatrixType: return "Expression Matrix";
@@ -53,6 +57,8 @@ QString DataFactory::name(quint16 type) const
  */
 QString DataFactory::fileExtension(quint16 type) const
 {
+   EDEBUG_FUNC(this,type);
+
    switch (type)
    {
    case ExpressionMatrixType: return "emx";
@@ -74,6 +80,8 @@ QString DataFactory::fileExtension(quint16 type) const
  */
 unique_ptr<EAbstractData> DataFactory::make(quint16 type) const
 {
+   EDEBUG_FUNC(this,type);
+
    switch (type)
    {
    case ExpressionMatrixType: return unique_ptr<EAbstractData>(new ExpressionMatrix);

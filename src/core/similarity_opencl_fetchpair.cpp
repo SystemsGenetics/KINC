@@ -19,6 +19,7 @@ using namespace std;
 Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* parent):
    ::OpenCL::Kernel(program, "fetchPair", parent)
 {
+   EDEBUG_FUNC(this,program,parent);
 }
 
 
@@ -53,6 +54,17 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
    ::OpenCL::Buffer<cl_char>* out_labels
 )
 {
+   EDEBUG_FUNC(this,
+      queue,
+      kernelSize,
+      expressions,
+      sampleSize,
+      in_index,
+      minExpression,
+      out_X,
+      out_N,
+      out_labels);
+
    // acquire lock for this kernel
    Locker locker {lock()};
 

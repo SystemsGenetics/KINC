@@ -32,6 +32,8 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    _baseOpenCL(baseOpenCL),
    _queue(new ::OpenCL::CommandQueue(context, context->devices().first(), this))
 {
+   EDEBUG_FUNC(this,base,baseOpenCL,context,program);
+
    // initialize kernels
    _kernels.fetchPair = new OpenCL::FetchPair(program, this);
    _kernels.gmm = new OpenCL::GMM(program, this);
@@ -76,6 +78,8 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
  */
 std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(const EAbstractAnalytic::Block* block)
 {
+   EDEBUG_FUNC(this,block);
+
    if ( ELog::isActive() )
    {
       ELog() << tr("Executing(OpenCL) work index %1.\n").arg(block->index());

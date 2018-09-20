@@ -11,7 +11,9 @@
 Extract::Input::Input(Extract* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
-{}
+{
+   EDEBUG_FUNC(this,parent);
+}
 
 
 
@@ -23,6 +25,8 @@ Extract::Input::Input(Extract* parent):
  */
 int Extract::Input::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -38,6 +42,8 @@ int Extract::Input::size() const
  */
 EAbstractAnalytic::Input::Type Extract::Input::type(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    switch (index)
    {
    case ExpressionData: return Type::DataIn;
@@ -64,6 +70,8 @@ EAbstractAnalytic::Input::Type Extract::Input::type(int index) const
  */
 QVariant Extract::Input::data(int index, Role role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    switch (index)
    {
    case ExpressionData:
@@ -150,6 +158,8 @@ QVariant Extract::Input::data(int index, Role role) const
  */
 void Extract::Input::set(int index, const QVariant& value)
 {
+   EDEBUG_FUNC(this,index,value);
+
    switch (index)
    {
    case MinCorrelation:
@@ -174,6 +184,8 @@ void Extract::Input::set(int index, const QVariant& value)
  */
 void Extract::Input::set(int index, EAbstractData* data)
 {
+   EDEBUG_FUNC(this,index,data);
+
    if ( index == ExpressionData )
    {
       _base->_emx = data->cast<ExpressionMatrix>();
@@ -201,6 +213,8 @@ void Extract::Input::set(int index, EAbstractData* data)
  */
 void Extract::Input::set(int index, QFile* file)
 {
+   EDEBUG_FUNC(this,index,file);
+
    if ( index == TextFile )
    {
       _base->_text = file;

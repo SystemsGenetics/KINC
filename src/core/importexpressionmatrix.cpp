@@ -14,6 +14,8 @@
  */
 int ImportExpressionMatrix::size() const
 {
+   EDEBUG_FUNC(this);
+
    return 1;
 }
 
@@ -28,9 +30,9 @@ int ImportExpressionMatrix::size() const
  *
  * @param result
  */
-void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
+void ImportExpressionMatrix::process(const EAbstractAnalytic::Block*)
 {
-   Q_UNUSED(result);
+   EDEBUG_FUNC(this);
 
    // structure for building list of genes
    struct Gene
@@ -169,6 +171,8 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
  */
 EAbstractAnalytic::Input* ImportExpressionMatrix::makeInput()
 {
+   EDEBUG_FUNC(this);
+
    return new Input(this);
 }
 
@@ -183,6 +187,8 @@ EAbstractAnalytic::Input* ImportExpressionMatrix::makeInput()
  */
 void ImportExpressionMatrix::initialize()
 {
+   EDEBUG_FUNC(this);
+
    if ( !_input || !_output )
    {
       E_MAKE_EXCEPTION(e);

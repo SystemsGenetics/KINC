@@ -18,6 +18,8 @@ using namespace std;
 CorrelationMatrix::Model::Model(CorrelationMatrix* matrix):
    _matrix(matrix)
 {
+   EDEBUG_FUNC(this,matrix);
+
    setParent(matrix);
 }
 
@@ -35,6 +37,8 @@ CorrelationMatrix::Model::Model(CorrelationMatrix* matrix):
  */
 QVariant CorrelationMatrix::Model::headerData(int section, Qt::Orientation orientation, int role) const
 {
+   EDEBUG_FUNC(this,section,orientation,role);
+
    // orientation is not used
    Q_UNUSED(orientation);
 
@@ -70,6 +74,8 @@ QVariant CorrelationMatrix::Model::headerData(int section, Qt::Orientation orien
  */
 int CorrelationMatrix::Model::rowCount(const QModelIndex&) const
 {
+   EDEBUG_FUNC(this);
+
    return _matrix->geneSize();
 }
 
@@ -83,6 +89,8 @@ int CorrelationMatrix::Model::rowCount(const QModelIndex&) const
  */
 int CorrelationMatrix::Model::columnCount(const QModelIndex&) const
 {
+   EDEBUG_FUNC(this);
+
    return _matrix->geneSize();
 }
 
@@ -99,6 +107,8 @@ int CorrelationMatrix::Model::columnCount(const QModelIndex&) const
  */
 QVariant CorrelationMatrix::Model::data(const QModelIndex& index, int role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    // if role is not display return nothing
    if ( role != Qt::DisplayRole )
    {

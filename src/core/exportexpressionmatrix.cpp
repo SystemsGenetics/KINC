@@ -14,6 +14,8 @@
  */
 int ExportExpressionMatrix::size() const
 {
+   EDEBUG_FUNC(this);
+
    return 1;
 }
 
@@ -28,9 +30,9 @@ int ExportExpressionMatrix::size() const
  *
  * @param result
  */
-void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
+void ExportExpressionMatrix::process(const EAbstractAnalytic::Block*)
 {
-   Q_UNUSED(result);
+   EDEBUG_FUNC(this);
 
    // get gene names, sample names
    EMetaArray geneNames = _input->geneNames().toArray();
@@ -99,6 +101,8 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
  */
 EAbstractAnalytic::Input* ExportExpressionMatrix::makeInput()
 {
+   EDEBUG_FUNC(this);
+
    return new Input(this);
 }
 
@@ -113,6 +117,8 @@ EAbstractAnalytic::Input* ExportExpressionMatrix::makeInput()
  */
 void ExportExpressionMatrix::initialize()
 {
+   EDEBUG_FUNC(this);
+
    if ( !_input || !_output )
    {
       E_MAKE_EXCEPTION(e);

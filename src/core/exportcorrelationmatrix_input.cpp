@@ -11,7 +11,9 @@
 ExportCorrelationMatrix::Input::Input(ExportCorrelationMatrix* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
-{}
+{
+   EDEBUG_FUNC(this,parent);
+}
 
 
 
@@ -23,6 +25,8 @@ ExportCorrelationMatrix::Input::Input(ExportCorrelationMatrix* parent):
  */
 int ExportCorrelationMatrix::Input::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -38,6 +42,8 @@ int ExportCorrelationMatrix::Input::size() const
  */
 EAbstractAnalytic::Input::Type ExportCorrelationMatrix::Input::type(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    switch (index)
    {
    case ExpressionData: return Type::DataIn;
@@ -61,6 +67,8 @@ EAbstractAnalytic::Input::Type ExportCorrelationMatrix::Input::type(int index) c
  */
 QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    switch (index)
    {
    case ExpressionData:
@@ -115,10 +123,9 @@ QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
  * @param index
  * @param value
  */
-void ExportCorrelationMatrix::Input::set(int index, const QVariant& value)
+void ExportCorrelationMatrix::Input::set(int, const QVariant&)
 {
-   Q_UNUSED(index);
-   Q_UNUSED(value);
+   EDEBUG_FUNC(this);
 }
 
 
@@ -134,6 +141,8 @@ void ExportCorrelationMatrix::Input::set(int index, const QVariant& value)
  */
 void ExportCorrelationMatrix::Input::set(int index, EAbstractData* data)
 {
+   EDEBUG_FUNC(this,index,data);
+
    if ( index == ExpressionData )
    {
       _base->_emx = data->cast<ExpressionMatrix>();
@@ -161,6 +170,8 @@ void ExportCorrelationMatrix::Input::set(int index, EAbstractData* data)
  */
 void ExportCorrelationMatrix::Input::set(int index, QFile* file)
 {
+   EDEBUG_FUNC(this,index,file);
+
    if ( index == OutputFile )
    {
       _base->_output = file;

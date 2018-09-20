@@ -15,7 +15,9 @@
 RMT::Input::Input(RMT* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
-{}
+{
+   EDEBUG_FUNC(this,parent);
+}
 
 
 
@@ -27,6 +29,8 @@ RMT::Input::Input(RMT* parent):
  */
 int RMT::Input::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -42,6 +46,8 @@ int RMT::Input::size() const
  */
 EAbstractAnalytic::Input::Type RMT::Input::type(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    switch (index)
    {
    case InputData: return Type::DataIn;
@@ -70,6 +76,8 @@ EAbstractAnalytic::Input::Type RMT::Input::type(int index) const
  */
 QVariant RMT::Input::data(int index, Role role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    switch (index)
    {
    case InputData:
@@ -182,6 +190,8 @@ QVariant RMT::Input::data(int index, Role role) const
  */
 void RMT::Input::set(int index, const QVariant& value)
 {
+   EDEBUG_FUNC(this,index,value);
+
    switch (index)
    {
    case ThresholdStart:
@@ -221,6 +231,8 @@ void RMT::Input::set(int index, const QVariant& value)
  */
 void RMT::Input::set(int index, QFile* file)
 {
+   EDEBUG_FUNC(this,index,file);
+
    if ( index == LogFile )
    {
       _base->_logfile = file;
@@ -240,6 +252,8 @@ void RMT::Input::set(int index, QFile* file)
  */
 void RMT::Input::set(int index, EAbstractData* data)
 {
+   EDEBUG_FUNC(this,index,data);
+
    if ( index == InputData )
    {
       _base->_input = data->cast<CorrelationMatrix>();

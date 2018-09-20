@@ -22,6 +22,8 @@ using namespace std;
  */
 quint16 AnalyticFactory::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -37,6 +39,8 @@ quint16 AnalyticFactory::size() const
  */
 QString AnalyticFactory::name(quint16 type) const
 {
+   EDEBUG_FUNC(this,type);
+
    switch (type)
    {
    case ImportExpressionMatrixType: return "Import Expression Matrix";
@@ -63,6 +67,8 @@ QString AnalyticFactory::name(quint16 type) const
  */
 QString AnalyticFactory::commandName(quint16 type) const
 {
+   EDEBUG_FUNC(this,type);
+
    switch (type)
    {
    case ImportExpressionMatrixType: return "import-emx";
@@ -89,6 +95,8 @@ QString AnalyticFactory::commandName(quint16 type) const
  */
 std::unique_ptr<EAbstractAnalytic> AnalyticFactory::make(quint16 type) const
 {
+   EDEBUG_FUNC(this,type);
+
    switch (type)
    {
    case ImportExpressionMatrixType: return unique_ptr<EAbstractAnalytic>(new ImportExpressionMatrix);

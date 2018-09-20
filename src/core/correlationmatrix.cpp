@@ -9,6 +9,8 @@
  */
 QAbstractTableModel* CorrelationMatrix::model()
 {
+   EDEBUG_FUNC(this);
+
    if ( !_model )
    {
       _model = new Model(this);
@@ -31,6 +33,8 @@ QAbstractTableModel* CorrelationMatrix::model()
  */
 void CorrelationMatrix::initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& correlationNames)
 {
+   EDEBUG_FUNC(this,geneNames,maxClusterSize,correlationNames);
+
    // make sure correlation names is an array and is not empty
    if ( !correlationNames.isArray() || correlationNames.toArray().isEmpty() )
    {
@@ -60,6 +64,8 @@ void CorrelationMatrix::initialize(const EMetadata& geneNames, int maxClusterSiz
  */
 EMetadata CorrelationMatrix::correlationNames() const
 {
+   EDEBUG_FUNC(this);
+
    return meta().toObject().at("correlations");
 }
 
@@ -73,6 +79,8 @@ EMetadata CorrelationMatrix::correlationNames() const
  */
 QVector<float> CorrelationMatrix::dumpRawData() const
 {
+   EDEBUG_FUNC(this);
+
    // if there are no genes do nothing
    if ( geneSize() == 0 )
    {

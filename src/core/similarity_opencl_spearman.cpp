@@ -19,6 +19,7 @@ using namespace std;
 Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* parent):
    ::OpenCL::Kernel(program, "Spearman_compute", parent)
 {
+   EDEBUG_FUNC(this,parent);
 }
 
 
@@ -57,6 +58,19 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
    ::OpenCL::Buffer<cl_float>* out_correlations
 )
 {
+   EDEBUG_FUNC(this,
+      queue,
+      kernelSize,
+      in_data,
+      clusterSize,
+      in_labels,
+      sampleSize,
+      minSamples,
+      work_x,
+      work_y,
+      work_rank,
+      out_correlations);
+
    // acquire lock for this kernel
    Locker locker {lock()};
 
