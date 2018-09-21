@@ -1,6 +1,6 @@
 #ifndef PAIRWISE_SPEARMAN_H
 #define PAIRWISE_SPEARMAN_H
-#include "pairwise_correlation.h"
+#include "pairwise_correlationmodel.h"
 #include "expressionmatrix.h"
 
 namespace Pairwise
@@ -8,7 +8,7 @@ namespace Pairwise
    /*!
     * This class implements the Spearman correlation model.
     */
-   class Spearman : public Correlation
+   class Spearman : public CorrelationModel
    {
    public:
       static int nextPower2(int n);

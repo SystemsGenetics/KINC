@@ -1,13 +1,13 @@
 #ifndef PAIRWISE_GMM_H
 #define PAIRWISE_GMM_H
-#include "pairwise_clustering.h"
+#include "pairwise_clusteringmodel.h"
 
 namespace Pairwise
 {
    /*!
     * This class implements the Gaussian mixture model.
     */
-   class GMM : public Clustering
+   class GMM : public ClusteringModel
    {
    public:
       GMM(ExpressionMatrix* emx);

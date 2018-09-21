@@ -1,5 +1,5 @@
-#ifndef PAIRWISE_CORRELATION_H
-#define PAIRWISE_CORRELATION_H
+#ifndef PAIRWISE_CORRELATIONMODEL_H
+#define PAIRWISE_CORRELATIONMODEL_H
 #include <ace/core/core.h>
 
 #include "pairwise_linalg.h"
@@ -12,7 +12,7 @@ namespace Pairwise
     * for each cluster in the data. The correlation metric must be implemented by
     * the inheriting class.
     */
-   class Correlation
+   class CorrelationModel
    {
    public:
       QVector<float> compute(

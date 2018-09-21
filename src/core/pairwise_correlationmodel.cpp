@@ -1,4 +1,4 @@
-#include "pairwise_correlation.h"
+#include "pairwise_correlationmodel.h"
 
 
 
@@ -19,7 +19,7 @@ using namespace Pairwise;
  * @param labels
  * @param minSamples
  */
-QVector<float> Correlation::compute(
+QVector<float> CorrelationModel::compute(
    const QVector<Vector2>& data,
    int K,
    const QVector<qint8>& labels,

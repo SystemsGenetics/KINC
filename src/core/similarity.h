@@ -5,7 +5,7 @@
 #include "ccmatrix.h"
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
-#include "pairwise_clustering.h"
+#include "pairwise_clusteringmodel.h"
 
 
 

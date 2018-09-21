@@ -1,5 +1,5 @@
-#ifndef PAIRWISE_CLUSTERING_H
-#define PAIRWISE_CLUSTERING_H
+#ifndef PAIRWISE_CLUSTERINGMODEL_H
+#define PAIRWISE_CLUSTERINGMODEL_H
 #include <ace/core/core.h>
 
 #include "ccmatrix.h"
@@ -37,10 +37,10 @@ namespace Pairwise
     * data according to a criterion. The clustering sub-model must be implemented
     * by the inheriting class.
     */
-   class Clustering
+   class ClusteringModel
    {
    public:
-      Clustering(ExpressionMatrix* emx);
+      ClusteringModel(ExpressionMatrix* emx);
       qint8 compute(
          const QVector<Vector2>& data,
          int numSamples,

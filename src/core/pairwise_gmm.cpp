@@ -14,7 +14,7 @@ using namespace Pairwise;
  * @param emx
  */
 GMM::GMM(ExpressionMatrix* emx):
-   Clustering(emx)
+   ClusteringModel(emx)
 {
 }
 

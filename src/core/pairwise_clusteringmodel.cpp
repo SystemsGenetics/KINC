@@ -1,4 +1,4 @@
-#include "pairwise_clustering.h"
+#include "pairwise_clusteringmodel.h"
 
 
 
@@ -14,7 +14,7 @@ using namespace Pairwise;
  *
  * @param emx
  */
-Clustering::Clustering(ExpressionMatrix* emx)
+ClusteringModel::ClusteringModel(ExpressionMatrix* emx)
 {
    // pre-allocate workspace
    _workLabels.resize(emx->sampleSize());
@@ -40,7 +40,7 @@ Clustering::Clustering(ExpressionMatrix* emx)
  * @param maxClusters
  * @param criterion
  */
-qint8 Clustering::compute(
+qint8 ClusteringModel::compute(
    const QVector<Vector2>& data,
    int numSamples,
    QVector<qint8>& labels,

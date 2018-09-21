@@ -1,13 +1,13 @@
 #ifndef PAIRWISE_PEARSON_H
 #define PAIRWISE_PEARSON_H
-#include "pairwise_correlation.h"
+#include "pairwise_correlationmodel.h"
 
 namespace Pairwise
 {
    /*!
     * This class implements the Pearson correlation model.
     */
-   class Pearson : public Correlation
+   class Pearson : public CorrelationModel
    {
    protected:
       float computeCluster(

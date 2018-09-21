@@ -38,8 +38,8 @@ SOURCES += \
    importcorrelationmatrix.cpp \
    importexpressionmatrix_input.cpp \
    importexpressionmatrix.cpp \
-   pairwise_clustering.cpp \
-   pairwise_correlation.cpp \
+   pairwise_clusteringmodel.cpp \
+   pairwise_correlationmodel.cpp \
    pairwise_gmm.cpp \
    pairwise_index.cpp \
    pairwise_linalg.cpp \
@@ -86,8 +86,8 @@ HEADERS += \
    importcorrelationmatrix.h \
    importexpressionmatrix_input.h \
    importexpressionmatrix.h \
-   pairwise_clustering.h \
-   pairwise_correlation.h \
+   pairwise_clusteringmodel.h \
+   pairwise_correlationmodel.h \
    pairwise_gmm.h \
    pairwise_index.h \
    pairwise_linalg.h \
