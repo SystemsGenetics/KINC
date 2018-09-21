@@ -2,6 +2,13 @@
 #define PAIRWISE_LINALG_H
 #include <ace/core/core.h>
 
+/*!
+ * This file provides structure and function definitions for the Vector2 and
+ * Matrix2x2 types, which are vector and matrix types with fixed dimensions.
+ * The operations defined for these types compute outputs directly without the
+ * use of loops. These types are useful for any algorithm that operates on
+ * pairwise data.
+ */
 namespace Pairwise
 {
    typedef union {

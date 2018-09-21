@@ -31,7 +31,7 @@ float Spearman_computeCluster(
    __global float *y,
    __global int *rank)
 {
-   // extract samples in gene pair cluster
+   // extract samples in pairwise cluster
    int N_pow2 = nextPower2(N);
 	int n = 0;
 

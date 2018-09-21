@@ -10,11 +10,9 @@ using namespace Pairwise;
 
 
 /*!
- * Compute the Pearson correlation for a cluster of a given dataset.
- *
- * Note that the dataset contains only those samples which were not removed
- * by pre-processing, while the labels contains all samples from the original
- * expression matrix.
+ * Compute the Pearson correlation of a cluster in a pairwise data array. The
+ * data array should only contain the clean samples that were extracted from
+ * the expression matrix, while the labels should contain all samples.
  *
  * @param data
  * @param labels

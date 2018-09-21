@@ -9,10 +9,15 @@ using namespace Pairwise;
 
 
 
-Clustering::Clustering(ExpressionMatrix* input)
+/*!
+ * Construct an abstract pairwise clustering model.
+ *
+ * @param emx
+ */
+Clustering::Clustering(ExpressionMatrix* emx)
 {
    // pre-allocate workspace
-   _workLabels.resize(input->sampleSize());
+   _workLabels.resize(emx->sampleSize());
 }
 
 
@@ -21,18 +26,15 @@ Clustering::Clustering(ExpressionMatrix* input)
 
 
 /*!
- * Compute clusters for a given dataset. Several clustering models, each one
- * having a different number of clusters, are fit to the data and the model
- * with the best criterion value is selected.
- *
- * Note that the dataset contains only those samples which were not removed
- * by pre-processing, while the labels contains all samples from the original
- * expression matrix.
+ * Determine the number of clusters in a pairwise data array. Several sub-models,
+ * each one having a different number of clusters, are fit to the data and the
+ * sub-model with the best criterion value is selected. The data array should
+ * only contain the clean samples that were extracted from the expression
+ * matrix, while the labels should contain all samples.
  *
  * @param data
  * @param numSamples
  * @param labels
- * @param minSamples
  * @param minSamples
  * @param minClusters
  * @param maxClusters
@@ -56,7 +58,7 @@ qint8 Clustering::compute(
 
       for ( qint8 K = minClusters; K <= maxClusters; ++K )
       {
-         // run each clustering model
+         // run each clustering sub-model
          bool success = fit(data, numSamples, K, _workLabels);
 
          if ( !success )
@@ -64,7 +66,7 @@ qint8 Clustering::compute(
             continue;
          }
 
-         // evaluate model
+         // compute the criterion value of the sub-model
          float value = INFINITY;
 
          switch (criterion)
@@ -80,7 +82,7 @@ qint8 Clustering::compute(
             break;
          }
 
-         // save the best model
+         // keep the sub-model with the lowest criterion value
          if ( value < bestValue )
          {
             bestK = K;
@@ -99,40 +101,4 @@ qint8 Clustering::compute(
    }
 
    return bestK;
-}
-
-
-
-
-
-
-float Clustering::computeAIC(int K, int D, float logL)
-{
-   int p = K * (1 + D + D * D);
-
-   return 2 * p - 2 * logL;
-}
-
-
-
-
-
-
-float Clustering::computeBIC(int K, int D, float logL, int N)
-{
-   int p = K * (1 + D + D * D);
-
-   return log(N) * p - 2 * logL;
-}
-
-
-
-
-
-
-float Clustering::computeICL(int K, int D, float logL, int N, float E)
-{
-   int p = K * (1 + D + D * D);
-
-   return log(N) * p - 2 * logL - 2 * E;
 }

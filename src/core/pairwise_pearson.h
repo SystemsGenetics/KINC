@@ -4,6 +4,9 @@
 
 namespace Pairwise
 {
+   /*!
+    * This class implements the Pearson correlation model.
+    */
    class Pearson : public Correlation
    {
    protected:

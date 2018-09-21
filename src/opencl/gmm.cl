@@ -45,7 +45,7 @@ void GMM_Component_initialize(
 
 
 
-bool GMM_Component_prepareCovariance(__global Component *component)
+bool GMM_Component_prepare(__global Component *component)
 {
    const int D = 2;
 
@@ -350,7 +350,7 @@ bool GMM_performMStep(
 
       matrixScale(sigma, 1.0f / logGamma[k]);
 
-      bool success = GMM_Component_prepareCovariance(&components[k]);
+      bool success = GMM_Component_prepare(&components[k]);
 
       if ( !success )
       {
@@ -438,7 +438,7 @@ bool GMM_fit(
       int i = rand(&state) % N;
 
       GMM_Component_initialize(&components[k], 1.0f / K, &X[i]);
-      GMM_Component_prepareCovariance(&components[k]);
+      GMM_Component_prepare(&components[k]);
    }
 
    // initialize means with k-means

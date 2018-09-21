@@ -8,8 +8,13 @@ using namespace Pairwise;
 
 
 
-GMM::GMM(ExpressionMatrix* input):
-   Clustering(input)
+/*!
+ * Construct a Gaussian mixture model.
+ *
+ * @param emx
+ */
+GMM::GMM(ExpressionMatrix* emx):
+   Clustering(emx)
 {
 }
 
@@ -18,18 +23,25 @@ GMM::GMM(ExpressionMatrix* input):
 
 
 
+/*!
+ * Initialize a mixture component with the given mixture weight and mean.
+ *
+ * @param pi
+ * @param mu
+ */
 void GMM::Component::initialize(float pi, const Vector2& mu)
 {
-   // initialize pi and mu as given
+   // initialize mixture weight and mean
    _pi = pi;
    _mu = mu;
 
-   // Use identity covariance- assume dimensions are independent
+   // initialize covariance to identity matrix
    matrixInitIdentity(_sigma);
 
-   // Initialize zero artifacts
+   // initialize precision to zero matrix
    matrixInitZero(_sigmaInv);
 
+   // initialize normalizer term to 0
    _normalizer = 0;
 }
 
@@ -38,12 +50,14 @@ void GMM::Component::initialize(float pi, const Vector2& mu)
 
 
 
-void GMM::Component::prepareCovariance()
+/*!
+ * Pre-compute the precision matrix and normalizer term for a mixture component.
+ */
+void GMM::Component::prepare()
 {
    const int D = 2;
 
-   // Compute inverse of Sigma once each iteration instead of
-   // repeatedly for each calcLogMvNorm execution.
+   // compute precision (inverse of covariance)
    float det;
    matrixInverse(_sigma, _sigmaInv, &det);
 
@@ -52,7 +66,7 @@ void GMM::Component::prepareCovariance()
       throw std::runtime_error("matrix inverse failed");
    }
 
-   // Compute normalizer for multivariate normal distribution
+   // compute normalizer term for multivariate normal distribution
    _normalizer = -0.5f * (D * log(2.0f * M_PI) + log(det));
 }
 
@@ -61,27 +75,36 @@ void GMM::Component::prepareCovariance()
 
 
 
+/*!
+ * Compute the log of the probability density function of the multivariate normal
+ * distribution conditioned on a single component for each point in X:
+ *
+ * P(x|k) = exp(-0.5 * (x - mu)^T Sigma^-1 (x - mu)) / sqrt((2pi)^d det(Sigma))
+ *
+ * Therefore the log-probability is:
+ *
+ * log(P(x|k)) = -0.5 * (x - mu)^T Sigma^-1 (x - mu) - 0.5 * (d * log(2pi) + log(det(Sigma)))
+ *
+ * @param X
+ * @param N
+ * @param logP
+ */
 void GMM::Component::calcLogMvNorm(const QVector<Vector2>& X, int N, float *logP)
 {
-   // Here we are computing the probability density function of the multivariate
-   // normal distribution conditioned on a single component for the set of points
-   // given by X.
-   //
-   // P(x|k) = exp{ -0.5 * (x - mu)^T Sigma^{-} (x - mu) } / sqrt{ (2pi)^d det(Sigma) }
-
    for (int i = 0; i < N; ++i)
    {
-      // Let xm = (x - mu)
+      // compute xm = (x - mu)
       Vector2 xm = X[i];
       vectorSubtract(xm, _mu);
 
-      // Compute xm^T Sxm = xm^T S^-1 xm
+      // compute Sxm = Sigma^-1 xm
       Vector2 Sxm;
       matrixProduct(_sigmaInv, xm, Sxm);
 
+      // compute xmSxm = xm^T Sigma^-1 xm
       float xmSxm = vectorDot(xm, Sxm);
 
-      // Compute log(P) = normalizer - 0.5 * xm^T * S^-1 * xm
+      // compute log(P) = normalizer - 0.5 * xm^T * Sigma^-1 * xm
       logP[i] = _normalizer - 0.5f * xmSxm;
    }
 }
@@ -91,6 +114,13 @@ void GMM::Component::calcLogMvNorm(const QVector<Vector2>& X, int N, float *logP
 
 
 
+/*!
+ * Initialize the mean of each component in the mixture model using k-means
+ * clustering.
+ *
+ * @param X
+ * @param N
+ */
 void GMM::kmeans(const QVector<Vector2>& X, int N)
 {
    const int K = _components.size();
@@ -150,6 +180,15 @@ void GMM::kmeans(const QVector<Vector2>& X, int N)
 
 
 
+/*!
+ * Compute the log of the pdf of a multivariate normal distribution for each
+ * component in the mixture model and each point in X. The resulting matrix is
+ * stored in loggamma.
+ *
+ * @param X
+ * @param N
+ * @param loggamma
+ */
 void GMM::calcLogMvNorm(const QVector<Vector2>& X, int N, float *loggamma)
 {
    const int K = _components.size();
@@ -165,6 +204,16 @@ void GMM::calcLogMvNorm(const QVector<Vector2>& X, int N, float *loggamma)
 
 
 
+/*!
+ * Compute the log-likelihood of the mixture model as well as loggamma, the matrix
+ * of log-probabilities for each component in the mixture model and each point in X.
+ *
+ * @param logpi
+ * @param K
+ * @param loggamma
+ * @param N
+ * @param logL
+ */
 void GMM::calcLogLikelihoodAndGammaNK(const float *logpi, int K, float *loggamma, int N, float *logL)
 {
    *logL = 0.0;
@@ -201,6 +250,14 @@ void GMM::calcLogLikelihoodAndGammaNK(const float *logpi, int K, float *loggamma
 
 
 
+/*!
+ * Compute logGamma.
+ *
+ * @param loggamma
+ * @param N
+ * @param K
+ * @param logGamma
+ */
 void GMM::calcLogGammaK(const float *loggamma, int N, int K, float *logGamma)
 {
    memset(logGamma, 0, K * sizeof(float));
@@ -235,6 +292,13 @@ void GMM::calcLogGammaK(const float *loggamma, int N, int K, float *logGamma)
 
 
 
+/*!
+ * Compute the sum of logGamma.
+ *
+ * @param logpi
+ * @param K
+ * @param logGamma
+ */
 float GMM::calcLogGammaSum(const float *logpi, int K, const float *logGamma)
 {
    float maxArg = -INFINITY;
@@ -262,9 +326,20 @@ float GMM::calcLogGammaSum(const float *logpi, int K, const float *logGamma)
 
 
 
+/*!
+ * Update each component in the mixture model using loggamma and logGamma.
+ *
+ * @param logpi
+ * @param K
+ * @param loggamma
+ * @param logGamma
+ * @param logGammaSum
+ * @param X
+ * @param N
+ */
 void GMM::performMStep(float *logpi, int K, float *loggamma, float *logGamma, float logGammaSum, const QVector<Vector2>& X, int N)
 {
-   // update pi
+   // update mixture weight
    for (int k = 0; k < K; ++k)
    {
       logpi[k] += logGamma[k] - logGammaSum;
@@ -289,7 +364,7 @@ void GMM::performMStep(float *logpi, int K, float *loggamma, float *logGamma, fl
 
    for (int k = 0; k < K; ++k)
    {
-      // Update mu
+      // update mean
       Vector2& mu = _components[k]._mu;
 
       vectorInitZero(mu);
@@ -301,7 +376,7 @@ void GMM::performMStep(float *logpi, int K, float *loggamma, float *logGamma, fl
 
       vectorScale(mu, 1.0f / logGamma[k]);
 
-      // Update sigma
+      // update covariance matrix
       Matrix2x2& sigma = _components[k]._sigma;
 
       matrixInitZero(sigma);
@@ -321,7 +396,8 @@ void GMM::performMStep(float *logpi, int K, float *loggamma, float *logGamma, fl
 
       matrixScale(sigma, 1.0f / logGamma[k]);
 
-      _components[k].prepareCovariance();
+      // pre-compute precision matrix and normalizer term
+      _components[k].prepare();
    }
 }
 
@@ -330,6 +406,14 @@ void GMM::performMStep(float *logpi, int K, float *loggamma, float *logGamma, fl
 
 
 
+/*!
+ * Compute the cluster labels of a dataset using loggamma.
+ *
+ * @param loggamma
+ * @param N
+ * @param K
+ * @param labels
+ */
 void GMM::calcLabels(float *loggamma, int N, int K, QVector<qint8>& labels)
 {
    for ( int i = 0; i < N; ++i )
@@ -355,6 +439,14 @@ void GMM::calcLabels(float *loggamma, int N, int K, QVector<qint8>& labels)
 
 
 
+/*!
+ * Compute the entropy between the mixture model and a dataset using loggamma
+ * and the given cluster labels.
+ *
+ * @param loggamma
+ * @param N
+ * @param labels
+ */
 float GMM::calcEntropy(float *loggamma, int N, const QVector<qint8>& labels)
 {
    float E = 0;
@@ -374,6 +466,15 @@ float GMM::calcEntropy(float *loggamma, int N, const QVector<qint8>& labels)
 
 
 
+/*!
+ * Fit the mixture model to a pairwise data array and compute the output cluster
+ * labels for the data. The data array should only contain clean samples.
+ *
+ * @param X
+ * @param N
+ * @param K
+ * @param labels
+ */
 bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
 {
    // initialize components
@@ -381,11 +482,11 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
 
    for ( int k = 0; k < K; ++k )
    {
-      // use uniform mixture proportion and randomly sampled mean
+      // use uniform mixture weight and randomly sampled mean
       int i = rand() % N;
 
       _components[k].initialize(1.0f / K, X[i]);
-      _components[k].prepareCovariance();
+      _components[k].prepare();
    }
 
    // initialize means with k-means
@@ -426,12 +527,12 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
          }
 
          // M step
-         // Let Gamma[k] = \Sum_i gamma[k, i]
+         // compute Gamma[k] = \Sum_i gamma[k, i]
          calcLogGammaK(loggamma, N, K, logGamma);
 
          float logGammaSum = calcLogGammaSum(logpi, K, logGamma);
 
-         // Update parameters
+         // update parameters
          performMStep(logpi, K, loggamma, logGamma, logGammaSum, X, N);
       }
 
@@ -452,4 +553,64 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
    delete[] logGamma;
 
    return success;
+}
+
+
+
+
+
+
+/*!
+ * Compute the Akaike Information Criterion of a Gaussian mixture model.
+ *
+ * @param K
+ * @param D
+ * @param logL
+ */
+float GMM::computeAIC(int K, int D, float logL)
+{
+   int p = K * (1 + D + D * D);
+
+   return 2 * p - 2 * logL;
+}
+
+
+
+
+
+
+/*!
+ * Compute the Bayesian Information Criterion of a Gaussian mixture model.
+ *
+ * @param K
+ * @param D
+ * @param logL
+ * @param N
+ */
+float GMM::computeBIC(int K, int D, float logL, int N)
+{
+   int p = K * (1 + D + D * D);
+
+   return log(N) * p - 2 * logL;
+}
+
+
+
+
+
+
+/*!
+ * Compute the Integrated Completed Likelihood of a Gaussian mixture model.
+ *
+ * @param K
+ * @param D
+ * @param logL
+ * @param N
+ * @param E
+ */
+float GMM::computeICL(int K, int D, float logL, int N, float E)
+{
+   int p = K * (1 + D + D * D);
+
+   return log(N) * p - 2 * logL - 2 * E;
 }
