@@ -58,7 +58,7 @@ def mark_outliers(X, y, k, marker):
 	T_y_max = Q3_y + 1.5 * (Q3_y - Q1_y)
 
 	# mark outliers
-	for i in xrange(len(y)):
+	for i in range(len(y)):
 		if y[i] == k:
 			outlier_x = (X[i, 0] < T_x_min or T_x_max < X[i, 0])
 			outlier_y = (X[i, 1] < T_y_min or T_y_max < X[i, 1])
@@ -79,7 +79,7 @@ def compute_clustering(X, y, create_model, min_samples, min_clusters, max_cluste
 
 	if N >= min_samples:
 		# initialize clustering models
-		models = [create_model(K) for K in xrange(min_clusters, max_clusters+1)]
+		models = [create_model(K) for K in range(min_clusters, max_clusters+1)]
 		min_crit = float("inf")
 
 		# identify number of clusters
@@ -162,12 +162,12 @@ if __name__ == "__main__":
 	pprint.pprint(vars(args))
 
 	# load data
-	emx = pd.read_csv(args.INPUT, sep="\t")
+	emx = pd.read_table(args.INPUT)
 	cmx = open(args.OUTPUT, "w");
 
 	# iterate through each pair
-	for i in xrange(len(emx.index)):
-		for j in xrange(i):
+	for i in range(len(emx.index)):
+		for j in range(i):
 			# fetch pairwise input data
 			X, y = fetch_pair(emx, i, j, args.MINEXPR)
 
@@ -185,11 +185,11 @@ if __name__ == "__main__":
 
 			# remove post-clustering outliers
 			if K > 1 and args.POSTOUT:
-				for k in xrange(K):
+				for k in range(K):
 					mark_outliers(X, y, k, -8)
 
 			# perform correlation
-			for k in xrange(K):
+			for k in range(K):
 				corr, p = compute_correlation(X, y, k, CORRELATION_METHODS[args.CORRMETHOD], args.MINSAMP, args.VISUALIZE)
 
 				# make sure correlation, p-value meets thresholds

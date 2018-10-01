@@ -8,10 +8,10 @@ import seaborn as sns
 
 
 def load_ematrix(filename):
-	print "Loading expression matrix..."
+	print("Loading expression matrix...")
 
 	# read expression matrix from file
-	emx = pd.read_csv(filename, sep="\t", index_col=0)
+	emx = pd.read_table(filename, index_col=0)
 
 	# remove NAN columns
 	emx = emx.dropna(axis=1, how="all")
@@ -19,18 +19,18 @@ def load_ematrix(filename):
 	# transpose to make samples row-wise
 	emx = emx.T
 
-	print "Loaded expression matrix (%d samples, %d genes)" % emx.shape
+	print("Loaded expression matrix (%d samples, %d genes)" % emx.shape)
 
 	return emx
 
 
 
 def load_netlist(filename):
-	print "Loading netlist..."
+	print("Loading netlist...")
 
-	netlist = pd.read_csv(filename, sep="\t")
+	netlist = pd.read_table(filename)
 
-	print "Loaded netlist (%d edges)" % len(netlist.index)
+	print("Loaded netlist (%d edges)" % len(netlist.index))
 
 	return netlist
 
@@ -68,7 +68,7 @@ if __name__ ==  "__main__":
 		k = edge["Cluster"]
 		samples = edge["Samples"]
 
-		print x, y, k
+		print(x, y, k)
 
 		# extract pairwise data
 		data = emx[[x, y]].dropna(axis=0, how="any")

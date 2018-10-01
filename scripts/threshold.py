@@ -14,10 +14,10 @@ import sys
 
 
 def load_cmx(filename, num_genes, num_clusters):
-	netlist = pd.read_csv(args.INPUT, sep="\t", header=None)
+	netlist = pd.read_table(args.INPUT, header=None)
 	cmx = np.zeros((num_genes * num_clusters, num_genes * num_clusters), dtype=np.float32)
 
-	for idx in xrange(len(netlist.index)):
+	for idx in range(len(netlist.index)):
 		i = netlist.iloc[idx, 0]
 		j = netlist.iloc[idx, 1]
 		k = netlist.iloc[idx, 2]
@@ -42,10 +42,10 @@ def powerlaw(args):
 		A = (abs(S) >= threshold)
 
 		# compute degree of each node
-		for i in xrange(A.shape[0]):
+		for i in range(A.shape[0]):
 			A[i, i] = 0
 
-		degrees = np.array([sum(A[i]) for i in xrange(A.shape[0])])
+		degrees = np.array([sum(A[i]) for i in range(A.shape[0])])
 
 		# compute degree distribution
 		bins = max(5, degrees.max())
@@ -101,7 +101,7 @@ def compute_pruned_matrix(S, threshold):
 def compute_degenerate(eigens):
 	unique = []
 	
-	for i in xrange(len(eigens)):
+	for i in range(len(eigens)):
 		if len(unique) == 0 or abs(eigens[i] - unique[-1]) > 1e-6:
 			unique.append(eigens[i])
 
@@ -123,7 +123,7 @@ def compute_spacings(eigens, pace):
 	# compute spacings between interpolated eigenvalues
 	spacings = np.empty(len(eigens) - 1)
 	
-	for i in xrange(len(spacings)):
+	for i in range(len(spacings)):
 		spacings[i] = (spline_eigens[i + 1] - spline_eigens[i]) * len(eigens)
 
 	return spacings
@@ -145,7 +145,7 @@ def compute_chi_square_pace(eigens, pace):
 	# compote chi-square value from nnsd
 	chi = 0
 	
-	for i in xrange(len(hist)):
+	for i in range(len(hist)):
 		# compute O_i, the number of elements in bin i
 		O_i = hist[i]
 
@@ -176,7 +176,7 @@ def compute_chi_square(eigens):
 	chi = 0
 	num_tests = 0
 
-	for pace in xrange(10, 41):
+	for pace in range(10, 41):
 		# make sure there are enough eigenvalues for pace
 		if len(unique) / pace < 5:
 			break
@@ -265,7 +265,7 @@ if __name__ == "__main__":
 	pprint.pprint(vars(args))
 
 	# load data
-	cmx = pd.read_csv(args.INPUT, sep="\t")
+	cmx = pd.read_table(args.INPUT)
 
 	# initialize method
 	compute_threshold = METHODS[args.METHOD]
