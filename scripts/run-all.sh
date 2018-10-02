@@ -10,6 +10,7 @@ INFILE="$1"
 
 # apply settings
 $KINC settings set opencl none
+$KINC settings set logging off
 
 # import emx
 EMX_FILE="$DATA/$(basename $INFILE .txt).emx"
@@ -20,7 +21,7 @@ $KINC run import-emx --input $INFILE --output $EMX_FILE --nan NA
 NP=$(nproc)
 CCM_FILE="$DATA/$(basename $EMX_FILE .emx).ccm"
 CMX_FILE="$DATA/$(basename $EMX_FILE .emx).cmx"
-CLUSMETHOD="none"
+CLUSMETHOD="gmm"
 CORRMETHOD="pearson"
 MINEXPR="-inf"
 CRITERION="BIC"

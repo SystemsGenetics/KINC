@@ -7,7 +7,7 @@ EMX_FILE="$1"
 
 # similarity
 CMX_FILE="$DATA/$(basename $EMX_FILE .txt)-cmx-py.txt"
-CLUSMETHOD="none"
+CLUSMETHOD="gmm"
 CORRMETHOD="pearson"
 MINEXPR="-inf"
 CRITERION="bic"
