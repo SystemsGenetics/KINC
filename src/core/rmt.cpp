@@ -247,7 +247,7 @@ QVector<float> RMT::computePruneMatrix(const QVector<float>& matrix, const QVect
    const int N {_input->geneSize()};
    const int K {_input->maxClusterSize()};
 
-   // generate vector of row/column indices that have a correlation above threshold
+   // generate vector of row indices that have a correlation above threshold
    QVector<int> indices;
 
    for ( int i = 0; i < maximums.size(); ++i )
@@ -265,11 +265,13 @@ QVector<float> RMT::computePruneMatrix(const QVector<float>& matrix, const QVect
    {
       for ( int j = 0; j < i; ++j )
       {
+         // make sure that i and j refer to the same cluster number
          if ( indices[i] % K != indices[j] % K )
          {
             continue;
          }
 
+         // save correlation if it is above threshold
          float correlation = matrix[indices[i]/K * N * K + indices[j]/K * K + indices[i] % K];
 
          if ( fabs(correlation) >= threshold )

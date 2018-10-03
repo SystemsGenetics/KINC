@@ -7,18 +7,30 @@
 
 
 
+/*!
+ * Construct a new input object with the given analytic as its parent.
+ *
+ * @param parent
+ */
 PowerLaw::Input::Input(PowerLaw* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
-{}
+{
+   EDEBUG_FUNC(this,parent);
+}
 
 
 
 
 
 
+/*!
+ * Return the total number of arguments this analytic type contains.
+ */
 int PowerLaw::Input::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -27,8 +39,15 @@ int PowerLaw::Input::size() const
 
 
 
+/*!
+ * Return the argument type for a given index.
+ *
+ * @param index
+ */
 EAbstractAnalytic::Input::Type PowerLaw::Input::type(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    switch (index)
    {
    case InputData: return Type::DataIn;
@@ -45,8 +64,16 @@ EAbstractAnalytic::Input::Type PowerLaw::Input::type(int index) const
 
 
 
+/*!
+ * Return data for a given role on an argument with the given index.
+ *
+ * @param index
+ * @param role
+ */
 QVariant PowerLaw::Input::data(int index, Role role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    switch (index)
    {
    case InputData:
@@ -109,8 +136,16 @@ QVariant PowerLaw::Input::data(int index, Role role) const
 
 
 
+/*!
+ * Set an argument with the given index to the given value.
+ *
+ * @param index
+ * @param value
+ */
 void PowerLaw::Input::set(int index, const QVariant& value)
 {
+   EDEBUG_FUNC(this,index,value);
+
    switch (index)
    {
    case ThresholdStart:
@@ -130,8 +165,16 @@ void PowerLaw::Input::set(int index, const QVariant& value)
 
 
 
+/*!
+ * Set a file argument with the given index to the given qt file pointer.
+ *
+ * @param index
+ * @param file
+ */
 void PowerLaw::Input::set(int index, QFile* file)
 {
+   EDEBUG_FUNC(this,index,file);
+
    if ( index == LogFile )
    {
       _base->_logfile = file;
@@ -143,8 +186,16 @@ void PowerLaw::Input::set(int index, QFile* file)
 
 
 
+/*!
+ * Set a data argument with the given index to the given data object pointer.
+ *
+ * @param index
+ * @param data
+ */
 void PowerLaw::Input::set(int index, EAbstractData* data)
 {
+   EDEBUG_FUNC(this,index,data);
+
    if ( index == InputData )
    {
       _base->_input = data->cast<CorrelationMatrix>();

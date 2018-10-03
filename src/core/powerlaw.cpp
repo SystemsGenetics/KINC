@@ -11,8 +11,14 @@ using namespace std;
 
 
 
+/*!
+ * Return the total number of blocks this analytic must process as steps
+ * or blocks of work.
+ */
 int PowerLaw::size() const
 {
+   EDEBUG_FUNC(this);
+
    return 1;
 }
 
@@ -21,9 +27,15 @@ int PowerLaw::size() const
 
 
 
-void PowerLaw::process(const EAbstractAnalytic::Block* result)
+/*!
+ * Process the given index with a possible block of results if this analytic
+ * produces work blocks. This analytic implementation has no work blocks.
+ *
+ * @param result
+ */
+void PowerLaw::process(const EAbstractAnalytic::Block*)
 {
-   Q_UNUSED(result);
+   EDEBUG_FUNC(this);
 
    // initialize log text stream
    QTextStream stream(_logfile);
@@ -44,9 +56,9 @@ void PowerLaw::process(const EAbstractAnalytic::Block* result)
       int size;
       QVector<bool> adjacencyMatrix {computeAdjacencyMatrix(matrix, maximums, threshold, &size)};
 
-      qInfo("prune matrix: %d", size);
+      qInfo("adjacency matrix: %d", size);
 
-      // make sure that pruned matrix is not empty
+      // make sure that adjacency matrix is not empty
       float correlation {0};
 
       if ( size > 0 )
@@ -70,8 +82,8 @@ void PowerLaw::process(const EAbstractAnalytic::Block* result)
       if ( threshold < _thresholdStop )
       {
          E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("PowerLaw Threshold Error"));
-         e.setDetails(tr("Could not find non-random threshold above stopping threshold."));
+         e.setTitle(tr("Power-law Threshold Error"));
+         e.setDetails(tr("Could not find scale-free network above stopping threshold."));
          throw e;
       }
    }
@@ -85,8 +97,13 @@ void PowerLaw::process(const EAbstractAnalytic::Block* result)
 
 
 
+/*!
+ * Make a new input object and return its pointer.
+ */
 EAbstractAnalytic::Input* PowerLaw::makeInput()
 {
+   EDEBUG_FUNC(this);
+
    return new Input(this);
 }
 
@@ -95,8 +112,15 @@ EAbstractAnalytic::Input* PowerLaw::makeInput()
 
 
 
+/*!
+ * Initialize this analytic. This implementation checks to make sure the input
+ * data object and output log file have been set, and that various integer
+ * arguments are valid.
+ */
 void PowerLaw::initialize()
 {
+   EDEBUG_FUNC(this);
+
    // make sure input and output were set properly
    if ( !_input || !_logfile )
    {
@@ -121,8 +145,15 @@ void PowerLaw::initialize()
 
 
 
+/*!
+ * Compute the row-wise maximums of a correlation matrix.
+ *
+ * @param matrix
+ */
 QVector<float> PowerLaw::computeMaximums(const QVector<float>& matrix)
 {
+   EDEBUG_FUNC(this,matrix);
+
    const int N {_input->geneSize()};
    const int K {_input->maxClusterSize()};
 
@@ -146,6 +177,7 @@ QVector<float> PowerLaw::computeMaximums(const QVector<float>& matrix)
       }
    }
 
+   // return row-wise maximums
    return maximums;
 }
 
@@ -154,8 +186,21 @@ QVector<float> PowerLaw::computeMaximums(const QVector<float>& matrix)
 
 
 
+/*!
+ * Compute the adjacency matrix of a correlation matrix with a given threshold.
+ * This function uses the pre-computed row-wise maximums for faster computation.
+ * Additionally, all zero-columns removed. The number of rows in the adjacency
+ * matrix is returned as a pointer argument.
+ *
+ * @param matrix
+ * @param maximums
+ * @param threshold
+ * @param size
+ */
 QVector<bool> PowerLaw::computeAdjacencyMatrix(const QVector<float>& matrix, const QVector<float>& maximums, float threshold, int* size)
 {
+   EDEBUG_FUNC(this,matrix,maximums,threshold,size);
+
    const int N {_input->geneSize()};
    const int K {_input->maxClusterSize()};
 
@@ -170,14 +215,14 @@ QVector<bool> PowerLaw::computeAdjacencyMatrix(const QVector<float>& matrix, con
       }
    }
 
-   // extract pruned adjacency matrix from correlation matrix
+   // extract adjacency matrix from correlation matrix
    QVector<bool> adjacencyMatrix(indices.size() * indices.size());
 
    for ( int i = 0; i < indices.size(); ++i )
    {
       for ( int j = 0; j < i; ++j )
       {
-         // find maximum (absolute) correlation of gene pair
+         // find maximum (absolute) correlation across clusters
          float max {0};
 
          for ( int k = 0; k < K; ++k )
@@ -190,7 +235,7 @@ QVector<bool> PowerLaw::computeAdjacencyMatrix(const QVector<float>& matrix, con
             }
          }
 
-         // save edge if gene pair has correlation above threshold
+         // save edge if the maximum correlation is above threshold
          if ( max >= threshold )
          {
             adjacencyMatrix[i * indices.size() + j] = 1;
@@ -199,7 +244,7 @@ QVector<bool> PowerLaw::computeAdjacencyMatrix(const QVector<float>& matrix, con
       }
    }
 
-   // save size of pruned matrix
+   // save size of adjacency matrix
    *size = indices.size();
 
    return adjacencyMatrix;
@@ -210,8 +255,16 @@ QVector<bool> PowerLaw::computeAdjacencyMatrix(const QVector<float>& matrix, con
 
 
 
+/*!
+ * Compute the degree distribution of an adjacency matrix.
+ *
+ * @param matrix
+ * @param size
+ */
 QVector<int> PowerLaw::computeDegreeDistribution(const QVector<bool>& matrix, int size)
 {
+   EDEBUG_FUNC(this,matrix,size);
+
    // compute degree of each node
    QVector<int> degrees(size);
 
@@ -225,7 +278,7 @@ QVector<int> PowerLaw::computeDegreeDistribution(const QVector<bool>& matrix, in
 
    // compute max degree
    int max {0};
-   
+
    for ( int i = 0; i < degrees.size(); i++ )
    {
       if ( max < degrees[i] )
@@ -253,8 +306,16 @@ QVector<int> PowerLaw::computeDegreeDistribution(const QVector<bool>& matrix, in
 
 
 
+/*!
+ * Compare a degree distribution to a power-law distribution. The goodness-of-fit
+ * is measured by the Pearson correlation of the log-transformed histogram.
+ *
+ * @param histogram
+ */
 float PowerLaw::computeCorrelation(const QVector<int>& histogram)
 {
+   EDEBUG_FUNC(this,histogram);
+
    // compute log-log transform of histogram data
    const int n = histogram.size();
    QVector<float> x(n);
@@ -268,7 +329,7 @@ float PowerLaw::computeCorrelation(const QVector<int>& histogram)
 
    // visualize log-log histogram
    qInfo("histogram:");
-   
+
    for ( int i = 0; i < 10; i++ )
    {
       float sum {0};
@@ -279,7 +340,7 @@ float PowerLaw::computeCorrelation(const QVector<int>& histogram)
 
       int len {(int)(sum / log((float) _input->geneSize()))};
       QString bin(len, '#');
-   
+
       qInfo(" | %s", bin.toStdString().c_str());
    }
 
