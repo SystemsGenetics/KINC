@@ -6,6 +6,11 @@
 
 
 
+/*!
+ * Compute the next power of 2 which occurs after a number.
+ *
+ * @param n
+ */
 int nextPower2(int n)
 {
 	int pow2 = 2;
@@ -22,6 +27,19 @@ int nextPower2(int n)
 
 
 
+/*!
+ * Compute the Spearman correlation of a cluster in a pairwise data array. The
+ * data array should only contain samples that have a non-negative label.
+ *
+ * @param data
+ * @param labels
+ * @param sampleSize
+ * @param cluster
+ * @param minSamples
+ * @param x
+ * @param y
+ * @param rank
+ */
 float Spearman_computeCluster(
    __global const float2 *data,
    __global const char *labels,
@@ -92,6 +110,18 @@ float Spearman_computeCluster(
 
 
 
+/*!
+ * Compute the correlation of each cluster in a pairwise data array. The data array
+ * should only contain the clean samples that were extracted from the expression
+ * matrix, while the labels should contain all samples.
+ *
+ * @param in_data
+ * @param clusterSize
+ * @param in_labels
+ * @param sampleSize
+ * @param minSamples
+ * @param out_correlations
+ */
 __kernel void Spearman_compute(
    __global const float2 *in_data,
    char clusterSize,

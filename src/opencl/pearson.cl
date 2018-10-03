@@ -4,6 +4,16 @@
 
 
 
+/*!
+ * Compute the Pearson correlation of a cluster in a pairwise data array. The
+ * data array should only contain samples that have a non-negative label.
+ *
+ * @param data
+ * @param labels
+ * @param sampleSize
+ * @param cluster
+ * @param minSamples
+ */
 float Pearson_computeCluster(
    __global const float2 *data,
    __global const char *labels,
@@ -57,6 +67,18 @@ float Pearson_computeCluster(
 
 
 
+/*!
+ * Compute the correlation of each cluster in a pairwise data array. The data array
+ * should only contain the clean samples that were extracted from the expression
+ * matrix, while the labels should contain all samples.
+ *
+ * @param in_data
+ * @param clusterSize
+ * @param in_labels
+ * @param sampleSize
+ * @param minSamples
+ * @param out_correlations
+ */
 __kernel void Pearson_compute(
    __global const float2 *in_data,
    char clusterSize,

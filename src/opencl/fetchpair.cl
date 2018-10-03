@@ -7,8 +7,9 @@
 
 
 /*!
- * Fetch pairwise data for a pair of genes. Samples which are nan or are
- * below a threshold are excluded.
+ * Extract pairwise data from an expression matrix given a pairwise index. Samples
+ * with missing values and samples that fall below the expression threshold are
+ * excluded. The number of extracted samples is returned.
  *
  * @param expressions
  * @param sampleSize
@@ -33,7 +34,7 @@ __kernel void fetchPair(
    int2 index = in_index[i];
    __global Vector2 *X = &out_X[i * sampleSize];
    __global char *labels = &out_labels[i * sampleSize];
-   __global int *p_N = &out_N[i];
+   __global int *p_numSamples = &out_N[i];
 
    if ( index.x == 0 && index.y == 0 )
    {
@@ -45,7 +46,7 @@ __kernel void fetchPair(
    __global const float *gene2 = &expressions[index.y * sampleSize];
 
    // populate X with shared expressions of gene pair
-   int N = 0;
+   int numSamples = 0;
 
    for ( int i = 0; i < sampleSize; ++i )
    {
@@ -59,13 +60,13 @@ __kernel void fetchPair(
       }
       else
       {
-         X[N].v2 = (float2) ( gene1[i], gene2[i] );
-         N++;
+         X[numSamples].v2 = (float2) ( gene1[i], gene2[i] );
+         numSamples++;
 
          labels[i] = 0;
       }
    }
 
    // return size of X
-   *p_N = N;
+   *p_numSamples = numSamples;
 }
