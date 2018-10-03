@@ -92,7 +92,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
       // remove pre-clustering outliers
       if ( _base->_removePreOutliers )
       {
-         markOutliers(data, numSamples, labels, 0, -7);
+         numSamples = removeOutliers(data, labels, 0, -7);
       }
 
       // compute clusters
@@ -116,7 +116,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
       {
          for ( qint8 k = 0; k < K; ++k )
          {
-            markOutliers(data, numSamples, labels, k, -8);
+            numSamples = removeOutliers(data, labels, k, -8);
          }
       }
 
@@ -214,34 +214,39 @@ int Similarity::Serial::fetchPair(Pairwise::Index index, QVector<Pairwise::Vecto
 
 
 /*!
- * Mark outliers in a vector of pairwise data. Outliers are detected independently
- * on each axis using the Tukey method, and marked with the given marker. Only those
+ * Remove outliers from a vector of pairwise data. Outliers are detected independently
+ * on each axis using the Tukey method, and marked with the given marker. Only the
  * samples in the given cluster are used in outlier detection. For unclustered data,
- * all samples should be labeled as 0, so a cluster value of 0 should be used.
+ * all samples are labeled as 0, so a cluster value of 0 should be used. The data
+ * array should only contain samples that have a non-negative label.
  *
  * @param data
- * @param N
  * @param labels
  * @param cluster
  * @param marker
  */
-int Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& data, int N, QVector<qint8>& labels, qint8 cluster, qint8 marker)
+int Similarity::Serial::removeOutliers(QVector<Pairwise::Vector2>& data, QVector<qint8>& labels, qint8 cluster, qint8 marker)
 {
-   EDEBUG_FUNC(this,data,N,labels,cluster,marker);
+   EDEBUG_FUNC(this,data,labels,cluster,marker);
 
    // extract univariate data from the given cluster
    QVector<float> x_sorted;
    QVector<float> y_sorted;
 
-   x_sorted.reserve(N);
-   y_sorted.reserve(N);
+   x_sorted.reserve(labels.size());
+   y_sorted.reserve(labels.size());
 
-   for ( int i = 0; i < N; i++ )
+   for ( int i = 0, j = 0; i < labels.size(); i++ )
    {
-      if ( labels[i] == cluster )
+      if ( labels[i] >= 0 )
       {
-         x_sorted.append(data[i].s[0]);
-         y_sorted.append(data[i].s[1]);
+         if ( labels[i] == cluster )
+         {
+            x_sorted.append(data[j].s[0]);
+            y_sorted.append(data[j].s[1]);
+         }
+
+         j++;
       }
    }
 
@@ -255,7 +260,7 @@ int Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& data, int
    std::sort(x_sorted.begin(), x_sorted.end());
    std::sort(y_sorted.begin(), y_sorted.end());
 
-   // compute interquartile range and thresholds for each axis
+   // compute quartiles and thresholds for each axis
    const int n = x_sorted.size();
 
    float Q1_x = x_sorted[n * 1 / 4];
@@ -268,25 +273,30 @@ int Similarity::Serial::markOutliers(const QVector<Pairwise::Vector2>& data, int
    float T_y_min = Q1_y - 1.5f * (Q3_y - Q1_y);
    float T_y_max = Q3_y + 1.5f * (Q3_y - Q1_y);
 
-   // mark outliers
-   int numOutliers = 0;
+   // remove outliers
+   int numSamples = 0;
 
-   for ( int i = 0; i < N; ++i )
+   for ( int i = 0, j = 0; i < labels.size(); i++ )
    {
-      if ( labels[i] == cluster )
+      if ( labels[i] >= 0 )
       {
-         // mark samples that are outliers on either axis
-         bool outlier_x = (data[i].s[0] < T_x_min || T_x_max < data[i].s[0]);
-         bool outlier_y = (data[i].s[1] < T_y_min || T_y_max < data[i].s[1]);
-
-         if ( outlier_x || outlier_y )
+         // mark samples in the given cluster that are outliers on either axis
+         if ( labels[i] == cluster && (data[j].s[0] < T_x_min || T_x_max < data[j].s[0] || data[j].s[1] < T_y_min || T_y_max < data[j].s[1]) )
          {
             labels[i] = marker;
-            ++numOutliers;
          }
+
+         // preserve all other non-outlier samples in the data array
+         else
+         {
+            data[numSamples] = data[j];
+            numSamples++;
+         }
+
+         j++;
       }
    }
 
-   // return number of outliers
-   return numOutliers;
+   // return number of remaining samples
+   return numSamples;
 }

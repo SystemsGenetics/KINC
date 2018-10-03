@@ -52,8 +52,7 @@ Spearman::Spearman(ExpressionMatrix* emx)
 
 /*!
  * Compute the Spearman correlation of a cluster in a pairwise data array. The
- * data array should only contain the clean samples that were extracted from the
- * expression matrix, while the labels should contain all samples.
+ * data array should only contain samples that have a non-negative label.
  *
  * @param data
  * @param labels

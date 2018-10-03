@@ -37,34 +37,41 @@ def fetch_pair(emx, i, j, min_expression):
 
 
 
-def mark_outliers(X, y, k, marker):
+def mark_outliers(X, labels, k, marker):
 	# extract samples in cluster k
-	X_k = X[y == k]
+	mask = (labels == k)
+	x = np.copy(X[mask, 0])
+	y = np.copy(X[mask, 1])
 
 	# make sure cluster is not empty
-	if X_k.shape[0] == 0:
+	if len(x) == 0 or len(y) == 0:
 		return
 
-	# compute quartiles for each axis
-	Q = np.percentile(X_k, [25, 75], axis=0, overwrite_input=True)
+	# sort arrays
+	x.sort()
+	y.sort()
 
-	# compute thresholds for each axis
-	Q1_x, Q3_x = Q[0, 0], Q[1, 0]
+	# compute quartiles and thresholds for each axis
+	n = len(x)
+
+	Q1_x = x[n * 1 // 4]
+	Q3_x = x[n * 3 // 4]
 	T_x_min = Q1_x - 1.5 * (Q3_x - Q1_x)
 	T_x_max = Q3_x + 1.5 * (Q3_x - Q1_x)
 
-	Q1_y, Q3_y = Q[0, 1], Q[1, 1]
+	Q1_y = y[n * 1 // 4]
+	Q3_y = y[n * 3 // 4]
 	T_y_min = Q1_y - 1.5 * (Q3_y - Q1_y)
 	T_y_max = Q3_y + 1.5 * (Q3_y - Q1_y)
 
 	# mark outliers
-	for i in range(len(y)):
-		if y[i] == k:
+	for i in range(len(labels)):
+		if labels[i] == k:
 			outlier_x = (X[i, 0] < T_x_min or T_x_max < X[i, 0])
 			outlier_y = (X[i, 1] < T_y_min or T_y_max < X[i, 1])
 
 			if outlier_x or outlier_y:
-				y[i] = marker
+				labels[i] = marker
 
 
 

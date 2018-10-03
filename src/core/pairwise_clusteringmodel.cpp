@@ -29,8 +29,7 @@ ClusteringModel::ClusteringModel(ExpressionMatrix* emx)
  * Determine the number of clusters in a pairwise data array. Several sub-models,
  * each one having a different number of clusters, are fit to the data and the
  * sub-model with the best criterion value is selected. The data array should
- * only contain the clean samples that were extracted from the expression
- * matrix, while the labels should contain all samples.
+ * only contain samples that have a non-negative label.
  *
  * @param data
  * @param numSamples

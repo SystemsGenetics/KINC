@@ -11,8 +11,7 @@ using namespace Pairwise;
 
 /*!
  * Compute the Pearson correlation of a cluster in a pairwise data array. The
- * data array should only contain the clean samples that were extracted from
- * the expression matrix, while the labels should contain all samples.
+ * data array should only contain samples that have a non-negative label.
  *
  * @param data
  * @param labels
@@ -33,20 +32,25 @@ float Pearson::computeCluster(
    float sumy2 = 0;
    float sumxy = 0;
 
-   for ( int i = 0; i < labels.size(); ++i )
+   for ( int i = 0, j = 0; i < labels.size(); ++i )
    {
-      if ( labels[i] == cluster )
+      if ( labels[i] >= 0 )
       {
-         float x_i = data[n].s[0];
-         float y_i = data[n].s[1];
+         if ( labels[i] == cluster )
+         {
+            float x_i = data[j].s[0];
+            float y_i = data[j].s[1];
 
-         sumx += x_i;
-         sumy += y_i;
-         sumx2 += x_i * x_i;
-         sumy2 += y_i * y_i;
-         sumxy += x_i * y_i;
+            sumx += x_i;
+            sumy += y_i;
+            sumx2 += x_i * x_i;
+            sumy2 += y_i * y_i;
+            sumxy += x_i * y_i;
 
-         ++n;
+            ++n;
+         }
+
+         ++j;
       }
    }
 

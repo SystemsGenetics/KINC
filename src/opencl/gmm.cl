@@ -605,7 +605,7 @@ __kernel void GMM_compute(
    // remove pre-clustering outliers
    if ( removePreOutliers )
    {
-      markOutliers(X, N, bestLabels, 0, -7, x_sorted, y_sorted);
+      N = removeOutliers(X, bestLabels, sampleSize, 0, -7, x_sorted, y_sorted);
    }
 
    // perform clustering only if there are enough samples
@@ -673,7 +673,7 @@ __kernel void GMM_compute(
    {
       for ( char k = 0; k < *bestK; ++k )
       {
-         markOutliers(X, N, bestLabels, k, -8, x_sorted, y_sorted);
+         N = removeOutliers(X, bestLabels, sampleSize, k, -8, x_sorted, y_sorted);
       }
    }
 }

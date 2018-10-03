@@ -6,7 +6,8 @@
 
 float Pearson_computeCluster(
    __global const float2 *data,
-   __global const char *labels, int N,
+   __global const char *labels,
+   int sampleSize,
    char cluster,
    int minSamples)
 {
@@ -18,20 +19,25 @@ float Pearson_computeCluster(
    float sumy2 = 0;
    float sumxy = 0;
 
-   for ( int i = 0; i < N; ++i )
+   for ( int i = 0, j = 0; i < sampleSize; ++i )
    {
-      if ( labels[i] == cluster )
+      if ( labels[i] >= 0 )
       {
-         float x_i = data[n].x;
-         float y_i = data[n].y;
+         if ( labels[i] == cluster )
+         {
+            float x_i = data[j].x;
+            float y_i = data[j].y;
 
-         sumx += x_i;
-         sumy += y_i;
-         sumx2 += x_i * x_i;
-         sumy2 += y_i * y_i;
-         sumxy += x_i * y_i;
+            sumx += x_i;
+            sumy += y_i;
+            sumx2 += x_i * x_i;
+            sumy2 += y_i * y_i;
+            sumxy += x_i * y_i;
 
-         ++n;
+            ++n;
+         }
+
+         ++j;
       }
    }
 

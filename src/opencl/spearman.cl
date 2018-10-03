@@ -24,7 +24,8 @@ int nextPower2(int n)
 
 float Spearman_computeCluster(
    __global const float2 *data,
-   __global const char *labels, int N,
+   __global const char *labels,
+	int sampleSize,
    char cluster,
    int minSamples,
    __global float *x,
@@ -32,10 +33,10 @@ float Spearman_computeCluster(
    __global int *rank)
 {
    // extract samples in pairwise cluster
-   int N_pow2 = nextPower2(N);
-	int n = 0;
+   int N_pow2 = nextPower2(sampleSize);
+   int n = 0;
 
-	for ( int i = 0, j = 0; i < N; ++i )
+   for ( int i = 0, j = 0; i < sampleSize; ++i )
    {
       if ( labels[i] >= 0 )
       {
@@ -43,7 +44,7 @@ float Spearman_computeCluster(
          {
             x[n] = data[j].x;
             y[n] = data[j].y;
-				rank[n] = n + 1;
+            rank[n] = n + 1;
             ++n;
          }
 
