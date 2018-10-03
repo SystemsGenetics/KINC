@@ -141,7 +141,7 @@ void GMM::initializeMeans(const QVector<Vector2>& X, int N)
 
       for (int i = 0; i < N; ++i)
       {
-         // determine the mean which is nearest to x_i
+         // determine the component mean which is nearest to x_i
          float min_dist = INFINITY;
          int min_k = 0;
          for (int k = 0; k < K; ++k)
