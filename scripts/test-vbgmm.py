@@ -19,76 +19,50 @@ def fetch_pair(emx, i, j, min_expression):
 	# mark nan samples
 	y[np.isnan(X[:, 0]) | np.isnan(X[:, 1])] = -9
 
-	return (X, y)
+	return X, y
 
 
 
-def compute_gmm(X, y, min_samples, min_clusters, max_clusters, criterion):
-	# extract clean pairwise data
-	mask = (y == 0)
-	X_clean = X[mask]
-	y_out = np.copy(y)
+def compute_gmm(X, n_components):
+	# initialize clustering model
+	model = sklearn.mixture.GaussianMixture(n_components)
 
-	# make sure there are enough samples
-	N = X_clean.shape[0]
-	K = 0
+	# fit clustering model
+	model.fit(X)
 
-	if N >= min_samples:
-		# initialize clustering models
-		models = [sklearn.mixture.GaussianMixture(K) for K in range(min_clusters, max_clusters+1)]
-		min_crit = float("inf")
+	# save clustering results
+	K = n_components
+	y = model.predict(X)
 
-		# identify number of clusters
-		for model in models:
-			# fit model
-			model.fit(X_clean)
+	# compute criterion value
+	crit = model.bic(X)
 
-			# compute criterion value
-			if criterion == "aic":
-				crit = model.aic(X_clean)
-			elif criterion == "bic":
-				crit = model.bic(X_clean)
+	# print results
+	print("%4d %4d: %8s: K = %4d, crit = %g" % (i, j, "GMM", K, crit))
 
-			# save the best model
-			if crit < min_crit:
-				min_crit = crit
-				K = len(model.weights_)
-				y_out[mask] = model.predict(X_clean)
-
-	print("%4d %4d: %8s: N = %4d, K = %4d" % (i, j, "GMM", N, K))
-
-	return K, y_out
+	return K, y, crit
 
 
 
-def compute_vbgmm(X, y, min_samples, n_components, weight_concentration_prior, weight_threshold):
-	# extract clean pairwise data
-	mask = (y == 0)
-	X_clean = X[mask]
-	y_out = np.copy(y)
+def compute_vbgmm(X, n_components, weight_concentration_prior, weight_threshold):
+	# initialize clustering model
+	model = sklearn.mixture.BayesianGaussianMixture(n_components, weight_concentration_prior=weight_concentration_prior)
 
-	# make sure there are enough samples
-	N = X_clean.shape[0]
-	K = 0
+	# fit clustering model
+	model.fit(X)
 
-	if N >= min_samples:
-		# initialize clustering model
-		model = sklearn.mixture.BayesianGaussianMixture(n_components, weight_concentration_prior=weight_concentration_prior)
+	print("".join(["%8.3f" % w for w in model.weights_]))
 
-		# fit clustering model
-		model.fit(X_clean)
+	# compute number of effective components
+	K = sum([(w > weight_threshold) for w in model.weights_])
 
-		print("".join(["%8.3f" % w for w in model.weights_]))
+	# save clustering results
+	y = model.predict(X)
 
-		# compute number of effective components
-		K = sum([(w > weight_threshold) for w in model.weights_])
+	# print results
+	print("%4d %4d: %8s: y_0 = %g, K = %d" % (i, j, "VBGMM", weight_concentration_prior, K))
 
-		# plot clustering results
-		y_out[mask] = model.predict(X_clean)
-
-	print("%4d %4d: %8s: N = %4d, K = %4d" % (i, j, "VBGMM", N, K))
-
-	return K, y_out
+	return K, y
 
 
 
@@ -102,8 +76,7 @@ if __name__ == "__main__":
 	min_samples = 30
 	min_clusters = 1
 	max_clusters = 5
-	criterion = "bic"
-	weight_concentration_priors = [1e-3, 1e0, 1e3]
+	weight_concentration_priors = [1e-6, 1e-3, 1e0, 1e3, 1e6]
 	weight_threshold = 0.05
 
 	# load data
@@ -112,34 +85,45 @@ if __name__ == "__main__":
 	# iterate through each pair
 	for i in range(len(emx.index)):
 		for j in range(i):
-			# fetch pairwise input data
+			# extract clean pairwise data
 			X, y = fetch_pair(emx, i, j, min_expression)
+			X = X[y == 0]
 
-			models = []
+			if len(X) < min_samples:
+				continue
 
-			# compute Gaussian mixture model
-			models.append(compute_gmm(X, y, min_samples, min_clusters, max_clusters, criterion))
+			# compute Gaussian mixture models
+			gmms = []
 
-			# compute variational Bayesian Gaussian mixture model
+			for n_components in range(min_clusters, max_clusters + 1):
+				gmms.append(compute_gmm(X, n_components))
+
+			# compute variational Bayesian Gaussian mixture models
+			vbgmms = []
+
 			for weight_concentration_prior in weight_concentration_priors:
-				models.append(compute_vbgmm(X, y, min_samples, max_clusters, weight_concentration_prior, weight_threshold))
+				vbgmms.append(compute_vbgmm(X, max_clusters, weight_concentration_prior, weight_threshold))
 
-			# plot comparison of GMM and VBGMM
-			if np.any([K > 0 for K, y in models]):
-				plt.figure(figsize=(5 * len(models), 5))
+			# plot comparison of GMMs and VBGMMs
+			rows, cols = 2, max(len(gmms), len(vbgmms))
+			plt.figure(figsize=(5 * cols, 5 * rows))
 
-				for i in range(len(models)):
-					K, y = models[i]
+			for k in range(len(gmms)):
+				K, y, crit = gmms[k]
 
-					if i == 0:
-						title = "GMM: K = %d" % (K)
-					else:
-						title = "VBGMM (y_0 = %g): K = %d" % (weight_concentration_priors[i - 1], K)
+				plt.subplot(rows, cols, k + 1)
+				plt.scatter(X[:, 0], X[:, 1], s=20, c=y, cmap="brg")
+				plt.title("GMM: K = %d, crit = %g" % (K, crit))
+				plt.xlabel(emx.index[i])
+				plt.ylabel(emx.index[j])
 
-					plt.subplot(1, len(models), i + 1)
-					plt.scatter(X[:, 0], X[:, 1], s=20, c=y, cmap="brg")
-					plt.title(title)
-					plt.xlabel(emx.index[i])
-					plt.ylabel(emx.index[j])
+			for k in range(len(vbgmms)):
+				K, y = vbgmms[k]
 
-				plt.show()
+				plt.subplot(rows, cols, cols + k + 1)
+				plt.scatter(X[:, 0], X[:, 1], s=20, c=y, cmap="brg")
+				plt.title("VBGMM: y_0 = %.0e, K = %d" % (weight_concentration_priors[k], K))
+				plt.xlabel(emx.index[i])
+				plt.ylabel(emx.index[j])
+
+			plt.show()
