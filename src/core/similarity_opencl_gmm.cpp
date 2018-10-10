@@ -86,7 +86,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
       minSamples,
       minClusters,
       maxClusters,
-      criterion,
+      &criterion,
       removePreOutliers,
       removePostOutliers,
       work_X,
@@ -111,7 +111,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    setArgument(MinSamples, minSamples);
    setArgument(MinClusters, minClusters);
    setArgument(MaxClusters, maxClusters);
-   setArgument(Criterion, criterion);
+   setArgument(Criterion, (cl_int) criterion);
    setArgument(RemovePreOutliers, removePreOutliers);
    setArgument(RemovePostOutliers, removePostOutliers);
    setBuffer(WorkX, work_X);

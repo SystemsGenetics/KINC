@@ -33,7 +33,7 @@ QAbstractTableModel* CorrelationMatrix::model()
  */
 void CorrelationMatrix::initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& correlationNames)
 {
-   EDEBUG_FUNC(this,geneNames,maxClusterSize,correlationNames);
+   EDEBUG_FUNC(this,&geneNames,maxClusterSize,&correlationNames);
 
    // make sure correlation names is an array and is not empty
    if ( !correlationNames.isArray() || correlationNames.toArray().isEmpty() )

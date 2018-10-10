@@ -157,7 +157,7 @@ QVariant ImportCorrelationMatrix::Input::data(int index, Role role) const
  */
 void ImportCorrelationMatrix::Input::set(int index, const QVariant& value)
 {
-   EDEBUG_FUNC(this,index,value);
+   EDEBUG_FUNC(this,index,&value);
 
    switch (index)
    {

@@ -33,7 +33,7 @@ Similarity::WorkBlock::WorkBlock(int index, qint64 start, qint64 size):
  */
 void Similarity::WorkBlock::write(QDataStream& stream) const
 {
-   EDEBUG_FUNC(this,stream);
+   EDEBUG_FUNC(this,&stream);
 
    stream << _start << _size;
 }
@@ -50,7 +50,7 @@ void Similarity::WorkBlock::write(QDataStream& stream) const
  */
 void Similarity::WorkBlock::read(QDataStream& stream)
 {
-   EDEBUG_FUNC(this,stream);
+   EDEBUG_FUNC(this,&stream);
 
    stream >> _start >> _size;
 }

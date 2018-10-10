@@ -32,7 +32,7 @@ QAbstractTableModel* CCMatrix::model()
  */
 void CCMatrix::initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& sampleNames)
 {
-   EDEBUG_FUNC(this,geneNames,maxClusterSize,sampleNames);
+   EDEBUG_FUNC(this,&geneNames,maxClusterSize,&sampleNames);
 
    // make sure sample names is an array and is not empty
    if ( !sampleNames.isArray() || sampleNames.toArray().isEmpty() )

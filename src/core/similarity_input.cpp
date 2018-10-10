@@ -315,7 +315,7 @@ QVariant Similarity::Input::data(int index, Role role) const
  */
 void Similarity::Input::set(int index, const QVariant& value)
 {
-   EDEBUG_FUNC(this,index,value);
+   EDEBUG_FUNC(this,index,&value);
 
    switch (index)
    {

@@ -152,7 +152,7 @@ void PowerLaw::initialize()
  */
 QVector<float> PowerLaw::computeMaximums(const QVector<float>& matrix)
 {
-   EDEBUG_FUNC(this,matrix);
+   EDEBUG_FUNC(this,&matrix);
 
    const int N {_input->geneSize()};
    const int K {_input->maxClusterSize()};
@@ -199,7 +199,7 @@ QVector<float> PowerLaw::computeMaximums(const QVector<float>& matrix)
  */
 QVector<bool> PowerLaw::computeAdjacencyMatrix(const QVector<float>& matrix, const QVector<float>& maximums, float threshold, int* size)
 {
-   EDEBUG_FUNC(this,matrix,maximums,threshold,size);
+   EDEBUG_FUNC(this,&matrix,&maximums,threshold,size);
 
    const int N {_input->geneSize()};
    const int K {_input->maxClusterSize()};
@@ -263,7 +263,7 @@ QVector<bool> PowerLaw::computeAdjacencyMatrix(const QVector<float>& matrix, con
  */
 QVector<int> PowerLaw::computeDegreeDistribution(const QVector<bool>& matrix, int size)
 {
-   EDEBUG_FUNC(this,matrix,size);
+   EDEBUG_FUNC(this,&matrix,size);
 
    // compute degree of each node
    QVector<int> degrees(size);
@@ -314,7 +314,7 @@ QVector<int> PowerLaw::computeDegreeDistribution(const QVector<bool>& matrix, in
  */
 float PowerLaw::computeCorrelation(const QVector<int>& histogram)
 {
-   EDEBUG_FUNC(this,histogram);
+   EDEBUG_FUNC(this,&histogram);
 
    // compute log-log transform of histogram data
    const int n = histogram.size();

@@ -70,7 +70,7 @@ QString CorrelationMatrix::Pair::toString() const
  */
 void CorrelationMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
 {
-   EDEBUG_FUNC(this,stream,cluster);
+   EDEBUG_FUNC(this,&stream,cluster);
 
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _correlations.size() )
@@ -96,7 +96,7 @@ void CorrelationMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
  */
 void CorrelationMatrix::Pair::readCluster(const EDataStream& stream, int cluster) const
 {
-   EDEBUG_FUNC(this,stream,cluster);
+   EDEBUG_FUNC(this,&stream,cluster);
 
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _correlations.size() )

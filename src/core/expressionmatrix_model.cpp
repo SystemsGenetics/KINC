@@ -128,7 +128,7 @@ int ExpressionMatrix::Model::columnCount(const QModelIndex&) const
  */
 QVariant ExpressionMatrix::Model::data(const QModelIndex& index, int role) const
 {
-   EDEBUG_FUNC(this,index,role);
+   EDEBUG_FUNC(this,&index,role);
 
    // make sure the index and role are valid
    if ( !index.isValid() || role != Qt::DisplayRole )

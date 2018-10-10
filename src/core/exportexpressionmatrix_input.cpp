@@ -116,7 +116,7 @@ QVariant ExportExpressionMatrix::Input::data(int index, Role role) const
  */
 void ExportExpressionMatrix::Input::set(int index, const QVariant& value)
 {
-   EDEBUG_FUNC(this,index,value);
+   EDEBUG_FUNC(this,index,&value);
 
    switch (index)
    {

@@ -194,7 +194,7 @@ void RMT::initialize()
  */
 QVector<float> RMT::computeMaximums(const QVector<float>& matrix)
 {
-   EDEBUG_FUNC(this,matrix);
+   EDEBUG_FUNC(this,&matrix);
 
    const int N {_input->geneSize()};
    const int K {_input->maxClusterSize()};
@@ -242,7 +242,7 @@ QVector<float> RMT::computeMaximums(const QVector<float>& matrix)
  */
 QVector<float> RMT::computePruneMatrix(const QVector<float>& matrix, const QVector<float>& maximums, float threshold, int* size)
 {
-   EDEBUG_FUNC(this,matrix,maximums,threshold,size);
+   EDEBUG_FUNC(this,&matrix,&maximums,threshold,size);
 
    const int N {_input->geneSize()};
    const int K {_input->maxClusterSize()};
@@ -348,7 +348,7 @@ QVector<float> RMT::computeEigenvalues(QVector<float>* matrix, int size)
  */
 QVector<float> RMT::computeUnique(const QVector<float>& values)
 {
-   EDEBUG_FUNC(this,values);
+   EDEBUG_FUNC(this,&values);
 
    const float EPSILON {1e-6};
    QVector<float> unique;
@@ -382,7 +382,7 @@ QVector<float> RMT::computeUnique(const QVector<float>& values)
  */
 float RMT::computeChiSquare(const QVector<float>& eigens)
 {
-   EDEBUG_FUNC(this,eigens);
+   EDEBUG_FUNC(this,&eigens);
 
    // make sure there are enough eigenvalues
    if ( eigens.size() < _minEigenvalueSize )
@@ -442,7 +442,7 @@ float RMT::computeChiSquare(const QVector<float>& eigens)
  */
 float RMT::computeChiSquareHelper(const QVector<float>& values)
 {
-   EDEBUG_FUNC(this,values);
+   EDEBUG_FUNC(this,&values);
 
    // compute spacings
    QVector<float> spacings {computeSpacings(values)};
@@ -495,7 +495,7 @@ float RMT::computeChiSquareHelper(const QVector<float>& values)
  */
 QVector<float> RMT::computeSpline(const QVector<float>& values, int pace)
 {
-   EDEBUG_FUNC(this,values,pace);
+   EDEBUG_FUNC(this,&values,pace);
 
    // using declarations for gsl resource pointers
    using gsl_interp_accel_ptr = unique_ptr<gsl_interp_accel, decltype(&gsl_interp_accel_free)>;
@@ -547,7 +547,7 @@ QVector<float> RMT::computeSpline(const QVector<float>& values, int pace)
  */
 QVector<float> RMT::computeSpacings(const QVector<float>& values)
 {
-   EDEBUG_FUNC(this,values);
+   EDEBUG_FUNC(this,&values);
 
    // compute spacings between interpolated eigenvalues
    QVector<float> spacings(values.size() - 1);

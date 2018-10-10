@@ -168,7 +168,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
  */
 int Similarity::Serial::fetchPair(const Pairwise::Index& index, QVector<Pairwise::Vector2>& data, QVector<qint8>& labels)
 {
-   EDEBUG_FUNC(this,index,data,labels);
+   EDEBUG_FUNC(this,&index,&data,&labels);
 
    // read in gene expressions
    ExpressionMatrix::Gene gene1(_base->_input);
@@ -227,7 +227,7 @@ int Similarity::Serial::fetchPair(const Pairwise::Index& index, QVector<Pairwise
  */
 int Similarity::Serial::removeOutliers(QVector<Pairwise::Vector2>& data, QVector<qint8>& labels, qint8 cluster, qint8 marker)
 {
-   EDEBUG_FUNC(this,data,labels,cluster,marker);
+   EDEBUG_FUNC(this,&data,&labels,cluster,marker);
 
    // extract univariate data from the given cluster
    QVector<float> x_sorted;

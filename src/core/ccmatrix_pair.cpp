@@ -102,7 +102,7 @@ QString CCMatrix::Pair::toString() const
  */
 void CCMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
 {
-   EDEBUG_FUNC(this,stream,cluster);
+   EDEBUG_FUNC(this,&stream,cluster);
 
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _sampleMasks.size() )
@@ -137,7 +137,7 @@ void CCMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
  */
 void CCMatrix::Pair::readCluster(const EDataStream& stream, int cluster) const
 {
-   EDEBUG_FUNC(this,stream,cluster);
+   EDEBUG_FUNC(this,&stream,cluster);
 
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _sampleMasks.size() )

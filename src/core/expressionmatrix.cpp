@@ -203,7 +203,7 @@ QVector<float> ExpressionMatrix::dumpRawData() const
  */
 void ExpressionMatrix::initialize(const QStringList& geneNames, const QStringList& sampleNames)
 {
-   EDEBUG_FUNC(this,geneNames,sampleNames);
+   EDEBUG_FUNC(this,&geneNames,&sampleNames);
 
    // create a metadata array of gene names
    EMetaArray metaGeneNames;

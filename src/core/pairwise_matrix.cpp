@@ -122,7 +122,7 @@ EMetadata Matrix::geneNames() const
  */
 void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int dataSize, int subHeaderSize)
 {
-   EDEBUG_FUNC(this,geneNames,maxClusterSize,dataSize,subHeaderSize);
+   EDEBUG_FUNC(this,&geneNames,maxClusterSize,dataSize,subHeaderSize);
 
    // make sure gene names metadata is an array and is not empty
    if ( !geneNames.isArray() || geneNames.toArray().isEmpty() )
@@ -178,7 +178,7 @@ void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int data
  */
 void Matrix::write(const Index& index, qint8 cluster)
 {
-   EDEBUG_FUNC(this,index,cluster);
+   EDEBUG_FUNC(this,&index,cluster);
 
    // make sure this is new data object that can be written to
    if ( _lastWrite == -2 )

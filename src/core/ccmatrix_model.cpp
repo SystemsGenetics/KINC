@@ -107,7 +107,7 @@ int CCMatrix::Model::columnCount(const QModelIndex&) const
  */
 QVariant CCMatrix::Model::data(const QModelIndex& index, int role) const
 {
-   EDEBUG_FUNC(this,index,role);
+   EDEBUG_FUNC(this,&index,role);
 
    // if role is not display return nothing
    if ( role != Qt::DisplayRole )
