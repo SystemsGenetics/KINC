@@ -176,7 +176,7 @@ void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int data
  * @param index
  * @param cluster
  */
-void Matrix::write(Index index, qint8 cluster)
+void Matrix::write(const Index& index, qint8 cluster)
 {
    EDEBUG_FUNC(this,index,cluster);
 

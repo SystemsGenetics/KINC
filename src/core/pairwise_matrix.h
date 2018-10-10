@@ -37,7 +37,7 @@ namespace Pairwise
       virtual void readHeader() = 0;
       void initialize(const EMetadata& geneNames, int maxClusterSize, int dataSize, int offset);
    private:
-      void write(Index index, qint8 cluster);
+      void write(const Index& index, qint8 cluster);
       Index getPair(qint64 index, qint8* cluster) const;
       qint64 findPair(qint64 indent, qint64 first, qint64 last) const;
       void seekPair(qint64 index) const;

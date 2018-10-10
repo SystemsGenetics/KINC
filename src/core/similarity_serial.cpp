@@ -166,7 +166,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
  * @param data
  * @param labels
  */
-int Similarity::Serial::fetchPair(Pairwise::Index index, QVector<Pairwise::Vector2>& data, QVector<qint8>& labels)
+int Similarity::Serial::fetchPair(const Pairwise::Index& index, QVector<Pairwise::Vector2>& data, QVector<qint8>& labels)
 {
    EDEBUG_FUNC(this,index,data,labels);
 

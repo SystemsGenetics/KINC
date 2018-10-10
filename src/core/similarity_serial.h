@@ -16,7 +16,7 @@ public:
    explicit Serial(Similarity* parent);
    virtual std::unique_ptr<EAbstractAnalytic::Block> execute(const EAbstractAnalytic::Block* block) override final;
 private:
-   int fetchPair(Pairwise::Index index, QVector<Pairwise::Vector2>& data, QVector<qint8>& labels);
+   int fetchPair(const Pairwise::Index& index, QVector<Pairwise::Vector2>& data, QVector<qint8>& labels);
    int removeOutliers(QVector<Pairwise::Vector2>& data, QVector<qint8>& labels, qint8 cluster, qint8 marker);
    /*!
     * Pointer to the base analytic for this object.

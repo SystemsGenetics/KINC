@@ -31,8 +31,8 @@ namespace Pairwise
       virtual void addCluster(int amount = 1) const = 0;
       virtual int clusterSize() const = 0;
       virtual bool isEmpty() const = 0;
-      void write(Index index);
-      void read(Index index) const;
+      void write(const Index& index);
+      void read(const Index& index) const;
       void reset() const { _rawIndex = 0; };
       void readNext() const;
       bool hasNext() const { return _rawIndex != _cMatrix->_clusterSize; }

@@ -15,7 +15,7 @@ using namespace Pairwise;
  *
  * @param index
  */
-void Matrix::Pair::write(Index index)
+void Matrix::Pair::write(const Index& index)
 {
    EDEBUG_FUNC(this,index);
 
@@ -51,7 +51,7 @@ void Matrix::Pair::write(Index index)
  *
  * @param index
  */
-void Matrix::Pair::read(Index index) const
+void Matrix::Pair::read(const Index& index) const
 {
    EDEBUG_FUNC(this,index);
 
