@@ -1,6 +1,10 @@
 #!/bin/bash
 
-set -x
+# parse command-line arguments
+if [[ $# != 1 ]]; then
+	echo "usage: $0 <infile>"
+	exit -1
+fi
 
 DATA="data"
 EMX_FILE="$1"

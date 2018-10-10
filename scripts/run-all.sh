@@ -1,12 +1,15 @@
 #!/bin/bash
 
-set -x
+# parse command-line arguments
+if [[ $# != 1 ]]; then
+	echo "usage: $0 <infile>"
+	exit -1
+fi
 
 KINC="build/cli/kinc"
 DATA="data"
 LOGS="logs"
 GPU=1
-
 INFILE="$1"
 
 # apply settings
