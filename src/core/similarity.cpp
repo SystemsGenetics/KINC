@@ -236,23 +236,24 @@ EAbstractAnalytic::OpenCL* Similarity::makeOpenCL()
 
 /*!
  * Initialize this analytic. This implementation checks to make sure that valid
- * arguments were provided, and then it initializes the output data objects.
+ * arguments were provided.
  */
 void Similarity::initialize()
 {
    EDEBUG_FUNC(this);
 
+   // only the master process needs to validate arguments
    if ( !isMaster() )
    {
       return;
    }
 
-   // make sure input and output are valid
-   if ( !_input || !_ccm || !_cmx )
+   // make sure input data is valid
+   if ( !_input )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Did not get valid input and/or output arguments."));
+      e.setDetails(tr("Did not get a valid input data object."));
       throw e;
    }
 
@@ -262,6 +263,28 @@ void Similarity::initialize()
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Invalid Argument"));
       e.setDetails(tr("Minimum clusters must be less than or equal to maximum clusters."));
+      throw e;
+   }
+}
+
+
+
+
+
+
+/*!
+ * Initialize the output data objects of this analytic.
+ */
+void Similarity::initializeOutputs()
+{
+   EDEBUG_FUNC(this);
+
+   // make sure output data is valid
+   if ( !_ccm || !_cmx )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Invalid Argument"));
+      e.setDetails(tr("Did not get valid output data objects."));
       throw e;
    }
 

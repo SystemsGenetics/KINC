@@ -63,6 +63,7 @@ public:
    virtual EAbstractAnalytic::Serial* makeSerial() override final;
    virtual EAbstractAnalytic::OpenCL* makeOpenCL() override final;
    virtual void initialize() override final;
+   virtual void initializeOutputs() override final;
 private:
    /*!
     * Defines the clustering methods this analytic supports.
