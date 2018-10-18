@@ -60,7 +60,7 @@ __kernel void fetchPair(
       }
       else
       {
-         X[numSamples].v2 = (float2) ( gene1[i], gene2[i] );
+         X[numSamples] = (float2) ( gene1[i], gene2[i] );
          numSamples++;
 
          labels[i] = 0;

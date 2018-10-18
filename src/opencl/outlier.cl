@@ -54,8 +54,8 @@ int removeOutliers(
       {
          if ( labels[i] == cluster )
          {
-            x_sorted[n] = data[j].s[0];
-            y_sorted[n] = data[j].s[1];
+            x_sorted[n] = data[j].x;
+            y_sorted[n] = data[j].y;
             n++;
          }
 
@@ -92,7 +92,7 @@ int removeOutliers(
       if ( labels[i] >= 0 )
       {
          // mark samples in the given cluster that are outliers on either axis
-         if ( labels[i] == cluster && (data[j].s[0] < T_x_min || T_x_max < data[j].s[0] || data[j].s[1] < T_y_min || T_y_max < data[j].s[1]) )
+         if ( labels[i] == cluster && (data[j].x < T_x_min || T_x_max < data[j].x || data[j].y < T_y_min || T_y_max < data[j].y) )
          {
             labels[i] = marker;
          }

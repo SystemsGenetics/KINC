@@ -1,22 +1,22 @@
 
-typedef union
-{
-   float s[2];
-   float2 v2;
-} Vector2;
-
-typedef union
-{
-   float s[4];
-   float4 v4;
-} Matrix2x2;
-
-
-
-
-
-
-#define ELEM(M, i, j) ((M)->s[(i) * 2 + (j)])
+/*!
+ * This file provides structure and function definitions for the Vector2 and
+ * Matrix2x2 types, which are vector and matrix types with fixed dimensions.
+ * The operations defined for these types compute outputs directly without the
+ * use of loops. These types are useful for any algorithm that operates on
+ * pairwise data.
+ *
+ * Since OpenCL provides built-in vector types, Vector2 and Matrix2x2 are
+ * defined in terms of these types. The following mapping is used to map
+ * indices to xyzw:
+ *
+ *   ELEM(M, 0, 0) = M->x
+ *   ELEM(M, 0, 1) = M->y
+ *   ELEM(M, 1, 0) = M->z
+ *   ELEM(M, 1, 1) = M->w
+ */
+typedef float2 Vector2;
+typedef float4 Matrix2x2;
 
 
 
@@ -24,8 +24,8 @@ typedef union
 
 
 #define vectorInitZero(a) \
-   (a)->s[0] = 0; \
-   (a)->s[1] = 0;
+   (a)->x = 0; \
+   (a)->y = 0;
 
 
 
@@ -33,8 +33,8 @@ typedef union
 
 
 #define vectorAdd(a, b) \
-   (a)->s[0] += (b)->s[0]; \
-   (a)->s[1] += (b)->s[1];
+   (a)->x += (b)->x; \
+   (a)->y += (b)->y;
 
 
 
@@ -42,8 +42,8 @@ typedef union
 
 
 #define vectorAddScaled(a, c, b) \
-   (a)->s[0] += (c) * (b)->s[0]; \
-   (a)->s[1] += (c) * (b)->s[1];
+   (a)->x += (c) * (b)->x; \
+   (a)->y += (c) * (b)->y;
 
 
 
@@ -51,8 +51,8 @@ typedef union
 
 
 #define vectorSubtract(a, b) \
-   (a)->s[0] -= (b)->s[0]; \
-   (a)->s[1] -= (b)->s[1];
+   (a)->x -= (b)->x; \
+   (a)->y -= (b)->y;
 
 
 
@@ -60,8 +60,8 @@ typedef union
 
 
 #define vectorScale(a, c) \
-   (a)->s[0] *= (c); \
-   (a)->s[1] *= (c);
+   (a)->x *= (c); \
+   (a)->y *= (c);
 
 
 
@@ -69,7 +69,7 @@ typedef union
 
 
 #define vectorDot(a, b) \
-   ((a)->s[0] * (b)->s[0] + (a)->s[1] * (b)->s[1])
+   ((a)->x * (b)->x + (a)->y * (b)->y)
 
 
 
@@ -78,7 +78,7 @@ typedef union
 
 #define SQR(x) ((x)*(x))
 #define vectorDiffNorm(a, b) \
-   sqrt(SQR((a)->s[0] - (b)->s[0]) + SQR((a)->s[1] - (b)->s[1]))
+   sqrt(SQR((a)->x - (b)->x) + SQR((a)->y - (b)->y))
 
 
 
@@ -86,10 +86,10 @@ typedef union
 
 
 #define matrixInitIdentity(M) \
-   ELEM(M, 0, 0) = 1; \
-   ELEM(M, 0, 1) = 0; \
-   ELEM(M, 1, 0) = 0; \
-   ELEM(M, 1, 1) = 1;
+   (M)->x = 1; \
+   (M)->y = 0; \
+   (M)->z = 0; \
+   (M)->w = 1;
 
 
 
@@ -97,10 +97,10 @@ typedef union
 
 
 #define matrixInitZero(M) \
-   ELEM(M, 0, 0) = 0; \
-   ELEM(M, 0, 1) = 0; \
-   ELEM(M, 1, 0) = 0; \
-   ELEM(M, 1, 1) = 0;
+   (M)->x = 0; \
+   (M)->y = 0; \
+   (M)->z = 0; \
+   (M)->w = 0;
 
 
 
@@ -108,10 +108,10 @@ typedef union
 
 
 #define matrixAddScaled(A, c, B) \
-   ELEM(A, 0, 0) += (c) * ELEM(B, 0, 0); \
-   ELEM(A, 0, 1) += (c) * ELEM(B, 0, 1); \
-   ELEM(A, 1, 0) += (c) * ELEM(B, 1, 0); \
-   ELEM(A, 1, 1) += (c) * ELEM(B, 1, 1);
+   (A)->x += (c) * (B)->x; \
+   (A)->y += (c) * (B)->y; \
+   (A)->z += (c) * (B)->z; \
+   (A)->w += (c) * (B)->w;
 
 
 
@@ -119,10 +119,10 @@ typedef union
 
 
 #define matrixScale(A, c) \
-   ELEM(A, 0, 0) *= (c); \
-   ELEM(A, 0, 1) *= (c); \
-   ELEM(A, 1, 0) *= (c); \
-   ELEM(A, 1, 1) *= (c);
+   (A)->x *= (c); \
+   (A)->y *= (c); \
+   (A)->z *= (c); \
+   (A)->w *= (c);
 
 
 
@@ -130,20 +130,20 @@ typedef union
 
 
 #define matrixInverse(A, B, det) \
-   *det = ELEM(A, 0, 0) * ELEM(A, 1, 1) - ELEM(A, 0, 1) * ELEM(A, 1, 0); \
-   ELEM(B, 0, 0) = +ELEM(A, 1, 1) / (*det); \
-   ELEM(B, 0, 1) = -ELEM(A, 0, 1) / (*det); \
-   ELEM(B, 1, 0) = -ELEM(A, 1, 0) / (*det); \
-   ELEM(B, 1, 1) = +ELEM(A, 0, 0) / (*det);
+   *det = (A)->x * (A)->w - (A)->y * (A)->z; \
+   (B)->x = +(A)->w / (*det); \
+   (B)->y = -(A)->y / (*det); \
+   (B)->z = -(A)->z / (*det); \
+   (B)->w = +(A)->x / (*det);
 
 
 
 
 
 
-#define matrixProduct(A, x, b) \
-   (b)->s[0] = ELEM(A, 0, 0) * (x)->s[0] + ELEM(A, 0, 1) * (x)->s[1]; \
-   (b)->s[1] = ELEM(A, 1, 0) * (x)->s[0] + ELEM(A, 1, 1) * (x)->s[1];
+#define matrixProduct(A, x_, b) \
+   (b)->x = (A)->x * (x_)->x + (A)->y * (x_)->y; \
+   (b)->y = (A)->z * (x_)->x + (A)->w * (x_)->y;
 
 
 
@@ -151,7 +151,7 @@ typedef union
 
 
 #define matrixOuterProduct(a, b, C) \
-   ELEM(C, 0, 0) = (a)->s[0] * (b)->s[0]; \
-   ELEM(C, 0, 1) = (a)->s[0] * (b)->s[1]; \
-   ELEM(C, 1, 0) = (a)->s[1] * (b)->s[0]; \
-   ELEM(C, 1, 1) = (a)->s[1] * (b)->s[1];
+   (C)->x = (a)->x * (b)->x; \
+   (C)->y = (a)->x * (b)->y; \
+   (C)->z = (a)->y * (b)->x; \
+   (C)->w = (a)->y * (b)->y;
