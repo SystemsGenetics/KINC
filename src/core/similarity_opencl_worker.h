@@ -1,7 +1,10 @@
 #ifndef SIMILARITY_OPENCL_WORKER_H
 #define SIMILARITY_OPENCL_WORKER_H
 #include "similarity_opencl.h"
-#include "pairwise_gmm.h"
+#include "similarity_opencl_fetchpair.h"
+#include "similarity_opencl_gmm.h"
+#include "similarity_opencl_pearson.h"
+#include "similarity_opencl_spearman.h"
 
 
 
@@ -43,13 +46,13 @@ private:
    struct
    {
       ::OpenCL::Buffer<cl_int2> in_index;
-      ::OpenCL::Buffer<Pairwise::Vector2> work_X;
+      ::OpenCL::Buffer<cl_float2> work_X;
       ::OpenCL::Buffer<cl_int> work_N;
       ::OpenCL::Buffer<cl_float> work_x;
       ::OpenCL::Buffer<cl_float> work_y;
       ::OpenCL::Buffer<cl_char> work_labels;
-      ::OpenCL::Buffer<Pairwise::GMM::Component> work_components;
-      ::OpenCL::Buffer<Pairwise::Vector2> work_MP;
+      ::OpenCL::Buffer<cl_component> work_components;
+      ::OpenCL::Buffer<cl_float2> work_MP;
       ::OpenCL::Buffer<cl_int> work_counts;
       ::OpenCL::Buffer<cl_float> work_logpi;
       ::OpenCL::Buffer<cl_float> work_loggamma;

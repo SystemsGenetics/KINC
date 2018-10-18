@@ -34,7 +34,7 @@ public:
       cl_int sampleSize,
       ::OpenCL::Buffer<cl_int2>* in_index,
       cl_int minExpression,
-      ::OpenCL::Buffer<Pairwise::Vector2>* out_X,
+      ::OpenCL::Buffer<cl_float2>* out_X,
       ::OpenCL::Buffer<cl_int>* out_N,
       ::OpenCL::Buffer<cl_char>* out_labels
    );

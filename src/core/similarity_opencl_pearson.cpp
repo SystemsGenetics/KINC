@@ -44,7 +44,7 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
 ::OpenCL::Event Similarity::OpenCL::Pearson::execute(
    ::OpenCL::CommandQueue* queue,
    int kernelSize,
-   ::OpenCL::Buffer<Pairwise::Vector2>* in_data,
+   ::OpenCL::Buffer<cl_float2>* in_data,
    cl_char clusterSize,
    ::OpenCL::Buffer<cl_char>* in_labels,
    cl_int sampleSize,

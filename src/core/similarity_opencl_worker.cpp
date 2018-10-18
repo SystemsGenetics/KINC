@@ -1,8 +1,4 @@
 #include "similarity_opencl_worker.h"
-#include "similarity_opencl_fetchpair.h"
-#include "similarity_opencl_gmm.h"
-#include "similarity_opencl_pearson.h"
-#include "similarity_opencl_spearman.h"
 #include "similarity_resultblock.h"
 #include "similarity_workblock.h"
 #include <ace/core/elog.h>
@@ -11,7 +7,6 @@
 
 
 using namespace std;
-
 
 
 
@@ -47,13 +42,13 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    int K {_base->_maxClusters};
 
    _buffers.in_index = ::OpenCL::Buffer<cl_int2>(context, 1 * kernelSize);
-   _buffers.work_X = ::OpenCL::Buffer<Pairwise::Vector2>(context, N * kernelSize);
+   _buffers.work_X = ::OpenCL::Buffer<cl_float2>(context, N * kernelSize);
    _buffers.work_N = ::OpenCL::Buffer<cl_int>(context, 1 * kernelSize);
    _buffers.work_x = ::OpenCL::Buffer<cl_float>(context, N_pow2 * kernelSize);
    _buffers.work_y = ::OpenCL::Buffer<cl_float>(context, N_pow2 * kernelSize);
    _buffers.work_labels = ::OpenCL::Buffer<cl_char>(context, N * kernelSize);
-   _buffers.work_components = ::OpenCL::Buffer<Pairwise::GMM::Component>(context, K * kernelSize);
-   _buffers.work_MP = ::OpenCL::Buffer<Pairwise::Vector2>(context, K * kernelSize);
+   _buffers.work_components = ::OpenCL::Buffer<cl_component>(context, K * kernelSize);
+   _buffers.work_MP = ::OpenCL::Buffer<cl_float2>(context, K * kernelSize);
    _buffers.work_counts = ::OpenCL::Buffer<cl_int>(context, K * kernelSize);
    _buffers.work_logpi = ::OpenCL::Buffer<cl_float>(context, K * kernelSize);
    _buffers.work_loggamma = ::OpenCL::Buffer<cl_float>(context, N * K * kernelSize);
@@ -137,7 +132,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             _base->_minSamples,
             _base->_minClusters,
             _base->_maxClusters,
-            _base->_criterion,
+            (cl_int) _base->_criterion,
             _base->_removePreOutliers,
             _base->_removePostOutliers,
             &_buffers.work_X,

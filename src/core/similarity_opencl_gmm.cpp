@@ -61,16 +61,16 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    cl_int minSamples,
    cl_char minClusters,
    cl_char maxClusters,
-   Pairwise::Criterion criterion,
+   cl_int criterion,
    cl_int removePreOutliers,
    cl_int removePostOutliers,
-   ::OpenCL::Buffer<Pairwise::Vector2>* work_X,
+   ::OpenCL::Buffer<cl_float2>* work_X,
    ::OpenCL::Buffer<cl_int>* work_N,
    ::OpenCL::Buffer<cl_float>* work_x,
    ::OpenCL::Buffer<cl_float>* work_y,
    ::OpenCL::Buffer<cl_char>* work_labels,
-   ::OpenCL::Buffer<Pairwise::GMM::Component>* work_components,
-   ::OpenCL::Buffer<Pairwise::Vector2>* work_MP,
+   ::OpenCL::Buffer<cl_component>* work_components,
+   ::OpenCL::Buffer<cl_float2>* work_MP,
    ::OpenCL::Buffer<cl_int>* work_counts,
    ::OpenCL::Buffer<cl_float>* work_logpi,
    ::OpenCL::Buffer<cl_float>* work_loggamma,
@@ -111,7 +111,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    setArgument(MinSamples, minSamples);
    setArgument(MinClusters, minClusters);
    setArgument(MaxClusters, maxClusters);
-   setArgument(Criterion, (cl_int) criterion);
+   setArgument(Criterion, criterion);
    setArgument(RemovePreOutliers, removePreOutliers);
    setArgument(RemovePostOutliers, removePostOutliers);
    setBuffer(WorkX, work_X);
