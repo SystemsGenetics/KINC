@@ -19,6 +19,18 @@ KINC is built with [ACE](https://github.com/SystemsGenetics/ACE), a framework wh
 
 Refer to the files under `docs` for installation instructions. KINC is currently supported on most flavors of Linux.
 
+### Palmetto
+
+To use KINC on Palmetto, you must add the following modules in lieu of installing dependencies through a package manager:
+```bash
+module add cuda-toolkit/9.2
+module add gcc/5.4.0
+module add git
+module add gsl/2.3
+module add openmpi/1.10.7
+module add Qt/5.9.2
+```
+
 ## Usage
 
 KINC provides two executables: `kinc`, the command-line version, and `qkinc`, the GUI version. The command-line version can use MPI while the GUI version can display data object files that are produced by KINC. KINC produces a gene-coexpression network in several steps:
