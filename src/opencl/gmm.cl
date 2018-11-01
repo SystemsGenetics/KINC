@@ -86,7 +86,7 @@ bool GMM_Component_prepare(__global Component *component)
    matrixInverse(&component->sigma, &component->sigmaInv, &det);
 
    // return failure if matrix inverse failed
-   if ( fabs(det) <= 0 )
+   if ( det <= 0 )
    {
       return false;
    }
