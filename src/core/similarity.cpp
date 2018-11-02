@@ -66,7 +66,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
       ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
    }
 
-   qint64 start {index * _workBlockSize};
+   qint64 start {index * (qint64) _workBlockSize};
    qint64 size {min(totalPairs(_input) - start, (qint64) _workBlockSize)};
 
    return unique_ptr<EAbstractAnalytic::Block>(new WorkBlock(index, start, size));

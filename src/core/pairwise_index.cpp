@@ -44,9 +44,7 @@ Index::Index(qint32 x, qint32 y):
  *
  * @param index
  */
-Index::Index(qint64 index):
-   _x(1),
-   _y(0)
+Index::Index(qint64 index)
 {
    EDEBUG_FUNC(this,index);
 
@@ -61,15 +59,15 @@ Index::Index(qint64 index):
 
    // compute pairwise index from scalar index
    qint64 pos {0};
-   while ( pos <= index )
+   qint64 x {0};
+
+   while ( pos + x <= index )
    {
-      ++_x;
-      pos = _x * (_x - 1) / 2;
+      pos += x;
+      ++x;
    }
 
-   --_x;
-   pos = _x * (_x - 1) / 2;
-
+   _x = x;
    _y = index - pos;
 }
 
