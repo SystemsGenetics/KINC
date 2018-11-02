@@ -160,9 +160,13 @@ private:
     */
    int _workBlockSize {32768};
    /*!
-    * The number of kernels to run in parallel for each OpenCL worker.
+    * The global work size for each OpenCL worker.
     */
-   int _kernelSize {4096};
+   int _globalWorkSize {4096};
+   /*!
+    * The local work size for each OpenCL worker.
+    */
+   int _localWorkSize {0};
 };
 
 

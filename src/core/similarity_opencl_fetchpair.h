@@ -18,7 +18,8 @@ public:
     */
    enum Argument
    {
-      Expressions
+      GlobalWorkSize
+      ,Expressions
       ,SampleSize
       ,InIndex
       ,MinExpression
@@ -29,7 +30,8 @@ public:
    explicit FetchPair(::OpenCL::Program* program, QObject* parent = nullptr);
    ::OpenCL::Event execute(
       ::OpenCL::CommandQueue* queue,
-      int kernelSize,
+      int globalWorkSize,
+      int localWorkSize,
       ::OpenCL::Buffer<cl_float>* expressions,
       cl_int sampleSize,
       ::OpenCL::Buffer<cl_int2>* in_index,

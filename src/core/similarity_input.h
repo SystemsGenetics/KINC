@@ -31,7 +31,8 @@ public:
       ,MinCorrelation
       ,MaxCorrelation
       ,WorkBlockSize
-      ,KernelSize
+      ,GlobalWorkSize
+      ,LocalWorkSize
       ,Total
    };
    explicit Input(Similarity* parent);

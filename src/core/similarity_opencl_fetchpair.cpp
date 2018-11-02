@@ -33,7 +33,8 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
  * kernel execution.
  *
  * @param queue
- * @param kernelSize
+ * @param globalWorkSize
+ * @param localWorkSize
  * @param expressions
  * @param sampleSize
  * @param in_index
@@ -44,7 +45,8 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
  */
 ::OpenCL::Event Similarity::OpenCL::FetchPair::execute(
    ::OpenCL::CommandQueue* queue,
-   int kernelSize,
+   int globalWorkSize,
+   int localWorkSize,
    ::OpenCL::Buffer<cl_float>* expressions,
    cl_int sampleSize,
    ::OpenCL::Buffer<cl_int2>* in_index,
@@ -56,7 +58,8 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
 {
    EDEBUG_FUNC(this,
       queue,
-      kernelSize,
+      globalWorkSize,
+      localWorkSize,
       expressions,
       sampleSize,
       in_index,
@@ -69,6 +72,7 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
    Locker locker {lock()};
 
    // set kernel arguments
+   setArgument(GlobalWorkSize, globalWorkSize);
    setBuffer(Expressions, expressions);
    setArgument(SampleSize, sampleSize);
    setBuffer(InIndex, in_index);
@@ -77,11 +81,15 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
    setBuffer(OutN, out_N);
    setBuffer(OutLabels, out_labels);
 
-   // set kernel sizes
-   int localSize {min(kernelSize, maxWorkGroupSize(queue->device()))};
-   int globalSize {kernelSize - kernelSize % localSize};
+   // set work sizes
+   if ( localWorkSize == 0 )
+   {
+      localWorkSize = min(globalWorkSize, maxWorkGroupSize(queue->device()));
+   }
 
-   setSizes(0, globalSize, localSize);
+   int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
+
+   setSizes(0, numWorkgroups * localWorkSize, localWorkSize);
 
    // execute kernel
    return ::OpenCL::Kernel::execute(queue);

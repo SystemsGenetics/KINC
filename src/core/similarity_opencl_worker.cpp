@@ -36,27 +36,27 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    _kernels.spearman = new OpenCL::Spearman(program, this);
 
    // initialize buffers
-   int kernelSize {_base->_kernelSize};
+   int W {_base->_globalWorkSize};
    int N {_base->_input->sampleSize()};
    int N_pow2 {Pairwise::Spearman::nextPower2(N)};
    int K {_base->_maxClusters};
 
-   _buffers.in_index = ::OpenCL::Buffer<cl_int2>(context, 1 * kernelSize);
-   _buffers.work_X = ::OpenCL::Buffer<cl_float2>(context, N * kernelSize);
-   _buffers.work_N = ::OpenCL::Buffer<cl_int>(context, 1 * kernelSize);
-   _buffers.work_x = ::OpenCL::Buffer<cl_float>(context, N_pow2 * kernelSize);
-   _buffers.work_y = ::OpenCL::Buffer<cl_float>(context, N_pow2 * kernelSize);
-   _buffers.work_labels = ::OpenCL::Buffer<cl_char>(context, N * kernelSize);
-   _buffers.work_components = ::OpenCL::Buffer<cl_component>(context, K * kernelSize);
-   _buffers.work_MP = ::OpenCL::Buffer<cl_float2>(context, K * kernelSize);
-   _buffers.work_counts = ::OpenCL::Buffer<cl_int>(context, K * kernelSize);
-   _buffers.work_logpi = ::OpenCL::Buffer<cl_float>(context, K * kernelSize);
-   _buffers.work_loggamma = ::OpenCL::Buffer<cl_float>(context, N * K * kernelSize);
-   _buffers.work_logGamma = ::OpenCL::Buffer<cl_float>(context, K * kernelSize);
-   _buffers.work_rank = ::OpenCL::Buffer<cl_int>(context, N_pow2 * kernelSize);
-   _buffers.out_K = ::OpenCL::Buffer<cl_char>(context, 1 * kernelSize);
-   _buffers.out_labels = ::OpenCL::Buffer<cl_char>(context, N * kernelSize);
-   _buffers.out_correlations = ::OpenCL::Buffer<cl_float>(context, K * kernelSize);
+   _buffers.in_index = ::OpenCL::Buffer<cl_int2>(context, 1 * W);
+   _buffers.work_X = ::OpenCL::Buffer<cl_float2>(context, N * W);
+   _buffers.work_N = ::OpenCL::Buffer<cl_int>(context, 1 * W);
+   _buffers.work_x = ::OpenCL::Buffer<cl_float>(context, N_pow2 * W);
+   _buffers.work_y = ::OpenCL::Buffer<cl_float>(context, N_pow2 * W);
+   _buffers.work_labels = ::OpenCL::Buffer<cl_char>(context, N * W);
+   _buffers.work_components = ::OpenCL::Buffer<cl_component>(context, K * W);
+   _buffers.work_MP = ::OpenCL::Buffer<cl_float2>(context, K * W);
+   _buffers.work_counts = ::OpenCL::Buffer<cl_int>(context, K * W);
+   _buffers.work_logpi = ::OpenCL::Buffer<cl_float>(context, K * W);
+   _buffers.work_loggamma = ::OpenCL::Buffer<cl_float>(context, N * K * W);
+   _buffers.work_logGamma = ::OpenCL::Buffer<cl_float>(context, K * W);
+   _buffers.work_rank = ::OpenCL::Buffer<cl_int>(context, N_pow2 * W);
+   _buffers.out_K = ::OpenCL::Buffer<cl_char>(context, 1 * W);
+   _buffers.out_labels = ::OpenCL::Buffer<cl_char>(context, N * W);
+   _buffers.out_correlations = ::OpenCL::Buffer<cl_float>(context, K * W);
 }
 
 
@@ -89,22 +89,17 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
    // iterate through all pairs
    Pairwise::Index index {workBlock->start()};
 
-   for ( int i = 0; i < workBlock->size(); i += _base->_kernelSize )
+   for ( int i = 0; i < workBlock->size(); i += _base->_globalWorkSize )
    {
       // write input buffers to device
-      int steps {min(_base->_kernelSize, (int)workBlock->size() - i)};
+      int globalWorkSize {(int) min((qint64)_base->_globalWorkSize, workBlock->size() - i)};
 
       _buffers.in_index.mapWrite(_queue).wait();
 
-      for ( int j = 0; j < steps; ++j )
+      for ( int j = 0; j < globalWorkSize; ++j )
       {
          _buffers.in_index[j] = { index.getX(), index.getY() };
          ++index;
-      }
-
-      for ( int j = steps; j < _base->_kernelSize; ++j )
-      {
-         _buffers.in_index[j] = { 0, 0 };
       }
 
       _buffers.in_index.unmap(_queue).wait();
@@ -112,7 +107,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
       // execute fetch-pair kernel
       _kernels.fetchPair->execute(
          _queue,
-         _base->_kernelSize,
+         globalWorkSize,
+         _base->_localWorkSize,
          &_baseOpenCL->_expressions,
          _base->_input->sampleSize(),
          &_buffers.in_index,
@@ -127,7 +123,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
       {
          _kernels.gmm->execute(
             _queue,
-            _base->_kernelSize,
+            globalWorkSize,
+            _base->_localWorkSize,
             _base->_input->sampleSize(),
             _base->_minSamples,
             _base->_minClusters,
@@ -155,7 +152,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
          // set cluster size to 1 if clustering is disabled
          _buffers.out_K.mapWrite(_queue).wait();
 
-         for ( int i = 0; i < _base->_kernelSize; ++i )
+         for ( int i = 0; i < globalWorkSize; ++i )
          {
             _buffers.out_K[i] = 1;
          }
@@ -168,7 +165,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
       {
          _kernels.pearson->execute(
             _queue,
-            _base->_kernelSize,
+            globalWorkSize,
+            _base->_localWorkSize,
             &_buffers.work_X,
             _base->_maxClusters,
             &_buffers.out_labels,
@@ -181,7 +179,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
       {
          _kernels.spearman->execute(
             _queue,
-            _base->_kernelSize,
+            globalWorkSize,
+            _base->_localWorkSize,
             &_buffers.work_X,
             _base->_maxClusters,
             &_buffers.out_labels,
@@ -204,7 +203,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
       e3.wait();
 
       // save results
-      for ( int j = 0; j < steps; ++j )
+      for ( int j = 0; j < globalWorkSize; ++j )
       {
          // get pointers to the cluster labels and correlations for this pair
          const qint8 *labels = &_buffers.out_labels.at(j * _base->_input->sampleSize());

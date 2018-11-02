@@ -33,7 +33,8 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
  * kernel execution.
  *
  * @param queue
- * @param kernelSize
+ * @param globalWorkSize
+ * @param localWorkSize
  * @param in_data
  * @param clusterSize
  * @param in_labels
@@ -46,7 +47,8 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
  */
 ::OpenCL::Event Similarity::OpenCL::Spearman::execute(
    ::OpenCL::CommandQueue* queue,
-   int kernelSize,
+   int globalWorkSize,
+   int localWorkSize,
    ::OpenCL::Buffer<cl_float2>* in_data,
    cl_char clusterSize,
    ::OpenCL::Buffer<cl_char>* in_labels,
@@ -60,7 +62,8 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
 {
    EDEBUG_FUNC(this,
       queue,
-      kernelSize,
+      globalWorkSize,
+      localWorkSize,
       in_data,
       clusterSize,
       in_labels,
@@ -75,6 +78,7 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
    Locker locker {lock()};
 
    // set kernel arguments
+   setArgument(GlobalWorkSize, globalWorkSize);
    setBuffer(InData, in_data);
    setArgument(ClusterSize, clusterSize);
    setBuffer(InLabels, in_labels);
@@ -85,11 +89,15 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
    setBuffer(WorkRank, work_rank);
    setBuffer(OutCorrelations, out_correlations);
 
-   // set kernel sizes
-   int localSize {min(kernelSize, maxWorkGroupSize(queue->device()))};
-   int globalSize {kernelSize - kernelSize % localSize};
+   // set work sizes
+   if ( localWorkSize == 0 )
+   {
+      localWorkSize = min(globalWorkSize, maxWorkGroupSize(queue->device()));
+   }
 
-   setSizes(0, globalSize, localSize);
+   int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
+
+   setSizes(0, numWorkgroups * localWorkSize, localWorkSize);
 
    // execute kernel
    return ::OpenCL::Kernel::execute(queue);

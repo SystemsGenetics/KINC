@@ -115,6 +115,7 @@ float Spearman_computeCluster(
  * should only contain the clean samples that were extracted from the expression
  * matrix, while the labels should contain all samples.
  *
+ * @param globalWorkSize
  * @param in_data
  * @param clusterSize
  * @param in_labels
@@ -123,6 +124,7 @@ float Spearman_computeCluster(
  * @param out_correlations
  */
 __kernel void Spearman_compute(
+	int globalWorkSize,
    __global const float2 *in_data,
    char clusterSize,
    __global const char *in_labels,
@@ -134,8 +136,14 @@ __kernel void Spearman_compute(
    __global float *out_correlations)
 {
    int i = get_global_id(0);
-	int N_pow2 = nextPower2(sampleSize);
 
+	if ( i >= globalWorkSize )
+   {
+      return;
+   }
+
+	// initialize workspace variables
+	int N_pow2 = nextPower2(sampleSize);
    __global const float2 *data = &in_data[i * sampleSize];
    __global const char *labels = &in_labels[i * sampleSize];
    __global float *x = &work_x[i * N_pow2];

@@ -663,8 +663,20 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
  * each one having a different number of clusters, are fit to the data and the
  * sub-model with the best criterion value is selected. The data array should
  * only contain samples that have a non-negative label.
+ *
+ * @param globalWorkSize
+ * @param sampleSize
+ * @param minSamples
+ * @param minClusters
+ * @param maxClusters
+ * @param criterion
+ * @param removePreOutliers
+ * @param removePostOutliers
+ * @param out_K
+ * @param out_labels
  */
 __kernel void GMM_compute(
+   int globalWorkSize,
    int sampleSize,
    int minSamples,
    char minClusters,
@@ -687,6 +699,11 @@ __kernel void GMM_compute(
    __global char *out_labels)
 {
    int i = get_global_id(0);
+
+   if ( i >= globalWorkSize )
+   {
+      return;
+   }
 
    // initialize workspace variables
    __global Vector2 *data = &work_X[i * sampleSize];

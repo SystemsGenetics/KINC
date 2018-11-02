@@ -32,7 +32,8 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
  * kernel execution.
  *
  * @param queue
- * @param kernelSize
+ * @param globalWorkSize
+ * @param localWorkSize
  * @param sampleSize
  * @param minSamples
  * @param minClusters
@@ -56,7 +57,8 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
  */
 ::OpenCL::Event Similarity::OpenCL::GMM::execute(
    ::OpenCL::CommandQueue* queue,
-   int kernelSize,
+   int globalWorkSize,
+   int localWorkSize,
    cl_int sampleSize,
    cl_int minSamples,
    cl_char minClusters,
@@ -81,7 +83,8 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
 {
    EDEBUG_FUNC(this,
       queue,
-      kernelSize,
+      globalWorkSize,
+      localWorkSize,
       sampleSize,
       minSamples,
       minClusters,
@@ -107,6 +110,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    Locker locker {lock()};
 
    // set kernel arguments
+   setArgument(GlobalWorkSize, globalWorkSize);
    setArgument(SampleSize, sampleSize);
    setArgument(MinSamples, minSamples);
    setArgument(MinClusters, minClusters);
@@ -128,11 +132,15 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    setBuffer(OutK, out_K);
    setBuffer(OutLabels, out_labels);
 
-   // set kernel sizes
-   int localSize {min(kernelSize, maxWorkGroupSize(queue->device()))};
-   int globalSize {kernelSize - kernelSize % localSize};
+   // set work sizes
+   if ( localWorkSize == 0 )
+   {
+      localWorkSize = min(globalWorkSize, maxWorkGroupSize(queue->device()));
+   }
 
-   setSizes(0, globalSize, localSize);
+   int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
+
+   setSizes(0, numWorkgroups * localWorkSize, localWorkSize);
 
    // execute kernel
    return ::OpenCL::Kernel::execute(queue);

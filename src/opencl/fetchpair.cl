@@ -11,6 +11,7 @@
  * with missing values and samples that fall below the expression threshold are
  * excluded. The number of extracted samples is returned.
  *
+ * @param globalWorkSize
  * @param expressions
  * @param sampleSize
  * @param in_index
@@ -20,6 +21,7 @@
  * @param out_labels
  */
 __kernel void fetchPair(
+   int globalWorkSize,
    __global const float *expressions,
    int sampleSize,
    __global const int2 *in_index,
@@ -30,16 +32,16 @@ __kernel void fetchPair(
 {
    int i = get_global_id(0);
 
+   if ( i >= globalWorkSize )
+   {
+      return;
+   }
+
    // initialize variables
    int2 index = in_index[i];
    __global Vector2 *X = &out_X[i * sampleSize];
    __global char *labels = &out_labels[i * sampleSize];
    __global int *p_numSamples = &out_N[i];
-
-   if ( index.x == 0 && index.y == 0 )
-   {
-      return;
-   }
 
    // index into gene expressions
    __global const float *gene1 = &expressions[index.x * sampleSize];

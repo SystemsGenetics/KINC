@@ -32,7 +32,8 @@ public:
     */
    enum Argument
    {
-      SampleSize
+      GlobalWorkSize
+      ,SampleSize
       ,MinSamples
       ,MinClusters
       ,MaxClusters
@@ -56,7 +57,8 @@ public:
    explicit GMM(::OpenCL::Program* program, QObject* parent = nullptr);
    ::OpenCL::Event execute(
       ::OpenCL::CommandQueue* queue,
-      int kernelSize,
+      int globalWorkSize,
+      int localWorkSize,
       cl_int sampleSize,
       cl_int minSamples,
       cl_char minClusters,

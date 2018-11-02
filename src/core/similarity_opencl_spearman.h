@@ -18,7 +18,8 @@ public:
     */
    enum Argument
    {
-      InData
+      GlobalWorkSize
+      ,InData
       ,ClusterSize
       ,InLabels
       ,SampleSize
@@ -31,7 +32,8 @@ public:
    explicit Spearman(::OpenCL::Program* program, QObject* parent = nullptr);
    ::OpenCL::Event execute(
       ::OpenCL::CommandQueue* queue,
-      int kernelSize,
+      int globalWorkSize,
+      int localWorkSize,
       ::OpenCL::Buffer<cl_float2>* in_data,
       cl_char clusterSize,
       ::OpenCL::Buffer<cl_char>* in_labels,

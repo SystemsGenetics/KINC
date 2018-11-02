@@ -113,7 +113,8 @@ EAbstractAnalytic::Input::Type Similarity::Input::type(int index) const
    case MinCorrelation: return Type::Double;
    case MaxCorrelation: return Type::Double;
    case WorkBlockSize: return Type::Integer;
-   case KernelSize: return Type::Integer;
+   case GlobalWorkSize: return Type::Integer;
+   case LocalWorkSize: return Type::Integer;
    default: return Type::Boolean;
    }
 }
@@ -287,14 +288,25 @@ QVariant Similarity::Input::data(int index, Role role) const
       case Role::Maximum: return std::numeric_limits<int>::max();
       default: return QVariant();
       }
-   case KernelSize:
+   case GlobalWorkSize:
       switch (role)
       {
-      case Role::CommandLineName: return QString("ksize");
-      case Role::Title: return tr("Kernel Size:");
-      case Role::WhatsThis: return tr("Number of kernels to run in parallel for each OpenCL worker.");
+      case Role::CommandLineName: return QString("gsize");
+      case Role::Title: return tr("Global Work Size:");
+      case Role::WhatsThis: return tr("The global work size for each OpenCL worker.");
       case Role::Default: return 4096;
       case Role::Minimum: return 1;
+      case Role::Maximum: return std::numeric_limits<int>::max();
+      default: return QVariant();
+      }
+   case LocalWorkSize:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("lsize");
+      case Role::Title: return tr("Local Work Size:");
+      case Role::WhatsThis: return tr("The local work size for each OpenCL worker.");
+      case Role::Default: return 0;
+      case Role::Minimum: return 0;
       case Role::Maximum: return std::numeric_limits<int>::max();
       default: return QVariant();
       }
@@ -356,8 +368,11 @@ void Similarity::Input::set(int index, const QVariant& value)
    case WorkBlockSize:
       _base->_workBlockSize = value.toInt();
       break;
-   case KernelSize:
-      _base->_kernelSize = value.toInt();
+   case GlobalWorkSize:
+      _base->_globalWorkSize = value.toInt();
+      break;
+   case LocalWorkSize:
+      _base->_localWorkSize = value.toInt();
       break;
    }
 }
