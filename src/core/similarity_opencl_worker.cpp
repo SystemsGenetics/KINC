@@ -32,6 +32,7 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    // initialize kernels
    _kernels.fetchPair = new OpenCL::FetchPair(program, this);
    _kernels.gmm = new OpenCL::GMM(program, this);
+   _kernels.outlier = new OpenCL::Outlier(program, this);
    _kernels.pearson = new OpenCL::Pearson(program, this);
    _kernels.spearman = new OpenCL::Spearman(program, this);
 
@@ -118,6 +119,24 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
          &_buffers.out_labels
       ).wait();
 
+      // execute outlier kernel (pre-clustering)
+      if ( _base->_removePreOutliers )
+      {
+         _kernels.outlier->execute(
+            _queue,
+            globalWorkSize,
+            _base->_localWorkSize,
+            &_buffers.work_X,
+            &_buffers.work_N,
+            &_buffers.out_labels,
+            _base->_input->sampleSize(),
+            &_buffers.out_K,
+            -7,
+            &_buffers.work_x,
+            &_buffers.work_y
+         );
+      }
+
       // execute clustering kernel
       if ( _base->_clusMethod == ClusteringMethod::GMM )
       {
@@ -130,12 +149,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             _base->_minClusters,
             _base->_maxClusters,
             (cl_int) _base->_criterion,
-            _base->_removePreOutliers,
-            _base->_removePostOutliers,
             &_buffers.work_X,
             &_buffers.work_N,
-            &_buffers.work_x,
-            &_buffers.work_y,
             &_buffers.work_labels,
             &_buffers.work_components,
             &_buffers.work_MP,
@@ -158,6 +173,24 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
          }
 
          _buffers.out_K.unmap(_queue).wait();
+      }
+
+      // execute outlier kernel (post-clustering)
+      if ( _base->_removePostOutliers )
+      {
+         _kernels.outlier->execute(
+            _queue,
+            globalWorkSize,
+            _base->_localWorkSize,
+            &_buffers.work_X,
+            &_buffers.work_N,
+            &_buffers.out_labels,
+            _base->_input->sampleSize(),
+            &_buffers.out_K,
+            -8,
+            &_buffers.work_x,
+            &_buffers.work_y
+         );
       }
 
       // execute correlation kernel

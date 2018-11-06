@@ -54,6 +54,7 @@ SOURCES += \
    similarity_input.cpp \
    similarity_opencl_fetchpair.cpp \
    similarity_opencl_gmm.cpp \
+   similarity_opencl_outlier.cpp \
    similarity_opencl_pearson.cpp \
    similarity_opencl_spearman.cpp \
    similarity_opencl_worker.cpp \
@@ -102,6 +103,7 @@ HEADERS += \
    similarity_input.h \
    similarity_opencl_fetchpair.h \
    similarity_opencl_gmm.h \
+   similarity_opencl_outlier.h \
    similarity_opencl_pearson.h \
    similarity_opencl_spearman.h \
    similarity_opencl_worker.h \

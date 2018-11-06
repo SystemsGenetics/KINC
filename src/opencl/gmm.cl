@@ -42,6 +42,21 @@ typedef struct
 
 
 /*!
+ * Implementation of rand(), taken from POSIX example.
+ *
+ * @param state
+ */
+int rand(ulong *state)
+{
+   *state = (*state) * 1103515245 + 12345;
+   return ((unsigned)((*state)/65536) % 32768);
+}
+
+
+
+
+
+/*!
  * Initialize a mixture component with the given mixture weight and mean.
  *
  * @param component
@@ -670,8 +685,6 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
  * @param minClusters
  * @param maxClusters
  * @param criterion
- * @param removePreOutliers
- * @param removePostOutliers
  * @param out_K
  * @param out_labels
  */
@@ -682,12 +695,8 @@ __kernel void GMM_compute(
    char minClusters,
    char maxClusters,
    Criterion criterion,
-   int removePreOutliers,
-   int removePostOutliers,
    __global Vector2 *work_X,
    __global int *work_N,
-   __global float *work_x,
-   __global float *work_y,
    __global char *work_labels,
    __global Component *work_components,
    __global Vector2 *work_MP,
@@ -708,8 +717,6 @@ __kernel void GMM_compute(
    // initialize workspace variables
    __global Vector2 *data = &work_X[i * sampleSize];
    int numSamples = work_N[i];
-   __global float *x_sorted = &work_x[i * sampleSize];
-   __global float *y_sorted = &work_y[i * sampleSize];
    __global char *labels = &work_labels[i * sampleSize];
    __global Component *components = &work_components[i * maxClusters];
    __global Vector2 *Mu = &work_MP[i * maxClusters];
@@ -729,12 +736,6 @@ __kernel void GMM_compute(
       ._loggamma = loggamma,
       ._logGamma = logGamma
    };
-
-   // remove pre-clustering outliers
-   if ( removePreOutliers )
-   {
-      numSamples = removeOutliers(data, bestLabels, sampleSize, 0, -7, x_sorted, y_sorted);
-   }
 
    // perform clustering only if there are enough samples
    *bestK = 0;
@@ -784,15 +785,6 @@ __kernel void GMM_compute(
                }
             }
          }
-      }
-   }
-
-   // remove post-clustering outliers
-   if ( *bestK > 1 && removePostOutliers )
-   {
-      for ( char k = 0; k < *bestK; ++k )
-      {
-         numSamples = removeOutliers(data, bestLabels, sampleSize, k, -8, x_sorted, y_sorted);
       }
    }
 }

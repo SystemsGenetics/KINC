@@ -92,7 +92,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
       // remove pre-clustering outliers
       if ( _base->_removePreOutliers )
       {
-         numSamples = removeOutliers(data, labels, 0, -7);
+         numSamples = removeOutliers(data, numSamples, labels, 1, -7);
       }
 
       // compute clusters
@@ -112,12 +112,9 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
       }
 
       // remove post-clustering outliers
-      if ( K > 1 && _base->_removePostOutliers )
+      if ( _base->_removePostOutliers )
       {
-         for ( qint8 k = 0; k < K; ++k )
-         {
-            numSamples = removeOutliers(data, labels, k, -8);
-         }
+         numSamples = removeOutliers(data, numSamples, labels, K, -8);
       }
 
       // compute correlations
@@ -225,7 +222,7 @@ int Similarity::Serial::fetchPair(const Pairwise::Index& index, QVector<Pairwise
  * @param cluster
  * @param marker
  */
-int Similarity::Serial::removeOutliers(QVector<Pairwise::Vector2>& data, QVector<qint8>& labels, qint8 cluster, qint8 marker)
+int Similarity::Serial::removeOutliersCluster(QVector<Pairwise::Vector2>& data, QVector<qint8>& labels, qint8 cluster, qint8 marker)
 {
    EDEBUG_FUNC(this,&data,&labels,cluster,marker);
 
@@ -298,5 +295,38 @@ int Similarity::Serial::removeOutliers(QVector<Pairwise::Vector2>& data, QVector
    }
 
    // return number of remaining samples
+   return numSamples;
+}
+
+
+
+
+
+
+/*!
+ * Perform outlier removal on each cluster in a parwise data array.
+ *
+ * @param data
+ * @param numSamples
+ * @param labels
+ * @param clusterSize
+ * @param marker
+ */
+int Similarity::Serial::removeOutliers(QVector<Pairwise::Vector2>& data, int numSamples, QVector<qint8>& labels, qint8 clusterSize, qint8 marker)
+{
+   EDEBUG_FUNC(this,&data,numSamples,&labels,clusterSize,marker);
+
+   // do not perform post-clustering outlier removal if there is only one cluster
+   if ( marker == -8 && clusterSize <= 1 )
+   {
+      return numSamples;
+   }
+
+   // perform outlier removal on each cluster
+   for ( qint8 k = 0; k < clusterSize; ++k )
+   {
+      numSamples = removeOutliersCluster(data, labels, k, marker);
+   }
+
    return numSamples;
 }

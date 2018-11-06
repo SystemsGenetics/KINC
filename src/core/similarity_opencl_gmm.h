@@ -38,12 +38,8 @@ public:
       ,MinClusters
       ,MaxClusters
       ,Criterion
-      ,RemovePreOutliers
-      ,RemovePostOutliers
       ,WorkX
       ,WorkN
-      ,WorkXSorted
-      ,WorkYSorted
       ,WorkLabels
       ,WorkComponents
       ,WorkMP
@@ -64,12 +60,8 @@ public:
       cl_char minClusters,
       cl_char maxClusters,
       cl_int criterion,
-      cl_int removePreOutliers,
-      cl_int removePostOutliers,
       ::OpenCL::Buffer<cl_float2>* work_X,
       ::OpenCL::Buffer<cl_int>* work_N,
-      ::OpenCL::Buffer<cl_float>* work_x,
-      ::OpenCL::Buffer<cl_float>* work_y,
       ::OpenCL::Buffer<cl_char>* work_labels,
       ::OpenCL::Buffer<cl_component>* work_components,
       ::OpenCL::Buffer<cl_float2>* work_MP,

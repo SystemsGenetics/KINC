@@ -15,6 +15,7 @@ class Similarity::OpenCL : public EAbstractAnalytic::OpenCL
 public:
    class FetchPair;
    class GMM;
+   class Outlier;
    class Pearson;
    class Spearman;
    class Worker;
@@ -39,7 +40,7 @@ private:
     */
    ::OpenCL::CommandQueue* _queue {nullptr};
    /*!
-    * Pointer to this object's OpenCL buffer for the expression matrix. 
+    * Pointer to this object's OpenCL buffer for the expression matrix.
     */
    ::OpenCL::Buffer<cl_float> _expressions;
 };

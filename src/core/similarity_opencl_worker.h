@@ -3,6 +3,7 @@
 #include "similarity_opencl.h"
 #include "similarity_opencl_fetchpair.h"
 #include "similarity_opencl_gmm.h"
+#include "similarity_opencl_outlier.h"
 #include "similarity_opencl_pearson.h"
 #include "similarity_opencl_spearman.h"
 
@@ -37,6 +38,7 @@ private:
    {
       OpenCL::FetchPair* fetchPair;
       OpenCL::GMM* gmm;
+      OpenCL::Outlier* outlier;
       OpenCL::Pearson* pearson;
       OpenCL::Spearman* spearman;
    } _kernels;

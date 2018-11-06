@@ -7,21 +7,6 @@
 
 
 /*!
- * Implementation of rand(), taken from POSIX example.
- *
- * @param state
- */
-int rand(ulong *state)
-{
-   *state = (*state) * 1103515245 + 12345;
-   return ((unsigned)((*state)/65536) % 32768);
-}
-
-
-
-
-
-/*!
  * Remove outliers from a vector of pairwise data. Outliers are detected independently
  * on each axis using the Tukey method, and marked with the given marker. Only the
  * samples in the given cluster are used in outlier detection. For unclustered data,
@@ -36,7 +21,7 @@ int rand(ulong *state)
  * @param x_sorted
  * @param y_sorted
  */
-int removeOutliers(
+int removeOutliersCluster(
    __global Vector2 *data,
    __global char *labels,
    int sampleSize,
@@ -110,4 +95,64 @@ int removeOutliers(
 
    // return number of remaining samples
    return numSamples;
+}
+
+
+
+
+
+
+/*!
+ * Perform outlier removal on each cluster in a parwise data array.
+ *
+ * @param globalWorkSize
+ * @param in_data
+ * @param in_N
+ * @param in_labels
+ * @param sampleSize
+ * @param in_K
+ * @param marker
+ */
+__kernel void removeOutliers(
+   int globalWorkSize,
+   __global Vector2 *in_data,
+   __global int *in_N,
+   __global char *in_labels,
+   int sampleSize,
+   __global char *in_K,
+   char marker,
+   __global float *work_x,
+   __global float *work_y)
+{
+   int i = get_global_id(0);
+
+   if ( i >= globalWorkSize )
+   {
+      return;
+   }
+
+   // initialize workspace variables
+   __global Vector2 *data = &in_data[i * sampleSize];
+   __global int *numSamples = &in_N[i];
+   __global char *labels = &in_labels[i * sampleSize];
+   char clusterSize = in_K[i];
+   __global float *x_sorted = &work_x[i * sampleSize];
+   __global float *y_sorted = &work_y[i * sampleSize];
+
+   if ( marker == -7 )
+   {
+      clusterSize = 1;
+   }
+
+   // do not perform post-clustering outlier removal if there is only one cluster
+   if ( marker == -8 && clusterSize <= 1 )
+   {
+      return;
+   }
+
+   // perform outlier removal on each cluster
+   for ( char k = 0; k < clusterSize; ++k )
+   {
+      *numSamples = removeOutliersCluster(data, labels, sampleSize, k, marker, x_sorted, y_sorted);
+   }
 }

@@ -39,12 +39,8 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
  * @param minClusters
  * @param maxClusters
  * @param criterion
- * @param removePreOutliers
- * @param removePostOutliers
  * @param work_X
  * @param work_N
- * @param work_x
- * @param work_y
  * @param work_labels
  * @param work_components
  * @param work_MP
@@ -64,12 +60,8 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    cl_char minClusters,
    cl_char maxClusters,
    cl_int criterion,
-   cl_int removePreOutliers,
-   cl_int removePostOutliers,
    ::OpenCL::Buffer<cl_float2>* work_X,
    ::OpenCL::Buffer<cl_int>* work_N,
-   ::OpenCL::Buffer<cl_float>* work_x,
-   ::OpenCL::Buffer<cl_float>* work_y,
    ::OpenCL::Buffer<cl_char>* work_labels,
    ::OpenCL::Buffer<cl_component>* work_components,
    ::OpenCL::Buffer<cl_float2>* work_MP,
@@ -90,12 +82,8 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
       minClusters,
       maxClusters,
       &criterion,
-      removePreOutliers,
-      removePostOutliers,
       work_X,
       work_N,
-      work_x,
-      work_y,
       work_labels,
       work_components,
       work_MP,
@@ -116,12 +104,8 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    setArgument(MinClusters, minClusters);
    setArgument(MaxClusters, maxClusters);
    setArgument(Criterion, criterion);
-   setArgument(RemovePreOutliers, removePreOutliers);
-   setArgument(RemovePostOutliers, removePostOutliers);
    setBuffer(WorkX, work_X);
    setBuffer(WorkN, work_N);
-   setBuffer(WorkXSorted, work_x);
-   setBuffer(WorkYSorted, work_y);
    setBuffer(WorkLabels, work_labels);
    setBuffer(WorkComponents, work_components);
    setBuffer(WorkMP, work_MP);
