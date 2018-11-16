@@ -23,6 +23,10 @@ public:
    virtual EAbstractAnalytic::Input* makeInput() override final;
    virtual void initialize();
 private:
+   /**
+    * Workspace variables to write to the output file
+    */
+   QTextStream _stream;
    /*!
     * Pointer to the input expression matrix.
     */
@@ -34,7 +38,7 @@ private:
    /*!
     * The string token used to represent NAN values.
     */
-   QString _nanToken;
+   QString _nanToken {"NA"};
 };
 
 

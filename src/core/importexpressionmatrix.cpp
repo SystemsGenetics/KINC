@@ -66,6 +66,15 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
          {
             _sampleNames.append(word.toString());
          }
+
+         // make sure reading input file worked
+         if ( _stream.status() != QTextStream::Ok )
+         {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("File IO Error"));
+            e.setDetails(tr("Qt Text Stream encountered an unknown error."));
+            throw e;
+         }
       }
    }
 

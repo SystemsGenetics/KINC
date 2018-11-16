@@ -97,6 +97,7 @@ QVariant ExportExpressionMatrix::Input::data(int index, Role role) const
       case Role::CommandLineName: return QString("nan");
       case Role::Title: return tr("NAN Token:");
       case Role::WhatsThis: return tr("Expected token for expressions that have no value.");
+      case Role::Default: return "NA";
       default: return QVariant();
       }
    default: return QVariant();

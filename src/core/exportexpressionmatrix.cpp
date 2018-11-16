@@ -10,13 +10,14 @@
 
 /*!
  * Return the total number of blocks this analytic must process as steps
- * or blocks of work.
+ * or blocks of work. This implementation uses a work block for writing the
+ * sample names and a work block for writing each gene.
  */
 int ExportExpressionMatrix::size() const
 {
    EDEBUG_FUNC(this);
 
-   return 1;
+   return 1 + _input->geneSize();
 }
 
 
@@ -26,39 +27,48 @@ int ExportExpressionMatrix::size() const
 
 /*!
  * Process the given index with a possible block of results if this analytic
- * produces work blocks. This analytic implementation has no work blocks.
+ * produces work blocks. This implementation uses only the index of the result
+ * block to determine which piece of work to do.
  *
  * @param result
  */
-void ExportExpressionMatrix::process(const EAbstractAnalytic::Block*)
+void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 {
-   EDEBUG_FUNC(this);
+   EDEBUG_FUNC(this,result);
 
-   // get gene names, sample names
-   EMetaArray geneNames = _input->geneNames().toArray();
-   EMetaArray sampleNames = _input->sampleNames().toArray();
-
-   // create text stream to output file
-   QTextStream stream(_output);
-   stream.setRealNumberPrecision(12);
-
-   // write sample names
-   for ( int i = 0; i < _input->sampleSize(); i++ )
+   // write the sample names in the first step
+   if ( result->index() == 0 )
    {
-      stream << sampleNames.at(i).toString() << "\t";
+      // get sample names
+      EMetaArray sampleNames {_input->sampleNames().toArray()};
+
+      // initialize output file stream
+      _stream.setDevice(_output);
+      _stream.setRealNumberPrecision(12);
+
+      // write sample names
+      for ( int i = 0; i < _input->sampleSize(); i++ )
+      {
+         _stream << sampleNames.at(i).toString() << "\t";
+      }
+      _stream << "\n";
    }
-   stream << "\n";
 
-   // write each gene to a line in output file
-   ExpressionMatrix::Gene gene(_input);
-
-   for ( int i = 0; i < _input->geneSize(); i++ )
+   // write each gene to the output file in a separate step
+   else
    {
+      // get gene index
+      int i = result->index() - 1;
+
+      // get gene name
+      QString geneName {_input->geneNames().toArray().at(i).toString()};
+
       // load gene from expression matrix
+      ExpressionMatrix::Gene gene(_input);
       gene.read(i);
 
       // write gene name
-      stream << geneNames.at(i).toString();
+      _stream << geneName;
 
       // write expression values
       for ( int j = 0; j < _input->sampleSize(); j++ )
@@ -68,21 +78,21 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block*)
          // if value is NAN use the no sample token
          if ( std::isnan(value) )
          {
-            stream << "\t" << _nanToken;
+            _stream << "\t" << _nanToken;
          }
 
          // else this is a normal floating point expression
          else
          {
-            stream << "\t" << value;
+            _stream << "\t" << value;
          }
       }
 
-      stream << "\n";
+      _stream << "\n";
    }
 
    // make sure writing output file worked
-   if ( stream.status() != QTextStream::Ok )
+   if ( _stream.status() != QTextStream::Ok )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("File IO Error"));

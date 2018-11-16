@@ -38,16 +38,14 @@ private:
 
       QVector<float> expressions;
    };
-
    /**
-    * Workspace variables to hold gene expression data
+    * Workspace variables to read from the input file.
     */
    QTextStream _stream;
    int _numLines {0};
    QVector<Gene> _genes;
    QStringList _geneNames;
    QStringList _sampleNames;
-
    /*!
     * Pointer to the input text file.
     */
