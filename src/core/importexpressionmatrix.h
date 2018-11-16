@@ -11,9 +11,9 @@
  * reads in a text file which contains a matrix as a table; that is, with each row
  * on a line, each value separated by whitespace, and the first row and column
  * containing the row names and column names, respectively. Elements which have
- * the given NAN token are read in as NAN. Additionally, the user can specify a
- * fixed number of samples (columns) to import; by default the analytic imports
- * the entire matrix.
+ * the given NAN token are read in as NAN. If the sample names are not in the
+ * input file, the user must provide the number of samples to the analytic, and
+ * the samples will be given integer names.
  */
 class ImportExpressionMatrix : public EAbstractAnalytic
 {
@@ -25,6 +25,29 @@ public:
    virtual EAbstractAnalytic::Input* makeInput() override final;
    virtual void initialize();
 private:
+   /**
+    * Structure used to load gene expression data
+    */
+   struct Gene
+   {
+      Gene() = default;
+      Gene(int size)
+      {
+         expressions.resize(size);
+      }
+
+      QVector<float> expressions;
+   };
+
+   /**
+    * Workspace variables to hold gene expression data
+    */
+   QTextStream _stream;
+   int _numLines {0};
+   QVector<Gene> _genes;
+   QStringList _geneNames;
+   QStringList _sampleNames;
+
    /*!
     * Pointer to the input text file.
     */
