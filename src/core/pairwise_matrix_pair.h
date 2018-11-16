@@ -17,12 +17,10 @@ namespace Pairwise
    public:
       Pair(Matrix* matrix):
          _matrix(matrix),
-         _cMatrix(matrix),
-         _index({matrix->_geneSize,0})
+         _cMatrix(matrix)
          {}
       Pair(const Matrix* matrix):
-         _cMatrix(matrix),
-         _index({matrix->_geneSize,0})
+         _cMatrix(matrix)
          {}
       Pair() = default;
       Pair(const Pair&) = default;
