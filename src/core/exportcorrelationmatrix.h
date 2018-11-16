@@ -2,7 +2,9 @@
 #define EXPORTCORRELATIONMATRIX_H
 #include <ace/core/core.h>
 
+#include "ccmatrix_pair.h"
 #include "ccmatrix.h"
+#include "correlationmatrix_pair.h"
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
 
@@ -29,6 +31,12 @@ public:
    virtual EAbstractAnalytic::Input* makeInput() override final;
    virtual void initialize();
 private:
+   /**
+    * Workspace variables to write to the output file
+    */
+   QTextStream _stream;
+   CCMatrix::Pair _ccmPair;
+   CorrelationMatrix::Pair _cmxPair;
    /*!
     * Pointer to the input expression matrix.
     */

@@ -1,9 +1,6 @@
 #include "importcorrelationmatrix.h"
 #include "importcorrelationmatrix_input.h"
-#include "ccmatrix_pair.h"
-#include "correlationmatrix_pair.h"
 #include "datafactory.h"
-#include "pairwise_index.h"
 
 
 
@@ -12,13 +9,14 @@
 
 /*!
  * Return the total number of blocks this analytic must process as steps
- * or blocks of work.
+ * or blocks of work. This implementation uses a work block for each line
+ * of the input file.
  */
 int ImportCorrelationMatrix::size() const
 {
    EDEBUG_FUNC(this);
 
-   return 1;
+   return _numLines;
 }
 
 
@@ -29,138 +27,104 @@ int ImportCorrelationMatrix::size() const
 
 /*!
  * Process the given index with a possible block of results if this analytic
- * produces work blocks. This analytic implementation has no work blocks.
+ * produces work blocks. This implementation uses only the index of the result
+ * block to determine which piece of work to do.
  *
  * @param result
  */
-void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block*)
+void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
 {
-   EDEBUG_FUNC(this);
+   EDEBUG_FUNC(this,result);
 
-   // build gene name metadata
-   EMetaArray metaGeneNames;
-   for ( int i = 0; i < _geneSize; ++i )
+   // read a line from input file
+   QString line = _stream.readLine();
+   auto words = line.splitRef(QRegExp("\\s+"), QString::SkipEmptyParts);
+
+   // make sure the line is valid
+   if ( words.size() == 11 )
    {
-      metaGeneNames.append(QString::number(i));
-   }
+      int geneX = words[0].toInt();
+      int geneY = words[1].toInt();
+      float correlation = words[9].toFloat();
+      QStringRef sampleMask = words[10];
 
-   // build sample name metadata
-   EMetaArray metaSampleNames;
-   for ( int i = 0; i < _sampleSize; ++i )
-   {
-      metaSampleNames.append(QString::number(i));
-   }
-
-   // build correlation name metadata
-   EMetaArray metaCorrelationNames;
-   metaCorrelationNames.append(_correlationName);
-
-   // initialize output data
-   _ccm->initialize(metaGeneNames, _maxClusterSize, metaSampleNames);
-   _cmx->initialize(metaGeneNames, _maxClusterSize, metaCorrelationNames);
-
-   // initialize pairwise iterators
-   Pairwise::Index index;
-   CCMatrix::Pair ccmPair(_ccm);
-   CorrelationMatrix::Pair cmxPair(_cmx);
-
-   // create text stream from input file and read until end reached
-   QTextStream stream(_input);
-
-   while ( !stream.atEnd() )
-   {
-      // read a line from text file
-      QString line = stream.readLine();
-      auto words = line.splitRef(QRegExp("\\s+"), QString::SkipEmptyParts);
-
-      // make sure the line is valid
-      if ( words.size() == 11 )
-      {
-         int geneX = words[0].toInt();
-         int geneY = words[1].toInt();
-         float correlation = words[9].toFloat();
-         QStringRef sampleMask = words[10];
-
-         // make sure sample mask has correct length
-         if ( sampleMask.size() != _sampleSize )
-         {
-            E_MAKE_EXCEPTION(e);
-            e.setTitle(tr("Parsing Error"));
-            e.setDetails(tr("Encountered sample mask with invalid length %1. "
-                            "Sample size is %2.")
-                         .arg(sampleMask.size()).arg(_sampleSize));
-            throw e;
-         }
-
-         // save previous pair when new pair is read
-         Pairwise::Index nextIndex(geneX, geneY);
-
-         if ( index != nextIndex )
-         {
-            // save pairs
-            if ( ccmPair.clusterSize() > 1 )
-            {
-               ccmPair.write(index);
-            }
-
-            if ( cmxPair.clusterSize() > 0 )
-            {
-               cmxPair.write(index);
-            }
-
-            // reset pairs
-            ccmPair.clearClusters();
-            cmxPair.clearClusters();
-
-            // update index
-            index = nextIndex;
-         }
-
-         // append data to ccm pair and cmx pair
-         int cluster = ccmPair.clusterSize();
-
-         ccmPair.addCluster();
-         cmxPair.addCluster();
-
-         for ( int i = 0; i < sampleMask.size(); ++i )
-         {
-            ccmPair.at(cluster, i) = sampleMask[i].digitValue();
-         }
-
-         cmxPair.at(cluster, 0) = correlation;
-      }
-
-      // save last pair
-      if ( ccmPair.clusterSize() > 1 )
-      {
-         ccmPair.write(index);
-      }
-
-      if ( cmxPair.clusterSize() > 0 )
-      {
-         cmxPair.write(index);
-      }
-
-      // skip empty lines and lines with '#' markers
-      else if ( words.size() != 1 && words.size() != 0 )
-      {
-         continue;
-      }
-
-      // otherwise throw an error
-      else
+      // make sure sample mask has correct length
+      if ( sampleMask.size() != _sampleSize )
       {
          E_MAKE_EXCEPTION(e);
          e.setTitle(tr("Parsing Error"));
-         e.setDetails(tr("Encountered line with incorrect amount of fields. "
-                         "Read %1 fields when there should have been %2.")
-                      .arg(words.size()).arg(11));
+         e.setDetails(tr("Encountered sample mask with invalid length %1. Sample size is %2.")
+            .arg(sampleMask.size())
+            .arg(_sampleSize));
          throw e;
+      }
+
+      // save previous pair when new pair is read
+      Pairwise::Index nextIndex(geneX, geneY);
+
+      if ( _index != nextIndex )
+      {
+         // save pairs
+         if ( _ccmPair.clusterSize() > 1 )
+         {
+            _ccmPair.write(_index);
+         }
+
+         if ( _cmxPair.clusterSize() > 0 )
+         {
+            _cmxPair.write(_index);
+         }
+
+         // reset pairs
+         _ccmPair.clearClusters();
+         _cmxPair.clearClusters();
+
+         // update index
+         _index = nextIndex;
+      }
+
+      // append data to ccm pair and cmx pair
+      int cluster = _ccmPair.clusterSize();
+
+      _ccmPair.addCluster();
+      _cmxPair.addCluster();
+
+      for ( int i = 0; i < sampleMask.size(); ++i )
+      {
+         _ccmPair.at(cluster, i) = sampleMask[i].digitValue();
+      }
+
+      _cmxPair.at(cluster, 0) = correlation;
+   }
+
+   // otherwise throw an error
+   else
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Parsing Error"));
+      e.setDetails(tr("Encountered line with incorrect amount of fields. "
+                      "Read %1 fields when there should have been %2.")
+         .arg(words.size())
+         .arg(11));
+      throw e;
+   }
+
+   // save last pair
+   if ( result->index() == _numLines - 1 )
+   {
+      if ( _ccmPair.clusterSize() > 1 )
+      {
+         _ccmPair.write(_index);
+      }
+
+      if ( _cmxPair.clusterSize() > 0 )
+      {
+         _cmxPair.write(_index);
       }
    }
 
    // make sure reading input file worked
-   if ( stream.status() != QTextStream::Ok )
+   if ( _stream.status() != QTextStream::Ok )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("File IO Error"));
@@ -198,6 +162,7 @@ void ImportCorrelationMatrix::initialize()
 {
    EDEBUG_FUNC(this);
 
+   // make sure input/output arguments are valid
    if ( !_input || !_ccm || !_cmx )
    {
       E_MAKE_EXCEPTION(e);
@@ -206,6 +171,7 @@ void ImportCorrelationMatrix::initialize()
       throw e;
    }
 
+   // make sure correlation name is valid
    if ( _correlationName.isEmpty() )
    {
       E_MAKE_EXCEPTION(e);
@@ -213,4 +179,54 @@ void ImportCorrelationMatrix::initialize()
       e.setDetails(tr("Correlation name is required."));
       throw e;
    }
+
+   // initialize input file stream
+   _stream.setDevice(_input);
+
+   // count the number of lines in the input file
+   _numLines = 0;
+
+   while ( !_stream.atEnd() )
+   {
+      _stream.readLine();
+      _numLines++;
+   }
+
+   // return stream to beginning of the input file
+   _stream.seek(0);
+
+   // make sure reading input file worked
+   if ( _stream.status() != QTextStream::Ok )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("File IO Error"));
+      e.setDetails(tr("Qt Text Stream encountered an unknown error."));
+      throw e;
+   }
+
+   // build gene name metadata
+   EMetaArray metaGeneNames;
+   for ( int i = 0; i < _geneSize; ++i )
+   {
+      metaGeneNames.append(QString::number(i));
+   }
+
+   // build sample name metadata
+   EMetaArray metaSampleNames;
+   for ( int i = 0; i < _sampleSize; ++i )
+   {
+      metaSampleNames.append(QString::number(i));
+   }
+
+   // build correlation name metadata
+   EMetaArray metaCorrelationNames;
+   metaCorrelationNames.append(_correlationName);
+
+   // initialize output data
+   _ccm->initialize(metaGeneNames, _maxClusterSize, metaSampleNames);
+   _cmx->initialize(metaGeneNames, _maxClusterSize, metaCorrelationNames);
+
+   // initialize pairwise iterators
+   _ccmPair = CCMatrix::Pair(_ccm);
+   _cmxPair = CorrelationMatrix::Pair(_cmx);
 }

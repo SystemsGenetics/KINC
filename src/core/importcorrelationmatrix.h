@@ -2,7 +2,9 @@
 #define IMPORTCORRELATIONMATRIX_H
 #include <ace/core/core.h>
 
+#include "ccmatrix_pair.h"
 #include "ccmatrix.h"
+#include "correlationmatrix_pair.h"
 #include "correlationmatrix.h"
 
 
@@ -28,6 +30,14 @@ public:
    virtual EAbstractAnalytic::Input* makeInput() override final;
    virtual void initialize();
 private:
+   /**
+    * Workspace variables to read from the input file.
+    */
+   QTextStream _stream;
+   int _numLines {0};
+   Pairwise::Index _index {0};
+   CCMatrix::Pair _ccmPair;
+   CorrelationMatrix::Pair _cmxPair;
    /*!
     * Pointer to the input text file.
     */
