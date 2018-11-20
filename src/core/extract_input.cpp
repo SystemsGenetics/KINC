@@ -4,6 +4,22 @@
 
 
 /*!
+ * String list of output formats for this analytic that correspond exactly
+ * to its enumeration. Used for handling the output format argument for this
+ * input object.
+ */
+const QStringList Extract::Input::FORMAT_NAMES
+{
+   "text"
+   ,"graphml"
+};
+
+
+
+
+
+
+/*!
  * Construct a new input object with the given analytic as its parent.
  *
  * @param parent
@@ -49,8 +65,8 @@ EAbstractAnalytic::Input::Type Extract::Input::type(int index) const
    case ExpressionData: return Type::DataIn;
    case ClusterData: return Type::DataIn;
    case CorrelationData: return Type::DataIn;
-   case TextFile: return Type::FileOut;
-   case GraphMLFile: return Type::FileOut;
+   case OutputFormatArg: return Type::Selection;
+   case OutputFile: return Type::FileOut;
    case MinCorrelation: return Type::Double;
    case MaxCorrelation: return Type::Double;
    default: return Type::Boolean;
@@ -101,22 +117,22 @@ QVariant Extract::Input::data(int index, Role role) const
       case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
-   case TextFile:
+   case OutputFormatArg:
       switch (role)
       {
-      case Role::CommandLineName: return QString("text");
-      case Role::Title: return tr("Output File:");
-      case Role::WhatsThis: return tr("Output file that will contain network as an edge list.");
-      case Role::FileFilters: return tr("Text file %1").arg("(*.txt)");
+      case Role::CommandLineName: return QString("format");
+      case Role::Title: return tr("Output Format:");
+      case Role::WhatsThis: return tr("Format to use for the output file.");
+      case Role::SelectionValues: return FORMAT_NAMES;
+      case Role::Default: return "text";
       default: return QVariant();
       }
-   case GraphMLFile:
+   case OutputFile:
       switch (role)
       {
-      case Role::CommandLineName: return QString("graphml");
+      case Role::CommandLineName: return QString("output");
       case Role::Title: return tr("GraphML File:");
-      case Role::WhatsThis: return tr("Output file that will contain network in GraphML format.");
-      case Role::FileFilters: return tr("GraphML file %1").arg("(*.graphml)");
+      case Role::WhatsThis: return tr("Output file that will contain network in the specified format.");
       default: return QVariant();
       }
    case MinCorrelation:
@@ -162,6 +178,9 @@ void Extract::Input::set(int index, const QVariant& value)
 
    switch (index)
    {
+   case OutputFormatArg:
+      _base->_outputFormat = static_cast<OutputFormat>(FORMAT_NAMES.indexOf(value.toString()));
+      break;
    case MinCorrelation:
       _base->_minCorrelation = value.toFloat();
       break;
@@ -215,12 +234,8 @@ void Extract::Input::set(int index, QFile* file)
 {
    EDEBUG_FUNC(this,index,file);
 
-   if ( index == TextFile )
+   if ( index == OutputFile )
    {
-      _base->_text = file;
-   }
-   else if ( index == GraphMLFile )
-   {
-      _base->_graphml = file;
+      _base->_output = file;
    }
 }

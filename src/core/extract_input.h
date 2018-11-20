@@ -19,8 +19,8 @@ public:
       ExpressionData = 0
       ,ClusterData
       ,CorrelationData
-      ,TextFile
-      ,GraphMLFile
+      ,OutputFormatArg
+      ,OutputFile
       ,MinCorrelation
       ,MaxCorrelation
       ,Total
@@ -33,6 +33,7 @@ public:
    virtual void set(int index, EAbstractData* data) override final;
    virtual void set(int index, QFile* file) override final;
 private:
+   static const QStringList FORMAT_NAMES;
    /*!
     * Pointer to the base analytic for this object.
     */

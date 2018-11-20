@@ -2,7 +2,9 @@
 #define EXTRACT_H
 #include <ace/core/core.h>
 
+#include "ccmatrix_pair.h"
 #include "ccmatrix.h"
+#include "correlationmatrix_pair.h"
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
 
@@ -27,8 +29,29 @@ public:
    virtual EAbstractAnalytic::Input* makeInput() override final;
    virtual void initialize();
 private:
-   void exportTextFile();
-   void exportGraphMLFile();
+   /*!
+   * Defines the output formats this analytic supports.
+   */
+   enum class OutputFormat
+   {
+     /*!
+      * Text format
+      */
+     Text
+     /*!
+      * GraphML format
+      */
+     ,GraphML
+   };
+   void writeTextFormat(int index);
+   void writeGraphMLFormat(int index);
+   /**
+    * Workspace variables to write to the output file
+    */
+   QTextStream _stream;
+   CCMatrix::Pair _ccmPair;
+   CorrelationMatrix::Pair _cmxPair;
+   EMetaArray _geneNames;
    /*!
     * Pointer to the input expression matrix.
     */
@@ -42,13 +65,13 @@ private:
     */
    CorrelationMatrix* _cmx {nullptr};
    /*!
+    * The output format to use.
+    */
+   OutputFormat _outputFormat {OutputFormat::Text};
+   /*!
     * Pointer to the output text file.
     */
-   QFile* _text {nullptr};
-   /*!
-    * Pointer to the output GraphML file.
-    */
-   QFile* _graphml {nullptr};
+   QFile* _output {nullptr};
    /*!
     * The minimum (absolute) correlation threshold.
     */
