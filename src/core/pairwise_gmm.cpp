@@ -188,38 +188,40 @@ void GMM::initializeMeans(const QVector<Vector2>& X, int N)
 
 /*!
  * Perform the expectation step of the EM algorithm. In this step we compute
- * loggamma, the posterior probabilities for each component in the mixture model
- * and each sample in X, as well as logGamma, the sum of loggamma across samples,
- * and logGammaSum, another term used in the maximization step:
+ * gamma, the posterior probabilities for each component in the mixture model
+ * and each sample in X, as well as the log-likelihood of the model:
  *
- *   log(gamma_ki) = log(P(x_i|k)) - log(p(x))
+ *   log(p(x_i)) = a + log(sum(exp(log(pi_k) + log(P(x_i|k))) - a))
  *
- *   log(p(x)) = a + log(sum(exp(logpi_k + logProb_ki) - a))
+ *   gamma_ki = exp(log(pi_k) + log(P(x_i|k)) - log(p(x_i)))
  *
- *   log(Gamma_k) = a + log(sum(exp(loggamma_ki) - a))
- *
- *   logGammaSum = a + log(sum(exp(logpi_k + logGamma_k) - a))
+ *   log(L) = sum(log(p(x_i)))
  *
  * @param X
  * @param N
- * @param logpi
- * @param loggamma
- * @param logGamma
- * @param logGammaSum
+ * @param gamma
  */
-float GMM::computeEStep(const QVector<Vector2>& X, int N, const float *logpi, float *loggamma, float *logGamma, float *logGammaSum)
+float GMM::computeEStep(const QVector<Vector2>& X, int N, float *gamma)
 {
    const int K = _components.size();
 
-   // compute the log-probabilities for each component and each point in X
-   float *logProb = loggamma;
+   // compute logpi
+   float logpi[K];
+
+   for (int k = 0; k < K; ++k)
+   {
+      logpi[k] = log(_components[k]._pi);
+   }
+
+   // compute the log-probability for each component and each point in X
+   float *logProb = gamma;
 
    for ( int k = 0; k < K; ++k )
    {
       _components[k].computeLogProbNorm(X, N, &logProb[k * N]);
    }
 
-   // compute loggamma and the log-likelihood
+   // compute gamma and log-likelihood
    float logL = 0.0;
 
    for (int i = 0; i < N; ++i)
@@ -244,60 +246,16 @@ float GMM::computeEStep(const QVector<Vector2>& X, int N, const float *logpi, fl
 
       float logpx = maxArg + log(sum);
 
-      // update loggamma_ki
+      // compute gamma_ki
       for (int k = 0; k < K; ++k)
       {
-         loggamma[k * N + i] -= logpx;
+         gamma[k * N + i] += logpi[k] - logpx;
+         gamma[k * N + i] = exp(gamma[k * N + i]);
       }
 
       // update log-likelihood
       logL += logpx;
    }
-
-   // compute logGamma
-   for (int k = 0; k < K; ++k)
-   {
-      const float *loggamma_k = &loggamma[k * N];
-
-      // compute a = argmax(loggamma_ki, i)
-      float maxArg = -INFINITY;
-      for (int i = 0; i < N; ++i)
-      {
-         float arg = loggamma_k[i];
-         if (maxArg < arg)
-         {
-            maxArg = arg;
-         }
-      }
-
-      // compute logGamma_k
-      float sum = 0;
-      for (int i = 0; i < N; ++i)
-      {
-         sum += exp(loggamma_k[i] - maxArg);
-      }
-
-      logGamma[k] = maxArg + log(sum);
-   }
-
-   // compute logGammaSum
-   float maxArg = -INFINITY;
-   for (int k = 0; k < K; ++k)
-   {
-      float arg = logpi[k] + logGamma[k];
-      if (maxArg < arg)
-      {
-         maxArg = arg;
-      }
-   }
-
-   float sum = 0;
-   for (int k = 0; k < K; ++k)
-   {
-      sum += exp(logpi[k] + logGamma[k] - maxArg);
-   }
-
-   *logGammaSum = maxArg + log(sum);
 
    // return log-likelihood
    return logL;
@@ -310,52 +268,38 @@ float GMM::computeEStep(const QVector<Vector2>& X, int N, const float *logpi, fl
 
 /*!
  * Perform the maximization step of the EM algorithm. In this step we update the
- * parameters of the the mixture model using loggamma, logGamma, and logGammaSum,
- * which are computed during the expectation step:
+ * parameters of the the mixture model using gamma, which is computed during the
+ * expectation step:
  *
- *   pi_k = exp(logpi_k + logGamma_k - logGammaSum)
+ *   n_k = sum(gamma_ki)
  *
- *   mu_k = sum(exp(loggamma_ki) * x_i)) / exp(logGamma_k)
+ *   pi_k = n_k / N
  *
- *   Sigma_k = sum(exp(loggamma_ki) * (x_i - mu_k) * (x_i - mu_k)^T) / exp(logGamma_k)
+ *   mu_k = sum(gamma_ki * x_i)) / n_k
+ *
+ *   Sigma_k = sum(gamma_ki * (x_i - mu_k) * (x_i - mu_k)^T) / n_k
  *
  * @param X
  * @param N
- * @param logpi
- * @param loggamma
- * @param logGamma
- * @param logGammaSum
+ * @param gamma
  */
-void GMM::computeMStep(const QVector<Vector2>& X, int N, float *logpi, float *loggamma, float *logGamma, float logGammaSum)
+void GMM::computeMStep(const QVector<Vector2>& X, int N, const float *gamma)
 {
    const int K = _components.size();
 
-   // update mixture weight
    for (int k = 0; k < K; ++k)
    {
-      logpi[k] += logGamma[k] - logGammaSum;
+      // compute n_k = sum(gamma_ki)
+      float n_k = 0;
 
-      _components[k]._pi = exp(logpi[k]);
-   }
-
-   // convert loggamma to gamma
-   for (int k = 0; k < K; ++k)
-   {
       for (int i = 0; i < N; ++i)
       {
-         loggamma[k * N + i] = exp(loggamma[k * N + i]);
+         n_k += gamma[k * N + i];
       }
-   }
 
-   // convert logGamma to Gamma
-   for (int k = 0; k < K; ++k)
-   {
-      logGamma[k] = exp(logGamma[k]);
-   }
+      // update mixture weight
+      _components[k]._pi = n_k / N;
 
-   // update remaining parameters
-   for (int k = 0; k < K; ++k)
-   {
       // update mean
       Vector2& mu = _components[k]._mu;
 
@@ -363,10 +307,10 @@ void GMM::computeMStep(const QVector<Vector2>& X, int N, float *logpi, float *lo
 
       for (int i = 0; i < N; ++i)
       {
-         vectorAdd(mu, loggamma[k * N + i], X[i]);
+         vectorAdd(mu, gamma[k * N + i], X[i]);
       }
 
-      vectorScale(mu, 1.0f / logGamma[k]);
+      vectorScale(mu, 1.0f / n_k);
 
       // update covariance matrix
       Matrix2x2& sigma = _components[k]._sigma;
@@ -383,10 +327,10 @@ void GMM::computeMStep(const QVector<Vector2>& X, int N, float *logpi, float *lo
          Matrix2x2 outerProduct;
          matrixOuterProduct(xm, xm, outerProduct);
 
-         matrixAdd(sigma, loggamma[k * N + i], outerProduct);
+         matrixAdd(sigma, gamma[k * N + i], outerProduct);
       }
 
-      matrixScale(sigma, 1.0f / logGamma[k]);
+      matrixScale(sigma, 1.0f / n_k);
 
       // pre-compute precision matrix and normalizer term
       _components[k].prepare();
@@ -491,14 +435,7 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
    initializeMeans(X, N);
 
    // initialize workspace
-   float *logpi = new float[K];
-   float *loggamma = new float[K * N];
-   float *logGamma = new float[K];
-
-   for (int k = 0; k < K; ++k)
-   {
-      logpi[k] = log(_components[k]._pi);
-   }
+   float *gamma = new float[K * N];
 
    // run EM algorithm
    const int MAX_ITERATIONS = 100;
@@ -512,10 +449,8 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
       for ( int t = 0; t < MAX_ITERATIONS; ++t )
       {
          // perform E step
-         float logGammaSum;
-
          prevLogL = currLogL;
-         currLogL = computeEStep(X, N, logpi, loggamma, logGamma, &logGammaSum);
+         currLogL = computeEStep(X, N, gamma);
 
          // check for convergence
          if ( fabs(currLogL - prevLogL) < TOLERANCE )
@@ -524,13 +459,13 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
          }
 
          // perform M step
-         computeMStep(X, N, logpi, loggamma, logGamma, logGammaSum);
+         computeMStep(X, N, gamma);
       }
 
       // save outputs
       _logL = currLogL;
-      computeLabels(loggamma, N, K, labels);
-      _entropy = computeEntropy(loggamma, N, labels);
+      computeLabels(gamma, N, K, labels);
+      _entropy = computeEntropy(gamma, N, labels);
 
       success = true;
    }
@@ -539,9 +474,7 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
       success = false;
    }
 
-   delete[] logpi;
-   delete[] loggamma;
-   delete[] logGamma;
+   delete[] gamma;
 
    return success;
 }

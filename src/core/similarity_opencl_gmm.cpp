@@ -46,8 +46,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
  * @param work_MP
  * @param work_counts
  * @param work_logpi
- * @param work_loggamma
- * @param work_logGamma
+ * @param work_gamma
  * @param out_K
  * @param out_labels
  */
@@ -67,8 +66,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    ::OpenCL::Buffer<cl_float2>* work_MP,
    ::OpenCL::Buffer<cl_int>* work_counts,
    ::OpenCL::Buffer<cl_float>* work_logpi,
-   ::OpenCL::Buffer<cl_float>* work_loggamma,
-   ::OpenCL::Buffer<cl_float>* work_logGamma,
+   ::OpenCL::Buffer<cl_float>* work_gamma,
    ::OpenCL::Buffer<cl_char>* out_K,
    ::OpenCL::Buffer<cl_char>* out_labels
 )
@@ -89,8 +87,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
       work_MP,
       work_counts,
       work_logpi,
-      work_loggamma,
-      work_logGamma,
+      work_gamma,
       out_K,
       out_labels);
 
@@ -111,8 +108,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    setBuffer(WorkMP, work_MP);
    setBuffer(WorkCounts, work_counts);
    setBuffer(WorkLogPi, work_logpi);
-   setBuffer(WorkLoggamma, work_loggamma);
-   setBuffer(WorkLogGamma, work_logGamma);
+   setBuffer(WorkGamma, work_gamma);
    setBuffer(OutK, out_K);
    setBuffer(OutLabels, out_labels);
 

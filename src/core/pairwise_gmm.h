@@ -52,8 +52,8 @@ namespace Pairwise
       float computeICL(int K, int D, float logL, int N, float E);
    private:
       void initializeMeans(const QVector<Vector2>& X, int N);
-      float computeEStep(const QVector<Vector2>& X, int N, const float *logpi, float *loggamma, float *logGamma, float *logGammaSum);
-      void computeMStep(const QVector<Vector2>& X, int N, float *logpi, float *loggamma, float *logGamma, float logGammaSum);
+      float computeEStep(const QVector<Vector2>& X, int N, float *gamma);
+      void computeMStep(const QVector<Vector2>& X, int N, const float *gamma);
       void computeLabels(const float *gamma, int N, int K, QVector<qint8>& labels);
       float computeEntropy(const float *gamma, int N, const QVector<qint8>& labels);
       /*!
