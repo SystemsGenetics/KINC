@@ -776,7 +776,7 @@ __kernel void GMM_compute(
             *bestK = K;
             bestValue = value;
 
-            for ( int i = 0, j = 0; i < numSamples; ++i )
+            for ( int i = 0, j = 0; i < sampleSize; ++i )
             {
                if ( bestLabels[i] >= 0 )
                {

@@ -216,4 +216,4 @@ if __name__ == "__main__":
 					num_postout = sum(y_k == 8)
 					num_missing = sum(y_k == 9)
 
-					cmx.write("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%g\t%s\n" % (i, j, k, K, num_samples, num_missing, num_postout, num_preout, num_threshold, corr, sample_mask))
+					cmx.write("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%0.8f\t%s\n" % (i, j, k, K, num_samples, num_missing, num_postout, num_preout, num_threshold, corr, sample_mask))

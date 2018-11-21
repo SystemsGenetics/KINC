@@ -90,11 +90,7 @@ void Extract::writeTextFormat(int index)
 
    // read next pair
    _cmxPair.readNext();
-
-   if ( _cmxPair.clusterSize() > 1 )
-   {
-      _ccmPair.read(_cmxPair.index());
-   }
+   _ccmPair.read(_cmxPair.index());
 
    // write pairwise data to output file
    for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
@@ -115,8 +111,8 @@ void Extract::writeTextFormat(int index)
          continue;
       }
 
-      // if there are multiple clusters then use cluster data
-      if ( _cmxPair.clusterSize() > 1 )
+      // if cluster data exists then use it
+      if ( _ccmPair.clusterSize() > 0 )
       {
          // compute summary statistics
          for ( int i = 0; i < _ccm->sampleSize(); i++ )
@@ -362,7 +358,7 @@ void Extract::initialize()
 
    // initialize output file stream
    _stream.setDevice(_output);
-   _stream.setRealNumberPrecision(12);
+   _stream.setRealNumberPrecision(8);
 
    // initialize gene names
    _geneNames = _cmx->geneNames().toArray();

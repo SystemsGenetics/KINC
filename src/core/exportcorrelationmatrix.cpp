@@ -45,11 +45,7 @@ void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block*)
 
    // read next pair
    _cmxPair.readNext();
-
-   if ( _cmxPair.clusterSize() > 1 )
-   {
-      _ccmPair.read(_cmxPair.index());
-   }
+   _ccmPair.read(_cmxPair.index());
 
    // write pairwise data to output file
    for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
@@ -61,8 +57,8 @@ void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block*)
       int numPreOutliers = 0;
       int numThreshold = 0;
 
-      // if there are multiple clusters then use cluster data
-      if ( _cmxPair.clusterSize() > 1 )
+      // if cluster data exists then use it
+      if ( _cmxPair.clusterSize() > 0 )
       {
          // compute summary statistics
          for ( int i = 0; i < _ccm->sampleSize(); i++ )
@@ -189,5 +185,5 @@ void ExportCorrelationMatrix::initialize()
 
    // initialize output file stream
    _stream.setDevice(_output);
-   _stream.setRealNumberPrecision(12);
+   _stream.setRealNumberPrecision(8);
 }

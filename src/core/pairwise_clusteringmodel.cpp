@@ -87,7 +87,7 @@ qint8 ClusteringModel::compute(
             bestK = K;
             bestValue = value;
 
-            for ( int i = 0, j = 0; i < numSamples; ++i )
+            for ( int i = 0, j = 0; i < labels.size(); ++i )
             {
                if ( labels[i] >= 0 )
                {
