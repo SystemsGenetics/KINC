@@ -58,7 +58,7 @@ void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block*)
       int numThreshold = 0;
 
       // if cluster data exists then use it
-      if ( _cmxPair.clusterSize() > 0 )
+      if ( _ccmPair.clusterSize() > 0 )
       {
          // compute summary statistics
          for ( int i = 0; i < _ccm->sampleSize(); i++ )

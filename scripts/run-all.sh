@@ -6,85 +6,103 @@ if [[ $# != 1 ]]; then
 	exit -1
 fi
 
-KINC="build/cli/kinc"
-DATA="data"
-LOGS="logs"
 GPU=1
+
+# define analytic flags
+DO_IMPORT_EMX=1
+DO_SIMILARITY=1
+DO_EXPORT_CMX=1
+DO_THRESHOLD=1
+DO_EXTRACT=1
+
+# define input/output files
 INFILE="$1"
+DATA="data"
+EMX_FILE="$DATA/$(basename $INFILE .txt).emx"
+CCM_FILE="$DATA/$(basename $EMX_FILE .emx).ccm"
+CMX_FILE="$DATA/$(basename $EMX_FILE .emx).cmx"
+LOGS="logs"
+RMT_FILE="$LOGS/$(basename $CMX_FILE .cmx).txt"
 
 # apply settings
 if [[ $GPU == 1 ]]; then
-   $KINC settings set opencl 0:0
-   $KINC settings set logging off
+   kinc settings set opencl 0:0
+   kinc settings set threads 4
+   kinc settings set logging off
 
    NP=1
 else
-   $KINC settings set opencl none
-   $KINC settings set logging off
+   kinc settings set opencl none
+   kinc settings set logging off
 
    NP=$(nproc)
 fi
 
 # import emx
-EMX_FILE="$DATA/$(basename $INFILE .txt).emx"
-
-$KINC run import-emx --input $INFILE --output $EMX_FILE --nan NA
+if [[ $DO_IMPORT_EMX = 1 ]]; then
+	kinc run import-emx \
+		--input $INFILE \
+		--output $EMX_FILE \
+		--nan NA
+fi
 
 # similarity
-CCM_FILE="$DATA/$(basename $EMX_FILE .emx).ccm"
-CMX_FILE="$DATA/$(basename $EMX_FILE .emx).cmx"
-CLUSMETHOD="gmm"
-CORRMETHOD="pearson"
-MINEXPR="-inf"
-MINCLUS=1
-MAXCLUS=5
-CRITERION="BIC"
-PREOUT="--preout"
-POSTOUT="--postout"
-MINCORR=0.5
-MAXCORR=1
+if [[ $DO_SIMILARITY = 1 ]]; then
+	CLUSMETHOD="gmm"
+	CORRMETHOD="pearson"
+	MINEXPR="-inf"
+	MINCLUS=1
+	MAXCLUS=5
+	CRITERION="BIC"
+	PREOUT="--preout"
+	POSTOUT="--postout"
+	MINCORR=0.5
+	MAXCORR=1
 
-mpirun -np $NP $KINC run similarity \
-   --input $EMX_FILE \
-   --ccm $CCM_FILE \
-   --cmx $CMX_FILE \
-   --clusmethod $CLUSMETHOD \
-   --corrmethod $CORRMETHOD \
-   --minexpr $MINEXPR \
-   --minclus $MINCLUS --maxclus $MAXCLUS \
-   --crit $CRITERION \
-   $PREOUT $POSTOUT \
-   --mincorr $MINCORR --maxcorr $MAXCORR
+	mpirun -np $NP kinc run similarity \
+	   --input $EMX_FILE \
+	   --ccm $CCM_FILE \
+	   --cmx $CMX_FILE \
+	   --clusmethod $CLUSMETHOD \
+	   --corrmethod $CORRMETHOD \
+	   --minexpr $MINEXPR \
+	   --minclus $MINCLUS --maxclus $MAXCLUS \
+	   --crit $CRITERION \
+	   $PREOUT $POSTOUT \
+	   --mincorr $MINCORR --maxcorr $MAXCORR
+fi
 
 # threshold
-LOG_FILE="$LOGS/$(basename $CMX_FILE .cmx).txt"
+if [[ $DO_THRESHOLD = 1 ]]; then
+	mkdir -p $LOGS
 
-mkdir -p $LOGS
-
-$KINC run rmt \
-   --input $CMX_FILE \
-   --log $LOG_FILE
+	kinc run rmt \
+	   --input $CMX_FILE \
+	   --log $RMT_FILE
+fi
 
 # export cmx
-OUTFILE="$DATA/$(basename $CMX_FILE .cmx)-cmx.txt"
+if [[ $DO_EXPORT_CMX = 1 ]]; then
+	OUTFILE="$DATA/$(basename $CMX_FILE .cmx)-cmx.txt"
 
-$KINC run export-cmx \
-   --emx $EMX_FILE \
-   --ccm $CCM_FILE \
-   --cmx $CMX_FILE \
-   --output $OUTFILE
+	kinc run export-cmx \
+	   --emx $EMX_FILE \
+	   --ccm $CCM_FILE \
+	   --cmx $CMX_FILE \
+	   --output $OUTFILE
+fi
 
 # extract
-NET_FILE="$DATA/$(basename $EMX_FILE .emx)-net.txt"
-GML_FILE="$DATA/$(basename $EMX_FILE .emx).graphml"
-MINCORR=0
-MAXCORR=1
+if [[ $DO_EXTRACT = 1 ]]; then
+	NET_FILE="$DATA/$(basename $EMX_FILE .emx)-net.txt"
+	MINCORR=0
+	MAXCORR=1
 
-$KINC run extract \
-   --emx $EMX_FILE \
-   --ccm $CCM_FILE \
-   --cmx $CMX_FILE \
-   --output $NET_FILE \
-   --graphml $GML_FILE \
-   --mincorr $MINCORR \
-   --maxcorr $MAXCORR
+	kinc run extract \
+	   --emx $EMX_FILE \
+	   --ccm $CCM_FILE \
+	   --cmx $CMX_FILE \
+	   --output $NET_FILE \
+	   --mincorr $MINCORR \
+	   --maxcorr $MAXCORR
+fi
