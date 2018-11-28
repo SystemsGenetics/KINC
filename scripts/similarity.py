@@ -196,11 +196,18 @@ if __name__ == "__main__":
 					mark_outliers(X, y, k, -8)
 
 			# perform correlation
+			correlations = [compute_correlation(X, y, k, CORRELATION_METHODS[args.CORRMETHOD], args.MINSAMP, args.VISUALIZE) for k in range(K)]
+
+			# save correlation matrix
+			valid = [(corr != None and args.MINCORR <= abs(corr) and abs(corr) <= args.MAXCORR and p <= args.MAXPVALUE) for corr, p in correlations]
+			num_clusters = sum(valid)
+			cluster_idx = 0
+
 			for k in range(K):
-				corr, p = compute_correlation(X, y, k, CORRELATION_METHODS[args.CORRMETHOD], args.MINSAMP, args.VISUALIZE)
+				corr, p = correlations[k]
 
 				# make sure correlation, p-value meets thresholds
-				if corr != None and args.MINCORR <= abs(corr) and abs(corr) <= args.MAXCORR and p <= args.MAXPVALUE:
+				if valid[k]:
 					# compute sample mask
 					y_k = np.copy(y)
 					y_k[(y_k >= 0) & (y_k != k)] = 0
@@ -216,4 +223,8 @@ if __name__ == "__main__":
 					num_postout = sum(y_k == 8)
 					num_missing = sum(y_k == 9)
 
-					cmx.write("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%0.8f\t%s\n" % (i, j, k, K, num_samples, num_missing, num_postout, num_preout, num_threshold, corr, sample_mask))
+					# write correlation to file
+					cmx.write("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%0.8f\t%s\n" % (i, j, cluster_idx, num_clusters, num_samples, num_missing, num_postout, num_preout, num_threshold, corr, sample_mask))
+
+					# increment cluster index
+					cluster_idx += 1
