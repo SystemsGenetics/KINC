@@ -40,7 +40,7 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
    if ( result->index() == 0 )
    {
       // get sample names
-      EMetaArray sampleNames {_input->sampleNames().toArray()};
+      EMetaArray sampleNames {_input->sampleNames()};
 
       // initialize output file stream
       _stream.setDevice(_output);
@@ -61,7 +61,7 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
       int i = result->index() - 1;
 
       // get gene name
-      QString geneName {_input->geneNames().toArray().at(i).toString()};
+      QString geneName {_input->geneNames().at(i).toString()};
 
       // load gene from expression matrix
       ExpressionMatrix::Gene gene(_input);

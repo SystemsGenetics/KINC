@@ -47,7 +47,7 @@ void ExpressionMatrix::writeNewData()
    EDEBUG_FUNC(this);
 
    // initialize metadata object
-   setMeta(EMetadata(EMetadata::Object));
+   setMeta(EMetaObject());
 
    // seek to the beginning of the data
    seek(0);
@@ -133,11 +133,11 @@ qint32 ExpressionMatrix::sampleSize() const
 /*!
  * Return the list of gene names in this expression matrix.
  */
-EMetadata ExpressionMatrix::geneNames() const
+EMetaArray ExpressionMatrix::geneNames() const
 {
    EDEBUG_FUNC(this);
 
-   return meta().toObject().at("genes");
+   return meta().toObject().at("genes").toArray();
 }
 
 
@@ -148,11 +148,11 @@ EMetadata ExpressionMatrix::geneNames() const
 /*!
  * Return the list of sample names in this expression matrix.
  */
-EMetadata ExpressionMatrix::sampleNames() const
+EMetaArray ExpressionMatrix::sampleNames() const
 {
    EDEBUG_FUNC(this);
 
-   return meta().toObject().at("samples");
+   return meta().toObject().at("samples").toArray();
 }
 
 

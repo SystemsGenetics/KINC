@@ -25,8 +25,8 @@ public:
 public:
    qint32 geneSize() const;
    qint32 sampleSize() const;
-   EMetadata geneNames() const;
-   EMetadata sampleNames() const;
+   EMetaArray geneNames() const;
+   EMetaArray sampleNames() const;
    QVector<float> dumpRawData() const;
    void initialize(const QStringList& geneNames, const QStringList& sampleNames);
 private:

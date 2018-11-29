@@ -31,11 +31,11 @@ namespace Pairwise
       int geneSize() const { return _geneSize; }
       int maxClusterSize() const { return _maxClusterSize; }
       qint64 size() const { return _pairSize; }
-      EMetadata geneNames() const;
+      EMetaArray geneNames() const;
    protected:
       virtual void writeHeader() = 0;
       virtual void readHeader() = 0;
-      void initialize(const EMetadata& geneNames, int maxClusterSize, int dataSize, int offset);
+      void initialize(const EMetaArray& geneNames, int maxClusterSize, int dataSize, int offset);
    private:
       void write(const Index& index, qint8 cluster);
       Index getPair(qint64 index, qint8* cluster) const;

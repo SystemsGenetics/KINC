@@ -56,7 +56,7 @@ void Matrix::writeNewData()
    EDEBUG_FUNC(this);
 
    // initialize metadata
-   setMeta(EMetadata(EMetadata::Object));
+   setMeta(EMetaObject());
 
    // seek to the beginning of the data
    seek(0);
@@ -99,11 +99,11 @@ void Matrix::finish()
 /*!
  * Return the list of gene names in this pairwise matrix.
  */
-EMetadata Matrix::geneNames() const
+EMetaArray Matrix::geneNames() const
 {
    EDEBUG_FUNC(this);
 
-   return meta().toObject().at("genes");
+   return meta().toObject().at("genes").toArray();
 }
 
 
@@ -120,16 +120,16 @@ EMetadata Matrix::geneNames() const
  * @param dataSize
  * @param subHeaderSize
  */
-void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int dataSize, int subHeaderSize)
+void Matrix::initialize(const EMetaArray& geneNames, int maxClusterSize, int dataSize, int subHeaderSize)
 {
    EDEBUG_FUNC(this,&geneNames,maxClusterSize,dataSize,subHeaderSize);
 
-   // make sure gene names metadata is an array and is not empty
-   if ( !geneNames.isArray() || geneNames.toArray().isEmpty() )
+   // make sure gene names metadata is not empty
+   if ( geneNames.isEmpty() )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Gene names metadata is not an array or is empty."));
+      e.setDetails(tr("Gene names metadata is empty."));
       throw e;
    }
 
@@ -156,7 +156,7 @@ void Matrix::initialize(const EMetadata& geneNames, int maxClusterSize, int data
    setMeta(metaObject);
 
    // initiailze new data within object
-   _geneSize = geneNames.toArray().size();
+   _geneSize = geneNames.size();
    _maxClusterSize = maxClusterSize;
    _dataSize = dataSize;
    _subHeaderSize = subHeaderSize;

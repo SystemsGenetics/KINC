@@ -48,7 +48,7 @@ void TestCorrelationMatrix::test()
 	// create data object
 	QString path {QDir::tempPath() + "/test.cmx"};
 
-	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(path, DataFactory::CorrelationMatrixType, EMetadata(EMetadata::Object))};
+	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(path, DataFactory::CorrelationMatrixType, EMetaObject())};
 	CorrelationMatrix* matrix {dataRef->data()->cast<CorrelationMatrix>()};
 
 	// write data to file

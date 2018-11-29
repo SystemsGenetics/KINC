@@ -31,16 +31,16 @@ QAbstractTableModel* CorrelationMatrix::model()
  * @param maxClusterSize
  * @param correlationNames
  */
-void CorrelationMatrix::initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& correlationNames)
+void CorrelationMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, const EMetaArray& correlationNames)
 {
    EDEBUG_FUNC(this,&geneNames,maxClusterSize,&correlationNames);
 
-   // make sure correlation names is an array and is not empty
-   if ( !correlationNames.isArray() || correlationNames.toArray().isEmpty() )
+   // make sure correlation names is not empty
+   if ( correlationNames.isEmpty() )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Correlation names metadata is not an array or is empty."));
+      e.setDetails(tr("Correlation names metadata is empty."));
       throw e;
    }
 
@@ -50,7 +50,7 @@ void CorrelationMatrix::initialize(const EMetadata& geneNames, int maxClusterSiz
    setMeta(metaObject);
 
    // save correlation size and initialize base class
-   _correlationSize = correlationNames.toArray().size();
+   _correlationSize = correlationNames.size();
    Matrix::initialize(geneNames, maxClusterSize, _correlationSize * sizeof(float), SUBHEADER_SIZE);
 }
 
@@ -62,11 +62,11 @@ void CorrelationMatrix::initialize(const EMetadata& geneNames, int maxClusterSiz
 /*!
  * Return the list of correlation names in this correlation matrix.
  */
-EMetadata CorrelationMatrix::correlationNames() const
+EMetaArray CorrelationMatrix::correlationNames() const
 {
    EDEBUG_FUNC(this);
 
-   return meta().toObject().at("correlations");
+   return meta().toObject().at("correlations").toArray();
 }
 
 

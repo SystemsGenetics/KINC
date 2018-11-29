@@ -18,8 +18,8 @@ public:
 public:
    virtual QAbstractTableModel* model() override final;
 public:
-   void initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& sampleNames);
-   EMetadata sampleNames() const;
+   void initialize(const EMetaArray& geneNames, int maxClusterSize, const EMetaArray& sampleNames);
+   EMetaArray sampleNames() const;
    /*!
     * Return the number of samples in the cluster matrix.
     */

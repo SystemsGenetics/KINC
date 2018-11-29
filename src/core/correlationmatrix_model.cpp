@@ -48,16 +48,14 @@ QVariant CorrelationMatrix::Model::headerData(int section, Qt::Orientation orien
       return QVariant();
    }
 
-   // get genes metadata and make sure it is an array
-   const EMetadata& genes {_matrix->geneNames()};
-   if ( genes.isArray() )
+   // get gene names
+   EMetaArray geneNames {_matrix->geneNames()};
+
+   // make sure section is within limits of gene name array
+   if ( section >= 0 && section < geneNames.size() )
    {
-      // make sure section is within limits of gene name array
-      if ( section >= 0 && section < genes.toArray().size() )
-      {
-         // return gene name
-         return genes.toArray().at(section).toString();
-      }
+     // return gene name
+     return geneNames.at(section).toString();
    }
 
    // no gene found return nothing

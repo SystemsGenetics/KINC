@@ -66,6 +66,9 @@ void Extract::writeTextFormat(int index)
 {
    EDEBUG_FUNC(this);
 
+   // get gene names
+   EMetaArray geneNames {_cmx->geneNames()};
+
    // initialize workspace
    QString sampleMask(_ccm->sampleSize(), '0');
 
@@ -95,8 +98,8 @@ void Extract::writeTextFormat(int index)
    // write pairwise data to output file
    for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
    {
-      auto& source {_geneNames.at(_cmxPair.index().getX()).toString()};
-      auto& target {_geneNames.at(_cmxPair.index().getY()).toString()};
+      QString source {geneNames.at(_cmxPair.index().getX()).toString()};
+      QString target {geneNames.at(_cmxPair.index().getY()).toString()};
       float correlation {_cmxPair.at(k, 0)};
       QString interaction {"co"};
       int numSamples {0};
@@ -211,6 +214,9 @@ void Extract::writeGraphMLFormat(int index)
 {
    EDEBUG_FUNC(this);
 
+   // get gene names
+   EMetaArray geneNames {_cmx->geneNames()};
+
    // initialize workspace
    QString sampleMask(_ccm->sampleSize(), '0');
 
@@ -227,7 +233,7 @@ void Extract::writeGraphMLFormat(int index)
       // write node list to file
       for ( int i = 0; i < _cmx->geneSize(); i++ )
       {
-         auto& id {_geneNames.at(i).toString()};
+         QString id {geneNames.at(i).toString()};
 
          _stream << "    <node id=\"" << id << "\"/>\n";
       }
@@ -244,8 +250,8 @@ void Extract::writeGraphMLFormat(int index)
    // write pairwise data to net file
    for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
    {
-      auto& source {_geneNames.at(_cmxPair.index().getX()).toString()};
-      auto& target {_geneNames.at(_cmxPair.index().getY()).toString()};
+      QString source {geneNames.at(_cmxPair.index().getX()).toString()};
+      QString target {geneNames.at(_cmxPair.index().getY()).toString()};
       float correlation {_cmxPair.at(k, 0)};
 
       // exclude edge if correlation is not within thresholds
@@ -359,7 +365,4 @@ void Extract::initialize()
    // initialize output file stream
    _stream.setDevice(_output);
    _stream.setRealNumberPrecision(8);
-
-   // initialize gene names
-   _geneNames = _cmx->geneNames().toArray();
 }

@@ -30,16 +30,16 @@ QAbstractTableModel* CCMatrix::model()
  * @param maxClusterSize
  * @param sampleNames
  */
-void CCMatrix::initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& sampleNames)
+void CCMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, const EMetaArray& sampleNames)
 {
    EDEBUG_FUNC(this,&geneNames,maxClusterSize,&sampleNames);
 
-   // make sure sample names is an array and is not empty
-   if ( !sampleNames.isArray() || sampleNames.toArray().isEmpty() )
+   // make sure sample names is not empty
+   if ( sampleNames.isEmpty() )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Sample names metadata is not an array or is empty."));
+      e.setDetails(tr("Sample names metadata is empty."));
       throw e;
    }
 
@@ -49,7 +49,7 @@ void CCMatrix::initialize(const EMetadata& geneNames, int maxClusterSize, const 
    setMeta(metaObject);
 
    // save sample size and initialize base class
-   _sampleSize = sampleNames.toArray().size();
+   _sampleSize = sampleNames.size();
    Matrix::initialize(geneNames, maxClusterSize, (_sampleSize + 1) / 2 * sizeof(qint8), SUBHEADER_SIZE);
 }
 
@@ -61,9 +61,9 @@ void CCMatrix::initialize(const EMetadata& geneNames, int maxClusterSize, const 
 /*!
  * Return the list of correlation names in this correlation matrix.
  */
-EMetadata CCMatrix::sampleNames() const
+EMetaArray CCMatrix::sampleNames() const
 {
    EDEBUG_FUNC(this);
 
-   return meta().toObject().at("samples");
+   return meta().toObject().at("samples").toArray();
 }

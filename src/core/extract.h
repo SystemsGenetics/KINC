@@ -51,7 +51,6 @@ private:
    QTextStream _stream;
    CCMatrix::Pair _ccmPair;
    CorrelationMatrix::Pair _cmxPair;
-   EMetaArray _geneNames;
    /*!
     * Pointer to the input expression matrix.
     */

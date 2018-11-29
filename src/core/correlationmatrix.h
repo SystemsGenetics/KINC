@@ -17,8 +17,8 @@ public:
 public:
    virtual QAbstractTableModel* model() override final;
 public:
-   void initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& correlationNames);
-   EMetadata correlationNames() const;
+   void initialize(const EMetaArray& geneNames, int maxClusterSize, const EMetaArray& correlationNames);
+   EMetaArray correlationNames() const;
    QVector<float> dumpRawData() const;
 private:
    class Model;

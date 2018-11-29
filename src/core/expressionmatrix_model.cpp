@@ -47,16 +47,14 @@ QVariant ExpressionMatrix::Model::headerData(int section, Qt::Orientation orient
    {
    case Qt::Vertical:
    {
-      // get the specified row name from the data object's metadata
-      EMetadata genes {_matrix->meta().toObject().at("genes")};
-      if ( genes.isArray() )
+      // get gene names
+      EMetaArray geneNames {_matrix->geneNames()};
+
+      // make sure the index is valid
+      if ( section >= 0 && section < geneNames.size() )
       {
-         // make sure the index is valid
-         if ( section >= 0 && section < genes.toArray().size() )
-         {
-            // return the specified row name
-            return genes.toArray().at(section).toString();
-         }
+         // return the specified row name
+         return geneNames.at(section).toString();
       }
 
       // otherwise return empty string
@@ -64,16 +62,14 @@ QVariant ExpressionMatrix::Model::headerData(int section, Qt::Orientation orient
    }
    case Qt::Horizontal:
    {
-      // get the specified column name from the data object's metadata
-      EMetadata samples {_matrix->meta().toObject().at("samples")};
-      if ( samples.isArray() )
+      // get sample names
+      EMetaArray samples {_matrix->sampleNames()};
+
+      // make sure the index is valid
+      if ( section >= 0 && section < samples.size() )
       {
-         // make sure the index is valid
-         if ( section >= 0 && section < samples.toArray().size() )
-         {
-            // return the specified column name
-            return samples.toArray().at(section).toString();
-         }
+         // return the specified column name
+         return samples.at(section).toString();
       }
 
       // otherwise return empty string
