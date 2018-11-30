@@ -131,7 +131,7 @@ QVariant Extract::Input::data(int index, Role role) const
       switch (role)
       {
       case Role::CommandLineName: return QString("output");
-      case Role::Title: return tr("GraphML File:");
+      case Role::Title: return tr("Output File:");
       case Role::WhatsThis: return tr("Output file that will contain network in the specified format.");
       default: return QVariant();
       }
