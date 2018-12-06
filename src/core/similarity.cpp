@@ -4,6 +4,7 @@
 #include "similarity_serial.h"
 #include "similarity_workblock.h"
 #include "similarity_opencl.h"
+#include "similarity_cuda.h"
 #include "ccmatrix_pair.h"
 #include "correlationmatrix_pair.h"
 #include <ace/core/elog.h>
@@ -227,6 +228,21 @@ EAbstractAnalytic::OpenCL* Similarity::makeOpenCL()
    EDEBUG_FUNC(this);
 
    return new OpenCL(this);
+}
+
+
+
+
+
+
+/*!
+ * Make a new CUDA object and return its pointer.
+ */
+EAbstractAnalytic::CUDA* Similarity::makeCUDA()
+{
+   EDEBUG_FUNC(this);
+
+   return new CUDA(this);
 }
 
 

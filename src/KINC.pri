@@ -24,8 +24,19 @@ CONFIG += c++11
 # Compiler defines
 DEFINES += QT_DEPRECATED_WARNINGS
 
+# Include directories
+isEmpty($$(CUDADIR)) {
+   CUDADIR = /usr/local/cuda
+}
+else {
+   CUDADIR = $$(CUDADIR)
+}
+
+INCLUDEPATH += $${CUDADIR}/include
+DEPENDPATH += $${CUDADIR}/include
+
 # External libraries
-LIBS += -L$${PWD}/../build/libs -lkinccore -lacecore -lgsl -lgslcblas -lOpenCL -lmpi
+LIBS += -L$${PWD}/../build/libs -lkinccore -lacecore -lgsl -lgslcblas -L$${CUDADIR}/lib64 -lcuda -lnvrtc -lOpenCL -lmpi
 equals(MPICXX,"yes") { LIBS += -lmpi_cxx }
 
 # Used to ignore useless warnings with OpenCL
@@ -33,4 +44,4 @@ QMAKE_CXXFLAGS += -Wno-ignored-attributes
 
 # Resource files
 RESOURCES += \
-    ../opencl.qrc
+    ../resources.qrc
