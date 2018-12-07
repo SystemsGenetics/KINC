@@ -1,4 +1,8 @@
 
+# Minimum Qt version
+lessThan(QT_MAJOR_VERSION,5): error("Requires Qt 5")
+lessThan(QT_MINOR_VERSION,7): error("Requires Qt 5.7")
+
 # Default setting for GUI
 isEmpty(GUI) { GUI = "yes" }
 

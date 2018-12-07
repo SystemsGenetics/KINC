@@ -5,13 +5,8 @@ include (../KINC.pri)
 # Basic settings
 QT += testlib
 TARGET = kinc-tests
+TEMPLATE = app
 CONFIG += debug
-
-# Installation instructions
-isEmpty(PREFIX) { PREFIX = /usr/local }
-program.path = $${PREFIX}/bin
-program.files = $${PWD}/../../build/tests/$${TARGET}
-INSTALLS += program
 
 # Source files
 SOURCES += \
@@ -36,3 +31,9 @@ HEADERS += \
 	testimportexpressionmatrix.h \
 	testrmt.h \
 	testsimilarity.h
+
+# Installation instructions
+isEmpty(PREFIX) { PREFIX = /usr/local }
+program.path = $${PREFIX}/bin
+program.files = $${PWD}/../../build/tests/$${TARGET}
+INSTALLS += program
