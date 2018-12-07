@@ -75,20 +75,15 @@ EMetaArray CorrelationMatrix::correlationNames() const
 
 
 /*!
- * Return an array of this correlation matrix's data in row-major order.
+ * Return a list of correlation pairs in raw form.
  */
-QVector<float> CorrelationMatrix::dumpRawData() const
+QVector<CorrelationMatrix::RawPair> CorrelationMatrix::dumpRawData() const
 {
    EDEBUG_FUNC(this);
 
-   // if there are no genes do nothing
-   if ( geneSize() == 0 )
-   {
-      return QVector<float>();
-   }
-
-   // create new correlation matrix
-   QVector<float> data(geneSize() * geneSize() * maxClusterSize());
+   // create list of raw pairs
+   QVector<RawPair> pairs;
+   pairs.reserve(size());
 
    // iterate through all pairs
    Pair pair(this);
@@ -98,18 +93,18 @@ QVector<float> CorrelationMatrix::dumpRawData() const
       // read in next pair
       pair.readNext();
 
-      // load cluster data
-      int i = pair.index().getX();
-      int j = pair.index().getY();
+      // copy pair to raw list
+      RawPair rawPair;
+      rawPair.index = pair.index();
+      rawPair.correlations.resize(pair.clusterSize());
 
       for ( int k = 0; k < pair.clusterSize(); ++k )
       {
-         float correlation = pair.at(k, 0);
-
-         data[i * geneSize() * maxClusterSize() + j * maxClusterSize() + k] = correlation;
-         data[j * geneSize() * maxClusterSize() + i * maxClusterSize() + k] = correlation;
+         rawPair.correlations[k] = pair.at(k, 0);
       }
+      
+      pairs.append(rawPair);
    }
 
-   return data;
+   return pairs;
 }

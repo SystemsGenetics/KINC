@@ -15,11 +15,17 @@ class CorrelationMatrix : public Pairwise::Matrix
 public:
    class Pair;
 public:
+   struct RawPair
+   {
+      Pairwise::Index index;
+      QVector<float> correlations;
+   };
+public:
    virtual QAbstractTableModel* model() override final;
 public:
    void initialize(const EMetaArray& geneNames, int maxClusterSize, const EMetaArray& correlationNames);
    EMetaArray correlationNames() const;
-   QVector<float> dumpRawData() const;
+   QVector<RawPair> dumpRawData() const;
 private:
    class Model;
 private:

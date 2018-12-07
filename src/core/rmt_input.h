@@ -18,6 +18,7 @@ public:
    {
       InputData = 0
       ,LogFile
+      ,ReductionType
       ,ThresholdStart
       ,ThresholdStep
       ,ThresholdStop
@@ -35,6 +36,7 @@ public:
    virtual void set(int index, QFile* file) override final;
    virtual void set(int index, EAbstractData* data) override final;
 private:
+   static const QStringList REDUCTION_NAMES;
    /*!
     * Pointer to the base analytic for this object.
     */

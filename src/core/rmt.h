@@ -1,10 +1,7 @@
 #ifndef RMT_H
 #define RMT_H
 #include <ace/core/core.h>
-
-
-
-class CorrelationMatrix;
+#include "correlationmatrix.h"
 
 
 
@@ -32,8 +29,31 @@ public:
    virtual EAbstractAnalytic::Input* makeInput() override final;
    virtual void initialize();
 private:
-   QVector<float> computeMaximums(const QVector<float>& matrix);
-   QVector<float> computePruneMatrix(const QVector<float>& matrix, const QVector<float>& maximums, float threshold, int* size);
+   /*!
+    * Defines the reduction methods this analytic supports.
+    */
+   enum class ReductionMethod
+   {
+      /*!
+       * Select the first cluster
+       */
+      First
+      /*!
+       * Select the cluster with the highest absolute correlation
+       */
+      ,MaximumCorrelation
+      /*!
+       * Select the cluster with the largest sample size
+       */
+      ,MaximumSize
+      /*!
+       * Select a random cluster
+       */
+      ,Random
+   };
+private:
+   QVector<float> computeMaximums(const QVector<CorrelationMatrix::RawPair>& pairs);
+   QVector<float> computePruneMatrix(const QVector<CorrelationMatrix::RawPair>& pairs, const QVector<float>& maximums, float threshold, int* size);
    QVector<float> computeEigenvalues(QVector<float>* pruneMatrix, int size);
    QVector<float> computeUnique(const QVector<float>& values);
    float computeChiSquare(const QVector<float>& eigens);
@@ -48,6 +68,12 @@ private:
     * Pointer to the output log file.
     */
    QFile* _logfile {nullptr};
+   /*!
+    * The reduction method to use. Pairwise reduction is used to select pairwise
+    * correlations when there are multiple correlations per pair. By default, the
+    * first cluster is selected from each pair.
+    */
+   ReductionMethod _reductionMethod {ReductionMethod::First};
    /*!
     * The starting threshold.
     */

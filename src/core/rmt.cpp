@@ -6,11 +6,11 @@
 
 #include "rmt.h"
 #include "rmt_input.h"
-#include "correlationmatrix.h"
 
 
 
 using namespace std;
+using RawPair = CorrelationMatrix::RawPair;
 
 
 
@@ -54,18 +54,18 @@ void RMT::process(const EAbstractAnalytic::Block*)
    float threshold {_thresholdStart};
 
    // load raw correlation data, row-wise maximums
-   QVector<float> matrix {_input->dumpRawData()};
-   QVector<float> maximums {computeMaximums(matrix)};
+   QVector<RawPair> pairs {_input->dumpRawData()};
+   QVector<float> maximums {computeMaximums(pairs)};
 
    // continue while max chi is less than final threshold
    while ( maxChi < _chiSquareThreshold2 )
    {
       qInfo("\n");
-      qInfo("threshold: %g", threshold);
+      qInfo("threshold: %8.3f", threshold);
 
       // compute pruned matrix based on threshold
       int size;
-      QVector<float> pruneMatrix {computePruneMatrix(matrix, maximums, threshold, &size)};
+      QVector<float> pruneMatrix {computePruneMatrix(pairs, maximums, threshold, &size)};
 
       qInfo("prune matrix: %d", size);
 
@@ -190,31 +190,27 @@ void RMT::initialize()
 /*!
  * Compute the row-wise maximums of a correlation matrix.
  *
- * @param matrix
+ * @param pairs
  */
-QVector<float> RMT::computeMaximums(const QVector<float>& matrix)
+QVector<float> RMT::computeMaximums(const QVector<RawPair>& pairs)
 {
-   EDEBUG_FUNC(this,&matrix);
-
-   const int N {_input->geneSize()};
-   const int K {_input->maxClusterSize()};
+   EDEBUG_FUNC(this,&pairs);
 
    // initialize elements to minimum value
-   QVector<float> maximums(N * K, 0);
+   QVector<float> maximums(_input->geneSize(), 0);
 
    // compute maximum correlation of each row
-   for ( int i = 0; i < N; ++i )
+   for ( auto& pair : pairs )
    {
-      for ( int j = 0; j < N; ++j )
-      {
-         for ( int k = 0; k < K; ++k )
-         {
-            float correlation = fabs(matrix[i * N * K + j * K + k]);
+      int i = pair.index.getX();
 
-            if ( maximums[i * K + k] < correlation )
-            {
-               maximums[i * K + k] = correlation;
-            }
+      for ( int k = 0; k < pair.correlations.size(); ++k )
+      {
+         float correlation = fabs(pair.correlations[k]);
+
+         if ( maximums[i] < correlation )
+         {
+            maximums[i] = correlation;
          }
       }
    }
@@ -235,57 +231,100 @@ QVector<float> RMT::computeMaximums(const QVector<float>& matrix)
  * below the given threshold removed, and all zero-columns removed. Additionally,
  * the number of rows in the pruned matrix is returned as a pointer argument.
  *
- * @param matrix
+ * @param pairs
  * @param maximums
  * @param threshold
  * @param size
  */
-QVector<float> RMT::computePruneMatrix(const QVector<float>& matrix, const QVector<float>& maximums, float threshold, int* size)
+QVector<float> RMT::computePruneMatrix(const QVector<RawPair>& pairs, const QVector<float>& maximums, float threshold, int* size)
 {
-   EDEBUG_FUNC(this,&matrix,&maximums,threshold,size);
-
-   const int N {_input->geneSize()};
-   const int K {_input->maxClusterSize()};
+   EDEBUG_FUNC(this,&pairs,&maximums,threshold,size);
 
    // generate vector of row indices that have a correlation above threshold
-   QVector<int> indices;
+   QVector<int> indices(_input->geneSize(), -1);
+   int pruneSize = 0;
 
    for ( int i = 0; i < maximums.size(); ++i )
    {
       if ( maximums[i] >= threshold )
       {
-         indices.append(i);
+         indices[i] = pruneSize;
+         pruneSize++;
       }
    }
 
    // extract pruned matrix from correlation matrix
-   QVector<float> pruneMatrix(indices.size() * indices.size());
+   QVector<float> pruneMatrix(pruneSize * pruneSize);
 
-   for ( int i = 0; i < indices.size(); ++i )
+   // initialize diagonal
+   for ( int i = 0; i < pruneSize; ++i )
    {
-      for ( int j = 0; j < i; ++j )
+      pruneMatrix[i * pruneSize + i] = 1;
+   }
+
+   // iterate through all pairs
+   for ( auto& pair : pairs )
+   {
+      // get indices into pruned matrix
+      int i = indices[pair.index.getX()];
+      int j = indices[pair.index.getY()];
+
+      // skip pair if it was pruned
+      if ( i == -1 || j == -1 )
       {
-         // make sure that i and j refer to the same cluster number
-         if ( indices[i] % K != indices[j] % K )
-         {
-            continue;
-         }
-
-         // save correlation if it is above threshold
-         float correlation = matrix[indices[i]/K * N * K + indices[j]/K * K + indices[i] % K];
-
-         if ( fabs(correlation) >= threshold )
-         {
-            pruneMatrix[i * indices.size() + j] = correlation;
-         }
+         continue;
       }
 
-      pruneMatrix[i * indices.size() + i] = 1;
+      // select correlation from pair using reduction method
+      float correlation = 0;
+
+      switch ( _reductionMethod )
+      {
+      case ReductionMethod::First:
+      {
+         correlation = pair.correlations[0];
+         break;
+      }
+      case ReductionMethod::MaximumCorrelation:
+      {
+         for ( int k = 0; k < pair.correlations.size(); k++ )
+         {
+            float r = fabs(pair.correlations[k]);
+
+            if ( correlation < r )
+            {
+               correlation = r;
+            }
+         }
+         break;
+      }
+      case ReductionMethod::MaximumSize:
+      {
+         E_MAKE_EXCEPTION(e);
+         e.setTitle(tr("Unsupported Option"));
+         e.setDetails(tr("Pairwise reduction by maximum size is not yet supported."));
+         throw e;
+      }
+      case ReductionMethod::Random:
+      {
+         int k = qrand() % pair.correlations.size();
+         correlation = pair.correlations[k];
+         break;
+      }
+      };
+
+      // save correlation if it is above threshold
+      if ( fabs(correlation) >= threshold )
+      {
+         pruneMatrix[i * pruneSize + j] = correlation;
+         pruneMatrix[j * pruneSize + i] = correlation;
+      }
    }
 
    // save size of pruned matrix
-   *size = indices.size();
+   *size = pruneSize;
 
+   // return pruned matrix
    return pruneMatrix;
 }
 
