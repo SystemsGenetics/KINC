@@ -25,7 +25,11 @@ QMAKE_CXXFLAGS += -Wno-ignored-attributes
 isEmpty(MPICXX) { MPICXX = "yes" }
 
 # External libraries
-LIBS += -L$${PWD}/../build/libs -lkinccore -lacecore -lgsl -lgslcblas -lOpenCL -lmpi
+LIBS += \
+    -L$${PWD}/../build/libs -lkinccore \
+    -lacecore \
+    -lgsl -llapack -llapacke \
+    -lOpenCL -lmpi
 equals(MPICXX,"yes") { LIBS += -lmpi_cxx }
 
 # Resource files
