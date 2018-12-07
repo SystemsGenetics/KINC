@@ -158,7 +158,7 @@ private:
    /*!
     * The number of pairs to process in each work block.
     */
-   int _workBlockSize {32768};
+   int _workBlockSize {0};
    /*!
     * The global work size for each OpenCL worker.
     */

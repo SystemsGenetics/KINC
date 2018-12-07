@@ -13,6 +13,7 @@ QT += core
 DEFINES += QT_DEPRECATED_WARNINGS
 
 # Used to ignore useless warnings from OpenCL
+QMAKE_CXX = mpic++
 QMAKE_CXXFLAGS += -Wno-ignored-attributes
 
 # Source files
