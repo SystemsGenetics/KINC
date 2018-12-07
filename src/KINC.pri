@@ -28,7 +28,7 @@ isEmpty(MPICXX) { MPICXX = "yes" }
 LIBS += \
     -L$${PWD}/../build/libs -lkinccore \
     -lacecore \
-    -lgsl -llapack -llapacke \
+    -lgsl -lgslcblas -llapack -llapacke \
     -lOpenCL -lmpi
 equals(MPICXX,"yes") { LIBS += -lmpi_cxx }
 
