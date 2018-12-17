@@ -3,25 +3,46 @@
 
 
 
-using namespace std;
+/*!
+ * String list of output formats for this analytic that correspond exactly
+ * to its enumeration. Used for handling the output format argument for this
+ * input object.
+ */
+const QStringList Extract::Input::FORMAT_NAMES
+{
+   "text"
+   ,"graphml"
+};
 
 
 
 
 
 
+/*!
+ * Construct a new input object with the given analytic as its parent.
+ *
+ * @param parent
+ */
 Extract::Input::Input(Extract* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
-{}
+{
+   EDEBUG_FUNC(this,parent);
+}
 
 
 
 
 
 
+/*!
+ * Return the total number of arguments this analytic type contains.
+ */
 int Extract::Input::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -30,15 +51,22 @@ int Extract::Input::size() const
 
 
 
+/*!
+ * Return the argument type for a given index.
+ *
+ * @param index
+ */
 EAbstractAnalytic::Input::Type Extract::Input::type(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    switch (index)
    {
    case ExpressionData: return Type::DataIn;
    case ClusterData: return Type::DataIn;
    case CorrelationData: return Type::DataIn;
+   case OutputFormatArg: return Type::Selection;
    case OutputFile: return Type::FileOut;
-   case GraphMLFile: return Type::FileOut;
    case MinCorrelation: return Type::Double;
    case MaxCorrelation: return Type::Double;
    default: return Type::Boolean;
@@ -50,8 +78,16 @@ EAbstractAnalytic::Input::Type Extract::Input::type(int index) const
 
 
 
+/*!
+ * Return data for a given role on an argument with the given index.
+ *
+ * @param index
+ * @param role
+ */
 QVariant Extract::Input::data(int index, Role role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    switch (index)
    {
    case ExpressionData:
@@ -81,22 +117,22 @@ QVariant Extract::Input::data(int index, Role role) const
       case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
+   case OutputFormatArg:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("format");
+      case Role::Title: return tr("Output Format:");
+      case Role::WhatsThis: return tr("Format to use for the output file.");
+      case Role::SelectionValues: return FORMAT_NAMES;
+      case Role::Default: return "text";
+      default: return QVariant();
+      }
    case OutputFile:
       switch (role)
       {
       case Role::CommandLineName: return QString("output");
       case Role::Title: return tr("Output File:");
-      case Role::WhatsThis: return tr("Output text file that will contain network edges.");
-      case Role::FileFilters: return tr("Text file %1").arg("(*.txt)");
-      default: return QVariant();
-      }
-   case GraphMLFile:
-      switch (role)
-      {
-      case Role::CommandLineName: return QString("graphml");
-      case Role::Title: return tr("GraphML File:");
-      case Role::WhatsThis: return tr("Output text file that will contain network in GraphML format.");
-      case Role::FileFilters: return tr("GraphML file %1").arg("(*.graphml)");
+      case Role::WhatsThis: return tr("Output file that will contain network in the specified format.");
       default: return QVariant();
       }
    case MinCorrelation:
@@ -130,10 +166,21 @@ QVariant Extract::Input::data(int index, Role role) const
 
 
 
+/*!
+ * Set an argument with the given index to the given value.
+ *
+ * @param index
+ * @param value
+ */
 void Extract::Input::set(int index, const QVariant& value)
 {
+   EDEBUG_FUNC(this,index,&value);
+
    switch (index)
    {
+   case OutputFormatArg:
+      _base->_outputFormat = static_cast<OutputFormat>(FORMAT_NAMES.indexOf(value.toString()));
+      break;
    case MinCorrelation:
       _base->_minCorrelation = value.toFloat();
       break;
@@ -148,8 +195,16 @@ void Extract::Input::set(int index, const QVariant& value)
 
 
 
+/*!
+ * Set a data argument with the given index to the given data object pointer.
+ *
+ * @param index
+ * @param data
+ */
 void Extract::Input::set(int index, EAbstractData* data)
 {
+   EDEBUG_FUNC(this,index,data);
+
    if ( index == ExpressionData )
    {
       _base->_emx = data->cast<ExpressionMatrix>();
@@ -169,14 +224,18 @@ void Extract::Input::set(int index, EAbstractData* data)
 
 
 
+/*!
+ * Set a file argument with the given index to the given qt file pointer.
+ *
+ * @param index
+ * @param file
+ */
 void Extract::Input::set(int index, QFile* file)
 {
+   EDEBUG_FUNC(this,index,file);
+
    if ( index == OutputFile )
    {
       _base->_output = file;
-   }
-   else if ( index == GraphMLFile )
-   {
-      _base->_graphml = file;
    }
 }

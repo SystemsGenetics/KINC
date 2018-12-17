@@ -4,10 +4,16 @@
 
 
 
+/*!
+ * This class implements the abstract input of the similarity analytic.
+ */
 class Similarity::Input : public EAbstractAnalytic::Input
 {
    Q_OBJECT
 public:
+   /*!
+    * Defines all arguments for its parent analytic.
+    */
    enum Argument
    {
       InputData = 0
@@ -24,7 +30,9 @@ public:
       ,RemovePostOutliers
       ,MinCorrelation
       ,MaxCorrelation
-      ,KernelSize
+      ,WorkBlockSize
+      ,GlobalWorkSize
+      ,LocalWorkSize
       ,Total
    };
    explicit Input(Similarity* parent);
@@ -34,12 +42,13 @@ public:
    virtual void set(int index, const QVariant& value) override final;
    virtual void set(int index, QFile* file) override final;
    virtual void set(int index, EAbstractData* data) override final;
-
 private:
    static const QStringList CLUSTERING_NAMES;
    static const QStringList CORRELATION_NAMES;
    static const QStringList CRITERION_NAMES;
-
+   /*!
+    * Pointer to the base analytic for this object.
+    */
    Similarity* _base;
 };
 

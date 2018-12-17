@@ -1,15 +1,23 @@
 #include "exportexpressionmatrix.h"
 #include "exportexpressionmatrix_input.h"
 #include "datafactory.h"
+#include "expressionmatrix_gene.h"
 
 
 
 
 
 
+/*!
+ * Return the total number of blocks this analytic must process as steps
+ * or blocks of work. This implementation uses a work block for writing the
+ * sample names and a work block for writing each gene.
+ */
 int ExportExpressionMatrix::size() const
 {
-   return 1;
+   EDEBUG_FUNC(this);
+
+   return 1 + _input->geneSize();
 }
 
 
@@ -17,79 +25,74 @@ int ExportExpressionMatrix::size() const
 
 
 
+/*!
+ * Process the given index with a possible block of results if this analytic
+ * produces work blocks. This implementation uses only the index of the result
+ * block to determine which piece of work to do.
+ *
+ * @param result
+ */
 void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 {
-   Q_UNUSED(result);
+   EDEBUG_FUNC(this,result);
 
-   // use expression declaration
-   using Expression = ExpressionMatrix::Expression;
-   using Transform = ExpressionMatrix::Transform;
-
-   // get gene names, sample names, and transform
-   EMetaArray geneNames = _input->getGeneNames().toArray();
-   EMetaArray sampleNames = _input->getSampleNames().toArray();
-   Transform transform = _input->getTransform();
-
-   // create text stream to output file
-   QTextStream stream(_output);
-   stream.setRealNumberPrecision(12);
-
-   // write sample names
-   for ( int i = 0; i < _input->getSampleSize(); i++ )
+   // write the sample names in the first step
+   if ( result->index() == 0 )
    {
-      stream << sampleNames.at(i).toString() << "\t";
+      // get sample names
+      EMetaArray sampleNames {_input->sampleNames()};
+
+      // initialize output file stream
+      _stream.setDevice(_output);
+      _stream.setRealNumberPrecision(8);
+
+      // write sample names
+      for ( int i = 0; i < _input->sampleSize(); i++ )
+      {
+         _stream << sampleNames.at(i).toString() << "\t";
+      }
+      _stream << "\n";
    }
-   stream << "\n";
 
-   // write each gene to a line in output file
-   ExpressionMatrix::Gene gene(_input);
-   for ( int i = 0; i < _input->getGeneSize(); i++ )
+   // write each gene to the output file in a separate step
+   else
    {
+      // get gene index
+      int i = result->index() - 1;
+
+      // get gene name
+      QString geneName {_input->geneNames().at(i).toString()};
+
       // load gene from expression matrix
+      ExpressionMatrix::Gene gene(_input);
       gene.read(i);
 
       // write gene name
-      stream << geneNames.at(i).toString();
+      _stream << geneName;
 
       // write expression values
-      for ( int j = 0; j < _input->getSampleSize(); j++ )
+      for ( int j = 0; j < _input->sampleSize(); j++ )
       {
-         Expression value {gene.at(j)};
+         float value {gene.at(j)};
 
          // if value is NAN use the no sample token
          if ( std::isnan(value) )
          {
-            stream << "\t" << _noSampleToken;
+            _stream << "\t" << _nanToken;
          }
 
          // else this is a normal floating point expression
          else
          {
-            // apply transform and write value
-            switch (transform)
-            {
-            case Transform::None:
-               break;
-            case Transform::NLog:
-               value = exp(value);
-               break;
-            case Transform::Log2:
-               value = pow(2, value);
-               break;
-            case Transform::Log10:
-               value = pow(10, value);
-               break;
-            }
-
-            stream << "\t" << value;
+            _stream << "\t" << value;
          }
       }
 
-      stream << "\n";
+      _stream << "\n";
    }
 
    // make sure writing output file worked
-   if ( stream.status() != QTextStream::Ok )
+   if ( _stream.status() != QTextStream::Ok )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("File IO Error"));
@@ -103,8 +106,13 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 
 
 
+/*!
+ * Make a new input object and return its pointer.
+ */
 EAbstractAnalytic::Input* ExportExpressionMatrix::makeInput()
 {
+   EDEBUG_FUNC(this);
+
    return new Input(this);
 }
 
@@ -113,8 +121,14 @@ EAbstractAnalytic::Input* ExportExpressionMatrix::makeInput()
 
 
 
+/*!
+ * Initialize this analytic. This implementation checks to make sure the input
+ * data object and output file have been set.
+ */
 void ExportExpressionMatrix::initialize()
 {
+   EDEBUG_FUNC(this);
+
    if ( !_input || !_output )
    {
       E_MAKE_EXCEPTION(e);

@@ -4,15 +4,21 @@
 
 
 
+/*!
+ * This class implements the abstract input of the export expression matrix analytic.
+ */
 class ExportExpressionMatrix::Input : public EAbstractAnalytic::Input
 {
    Q_OBJECT
 public:
+   /*!
+    * Defines all input arguments for this analytic.
+    */
    enum Argument
    {
       InputData = 0
       ,OutputFile
-      ,NoSampleToken
+      ,NANToken
       ,Total
    };
    explicit Input(ExportExpressionMatrix* parent);
@@ -23,6 +29,9 @@ public:
    virtual void set(int index, EAbstractData* data) override final;
    virtual void set(int index, QFile* file) override final;
 private:
+   /*!
+    * Pointer to the base analytic for this object.
+    */
    ExportExpressionMatrix* _base;
 };
 

@@ -6,15 +6,20 @@
 
 
 
+/*!
+ * Compute the next power of 2 which occurs after a number.
+ *
+ * @param n
+ */
 int nextPower2(int n)
 {
-	int pow2 = 2;
-	while ( pow2 < n )
-	{
-		pow2 *= 2;
-	}
+   int pow2 = 2;
+   while ( pow2 < n )
+   {
+      pow2 *= 2;
+   }
 
-	return pow2;
+   return pow2;
 }
 
 
@@ -22,20 +27,34 @@ int nextPower2(int n)
 
 
 
+/*!
+ * Compute the Spearman correlation of a cluster in a pairwise data array. The
+ * data array should only contain samples that have a non-negative label.
+ *
+ * @param data
+ * @param labels
+ * @param sampleSize
+ * @param cluster
+ * @param minSamples
+ * @param x
+ * @param y
+ * @param rank
+ */
 float Spearman_computeCluster(
    __global const float2 *data,
-   __global const char *labels, int N,
+   __global const char *labels,
+   int sampleSize,
    char cluster,
    int minSamples,
    __global float *x,
    __global float *y,
    __global int *rank)
 {
-   // extract samples in gene pair cluster
-   int N_pow2 = nextPower2(N);
-	int n = 0;
+   // extract samples in pairwise cluster
+   int N_pow2 = nextPower2(sampleSize);
+   int n = 0;
 
-	for ( int i = 0, j = 0; i < N; ++i )
+   for ( int i = 0, j = 0; i < sampleSize; ++i )
    {
       if ( labels[i] >= 0 )
       {
@@ -43,7 +62,7 @@ float Spearman_computeCluster(
          {
             x[n] = data[j].x;
             y[n] = data[j].y;
-				rank[n] = n + 1;
+            rank[n] = n + 1;
             ++n;
          }
 
@@ -91,11 +110,25 @@ float Spearman_computeCluster(
 
 
 
+/*!
+ * Compute the correlation of each cluster in a pairwise data array. The data array
+ * should only contain the clean samples that were extracted from the expression
+ * matrix, while the labels should contain all samples.
+ *
+ * @param globalWorkSize
+ * @param in_data
+ * @param clusterSize
+ * @param in_labels
+ * @param sampleSize
+ * @param minSamples
+ * @param out_correlations
+ */
 __kernel void Spearman_compute(
+   int globalWorkSize,
    __global const float2 *in_data,
    char clusterSize,
    __global const char *in_labels,
-	int sampleSize,
+   int sampleSize,
    int minSamples,
    __global float *work_x,
    __global float *work_y,
@@ -103,8 +136,14 @@ __kernel void Spearman_compute(
    __global float *out_correlations)
 {
    int i = get_global_id(0);
-	int N_pow2 = nextPower2(sampleSize);
 
+   if ( i >= globalWorkSize )
+   {
+      return;
+   }
+
+   // initialize workspace variables
+   int N_pow2 = nextPower2(sampleSize);
    __global const float2 *data = &in_data[i * sampleSize];
    __global const char *labels = &in_labels[i * sampleSize];
    __global float *x = &work_x[i * N_pow2];

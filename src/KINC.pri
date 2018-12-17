@@ -1,11 +1,9 @@
 
-# Default settings for MPI CXX include
-isEmpty(MPICXX) { MPICXX = "yes" }
-
 # Versions
 MAJOR_VERSION = 3
 MINOR_VERSION = 2
-REVISION = 0
+REVISION = 2
+
 VERSION = $${MAJOR_VERSION}.$${MINOR_VERSION}.$${REVISION}
 
 # Version compiler defines
@@ -17,24 +15,22 @@ DEFINES += \
 
 # Basic settings
 QT += core
-TEMPLATE = app
 QMAKE_CXX = mpic++
 CONFIG += c++11
-
-# Compiler defines
-DEFINES += QT_DEPRECATED_WARNINGS
-
-# External libraries
-LIBS += -lmpi
-equals(MPICXX,"yes") { LIBS += -lmpi_cxx }
-LIBS += -lacecore -lOpenCL -lgsl -lgslcblas -L$${PWD}/../build/libs -lkinccore
 
 # Used to ignore useless warnings with OpenCL
 QMAKE_CXXFLAGS += -Wno-ignored-attributes
 
-# Source files
-SOURCES += \
-    ../main.cpp \
+# Default settings for MPI CXX include
+isEmpty(MPICXX) { MPICXX = "yes" }
+
+# External libraries
+LIBS += \
+    -L$${PWD}/../build/libs -lkinccore \
+    -lacecore \
+    -lgsl -lgslcblas -llapack -llapacke \
+    -lOpenCL -lmpi
+equals(MPICXX,"yes") { LIBS += -lmpi_cxx }
 
 # Resource files
 RESOURCES += \

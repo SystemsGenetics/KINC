@@ -3,18 +3,30 @@
 
 
 
+/*!
+ * Construct a new input object with the given analytic as its parent.
+ *
+ * @param parent
+ */
 ExportCorrelationMatrix::Input::Input(ExportCorrelationMatrix* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
-{}
+{
+   EDEBUG_FUNC(this,parent);
+}
 
 
 
 
 
 
+/*!
+ * Return the total number of arguments this analytic type contains.
+ */
 int ExportCorrelationMatrix::Input::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -23,10 +35,18 @@ int ExportCorrelationMatrix::Input::size() const
 
 
 
+/*!
+ * Return the argument type for a given index.
+ *
+ * @param index
+ */
 EAbstractAnalytic::Input::Type ExportCorrelationMatrix::Input::type(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    switch (index)
    {
+   case ExpressionData: return Type::DataIn;
    case ClusterData: return Type::DataIn;
    case CorrelationData: return Type::DataIn;
    case OutputFile: return Type::FileOut;
@@ -39,10 +59,27 @@ EAbstractAnalytic::Input::Type ExportCorrelationMatrix::Input::type(int index) c
 
 
 
+/*!
+ * Return data for a given role on an argument with the given index.
+ *
+ * @param index
+ * @param role
+ */
 QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    switch (index)
    {
+   case ExpressionData:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("emx");
+      case Role::Title: return tr("Expression Matrix:");
+      case Role::WhatsThis: return tr("Input expression matrix containing gene expression data.");
+      case Role::DataType: return DataFactory::ExpressionMatrixType;
+      default: return QVariant();
+      }
    case ClusterData:
       switch (role)
       {
@@ -79,10 +116,16 @@ QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
 
 
 
-void ExportCorrelationMatrix::Input::set(int index, const QVariant& value)
+/*!
+ * Set an argument with the given index to the given value. This analytic has
+ * no basic arguments so this function does nothing.
+ *
+ * @param index
+ * @param value
+ */
+void ExportCorrelationMatrix::Input::set(int, const QVariant&)
 {
-   Q_UNUSED(index);
-   Q_UNUSED(value);
+   EDEBUG_FUNC(this);
 }
 
 
@@ -90,9 +133,21 @@ void ExportCorrelationMatrix::Input::set(int index, const QVariant& value)
 
 
 
+/*!
+ * Set a data argument with the given index to the given data object pointer.
+ *
+ * @param index
+ * @param data
+ */
 void ExportCorrelationMatrix::Input::set(int index, EAbstractData* data)
 {
-   if ( index == ClusterData )
+   EDEBUG_FUNC(this,index,data);
+
+   if ( index == ExpressionData )
+   {
+      _base->_emx = data->cast<ExpressionMatrix>();
+   }
+   else if ( index == ClusterData )
    {
       _base->_ccm = data->cast<CCMatrix>();
    }
@@ -107,8 +162,16 @@ void ExportCorrelationMatrix::Input::set(int index, EAbstractData* data)
 
 
 
+/*!
+ * Set a file argument with the given index to the given qt file pointer.
+ *
+ * @param index
+ * @param file
+ */
 void ExportCorrelationMatrix::Input::set(int index, QFile* file)
 {
+   EDEBUG_FUNC(this,index,file);
+
    if ( index == OutputFile )
    {
       _base->_output = file;

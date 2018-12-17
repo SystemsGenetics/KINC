@@ -4,7 +4,7 @@
 
 
 
-/**
+/*!
  * Swap two values
  *
  * @param a
@@ -22,7 +22,7 @@ void swapF(__global float* a, __global float* b)
 
 
 
-/**
+/*!
  * Swap two values
  *
  * @param a
@@ -92,7 +92,7 @@ void heapify(__global float *array, int n)
 
 
 
-/**
+/*!
  * Sort an array using heapsort.
  *
  * @param array
@@ -117,11 +117,10 @@ void heapSort(__global float *array, int n)
 
 
 
-/**
- * Sort a list using the bitonic algorithm. Additionally,
- * rearrange a second list with the same operations that are
- * done to the sorted list. The size of each list must be a
- * power of 2.
+/*!
+ * Sort a list using bitonic sort, while also applying the same swap operations
+ * to a second list of the same size. The lists should have a size which is a
+ * power of two.
  *
  * @param size
  * @param sortList
@@ -160,11 +159,10 @@ void bitonicSortFF(int size, __global float* sortList, __global float* extraList
 
 
 
-/**
- * Sort a list using the bitonic algorithm. Additionally,
- * rearrange a second list with the same operations that are
- * done to the sorted list. The size of each list must be a
- * power of 2.
+/*!
+ * Sort a list using bitonic sort, while also applying the same swap operations
+ * to a second list of the same size. The lists should have a size which is a
+ * power of two.
  *
  * @param size
  * @param sortList

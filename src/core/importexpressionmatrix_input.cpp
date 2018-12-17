@@ -6,18 +6,30 @@
 
 
 
+/*!
+ * Construct a new input object with the given analytic as its parent.
+ *
+ * @param parent
+ */
 ImportExpressionMatrix::Input::Input(ImportExpressionMatrix* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
-{}
+{
+   EDEBUG_FUNC(this,parent);
+}
 
 
 
 
 
 
+/*!
+ * Return the total number of arguments this analytic type contains.
+ */
 int ImportExpressionMatrix::Input::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -26,15 +38,21 @@ int ImportExpressionMatrix::Input::size() const
 
 
 
+/*!
+ * Return the argument type for a given index.
+ *
+ * @param index
+ */
 EAbstractAnalytic::Input::Type ImportExpressionMatrix::Input::type(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    switch (index)
    {
    case InputFile: return Type::FileIn;
    case OutputData: return Type::DataOut;
-   case NoSampleToken: return Type::String;
+   case NANToken: return Type::String;
    case SampleSize: return Type::Integer;
-   case TransformType: return Type::Selection;
    default: return Type::Boolean;
    }
 }
@@ -44,8 +62,16 @@ EAbstractAnalytic::Input::Type ImportExpressionMatrix::Input::type(int index) co
 
 
 
+/*!
+ * Return data for a given role on an argument with the given index.
+ *
+ * @param index
+ * @param role
+ */
 QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    switch (index)
    {
    case InputFile:
@@ -66,12 +92,13 @@ QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
       case Role::DataType: return DataFactory::ExpressionMatrixType;
       default: return QVariant();
       }
-   case NoSampleToken:
+   case NANToken:
       switch (role)
       {
       case Role::CommandLineName: return QString("nan");
-      case Role::Title: return tr("No Sample Token:");
+      case Role::Title: return tr("NAN Token:");
       case Role::WhatsThis: return tr("Expected token for expressions that have no value.");
+      case Role::Default: return "NA";
       default: return QVariant();
       }
    case SampleSize:
@@ -85,16 +112,6 @@ QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
       case Role::Maximum: return std::numeric_limits<int>::max();
       default: return QVariant();
       }
-   case TransformType:
-      switch (role)
-      {
-      case Role::CommandLineName: return QString("transform");
-      case Role::Title: return tr("Transform:");
-      case Role::WhatsThis: return tr("Element-wise transformation to apply to expression data.");
-      case Role::Default: return ExpressionMatrix::TRANSFORM_NAMES.first();
-      case Role::SelectionValues: return ExpressionMatrix::TRANSFORM_NAMES;
-      default: return QVariant();
-      }
    default: return QVariant();
    }
 }
@@ -104,18 +121,23 @@ QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
 
 
 
+/*!
+ * Set an argument with the given index to the given value.
+ *
+ * @param index
+ * @param value
+ */
 void ImportExpressionMatrix::Input::set(int index, const QVariant& value)
 {
+   EDEBUG_FUNC(this,index,&value);
+
    switch (index)
    {
    case SampleSize:
       _base->_sampleSize = value.toInt();
       break;
-   case NoSampleToken:
-      _base->_noSampleToken = value.toString();
-      break;
-   case TransformType:
-      _base->_transform = static_cast<Transform>(ExpressionMatrix::TRANSFORM_NAMES.indexOf(value.toString()));
+   case NANToken:
+      _base->_nanToken = value.toString();
       break;
    }
 }
@@ -125,8 +147,16 @@ void ImportExpressionMatrix::Input::set(int index, const QVariant& value)
 
 
 
+/*!
+ * Set a file argument with the given index to the given qt file pointer.
+ *
+ * @param index
+ * @param file
+ */
 void ImportExpressionMatrix::Input::set(int index, QFile* file)
 {
+   EDEBUG_FUNC(this,index,file);
+
    if ( index == InputFile )
    {
       _base->_input = file;
@@ -138,8 +168,16 @@ void ImportExpressionMatrix::Input::set(int index, QFile* file)
 
 
 
+/*!
+ * Set a data argument with the given index to the given data object pointer.
+ *
+ * @param index
+ * @param data
+ */
 void ImportExpressionMatrix::Input::set(int index, EAbstractData* data)
 {
+   EDEBUG_FUNC(this,index,data);
+
    if ( index == OutputData )
    {
       _base->_output = data->cast<ExpressionMatrix>();

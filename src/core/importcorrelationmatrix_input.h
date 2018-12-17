@@ -4,10 +4,16 @@
 
 
 
+/*!
+ * This class implements the abstract input of the import correlation matrix analytic.
+ */
 class ImportCorrelationMatrix::Input : public EAbstractAnalytic::Input
 {
    Q_OBJECT
 public:
+   /*!
+    * Defines all input arguments for this analytic.
+    */
    enum Argument
    {
       InputFile = 0
@@ -27,6 +33,9 @@ public:
    virtual void set(int index, QFile* file) override final;
    virtual void set(int index, EAbstractData* data) override final;
 private:
+   /*!
+    * Pointer to the base analytic for this object.
+    */
    ImportCorrelationMatrix* _base;
 };
 

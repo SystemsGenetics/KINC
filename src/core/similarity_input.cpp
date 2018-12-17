@@ -1,20 +1,20 @@
 #include "similarity_input.h"
 #include "datafactory.h"
-#include "pairwise_gmm.h"
-#include "pairwise_kmeans.h"
-#include "pairwise_pearson.h"
-#include "pairwise_spearman.h"
 
 
 
 
 
 
+/*!
+ * String list of clustering methods for this analytic that correspond exactly
+ * to its enumeration. Used for handling the clustering method argument for this
+ * input object.
+ */
 const QStringList Similarity::Input::CLUSTERING_NAMES
 {
    "none"
    ,"gmm"
-   ,"kmeans"
 };
 
 
@@ -22,6 +22,11 @@ const QStringList Similarity::Input::CLUSTERING_NAMES
 
 
 
+/*!
+ * String list of correlation methods for this analytic that correspond exactly
+ * to its enumeration. Used for handling the correlation method argument for this
+ * input object.
+ */
 const QStringList Similarity::Input::CORRELATION_NAMES
 {
    "pearson"
@@ -33,9 +38,15 @@ const QStringList Similarity::Input::CORRELATION_NAMES
 
 
 
+/*!
+ * String list of criterion options for this analytic that correspond exactly
+ * to its enumeration. Used for handling the criterion argument for this input
+ * object.
+ */
 const QStringList Similarity::Input::CRITERION_NAMES
 {
-   "BIC"
+   "AIC"
+   ,"BIC"
    ,"ICL"
 };
 
@@ -44,10 +55,16 @@ const QStringList Similarity::Input::CRITERION_NAMES
 
 
 
+/*!
+ * Construct a new input object with the given analytic as its parent.
+ *
+ * @param parent
+ */
 Similarity::Input::Input(Similarity* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
 {
+   EDEBUG_FUNC(this,parent);
 }
 
 
@@ -55,8 +72,13 @@ Similarity::Input::Input(Similarity* parent):
 
 
 
+/*!
+ * Return the total number of arguments this analytic type contains.
+ */
 int Similarity::Input::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -65,8 +87,15 @@ int Similarity::Input::size() const
 
 
 
+/*!
+ * Return the argument type for a given index.
+ *
+ * @param index
+ */
 EAbstractAnalytic::Input::Type Similarity::Input::type(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    switch (index)
    {
    case InputData: return Type::DataIn;
@@ -83,7 +112,9 @@ EAbstractAnalytic::Input::Type Similarity::Input::type(int index) const
    case RemovePostOutliers: return Type::Boolean;
    case MinCorrelation: return Type::Double;
    case MaxCorrelation: return Type::Double;
-   case KernelSize: return Type::Integer;
+   case WorkBlockSize: return Type::Integer;
+   case GlobalWorkSize: return Type::Integer;
+   case LocalWorkSize: return Type::Integer;
    default: return Type::Boolean;
    }
 }
@@ -93,8 +124,16 @@ EAbstractAnalytic::Input::Type Similarity::Input::type(int index) const
 
 
 
+/*!
+ * Return data for a given role on an argument with the given index.
+ *
+ * @param index
+ * @param role
+ */
 QVariant Similarity::Input::data(int index, Role role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    switch (index)
    {
    case InputData:
@@ -238,14 +277,36 @@ QVariant Similarity::Input::data(int index, Role role) const
       case Role::Maximum: return 1;
       default: return QVariant();
       }
-   case KernelSize:
+   case WorkBlockSize:
       switch (role)
       {
-      case Role::CommandLineName: return QString("ksize");
-      case Role::Title: return tr("Kernel Size:");
-      case Role::WhatsThis: return tr("(OpenCL) Total number of kernels to run per block.");
+      case Role::CommandLineName: return QString("bsize");
+      case Role::Title: return tr("Work Block Size:");
+      case Role::WhatsThis: return tr("Number of pairs to process in each work block.");
+      case Role::Default: return 0;
+      case Role::Minimum: return 0;
+      case Role::Maximum: return std::numeric_limits<int>::max();
+      default: return QVariant();
+      }
+   case GlobalWorkSize:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("gsize");
+      case Role::Title: return tr("Global Work Size:");
+      case Role::WhatsThis: return tr("The global work size for each OpenCL worker.");
       case Role::Default: return 4096;
       case Role::Minimum: return 1;
+      case Role::Maximum: return std::numeric_limits<int>::max();
+      default: return QVariant();
+      }
+   case LocalWorkSize:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("lsize");
+      case Role::Title: return tr("Local Work Size:");
+      case Role::WhatsThis: return tr("The local work size for each OpenCL worker.");
+      case Role::Default: return 0;
+      case Role::Minimum: return 0;
       case Role::Maximum: return std::numeric_limits<int>::max();
       default: return QVariant();
       }
@@ -258,38 +319,24 @@ QVariant Similarity::Input::data(int index, Role role) const
 
 
 
+/*!
+ * Set an argument with the given index to the given value.
+ *
+ * @param index
+ * @param value
+ */
 void Similarity::Input::set(int index, const QVariant& value)
 {
+   EDEBUG_FUNC(this,index,&value);
+
    switch (index)
    {
    case ClusteringType:
       _base->_clusMethod = static_cast<ClusteringMethod>(CLUSTERING_NAMES.indexOf(value.toString()));
-
-      switch ( _base->_clusMethod )
-      {
-      case ClusteringMethod::None:
-         _base->_clusModel = nullptr;
-         break;
-      case ClusteringMethod::GMM:
-         _base->_clusModel = new Pairwise::GMM();
-         break;
-      case ClusteringMethod::KMeans:
-         _base->_clusModel = new Pairwise::KMeans();
-         break;
-      }
       break;
    case CorrelationType:
       _base->_corrMethod = static_cast<CorrelationMethod>(CORRELATION_NAMES.indexOf(value.toString()));
-
-      switch ( _base->_corrMethod )
-      {
-      case CorrelationMethod::Pearson:
-         _base->_corrModel = new Pairwise::Pearson();
-         break;
-      case CorrelationMethod::Spearman:
-         _base->_corrModel = new Pairwise::Spearman();
-         break;
-      }
+      _base->_corrName = value.toString();
       break;
    case MinExpression:
       _base->_minExpression = value.toDouble();
@@ -318,8 +365,14 @@ void Similarity::Input::set(int index, const QVariant& value)
    case MaxCorrelation:
       _base->_maxCorrelation = value.toDouble();
       break;
-   case KernelSize:
-      _base->_kernelSize = value.toInt();
+   case WorkBlockSize:
+      _base->_workBlockSize = value.toInt();
+      break;
+   case GlobalWorkSize:
+      _base->_globalWorkSize = value.toInt();
+      break;
+   case LocalWorkSize:
+      _base->_localWorkSize = value.toInt();
       break;
    }
 }
@@ -329,10 +382,16 @@ void Similarity::Input::set(int index, const QVariant& value)
 
 
 
-void Similarity::Input::set(int index, QFile* file)
+/*!
+ * Set a file argument with the given index to the given qt file pointer. This
+ * implementation does nothing because this analytic has no file arguments.
+ *
+ * @param index
+ * @param file
+ */
+void Similarity::Input::set(int, QFile*)
 {
-   Q_UNUSED(index)
-   Q_UNUSED(file)
+   EDEBUG_FUNC(this);
 }
 
 
@@ -340,8 +399,16 @@ void Similarity::Input::set(int index, QFile* file)
 
 
 
+/*!
+ * Set a data argument with the given index to the given data object pointer.
+ *
+ * @param index
+ * @param data
+ */
 void Similarity::Input::set(int index, EAbstractData *data)
 {
+   EDEBUG_FUNC(this,index,data);
+
    switch (index)
    {
    case InputData:

@@ -4,13 +4,22 @@
 
 
 
+/*!
+ * This class implements the fetch-pair kernel for the similarity analytic. This
+ * kernel takes a list of pairwise indices and computes the pairwise data, the
+ * number of clean samples, and the initial sample labels for each pair.
+ */
 class Similarity::OpenCL::FetchPair : public ::OpenCL::Kernel
 {
    Q_OBJECT
 public:
+   /*!
+    * Defines the arguments passed to the OpenCL kernel.
+    */
    enum Argument
    {
-      Expressions
+      GlobalWorkSize
+      ,Expressions
       ,SampleSize
       ,InIndex
       ,MinExpression
@@ -21,12 +30,13 @@ public:
    explicit FetchPair(::OpenCL::Program* program, QObject* parent = nullptr);
    ::OpenCL::Event execute(
       ::OpenCL::CommandQueue* queue,
-      int kernelSize,
+      int globalWorkSize,
+      int localWorkSize,
       ::OpenCL::Buffer<cl_float>* expressions,
       cl_int sampleSize,
       ::OpenCL::Buffer<cl_int2>* in_index,
       cl_int minExpression,
-      ::OpenCL::Buffer<Pairwise::Vector2>* out_X,
+      ::OpenCL::Buffer<cl_float2>* out_X,
       ::OpenCL::Buffer<cl_int>* out_N,
       ::OpenCL::Buffer<cl_char>* out_labels
    );

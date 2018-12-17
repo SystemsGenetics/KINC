@@ -4,9 +4,17 @@
 
 
 
+/*!
+ * This class implements the ACE data factory for producing new data objects
+ * and giving basic information about all available data types.
+ */
 class DataFactory : public EAbstractDataFactory
 {
 public:
+   /*!
+    * Defines all available data types this program implements along with the total
+    * size.
+    */
    enum Type
    {
       ExpressionMatrixType = 0

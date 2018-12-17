@@ -7,18 +7,48 @@
 
 
 
+/*!
+ * String list of reduction methods for this analytic that correspond exactly
+ * to its enumeration. Used for handling the reduction method argument for this
+ * input object.
+ */
+const QStringList RMT::Input::REDUCTION_NAMES
+{
+   "first"
+   ,"maxcorr"
+   ,"maxsize"
+   ,"random"
+};
+
+
+
+
+
+
+/*!
+ * Construct a new input object with the given analytic as its parent.
+ *
+ * @param parent
+ */
 RMT::Input::Input(RMT* parent):
    EAbstractAnalytic::Input(parent),
    _base(parent)
-{}
+{
+   EDEBUG_FUNC(this,parent);
+}
 
 
 
 
 
 
+/*!
+ * Return the total number of arguments this analytic type contains.
+ */
 int RMT::Input::size() const
 {
+   EDEBUG_FUNC(this);
+
    return Total;
 }
 
@@ -27,17 +57,26 @@ int RMT::Input::size() const
 
 
 
+/*!
+ * Return the argument type for a given index.
+ *
+ * @param index
+ */
 EAbstractAnalytic::Input::Type RMT::Input::type(int index) const
 {
+   EDEBUG_FUNC(this,index);
+
    switch (index)
    {
    case InputData: return Type::DataIn;
    case LogFile: return Type::FileOut;
+   case ReductionType: return Type::Selection;
    case ThresholdStart: return Type::Double;
    case ThresholdStep: return Type::Double;
    case ThresholdStop: return Type::Double;
-   case MinUnfoldingPace: return Type::Integer;
-   case MaxUnfoldingPace: return Type::Integer;
+   case SplineInterpolation: return Type::Boolean;
+   case MinSplinePace: return Type::Integer;
+   case MaxSplinePace: return Type::Integer;
    case HistogramBinSize: return Type::Integer;
    default: return Type::Boolean;
    }
@@ -48,8 +87,16 @@ EAbstractAnalytic::Input::Type RMT::Input::type(int index) const
 
 
 
+/*!
+ * Return data for a given role on an argument with the given index.
+ *
+ * @param index
+ * @param role
+ */
 QVariant RMT::Input::data(int index, Role role) const
 {
+   EDEBUG_FUNC(this,index,role);
+
    switch (index)
    {
    case InputData:
@@ -68,6 +115,16 @@ QVariant RMT::Input::data(int index, Role role) const
       case Role::Title: return tr("Log File:");
       case Role::WhatsThis: return tr("Output text file that logs all results.");
       case Role::FileFilters: return tr("Text file %1").arg("(*.txt)");
+      default: return QVariant();
+      }
+   case ReductionType:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("reduction");
+      case Role::Title: return tr("Reduction Method:");
+      case Role::WhatsThis: return tr("Method to use for pairwise reduction.");
+      case Role::SelectionValues: return REDUCTION_NAMES;
+      case Role::Default: return "first";
       default: return QVariant();
       }
    case ThresholdStart:
@@ -103,23 +160,32 @@ QVariant RMT::Input::data(int index, Role role) const
       case Role::Maximum: return 1;
       default: return QVariant();
       }
-   case MinUnfoldingPace:
+   case SplineInterpolation:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("spline");
+      case Role::Title: return tr("Use Spline Interpolation:");
+      case Role::WhatsThis: return tr("Whether to perform spline interpolation on each set of eigenvalues.");
+      case Role::Default: return true;
+      default: return QVariant();
+      }
+   case MinSplinePace:
       switch (role)
       {
       case Role::CommandLineName: return QString("minpace");
-      case Role::Title: return tr("Minimum Unfolding Pace:");
-      case Role::WhatsThis: return tr("The minimum pace with which to perform unfolding.");
+      case Role::Title: return tr("Minimum Spline Pace:");
+      case Role::WhatsThis: return tr("The minimum pace of the spline interpolation.");
       case Role::Default: return 10;
       case Role::Minimum: return 1;
       case Role::Maximum: return std::numeric_limits<int>::max();
       default: return QVariant();
       }
-   case MaxUnfoldingPace:
+   case MaxSplinePace:
       switch (role)
       {
       case Role::CommandLineName: return QString("maxpace");
-      case Role::Title: return tr("Maximum Unfolding Pace:");
-      case Role::WhatsThis: return tr("The maximum pace with which to perform unfolding.");
+      case Role::Title: return tr("Maximum Spline Pace:");
+      case Role::WhatsThis: return tr("The maximum pace of the spline interpolation.");
       case Role::Default: return 40;
       case Role::Minimum: return 1;
       case Role::Maximum: return std::numeric_limits<int>::max();
@@ -145,10 +211,21 @@ QVariant RMT::Input::data(int index, Role role) const
 
 
 
+/*!
+ * Set an argument with the given index to the given value.
+ *
+ * @param index
+ * @param value
+ */
 void RMT::Input::set(int index, const QVariant& value)
 {
+   EDEBUG_FUNC(this,index,&value);
+
    switch (index)
    {
+   case ReductionType:
+      _base->_reductionMethod = static_cast<ReductionMethod>(REDUCTION_NAMES.indexOf(value.toString()));
+      break;
    case ThresholdStart:
       _base->_thresholdStart = value.toDouble();
       break;
@@ -158,11 +235,14 @@ void RMT::Input::set(int index, const QVariant& value)
    case ThresholdStop:
       _base->_thresholdStop = value.toDouble();
       break;
-   case MinUnfoldingPace:
-      _base->_minUnfoldingPace = value.toInt();
+   case SplineInterpolation:
+      _base->_splineInterpolation = value.toBool();
       break;
-   case MaxUnfoldingPace:
-      _base->_maxUnfoldingPace = value.toInt();
+   case MinSplinePace:
+      _base->_minSplinePace = value.toInt();
+      break;
+   case MaxSplinePace:
+      _base->_maxSplinePace = value.toInt();
       break;
    case HistogramBinSize:
       _base->_histogramBinSize = value.toInt();
@@ -175,8 +255,16 @@ void RMT::Input::set(int index, const QVariant& value)
 
 
 
+/*!
+ * Set a file argument with the given index to the given qt file pointer.
+ *
+ * @param index
+ * @param file
+ */
 void RMT::Input::set(int index, QFile* file)
 {
+   EDEBUG_FUNC(this,index,file);
+
    if ( index == LogFile )
    {
       _base->_logfile = file;
@@ -188,8 +276,16 @@ void RMT::Input::set(int index, QFile* file)
 
 
 
+/*!
+ * Set a data argument with the given index to the given data object pointer.
+ *
+ * @param index
+ * @param data
+ */
 void RMT::Input::set(int index, EAbstractData* data)
 {
+   EDEBUG_FUNC(this,index,data);
+
    if ( index == InputData )
    {
       _base->_input = data->cast<CorrelationMatrix>();

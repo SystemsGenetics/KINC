@@ -4,52 +4,50 @@
 
 
 
+/*!
+ * This class implements the cluster matrix data object. A cluster matrix is a
+ * pairwise matrix where each pair-cluster element is a sample mask denoting
+ * whether a sample belongs in the cluster. The matrix data can be accessed
+ * using the pairwise iterator for this class.
+ */
 class CCMatrix : public Pairwise::Matrix
 {
    Q_OBJECT
 public:
    class Pair;
+public:
    virtual QAbstractTableModel* model() override final;
-   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-   int rowCount(const QModelIndex&) const;
-   int columnCount(const QModelIndex&) const;
-   QVariant data(const QModelIndex& index, int role) const;
-   void initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& sampleNames);
-   EMetadata sampleNames() const;
+public:
+   void initialize(const EMetaArray& geneNames, int maxClusterSize, const EMetaArray& sampleNames);
+   EMetaArray sampleNames() const;
+   /*!
+    * Return the number of samples in the cluster matrix.
+    */
    int sampleSize() const { return _sampleSize; }
 private:
-   virtual void writeHeader() { stream() << _sampleSize; }
-   virtual void readHeader() { stream() >> _sampleSize; }
-   static const int DATA_OFFSET {4};
-   qint32 _sampleSize {0};
-};
-
-
-
-class CCMatrix::Pair : public Pairwise::Matrix::Pair
-{
-public:
-   Pair(CCMatrix* matrix):
-      Matrix::Pair(matrix),
-      _cMatrix(matrix)
-      {}
-   Pair(const CCMatrix* matrix):
-      Matrix::Pair(matrix),
-      _cMatrix(matrix)
-      {}
-   Pair() = default;
-   virtual void clearClusters() const { _sampleMasks.clear(); }
-   virtual void addCluster(int amount = 1) const;
-   virtual int clusterSize() const { return _sampleMasks.size(); }
-   virtual bool isEmpty() const { return _sampleMasks.isEmpty(); }
-   QString toString() const;
-   const qint8& at(int cluster, int sample) const { return _sampleMasks.at(cluster).at(sample); }
-   qint8& at(int cluster, int sample) { return _sampleMasks[cluster][sample]; }
+   class Model;
 private:
-   virtual void writeCluster(EDataStream& stream, int cluster);
-   virtual void readCluster(const EDataStream& stream, int cluster) const;
-   mutable QVector<QVector<qint8>> _sampleMasks;
-   const CCMatrix* _cMatrix;
+   /*!
+    * Write the sub-header to the data object file.
+    */
+   virtual void writeHeader() { stream() << _sampleSize; }
+   /*!
+    * Read the sub-header from the data object file.
+    */
+   virtual void readHeader() { stream() >> _sampleSize; }
+   /*!
+    * The size (in bytes) of the sub-header. The sub-header consists of the
+    * sample size.
+    */
+   constexpr static int SUBHEADER_SIZE {4};
+   /*!
+    * The number of samples in each sample mask.
+    */
+   qint32 _sampleSize {0};
+   /*!
+    * Pointer to a qt table model for this class.
+    */
+  Model* _model {nullptr};
 };
 
 

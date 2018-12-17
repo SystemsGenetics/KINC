@@ -4,20 +4,40 @@
 
 
 
+typedef struct
+{
+   cl_float pi;
+   cl_float2 mu;
+   cl_float4 sigma;
+   cl_float4 sigmaInv;
+   cl_float normalizer;
+} cl_component;
+
+
+
+
+
+
+/*!
+ * This class implements the GMM kernel for the similarity analytic. This
+ * kernel takes a list of pairwise data arrays and computes the number of
+ * clusters and a list of cluster labels for each pair.
+ */
 class Similarity::OpenCL::GMM : public ::OpenCL::Kernel
 {
    Q_OBJECT
 public:
+   /*!
+    * Defines the arguments passed to the OpenCL kernel.
+    */
    enum Argument
    {
-      Expressions
+      GlobalWorkSize
       ,SampleSize
       ,MinSamples
       ,MinClusters
       ,MaxClusters
       ,Criterion
-      ,RemovePreOutliers
-      ,RemovePostOutliers
       ,WorkX
       ,WorkN
       ,WorkLabels
@@ -25,32 +45,28 @@ public:
       ,WorkMP
       ,WorkCounts
       ,WorkLogPi
-      ,WorkLoggamma
-      ,WorkLogGamma
+      ,WorkGamma
       ,OutK
       ,OutLabels
    };
    explicit GMM(::OpenCL::Program* program, QObject* parent = nullptr);
    ::OpenCL::Event execute(
       ::OpenCL::CommandQueue* queue,
-      int kernelSize,
-      ::OpenCL::Buffer<cl_float>* expressions,
+      int globalWorkSize,
+      int localWorkSize,
       cl_int sampleSize,
       cl_int minSamples,
       cl_char minClusters,
       cl_char maxClusters,
-      Pairwise::Criterion criterion,
-      cl_int removePreOutliers,
-      cl_int removePostOutliers,
-      ::OpenCL::Buffer<Pairwise::Vector2>* work_X,
+      cl_int criterion,
+      ::OpenCL::Buffer<cl_float2>* work_X,
       ::OpenCL::Buffer<cl_int>* work_N,
       ::OpenCL::Buffer<cl_char>* work_labels,
-      ::OpenCL::Buffer<Pairwise::GMM::Component>* work_components,
-      ::OpenCL::Buffer<Pairwise::Vector2>* work_MP,
+      ::OpenCL::Buffer<cl_component>* work_components,
+      ::OpenCL::Buffer<cl_float2>* work_MP,
       ::OpenCL::Buffer<cl_int>* work_counts,
       ::OpenCL::Buffer<cl_float>* work_logpi,
-      ::OpenCL::Buffer<cl_float>* work_loggamma,
-      ::OpenCL::Buffer<cl_float>* work_logGamma,
+      ::OpenCL::Buffer<cl_float>* work_gamma,
       ::OpenCL::Buffer<cl_char>* out_K,
       ::OpenCL::Buffer<cl_char>* out_labels
    );

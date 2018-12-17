@@ -9,10 +9,36 @@ using namespace Pairwise;
 
 
 
-void Spearman::initialize(ExpressionMatrix* input)
+/*!
+ * Compute the next power of 2 which occurs after a number.
+ *
+ * @param n
+ */
+int Spearman::nextPower2(int n)
+{
+   int pow2 = 2;
+   while ( pow2 < n )
+   {
+      pow2 *= 2;
+   }
+
+   return pow2;
+}
+
+
+
+
+
+
+/*!
+ * Construct a Spearman correlation model.
+ *
+ * @param emx
+ */
+Spearman::Spearman(ExpressionMatrix* emx)
 {
    // pre-allocate workspace
-   int workSize = nextPower2(input->getSampleSize());
+   int workSize = nextPower2(emx->sampleSize());
 
    _x.resize(workSize);
    _y.resize(workSize);
@@ -24,13 +50,22 @@ void Spearman::initialize(ExpressionMatrix* input)
 
 
 
+/*!
+ * Compute the Spearman correlation of a cluster in a pairwise data array. The
+ * data array should only contain samples that have a non-negative label.
+ *
+ * @param data
+ * @param labels
+ * @param cluster
+ * @param minSamples
+ */
 float Spearman::computeCluster(
    const QVector<Vector2>& data,
    const QVector<qint8>& labels,
    qint8 cluster,
    int minSamples)
 {
-   // extract samples in gene pair cluster
+   // extract samples in pairwise cluster
    int N_pow2 = nextPower2(labels.size());
    int n = 0;
 
@@ -90,22 +125,15 @@ float Spearman::computeCluster(
 
 
 
-int Spearman::nextPower2(int n)
-{
-   int pow2 = 2;
-   while ( pow2 < n )
-   {
-      pow2 *= 2;
-   }
-
-   return pow2;
-}
-
-
-
-
-
-
+/*!
+ * Sort a list using bitonic sort, while also applying the same swap operations
+ * to a second list of the same size. The lists should have a size which is a
+ * power of two.
+ *
+ * @param size
+ * @param sortList
+ * @param extraList
+ */
 void Spearman::bitonicSort(int size, QVector<float>& sortList, QVector<float>& extraList)
 {
    // initialize all variables
@@ -138,6 +166,15 @@ void Spearman::bitonicSort(int size, QVector<float>& sortList, QVector<float>& e
 
 
 
+/*!
+ * Sort a list using bitonic sort, while also applying the same swap operations
+ * to a second list of the same size. The lists should have a size which is a
+ * power of two.
+ *
+ * @param size
+ * @param sortList
+ * @param extraList
+ */
 void Spearman::bitonicSort(int size, QVector<float>& sortList, QVector<int>& extraList)
 {
    // initialize all variables

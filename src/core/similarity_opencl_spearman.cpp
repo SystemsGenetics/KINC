@@ -9,9 +9,17 @@ using namespace std;
 
 
 
+/*!
+ * Construct a new Spearman kernel object with the given OpenCL program and
+ * qt parent.
+ *
+ * @param program
+ * @param parent
+ */
 Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* parent):
    ::OpenCL::Kernel(program, "Spearman_compute", parent)
 {
+   EDEBUG_FUNC(this,parent);
 }
 
 
@@ -19,10 +27,29 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
 
 
 
+/*!
+ * Execute this kernel object's OpenCL kernel using the given OpenCL command
+ * queue and kernel arguments, returning the OpenCL event associated with the
+ * kernel execution.
+ *
+ * @param queue
+ * @param globalWorkSize
+ * @param localWorkSize
+ * @param in_data
+ * @param clusterSize
+ * @param in_labels
+ * @param sampleSize
+ * @param minSamples
+ * @param work_x
+ * @param work_y
+ * @param work_rank
+ * @param out_correlations
+ */
 ::OpenCL::Event Similarity::OpenCL::Spearman::execute(
    ::OpenCL::CommandQueue* queue,
-   int kernelSize,
-   ::OpenCL::Buffer<Pairwise::Vector2>* in_data,
+   int globalWorkSize,
+   int localWorkSize,
+   ::OpenCL::Buffer<cl_float2>* in_data,
    cl_char clusterSize,
    ::OpenCL::Buffer<cl_char>* in_labels,
    cl_int sampleSize,
@@ -33,10 +60,25 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
    ::OpenCL::Buffer<cl_float>* out_correlations
 )
 {
+   EDEBUG_FUNC(this,
+      queue,
+      globalWorkSize,
+      localWorkSize,
+      in_data,
+      clusterSize,
+      in_labels,
+      sampleSize,
+      minSamples,
+      work_x,
+      work_y,
+      work_rank,
+      out_correlations);
+
    // acquire lock for this kernel
    Locker locker {lock()};
 
    // set kernel arguments
+   setArgument(GlobalWorkSize, globalWorkSize);
    setBuffer(InData, in_data);
    setArgument(ClusterSize, clusterSize);
    setBuffer(InLabels, in_labels);
@@ -47,8 +89,15 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
    setBuffer(WorkRank, work_rank);
    setBuffer(OutCorrelations, out_correlations);
 
-   // set kernel sizes
-   setSizes(0, kernelSize, min(kernelSize, maxWorkGroupSize(queue->device())));
+   // set work sizes
+   if ( localWorkSize == 0 )
+   {
+      localWorkSize = min(globalWorkSize, maxWorkGroupSize(queue->device()));
+   }
+
+   int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
+
+   setSizes(0, numWorkgroups * localWorkSize, localWorkSize);
 
    // execute kernel
    return ::OpenCL::Kernel::execute(queue);

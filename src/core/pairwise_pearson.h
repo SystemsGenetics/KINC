@@ -1,15 +1,14 @@
 #ifndef PAIRWISE_PEARSON_H
 #define PAIRWISE_PEARSON_H
-#include "pairwise_correlation.h"
+#include "pairwise_correlationmodel.h"
 
 namespace Pairwise
 {
-   class Pearson : public Correlation
+   /*!
+    * This class implements the Pearson correlation model.
+    */
+   class Pearson : public CorrelationModel
    {
-   public:
-      void initialize(ExpressionMatrix* /*input*/) {}
-      QString getName() const { return "pearson"; }
-
    protected:
       float computeCluster(
          const QVector<Vector2>& data,

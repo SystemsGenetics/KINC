@@ -4,53 +4,52 @@
 
 
 
+/*!
+ * This class implements the correlation matrix data object. A correlation matrix
+ * is a pairwise matrix where each pair-cluster element is a correlation value. The
+ * matrix data can be accessed using the pairwise iterator for this class.
+ */
 class CorrelationMatrix : public Pairwise::Matrix
 {
    Q_OBJECT
 public:
    class Pair;
-   virtual QAbstractTableModel* model() override final;
-   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-   int rowCount(const QModelIndex&) const;
-   int columnCount(const QModelIndex&) const;
-   QVariant data(const QModelIndex& index, int role) const;
-   void initialize(const EMetadata& geneNames, int maxClusterSize, const EMetadata& correlationNames);
-   EMetadata correlationNames() const;
-   QVector<float> dumpRawData() const;
-private:
-   virtual void writeHeader() { stream() << _correlationSize; }
-   virtual void readHeader() { stream() >> _correlationSize; }
-   static const int DATA_OFFSET {1};
-   qint8 _correlationSize {0};
-};
-
-
-
-class CorrelationMatrix::Pair : public Pairwise::Matrix::Pair
-{
 public:
-   Pair(CorrelationMatrix* matrix):
-      Matrix::Pair(matrix),
-      _cMatrix(matrix)
-      {}
-   Pair(const CorrelationMatrix* matrix):
-      Matrix::Pair(matrix),
-      _cMatrix(matrix)
-      {}
-   Pair() = default;
-   virtual void clearClusters() const { _correlations.clear(); }
-   virtual void addCluster(int amount = 1) const;
-   virtual int clusterSize() const { return _correlations.size(); }
-   virtual bool isEmpty() const { return _correlations.isEmpty(); }
-   QString toString() const;
-   const float& at(int cluster, int correlation) const
-      { return _correlations.at(cluster).at(correlation); }
-   float& at(int cluster, int correlation) { return _correlations[cluster][correlation]; }
+   struct RawPair
+   {
+      Pairwise::Index index;
+      QVector<float> correlations;
+   };
+public:
+   virtual QAbstractTableModel* model() override final;
+public:
+   void initialize(const EMetaArray& geneNames, int maxClusterSize, const EMetaArray& correlationNames);
+   EMetaArray correlationNames() const;
+   QVector<RawPair> dumpRawData() const;
 private:
-   virtual void writeCluster(EDataStream& stream, int cluster);
-   virtual void readCluster(const EDataStream& stream, int cluster) const;
-   mutable QVector<QVector<float>> _correlations;
-   const CorrelationMatrix* _cMatrix;
+   class Model;
+private:
+   /*!
+    * Write the sub-header to the data object file.
+    */
+   virtual void writeHeader() { stream() << _correlationSize; }
+   /*!
+    * Read the sub-header from the data object file.
+    */
+   virtual void readHeader() { stream() >> _correlationSize; }
+   /*!
+    * The size (in bytes) of the sub-header. The sub-header consists of the
+    * correlation size.
+    */
+   constexpr static int SUBHEADER_SIZE {1};
+   /*!
+    * The number of correlations in each pair-cluster.
+    */
+   qint8 _correlationSize {0};
+   /*!
+    * Pointer to a qt table model for this class.
+    */
+  Model* _model {nullptr};
 };
 
 
