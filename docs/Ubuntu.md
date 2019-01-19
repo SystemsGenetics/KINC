@@ -1,7 +1,7 @@
 
-# Development on Ubuntu 16.04
+# Installation on Ubuntu
 
-Use the following steps to setup KINC for development on Ubuntu 16.04:
+Use the following steps to install KINC from source on Ubuntu 16.04:
 
 ## Step 1: Install Dependencies
 
@@ -64,6 +64,6 @@ make install
 
 You should now be able to run KINC.
 
-## (Optional) Use QtCreator
+## (Optional) Use QtCreator for Development
 
 Select __File__ > __Open File or Project__ and then navigate in the file browser to the ACE directory and select the ACE.pro file. Navigate through configure setup. Repeat for KINC.
