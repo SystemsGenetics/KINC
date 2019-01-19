@@ -1,3 +1,4 @@
+
 # Include common settings
 include (../KINC.pri)
 
@@ -8,15 +9,6 @@ CONFIG += staticlib
 
 # Build settings
 DESTDIR = $$PWD/../../build/libs/
-
-# Qt libraries
-QT += core
-
-# Preprocessor defines
-DEFINES += QT_DEPRECATED_WARNINGS
-
-# Used to ignore useless warnings from OpenCL
-QMAKE_CXXFLAGS += -Wno-ignored-attributes
 
 # Source files
 SOURCES += \

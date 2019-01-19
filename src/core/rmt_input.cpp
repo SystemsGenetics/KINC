@@ -8,6 +8,24 @@
 
 
 /*!
+ * String list of reduction methods for this analytic that correspond exactly
+ * to its enumeration. Used for handling the reduction method argument for this
+ * input object.
+ */
+const QStringList RMT::Input::REDUCTION_NAMES
+{
+   "first"
+   ,"maxcorr"
+   ,"maxsize"
+   ,"random"
+};
+
+
+
+
+
+
+/*!
  * Construct a new input object with the given analytic as its parent.
  *
  * @param parent
@@ -52,6 +70,7 @@ EAbstractAnalytic::Input::Type RMT::Input::type(int index) const
    {
    case InputData: return Type::DataIn;
    case LogFile: return Type::FileOut;
+   case ReductionType: return Type::Selection;
    case ThresholdStart: return Type::Double;
    case ThresholdStep: return Type::Double;
    case ThresholdStop: return Type::Double;
@@ -96,6 +115,16 @@ QVariant RMT::Input::data(int index, Role role) const
       case Role::Title: return tr("Log File:");
       case Role::WhatsThis: return tr("Output text file that logs all results.");
       case Role::FileFilters: return tr("Text file %1").arg("(*.txt)");
+      default: return QVariant();
+      }
+   case ReductionType:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("reduction");
+      case Role::Title: return tr("Reduction Method:");
+      case Role::WhatsThis: return tr("Method to use for pairwise reduction.");
+      case Role::SelectionValues: return REDUCTION_NAMES;
+      case Role::Default: return "first";
       default: return QVariant();
       }
    case ThresholdStart:
@@ -194,6 +223,9 @@ void RMT::Input::set(int index, const QVariant& value)
 
    switch (index)
    {
+   case ReductionType:
+      _base->_reductionMethod = static_cast<ReductionMethod>(REDUCTION_NAMES.indexOf(value.toString()));
+      break;
    case ThresholdStart:
       _base->_thresholdStart = value.toDouble();
       break;

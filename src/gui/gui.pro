@@ -5,6 +5,7 @@ include (../KINC.pri)
 # Basic settings
 QT += gui widgets
 TARGET = qkinc
+TEMPLATE = app
 
 # External libraries
 LIBS += -lacegui

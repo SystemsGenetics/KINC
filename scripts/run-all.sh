@@ -85,15 +85,6 @@ if [[ $DO_SIMILARITY = 1 ]]; then
 		--mincorr $MINCORR --maxcorr $MAXCORR
 fi
 
-# threshold
-if [[ $DO_THRESHOLD = 1 ]]; then
-	mkdir -p $LOGS
-
-	kinc run rmt \
-		--input $CMX_FILE \
-		--log $RMT_FILE
-fi
-
 # export cmx
 if [[ $DO_EXPORT_CMX = 1 ]]; then
 	OUTFILE="$DATA/$(basename $CMX_FILE .cmx)-cmx.txt"
@@ -103,6 +94,15 @@ if [[ $DO_EXPORT_CMX = 1 ]]; then
 		--ccm $CCM_FILE \
 		--cmx $CMX_FILE \
 		--output $OUTFILE
+fi
+
+# threshold
+if [[ $DO_THRESHOLD = 1 ]]; then
+	mkdir -p $LOGS
+
+	kinc run rmt \
+	   --input $CMX_FILE \
+	   --log $RMT_FILE
 fi
 
 # extract

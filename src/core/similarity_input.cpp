@@ -283,8 +283,8 @@ QVariant Similarity::Input::data(int index, Role role) const
       case Role::CommandLineName: return QString("bsize");
       case Role::Title: return tr("Work Block Size:");
       case Role::WhatsThis: return tr("Number of pairs to process in each work block.");
-      case Role::Default: return 32768;
-      case Role::Minimum: return 1;
+      case Role::Default: return 0;
+      case Role::Minimum: return 0;
       case Role::Maximum: return std::numeric_limits<int>::max();
       default: return QVariant();
       }

@@ -1,10 +1,7 @@
 #ifndef POWERLAW_H
 #define POWERLAW_H
 #include <ace/core/core.h>
-
-
-
-class CorrelationMatrix;
+#include "correlationmatrix.h"
 
 
 
@@ -26,8 +23,8 @@ public:
    virtual EAbstractAnalytic::Input* makeInput() override final;
    virtual void initialize();
 private:
-   QVector<float> computeMaximums(const QVector<float>& matrix);
-   QVector<bool> computeAdjacencyMatrix(const QVector<float>& matrix, const QVector<float>& maximums, float threshold, int* size);
+   QVector<float> computeMaximums(const QVector<CorrelationMatrix::RawPair>& pairs);
+   QVector<bool> computeAdjacencyMatrix(const QVector<CorrelationMatrix::RawPair>& pairs, const QVector<float>& maximums, float threshold, int* size);
    QVector<int> computeDegreeDistribution(const QVector<bool>& matrix, int size);
    float computeCorrelation(const QVector<int>& histogram);
    /*!

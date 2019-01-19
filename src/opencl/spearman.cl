@@ -13,13 +13,13 @@
  */
 int nextPower2(int n)
 {
-	int pow2 = 2;
-	while ( pow2 < n )
-	{
-		pow2 *= 2;
-	}
+   int pow2 = 2;
+   while ( pow2 < n )
+   {
+      pow2 *= 2;
+   }
 
-	return pow2;
+   return pow2;
 }
 
 
@@ -43,7 +43,7 @@ int nextPower2(int n)
 float Spearman_computeCluster(
    __global const float2 *data,
    __global const char *labels,
-	int sampleSize,
+   int sampleSize,
    char cluster,
    int minSamples,
    __global float *x,
@@ -124,11 +124,11 @@ float Spearman_computeCluster(
  * @param out_correlations
  */
 __kernel void Spearman_compute(
-	int globalWorkSize,
+   int globalWorkSize,
    __global const float2 *in_data,
    char clusterSize,
    __global const char *in_labels,
-	int sampleSize,
+   int sampleSize,
    int minSamples,
    __global float *work_x,
    __global float *work_y,
@@ -137,13 +137,13 @@ __kernel void Spearman_compute(
 {
    int i = get_global_id(0);
 
-	if ( i >= globalWorkSize )
+   if ( i >= globalWorkSize )
    {
       return;
    }
 
-	// initialize workspace variables
-	int N_pow2 = nextPower2(sampleSize);
+   // initialize workspace variables
+   int N_pow2 = nextPower2(sampleSize);
    __global const float2 *data = &in_data[i * sampleSize];
    __global const char *labels = &in_labels[i * sampleSize];
    __global float *x = &work_x[i * N_pow2];

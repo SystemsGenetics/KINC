@@ -4,6 +4,7 @@ include (../KINC.pri)
 
 # Basic settings
 TARGET = kinc
+TEMPLATE = app
 
 # External libraries
 LIBS += -laceconsole

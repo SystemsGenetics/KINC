@@ -5,6 +5,7 @@
 
 
 using namespace std;
+using RawPair = CorrelationMatrix::RawPair;
 
 
 
@@ -41,8 +42,8 @@ void PowerLaw::process(const EAbstractAnalytic::Block*)
    QTextStream stream(_logfile);
 
    // load raw correlation data, row-wise maximums
-   QVector<float> matrix {_input->dumpRawData()};
-   QVector<float> maximums {computeMaximums(matrix)};
+   QVector<RawPair> pairs {_input->dumpRawData()};
+   QVector<float> maximums {computeMaximums(pairs)};
 
    // continue until network is sufficiently scale-free
    float threshold {_thresholdStart};
@@ -50,11 +51,11 @@ void PowerLaw::process(const EAbstractAnalytic::Block*)
    while ( true )
    {
       qInfo("\n");
-      qInfo("threshold: %g", threshold);
+      qInfo("threshold: %8.3f", threshold);
 
       // compute adjacency matrix based on threshold
       int size;
-      QVector<bool> adjacencyMatrix {computeAdjacencyMatrix(matrix, maximums, threshold, &size)};
+      QVector<bool> adjacencyMatrix {computeAdjacencyMatrix(pairs, maximums, threshold, &size)};
 
       qInfo("adjacency matrix: %d", size);
 
@@ -69,7 +70,7 @@ void PowerLaw::process(const EAbstractAnalytic::Block*)
          // compute correlation of degree distribution
          correlation = computeCorrelation(histogram);
 
-         qInfo("correlation: %g", correlation);
+         qInfo("correlation: %8.3f", correlation);
       }
 
       // output to log file
@@ -148,31 +149,27 @@ void PowerLaw::initialize()
 /*!
  * Compute the row-wise maximums of a correlation matrix.
  *
- * @param matrix
+ * @param pairs
  */
-QVector<float> PowerLaw::computeMaximums(const QVector<float>& matrix)
+QVector<float> PowerLaw::computeMaximums(const QVector<RawPair>& pairs)
 {
-   EDEBUG_FUNC(this,&matrix);
-
-   const int N {_input->geneSize()};
-   const int K {_input->maxClusterSize()};
+   EDEBUG_FUNC(this,&pairs);
 
    // initialize elements to minimum value
-   QVector<float> maximums(N, 0);
+   QVector<float> maximums(_input->geneSize(), 0);
 
    // compute maximum correlation of each row
-   for ( int i = 0; i < N; ++i )
+   for ( auto& pair : pairs )
    {
-      for ( int j = 0; j < N; ++j )
-      {
-         for ( int k = 0; k < K; ++k )
-         {
-            float correlation = fabs(matrix[i * N * K + j * K + k]);
+      int i = pair.index.getX();
 
-            if ( maximums[i] < correlation )
-            {
-               maximums[i] = correlation;
-            }
+      for ( int k = 0; k < pair.correlations.size(); ++k )
+      {
+         float correlation = fabs(pair.correlations[k]);
+
+         if ( maximums[i] < correlation )
+         {
+            maximums[i] = correlation;
          }
       }
    }
@@ -192,61 +189,65 @@ QVector<float> PowerLaw::computeMaximums(const QVector<float>& matrix)
  * Additionally, all zero-columns removed. The number of rows in the adjacency
  * matrix is returned as a pointer argument.
  *
- * @param matrix
+ * @param pairs
  * @param maximums
  * @param threshold
  * @param size
  */
-QVector<bool> PowerLaw::computeAdjacencyMatrix(const QVector<float>& matrix, const QVector<float>& maximums, float threshold, int* size)
+QVector<bool> PowerLaw::computeAdjacencyMatrix(const QVector<RawPair>& pairs, const QVector<float>& maximums, float threshold, int* size)
 {
-   EDEBUG_FUNC(this,&matrix,&maximums,threshold,size);
-
-   const int N {_input->geneSize()};
-   const int K {_input->maxClusterSize()};
+   EDEBUG_FUNC(this,&pairs,&maximums,threshold,size);
 
    // generate vector of row indices that have a correlation above threshold
-   QVector<int> indices;
+   QVector<int> indices(_input->geneSize(), -1);
+   int pruneSize = 0;
 
    for ( int i = 0; i < maximums.size(); ++i )
    {
       if ( maximums[i] >= threshold )
       {
-         indices.append(i);
+         indices[i] = pruneSize;
+         pruneSize++;
       }
    }
 
    // extract adjacency matrix from correlation matrix
-   QVector<bool> adjacencyMatrix(indices.size() * indices.size());
+   QVector<bool> adjacencyMatrix(pruneSize * pruneSize);
 
-   for ( int i = 0; i < indices.size(); ++i )
+   // initialize diagonal
+   for ( int i = 0; i < pruneSize; ++i )
    {
-      for ( int j = 0; j < i; ++j )
+      adjacencyMatrix[i * pruneSize + i] = 1;
+   }
+
+   // iterate through all pairs
+   for ( auto& pair : pairs )
+   {
+      // get indices into pruned matrix
+      int i = indices[pair.index.getX()];
+      int j = indices[pair.index.getY()];
+
+      // skip pair if it was pruned
+      if ( i == -1 || j == -1 )
       {
-         // find maximum (absolute) correlation across clusters
-         float max {0};
+         continue;
+      }
 
-         for ( int k = 0; k < K; ++k )
-         {
-            float correlation {fabs(matrix[indices[i] * N * K + indices[j] * K + k])};
+      // select correlation from pair
+      float correlation = pair.correlations[0];
 
-            if ( max < correlation )
-            {
-               max = correlation;
-            }
-         }
-
-         // save edge if the maximum correlation is above threshold
-         if ( max >= threshold )
-         {
-            adjacencyMatrix[i * indices.size() + j] = 1;
-            adjacencyMatrix[j * indices.size() + i] = 1;
-         }
+      // save correlation if it is above threshold
+      if ( fabs(correlation) >= threshold )
+      {
+         adjacencyMatrix[i * pruneSize + j] = 1;
+         adjacencyMatrix[j * pruneSize + i] = 1;
       }
    }
 
    // save size of adjacency matrix
-   *size = indices.size();
+   *size = pruneSize;
 
+   // return adjacency matrix
    return adjacencyMatrix;
 }
 

@@ -7,6 +7,7 @@
 #include "similarity_cuda.h"
 #include "ccmatrix_pair.h"
 #include "correlationmatrix_pair.h"
+#include <ace/core/ace_qmpi.h>
 #include <ace/core/elog.h>
 
 
@@ -258,8 +259,11 @@ void Similarity::initialize()
 {
    EDEBUG_FUNC(this);
 
+   // get MPI instance
+   auto& mpi {Ace::QMPI::instance()};
+
    // only the master process needs to validate arguments
-   if ( !isMaster() )
+   if ( !mpi.isMaster() )
    {
       return;
    }
@@ -280,6 +284,14 @@ void Similarity::initialize()
       e.setTitle(tr("Invalid Argument"));
       e.setDetails(tr("Minimum clusters must be less than or equal to maximum clusters."));
       throw e;
+   }
+
+   // initialize work block size
+   if ( _workBlockSize == 0 )
+   {
+      int numWorkers = max(1, mpi.size() - 1);
+
+      _workBlockSize = min((qint64) 32768, totalPairs(_input) / numWorkers);
    }
 }
 
