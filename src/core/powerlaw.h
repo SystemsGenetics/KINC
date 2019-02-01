@@ -23,10 +23,10 @@ public:
    virtual EAbstractAnalytic::Input* makeInput() override final;
    virtual void initialize();
 private:
-   QVector<float> computeMaximums(const QVector<CorrelationMatrix::RawPair>& pairs);
-   QVector<bool> computeAdjacencyMatrix(const QVector<CorrelationMatrix::RawPair>& pairs, const QVector<float>& maximums, float threshold, int* size);
-   QVector<int> computeDegreeDistribution(const QVector<bool>& matrix, int size);
-   float computeCorrelation(const QVector<int>& histogram);
+   std::vector<float> computeMaximums(const std::vector<CorrelationMatrix::RawPair>& pairs);
+   std::vector<bool> computeAdjacencyMatrix(const std::vector<CorrelationMatrix::RawPair>& pairs, const std::vector<float>& maximums, float threshold, size_t* size);
+   std::vector<int> computeDegreeDistribution(const std::vector<bool>& matrix, size_t size);
+   float computeCorrelation(const std::vector<int>& histogram);
    /*!
     * Pointer to the input correlation matrix.
     */

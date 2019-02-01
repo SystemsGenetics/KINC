@@ -52,14 +52,14 @@ private:
       ,Random
    };
 private:
-   QVector<float> computeMaximums(const QVector<CorrelationMatrix::RawPair>& pairs);
-   QVector<float> computePruneMatrix(const QVector<CorrelationMatrix::RawPair>& pairs, const QVector<float>& maximums, float threshold, int* size);
-   QVector<float> computeEigenvalues(QVector<float>* pruneMatrix, int size);
-   QVector<float> computeUnique(const QVector<float>& values);
-   float computeChiSquare(const QVector<float>& eigens);
-   float computeChiSquareHelper(const QVector<float>& values);
-   QVector<float> computeSpline(const QVector<float>& values, int pace);
-   QVector<float> computeSpacings(const QVector<float>& values);
+   std::vector<float> computeMaximums(const std::vector<CorrelationMatrix::RawPair>& pairs);
+   std::vector<float> computePruneMatrix(const std::vector<CorrelationMatrix::RawPair>& pairs, const std::vector<float>& maximums, float threshold, size_t* size);
+   std::vector<float> computeEigenvalues(std::vector<float>* pruneMatrix, size_t size);
+   std::vector<float> computeUnique(const std::vector<float>& values);
+   float computeChiSquare(const std::vector<float>& eigens);
+   float computeChiSquareHelper(const std::vector<float>& values);
+   std::vector<float> computeSpline(const std::vector<float>& values, int pace);
+   std::vector<float> computeSpacings(const std::vector<float>& values);
    /*!
     * Pointer to the input correlation matrix.
     */

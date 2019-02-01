@@ -18,14 +18,14 @@ public:
    struct RawPair
    {
       Pairwise::Index index;
-      QVector<float> correlations;
+      std::vector<float> correlations;
    };
 public:
    virtual QAbstractTableModel* model() override final;
 public:
    void initialize(const EMetaArray& geneNames, int maxClusterSize, const EMetaArray& correlationNames);
    EMetaArray correlationNames() const;
-   QVector<RawPair> dumpRawData() const;
+   std::vector<RawPair> dumpRawData() const;
 private:
    class Model;
 private:

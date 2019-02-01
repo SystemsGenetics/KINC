@@ -42,8 +42,8 @@ void PowerLaw::process(const EAbstractAnalytic::Block*)
    QTextStream stream(_logfile);
 
    // load raw correlation data, row-wise maximums
-   QVector<RawPair> pairs {_input->dumpRawData()};
-   QVector<float> maximums {computeMaximums(pairs)};
+   std::vector<RawPair> pairs {_input->dumpRawData()};
+   std::vector<float> maximums {computeMaximums(pairs)};
 
    // continue until network is sufficiently scale-free
    float threshold {_thresholdStart};
@@ -54,10 +54,10 @@ void PowerLaw::process(const EAbstractAnalytic::Block*)
       qInfo("threshold: %8.3f", threshold);
 
       // compute adjacency matrix based on threshold
-      int size;
-      QVector<bool> adjacencyMatrix {computeAdjacencyMatrix(pairs, maximums, threshold, &size)};
+      size_t size;
+      std::vector<bool> adjacencyMatrix {computeAdjacencyMatrix(pairs, maximums, threshold, &size)};
 
-      qInfo("adjacency matrix: %d", size);
+      qInfo("adjacency matrix: %lu", size);
 
       // make sure that adjacency matrix is not empty
       float correlation {0};
@@ -65,7 +65,7 @@ void PowerLaw::process(const EAbstractAnalytic::Block*)
       if ( size > 0 )
       {
          // compute degree distribution of matrix
-         QVector<int> histogram {computeDegreeDistribution(adjacencyMatrix, size)};
+         std::vector<int> histogram {computeDegreeDistribution(adjacencyMatrix, size)};
 
          // compute correlation of degree distribution
          correlation = computeCorrelation(histogram);
@@ -151,19 +151,19 @@ void PowerLaw::initialize()
  *
  * @param pairs
  */
-QVector<float> PowerLaw::computeMaximums(const QVector<RawPair>& pairs)
+std::vector<float> PowerLaw::computeMaximums(const std::vector<RawPair>& pairs)
 {
    EDEBUG_FUNC(this,&pairs);
 
    // initialize elements to minimum value
-   QVector<float> maximums(_input->geneSize(), 0);
+   std::vector<float> maximums(_input->geneSize(), 0);
 
    // compute maximum correlation of each row
    for ( auto& pair : pairs )
    {
       int i = pair.index.getX();
 
-      for ( int k = 0; k < pair.correlations.size(); ++k )
+      for ( size_t k = 0; k < pair.correlations.size(); ++k )
       {
          float correlation = fabs(pair.correlations[k]);
 
@@ -194,15 +194,15 @@ QVector<float> PowerLaw::computeMaximums(const QVector<RawPair>& pairs)
  * @param threshold
  * @param size
  */
-QVector<bool> PowerLaw::computeAdjacencyMatrix(const QVector<RawPair>& pairs, const QVector<float>& maximums, float threshold, int* size)
+std::vector<bool> PowerLaw::computeAdjacencyMatrix(const std::vector<RawPair>& pairs, const std::vector<float>& maximums, float threshold, size_t* size)
 {
    EDEBUG_FUNC(this,&pairs,&maximums,threshold,size);
 
    // generate vector of row indices that have a correlation above threshold
-   QVector<int> indices(_input->geneSize(), -1);
-   int pruneSize = 0;
+   std::vector<int> indices(_input->geneSize(), -1);
+   size_t pruneSize = 0;
 
-   for ( int i = 0; i < maximums.size(); ++i )
+   for ( size_t i = 0; i < maximums.size(); ++i )
    {
       if ( maximums[i] >= threshold )
       {
@@ -212,10 +212,10 @@ QVector<bool> PowerLaw::computeAdjacencyMatrix(const QVector<RawPair>& pairs, co
    }
 
    // extract adjacency matrix from correlation matrix
-   QVector<bool> adjacencyMatrix(pruneSize * pruneSize);
+   std::vector<bool> adjacencyMatrix(pruneSize * pruneSize);
 
    // initialize diagonal
-   for ( int i = 0; i < pruneSize; ++i )
+   for ( size_t i = 0; i < pruneSize; ++i )
    {
       adjacencyMatrix[i * pruneSize + i] = 1;
    }
@@ -262,16 +262,16 @@ QVector<bool> PowerLaw::computeAdjacencyMatrix(const QVector<RawPair>& pairs, co
  * @param matrix
  * @param size
  */
-QVector<int> PowerLaw::computeDegreeDistribution(const QVector<bool>& matrix, int size)
+std::vector<int> PowerLaw::computeDegreeDistribution(const std::vector<bool>& matrix, size_t size)
 {
    EDEBUG_FUNC(this,&matrix,size);
 
    // compute degree of each node
-   QVector<int> degrees(size);
+   std::vector<int> degrees(size);
 
-   for ( int i = 0; i < size; i++ )
+   for ( size_t i = 0; i < size; i++ )
    {
-      for ( int j = 0; j < size; j++ )
+      for ( size_t j = 0; j < size; j++ )
       {
          degrees[i] += matrix[i * size + j];
       }
@@ -280,7 +280,7 @@ QVector<int> PowerLaw::computeDegreeDistribution(const QVector<bool>& matrix, in
    // compute max degree
    int max {0};
 
-   for ( int i = 0; i < degrees.size(); i++ )
+   for ( size_t i = 0; i < degrees.size(); i++ )
    {
       if ( max < degrees[i] )
       {
@@ -289,9 +289,9 @@ QVector<int> PowerLaw::computeDegreeDistribution(const QVector<bool>& matrix, in
    }
 
    // compute histogram of degrees
-   QVector<int> histogram(max);
+   std::vector<int> histogram(max);
 
-   for ( int i = 0; i < degrees.size(); i++ )
+   for ( size_t i = 0; i < degrees.size(); i++ )
    {
       if ( degrees[i] > 0 )
       {
@@ -313,14 +313,14 @@ QVector<int> PowerLaw::computeDegreeDistribution(const QVector<bool>& matrix, in
  *
  * @param histogram
  */
-float PowerLaw::computeCorrelation(const QVector<int>& histogram)
+float PowerLaw::computeCorrelation(const std::vector<int>& histogram)
 {
    EDEBUG_FUNC(this,&histogram);
 
    // compute log-log transform of histogram data
    const int n = histogram.size();
-   QVector<float> x(n);
-   QVector<float> y(n);
+   std::vector<float> x(n);
+   std::vector<float> y(n);
 
    for ( int i = 0; i < n; i++ )
    {

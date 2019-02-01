@@ -77,12 +77,12 @@ EMetaArray CorrelationMatrix::correlationNames() const
 /*!
  * Return a list of correlation pairs in raw form.
  */
-QVector<CorrelationMatrix::RawPair> CorrelationMatrix::dumpRawData() const
+std::vector<CorrelationMatrix::RawPair> CorrelationMatrix::dumpRawData() const
 {
    EDEBUG_FUNC(this);
 
    // create list of raw pairs
-   QVector<RawPair> pairs;
+   std::vector<RawPair> pairs;
    pairs.reserve(size());
 
    // iterate through all pairs
@@ -103,7 +103,7 @@ QVector<CorrelationMatrix::RawPair> CorrelationMatrix::dumpRawData() const
          rawPair.correlations[k] = pair.at(k, 0);
       }
       
-      pairs.append(rawPair);
+      pairs.push_back(rawPair);
    }
 
    return pairs;
