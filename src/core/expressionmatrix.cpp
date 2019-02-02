@@ -163,18 +163,18 @@ EMetaArray ExpressionMatrix::sampleNames() const
 /*!
  * Return an array of this expression matrix's data in row-major order.
  */
-QVector<float> ExpressionMatrix::dumpRawData() const
+std::vector<float> ExpressionMatrix::dumpRawData() const
 {
    EDEBUG_FUNC(this);
 
    // return empty array if expression matrix is empty
    if ( _geneSize == 0 )
    {
-      return QVector<float>();
+      return std::vector<float>();
    }
 
    // allocate an array with the same size as the expression matrix
-   QVector<float> ret(_geneSize*_sampleSize);
+   std::vector<float> ret(_geneSize*_sampleSize);
 
    // seek to the beginning of the expression data
    seekExpression(0,0);

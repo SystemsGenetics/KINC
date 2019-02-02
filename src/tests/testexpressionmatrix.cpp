@@ -13,9 +13,9 @@ void TestExpressionMatrix::test()
 	// create random expression data
 	int numGenes = 10;
 	int numSamples = 5;
-	QVector<float> testExpressions(numGenes * numSamples);
+	std::vector<float> testExpressions(numGenes * numSamples);
 
-	for ( int i = 0; i < testExpressions.size(); ++i )
+	for ( size_t i = 0; i < testExpressions.size(); ++i )
 	{
 		testExpressions[i] = -10.0 + 20.0 * rand() / (1 << 31);
 	}
@@ -57,7 +57,7 @@ void TestExpressionMatrix::test()
 	matrix->finish();
 
 	// read expression data from file
-	QVector<float> expressions {matrix->dumpRawData()};
+	std::vector<float> expressions {matrix->dumpRawData()};
 
 	// verify expression data
 	QVERIFY(!memcmp(testExpressions.data(), expressions.data(), testExpressions.size() * sizeof(float)));
