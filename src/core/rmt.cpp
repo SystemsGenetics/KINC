@@ -1,3 +1,4 @@
+#include <cblas.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
 #include <lapacke.h>
@@ -178,6 +179,9 @@ void RMT::initialize()
       e.setDetails(tr("Minimum spline pace must be less than maximum spline pace."));
       throw e;
    }
+   
+   // set the number of openblas threads
+   openblas_set_num_threads(_numThreads);
 }
 
 
@@ -413,7 +417,7 @@ float RMT::computeChiSquare(const std::vector<float>& eigens)
    EDEBUG_FUNC(this,&eigens);
 
    // make sure there are enough eigenvalues
-   if ( eigens.size() < (size_t) _minEigenvalueSize )
+   if ( eigens.size() < (size_t) _minUniqueEigenvalues )
    {
       return -1;
    }

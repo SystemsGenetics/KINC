@@ -74,6 +74,8 @@ EAbstractAnalytic::Input::Type RMT::Input::type(int index) const
    case ThresholdStart: return Type::Double;
    case ThresholdStep: return Type::Double;
    case ThresholdStop: return Type::Double;
+   case NumThreads: return Type::Integer;
+   case MinUniqueEigenvalues: return Type::Integer;
    case SplineInterpolation: return Type::Boolean;
    case MinSplinePace: return Type::Integer;
    case MaxSplinePace: return Type::Integer;
@@ -160,6 +162,28 @@ QVariant RMT::Input::data(int index, Role role) const
       case Role::Maximum: return 1;
       default: return QVariant();
       }
+   case NumThreads:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("threads");
+      case Role::Title: return tr("Number of Threads:");
+      case Role::WhatsThis: return tr("The number of threads to use during eigenvalue computation.");
+      case Role::Default: return 1;
+      case Role::Minimum: return 1;
+      case Role::Maximum: return std::numeric_limits<int>::max();
+      default: return QVariant();
+      }
+   case MinUniqueEigenvalues:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("mineigens");
+      case Role::Title: return tr("Minimum Unique Eigenvalues:");
+      case Role::WhatsThis: return tr("The minimum number of unique eigenvalues required to perform a chi-squared test.");
+      case Role::Default: return 50;
+      case Role::Minimum: return 1;
+      case Role::Maximum: return std::numeric_limits<int>::max();
+      default: return QVariant();
+      }
    case SplineInterpolation:
       switch (role)
       {
@@ -234,6 +258,12 @@ void RMT::Input::set(int index, const QVariant& value)
       break;
    case ThresholdStop:
       _base->_thresholdStop = value.toDouble();
+      break;
+   case NumThreads:
+      _base->_numThreads = value.toInt();
+      break;
+   case MinUniqueEigenvalues:
+      _base->_minUniqueEigenvalues = value.toInt();
       break;
    case SplineInterpolation:
       _base->_splineInterpolation = value.toBool();

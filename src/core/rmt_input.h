@@ -22,6 +22,8 @@ public:
       ,ThresholdStart
       ,ThresholdStep
       ,ThresholdStop
+      ,NumThreads
+      ,MinUniqueEigenvalues
       ,SplineInterpolation
       ,MinSplinePace
       ,MaxSplinePace

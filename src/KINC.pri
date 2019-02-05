@@ -6,20 +6,23 @@ REVISION = 2
 
 VERSION = $${MAJOR_VERSION}.$${MINOR_VERSION}.$${REVISION}
 
-# Version compiler defines
+# Basic settings
+QT += core
+QMAKE_CXX = mpic++
+CONFIG += c++11
+
+# Compiler flags
+QMAKE_CXXFLAGS += -Wno-ignored-attributes
+
+# Preprocessor defines
 DEFINES += \
     QT_DEPRECATED_WARNINGS \
     MAJOR_VERSION=$${MAJOR_VERSION} \
     MINOR_VERSION=$${MINOR_VERSION} \
     REVISION=$${REVISION}
 
-# Basic settings
-QT += core
-QMAKE_CXX = mpic++
-CONFIG += c++11
-
-# Used to ignore useless warnings with OpenCL
-QMAKE_CXXFLAGS += -Wno-ignored-attributes
+# Include directories
+INCLUDEPATH += /usr/include/openblas
 
 # Default settings for optional linker flags
 isEmpty(LINK_LAPACKE) { LINK_LAPACKE = 1 }

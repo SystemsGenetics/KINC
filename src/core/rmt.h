@@ -101,12 +101,16 @@ private:
     * analytic to find a proper threshold.
     */
    float _chiSquareThreshold2 {200};
+   /**
+    * The number of threads to use during eigenvalue computation.
+    */
+   int _numThreads {1};
    /*!
     * The minimum number of unique eigenvalues which must exist in a pruned matrix
     * for the analytic to compute the NNSD of the eigenvalues. If the number of
     * unique eigenvalues is less, the chi-squared test for that threshold is skipped.
     */
-   int _minEigenvalueSize {50};
+   int _minUniqueEigenvalues {50};
    /*!
     * Whether to perform spline interpolation on each set of eigenvalues before
     * computing the spacings. If this option is enabled then the chi-squared value
