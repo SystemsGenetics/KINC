@@ -112,6 +112,7 @@ To run KINC you must update the `LD_LIBRARY_PATH` in your `~/.bashrc` file.  Use
 
 ```
 echo "export LD_LIBRARY_PATH=\"$INSTALL_PREFIX/ACE-$ACE_VERSION/lib:$INSTALL_PREFIX/KINC-$KINC_VERSION/lib:\$LD_LIBRARY_PATH\""
+echo "export PATH=\"$INSTALL_PREFIX/ACE-$ACE_VERSION/bin:$INSTALL_PREFIX/KINC-$KINC_VERSION/bin:\$PATH\""
 ```
 Add the resulting text to the end of your ~/.bashrc file.
 You should now be able to run KINC
