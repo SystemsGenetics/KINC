@@ -104,7 +104,7 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
             {
                // read in the floating point value
                bool ok;
-               gene.expressions[i-1] = words.at(i).toDouble(&ok);
+               gene.expressions[i-1] = words.at(i).toFloat(&ok);
 
                // make sure reading worked
                if ( !ok )

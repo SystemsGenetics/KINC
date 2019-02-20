@@ -112,11 +112,11 @@ void CCMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
 
       for ( int i = 0; i < samples.size(); i += 2 )
       {
-         qint8 value {(qint8)(samples[i] & 0x0F)};
+         qint8 value {static_cast<qint8>(samples[i] & 0x0F)};
 
          if ( i + 1 < samples.size() )
          {
-            value |= (samples[i + 1] << 4);
+            value |= static_cast<qint8>(samples[i + 1] << 4);
          }
 
          stream << value;

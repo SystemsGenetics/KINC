@@ -91,7 +91,7 @@ void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
 
       for ( int i = 0; i < sampleMask.size(); ++i )
       {
-         _ccmPair.at(cluster, i) = sampleMask[i].digitValue();
+         _ccmPair.at(cluster, i) = static_cast<qint8>(sampleMask[i].digitValue());
       }
 
       _cmxPair.at(cluster, 0) = correlation;

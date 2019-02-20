@@ -59,7 +59,7 @@ float Pearson::computeCluster(
 
    if ( n >= minSamples )
    {
-      result = (n*sumxy - sumx*sumy) / sqrt((n*sumx2 - sumx*sumx) * (n*sumy2 - sumy*sumy));
+      result = (n*sumxy - sumx*sumy) / sqrtf((n*sumx2 - sumx*sumx) * (n*sumy2 - sumy*sumy));
    }
 
    return result;

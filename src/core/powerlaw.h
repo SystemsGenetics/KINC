@@ -38,16 +38,16 @@ private:
    /*!
     * The starting threshold.
     */
-   float _thresholdStart {0.99};
+   float _thresholdStart {0.99f};
    /*!
     * The threshold decrement.
     */
-   float _thresholdStep {0.01};
+   float _thresholdStep {0.01f};
    /*!
     * The stopping threshold. The analytic will fail if it cannot find a
     * proper threshold before reaching the stopping threshold.
     */
-   float _thresholdStop {0.5};
+   float _thresholdStop {0.5f};
 };
 
 

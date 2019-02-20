@@ -50,7 +50,7 @@ void CCMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, const
 
    // save sample size and initialize base class
    _sampleSize = sampleNames.size();
-   Matrix::initialize(geneNames, maxClusterSize, (_sampleSize + 1) / 2 * sizeof(qint8), SUBHEADER_SIZE);
+   Matrix::initialize(geneNames, maxClusterSize, static_cast<qint32>((_sampleSize + 1) / 2 * sizeof(qint8)), SUBHEADER_SIZE);
 }
 
 

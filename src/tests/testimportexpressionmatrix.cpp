@@ -18,7 +18,7 @@ void TestImportExpressionMatrix::test()
 
 	for ( size_t i = 0; i < testExpressions.size(); ++i )
 	{
-		testExpressions[i] = -10.0 + 20.0 * rand() / (1 << 31);
+		testExpressions[i] = -10.0f + 20.0f * rand() / (1 << 31);
 	}
 
 	// create metadata
@@ -101,10 +101,10 @@ void TestImportExpressionMatrix::test()
 
 	for ( size_t i = 0; i < testExpressions.size(); ++i )
 	{
-		error += fabs(testExpressions[i] - expressions[i]);
+		error += fabsf(testExpressions[i] - expressions[i]);
 	}
 
 	error /= testExpressions.size();
 
-	QVERIFY(error < 1e-3);
+	QVERIFY(error < 1e-3f);
 }

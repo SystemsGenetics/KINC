@@ -251,13 +251,13 @@ void RMT::Input::set(int index, const QVariant& value)
       _base->_reductionMethod = static_cast<ReductionMethod>(REDUCTION_NAMES.indexOf(value.toString()));
       break;
    case ThresholdStart:
-      _base->_thresholdStart = value.toDouble();
+      _base->_thresholdStart = value.toFloat();
       break;
    case ThresholdStep:
-      _base->_thresholdStep = value.toDouble();
+      _base->_thresholdStep = value.toFloat();
       break;
    case ThresholdStop:
-      _base->_thresholdStop = value.toDouble();
+      _base->_thresholdStop = value.toFloat();
       break;
    case NumThreads:
       _base->_numThreads = value.toInt();

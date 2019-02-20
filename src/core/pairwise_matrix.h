@@ -28,14 +28,14 @@ namespace Pairwise
       virtual void writeNewData() override final;
       virtual void finish() override final;
    public:
-      int geneSize() const { return _geneSize; }
-      int maxClusterSize() const { return _maxClusterSize; }
+      qint32 geneSize() const { return _geneSize; }
+      qint32 maxClusterSize() const { return _maxClusterSize; }
       qint64 size() const { return _pairSize; }
       EMetaArray geneNames() const;
    protected:
       virtual void writeHeader() = 0;
       virtual void readHeader() = 0;
-      void initialize(const EMetaArray& geneNames, int maxClusterSize, int dataSize, int offset);
+      void initialize(const EMetaArray& geneNames, qint32 maxClusterSize, qint32 dataSize, qint16 subHeaderSize);
    private:
       void write(const Index& index, qint8 cluster);
       Index getPair(qint64 index, qint8* cluster) const;

@@ -157,7 +157,7 @@ float vectorDiffNorm(const Vector2& a, const Vector2& b)
    dist += (a.s[0] - b.s[0]) * (a.s[0] - b.s[0]);
    dist += (a.s[1] - b.s[1]) * (a.s[1] - b.s[1]);
 
-   return sqrt(dist);
+   return sqrtf(dist);
 }
 
 

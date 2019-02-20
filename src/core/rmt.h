@@ -77,16 +77,16 @@ private:
    /*!
     * The starting threshold.
     */
-   float _thresholdStart {0.99};
+   float _thresholdStart {0.99f};
    /*!
     * The threshold decrement.
     */
-   float _thresholdStep {0.001};
+   float _thresholdStep {0.001f};
    /*!
     * The stopping threshold. The analytic will fail if it cannot find a
     * proper threshold before reaching the stopping threshold.
     */
-   float _thresholdStop {0.5};
+   float _thresholdStop {0.5f};
    /*!
     * The critical value for the chi-squared test, which is dependent on the
     * degrees of freedom and the alpha-value of the test. This particular
@@ -94,7 +94,7 @@ private:
     * of freedom corresponds to the number of histogram bins, this value
     * must be re-calculated if the number of histogram bins is changed.
     */
-   float _chiSquareThreshold1 {99.607};
+   float _chiSquareThreshold1 {99.607f};
    /*!
     * The final chi-squared threshold. Once the chi-squared test goes below the
     * chi-squared critical value, it must go above this value in order for the

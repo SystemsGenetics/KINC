@@ -37,7 +37,7 @@ void TestImportCorrelationMatrix::test()
 						sampleMasks[k][n] = rand() % 2;
 					}
 
-					correlations[k] = -1.0 + 2.0 * rand() / (1 << 31);
+					correlations[k] = -1.0f + 2.0f * rand() / (1 << 31);
 				}
 
 				testPairs.append({ { i, j }, sampleMasks, correlations });

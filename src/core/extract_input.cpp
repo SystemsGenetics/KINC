@@ -141,7 +141,7 @@ QVariant Extract::Input::data(int index, Role role) const
       case Role::CommandLineName: return QString("mincorr");
       case Role::Title: return tr("Minimum Correlation:");
       case Role::WhatsThis: return tr("Minimum (absolute) correlation threshold for gene pairs.");
-      case Role::Default: return 0.85;
+      case Role::Default: return 0.85f;
       case Role::Minimum: return 0;
       case Role::Maximum: return 1;
       default: return QVariant();

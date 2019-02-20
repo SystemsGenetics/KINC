@@ -74,11 +74,11 @@ private:
    /*!
     * The minimum (absolute) correlation threshold.
     */
-   float _minCorrelation {0.85};
+   float _minCorrelation {0.85f};
    /*!
     * The maximum (absolute) correlation threshold.
     */
-   float _maxCorrelation {1.00};
+   float _maxCorrelation {1.00f};
 };
 
 

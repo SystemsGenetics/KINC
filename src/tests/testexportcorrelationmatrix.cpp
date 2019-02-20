@@ -39,7 +39,7 @@ void TestExportCorrelationMatrix::test()
 						sampleMasks[k][n] = rand() % 2;
 					}
 
-					correlations[k] = -1.0 + 2.0 * rand() / (1 << 31);
+					correlations[k] = -1.0f + 2.0f * rand() / (1 << 31);
 				}
 
 				testPairs.append({ { i, j }, sampleMasks, correlations });
@@ -173,12 +173,12 @@ void TestExportCorrelationMatrix::test()
 				}
 			}
 
-			error += fabs(testPair.correlations[k] - correlation);
+			error += fabsf(testPair.correlations[k] - correlation);
 			numClusters++;
 		}
 	}
 
 	error /= numClusters;
 
-	QVERIFY(error < 1e-3);
+	QVERIFY(error < 1e-3f);
 }

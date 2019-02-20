@@ -34,7 +34,7 @@ namespace Pairwise
       /*!
        * Workspace for the rank data.
        */
-      QVector<float> _rank;
+      QVector<int> _rank;
    };
 }
 

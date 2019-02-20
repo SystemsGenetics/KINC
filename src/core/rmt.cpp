@@ -382,7 +382,7 @@ std::vector<float> RMT::computeUnique(const std::vector<float>& values)
 {
    EDEBUG_FUNC(this,&values);
 
-   const float EPSILON {1e-6};
+   const float EPSILON {1e-6f};
    std::vector<float> unique;
 
    for ( size_t i = 1; i < values.size(); ++i )
@@ -489,7 +489,9 @@ float RMT::computeChiSquareHelper(const std::vector<float>& values)
    {
       if ( histogramMin <= spacing && spacing < histogramMax )
       {
-         ++histogram[(spacing - histogramMin) / histogramBinWidth];
+         size_t index = static_cast<size_t>((spacing - histogramMin) / histogramBinWidth);
+
+         ++histogram[index];
       }
    }
 
@@ -502,7 +504,7 @@ float RMT::computeChiSquareHelper(const std::vector<float>& values)
       float O_i {histogram[i]};
 
       // compute E_i, the expected value of Poisson distribution for bin i
-      float E_i {(exp(-i * histogramBinWidth) - exp(-(i + 1) * histogramBinWidth)) * values.size()};
+      float E_i {(expf(-i * histogramBinWidth) - expf(-(i + 1) * histogramBinWidth)) * values.size()};
 
       // update chi-squared value based on difference between O_i and E_i
       chi += (O_i - E_i) * (O_i - E_i) / E_i;
@@ -559,7 +561,7 @@ std::vector<float> RMT::computeSpline(const std::vector<float>& values, int pace
 
    for ( size_t i = 1; i < values.size() - 1; ++i )
    {
-      splineValues[i] = gsl_spline_eval(spline.get(), values.at(i), interp.get());
+      splineValues[i] = static_cast<float>(gsl_spline_eval(spline.get(), values.at(i), interp.get()));
    }
 
    // return interpolated values

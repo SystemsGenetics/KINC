@@ -75,10 +75,9 @@ QVariant ExpressionMatrix::Model::headerData(int section, Qt::Orientation orient
       // otherwise return empty string
       return QVariant();
    }
-   default:
-      // return empty string if orientation is not valid
-      return QVariant();
    }
+
+   return QVariant();
 }
 
 

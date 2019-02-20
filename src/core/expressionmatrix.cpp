@@ -12,7 +12,7 @@ qint64 ExpressionMatrix::dataEnd() const
 {
    EDEBUG_FUNC(this);
 
-   return _headerSize + (qint64)_geneSize * (qint64)_sampleSize * sizeof(float);
+   return _headerSize + static_cast<qint64>(_geneSize) * _sampleSize * sizeof(float);
 }
 
 
@@ -174,7 +174,7 @@ std::vector<float> ExpressionMatrix::dumpRawData() const
    }
 
    // allocate an array with the same size as the expression matrix
-   std::vector<float> ret(_geneSize*_sampleSize);
+   std::vector<float> ret(static_cast<qint64>(_geneSize) * _sampleSize);
 
    // seek to the beginning of the expression data
    seekExpression(0,0);
@@ -260,5 +260,5 @@ void ExpressionMatrix::seekExpression(int gene, int sample) const
    }
 
    // seek to the specified position in the data
-   seek(_headerSize + ((qint64)gene*(qint64)_sampleSize + (qint64)sample)*sizeof(float));
+   seek(_headerSize + (static_cast<qint64>(gene) * _sampleSize + sample) * sizeof(float));
 }

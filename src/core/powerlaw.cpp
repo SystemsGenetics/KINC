@@ -324,8 +324,8 @@ float PowerLaw::computeCorrelation(const std::vector<int>& histogram)
 
    for ( int i = 0; i < n; i++ )
    {
-      x[i] = log(i + 1);
-      y[i] = log(histogram[i] + 1);
+      x[i] = logf(i + 1);
+      y[i] = logf(histogram[i] + 1);
    }
 
    // visualize log-log histogram
@@ -339,7 +339,7 @@ float PowerLaw::computeCorrelation(const std::vector<int>& histogram)
          sum += y[j];
       }
 
-      int len {(int)(sum / log((float) _input->geneSize()))};
+      int len {static_cast<int>(sum / logf(_input->geneSize()))};
       QString bin(len, '#');
 
       qInfo(" | %s", bin.toStdString().c_str());
@@ -361,5 +361,5 @@ float PowerLaw::computeCorrelation(const std::vector<int>& histogram)
       sumxy += x[i] * y[i];
    }
 
-   return (n*sumxy - sumx*sumy) / sqrt((n*sumx2 - sumx*sumx) * (n*sumy2 - sumy*sumy));
+   return (n*sumxy - sumx*sumy) / sqrtf((n*sumx2 - sumx*sumx) * (n*sumy2 - sumy*sumy));
 }

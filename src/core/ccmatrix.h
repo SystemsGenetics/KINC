@@ -39,7 +39,7 @@ private:
     * The size (in bytes) of the sub-header. The sub-header consists of the
     * sample size.
     */
-   constexpr static int SUBHEADER_SIZE {4};
+   constexpr static qint16 SUBHEADER_SIZE {4};
    /*!
     * The number of samples in each sample mask.
     */
