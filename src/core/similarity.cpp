@@ -171,7 +171,7 @@ void Similarity::process(const EAbstractAnalytic::Block* result)
             if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
             {
                cmxPair.addCluster();
-               cmxPair.at(cmxPair.clusterSize() - 1, 0) = corr;
+               cmxPair.at(cmxPair.clusterSize() - 1) = corr;
             }
          }
 
@@ -304,8 +304,5 @@ void Similarity::initializeOutputs()
    _ccm->initialize(_input->geneNames(), _maxClusters, _input->sampleNames());
 
    // initialize correlation matrix
-   EMetaArray correlations;
-   correlations.append(_corrName);
-
-   _cmx->initialize(_input->geneNames(), _maxClusters, correlations);
+   _cmx->initialize(_input->geneNames(), _maxClusters, _corrName);
 }

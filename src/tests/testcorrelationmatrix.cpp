@@ -42,8 +42,7 @@ void TestCorrelationMatrix::test()
 		metaGeneNames.append(QString::number(i));
 	}
 
-	EMetaArray metaCorrelationNames;
-	metaCorrelationNames.append(QString("test"));
+	QString correlationName("test");
 
 	// create data object
 	QString path {QDir::tempPath() + "/test.cmx"};
@@ -52,7 +51,7 @@ void TestCorrelationMatrix::test()
 	CorrelationMatrix* matrix {dataRef->data()->cast<CorrelationMatrix>()};
 
 	// write data to file
-	matrix->initialize(metaGeneNames, maxClusters, metaCorrelationNames);
+	matrix->initialize(metaGeneNames, maxClusters, correlationName);
 
 	CorrelationMatrix::Pair pair(matrix);
 
@@ -63,7 +62,7 @@ void TestCorrelationMatrix::test()
 
 		for ( int k = 0; k < pair.clusterSize(); ++k )
 		{
-			pair.at(k, 0) = testPair.correlations.at(k);
+			pair.at(k) = testPair.correlations.at(k);
 		}
 
 		pair.write(testPair.index);
@@ -84,7 +83,7 @@ void TestCorrelationMatrix::test()
 
 		for ( int k = 0; k < pair.clusterSize(); ++k )
 		{
-			QCOMPARE(pair.at(k, 0), testPair.correlations.at(k));
+			QCOMPARE(pair.at(k), testPair.correlations.at(k));
 		}
 	}
 }

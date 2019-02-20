@@ -11,10 +11,10 @@ void CorrelationMatrix::Pair::addCluster(int amount) const
 {
    EDEBUG_FUNC(this,amount);
 
-   // keep adding a new list of floats for given amount
+   // keep adding a new float for given amount
    while ( amount-- > 0 )
    {
-      _correlations.append(QVector<float>(_cMatrix->_correlationSize, NAN));
+      _correlations.append(NAN);
    }
 }
 
@@ -39,18 +39,10 @@ QString CorrelationMatrix::Pair::toString() const
 
    // initialize list of strings and iterate through all clusters
    QStringList ret;
-   for (const auto& cluster : _correlations)
+   for (const auto& correlation : _correlations)
    {
-      // initialize list of strings for cluster and iterate through each correlation
-      QStringList clusterStrings;
-      for (const auto& correlation : cluster)
-      {
-         // add correlation value as string
-         clusterStrings << QString::number(correlation);
-      }
-
-      // join all cluster strings into one string
-      ret << clusterStrings.join(',');
+      // add correlation value as string
+      ret << QString::number(correlation);
    }
 
    // join all clusters and return as string
@@ -75,11 +67,8 @@ void CorrelationMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _correlations.size() )
    {
-      // write correlations per cluster to output stream
-      for (const auto& correlation : _correlations.at(cluster))
-      {
-         stream << correlation;
-      }
+      // write correlation to output stream
+      stream << _correlations.at(cluster);
    }
 }
 
@@ -101,12 +90,7 @@ void CorrelationMatrix::Pair::readCluster(const EDataStream& stream, int cluster
    // make sure cluster value is within range
    if ( cluster >= 0 && cluster < _correlations.size() )
    {
-      // read correlations per cluster from input stream
-      for (int i = 0; i < _cMatrix->_correlationSize ;++i)
-      {
-         float value;
-         stream >> value;
-         _correlations[cluster][i] = value;
-      }
+      // read correlation from input stream
+      stream >> _correlations[cluster];
    }
 }

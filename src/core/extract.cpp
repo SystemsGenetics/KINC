@@ -100,7 +100,7 @@ void Extract::writeTextFormat(int index)
    {
       QString source {geneNames.at(_cmxPair.index().getX()).toString()};
       QString target {geneNames.at(_cmxPair.index().getY()).toString()};
-      float correlation {_cmxPair.at(k, 0)};
+      float correlation {_cmxPair.at(k)};
       QString interaction {"co"};
       int numSamples {0};
       int numMissing {0};
@@ -252,7 +252,7 @@ void Extract::writeGraphMLFormat(int index)
    {
       QString source {geneNames.at(_cmxPair.index().getX()).toString()};
       QString target {geneNames.at(_cmxPair.index().getY()).toString()};
-      float correlation {_cmxPair.at(k, 0)};
+      float correlation {_cmxPair.at(k)};
 
       // exclude edge if correlation is not within thresholds
       if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )

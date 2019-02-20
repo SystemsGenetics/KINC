@@ -25,33 +25,23 @@ QAbstractTableModel* CorrelationMatrix::model()
 
 /*!
  * Initialize this correlation matrix with a list of gene names, the max cluster
- * size, and a list of correlation names.
+ * size, and a correlation name.
  *
  * @param geneNames
  * @param maxClusterSize
- * @param correlationNames
+ * @param correlationName
  */
-void CorrelationMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, const EMetaArray& correlationNames)
+void CorrelationMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, const QString& correlationName)
 {
-   EDEBUG_FUNC(this,&geneNames,maxClusterSize,&correlationNames);
-
-   // make sure correlation names is not empty
-   if ( correlationNames.isEmpty() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Correlation names metadata is empty."));
-      throw e;
-   }
+   EDEBUG_FUNC(this,&geneNames,maxClusterSize,&correlationName);
 
    // save correlation names to metadata
    EMetaObject metaObject {meta().toObject()};
-   metaObject.insert("correlations", correlationNames);
+   metaObject.insert("correlation", correlationName);
    setMeta(metaObject);
 
-   // save correlation size and initialize base class
-   _correlationSize = correlationNames.size();
-   Matrix::initialize(geneNames, maxClusterSize, _correlationSize * sizeof(float), SUBHEADER_SIZE);
+   // initialize base class
+   Matrix::initialize(geneNames, maxClusterSize, sizeof(float), SUBHEADER_SIZE);
 }
 
 
@@ -60,13 +50,13 @@ void CorrelationMatrix::initialize(const EMetaArray& geneNames, int maxClusterSi
 
 
 /*!
- * Return the list of correlation names in this correlation matrix.
+ * Return the correlation name for this correlation matrix.
  */
-EMetaArray CorrelationMatrix::correlationNames() const
+QString CorrelationMatrix::correlationName() const
 {
    EDEBUG_FUNC(this);
 
-   return meta().toObject().at("correlations").toArray();
+   return meta().toObject().at("correlation").toString();
 }
 
 
@@ -100,7 +90,7 @@ std::vector<CorrelationMatrix::RawPair> CorrelationMatrix::dumpRawData() const
 
       for ( int k = 0; k < pair.clusterSize(); ++k )
       {
-         rawPair.correlations[k] = pair.at(k, 0);
+         rawPair.correlations[k] = pair.at(k);
       }
       
       pairs.push_back(rawPair);
