@@ -30,7 +30,7 @@ void TestRMT::test()
 
 				for ( int k = 0; k < numClusters; ++k )
 				{
-					correlations[k] = -1.0 + 2.0 * rand() / (1 << 31);
+					correlations[k] = -1.0f + 2.0f * rand() / (1 << 31);
 				}
 
 				testPairs.append({ { i, j }, correlations });
@@ -45,8 +45,7 @@ void TestRMT::test()
 		metaGeneNames.append(QString::number(i));
 	}
 
-	EMetaArray metaCorrelationNames;
-	metaCorrelationNames.append(QString("test"));
+	QString correlationName("test");
 
 	// initialize temp files
 	QString cmxPath {QDir::tempPath() + "/test.cmx"};
@@ -59,7 +58,7 @@ void TestRMT::test()
 	std::unique_ptr<Ace::DataObject> cmxDataRef {new Ace::DataObject(cmxPath)};
 	CorrelationMatrix* cmx {cmxDataRef->data()->cast<CorrelationMatrix>()};
 
-	cmx->initialize(metaGeneNames, maxClusters, metaCorrelationNames);
+	cmx->initialize(metaGeneNames, maxClusters, correlationName);
 
 	CorrelationMatrix::Pair cmxPair(cmx);
 	for ( auto& testPair : testPairs )
@@ -69,7 +68,7 @@ void TestRMT::test()
 
 		for ( int k = 0; k < cmxPair.clusterSize(); ++k )
 		{
-			cmxPair.at(k, 0) = testPair.correlations.at(k);
+			cmxPair.at(k) = testPair.correlations.at(k);
 		}
 
 		cmxPair.write(testPair.index);

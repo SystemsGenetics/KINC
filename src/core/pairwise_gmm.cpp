@@ -67,7 +67,7 @@ void GMM::Component::prepare()
    }
 
    // compute normalizer term for multivariate normal distribution
-   _normalizer = -0.5f * (D * log(2.0f * M_PI) + log(det));
+   _normalizer = -0.5f * (D * logf(2.0f * M_PI) + logf(det));
 }
 
 
@@ -126,7 +126,7 @@ void GMM::initializeMeans(const QVector<Vector2>& X, int N)
    const int K = _components.size();
 
    const int MAX_ITERATIONS = 20;
-   const float TOLERANCE = 1e-3;
+   const float TOLERANCE = 1e-3f;
    float diff = 0;
 
    // initialize workspace
@@ -210,7 +210,7 @@ float GMM::computeEStep(const QVector<Vector2>& X, int N, float *gamma)
 
    for (int k = 0; k < K; ++k)
    {
-      logpi[k] = log(_components[k]._pi);
+      logpi[k] = logf(_components[k]._pi);
    }
 
    // compute the log-probability for each component and each point in X
@@ -222,7 +222,7 @@ float GMM::computeEStep(const QVector<Vector2>& X, int N, float *gamma)
    }
 
    // compute gamma and log-likelihood
-   float logL = 0.0;
+   float logL = 0;
 
    for (int i = 0; i < N; ++i)
    {
@@ -238,19 +238,19 @@ float GMM::computeEStep(const QVector<Vector2>& X, int N, float *gamma)
       }
 
       // compute logpx
-      float sum = 0.0;
+      float sum = 0;
       for (int k = 0; k < K; ++k)
       {
-         sum += exp(logpi[k] + logProb[k * N + i] - maxArg);
+         sum += expf(logpi[k] + logProb[k * N + i] - maxArg);
       }
 
-      float logpx = maxArg + log(sum);
+      float logpx = maxArg + logf(sum);
 
       // compute gamma_ki
       for (int k = 0; k < K; ++k)
       {
          gamma[k * N + i] += logpi[k] - logpx;
-         gamma[k * N + i] = exp(gamma[k * N + i]);
+         gamma[k * N + i] = expf(gamma[k * N + i]);
       }
 
       // update log-likelihood
@@ -397,7 +397,7 @@ float GMM::computeEntropy(const float *gamma, int N, const QVector<qint8>& label
    {
       int k = labels[i];
 
-      E += log(gamma[k * N + i]);
+      E += logf(gamma[k * N + i]);
    }
 
    return E;
@@ -439,7 +439,7 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
 
    // run EM algorithm
    const int MAX_ITERATIONS = 100;
-   const float TOLERANCE = 1e-8;
+   const float TOLERANCE = 1e-8f;
    float prevLogL = -INFINITY;
    float currLogL = -INFINITY;
    bool success;
@@ -515,7 +515,7 @@ float GMM::computeBIC(int K, int D, float logL, int N)
 {
    int p = K * (1 + D + D * D);
 
-   return log(N) * p - 2 * logL;
+   return logf(N) * p - 2 * logL;
 }
 
 
@@ -536,5 +536,5 @@ float GMM::computeICL(int K, int D, float logL, int N, float E)
 {
    int p = K * (1 + D + D * D);
 
-   return log(N) * p - 2 * logL - 2 * E;
+   return logf(N) * p - 2 * logL - 2 * E;
 }

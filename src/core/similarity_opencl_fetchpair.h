@@ -35,7 +35,7 @@ public:
       ::OpenCL::Buffer<cl_float>* expressions,
       cl_int sampleSize,
       ::OpenCL::Buffer<cl_int2>* in_index,
-      cl_int minExpression,
+      cl_float minExpression,
       ::OpenCL::Buffer<cl_float2>* out_X,
       ::OpenCL::Buffer<cl_int>* out_N,
       ::OpenCL::Buffer<cl_char>* out_labels

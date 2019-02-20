@@ -339,7 +339,7 @@ void Similarity::Input::set(int index, const QVariant& value)
       _base->_corrName = value.toString();
       break;
    case MinExpression:
-      _base->_minExpression = value.toDouble();
+      _base->_minExpression = value.toFloat();
       break;
    case MinSamples:
       _base->_minSamples = value.toInt();
@@ -360,10 +360,10 @@ void Similarity::Input::set(int index, const QVariant& value)
       _base->_removePostOutliers = value.toBool();
       break;
    case MinCorrelation:
-      _base->_minCorrelation = value.toDouble();
+      _base->_minCorrelation = value.toFloat();
       break;
    case MaxCorrelation:
-      _base->_maxCorrelation = value.toDouble();
+      _base->_maxCorrelation = value.toFloat();
       break;
    case WorkBlockSize:
       _base->_workBlockSize = value.toInt();

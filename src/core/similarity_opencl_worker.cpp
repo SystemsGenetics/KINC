@@ -92,7 +92,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
    for ( int i = 0; i < workBlock->size(); i += _base->_globalWorkSize )
    {
       // write input buffers to device
-      int globalWorkSize {(int) min((qint64)_base->_globalWorkSize, workBlock->size() - i)};
+      int globalWorkSize {static_cast<int>(min(static_cast<qint64>(_base->_globalWorkSize), workBlock->size() - i))};
 
       _buffers.in_index.mapWrite(_queue).wait();
 

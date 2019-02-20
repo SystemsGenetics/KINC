@@ -52,14 +52,14 @@ private:
       ,Random
    };
 private:
-   QVector<float> computeMaximums(const QVector<CorrelationMatrix::RawPair>& pairs);
-   QVector<float> computePruneMatrix(const QVector<CorrelationMatrix::RawPair>& pairs, const QVector<float>& maximums, float threshold, int* size);
-   QVector<float> computeEigenvalues(QVector<float>* pruneMatrix, int size);
-   QVector<float> computeUnique(const QVector<float>& values);
-   float computeChiSquare(const QVector<float>& eigens);
-   float computeChiSquareHelper(const QVector<float>& values);
-   QVector<float> computeSpline(const QVector<float>& values, int pace);
-   QVector<float> computeSpacings(const QVector<float>& values);
+   std::vector<float> computeMaximums(const std::vector<CorrelationMatrix::RawPair>& pairs);
+   std::vector<float> computePruneMatrix(const std::vector<CorrelationMatrix::RawPair>& pairs, const std::vector<float>& maximums, float threshold, size_t* size);
+   std::vector<float> computeEigenvalues(std::vector<float>* pruneMatrix, size_t size);
+   std::vector<float> computeUnique(const std::vector<float>& values);
+   float computeChiSquare(const std::vector<float>& eigens);
+   float computeChiSquareHelper(const std::vector<float>& values);
+   std::vector<float> computeSpline(const std::vector<float>& values, int pace);
+   std::vector<float> computeSpacings(const std::vector<float>& values);
    /*!
     * Pointer to the input correlation matrix.
     */
@@ -77,16 +77,16 @@ private:
    /*!
     * The starting threshold.
     */
-   float _thresholdStart {0.99};
+   float _thresholdStart {0.99f};
    /*!
     * The threshold decrement.
     */
-   float _thresholdStep {0.001};
+   float _thresholdStep {0.001f};
    /*!
     * The stopping threshold. The analytic will fail if it cannot find a
     * proper threshold before reaching the stopping threshold.
     */
-   float _thresholdStop {0.5};
+   float _thresholdStop {0.5f};
    /*!
     * The critical value for the chi-squared test, which is dependent on the
     * degrees of freedom and the alpha-value of the test. This particular
@@ -94,19 +94,23 @@ private:
     * of freedom corresponds to the number of histogram bins, this value
     * must be re-calculated if the number of histogram bins is changed.
     */
-   float _chiSquareThreshold1 {99.607};
+   float _chiSquareThreshold1 {99.607f};
    /*!
     * The final chi-squared threshold. Once the chi-squared test goes below the
     * chi-squared critical value, it must go above this value in order for the
     * analytic to find a proper threshold.
     */
    float _chiSquareThreshold2 {200};
+   /**
+    * The number of threads to use during eigenvalue computation.
+    */
+   int _numThreads {1};
    /*!
     * The minimum number of unique eigenvalues which must exist in a pruned matrix
     * for the analytic to compute the NNSD of the eigenvalues. If the number of
     * unique eigenvalues is less, the chi-squared test for that threshold is skipped.
     */
-   int _minEigenvalueSize {50};
+   int _minUniqueEigenvalues {50};
    /*!
     * Whether to perform spline interpolation on each set of eigenvalues before
     * computing the spacings. If this option is enabled then the chi-squared value

@@ -1,5 +1,4 @@
 #include "similarity_opencl.h"
-#include <QVector>
 #include "similarity_opencl_worker.h"
 
 
@@ -71,13 +70,13 @@ void Similarity::OpenCL::initialize(::OpenCL::Context* context)
    _queue = new ::OpenCL::CommandQueue(context, context->devices().first(), this);
 
    // create buffer for expression data
-   QVector<float> rawData = _base->_input->dumpRawData();
+   std::vector<float> rawData = _base->_input->dumpRawData();
    _expressions = ::OpenCL::Buffer<cl_float>(context,rawData.size());
 
    // copy expression data to device
    _expressions.mapWrite(_queue).wait();
 
-   for (int i = 0; i < rawData.size() ; ++i )
+   for ( size_t i = 0; i < rawData.size(); ++i )
    {
       _expressions[i] = rawData[i];
    }

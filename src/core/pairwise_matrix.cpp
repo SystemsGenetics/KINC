@@ -120,7 +120,7 @@ EMetaArray Matrix::geneNames() const
  * @param dataSize
  * @param subHeaderSize
  */
-void Matrix::initialize(const EMetaArray& geneNames, int maxClusterSize, int dataSize, int subHeaderSize)
+void Matrix::initialize(const EMetaArray& geneNames, qint32 maxClusterSize, qint32 dataSize, qint16 subHeaderSize)
 {
    EDEBUG_FUNC(this,&geneNames,maxClusterSize,dataSize,subHeaderSize);
 

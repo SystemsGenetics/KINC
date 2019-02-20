@@ -50,7 +50,7 @@ void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block*)
    // write pairwise data to output file
    for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
    {
-      float correlation = _cmxPair.at(k, 0);
+      float correlation = _cmxPair.at(k);
       int numSamples = 0;
       int numMissing = 0;
       int numPostOutliers = 0;

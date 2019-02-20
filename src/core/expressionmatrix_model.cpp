@@ -75,10 +75,9 @@ QVariant ExpressionMatrix::Model::headerData(int section, Qt::Orientation orient
       // otherwise return empty string
       return QVariant();
    }
-   default:
-      // return empty string if orientation is not valid
-      return QVariant();
    }
+
+   return QVariant();
 }
 
 
@@ -88,6 +87,8 @@ QVariant ExpressionMatrix::Model::headerData(int section, Qt::Orientation orient
 
 /*!
  * Return the number of rows in the table model.
+ *
+ * @param index
  */
 int ExpressionMatrix::Model::rowCount(const QModelIndex&) const
 {
@@ -103,6 +104,8 @@ int ExpressionMatrix::Model::rowCount(const QModelIndex&) const
 
 /*!
  * Return the number of columns in the table model.
+ *
+ * @param index
  */
 int ExpressionMatrix::Model::columnCount(const QModelIndex&) const
 {

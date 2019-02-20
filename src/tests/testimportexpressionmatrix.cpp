@@ -14,11 +14,11 @@ void TestImportExpressionMatrix::test()
 	// create random expression data
 	int numGenes = 10;
 	int numSamples = 5;
-	QVector<float> testExpressions(numGenes * numSamples);
+	std::vector<float> testExpressions(numGenes * numSamples);
 
-	for ( int i = 0; i < testExpressions.size(); ++i )
+	for ( size_t i = 0; i < testExpressions.size(); ++i )
 	{
-		testExpressions[i] = -10.0 + 20.0 * rand() / (1 << 31);
+		testExpressions[i] = -10.0f + 20.0f * rand() / (1 << 31);
 	}
 
 	// create metadata
@@ -94,17 +94,17 @@ void TestImportExpressionMatrix::test()
 	// read expression data from file
 	std::unique_ptr<Ace::DataObject> dataRef {new Ace::DataObject(emxPath)};
 	ExpressionMatrix* matrix {dataRef->data()->cast<ExpressionMatrix>()};
-	QVector<float> expressions {matrix->dumpRawData()};
+	std::vector<float> expressions {matrix->dumpRawData()};
 
 	// verify expression data
 	float error = 0;
 
-	for ( int i = 0; i < testExpressions.size(); ++i )
+	for ( size_t i = 0; i < testExpressions.size(); ++i )
 	{
-		error += fabs(testExpressions[i] - expressions[i]);
+		error += fabsf(testExpressions[i] - expressions[i]);
 	}
 
 	error /= testExpressions.size();
 
-	QVERIFY(error < 1e-3);
+	QVERIFY(error < 1e-3f);
 }

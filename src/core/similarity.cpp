@@ -29,7 +29,7 @@ qint64 Similarity::totalPairs(const ExpressionMatrix* emx) const
 {
    EDEBUG_FUNC(this,emx);
 
-   return (qint64) emx->geneSize() * (emx->geneSize() - 1) / 2;
+   return static_cast<qint64>(emx->geneSize()) * (emx->geneSize() - 1) / 2;
 }
 
 
@@ -68,8 +68,8 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
       ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
    }
 
-   qint64 start {index * (qint64) _workBlockSize};
-   qint64 size {min(totalPairs(_input) - start, (qint64) _workBlockSize)};
+   qint64 start {index * static_cast<qint64>(_workBlockSize)};
+   qint64 size {min(totalPairs(_input) - start, static_cast<qint64>(_workBlockSize))};
 
    return unique_ptr<EAbstractAnalytic::Block>(new WorkBlock(index, start, size));
 }
@@ -172,7 +172,7 @@ void Similarity::process(const EAbstractAnalytic::Block* result)
             if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
             {
                cmxPair.addCluster();
-               cmxPair.at(cmxPair.clusterSize() - 1, 0) = corr;
+               cmxPair.at(cmxPair.clusterSize() - 1) = corr;
             }
          }
 
@@ -291,7 +291,7 @@ void Similarity::initialize()
    {
       int numWorkers = max(1, mpi.size() - 1);
 
-      _workBlockSize = min((qint64) 32768, totalPairs(_input) / numWorkers);
+      _workBlockSize = min(32768LL, totalPairs(_input) / numWorkers);
    }
 }
 
@@ -320,8 +320,5 @@ void Similarity::initializeOutputs()
    _ccm->initialize(_input->geneNames(), _maxClusters, _input->sampleNames());
 
    // initialize correlation matrix
-   EMetaArray correlations;
-   correlations.append(_corrName);
-
-   _cmx->initialize(_input->geneNames(), _maxClusters, correlations);
+   _cmx->initialize(_input->geneNames(), _maxClusters, _corrName);
 }

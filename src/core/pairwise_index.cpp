@@ -67,8 +67,8 @@ Index::Index(qint64 index)
       ++x;
    }
 
-   _x = x;
-   _y = index - pos;
+   _x = static_cast<qint32>(x);
+   _y = static_cast<qint32>(index - pos);
 }
 
 
@@ -95,7 +95,7 @@ qint64 Index::indent(qint8 cluster) const
    }
 
    // compute indent with given cluster and return it
-   qint64 index {(qint64)_x * (_x - 1) / 2 + _y};
+   qint64 index {static_cast<qint64>(_x) * (_x - 1) / 2 + _y};
    return index * MAX_CLUSTER_SIZE + cluster;
 }
 

@@ -1,3 +1,4 @@
+#include <cblas.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
 #include <lapacke.h>
@@ -52,8 +53,8 @@ void RMT::process(const EAbstractAnalytic::Block*)
    float threshold {_thresholdStart};
 
    // load raw correlation data, row-wise maximums
-   QVector<RawPair> pairs {_input->dumpRawData()};
-   QVector<float> maximums {computeMaximums(pairs)};
+   std::vector<RawPair> pairs {_input->dumpRawData()};
+   std::vector<float> maximums {computeMaximums(pairs)};
 
    // continue while max chi is less than final threshold
    while ( maxChi < _chiSquareThreshold2 )
@@ -62,10 +63,10 @@ void RMT::process(const EAbstractAnalytic::Block*)
       qInfo("threshold: %8.3f", threshold);
 
       // compute pruned matrix based on threshold
-      int size;
-      QVector<float> pruneMatrix {computePruneMatrix(pairs, maximums, threshold, &size)};
+      size_t size;
+      std::vector<float> pruneMatrix {computePruneMatrix(pairs, maximums, threshold, &size)};
 
-      qInfo("prune matrix: %d", size);
+      qInfo("prune matrix: %lu", size);
 
       // make sure that pruned matrix is not empty
       float chi = -1;
@@ -73,14 +74,14 @@ void RMT::process(const EAbstractAnalytic::Block*)
       if ( size > 0 )
       {
          // compute eigenvalues of pruned matrix
-         QVector<float> eigens {computeEigenvalues(&pruneMatrix, size)};
+         std::vector<float> eigens {computeEigenvalues(&pruneMatrix, size)};
 
-         qInfo("eigenvalues: %d", eigens.size());
+         qInfo("eigenvalues: %lu", eigens.size());
 
          // compute unique eigenvalues
-         QVector<float> unique {computeUnique(eigens)};
+         std::vector<float> unique {computeUnique(eigens)};
 
-         qInfo("unique eigenvalues: %d", unique.size());
+         qInfo("unique eigenvalues: %lu", unique.size());
 
          // compute chi-squared value from NNSD of eigenvalues
          chi = computeChiSquare(unique);
@@ -178,6 +179,9 @@ void RMT::initialize()
       e.setDetails(tr("Minimum spline pace must be less than maximum spline pace."));
       throw e;
    }
+   
+   // set the number of openblas threads
+   openblas_set_num_threads(_numThreads);
 }
 
 
@@ -190,19 +194,19 @@ void RMT::initialize()
  *
  * @param pairs
  */
-QVector<float> RMT::computeMaximums(const QVector<RawPair>& pairs)
+std::vector<float> RMT::computeMaximums(const std::vector<RawPair>& pairs)
 {
    EDEBUG_FUNC(this,&pairs);
 
    // initialize elements to minimum value
-   QVector<float> maximums(_input->geneSize(), 0);
+   std::vector<float> maximums(_input->geneSize(), 0);
 
    // compute maximum correlation of each row
    for ( auto& pair : pairs )
    {
       int i = pair.index.getX();
 
-      for ( int k = 0; k < pair.correlations.size(); ++k )
+      for ( size_t k = 0; k < pair.correlations.size(); ++k )
       {
          float correlation = fabs(pair.correlations[k]);
 
@@ -234,15 +238,15 @@ QVector<float> RMT::computeMaximums(const QVector<RawPair>& pairs)
  * @param threshold
  * @param size
  */
-QVector<float> RMT::computePruneMatrix(const QVector<RawPair>& pairs, const QVector<float>& maximums, float threshold, int* size)
+std::vector<float> RMT::computePruneMatrix(const std::vector<RawPair>& pairs, const std::vector<float>& maximums, float threshold, size_t* size)
 {
    EDEBUG_FUNC(this,&pairs,&maximums,threshold,size);
 
    // generate vector of row indices that have a correlation above threshold
-   QVector<int> indices(_input->geneSize(), -1);
-   int pruneSize = 0;
+   std::vector<int> indices(_input->geneSize(), -1);
+   size_t pruneSize = 0;
 
-   for ( int i = 0; i < maximums.size(); ++i )
+   for ( size_t i = 0; i < maximums.size(); ++i )
    {
       if ( maximums[i] >= threshold )
       {
@@ -252,10 +256,10 @@ QVector<float> RMT::computePruneMatrix(const QVector<RawPair>& pairs, const QVec
    }
 
    // extract pruned matrix from correlation matrix
-   QVector<float> pruneMatrix(pruneSize * pruneSize);
+   std::vector<float> pruneMatrix(pruneSize * pruneSize);
 
    // initialize diagonal
-   for ( int i = 0; i < pruneSize; ++i )
+   for ( size_t i = 0; i < pruneSize; ++i )
    {
       pruneMatrix[i * pruneSize + i] = 1;
    }
@@ -285,7 +289,7 @@ QVector<float> RMT::computePruneMatrix(const QVector<RawPair>& pairs, const QVec
       }
       case ReductionMethod::MaximumCorrelation:
       {
-         for ( int k = 0; k < pair.correlations.size(); k++ )
+         for ( size_t k = 0; k < pair.correlations.size(); k++ )
          {
             float r = fabs(pair.correlations[k]);
 
@@ -337,13 +341,13 @@ QVector<float> RMT::computePruneMatrix(const QVector<RawPair>& pairs, const QVec
  * @param matrix
  * @param size
  */
-QVector<float> RMT::computeEigenvalues(QVector<float>* matrix, int size)
+std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t size)
 {
    EDEBUG_FUNC(this,matrix,size);
 
    // initialize eigenvalues and workspace
-   QVector<float> eigens(size);
-   QVector<float> work(5 * size);
+   std::vector<float> eigens(size);
+   std::vector<float> work(5 * size);
 
    // compute eigenvalues
    int info = LAPACKE_ssyev_work(
@@ -374,18 +378,18 @@ QVector<float> RMT::computeEigenvalues(QVector<float>* matrix, int size)
  *
  * @param values
  */
-QVector<float> RMT::computeUnique(const QVector<float>& values)
+std::vector<float> RMT::computeUnique(const std::vector<float>& values)
 {
    EDEBUG_FUNC(this,&values);
 
-   const float EPSILON {1e-6};
-   QVector<float> unique;
+   const float EPSILON {1e-6f};
+   std::vector<float> unique;
 
-   for ( int i = 1; i < values.size(); ++i )
+   for ( size_t i = 1; i < values.size(); ++i )
    {
-      if ( unique.isEmpty() || fabs(values.at(i) - unique.last()) > EPSILON )
+      if ( unique.empty() || fabs(values.at(i) - unique.back()) > EPSILON )
       {
-         unique.append(values.at(i));
+         unique.push_back(values.at(i));
       }
    }
 
@@ -408,12 +412,12 @@ QVector<float> RMT::computeUnique(const QVector<float>& values)
  *
  * @param eigens
  */
-float RMT::computeChiSquare(const QVector<float>& eigens)
+float RMT::computeChiSquare(const std::vector<float>& eigens)
 {
    EDEBUG_FUNC(this,&eigens);
 
    // make sure there are enough eigenvalues
-   if ( eigens.size() < _minEigenvalueSize )
+   if ( eigens.size() < (size_t) _minUniqueEigenvalues )
    {
       return -1;
    }
@@ -434,7 +438,7 @@ float RMT::computeChiSquare(const QVector<float>& eigens)
          }
 
          // compute spline-interpolated eigenvalues
-         QVector<float> splineEigens {computeSpline(eigens, pace)};
+         std::vector<float> splineEigens {computeSpline(eigens, pace)};
 
          // compute chi-squared value
          float chiPace {computeChiSquareHelper(splineEigens)};
@@ -468,37 +472,39 @@ float RMT::computeChiSquare(const QVector<float>& eigens)
  *
  * @param values
  */
-float RMT::computeChiSquareHelper(const QVector<float>& values)
+float RMT::computeChiSquareHelper(const std::vector<float>& values)
 {
    EDEBUG_FUNC(this,&values);
 
    // compute spacings
-   QVector<float> spacings {computeSpacings(values)};
+   std::vector<float> spacings {computeSpacings(values)};
 
    // compute histogram of spacings
    const float histogramMin {0};
    const float histogramMax {3};
    const float histogramBinWidth {(histogramMax - histogramMin) / _histogramBinSize};
-   QVector<float> histogram(_histogramBinSize);
+   std::vector<float> histogram(_histogramBinSize);
 
    for ( auto& spacing : spacings )
    {
       if ( histogramMin <= spacing && spacing < histogramMax )
       {
-         ++histogram[(spacing - histogramMin) / histogramBinWidth];
+         size_t index = static_cast<size_t>((spacing - histogramMin) / histogramBinWidth);
+
+         ++histogram[index];
       }
    }
 
    // compute chi-squared value from the histogram
    float chi {0.0};
 
-   for ( int i = 0; i < histogram.size(); ++i )
+   for ( int i = 0; i < (int) histogram.size(); ++i )
    {
       // compute O_i, the number of elements in bin i
       float O_i {histogram[i]};
 
       // compute E_i, the expected value of Poisson distribution for bin i
-      float E_i {(exp(-i * histogramBinWidth) - exp(-(i + 1) * histogramBinWidth)) * values.size()};
+      float E_i {(expf(-i * histogramBinWidth) - expf(-(i + 1) * histogramBinWidth)) * values.size()};
 
       // update chi-squared value based on difference between O_i and E_i
       chi += (O_i - E_i) * (O_i - E_i) / E_i;
@@ -521,7 +527,7 @@ float RMT::computeChiSquareHelper(const QVector<float>& values)
  * @param values
  * @param pace
  */
-QVector<float> RMT::computeSpline(const QVector<float>& values, int pace)
+std::vector<float> RMT::computeSpline(const std::vector<float>& values, int pace)
 {
    EDEBUG_FUNC(this,&values,pace);
 
@@ -530,7 +536,7 @@ QVector<float> RMT::computeSpline(const QVector<float>& values, int pace)
    using gsl_spline_ptr = unique_ptr<gsl_spline, decltype(&gsl_spline_free)>;
 
    // extract eigenvalues for spline based on pace
-   int splineSize {values.size() / pace};
+   int splineSize {(int) values.size() / pace};
    unique_ptr<double[]> x(new double[splineSize]);
    unique_ptr<double[]> y(new double[splineSize]);
 
@@ -548,14 +554,14 @@ QVector<float> RMT::computeSpline(const QVector<float>& values, int pace)
    gsl_spline_init(spline.get(), x.get(), y.get(), splineSize);
 
    // extract interpolated eigenvalues from spline
-   QVector<float> splineValues(values.size());
+   std::vector<float> splineValues(values.size());
 
    splineValues[0] = 0.0;
    splineValues[values.size() - 1] = 1.0;
 
-   for ( int i = 1; i < values.size() - 1; ++i )
+   for ( size_t i = 1; i < values.size() - 1; ++i )
    {
-      splineValues[i] = gsl_spline_eval(spline.get(), values.at(i), interp.get());
+      splineValues[i] = static_cast<float>(gsl_spline_eval(spline.get(), values.at(i), interp.get()));
    }
 
    // return interpolated values
@@ -573,14 +579,14 @@ QVector<float> RMT::computeSpline(const QVector<float>& values, int pace)
  *
  * @param values
  */
-QVector<float> RMT::computeSpacings(const QVector<float>& values)
+std::vector<float> RMT::computeSpacings(const std::vector<float>& values)
 {
    EDEBUG_FUNC(this,&values);
 
    // compute spacings between interpolated eigenvalues
-   QVector<float> spacings(values.size() - 1);
+   std::vector<float> spacings(values.size() - 1);
 
-   for ( int i = 0; i < spacings.size(); ++i )
+   for ( size_t i = 0; i < spacings.size(); ++i )
    {
       spacings[i] = (values.at(i + 1) - values.at(i)) * values.size();
    }

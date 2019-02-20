@@ -91,10 +91,10 @@ void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
 
       for ( int i = 0; i < sampleMask.size(); ++i )
       {
-         _ccmPair.at(cluster, i) = sampleMask[i].digitValue();
+         _ccmPair.at(cluster, i) = static_cast<qint8>(sampleMask[i].digitValue());
       }
 
-      _cmxPair.at(cluster, 0) = correlation;
+      _cmxPair.at(cluster) = correlation;
    }
 
    // otherwise throw an error
@@ -218,13 +218,9 @@ void ImportCorrelationMatrix::initialize()
       metaSampleNames.append(QString::number(i));
    }
 
-   // build correlation name metadata
-   EMetaArray metaCorrelationNames;
-   metaCorrelationNames.append(_correlationName);
-
    // initialize output data
    _ccm->initialize(metaGeneNames, _maxClusterSize, metaSampleNames);
-   _cmx->initialize(metaGeneNames, _maxClusterSize, metaCorrelationNames);
+   _cmx->initialize(metaGeneNames, _maxClusterSize, _correlationName);
 
    // initialize pairwise iterators
    _ccmPair = CCMatrix::Pair(_ccm);

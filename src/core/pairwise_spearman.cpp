@@ -114,7 +114,7 @@ float Spearman::computeCluster(
       }
 
       // compute spearman coefficient
-      result = 1.0 - 6.0 * diff / (n * (n*n - 1));
+      result = 1.0f - 6.0f * diff / (n * (n*n - 1));
    }
 
    return result;

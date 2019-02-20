@@ -18,6 +18,7 @@ public:
 public:
    Gene(ExpressionMatrix* matrix, bool isInitialized = false);
    ~Gene();
+public:
    void read(int index);
    bool readNext();
    void write(int index);

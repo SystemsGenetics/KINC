@@ -25,13 +25,15 @@ namespace Pairwise
       Pair() = default;
       Pair(const Pair&) = default;
       Pair(Pair&&) = default;
+      virtual ~Pair() = default;
+   public:
       virtual void clearClusters() const = 0;
       virtual void addCluster(int amount = 1) const = 0;
       virtual int clusterSize() const = 0;
       virtual bool isEmpty() const = 0;
       void write(const Index& index);
       void read(const Index& index) const;
-      void reset() const { _rawIndex = 0; };
+      void reset() const { _rawIndex = 0; }
       void readNext() const;
       bool hasNext() const { return _rawIndex != _cMatrix->_clusterSize; }
       const Index& index() const { return _index; }
