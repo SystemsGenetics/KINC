@@ -69,6 +69,8 @@ QVariant CCMatrix::Model::headerData(int section, Qt::Orientation orientation, i
 
 /*!
  * Return the number of rows in the table model.
+ *
+ * @param index
  */
 int CCMatrix::Model::rowCount(const QModelIndex&) const
 {
@@ -84,6 +86,8 @@ int CCMatrix::Model::rowCount(const QModelIndex&) const
 
 /*!
  * Return the number of columns in the table model.
+ *
+ * @param index
  */
 int CCMatrix::Model::columnCount(const QModelIndex&) const
 {

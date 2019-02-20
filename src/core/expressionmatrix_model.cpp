@@ -87,6 +87,8 @@ QVariant ExpressionMatrix::Model::headerData(int section, Qt::Orientation orient
 
 /*!
  * Return the number of rows in the table model.
+ *
+ * @param index
  */
 int ExpressionMatrix::Model::rowCount(const QModelIndex&) const
 {
@@ -102,6 +104,8 @@ int ExpressionMatrix::Model::rowCount(const QModelIndex&) const
 
 /*!
  * Return the number of columns in the table model.
+ *
+ * @param index
  */
 int ExpressionMatrix::Model::columnCount(const QModelIndex&) const
 {

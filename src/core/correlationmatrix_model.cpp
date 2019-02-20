@@ -69,6 +69,8 @@ QVariant CorrelationMatrix::Model::headerData(int section, Qt::Orientation orien
 
 /*!
  * Return the number of rows in the table model.
+ *
+ * @param index
  */
 int CorrelationMatrix::Model::rowCount(const QModelIndex&) const
 {
@@ -84,6 +86,8 @@ int CorrelationMatrix::Model::rowCount(const QModelIndex&) const
 
 /*!
  * Return the number of columns in the table model.
+ *
+ * @param index
  */
 int CorrelationMatrix::Model::columnCount(const QModelIndex&) const
 {
