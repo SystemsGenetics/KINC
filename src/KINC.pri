@@ -28,11 +28,23 @@ INCLUDEPATH += /usr/include/openblas
 isEmpty(LINK_LAPACKE) { LINK_LAPACKE = 1 }
 isEmpty(LINK_MPI_CXX) { LINK_MPI_CXX = 1 }
 
+# Include directories
+isEmpty($$(CUDADIR)) {
+   CUDADIR = /usr/local/cuda
+}
+else {
+   CUDADIR = $$(CUDADIR)
+}
+
+INCLUDEPATH += $${CUDADIR}/include
+DEPENDPATH += $${CUDADIR}/include
+
 # External libraries
 LIBS += \
     -L$${PWD}/../build/libs -lkinccore \
     -lacecore \
     -lgsl -lopenblas \
+    -L$${CUDADIR}/lib64 -lcuda -lnvrtc \
     -lOpenCL -lmpi
 
 equals(LINK_LAPACKE, 1) { LIBS += -llapacke }
@@ -40,4 +52,4 @@ equals(LINK_MPI_CXX, 1) { LIBS += -lmpi_cxx }
 
 # Resource files
 RESOURCES += \
-    ../opencl.qrc
+    ../resources.qrc

@@ -53,6 +53,7 @@ public:
    class ResultBlock;
    class Serial;
    class OpenCL;
+   class CUDA;
 public:
    virtual int size() const override final;
    virtual std::unique_ptr<EAbstractAnalytic::Block> makeWork(int index) const override final;
@@ -62,6 +63,7 @@ public:
    virtual EAbstractAnalytic::Input* makeInput() override final;
    virtual EAbstractAnalytic::Serial* makeSerial() override final;
    virtual EAbstractAnalytic::OpenCL* makeOpenCL() override final;
+   virtual EAbstractAnalytic::CUDA* makeCUDA() override final;
    virtual void initialize() override final;
    virtual void initializeOutputs() override final;
 private:
