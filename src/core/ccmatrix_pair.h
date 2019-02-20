@@ -22,6 +22,8 @@ public:
       _cMatrix(matrix)
       {}
    Pair() = default;
+   virtual ~Pair() = default;
+public:
    virtual void clearClusters() const { _sampleMasks.clear(); }
    virtual void addCluster(int amount = 1) const;
    virtual int clusterSize() const { return _sampleMasks.size(); }
