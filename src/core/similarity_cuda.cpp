@@ -1,5 +1,4 @@
 #include "similarity_cuda.h"
-#include <QVector>
 #include "similarity_cuda_worker.h"
 
 
@@ -68,11 +67,11 @@ void Similarity::CUDA::initialize(::CUDA::Context* context)
    _program = new ::CUDA::Program(paths, this);
 
    // create buffer for expression data
-   QVector<float> rawData = _base->_input->dumpRawData();
+   std::vector<float> rawData = _base->_input->dumpRawData();
    _expressions = ::CUDA::Buffer<float>(rawData.size());
 
    // copy expression data to device
-   for ( int i = 0; i < rawData.size(); ++i )
+   for ( size_t i = 0; i < rawData.size(); ++i )
    {
       _expressions[i] = rawData[i];
    }

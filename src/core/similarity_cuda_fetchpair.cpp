@@ -48,7 +48,7 @@ Similarity::CUDA::FetchPair::FetchPair(::CUDA::Program* program):
    ::CUDA::Buffer<float>* expressions,
    int sampleSize,
    ::CUDA::Buffer<int2>* in_index,
-   int minExpression,
+   float minExpression,
    ::CUDA::Buffer<float2>* out_X,
    ::CUDA::Buffer<int>* out_N,
    ::CUDA::Buffer<qint8>* out_labels
