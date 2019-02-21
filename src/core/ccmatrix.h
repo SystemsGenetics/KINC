@@ -30,11 +30,11 @@ private:
    /*!
     * Write the sub-header to the data object file.
     */
-   virtual void writeHeader() { stream() << _sampleSize; }
+   virtual void writeHeader() override final { stream() << _sampleSize; }
    /*!
     * Read the sub-header from the data object file.
     */
-   virtual void readHeader() { stream() >> _sampleSize; }
+   virtual void readHeader() override final { stream() >> _sampleSize; }
    /*!
     * The size (in bytes) of the sub-header. The sub-header consists of the
     * sample size.
@@ -47,7 +47,7 @@ private:
    /*!
     * Pointer to a qt table model for this class.
     */
-  Model* _model {nullptr};
+   Model* _model {nullptr};
 };
 
 

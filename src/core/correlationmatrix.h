@@ -32,11 +32,11 @@ private:
    /*!
     * Write the sub-header to the data object file.
     */
-   virtual void writeHeader() {}
+   virtual void writeHeader() override final {}
    /*!
     * Read the sub-header from the data object file.
     */
-   virtual void readHeader() {}
+   virtual void readHeader() override final {}
    /*!
     * The size (in bytes) of the sub-header. The sub-header previously
     * contained the correlation size but is now simply reserved for
@@ -46,7 +46,7 @@ private:
    /*!
     * Pointer to a qt table model for this class.
     */
-  Model* _model {nullptr};
+   Model* _model {nullptr};
 };
 
 
