@@ -1,7 +1,14 @@
 #include <cblas.h>
+#include <cuda_runtime.h>
+#include <cusolverDn.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
 #include <lapacke.h>
+
+#define MAJOR_VERSION KINC_MAJOR_VERSION
+#define MINOR_VERSION KINC_MINOR_VERSION
+#define REVISION KINC_REVISION
+#include <ace/core/ace_settings.h>
 
 #include "rmt.h"
 #include "rmt_input.h"
@@ -10,6 +17,36 @@
 
 using namespace std;
 using RawPair = CorrelationMatrix::RawPair;
+
+
+
+
+
+
+#define CHECK_ERROR(condition, message)  \
+	if ( !(condition) )                   \
+	{                                     \
+      E_MAKE_EXCEPTION(e);               \
+      e.setTitle(tr("CUDA Error"));      \
+      e.setDetails(tr(message));         \
+      throw e;                           \
+	}
+
+
+
+
+
+
+#define CHECK_CUDA(ret) \
+	CHECK_ERROR(ret == cudaSuccess, #ret)
+
+
+
+
+
+
+#define CHECK_CUSOLVER(ret) \
+	CHECK_ERROR(ret == CUSOLVER_STATUS_SUCCESS, #ret)
 
 
 
@@ -345,25 +382,105 @@ std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t si
 {
    EDEBUG_FUNC(this,matrix,size);
 
-   // initialize eigenvalues and workspace
-   std::vector<float> eigens(size);
-   std::vector<float> work(5 * size);
+   // initialize helper variables
+   int n = size;
+   int lda = size;
 
-   // compute eigenvalues
-   int info = LAPACKE_ssyev_work(
-      LAPACK_COL_MAJOR, 'N', 'U',
-      size, matrix->data(), size,
-      eigens.data(),
-      work.data(), work.size());
-
-   // print warning if LAPACKE returned error code
-   if ( info != 0 )
+   // determine whether a device is available
+   if ( Ace::Settings::instance().cudaDevicePointer() )
    {
-      qInfo("warning: LAPACKE ssyev returned %d", info);
-   }
+      // initialize cuSOLVER handle
+      cusolverDnHandle_t cusolver_handle;
 
-   // return eigenvalues
-   return eigens;
+      CHECK_CUSOLVER(cusolverDnCreate(&cusolver_handle));
+
+      // allocate device buffers
+      float *matrix_dev;
+      float *eigens_dev;
+      int *info_dev;
+
+      CHECK_CUDA(cudaMalloc((void **)&matrix_dev, n * n * sizeof(float)));
+      CHECK_CUDA(cudaMalloc((void **)&eigens_dev, n * sizeof(float)));
+      CHECK_CUDA(cudaMalloc((void **)&info_dev, sizeof(int)));
+
+      // copy pruned matrix to device
+      CHECK_CUDA(cudaMemcpy(matrix_dev, matrix->data(), n * n * sizeof(float), cudaMemcpyHostToDevice));
+
+      // determine the size of the workspace
+      int lwork;
+
+      CHECK_CUSOLVER(cusolverDnSsyevd_bufferSize(
+         cusolver_handle,
+         CUSOLVER_EIG_MODE_NOVECTOR,
+         CUBLAS_FILL_MODE_UPPER,
+         n, matrix_dev, lda,
+         eigens_dev,
+         &lwork
+      ));
+
+      // allocate device buffer for workspace
+      float *work_dev;
+
+      CHECK_CUDA(cudaMalloc((void **)&work_dev, lwork * sizeof(float)));
+
+      // compute eigenvalues
+      CHECK_CUSOLVER(cusolverDnSsyevd(
+         cusolver_handle,
+         CUSOLVER_EIG_MODE_NOVECTOR,
+         CUBLAS_FILL_MODE_UPPER,
+         n, matrix_dev, lda,
+         eigens_dev,
+         work_dev, lwork,
+         info_dev
+      ));
+
+      // destroy cuSOLVER handle
+      CHECK_CUSOLVER(cusolverDnDestroy(cusolver_handle));
+
+      // copy results to host
+      int info;
+      std::vector<float> eigens(n);
+
+      CHECK_CUDA(cudaMemcpy(&info, info_dev, sizeof(int), cudaMemcpyDeviceToHost));
+      CHECK_CUDA(cudaMemcpy(eigens.data(), eigens_dev, n * sizeof(float), cudaMemcpyDeviceToHost));
+
+      // cleanup
+      CHECK_CUDA(cudaFree(matrix_dev));
+      CHECK_CUDA(cudaFree(work_dev));
+      CHECK_CUDA(cudaFree(eigens_dev));
+      CHECK_CUDA(cudaFree(info_dev));
+
+      // print warning if cuSOLVER returned error code
+      if ( info != 0 )
+      {
+         qInfo("warning: cuSOLVER ssyev returned %d", info);
+      }
+
+      // return eigenvalues
+      return eigens;
+   }
+   else
+   {
+      // initialize eigenvalues and workspace
+      std::vector<float> eigens(n);
+      std::vector<float> work(5 * n);
+
+      // compute eigenvalues
+      int info = LAPACKE_ssyev_work(
+         LAPACK_COL_MAJOR, 'N', 'U',
+         n, matrix->data(), lda,
+         eigens.data(),
+         work.data(), work.size());
+
+      // print warning if LAPACKE returned error code
+      if ( info != 0 )
+      {
+         qInfo("warning: LAPACKE ssyev returned %d", info);
+      }
+
+      // return eigenvalues
+      return eigens;
+   }
 }
 
 

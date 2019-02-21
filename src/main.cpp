@@ -19,9 +19,9 @@ int main(int argc, char *argv[])
 {
    EApplication application("SystemsGenetics"
                             ,"kinc"
-                            ,MAJOR_VERSION
-                            ,MINOR_VERSION
-                            ,REVISION
+                            ,KINC_MAJOR_VERSION
+                            ,KINC_MINOR_VERSION
+                            ,KINC_REVISION
                             ,unique_ptr<DataFactory>(new DataFactory)
                             ,unique_ptr<AnalyticFactory>(new AnalyticFactory)
                             ,argc

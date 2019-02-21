@@ -1,10 +1,17 @@
 
 # Versions
-MAJOR_VERSION = 3
-MINOR_VERSION = 2
-REVISION = 2
+KINC_MAJOR_VERSION = 3
+KINC_MINOR_VERSION = 2
+KINC_REVISION = 2
 
-VERSION = $${MAJOR_VERSION}.$${MINOR_VERSION}.$${REVISION}
+VERSION = $${KINC_MAJOR_VERSION}.$${KINC_MINOR_VERSION}.$${KINC_REVISION}
+
+# Version compiler defines
+DEFINES += \
+    QT_DEPRECATED_WARNINGS \
+    KINC_MAJOR_VERSION=$${KINC_MAJOR_VERSION} \
+    KINC_MINOR_VERSION=$${KINC_MINOR_VERSION} \
+    KINC_REVISION=$${KINC_REVISION}
 
 # Basic settings
 QT += core
@@ -17,12 +24,9 @@ QMAKE_CXXFLAGS += -Wno-ignored-attributes
 # Preprocessor defines
 DEFINES += \
     QT_DEPRECATED_WARNINGS \
-    MAJOR_VERSION=$${MAJOR_VERSION} \
-    MINOR_VERSION=$${MINOR_VERSION} \
-    REVISION=$${REVISION}
-
-# Include directories
-INCLUDEPATH += /usr/include/openblas
+    KINC_MAJOR_VERSION=$${KINC_MAJOR_VERSION} \
+    KINC_MINOR_VERSION=$${KINC_MINOR_VERSION} \
+    KINC_REVISION=$${KINC_REVISION}
 
 # Default settings for optional linker flags
 isEmpty(LINK_LAPACKE) { LINK_LAPACKE = 1 }
@@ -39,12 +43,14 @@ else {
 INCLUDEPATH += $${CUDADIR}/include
 DEPENDPATH += $${CUDADIR}/include
 
+INCLUDEPATH += /usr/include/openblas
+
 # External libraries
 LIBS += \
     -L$${PWD}/../build/libs -lkinccore \
     -lacecore \
     -lgsl -lopenblas \
-    -L$${CUDADIR}/lib64 -lcuda -lnvrtc \
+    -L$${CUDADIR}/lib64 -lcuda -lnvrtc -lcudart -lcusolver -fopenmp \
     -lOpenCL -lmpi
 
 equals(LINK_LAPACKE, 1) { LIBS += -llapacke }
