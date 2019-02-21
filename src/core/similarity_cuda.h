@@ -21,16 +21,12 @@ public:
    class Worker;
    explicit CUDA(Similarity* parent);
    virtual std::unique_ptr<EAbstractAnalytic::CUDA::Worker> makeWorker() override final;
-   virtual void initialize(::CUDA::Context* context) override final;
+   virtual void initialize() override final;
 private:
    /*!
     * Pointer to the base analytic for this object.
     */
    Similarity* _base;
-   /*!
-    * Pointer to this object's base CUDA context used to create all other resources.
-    */
-   ::CUDA::Context* _context {nullptr};
    /*!
     * Pointer to this object's CUDA program.
     */
