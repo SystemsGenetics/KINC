@@ -30,7 +30,7 @@ if [[ $DO_SIMILARITY = 1 ]]; then
 	MINCORR=0
 	MAXCORR=1
 
-	python scripts/similarity.py \
+	python scripts/kinc-similarity.py \
 	   -i $EMX_FILE \
 	   -o $CMX_FILE \
 	   --clusmethod $CLUSMETHOD \
@@ -50,7 +50,7 @@ if [[ $DO_THRESHOLD = 1 ]]; then
 	TSTEP=0.001
 	TSTOP=0.50
 
-	python scripts/threshold.py \
+	python scripts/kinc-threshold.py \
 	   -i $CMX_FILE \
 	   --genes $NUM_GENES \
 	   --method $METHOD \
@@ -64,7 +64,7 @@ if [[ $DO_EXTRACT = 1 ]]; then
 	MINCORR=0
 	MAXCORR=1
 
-	python scripts/extract.py \
+	python scripts/kinc-extract.py \
 	   --emx $EMX_FILE \
 	   --cmx $CMX_FILE \
 	   --output $NET_FILE \
