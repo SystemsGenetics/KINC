@@ -1,5 +1,4 @@
 #include <cblas.h>
-#include <cuda_runtime.h>
 #include <cusolverDn.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
@@ -9,6 +8,7 @@
 #define MINOR_VERSION KINC_MINOR_VERSION
 #define REVISION KINC_REVISION
 #include <ace/core/ace_settings.h>
+#include <ace/core/cudaxx.h>
 
 #include "rmt.h"
 #include "rmt_input.h"
@@ -395,16 +395,13 @@ std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t si
       CHECK_CUSOLVER(cusolverDnCreate(&cusolver_handle));
 
       // allocate device buffers
-      float *matrix_dev;
-      float *eigens_dev;
-      int *info_dev;
-
-      CHECK_CUDA(cudaMalloc((void **)&matrix_dev, n * n * sizeof(float)));
-      CHECK_CUDA(cudaMalloc((void **)&eigens_dev, n * sizeof(float)));
-      CHECK_CUDA(cudaMalloc((void **)&info_dev, sizeof(int)));
+	  ::CUDA::Buffer<float> matrixBuffer(n * n);
+	  ::CUDA::Buffer<float> eigensBuffer(n);
+	  ::CUDA::Buffer<int> info(1);
 
       // copy pruned matrix to device
-      CHECK_CUDA(cudaMemcpy(matrix_dev, matrix->data(), n * n * sizeof(float), cudaMemcpyHostToDevice));
+	  memcpy(matrixBuffer.hostData(), matrix->data(), matrix->size() * sizeof(float));
+	  matrixBuffer.write();
 
       // determine the size of the workspace
       int lwork;
@@ -413,47 +410,39 @@ std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t si
          cusolver_handle,
          CUSOLVER_EIG_MODE_NOVECTOR,
          CUBLAS_FILL_MODE_UPPER,
-         n, matrix_dev, lda,
-         eigens_dev,
+         n, (float *)matrixBuffer.deviceData(), lda,
+         (float *)eigensBuffer.deviceData(),
          &lwork
       ));
 
       // allocate device buffer for workspace
-      float *work_dev;
-
-      CHECK_CUDA(cudaMalloc((void **)&work_dev, lwork * sizeof(float)));
+	  ::CUDA::Buffer<float> work(lwork);
 
       // compute eigenvalues
       CHECK_CUSOLVER(cusolverDnSsyevd(
          cusolver_handle,
          CUSOLVER_EIG_MODE_NOVECTOR,
          CUBLAS_FILL_MODE_UPPER,
-         n, matrix_dev, lda,
-         eigens_dev,
-         work_dev, lwork,
-         info_dev
+         n, (float *)matrixBuffer.deviceData(), lda,
+         (float *)eigensBuffer.deviceData(),
+         (float *)work.deviceData(), lwork,
+         (int *)info.deviceData()
       ));
 
       // destroy cuSOLVER handle
       CHECK_CUSOLVER(cusolverDnDestroy(cusolver_handle));
 
       // copy results to host
-      int info;
       std::vector<float> eigens(n);
 
-      CHECK_CUDA(cudaMemcpy(&info, info_dev, sizeof(int), cudaMemcpyDeviceToHost));
-      CHECK_CUDA(cudaMemcpy(eigens.data(), eigens_dev, n * sizeof(float), cudaMemcpyDeviceToHost));
-
-      // cleanup
-      CHECK_CUDA(cudaFree(matrix_dev));
-      CHECK_CUDA(cudaFree(work_dev));
-      CHECK_CUDA(cudaFree(eigens_dev));
-      CHECK_CUDA(cudaFree(info_dev));
+	  info.read().wait();
+	  eigensBuffer.read().wait();
+	  memcpy(eigens.data(), eigensBuffer.hostData(), eigens.size() * sizeof(float));
 
       // print warning if cuSOLVER returned error code
-      if ( info != 0 )
+      if ( info.at(0) != 0 )
       {
-         qInfo("warning: cuSOLVER ssyev returned %d", info);
+         qInfo("warning: cuSOLVER ssyev returned %d", info.at(0));
       }
 
       // return eigenvalues

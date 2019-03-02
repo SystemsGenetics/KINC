@@ -50,7 +50,7 @@ LIBS += \
     -L$${PWD}/../build/libs -lkinccore \
     -lacecore \
     -lgsl -lopenblas \
-    -L$${CUDADIR}/lib64 -lcuda -lnvrtc -lcudart -lcusolver -fopenmp \
+    -L$${CUDADIR}/lib64 -lcuda -lnvrtc -lcusolver -fopenmp \
     -lOpenCL -lmpi
 
 equals(LINK_LAPACKE, 1) { LIBS += -llapacke }
