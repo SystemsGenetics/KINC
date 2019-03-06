@@ -12,9 +12,9 @@ MODE="$1"
 # define analytic flags
 DO_IMPORT_EMX=1
 DO_SIMILARITY=1
-DO_EXPORT_CMX=1
-DO_THRESHOLD=1
-DO_EXTRACT=1
+DO_EXPORT_CMX=0
+DO_THRESHOLD=0
+DO_EXTRACT=0
 
 # define input/output files
 INFILE="$2"
@@ -62,7 +62,7 @@ fi
 # similarity
 if [[ $DO_SIMILARITY = 1 ]]; then
 	CLUSMETHOD="gmm"
-	CORRMETHOD="pearson"
+	CORRMETHOD="spearman"
 	MINEXPR="-inf"
 	MINCLUS=1
 	MAXCLUS=5
@@ -71,6 +71,7 @@ if [[ $DO_SIMILARITY = 1 ]]; then
 	POSTOUT="--postout"
 	MINCORR=0.5
 	MAXCORR=1
+	LSIZE=32
 
 	mpirun -np $NP kinc run similarity \
 		--input $EMX_FILE \
@@ -79,10 +80,13 @@ if [[ $DO_SIMILARITY = 1 ]]; then
 		--clusmethod $CLUSMETHOD \
 		--corrmethod $CORRMETHOD \
 		--minexpr $MINEXPR \
-		--minclus $MINCLUS --maxclus $MAXCLUS \
+		--minclus $MINCLUS \
+		--maxclus $MAXCLUS \
 		--crit $CRITERION \
 		$PREOUT $POSTOUT \
-		--mincorr $MINCORR --maxcorr $MAXCORR
+		--mincorr $MINCORR \
+		--maxcorr $MAXCORR \
+		--lsize $LSIZE
 fi
 
 # export cmx
