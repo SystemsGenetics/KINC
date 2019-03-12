@@ -132,54 +132,41 @@ void Similarity::process(const EAbstractAnalytic::Block* result)
 
    for ( auto& pair : resultBlock->pairs() )
    {
-      // save clusters whose correlations are within thresholds
-      if ( pair.K > 1 )
+      // save correlations that are within thresholds
+      CCMatrix::Pair ccmPair(_ccm);
+      CorrelationMatrix::Pair cmxPair(_cmx);
+
+      for ( qint8 k = 0; k < pair.K; ++k )
       {
-         CCMatrix::Pair ccmPair(_ccm);
+         // determine whether correlation is within thresholds
+         float corr = pair.correlations[k];
 
-         for ( qint8 k = 0; k < pair.K; ++k )
+         if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
          {
-            float corr = pair.correlations[k];
+            // save sample string
+            ccmPair.addCluster();
 
-            if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
+            for ( int i = 0; i < _input->sampleSize(); ++i )
             {
-               ccmPair.addCluster();
-
-               for ( int i = 0; i < _input->sampleSize(); ++i )
-               {
-                  ccmPair.at(ccmPair.clusterSize() - 1, i) = (pair.labels[i] >= 0)
-                     ? (k == pair.labels[i])
-                     : -pair.labels[i];
-               }
+               ccmPair.at(ccmPair.clusterSize() - 1, i) = (pair.labels[i] >= 0)
+                  ? (k == pair.labels[i])
+                  : -pair.labels[i];
             }
-         }
 
-         if ( ccmPair.clusterSize() > 0 )
-         {
-            ccmPair.write(index);
+            // save correlation
+            cmxPair.addCluster();
+            cmxPair.at(cmxPair.clusterSize() - 1) = corr;
          }
       }
 
-      // save correlations that are within thresholds
-      if ( pair.K > 0 )
+      if ( ccmPair.clusterSize() > 0 )
       {
-         CorrelationMatrix::Pair cmxPair(_cmx);
+         ccmPair.write(index);
+      }
 
-         for ( qint8 k = 0; k < pair.K; ++k )
-         {
-            float corr = pair.correlations[k];
-
-            if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
-            {
-               cmxPair.addCluster();
-               cmxPair.at(cmxPair.clusterSize() - 1) = corr;
-            }
-         }
-
-         if ( cmxPair.clusterSize() > 0 )
-         {
-            cmxPair.write(index);
-         }
+      if ( cmxPair.clusterSize() > 0 )
+      {
+         cmxPair.write(index);
       }
 
       ++index;
