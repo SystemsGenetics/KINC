@@ -59,7 +59,7 @@ Similarity::CUDA::Spearman::Spearman(::CUDA::Program* program):
 )
 {
    EDEBUG_FUNC(this,
-      stream,
+      &stream,
       globalWorkSize,
       localWorkSize,
       in_data,

@@ -264,7 +264,7 @@ std::vector<bool> PowerLaw::computeAdjacencyMatrix(const std::vector<RawPair>& p
  */
 std::vector<int> PowerLaw::computeDegreeDistribution(const std::vector<bool>& matrix, size_t size)
 {
-   EDEBUG_FUNC(this,&matrix,size);
+   EDEBUG_FUNC(this,&matrix,&size);
 
    // compute degree of each node
    std::vector<int> degrees(size);

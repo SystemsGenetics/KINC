@@ -71,14 +71,14 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
 )
 {
    EDEBUG_FUNC(this,
-      stream,
+      &stream,
       globalWorkSize,
       localWorkSize,
       sampleSize,
       minSamples,
       minClusters,
       maxClusters,
-      &criterion,
+      criterion,
       work_X,
       work_N,
       work_labels,

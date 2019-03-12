@@ -55,7 +55,7 @@ Similarity::CUDA::FetchPair::FetchPair(::CUDA::Program* program):
 )
 {
    EDEBUG_FUNC(this,
-      stream,
+      &stream,
       globalWorkSize,
       localWorkSize,
       expressions,

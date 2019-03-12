@@ -57,7 +57,7 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
 )
 {
    EDEBUG_FUNC(this,
-      stream,
+      &stream,
       globalWorkSize,
       localWorkSize,
       in_data,

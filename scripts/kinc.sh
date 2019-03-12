@@ -29,14 +29,14 @@ RMT_FILE="$LOGS/$(basename $CMX_FILE .cmx).txt"
 if [[ $MODE = "cuda" ]]; then
 	kinc settings set cuda 0
 	kinc settings set opencl none
-	kinc settings set threads 4
+	kinc settings set threads 2
 	kinc settings set logging off
 
 	NP=1
 elif [[ $MODE = "opencl" ]]; then
 	kinc settings set cuda none
 	kinc settings set opencl 0:0
-	kinc settings set threads 4
+	kinc settings set threads 2
 	kinc settings set logging off
 
 	NP=1
@@ -53,7 +53,7 @@ fi
 
 # import emx
 if [[ $DO_IMPORT_EMX = 1 ]]; then
-	kinc run import-emx \
+	time kinc run import-emx \
 		--input $INFILE \
 		--output $EMX_FILE \
 		--nan NA
@@ -73,7 +73,7 @@ if [[ $DO_SIMILARITY = 1 ]]; then
 	MAXCORR=1
 	LSIZE=32
 
-	mpirun -np $NP kinc run similarity \
+	time mpirun -np $NP kinc run similarity \
 		--input $EMX_FILE \
 		--ccm $CCM_FILE \
 		--cmx $CMX_FILE \
@@ -93,7 +93,7 @@ fi
 if [[ $DO_EXPORT_CMX = 1 ]]; then
 	OUTFILE="$DATA/$(basename $CMX_FILE .cmx)-cmx.txt"
 
-	kinc run export-cmx \
+	time kinc run export-cmx \
 		--emx $EMX_FILE \
 		--ccm $CCM_FILE \
 		--cmx $CMX_FILE \
@@ -104,7 +104,7 @@ fi
 if [[ $DO_THRESHOLD = 1 ]]; then
 	mkdir -p $LOGS
 
-	kinc run rmt \
+	time kinc run rmt \
 	   --input $CMX_FILE \
 	   --log $RMT_FILE
 fi
@@ -115,7 +115,7 @@ if [[ $DO_EXTRACT = 1 ]]; then
 	MINCORR=0
 	MAXCORR=1
 
-	kinc run extract \
+	time kinc run extract \
 		--emx $EMX_FILE \
 		--ccm $CCM_FILE \
 		--cmx $CMX_FILE \

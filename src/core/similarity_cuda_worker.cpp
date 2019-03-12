@@ -18,7 +18,7 @@ using namespace std;
  * CUDA context, and CUDA program.
  *
  * @param base
- * @param baseCUDA
+ * @param baseCuda
  * @param program
  */
 Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, ::CUDA::Program* program):
@@ -32,7 +32,7 @@ Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, :
       .spearman = CUDA::Spearman(program)
    })
 {
-   EDEBUG_FUNC(this,base,baseCUDA,program);
+   EDEBUG_FUNC(this,base,baseCuda,program);
 
    // initialize buffers
    int W {_base->_globalWorkSize};

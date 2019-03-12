@@ -380,7 +380,7 @@ std::vector<float> RMT::computePruneMatrix(const std::vector<RawPair>& pairs, co
  */
 std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t size)
 {
-   EDEBUG_FUNC(this,matrix,size);
+   EDEBUG_FUNC(this,matrix,&size);
 
    // initialize helper variables
    int n = size;
