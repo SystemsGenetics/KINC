@@ -17,7 +17,8 @@ using namespace Pairwise;
 ClusteringModel::ClusteringModel(ExpressionMatrix* emx)
 {
    // pre-allocate workspace
-   _workLabels.resize(emx->sampleSize());
+   _data.resize(emx->sampleSize());
+   _labels.resize(emx->sampleSize());
 }
 
 
@@ -28,8 +29,7 @@ ClusteringModel::ClusteringModel(ExpressionMatrix* emx)
 /*!
  * Determine the number of clusters in a pairwise data array. Several sub-models,
  * each one having a different number of clusters, are fit to the data and the
- * sub-model with the best criterion value is selected. The data array should
- * only contain samples that have a non-negative label.
+ * sub-model with the best criterion value is selected.
  *
  * @param data
  * @param numSamples
@@ -53,12 +53,23 @@ qint8 ClusteringModel::compute(
 
    if ( numSamples >= minSamples )
    {
+      // extract clean samples from data array
+      for ( int i = 0, j = 0; i < labels.size(); ++i )
+      {
+         if ( labels[i] >= 0 )
+         {
+            _data[j] = data[i];
+            ++j;
+         }
+      }
+
+      // determine the number of clusters
       float bestValue = INFINITY;
 
       for ( qint8 K = minClusters; K <= maxClusters; ++K )
       {
          // run each clustering sub-model
-         bool success = fit(data, numSamples, K, _workLabels);
+         bool success = fit(_data, numSamples, K, _labels);
 
          if ( !success )
          {
@@ -87,11 +98,12 @@ qint8 ClusteringModel::compute(
             bestK = K;
             bestValue = value;
 
+            // save labels for clean samples
             for ( int i = 0, j = 0; i < labels.size(); ++i )
             {
                if ( labels[i] >= 0 )
                {
-                  labels[i] = _workLabels[j];
+                  labels[i] = _labels[j];
                   ++j;
                }
             }

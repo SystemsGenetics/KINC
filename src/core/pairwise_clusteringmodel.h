@@ -59,9 +59,13 @@ namespace Pairwise
       virtual float computeICL(int K, int D, float logL, int N, float E) = 0;
    private:
       /*!
+       * Workspace for clustering data.
+       */
+      QVector<Vector2> _data;
+      /*!
        * Workspace for the cluster labels.
        */
-      QVector<qint8> _workLabels;
+      QVector<qint8> _labels;
    };
 }
 

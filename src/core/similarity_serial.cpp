@@ -190,7 +190,7 @@ int Similarity::Serial::fetchPair(const Pairwise::Index& index, QVector<Pairwise
       // include any remaining samples
       else
       {
-         data[numSamples] = { gene1.at(i), gene2.at(i) };
+         data[i] = { gene1.at(i), gene2.at(i) };
          numSamples++;
 
          labels[i] = 0;
@@ -210,36 +210,33 @@ int Similarity::Serial::fetchPair(const Pairwise::Index& index, QVector<Pairwise
  * Remove outliers from a vector of pairwise data. Outliers are detected independently
  * on each axis using the Tukey method, and marked with the given marker. Only the
  * samples in the given cluster are used in outlier detection. For unclustered data,
- * all samples are labeled as 0, so a cluster value of 0 should be used. The data
- * array should only contain samples that have a non-negative label.
+ * all samples are labeled as 0, so a cluster value of 0 should be used.
+ *
+ * This function returns the number of clean samples remaining in the data array,
+ * including samples in other clusters.
  *
  * @param data
  * @param labels
  * @param cluster
  * @param marker
  */
-int Similarity::Serial::removeOutliersCluster(QVector<Pairwise::Vector2>& data, QVector<qint8>& labels, qint8 cluster, qint8 marker)
+int Similarity::Serial::removeOutliersCluster(const QVector<Pairwise::Vector2>& data, QVector<qint8>& labels, qint8 cluster, qint8 marker)
 {
    EDEBUG_FUNC(this,&data,&labels,cluster,marker);
 
-   // extract univariate data from the given cluster
+   // extract samples from the given cluster into separate arrays
    QVector<float> x_sorted;
    QVector<float> y_sorted;
 
    x_sorted.reserve(labels.size());
    y_sorted.reserve(labels.size());
 
-   for ( int i = 0, j = 0; i < labels.size(); i++ )
+   for ( int i = 0; i < labels.size(); i++ )
    {
-      if ( labels[i] >= 0 )
+      if ( labels[i] == cluster )
       {
-         if ( labels[i] == cluster )
-         {
-            x_sorted.append(data[j].s[0]);
-            y_sorted.append(data[j].s[1]);
-         }
-
-         j++;
+         x_sorted.append(data[i].s[0]);
+         y_sorted.append(data[i].s[1]);
       }
    }
 
@@ -266,27 +263,21 @@ int Similarity::Serial::removeOutliersCluster(QVector<Pairwise::Vector2>& data, 
    float T_y_min = Q1_y - 1.5f * (Q3_y - Q1_y);
    float T_y_max = Q3_y + 1.5f * (Q3_y - Q1_y);
 
-   // remove outliers
+   // mark outliers
    int numSamples = 0;
 
-   for ( int i = 0, j = 0; i < labels.size(); i++ )
+   for ( int i = 0; i < labels.size(); i++ )
    {
-      if ( labels[i] >= 0 )
+      // mark samples in the given cluster that are outliers on either axis
+      if ( labels[i] == cluster && (data[i].s[0] < T_x_min || T_x_max < data[i].s[0] || data[i].s[1] < T_y_min || T_y_max < data[i].s[1]) )
       {
-         // mark samples in the given cluster that are outliers on either axis
-         if ( labels[i] == cluster && (data[j].s[0] < T_x_min || T_x_max < data[j].s[0] || data[j].s[1] < T_y_min || T_y_max < data[j].s[1]) )
-         {
-            labels[i] = marker;
-         }
+         labels[i] = marker;
+      }
 
-         // preserve all other non-outlier samples in the data array
-         else
-         {
-            data[numSamples] = data[j];
-            numSamples++;
-         }
-
-         j++;
+      // count the number of remaining samples in the entire data array
+      else if ( labels[i] >= 0 )
+      {
+         numSamples++;
       }
    }
 
@@ -308,7 +299,7 @@ int Similarity::Serial::removeOutliersCluster(QVector<Pairwise::Vector2>& data, 
  * @param clusterSize
  * @param marker
  */
-int Similarity::Serial::removeOutliers(QVector<Pairwise::Vector2>& data, int numSamples, QVector<qint8>& labels, qint8 clusterSize, qint8 marker)
+int Similarity::Serial::removeOutliers(const QVector<Pairwise::Vector2>& data, int numSamples, QVector<qint8>& labels, qint8 clusterSize, qint8 marker)
 {
    EDEBUG_FUNC(this,&data,numSamples,&labels,clusterSize,marker);
 
