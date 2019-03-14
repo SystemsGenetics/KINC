@@ -24,13 +24,13 @@ using RawPair = CorrelationMatrix::RawPair;
 
 
 #define CHECK_ERROR(condition, message)  \
-	if ( !(condition) )                   \
-	{                                     \
+   if ( !(condition) )                   \
+   {                                     \
       E_MAKE_EXCEPTION(e);               \
       e.setTitle(tr("CUDA Error"));      \
       e.setDetails(tr(message));         \
       throw e;                           \
-	}
+   }
 
 
 
@@ -38,7 +38,7 @@ using RawPair = CorrelationMatrix::RawPair;
 
 
 #define CHECK_CUDA(ret) \
-	CHECK_ERROR(ret == cudaSuccess, #ret)
+   CHECK_ERROR(ret == cudaSuccess, #ret)
 
 
 
@@ -46,7 +46,7 @@ using RawPair = CorrelationMatrix::RawPair;
 
 
 #define CHECK_CUSOLVER(ret) \
-	CHECK_ERROR(ret == CUSOLVER_STATUS_SUCCESS, #ret)
+   CHECK_ERROR(ret == CUSOLVER_STATUS_SUCCESS, #ret)
 
 
 
@@ -395,13 +395,13 @@ std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t si
       CHECK_CUSOLVER(cusolverDnCreate(&cusolver_handle));
 
       // allocate device buffers
-	  ::CUDA::Buffer<float> matrixBuffer(n * n);
-	  ::CUDA::Buffer<float> eigensBuffer(n);
-	  ::CUDA::Buffer<int> info(1);
+      ::CUDA::Buffer<float> matrixBuffer(n * n);
+      ::CUDA::Buffer<float> eigensBuffer(n);
+      ::CUDA::Buffer<int> info(1);
 
       // copy pruned matrix to device
-	  memcpy(matrixBuffer.hostData(), matrix->data(), matrix->size() * sizeof(float));
-	  matrixBuffer.write();
+      memcpy(matrixBuffer.hostData(), matrix->data(), matrix->size() * sizeof(float));
+      matrixBuffer.write();
 
       // determine the size of the workspace
       int lwork;
@@ -416,7 +416,7 @@ std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t si
       ));
 
       // allocate device buffer for workspace
-	  ::CUDA::Buffer<float> work(lwork);
+      ::CUDA::Buffer<float> work(lwork);
 
       // compute eigenvalues
       CHECK_CUSOLVER(cusolverDnSsyevd(
@@ -435,9 +435,9 @@ std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t si
       // copy results to host
       std::vector<float> eigens(n);
 
-	  info.read().wait();
-	  eigensBuffer.read().wait();
-	  memcpy(eigens.data(), eigensBuffer.hostData(), eigens.size() * sizeof(float));
+      info.read().wait();
+      eigensBuffer.read().wait();
+      memcpy(eigens.data(), eigensBuffer.hostData(), eigens.size() * sizeof(float));
 
       // print warning if cuSOLVER returned error code
       if ( info.at(0) != 0 )

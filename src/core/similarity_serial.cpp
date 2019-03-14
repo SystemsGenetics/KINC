@@ -129,13 +129,9 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
       Pair pair;
       pair.K = K;
 
-      if ( K > 1 )
-      {
-         pair.labels = labels;
-      }
-
       if ( K > 0 )
       {
+         pair.labels = labels;
          pair.correlations = correlations;
       }
 
