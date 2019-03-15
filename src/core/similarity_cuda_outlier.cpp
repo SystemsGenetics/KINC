@@ -39,8 +39,7 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
  * @param sampleSize
  * @param in_K
  * @param marker
- * @param work_x
- * @param work_y
+ * @param work_xy
  */
 ::CUDA::Event Similarity::CUDA::Outlier::execute(
    const ::CUDA::Stream& stream,
@@ -52,8 +51,7 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
    int sampleSize,
    ::CUDA::Buffer<qint8>* in_K,
    qint8 marker,
-   ::CUDA::Buffer<float>* work_x,
-   ::CUDA::Buffer<float>* work_y
+   ::CUDA::Buffer<float>* work_xy
 )
 {
    EDEBUG_FUNC(this,
@@ -66,8 +64,7 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
       sampleSize,
       in_K,
       marker,
-      work_x,
-      work_y);
+      work_xy);
 
    // set kernel arguments
    setArgument(GlobalWorkSize, globalWorkSize);
@@ -77,8 +74,7 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
    setArgument(SampleSize, sampleSize);
    setBuffer(InK, in_K);
    setArgument(Marker, marker);
-   setBuffer(WorkX, work_x);
-   setBuffer(WorkY, work_y);
+   setBuffer(WorkXY, work_xy);
 
    // set work sizes
    if ( localWorkSize == 0 )

@@ -10,8 +10,10 @@
  * Remove outliers from a vector of pairwise data. Outliers are detected independently
  * on each axis using the Tukey method, and marked with the given marker. Only the
  * samples in the given cluster are used in outlier detection. For unclustered data,
- * all samples are labeled as 0, so a cluster value of 0 should be used. The data
- * array should only contain samples that have a non-negative label.
+ * all samples are labeled as 0, so a cluster value of 0 should be used.
+ *
+ * This function returns the number of clean samples remaining in the data array,
+ * including samples in other clusters.
  *
  * @param data
  * @param labels
@@ -31,21 +33,16 @@ int removeOutliersCluster(
    float *x_sorted,
    float *y_sorted)
 {
-   // extract univariate data from the given cluster
+   // extract samples from the given cluster into separate arrays
    int n = 0;
 
-   for ( int i = 0, j = 0; i < sampleSize; i++ )
+   for ( int i = 0; i < sampleSize; i++ )
    {
-      if ( labels[i] >= 0 )
+      if ( labels[i] == cluster )
       {
-         if ( labels[i] == cluster )
-         {
-            x_sorted[n] = data[j].x;
-            y_sorted[n] = data[j].y;
-            n++;
-         }
-
-         j++;
+         x_sorted[n] = data[i].x;
+         y_sorted[n] = data[i].y;
+         n++;
       }
    }
 
@@ -70,27 +67,21 @@ int removeOutliersCluster(
    float T_y_min = Q1_y - 1.5f * (Q3_y - Q1_y);
    float T_y_max = Q3_y + 1.5f * (Q3_y - Q1_y);
 
-   // remove outliers
+   // mark outliers
    int numSamples = 0;
 
-   for ( int i = 0, j = 0; i < sampleSize; i++ )
+   for ( int i = 0; i < sampleSize; i++ )
    {
-      if ( labels[i] >= 0 )
+      // mark samples in the given cluster that are outliers on either axis
+      if ( labels[i] == cluster && (data[i].x < T_x_min || T_x_max < data[i].x || data[i].y < T_y_min || T_y_max < data[i].y) )
       {
-         // mark samples in the given cluster that are outliers on either axis
-         if ( labels[i] == cluster && (data[j].x < T_x_min || T_x_max < data[j].x || data[j].y < T_y_min || T_y_max < data[j].y) )
-         {
-            labels[i] = marker;
-         }
+         labels[i] = marker;
+      }
 
-         // preserve all other non-outlier samples in the data array
-         else
-         {
-            data[numSamples] = data[j];
-            numSamples++;
-         }
-
-         j++;
+      // count the number of remaining samples in the entire data array
+      else if ( labels[i] >= 0 )
+      {
+         numSamples++;
       }
    }
 
@@ -123,8 +114,7 @@ void removeOutliers(
    int sampleSize,
    char *in_K,
    char marker,
-   float *work_x,
-   float *work_y)
+   float *work_xy)
 {
    int i = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -135,11 +125,11 @@ void removeOutliers(
 
    // initialize workspace variables
    Vector2 *data = &in_data[i * sampleSize];
-   int *numSamples = &in_N[i];
+   int *p_N = &in_N[i];
    char *labels = &in_labels[i * sampleSize];
    char clusterSize = in_K[i];
-   float *x_sorted = &work_x[i * sampleSize];
-   float *y_sorted = &work_y[i * sampleSize];
+   float *x_sorted = &work_xy[(2 * i + 0) * sampleSize];
+   float *y_sorted = &work_xy[(2 * i + 1) * sampleSize];
 
    if ( marker == -7 )
    {
@@ -153,8 +143,13 @@ void removeOutliers(
    }
 
    // perform outlier removal on each cluster
+   int N;
+
    for ( char k = 0; k < clusterSize; ++k )
    {
-      *numSamples = removeOutliersCluster(data, labels, sampleSize, k, marker, x_sorted, y_sorted);
+      N = removeOutliersCluster(data, labels, sampleSize, k, marker, x_sorted, y_sorted);
    }
+
+   // save number of remaining samples
+   *p_N = N;
 }

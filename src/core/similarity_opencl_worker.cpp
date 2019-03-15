@@ -45,8 +45,7 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    _buffers.in_index = ::OpenCL::Buffer<cl_int2>(context, 1 * W);
    _buffers.work_X = ::OpenCL::Buffer<cl_float2>(context, N * W);
    _buffers.work_N = ::OpenCL::Buffer<cl_int>(context, 1 * W);
-   _buffers.work_x = ::OpenCL::Buffer<cl_float>(context, N_pow2 * W);
-   _buffers.work_y = ::OpenCL::Buffer<cl_float>(context, N_pow2 * W);
+   _buffers.work_xy = ::OpenCL::Buffer<cl_float>(context, 2 * N_pow2 * W);
    _buffers.work_labels = ::OpenCL::Buffer<cl_char>(context, N * W);
    _buffers.work_components = ::OpenCL::Buffer<cl_component>(context, K * W);
    _buffers.work_MP = ::OpenCL::Buffer<cl_float2>(context, K * W);
@@ -131,8 +130,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             _base->_input->sampleSize(),
             &_buffers.out_K,
             -7,
-            &_buffers.work_x,
-            &_buffers.work_y
+            &_buffers.work_xy
          ).wait();
       }
 
@@ -149,6 +147,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             _base->_maxClusters,
             (cl_int) _base->_criterion,
             &_buffers.work_X,
+            &_buffers.work_xy,
             &_buffers.work_N,
             &_buffers.work_labels,
             &_buffers.work_components,
@@ -186,8 +185,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             _base->_input->sampleSize(),
             &_buffers.out_K,
             -8,
-            &_buffers.work_x,
-            &_buffers.work_y
+            &_buffers.work_xy
          ).wait();
       }
 
@@ -217,8 +215,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             &_buffers.out_labels,
             _base->_input->sampleSize(),
             _base->_minSamples,
-            &_buffers.work_x,
-            &_buffers.work_y,
+            &_buffers.work_xy,
             &_buffers.work_rank,
             &_buffers.out_correlations
          ).wait();

@@ -41,14 +41,14 @@ __kernel void fetchPair(
    int2 index = in_index[i];
    __global Vector2 *X = &out_X[i * sampleSize];
    __global char *labels = &out_labels[i * sampleSize];
-   __global int *p_numSamples = &out_N[i];
+   __global int *p_N = &out_N[i];
 
    // index into gene expressions
    __global const float *gene1 = &expressions[index.x * sampleSize];
    __global const float *gene2 = &expressions[index.y * sampleSize];
 
    // populate X with shared expressions of gene pair
-   int numSamples = 0;
+   int N = 0;
 
    for ( int i = 0; i < sampleSize; ++i )
    {
@@ -62,13 +62,13 @@ __kernel void fetchPair(
       }
       else
       {
-         X[numSamples] = (float2) ( gene1[i], gene2[i] );
-         numSamples++;
+         X[i] = (float2) ( gene1[i], gene2[i] );
+         N++;
 
          labels[i] = 0;
       }
    }
 
-   // return size of X
-   *p_numSamples = numSamples;
+   // save number of clean samples
+   *p_N = N;
 }

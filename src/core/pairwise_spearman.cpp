@@ -51,8 +51,7 @@ Spearman::Spearman(ExpressionMatrix* emx)
 
 
 /*!
- * Compute the Spearman correlation of a cluster in a pairwise data array. The
- * data array should only contain samples that have a non-negative label.
+ * Compute the Spearman correlation of a cluster in a pairwise data array.
  *
  * @param data
  * @param labels
@@ -69,19 +68,14 @@ float Spearman::computeCluster(
    int N_pow2 = nextPower2(labels.size());
    int n = 0;
 
-   for ( int i = 0, j = 0; i < labels.size(); ++i )
+   for ( int i = 0; i < labels.size(); ++i )
    {
-      if ( labels[i] >= 0 )
+      if ( labels[i] == cluster )
       {
-         if ( labels[i] == cluster )
-         {
-            _x[n] = data[j].s[0];
-            _y[n] = data[j].s[1];
-            _rank[n] = n + 1;
-            ++n;
-         }
-
-         ++j;
+         _x[n] = data[i].s[0];
+         _y[n] = data[i].s[1];
+         _rank[n] = n + 1;
+         ++n;
       }
    }
 

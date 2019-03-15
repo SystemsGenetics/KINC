@@ -42,14 +42,14 @@ void fetchPair(
    int2 index = in_index[i];
    Vector2 *X = &out_X[i * sampleSize];
    char *labels = &out_labels[i * sampleSize];
-   int *p_numSamples = &out_N[i];
+   int *p_N = &out_N[i];
 
    // index into gene expressions
    const float *gene1 = &expressions[index.x * sampleSize];
    const float *gene2 = &expressions[index.y * sampleSize];
 
    // populate X with shared expressions of gene pair
-   int numSamples = 0;
+   int N = 0;
 
    for ( int i = 0; i < sampleSize; ++i )
    {
@@ -63,13 +63,13 @@ void fetchPair(
       }
       else
       {
-         X[numSamples] = make_float2(gene1[i], gene2[i]);
-         numSamples++;
+         X[i] = make_float2(gene1[i], gene2[i]);
+         N++;
 
          labels[i] = 0;
       }
    }
 
-   // return size of X
-   *p_numSamples = numSamples;
+   // save number of clean samples
+   *p_N = N;
 }

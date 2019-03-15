@@ -10,9 +10,7 @@ using namespace Pairwise;
 
 
 /*!
- * Compute the correlation of each cluster in a pairwise data array. The data array
- * should only contain the clean samples that were extracted from the expression
- * matrix, while the labels should contain all samples.
+ * Compute the correlation of each cluster in a pairwise data array.
  *
  * @param data
  * @param K

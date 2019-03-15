@@ -24,8 +24,7 @@ public:
       ,InLabels
       ,SampleSize
       ,MinSamples
-      ,WorkX
-      ,WorkY
+      ,WorkXY
       ,WorkRank
       ,OutCorrelations
    };
@@ -39,8 +38,7 @@ public:
       ::OpenCL::Buffer<cl_char>* in_labels,
       cl_int sampleSize,
       cl_int minSamples,
-      ::OpenCL::Buffer<cl_float>* work_x,
-      ::OpenCL::Buffer<cl_float>* work_y,
+      ::OpenCL::Buffer<cl_float>* work_xy,
       ::OpenCL::Buffer<cl_int>* work_rank,
       ::OpenCL::Buffer<cl_float>* out_correlations
    );
