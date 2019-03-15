@@ -22,8 +22,7 @@ public:
       ,SampleSize
       ,InK
       ,Marker
-      ,WorkX
-      ,WorkY
+      ,WorkXY
    };
    explicit Outlier(::CUDA::Program* program);
    ::CUDA::Event execute(
@@ -36,8 +35,7 @@ public:
       int sampleSize,
       ::CUDA::Buffer<qint8>* in_K,
       qint8 marker,
-      ::CUDA::Buffer<float>* work_x,
-      ::CUDA::Buffer<float>* work_y
+      ::CUDA::Buffer<float>* work_xy
    );
 };
 

@@ -626,8 +626,7 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
 /*!
  * Determine the number of clusters in a pairwise data array. Several sub-models,
  * each one having a different number of clusters, are fit to the data and the
- * sub-model with the best criterion value is selected. The data array should
- * only contain samples that have a non-negative label.
+ * sub-model with the best criterion value is selected.
  *
  * @param globalWorkSize
  * @param sampleSize
@@ -646,6 +645,7 @@ void GMM_compute(
    char minClusters,
    char maxClusters,
    Criterion criterion,
+   Vector2 *work_data,
    Vector2 *work_X,
    int *work_N,
    char *work_labels,
@@ -665,7 +665,8 @@ void GMM_compute(
    }
 
    // initialize workspace variables
-   Vector2 *data = &work_X[i * sampleSize];
+   Vector2 *data = &work_data[i * sampleSize];
+   Vector2 *X = &work_X[i * sampleSize];
    int numSamples = work_N[i];
    char *labels = &work_labels[i * sampleSize];
    Component *components = &work_components[i * maxClusters];
@@ -691,12 +692,23 @@ void GMM_compute(
 
    if ( numSamples >= minSamples )
    {
+      // extract clean samples from data array
+      for ( int i = 0, j = 0; i < sampleSize; ++i )
+      {
+         if ( bestLabels[i] >= 0 )
+         {
+            X[j] = data[i];
+            ++j;
+         }
+      }
+
+      // determine the number of clusters
       float bestValue = INFINITY;
 
       for ( char K = minClusters; K <= maxClusters; ++K )
       {
          // run each clustering sub-model
-         bool success = GMM_fit(&gmm, data, numSamples, K, labels);
+         bool success = GMM_fit(&gmm, X, numSamples, K, labels);
 
          if ( !success )
          {
@@ -725,6 +737,7 @@ void GMM_compute(
             *bestK = K;
             bestValue = value;
 
+            // save labels for clean samples
             for ( int i = 0, j = 0; i < sampleSize; ++i )
             {
                if ( bestLabels[i] >= 0 )

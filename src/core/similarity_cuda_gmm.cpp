@@ -38,6 +38,7 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
  * @param minClusters
  * @param maxClusters
  * @param criterion
+ * @param work_data
  * @param work_X
  * @param work_N
  * @param work_labels
@@ -58,7 +59,8 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
    char minClusters,
    char maxClusters,
    int criterion,
-   ::CUDA::Buffer<float2>* work_X,
+   ::CUDA::Buffer<float2>* work_data,
+   ::CUDA::Buffer<float>* work_X,
    ::CUDA::Buffer<int>* work_N,
    ::CUDA::Buffer<qint8>* work_labels,
    ::CUDA::Buffer<cu_component>* work_components,
@@ -79,6 +81,7 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
       minClusters,
       maxClusters,
       criterion,
+      work_data,
       work_X,
       work_N,
       work_labels,
@@ -97,6 +100,7 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
    setArgument(MinClusters, minClusters);
    setArgument(MaxClusters, maxClusters);
    setArgument(Criterion, criterion);
+   setBuffer(WorkData, work_data);
    setBuffer(WorkX, work_X);
    setBuffer(WorkN, work_N);
    setBuffer(WorkLabels, work_labels);

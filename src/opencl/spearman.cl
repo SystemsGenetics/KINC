@@ -28,8 +28,7 @@ int nextPower2(int n)
 
 
 /*!
- * Compute the Spearman correlation of a cluster in a pairwise data array. The
- * data array should only contain samples that have a non-negative label.
+ * Compute the Spearman correlation of a cluster in a pairwise data array.
  *
  * @param data
  * @param labels
@@ -54,19 +53,14 @@ float Spearman_computeCluster(
    int N_pow2 = nextPower2(sampleSize);
    int n = 0;
 
-   for ( int i = 0, j = 0; i < sampleSize; ++i )
+   for ( int i = 0; i < sampleSize; ++i )
    {
-      if ( labels[i] >= 0 )
+      if ( labels[i] == cluster )
       {
-         if ( labels[i] == cluster )
-         {
-            x[n] = data[j].x;
-            y[n] = data[j].y;
-            rank[n] = n + 1;
-            ++n;
-         }
-
-         ++j;
+         x[n] = data[i].x;
+         y[n] = data[i].y;
+         rank[n] = n + 1;
+         ++n;
       }
    }
 
@@ -130,8 +124,7 @@ __kernel void Spearman_compute(
    __global const char *in_labels,
    int sampleSize,
    int minSamples,
-   __global float *work_x,
-   __global float *work_y,
+   __global float *work_xy,
    __global int *work_rank,
    __global float *out_correlations)
 {
@@ -146,8 +139,8 @@ __kernel void Spearman_compute(
    int N_pow2 = nextPower2(sampleSize);
    __global const float2 *data = &in_data[i * sampleSize];
    __global const char *labels = &in_labels[i * sampleSize];
-   __global float *x = &work_x[i * N_pow2];
-   __global float *y = &work_y[i * N_pow2];
+   __global float *x = &work_xy[(2 * i + 0) * N_pow2];
+   __global float *y = &work_xy[(2 * i + 1) * N_pow2];
    __global int *rank = &work_rank[i * N_pow2];
    __global float *correlations = &out_correlations[i * clusterSize];
 

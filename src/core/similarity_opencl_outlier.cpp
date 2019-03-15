@@ -40,8 +40,7 @@ Similarity::OpenCL::Outlier::Outlier(::OpenCL::Program* program, QObject* parent
  * @param sampleSize
  * @param in_K
  * @param marker
- * @param work_x
- * @param work_y
+ * @param work_xy
  */
 ::OpenCL::Event Similarity::OpenCL::Outlier::execute(
    ::OpenCL::CommandQueue* queue,
@@ -53,8 +52,7 @@ Similarity::OpenCL::Outlier::Outlier(::OpenCL::Program* program, QObject* parent
    cl_int sampleSize,
    ::OpenCL::Buffer<cl_char>* in_K,
    cl_char marker,
-   ::OpenCL::Buffer<cl_float>* work_x,
-   ::OpenCL::Buffer<cl_float>* work_y
+   ::OpenCL::Buffer<cl_float>* work_xy
 )
 {
    EDEBUG_FUNC(this,
@@ -67,8 +65,7 @@ Similarity::OpenCL::Outlier::Outlier(::OpenCL::Program* program, QObject* parent
       sampleSize,
       in_K,
       marker,
-      work_x,
-      work_y);
+      work_xy);
 
    // acquire lock for this kernel
    Locker locker {lock()};
@@ -81,8 +78,7 @@ Similarity::OpenCL::Outlier::Outlier(::OpenCL::Program* program, QObject* parent
    setArgument(SampleSize, sampleSize);
    setBuffer(InK, in_K);
    setArgument(Marker, marker);
-   setBuffer(WorkX, work_x);
-   setBuffer(WorkY, work_y);
+   setBuffer(WorkXY, work_xy);
 
    // set work sizes
    if ( localWorkSize == 0 )

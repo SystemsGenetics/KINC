@@ -39,6 +39,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
  * @param minClusters
  * @param maxClusters
  * @param criterion
+ * @param work_data
  * @param work_X
  * @param work_N
  * @param work_labels
@@ -59,7 +60,8 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    cl_char minClusters,
    cl_char maxClusters,
    cl_int criterion,
-   ::OpenCL::Buffer<cl_float2>* work_X,
+   ::OpenCL::Buffer<cl_float2>* work_data,
+   ::OpenCL::Buffer<cl_float>* work_X,
    ::OpenCL::Buffer<cl_int>* work_N,
    ::OpenCL::Buffer<cl_char>* work_labels,
    ::OpenCL::Buffer<cl_component>* work_components,
@@ -80,6 +82,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
       minClusters,
       maxClusters,
       &criterion,
+      work_data,
       work_X,
       work_N,
       work_labels,
@@ -101,6 +104,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    setArgument(MinClusters, minClusters);
    setArgument(MaxClusters, maxClusters);
    setArgument(Criterion, criterion);
+   setBuffer(WorkData, work_data);
    setBuffer(WorkX, work_X);
    setBuffer(WorkN, work_N);
    setBuffer(WorkLabels, work_labels);

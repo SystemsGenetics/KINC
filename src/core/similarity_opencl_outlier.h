@@ -23,8 +23,7 @@ public:
       ,SampleSize
       ,InK
       ,Marker
-      ,WorkX
-      ,WorkY
+      ,WorkXY
    };
    explicit Outlier(::OpenCL::Program* program, QObject* parent = nullptr);
    ::OpenCL::Event execute(
@@ -37,8 +36,7 @@ public:
       cl_int sampleSize,
       ::OpenCL::Buffer<cl_char>* in_K,
       cl_char marker,
-      ::OpenCL::Buffer<cl_float>* work_x,
-      ::OpenCL::Buffer<cl_float>* work_y
+      ::OpenCL::Buffer<cl_float>* work_xy
    );
 };
 

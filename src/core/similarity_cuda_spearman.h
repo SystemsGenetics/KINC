@@ -23,8 +23,7 @@ public:
       ,InLabels
       ,SampleSize
       ,MinSamples
-      ,WorkX
-      ,WorkY
+      ,WorkXY
       ,WorkRank
       ,OutCorrelations
    };
@@ -38,8 +37,7 @@ public:
       ::CUDA::Buffer<qint8>* in_labels,
       int sampleSize,
       int minSamples,
-      ::CUDA::Buffer<float>* work_x,
-      ::CUDA::Buffer<float>* work_y,
+      ::CUDA::Buffer<float>* work_xy,
       ::CUDA::Buffer<int>* work_rank,
       ::CUDA::Buffer<float>* out_correlations
    );

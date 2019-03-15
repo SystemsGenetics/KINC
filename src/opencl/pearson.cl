@@ -5,8 +5,7 @@
 
 
 /*!
- * Compute the Pearson correlation of a cluster in a pairwise data array. The
- * data array should only contain samples that have a non-negative label.
+ * Compute the Pearson correlation of a cluster in a pairwise data array.
  *
  * @param data
  * @param labels
@@ -29,25 +28,20 @@ float Pearson_computeCluster(
    float sumy2 = 0;
    float sumxy = 0;
 
-   for ( int i = 0, j = 0; i < sampleSize; ++i )
+   for ( int i = 0; i < sampleSize; ++i )
    {
-      if ( labels[i] >= 0 )
+      if ( labels[i] == cluster )
       {
-         if ( labels[i] == cluster )
-         {
-            float x_i = data[j].x;
-            float y_i = data[j].y;
+         float x_i = data[i].x;
+         float y_i = data[i].y;
 
-            sumx += x_i;
-            sumy += y_i;
-            sumx2 += x_i * x_i;
-            sumy2 += y_i * y_i;
-            sumxy += x_i * y_i;
+         sumx += x_i;
+         sumy += y_i;
+         sumx2 += x_i * x_i;
+         sumy2 += y_i * y_i;
+         sumxy += x_i * y_i;
 
-            ++n;
-         }
-
-         ++j;
+         ++n;
       }
    }
 

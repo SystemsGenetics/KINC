@@ -38,6 +38,7 @@ public:
       ,MinClusters
       ,MaxClusters
       ,Criterion
+      ,WorkData
       ,WorkX
       ,WorkN
       ,WorkLabels
@@ -59,7 +60,8 @@ public:
       cl_char minClusters,
       cl_char maxClusters,
       cl_int criterion,
-      ::OpenCL::Buffer<cl_float2>* work_X,
+      ::OpenCL::Buffer<cl_float2>* work_data,
+      ::OpenCL::Buffer<cl_float>* work_X,
       ::OpenCL::Buffer<cl_int>* work_N,
       ::OpenCL::Buffer<cl_char>* work_labels,
       ::OpenCL::Buffer<cl_component>* work_components,
