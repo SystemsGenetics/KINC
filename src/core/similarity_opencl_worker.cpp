@@ -245,15 +245,10 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
          // save the number of clusters
          pair.K = _buffers.out_K.at(j);
 
-         // save the cluster labels (if more than one cluster was found)
-         if ( pair.K > 1 )
-         {
-            pair.labels = ResultBlock::makeVector(labels, _base->_input->sampleSize());
-         }
-
-         // save the correlations (if the pair was able to be processed)
+         // save the cluster labels and correlations (if the pair was able to be processed)
          if ( pair.K > 0 )
          {
+            pair.labels = ResultBlock::makeVector(labels, _base->_input->sampleSize());
             pair.correlations = ResultBlock::makeVector(correlations, _base->_maxClusters);
          }
 
