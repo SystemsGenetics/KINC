@@ -8,33 +8,21 @@ import seaborn as sns
 
 
 
-if __name__ ==  "__main__":
-	# parse command-line arguments
-	parser = argparse.ArgumentParser()
-	parser.add_argument("-e", "--emx", required=True, help="expression matrix file", dest="EMX")
-	parser.add_argument("-n", "--netlist", required=True, help="netlist file", dest="NETLIST")
-	parser.add_argument("-o", "--output", required=True, help="output directory", dest="OUTPUT")
-	parser.add_argument("-s", "--scale", action="store_true", help="use a uniform global scale", dest="SCALE")
+def plot_clusdist(netlist, output_dir):
+	sns.distplot(netlist["Num_Clusters"], kde=False)
+	plt.savefig("%s/clusdist.png" % output_dir)
+	plt.close()
 
-	args = parser.parse_args()
 
-	# load input data
-	emx = pd.read_table(args.EMX, index_col=0)
-	netlist = pd.read_table(args.NETLIST)
 
-	print("Loaded expression matrix (%d genes, %d samples)" % emx.shape)
-	print("Loaded netlist (%d edges)" % len(netlist.index))
+def plot_corrdist(netlist, output_dir):
+	sns.distplot(netlist["sc"])
+	plt.savefig("%s/corrdist.png" % output_dir)
+	plt.close()
 
-	# setup plot limits
-	if args.SCALE:
-		limits = (emx.min().min(), emx.max().max())
-	else:
-		limits = None
 
-	# initialize output directory
-	if not os.path.exists(args.OUTPUT):
-		os.mkdir(args.OUTPUT)
 
+def plot_pairwise(emx, netlist, output_dir, limits=None):
 	# iterate through each network edge
 	for idx in netlist.index:
 		edge = netlist.iloc[idx]
@@ -79,5 +67,52 @@ if __name__ ==  "__main__":
 		plt.scatter(data[0], data[1], color="w", edgecolors=colors)
 
 		# save plot to file
-		plt.savefig("%s/%s_%s_%d.png" % (args.OUTPUT, x, y, k))
+		plt.savefig("%s/%s_%s_%d.png" % (output_dir, x, y, k))
 		plt.close()
+
+
+
+if __name__ ==  "__main__":
+	# parse command-line arguments
+	parser = argparse.ArgumentParser()
+	parser.add_argument("-e", "--emx", required=True, help="expression matrix file", dest="EMX")
+	parser.add_argument("-n", "--netlist", required=True, help="netlist file", dest="NETLIST")
+	parser.add_argument("-o", "--output", default="plots", help="output directory", dest="OUTPUT_DIR")
+	parser.add_argument("--clusdist", action="store_true", help="plot cluster distribution", dest="CLUSDIST")
+	parser.add_argument("--corrdist", action="store_true", help="plot correlation distribution", dest="CORRDIST")
+	parser.add_argument("--pairwise", action="store_true", help="plot pairwise plots", dest="PAIRWISE")
+	parser.add_argument("--pw-scale", action="store_true", help="use the same limits for all pairwise plots", dest="SCALE")
+
+	args = parser.parse_args()
+
+	# load input data
+	emx = pd.read_table(args.EMX, index_col=0)
+	netlist = pd.read_table(args.NETLIST)
+
+	print("Loaded expression matrix (%d genes, %d samples)" % emx.shape)
+	print("Loaded netlist (%d edges)" % len(netlist.index))
+
+	# initialize output directory
+	if not os.path.exists(args.OUTPUT_DIR):
+		os.mkdir(args.OUTPUT_DIR)
+
+	# setup plot limits
+	if args.SCALE:
+		limits = (emx.min().min(), emx.max().max())
+	else:
+		limits = None
+
+	# plot cluster distribution
+	if args.CLUSDIST:
+		print("Plotting cluster distribution...")
+		plot_clusdist(netlist, output_dir=args.OUTPUT_DIR)
+
+	# plot correlation distribution
+	if args.CORRDIST:
+		print("Plotting correlation distribution...")
+		plot_corrdist(netlist, output_dir=args.OUTPUT_DIR)
+
+	# plot pairwise plots
+	if args.PAIRWISE:
+		print("Plotting pairwise plots...")
+		plot_pairwise(emx, netlist, output_dir=args.OUTPUT_DIR, limits=limits)
