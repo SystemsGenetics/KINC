@@ -34,16 +34,21 @@ private:
    */
    enum class OutputFormat
    {
-     /*!
-      * Text format
-      */
-     Text
-     /*!
-      * GraphML format
-      */
-     ,GraphML
+      /*!
+       * Text format
+       */
+      Text
+      /*!
+       * Minimal format
+       */
+      ,Minimal
+      /*!
+       * GraphML format
+       */
+      ,GraphML
    };
    void writeTextFormat(int index);
+   void writeMinimalFormat(int index);
    void writeGraphMLFormat(int index);
    /**
     * Workspace variables to write to the output file

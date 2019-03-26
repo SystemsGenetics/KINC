@@ -46,6 +46,9 @@ void Extract::process(const EAbstractAnalytic::Block* result)
    case OutputFormat::Text:
       writeTextFormat(result->index());
       break;
+   case OutputFormat::Minimal:
+      writeMinimalFormat(result->index());
+      break;
    case OutputFormat::GraphML:
       writeGraphMLFormat(result->index());
       break;
@@ -187,6 +190,72 @@ void Extract::writeTextFormat(int index)
          << "\t" << numPreOutliers
          << "\t" << numThreshold
          << "\t" << sampleMask
+         << "\n";
+   }
+
+   // make sure writing output file worked
+   if ( _stream.status() != QTextStream::Ok )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("File IO Error"));
+      e.setDetails(tr("Qt Text Stream encountered an unknown error."));
+      throw e;
+   }
+}
+
+
+
+
+
+
+/*!
+ * Write the next pair using the minimal format.
+ *
+ * @param index
+ */
+void Extract::writeMinimalFormat(int index)
+{
+   EDEBUG_FUNC(this);
+
+   // get gene names
+   EMetaArray geneNames {_cmx->geneNames()};
+
+   // write header to file
+   if ( index == 0 )
+   {
+      _stream
+         << "Source"
+         << "\t" << "Target"
+         << "\t" << "sc"
+         << "\t" << "Cluster"
+         << "\t" << "Num_Clusters"
+         << "\n";
+   }
+
+   // read next pair
+   _cmxPair.readNext();
+   _ccmPair.read(_cmxPair.index());
+
+   // write pairwise data to output file
+   for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
+   {
+      QString source {geneNames.at(_cmxPair.index().getX()).toString()};
+      QString target {geneNames.at(_cmxPair.index().getY()).toString()};
+      float correlation {_cmxPair.at(k)};
+
+      // exclude cluster if correlation is not within thresholds
+      if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
+      {
+         continue;
+      }
+
+      // write cluster to output file
+      _stream
+         << source
+         << "\t" << target
+         << "\t" << correlation
+         << "\t" << k
+         << "\t" << _cmxPair.clusterSize()
          << "\n";
    }
 
