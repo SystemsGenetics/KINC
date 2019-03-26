@@ -41,7 +41,6 @@ Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, :
    int K {_base->_maxClusters};
 
    _buffers.in_index = ::CUDA::Buffer<int2>(1 * W);
-   _buffers.work_X = ::CUDA::Buffer<float2>(N * W);
    _buffers.work_N = ::CUDA::Buffer<int>(1 * W);
    _buffers.work_xy = ::CUDA::Buffer<float>(2 * N_pow2 * W);
    _buffers.work_labels = ::CUDA::Buffer<qint8>(N * W);
@@ -111,7 +110,6 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
          _base->_input->sampleSize(),
          &_buffers.in_index,
          _base->_minExpression,
-         &_buffers.work_X,
          &_buffers.work_N,
          &_buffers.out_labels
       );
@@ -123,10 +121,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
             _stream,
             globalWorkSize,
             _base->_localWorkSize,
-            &_buffers.work_X,
+            &_baseCuda->_expressions,
+            _base->_input->sampleSize(),
+            &_buffers.in_index,
             &_buffers.work_N,
             &_buffers.out_labels,
-            _base->_input->sampleSize(),
             &_buffers.out_K,
             -7,
             &_buffers.work_xy
@@ -140,12 +139,13 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
             _stream,
             globalWorkSize,
             _base->_localWorkSize,
+            &_baseCuda->_expressions,
             _base->_input->sampleSize(),
+            &_buffers.in_index,
             _base->_minSamples,
             _base->_minClusters,
             _base->_maxClusters,
             (int) _base->_criterion,
-            &_buffers.work_X,
             &_buffers.work_xy,
             &_buffers.work_N,
             &_buffers.work_labels,
@@ -176,10 +176,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
             _stream,
             globalWorkSize,
             _base->_localWorkSize,
-            &_buffers.work_X,
+            &_baseCuda->_expressions,
+            _base->_input->sampleSize(),
+            &_buffers.in_index,
             &_buffers.work_N,
             &_buffers.out_labels,
-            _base->_input->sampleSize(),
             &_buffers.out_K,
             -8,
             &_buffers.work_xy
@@ -193,10 +194,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
             _stream,
             globalWorkSize,
             _base->_localWorkSize,
-            &_buffers.work_X,
+            &_baseCuda->_expressions,
+            _base->_input->sampleSize(),
+            &_buffers.in_index,
             _base->_maxClusters,
             &_buffers.out_labels,
-            _base->_input->sampleSize(),
             _base->_minSamples,
             &_buffers.out_correlations
          );
@@ -207,10 +209,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
             _stream,
             globalWorkSize,
             _base->_localWorkSize,
-            &_buffers.work_X,
+            &_baseCuda->_expressions,
+            _base->_input->sampleSize(),
+            &_buffers.in_index,
             _base->_maxClusters,
             &_buffers.out_labels,
-            _base->_input->sampleSize(),
             _base->_minSamples,
             &_buffers.work_xy,
             &_buffers.work_rank,

@@ -33,10 +33,11 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
  * @param stream
  * @param globalWorkSize
  * @param localWorkSize
- * @param in_data
+ * @param expressions
+ * @param sampleSize
+ * @param in_index
  * @param in_N
  * @param in_labels
- * @param sampleSize
  * @param in_K
  * @param marker
  * @param work_xy
@@ -45,10 +46,11 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
    const ::CUDA::Stream& stream,
    int globalWorkSize,
    int localWorkSize,
-   ::CUDA::Buffer<float2>* in_data,
+   ::CUDA::Buffer<float>* expressions,
+   int sampleSize,
+   ::CUDA::Buffer<int2>* in_index,
    ::CUDA::Buffer<int>* in_N,
    ::CUDA::Buffer<qint8>* in_labels,
-   int sampleSize,
    ::CUDA::Buffer<qint8>* in_K,
    qint8 marker,
    ::CUDA::Buffer<float>* work_xy
@@ -58,20 +60,22 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
       &stream,
       globalWorkSize,
       localWorkSize,
-      in_data,
+      expressions,
+      sampleSize,
+      in_index,
       in_N,
       in_labels,
-      sampleSize,
       in_K,
       marker,
       work_xy);
 
    // set kernel arguments
    setArgument(GlobalWorkSize, globalWorkSize);
-   setBuffer(InData, in_data);
+   setBuffer(Expressions, expressions);
+   setArgument(SampleSize, sampleSize);
+   setBuffer(InIndex, in_index);
    setBuffer(InN, in_N);
    setBuffer(InLabels, in_labels);
-   setArgument(SampleSize, sampleSize);
    setBuffer(InK, in_K);
    setArgument(Marker, marker);
    setBuffer(WorkXY, work_xy);

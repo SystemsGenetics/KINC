@@ -31,24 +31,26 @@ int nextPower2(int n)
 /*!
  * Compute the Spearman correlation of a cluster in a pairwise data array.
  *
- * @param data
+ * @param x
+ * @param y
  * @param labels
  * @param sampleSize
  * @param cluster
  * @param minSamples
- * @param x
- * @param y
+ * @param x_sorted
+ * @param y_sorted
  * @param rank
  */
 __device__
 float Spearman_computeCluster(
-   const float2 *data,
+   const float *x,
+   const float *y,
    const char *labels,
    int sampleSize,
    char cluster,
    int minSamples,
-   float *x,
-   float *y,
+   float *x_sorted,
+   float *y_sorted,
    int *rank)
 {
    // extract samples in pairwise cluster
@@ -59,8 +61,8 @@ float Spearman_computeCluster(
    {
       if ( labels[i] == cluster )
       {
-         x[n] = data[i].x;
-         y[n] = data[i].y;
+         x_sorted[n] = x[i];
+         y_sorted[n] = y[i];
          rank[n] = n + 1;
          ++n;
       }
@@ -68,8 +70,8 @@ float Spearman_computeCluster(
 
    for ( int i = n; i < N_pow2; ++i )
    {
-      x[i] = INFINITY;
-      y[i] = INFINITY;
+      x_sorted[i] = INFINITY;
+      y_sorted[i] = INFINITY;
       rank[i] = 0;
    }
 
@@ -82,8 +84,8 @@ float Spearman_computeCluster(
       int n_pow2 = nextPower2(n);
 
       // execute two bitonic sorts that is beginning of spearman algorithm
-      bitonicSortFF(n_pow2, x, y);
-      bitonicSortFI(n_pow2, y, rank);
+      bitonicSortFF(n_pow2, x_sorted, y_sorted);
+      bitonicSortFI(n_pow2, y_sorted, rank);
 
       // go through spearman sorted rank list and calculate difference from 1,2,3,... list
       int diff = 0;
@@ -112,20 +114,22 @@ float Spearman_computeCluster(
  * matrix, while the labels should contain all samples.
  *
  * @param globalWorkSize
- * @param in_data
+ * @param expressions
+ * @param sampleSize
+ * @param in_index
  * @param clusterSize
  * @param in_labels
- * @param sampleSize
  * @param minSamples
  * @param out_correlations
  */
 __global__
 void Spearman_compute(
    int globalWorkSize,
-   const float2 *in_data,
+   const float *expressions,
+   int sampleSize,
+   const int2 *in_index,
    char clusterSize,
    const char *in_labels,
-   int sampleSize,
    int minSamples,
    float *work_xy,
    int *work_rank,
@@ -140,15 +144,17 @@ void Spearman_compute(
 
    // initialize workspace variables
    int N_pow2 = nextPower2(sampleSize);
-   const float2 *data = &in_data[i * sampleSize];
+   int2 index = in_index[i];
+   const float *x = &expressions[index.x * sampleSize];
+   const float *y = &expressions[index.y * sampleSize];
    const char *labels = &in_labels[i * sampleSize];
-   float *x = &work_xy[(2 * i + 0) * N_pow2];
-   float *y = &work_xy[(2 * i + 1) * N_pow2];
+   float *x_sorted = &work_xy[(2 * i + 0) * N_pow2];
+   float *y_sorted = &work_xy[(2 * i + 1) * N_pow2];
    int *rank = &work_rank[i * N_pow2];
    float *correlations = &out_correlations[i * clusterSize];
 
    for ( char k = 0; k < clusterSize; ++k )
    {
-      correlations[k] = Spearman_computeCluster(data, labels, sampleSize, k, minSamples, x, y, rank);
+      correlations[k] = Spearman_computeCluster(x, y, labels, sampleSize, k, minSamples, x_sorted, y_sorted, rank);
    }
 }

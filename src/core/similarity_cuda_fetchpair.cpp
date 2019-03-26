@@ -37,7 +37,6 @@ Similarity::CUDA::FetchPair::FetchPair(::CUDA::Program* program):
  * @param sampleSize
  * @param in_index
  * @param minExpression
- * @param out_X
  * @param out_N
  * @param out_labels
  */
@@ -49,7 +48,6 @@ Similarity::CUDA::FetchPair::FetchPair(::CUDA::Program* program):
    int sampleSize,
    ::CUDA::Buffer<int2>* in_index,
    float minExpression,
-   ::CUDA::Buffer<float2>* out_X,
    ::CUDA::Buffer<int>* out_N,
    ::CUDA::Buffer<qint8>* out_labels
 )
@@ -62,7 +60,6 @@ Similarity::CUDA::FetchPair::FetchPair(::CUDA::Program* program):
       sampleSize,
       in_index,
       minExpression,
-      out_X,
       out_N,
       out_labels);
 
@@ -72,7 +69,6 @@ Similarity::CUDA::FetchPair::FetchPair(::CUDA::Program* program):
    setArgument(SampleSize, sampleSize);
    setBuffer(InIndex, in_index);
    setArgument(MinExpression, minExpression);
-   setBuffer(OutX, out_X);
    setBuffer(OutN, out_N);
    setBuffer(OutLabels, out_labels);
 

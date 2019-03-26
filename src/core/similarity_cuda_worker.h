@@ -48,7 +48,6 @@ private:
    struct
    {
       ::CUDA::Buffer<int2> in_index;
-      ::CUDA::Buffer<float2> work_X;
       ::CUDA::Buffer<int> work_N;
       ::CUDA::Buffer<float> work_xy;
       ::CUDA::Buffer<qint8> work_labels;

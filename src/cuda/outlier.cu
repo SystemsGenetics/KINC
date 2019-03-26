@@ -15,7 +15,8 @@
  * This function returns the number of clean samples remaining in the data array,
  * including samples in other clusters.
  *
- * @param data
+ * @param x
+ * @param y
  * @param labels
  * @param sampleSize
  * @param cluster
@@ -25,7 +26,8 @@
  */
 __device__
 int removeOutliersCluster(
-   Vector2 *data,
+   const float *x,
+   const float *y,
    char *labels,
    int sampleSize,
    char cluster,
@@ -40,8 +42,8 @@ int removeOutliersCluster(
    {
       if ( labels[i] == cluster )
       {
-         x_sorted[n] = data[i].x;
-         y_sorted[n] = data[i].y;
+         x_sorted[n] = x[i];
+         y_sorted[n] = y[i];
          n++;
       }
    }
@@ -73,7 +75,7 @@ int removeOutliersCluster(
    for ( int i = 0; i < sampleSize; i++ )
    {
       // mark samples in the given cluster that are outliers on either axis
-      if ( labels[i] == cluster && (data[i].x < T_x_min || T_x_max < data[i].x || data[i].y < T_y_min || T_y_max < data[i].y) )
+      if ( labels[i] == cluster && (x[i] < T_x_min || T_x_max < x[i] || y[i] < T_y_min || T_y_max < y[i]) )
       {
          labels[i] = marker;
       }
@@ -98,20 +100,22 @@ int removeOutliersCluster(
  * Perform outlier removal on each cluster in a parwise data array.
  *
  * @param globalWorkSize
- * @param in_data
+ * @param expressions
+ * @param sampleSize
+ * @param in_index
  * @param in_N
  * @param in_labels
- * @param sampleSize
  * @param in_K
  * @param marker
  */
 __global__
 void removeOutliers(
    int globalWorkSize,
-   Vector2 *in_data,
+   const float *expressions,
+   int sampleSize,
+   const int2 *in_index,
    int *in_N,
    char *in_labels,
-   int sampleSize,
    char *in_K,
    char marker,
    float *work_xy)
@@ -124,7 +128,9 @@ void removeOutliers(
    }
 
    // initialize workspace variables
-   Vector2 *data = &in_data[i * sampleSize];
+   int2 index = in_index[i];
+   const float *x = &expressions[index.x * sampleSize];
+   const float *y = &expressions[index.y * sampleSize];
    int *p_N = &in_N[i];
    char *labels = &in_labels[i * sampleSize];
    char clusterSize = in_K[i];
@@ -147,7 +153,7 @@ void removeOutliers(
 
    for ( char k = 0; k < clusterSize; ++k )
    {
-      N = removeOutliersCluster(data, labels, sampleSize, k, marker, x_sorted, y_sorted);
+      N = removeOutliersCluster(x, y, labels, sampleSize, k, marker, x_sorted, y_sorted);
    }
 
    // save number of remaining samples

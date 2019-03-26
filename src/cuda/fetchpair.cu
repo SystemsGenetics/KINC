@@ -16,7 +16,6 @@
  * @param sampleSize
  * @param in_index
  * @param minExpression
- * @param out_X
  * @param out_N
  * @param out_labels
  */
@@ -27,7 +26,6 @@ void fetchPair(
    int sampleSize,
    const int2 *in_index,
    int minExpression,
-   Vector2 *out_X,
    int *out_N,
    char *out_labels)
 {
@@ -40,7 +38,6 @@ void fetchPair(
 
    // initialize variables
    int2 index = in_index[i];
-   Vector2 *X = &out_X[i * sampleSize];
    char *labels = &out_labels[i * sampleSize];
    int *p_N = &out_N[i];
 
@@ -63,9 +60,7 @@ void fetchPair(
       }
       else
       {
-         X[i] = make_float2(gene1[i], gene2[i]);
          N++;
-
          labels[i] = 0;
       }
    }

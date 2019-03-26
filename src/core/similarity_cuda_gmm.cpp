@@ -33,13 +33,14 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
  * @param stream
  * @param globalWorkSize
  * @param localWorkSize
+ * @param expressions
  * @param sampleSize
+ * @param in_index
  * @param minSamples
  * @param minClusters
  * @param maxClusters
  * @param criterion
- * @param work_data
- * @param work_X
+ * @param work_xy
  * @param work_N
  * @param work_labels
  * @param work_components
@@ -54,13 +55,14 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
    const ::CUDA::Stream& stream,
    int globalWorkSize,
    int localWorkSize,
+   ::CUDA::Buffer<float>* expressions,
    int sampleSize,
+   ::CUDA::Buffer<int2>* in_index,
    int minSamples,
    char minClusters,
    char maxClusters,
    int criterion,
-   ::CUDA::Buffer<float2>* work_data,
-   ::CUDA::Buffer<float>* work_X,
+   ::CUDA::Buffer<float>* work_xy,
    ::CUDA::Buffer<int>* work_N,
    ::CUDA::Buffer<qint8>* work_labels,
    ::CUDA::Buffer<cu_component>* work_components,
@@ -76,13 +78,14 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
       &stream,
       globalWorkSize,
       localWorkSize,
+      expressions,
       sampleSize,
+      in_index,
       minSamples,
       minClusters,
       maxClusters,
       criterion,
-      work_data,
-      work_X,
+      work_xy,
       work_N,
       work_labels,
       work_components,
@@ -95,13 +98,14 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
 
    // set kernel arguments
    setArgument(GlobalWorkSize, globalWorkSize);
+   setBuffer(Expressions, expressions);
    setArgument(SampleSize, sampleSize);
+   setBuffer(InIndex, in_index);
    setArgument(MinSamples, minSamples);
    setArgument(MinClusters, minClusters);
    setArgument(MaxClusters, maxClusters);
    setArgument(Criterion, criterion);
-   setBuffer(WorkData, work_data);
-   setBuffer(WorkX, work_X);
+   setBuffer(WorkXY, work_xy);
    setBuffer(WorkN, work_N);
    setBuffer(WorkLabels, work_labels);
    setBuffer(WorkComponents, work_components);
