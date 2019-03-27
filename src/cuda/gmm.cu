@@ -102,7 +102,7 @@ bool GMM_Component_prepare(Component *component)
    matrixInverse(&component->sigma, &component->sigmaInv, &det);
 
    // return failure if matrix inverse failed
-   if ( det <= 0 )
+   if ( det <= 0 || isnan(det) )
    {
       return false;
    }
