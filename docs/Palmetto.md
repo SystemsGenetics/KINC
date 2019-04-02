@@ -57,7 +57,7 @@ KINC will read from the directory you launch from, so you only need a GEM and th
 - The name you would like for your output files. The script will add the necessary file extensions. The following command will pass these variables to `qsub`:
 
 ```
-qsub -v GEM=EDS1014_GEM.txt,OUTNAME=EDS1014 run_KINc.sh
+qsub -v GEM="EDS1014_GEM.txt",OUTNAME="EDS1014" run_KINC.sh
 ```
 
 The `GEM` variable should be set to the name of your GEM as it is written in scratch2. The `OUTNAME` variable should be set to what you would like your output files to be named, apart from the filename extensions. The job will then be submitted according to the allotted resource specifications of the script.

@@ -15,6 +15,7 @@ namespace Pairwise
    class CorrelationModel
    {
    public:
+      ~CorrelationModel() = default;
       QVector<float> compute(
          const QVector<Vector2>& data,
          int K,

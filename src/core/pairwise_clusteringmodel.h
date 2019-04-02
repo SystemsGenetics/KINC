@@ -41,6 +41,7 @@ namespace Pairwise
    {
    public:
       ClusteringModel(ExpressionMatrix* emx);
+      ~ClusteringModel() = default;
       qint8 compute(
          const QVector<Vector2>& data,
          int numSamples,
