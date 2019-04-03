@@ -8,21 +8,21 @@
 
 
 
-typedef struct
+struct Component
 {
    float pi;
    Vector2 mu;
    Matrix2x2 sigma;
    Matrix2x2 sigmaInv;
    float normalizer;
-} Component;
+};
 
 
 
 
 
 
-typedef struct
+struct GMM
 {
    Component *components;
    int K;
@@ -32,7 +32,7 @@ typedef struct
    int *_counts;
    float *_logpi;
    float *_gamma;
-} GMM;
+};
 
 
 
@@ -50,6 +50,7 @@ int rand(unsigned long *state)
    *state = (*state) * 1103515245 + 12345;
    return ((unsigned)((*state)/65536) % 32768);
 }
+
 
 
 
@@ -108,7 +109,7 @@ bool GMM_Component_prepare(Component *component)
    }
 
    // compute normalizer term for multivariate normal distribution
-   component->normalizer = -0.5f * (D * log(2.0f * M_PI) + log(det));
+   component->normalizer = -0.5f * (D * logf(2.0f * M_PI) + logf(det));
 
    // return success
    return true;
@@ -177,7 +178,7 @@ void GMM_initializeMeans(GMM *gmm, const Vector2 *X, int N)
    const int K = gmm->K;
 
    const int MAX_ITERATIONS = 20;
-   const float TOLERANCE = 1e-3;
+   const float TOLERANCE = 1e-3f;
    float diff = 0;
 
    // initialize workspace
@@ -260,7 +261,7 @@ float GMM_computeEStep(GMM *gmm, const Vector2 *X, int N)
    // compute logpi
    for (int k = 0; k < K; ++k)
    {
-      gmm->_logpi[k] = log(gmm->components[k].pi);
+      gmm->_logpi[k] = logf(gmm->components[k].pi);
    }
 
    // compute the log-probability for each component and each point in X
@@ -272,7 +273,7 @@ float GMM_computeEStep(GMM *gmm, const Vector2 *X, int N)
    }
 
    // compute gamma and log-likelihood
-   float logL = 0.0;
+   float logL = 0;
 
    for (int i = 0; i < N; ++i)
    {
@@ -288,19 +289,19 @@ float GMM_computeEStep(GMM *gmm, const Vector2 *X, int N)
       }
 
       // compute logpx
-      float sum = 0.0;
+      float sum = 0;
       for (int k = 0; k < K; ++k)
       {
-         sum += exp(gmm->_logpi[k] + logProb[k * N + i] - maxArg);
+         sum += expf(gmm->_logpi[k] + logProb[k * N + i] - maxArg);
       }
 
-      float logpx = maxArg + log(sum);
+      float logpx = maxArg + logf(sum);
 
       // compute gamma_ki
       for (int k = 0; k < K; ++k)
       {
          gmm->_gamma[k * N + i] += gmm->_logpi[k] - logpx;
-         gmm->_gamma[k * N + i] = exp(gmm->_gamma[k * N + i]);
+         gmm->_gamma[k * N + i] = expf(gmm->_gamma[k * N + i]);
       }
 
       // update log-likelihood
@@ -460,7 +461,7 @@ float GMM_computeEntropy(
    {
       int k = labels[i];
 
-      E += log(gamma[k * N + i]);
+      E += logf(gamma[k * N + i]);
    }
 
    return E;
@@ -506,7 +507,7 @@ bool GMM_fit(
 
    // run EM algorithm
    const int MAX_ITERATIONS = 100;
-   const float TOLERANCE = 1e-8;
+   const float TOLERANCE = 1e-8f;
    float prevLogL = -INFINITY;
    float currLogL = -INFINITY;
 
@@ -590,7 +591,7 @@ float GMM_computeBIC(int K, int D, float logL, int N)
 {
    int p = K * (1 + D + D * D);
 
-   return log((float) N) * p - 2 * logL;
+   return logf((float) N) * p - 2 * logL;
 }
 
 
@@ -612,7 +613,7 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
 {
    int p = K * (1 + D + D * D);
 
-   return log((float) N) * p - 2 * logL - 2 * E;
+   return logf((float) N) * p - 2 * logL - 2 * E;
 }
 
 

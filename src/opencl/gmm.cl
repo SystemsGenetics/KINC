@@ -99,7 +99,7 @@ bool GMM_Component_prepare(__global Component *component)
    matrixInverse(&component->sigma, &component->sigmaInv, &det);
 
    // return failure if matrix inverse failed
-   if ( det <= 0 )
+   if ( det <= 0 || isnan(det) )
    {
       return false;
    }
@@ -172,7 +172,7 @@ void GMM_initializeMeans(GMM *gmm, __global const Vector2 *X, int N)
    const int K = gmm->K;
 
    const int MAX_ITERATIONS = 20;
-   const float TOLERANCE = 1e-3;
+   const float TOLERANCE = 1e-3f;
    float diff = 0;
 
    // initialize workspace
@@ -269,7 +269,7 @@ float GMM_computeEStep(GMM *gmm, __global const Vector2 *X, int N)
    }
 
    // compute gamma and log-likelihood
-   float logL = 0.0;
+   float logL = 0;
 
    for (int i = 0; i < N; ++i)
    {
@@ -285,7 +285,7 @@ float GMM_computeEStep(GMM *gmm, __global const Vector2 *X, int N)
       }
 
       // compute logpx
-      float sum = 0.0;
+      float sum = 0;
       for (int k = 0; k < K; ++k)
       {
          sum += exp(gmm->_logpi[k] + logProb[k * N + i] - maxArg);
@@ -499,7 +499,7 @@ bool GMM_fit(
 
    // run EM algorithm
    const int MAX_ITERATIONS = 100;
-   const float TOLERANCE = 1e-8;
+   const float TOLERANCE = 1e-8f;
    float prevLogL = -INFINITY;
    float currLogL = -INFINITY;
 
