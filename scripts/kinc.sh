@@ -46,7 +46,7 @@ fi
 
 # import emx
 if [[ $DO_IMPORT_EMX = 1 ]]; then
-	time kinc run import-emx \
+	env time -f "%e" kinc run import-emx \
 		--input $INFILE \
 		--output $EMX_FILE \
 		--nan NA
@@ -66,7 +66,7 @@ if [[ $DO_SIMILARITY = 1 ]]; then
 	MAXCORR=1
 	LSIZE=32
 
-	time mpirun -np $NP kinc run similarity \
+	env time -f "%e" mpirun -np $NP kinc run similarity \
 		--input $EMX_FILE \
 		--ccm $CCM_FILE \
 		--cmx $CMX_FILE \
@@ -87,7 +87,7 @@ fi
 if [[ $DO_EXPORT_CMX = 1 ]]; then
 	OUTFILE="$DATA/$(basename $CMX_FILE .cmx)-cmx.txt"
 
-	time kinc run export-cmx \
+	env time -f "%e" kinc run export-cmx \
 		--emx $EMX_FILE \
 		--ccm $CCM_FILE \
 		--cmx $CMX_FILE \
@@ -98,7 +98,7 @@ fi
 if [[ $DO_THRESHOLD = 1 ]]; then
 	mkdir -p $LOGS
 
-	time kinc run rmt \
+	env time -f "%e" kinc run rmt \
 	   --input $CMX_FILE \
 	   --log $RMT_FILE
 fi
@@ -109,7 +109,7 @@ if [[ $DO_EXTRACT = 1 ]]; then
 	MINCORR=0
 	MAXCORR=1
 
-	time kinc run extract \
+	env time -f "%e" kinc run extract \
 		--emx $EMX_FILE \
 		--ccm $CCM_FILE \
 		--cmx $CMX_FILE \
