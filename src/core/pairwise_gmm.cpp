@@ -324,10 +324,7 @@ void GMM::computeMStep(const QVector<Vector2>& X, int N, const float *gamma)
          vectorSubtract(xm, mu);
 
          // compute Sigma_ki = gamma_ki * (x_i - mu_k) (x_i - mu_k)^T
-         Matrix2x2 outerProduct;
-         matrixOuterProduct(xm, xm, outerProduct);
-
-         matrixAdd(sigma, gamma[k * N + i], outerProduct);
+         matrixAddOuterProduct(sigma, gamma[k * N + i], xm);
       }
 
       matrixScale(sigma, 1.0f / n_k);

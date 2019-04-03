@@ -107,17 +107,6 @@ typedef float4 Matrix2x2;
 
 
 
-#define matrixAddScaled(A, c, B) \
-   (A)->x += (c) * (B)->x; \
-   (A)->y += (c) * (B)->y; \
-   (A)->z += (c) * (B)->z; \
-   (A)->w += (c) * (B)->w;
-
-
-
-
-
-
 #define matrixScale(A, c) \
    (A)->x *= (c); \
    (A)->y *= (c); \
@@ -150,8 +139,8 @@ typedef float4 Matrix2x2;
 
 
 
-#define matrixOuterProduct(a, b, C) \
-   (C)->x = (a)->x * (b)->x; \
-   (C)->y = (a)->x * (b)->y; \
-   (C)->z = (a)->y * (b)->x; \
-   (C)->w = (a)->y * (b)->y;
+#define matrixAddOuterProduct(A, c, x_) \
+   (A)->x += (c) * (x_)->x * (x_)->x; \
+   (A)->y += (c) * (x_)->x * (x_)->y; \
+   (A)->z += (c) * (x_)->y * (x_)->x; \
+   (A)->w += (c) * (x_)->y * (x_)->y;

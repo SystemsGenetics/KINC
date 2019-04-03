@@ -202,27 +202,6 @@ void matrixInitZero(Matrix2x2& M)
 
 
 /*!
- * Add two matrices in place. The matrix B is scaled by a constant c, and the
- * result is stored in A.
- *
- * @param A
- * @param c
- * @param B
- */
-void matrixAdd(Matrix2x2& A, float c, const Matrix2x2& B)
-{
-   elem(A, 0, 0) += c * elem(B, 0, 0);
-   elem(A, 0, 1) += c * elem(B, 0, 1);
-   elem(A, 1, 0) += c * elem(B, 1, 0);
-   elem(A, 1, 1) += c * elem(B, 1, 1);
-}
-
-
-
-
-
-
-/*!
  * Scale a matrix by a constant.
  *
  * @param M
@@ -285,18 +264,18 @@ void matrixProduct(const Matrix2x2& A, const Vector2& x, Vector2& b)
 
 
 /*!
- * Compute the outer product a * b^T and store the result in C.
+ * Perform the operation A <- A + c * x * x^T.
  *
- * @param a
- * @param b
- * @param C
+ * @param A
+ * @param c
+ * @param x
  */
-void matrixOuterProduct(const Vector2& a, const Vector2& b, Matrix2x2& C)
+void matrixAddOuterProduct(Matrix2x2& A, float c, const Vector2& x)
 {
-   elem(C, 0, 0) = a.s[0] * b.s[0];
-   elem(C, 0, 1) = a.s[0] * b.s[1];
-   elem(C, 1, 0) = a.s[1] * b.s[0];
-   elem(C, 1, 1) = a.s[1] * b.s[1];
+   elem(A, 0, 0) += c * x.s[0] * x.s[0];
+   elem(A, 0, 1) += c * x.s[0] * x.s[1];
+   elem(A, 1, 0) += c * x.s[1] * x.s[0];
+   elem(A, 1, 1) += c * x.s[1] * x.s[1];
 }
 
 

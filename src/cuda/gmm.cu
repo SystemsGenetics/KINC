@@ -375,10 +375,7 @@ bool GMM_computeMStep(GMM *gmm, const Vector2 *X, int N)
          vectorSubtract(&xm, mu);
 
          // compute Sigma_ki = gamma_ki * (x_i - mu_k) (x_i - mu_k)^T
-         Matrix2x2 outerProduct;
-         matrixOuterProduct(&xm, &xm, &outerProduct);
-
-         matrixAddScaled(sigma, gmm->_gamma[k * N + i], &outerProduct);
+         matrixAddOuterProduct(sigma, gmm->_gamma[k * N + i], &xm);
       }
 
       matrixScale(sigma, 1.0f / n_k);
