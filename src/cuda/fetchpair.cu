@@ -7,9 +7,10 @@
 
 
 /*!
- * Extract pairwise data from an expression matrix given a pairwise index. Samples
+ * Compute the initial labels for a gene pair in an expression matrix. Samples
  * with missing values and samples that fall below the expression threshold are
- * excluded. The number of extracted samples is returned.
+ * labeled as such, all other samples are labeled as cluster 0. The number of
+ * clean samples is returned.
  *
  * @param globalWorkSize
  * @param expressions
