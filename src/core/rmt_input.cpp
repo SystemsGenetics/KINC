@@ -75,6 +75,7 @@ EAbstractAnalytic::Input::Type RMT::Input::type(int index) const
    case ThresholdStep: return Type::Double;
    case ThresholdStop: return Type::Double;
    case NumThreads: return Type::Integer;
+   case UniqueEpsilon: return Type::Double;
    case MinUniqueEigenvalues: return Type::Integer;
    case SplineInterpolation: return Type::Boolean;
    case MinSplinePace: return Type::Integer;
@@ -173,6 +174,17 @@ QVariant RMT::Input::data(int index, Role role) const
       case Role::Maximum: return std::numeric_limits<int>::max();
       default: return QVariant();
       }
+   case UniqueEpsilon:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("epsilon");
+      case Role::Title: return tr("Unique Epsilon:");
+      case Role::WhatsThis: return tr("The minimum difference required between an eigenvalue and the previous eigenvalue in ascending order for the eigenvalue to be considered unique.");
+      case Role::Default: return 1e-6;
+      case Role::Minimum: return 0;
+      case Role::Maximum: return std::numeric_limits<float>::infinity();
+      default: return QVariant();
+      }
    case MinUniqueEigenvalues:
       switch (role)
       {
@@ -261,6 +273,9 @@ void RMT::Input::set(int index, const QVariant& value)
       break;
    case NumThreads:
       _base->_numThreads = value.toInt();
+      break;
+   case UniqueEpsilon:
+      _base->_uniqueEpsilon = value.toFloat();
       break;
    case MinUniqueEigenvalues:
       _base->_minUniqueEigenvalues = value.toInt();

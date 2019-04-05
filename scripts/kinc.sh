@@ -100,7 +100,8 @@ if [[ $DO_THRESHOLD = 1 ]]; then
 
 	env time -f "%e" kinc run rmt \
 	   --input $CMX_FILE \
-	   --log $RMT_FILE
+	   --log $RMT_FILE \
+		 --threads $NP
 fi
 
 # extract

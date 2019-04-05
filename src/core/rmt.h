@@ -106,6 +106,11 @@ private:
     */
    int _numThreads {1};
    /*!
+    * The minimum difference required between an eigenvalue and the previous
+    * eigenvalue in ascending order for the eigenvalue to be considered unique.
+    */
+   float _uniqueEpsilon {1e-6f};
+   /*!
     * The minimum number of unique eigenvalues which must exist in a pruned matrix
     * for the analytic to compute the NNSD of the eigenvalues. If the number of
     * unique eigenvalues is less, the chi-squared test for that threshold is skipped.

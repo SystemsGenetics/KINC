@@ -488,12 +488,11 @@ std::vector<float> RMT::computeUnique(const std::vector<float>& values)
 {
    EDEBUG_FUNC(this,&values);
 
-   const float EPSILON {1e-6f};
    std::vector<float> unique;
 
-   for ( size_t i = 1; i < values.size(); ++i )
+   for ( size_t i = 0; i < values.size(); ++i )
    {
-      if ( unique.empty() || fabs(values.at(i) - unique.back()) > EPSILON )
+      if ( unique.empty() || fabs(values.at(i) - unique.back()) > _uniqueEpsilon )
       {
          unique.push_back(values.at(i));
       }
