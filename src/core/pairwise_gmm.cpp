@@ -380,7 +380,7 @@ void GMM::computeLabels(const float *gamma, int N, int K, QVector<qint8>& labels
  * Compute the entropy of the mixture model for a dataset using gamma
  * and the given cluster labels:
  *
- *   E = sum(sum(z_ki * log(gamma_ki))), z_ki = (y_i == k)
+ *   E = -sum(sum(z_ki * log(gamma_ki))), z_ki = (y_i == k)
  *
  * @param gamma
  * @param N
@@ -394,7 +394,7 @@ float GMM::computeEntropy(const float *gamma, int N, const QVector<qint8>& label
    {
       int k = labels[i];
 
-      E += logf(gamma[k * N + i]);
+      E -= logf(gamma[k * N + i]);
    }
 
    return E;
@@ -533,5 +533,5 @@ float GMM::computeICL(int K, int D, float logL, int N, float E)
 {
    int p = K * (1 + D + D * D);
 
-   return logf(N) * p - 2 * logL - 2 * E;
+   return logf(N) * p - 2 * logL + 2 * E;
 }
