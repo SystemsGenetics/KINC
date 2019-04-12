@@ -81,11 +81,6 @@ Similarity::OpenCL::Outlier::Outlier(::OpenCL::Program* program, QObject* parent
    setBuffer(WorkXY, work_xy);
 
    // set work sizes
-   if ( localWorkSize == 0 )
-   {
-      localWorkSize = min(globalWorkSize, maxWorkGroupSize(queue->device()));
-   }
-
    int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
 
    setSizes(0, numWorkgroups * localWorkSize, localWorkSize);

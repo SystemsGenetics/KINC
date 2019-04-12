@@ -81,11 +81,6 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
    setBuffer(WorkXY, work_xy);
 
    // set work sizes
-   if ( localWorkSize == 0 )
-   {
-      localWorkSize = min(globalWorkSize, getAttribute(CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK));
-   }
-
    int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
 
    setSizes(numWorkgroups * localWorkSize, localWorkSize);

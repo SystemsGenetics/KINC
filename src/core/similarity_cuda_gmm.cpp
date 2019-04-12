@@ -117,11 +117,6 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
    setBuffer(OutLabels, out_labels);
 
    // set work sizes
-   if ( localWorkSize == 0 )
-   {
-      localWorkSize = min(globalWorkSize, getAttribute(CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK));
-   }
-
    int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
 
    setSizes(numWorkgroups * localWorkSize, localWorkSize);

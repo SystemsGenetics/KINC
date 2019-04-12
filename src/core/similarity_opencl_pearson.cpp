@@ -78,11 +78,6 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
    setBuffer(OutCorrelations, out_correlations);
 
    // set work sizes
-   if ( localWorkSize == 0 )
-   {
-      localWorkSize = min(globalWorkSize, maxWorkGroupSize(queue->device()));
-   }
-
    int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
 
    setSizes(0, numWorkgroups * localWorkSize, localWorkSize);

@@ -82,11 +82,6 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
    setBuffer(OutLabels, out_labels);
 
    // set work sizes
-   if ( localWorkSize == 0 )
-   {
-      localWorkSize = min(globalWorkSize, maxWorkGroupSize(queue->device()));
-   }
-
    int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
 
    setSizes(0, numWorkgroups * localWorkSize, localWorkSize);

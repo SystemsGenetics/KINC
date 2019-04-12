@@ -168,7 +168,7 @@ private:
    /*!
     * The local work size for each OpenCL worker.
     */
-   int _localWorkSize {0};
+   int _localWorkSize {32};
 };
 
 

@@ -305,8 +305,8 @@ QVariant Similarity::Input::data(int index, Role role) const
       case Role::CommandLineName: return QString("lsize");
       case Role::Title: return tr("Local Work Size:");
       case Role::WhatsThis: return tr("The local work size for each OpenCL worker.");
-      case Role::Default: return 0;
-      case Role::Minimum: return 0;
+      case Role::Default: return 32;
+      case Role::Minimum: return 1;
       case Role::Maximum: return std::numeric_limits<int>::max();
       default: return QVariant();
       }
