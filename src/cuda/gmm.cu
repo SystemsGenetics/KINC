@@ -45,7 +45,7 @@ struct GMM
  * @param state
  */
 __device__
-int rand(unsigned long *state)
+int myrand(unsigned long *state)
 {
    *state = (*state) * 1103515245 + 12345;
    return ((unsigned)((*state)/65536) % 32768);
@@ -488,6 +488,7 @@ bool GMM_fit(
    const Vector2 *X, int N, int K,
    char *labels)
 {
+   // initialize random state
    unsigned long state = 1;
 
    // initialize components
@@ -496,7 +497,7 @@ bool GMM_fit(
    for ( int k = 0; k < K; ++k )
    {
       // use uniform mixture weight and randomly sampled mean
-      int i = rand(&state) % N;
+      int i = myrand(&state) % N;
 
       GMM_Component_initialize(&gmm->components[k], 1.0f / K, &X[i]);
       GMM_Component_prepare(&gmm->components[k]);

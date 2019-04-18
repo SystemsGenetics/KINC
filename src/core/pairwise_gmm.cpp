@@ -9,6 +9,22 @@ using namespace Pairwise;
 
 
 /*!
+ * Implementation of rand(), taken from POSIX example.
+ *
+ * @param state
+ */
+int myrand(unsigned long *state)
+{
+   *state = (*state) * 1103515245 + 12345;
+   return ((unsigned)((*state)/65536) % 32768);
+}
+
+
+
+
+
+
+/*!
  * Construct a Gaussian mixture model.
  *
  * @param emx
@@ -416,13 +432,16 @@ float GMM::computeEntropy(const float *gamma, int N, const QVector<qint8>& label
  */
 bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
 {
+   // initialize random state
+   unsigned long state = 1;
+
    // initialize components
    _components.resize(K);
 
    for ( int k = 0; k < K; ++k )
    {
       // use uniform mixture weight and randomly sampled mean
-      int i = rand() % N;
+      int i = myrand(&state) % N;
 
       _components[k].initialize(1.0f / K, X[i]);
       _components[k].prepare();
