@@ -24,6 +24,8 @@ RUN wget -q http://download.qt.io/official_releases/qt/5.11/5.11.1/single/qt-eve
 	&& rm qt-everywhere-src-5.11.1.tar.xz \
 	&& cd qt-everywhere-src-5.11.1 \
 	&& ./configure -opensource -confirm-license -prefix $QTDIR \
+		-no-compile-examples \
+		-no-widgets \
 		-skip qt3d \
 		-skip qtactiveqt \
 		-skip qtandroidextras \
@@ -68,13 +70,16 @@ RUN wget -q http://download.qt.io/official_releases/qt/5.11/5.11.1/single/qt-eve
 	&& cd .. \
 	&& rm -rf qt-everywhere-src-5.11.1
 
+# install python dependencies
+RUN pip3 install -q argparse matplotlib numpy pandas scipy seaborn
+
 # install ACE
 WORKDIR /opt
 
 RUN git clone https://github.com/SystemsGenetics/ACE.git \
 	&& cd ACE/build \
 	&& git checkout v3.0.2 \
-	&& qmake ../src/ACE.pro \
+	&& qmake ../src/ACE.pro GUI=no \
 	&& make -s -j $(nproc) \
 	&& make -s qmake_all \
 	&& make -s install
@@ -87,13 +92,10 @@ WORKDIR /opt
 RUN git clone https://github.com/SystemsGenetics/KINC.git \
 	&& cd KINC/build \
 	&& git checkout v3.2.2 \
-	&& qmake ../src/KINC.pro \
+	&& qmake ../src/KINC.pro GUI=no \
 	&& make -s -j $(nproc) \
 	&& make -s qmake_all \
 	&& make -s install
-
-# install python dependencies
-RUN pip3 install -q argparse matplotlib numpy pandas scipy seaborn
 
 # return to home directory
 WORKDIR /root
