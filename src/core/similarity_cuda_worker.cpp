@@ -91,7 +91,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
    for ( int i = 0; i < workBlock->size(); i += _base->_globalWorkSize )
    {
       // write input buffers to device
-      int globalWorkSize {(int) min((qint64)_base->_globalWorkSize, workBlock->size() - i)};
+      int globalWorkSize {static_cast<int>(min(static_cast<qint64>(_base->_globalWorkSize), workBlock->size() - i))};
 
       for ( int j = 0; j < globalWorkSize; ++j )
       {

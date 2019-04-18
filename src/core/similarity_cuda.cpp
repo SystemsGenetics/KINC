@@ -71,10 +71,7 @@ void Similarity::CUDA::initialize(::CUDA::Context* context)
    _expressions = ::CUDA::Buffer<float>(rawData.size());
 
    // copy expression data to device
-   for ( size_t i = 0; i < rawData.size(); ++i )
-   {
-      _expressions[i] = rawData[i];
-   }
+   memcpy(_expressions.hostData(), rawData.data(), rawData.size() * sizeof(float));
 
    _expressions.write().wait();
 }

@@ -75,11 +75,8 @@ void Similarity::OpenCL::initialize(::OpenCL::Context* context)
 
    // copy expression data to device
    _expressions.mapWrite(_queue).wait();
-
-   for ( size_t i = 0; i < rawData.size(); ++i )
-   {
-      _expressions[i] = rawData[i];
-   }
+   
+   memcpy(_expressions.data(), rawData.data(), rawData.size() * sizeof(float));
 
    _expressions.unmap(_queue).wait();
 }
