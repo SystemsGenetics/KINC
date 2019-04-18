@@ -35,10 +35,11 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
  * @param queue
  * @param globalWorkSize
  * @param localWorkSize
- * @param in_data
+ * @param expressions
+ * @param sampleSize
+ * @param in_index
  * @param clusterSize
  * @param in_labels
- * @param sampleSize
  * @param minSamples
  * @param out_correlations
  */
@@ -46,10 +47,11 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
    ::OpenCL::CommandQueue* queue,
    int globalWorkSize,
    int localWorkSize,
-   ::OpenCL::Buffer<cl_float2>* in_data,
+   ::OpenCL::Buffer<cl_float>* expressions,
+   cl_int sampleSize,
+   ::OpenCL::Buffer<cl_int2>* in_index,
    cl_char clusterSize,
    ::OpenCL::Buffer<cl_char>* in_labels,
-   cl_int sampleSize,
    cl_int minSamples,
    ::OpenCL::Buffer<cl_float>* out_correlations
 )
@@ -58,10 +60,11 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
       queue,
       globalWorkSize,
       localWorkSize,
-      in_data,
+      expressions,
+      sampleSize,
+      in_index,
       clusterSize,
       in_labels,
-      sampleSize,
       minSamples,
       out_correlations);
 
@@ -70,10 +73,11 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
 
    // set kernel arguments
    setArgument(GlobalWorkSize, globalWorkSize);
-   setBuffer(InData, in_data);
+   setBuffer(Expressions, expressions);
+   setArgument(SampleSize, sampleSize);
+   setBuffer(InIndex, in_index);
    setArgument(ClusterSize, clusterSize);
    setBuffer(InLabels, in_labels);
-   setArgument(SampleSize, sampleSize);
    setArgument(MinSamples, minSamples);
    setBuffer(OutCorrelations, out_correlations);
 

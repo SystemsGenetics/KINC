@@ -19,10 +19,11 @@ public:
    enum Argument
    {
       GlobalWorkSize
-      ,InData
+      ,Expressions
+      ,SampleSize
+      ,InIndex
       ,ClusterSize
       ,InLabels
-      ,SampleSize
       ,MinSamples
       ,WorkXY
       ,WorkRank
@@ -33,10 +34,11 @@ public:
       ::OpenCL::CommandQueue* queue,
       int globalWorkSize,
       int localWorkSize,
-      ::OpenCL::Buffer<cl_float2>* in_data,
+      ::OpenCL::Buffer<cl_float>* expressions,
+      cl_int sampleSize,
+      ::OpenCL::Buffer<cl_int2>* in_index,
       cl_char clusterSize,
       ::OpenCL::Buffer<cl_char>* in_labels,
-      cl_int sampleSize,
       cl_int minSamples,
       ::OpenCL::Buffer<cl_float>* work_xy,
       ::OpenCL::Buffer<cl_int>* work_rank,

@@ -7,14 +7,16 @@
 /*!
  * Compute the Pearson correlation of a cluster in a pairwise data array.
  *
- * @param data
+ * @param x
+ * @param y
  * @param labels
  * @param sampleSize
  * @param cluster
  * @param minSamples
  */
 float Pearson_computeCluster(
-   __global const float2 *data,
+   __global const float *x,
+   __global const float *y,
    __global const char *labels,
    int sampleSize,
    char cluster,
@@ -32,8 +34,8 @@ float Pearson_computeCluster(
    {
       if ( labels[i] == cluster )
       {
-         float x_i = data[i].x;
-         float y_i = data[i].y;
+         float x_i = x[i];
+         float y_i = y[i];
 
          sumx += x_i;
          sumy += y_i;
@@ -67,19 +69,21 @@ float Pearson_computeCluster(
  * matrix, while the labels should contain all samples.
  *
  * @param globalWorkSize
- * @param in_data
+ * @param expressions
+ * @param sampleSize
+ * @param in_index
  * @param clusterSize
  * @param in_labels
- * @param sampleSize
  * @param minSamples
  * @param out_correlations
  */
 __kernel void Pearson_compute(
    int globalWorkSize,
-   __global const float2 *in_data,
+   __global const float *expressions,
+   int sampleSize,
+   __global const int2 *in_index,
    char clusterSize,
    __global const char *in_labels,
-   int sampleSize,
    int minSamples,
    __global float *out_correlations)
 {
@@ -91,12 +95,14 @@ __kernel void Pearson_compute(
    }
 
    // initialize workspace variables
-   __global const float2 *data = &in_data[i * sampleSize];
+   int2 index = in_index[i];
+   __global const float *x = &expressions[index.x * sampleSize];
+   __global const float *y = &expressions[index.y * sampleSize];
    __global const char *labels = &in_labels[i * sampleSize];
    __global float *correlations = &out_correlations[i * clusterSize];
 
    for ( char k = 0; k < clusterSize; ++k )
    {
-      correlations[k] = Pearson_computeCluster(data, labels, sampleSize, k, minSamples);
+      correlations[k] = Pearson_computeCluster(x, y, labels, sampleSize, k, minSamples);
    }
 }

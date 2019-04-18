@@ -35,10 +35,11 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
  * @param queue
  * @param globalWorkSize
  * @param localWorkSize
- * @param in_data
+ * @param expressions
+ * @param sampleSize
+ * @param in_index
  * @param clusterSize
  * @param in_labels
- * @param sampleSize
  * @param minSamples
  * @param work_xy
  * @param work_rank
@@ -48,10 +49,11 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
    ::OpenCL::CommandQueue* queue,
    int globalWorkSize,
    int localWorkSize,
-   ::OpenCL::Buffer<cl_float2>* in_data,
+   ::OpenCL::Buffer<cl_float>* expressions,
+   cl_int sampleSize,
+   ::OpenCL::Buffer<cl_int2>* in_index,
    cl_char clusterSize,
    ::OpenCL::Buffer<cl_char>* in_labels,
-   cl_int sampleSize,
    cl_int minSamples,
    ::OpenCL::Buffer<cl_float>* work_xy,
    ::OpenCL::Buffer<cl_int>* work_rank,
@@ -62,10 +64,11 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
       queue,
       globalWorkSize,
       localWorkSize,
-      in_data,
+      expressions,
+      sampleSize,
+      in_index,
       clusterSize,
       in_labels,
-      sampleSize,
       minSamples,
       work_xy,
       work_rank,
@@ -76,10 +79,11 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
 
    // set kernel arguments
    setArgument(GlobalWorkSize, globalWorkSize);
-   setBuffer(InData, in_data);
+   setBuffer(Expressions, expressions);
+   setArgument(SampleSize, sampleSize);
+   setBuffer(InIndex, in_index);
    setArgument(ClusterSize, clusterSize);
    setBuffer(InLabels, in_labels);
-   setArgument(SampleSize, sampleSize);
    setArgument(MinSamples, minSamples);
    setBuffer(WorkXY, work_xy);
    setBuffer(WorkRank, work_rank);

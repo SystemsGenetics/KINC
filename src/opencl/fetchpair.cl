@@ -7,16 +7,16 @@
 
 
 /*!
- * Extract pairwise data from an expression matrix given a pairwise index. Samples
+ * Compute the initial labels for a gene pair in an expression matrix. Samples
  * with missing values and samples that fall below the expression threshold are
- * excluded. The number of extracted samples is returned.
+ * labeled as such, all other samples are labeled as cluster 0. The number of
+ * clean samples is returned.
  *
  * @param globalWorkSize
  * @param expressions
  * @param sampleSize
  * @param in_index
  * @param minExpression
- * @param out_X
  * @param out_N
  * @param out_labels
  */
@@ -26,7 +26,6 @@ __kernel void fetchPair(
    int sampleSize,
    __global const int2 *in_index,
    int minExpression,
-   __global Vector2 *out_X,
    __global int *out_N,
    __global char *out_labels)
 {
@@ -39,7 +38,6 @@ __kernel void fetchPair(
 
    // initialize variables
    int2 index = in_index[i];
-   __global Vector2 *X = &out_X[i * sampleSize];
    __global char *labels = &out_labels[i * sampleSize];
    __global int *p_N = &out_N[i];
 
@@ -62,9 +60,7 @@ __kernel void fetchPair(
       }
       else
       {
-         X[i] = (float2) ( gene1[i], gene2[i] );
          N++;
-
          labels[i] = 0;
       }
    }

@@ -48,7 +48,6 @@ private:
    struct
    {
       ::OpenCL::Buffer<cl_int2> in_index;
-      ::OpenCL::Buffer<cl_float2> work_X;
       ::OpenCL::Buffer<cl_int> work_N;
       ::OpenCL::Buffer<cl_float> work_xy;
       ::OpenCL::Buffer<cl_char> work_labels;

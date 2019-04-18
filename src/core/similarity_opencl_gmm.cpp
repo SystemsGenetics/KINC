@@ -34,13 +34,14 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
  * @param queue
  * @param globalWorkSize
  * @param localWorkSize
+ * @param expressions
  * @param sampleSize
+ * @param in_index
  * @param minSamples
  * @param minClusters
  * @param maxClusters
  * @param criterion
- * @param work_data
- * @param work_X
+ * @param work_xy
  * @param work_N
  * @param work_labels
  * @param work_components
@@ -55,13 +56,14 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    ::OpenCL::CommandQueue* queue,
    int globalWorkSize,
    int localWorkSize,
+   ::OpenCL::Buffer<cl_float>* expressions,
    cl_int sampleSize,
+   ::OpenCL::Buffer<cl_int2>* in_index,
    cl_int minSamples,
    cl_char minClusters,
    cl_char maxClusters,
    cl_int criterion,
-   ::OpenCL::Buffer<cl_float2>* work_data,
-   ::OpenCL::Buffer<cl_float>* work_X,
+   ::OpenCL::Buffer<cl_float>* work_xy,
    ::OpenCL::Buffer<cl_int>* work_N,
    ::OpenCL::Buffer<cl_char>* work_labels,
    ::OpenCL::Buffer<cl_component>* work_components,
@@ -77,13 +79,14 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
       queue,
       globalWorkSize,
       localWorkSize,
+      expressions,
       sampleSize,
+      in_index,
       minSamples,
       minClusters,
       maxClusters,
       &criterion,
-      work_data,
-      work_X,
+      work_xy,
       work_N,
       work_labels,
       work_components,
@@ -99,13 +102,14 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
 
    // set kernel arguments
    setArgument(GlobalWorkSize, globalWorkSize);
+   setBuffer(Expressions, expressions);
    setArgument(SampleSize, sampleSize);
+   setBuffer(InIndex, in_index);
    setArgument(MinSamples, minSamples);
    setArgument(MinClusters, minClusters);
    setArgument(MaxClusters, maxClusters);
    setArgument(Criterion, criterion);
-   setBuffer(WorkData, work_data);
-   setBuffer(WorkX, work_X);
+   setBuffer(WorkXY, work_xy);
    setBuffer(WorkN, work_N);
    setBuffer(WorkLabels, work_labels);
    setBuffer(WorkComponents, work_components);

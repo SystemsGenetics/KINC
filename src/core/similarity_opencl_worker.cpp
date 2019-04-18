@@ -43,7 +43,6 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    int K {_base->_maxClusters};
 
    _buffers.in_index = ::OpenCL::Buffer<cl_int2>(context, 1 * W);
-   _buffers.work_X = ::OpenCL::Buffer<cl_float2>(context, N * W);
    _buffers.work_N = ::OpenCL::Buffer<cl_int>(context, 1 * W);
    _buffers.work_xy = ::OpenCL::Buffer<cl_float>(context, 2 * N_pow2 * W);
    _buffers.work_labels = ::OpenCL::Buffer<cl_char>(context, N * W);
@@ -112,7 +111,6 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
          _base->_input->sampleSize(),
          &_buffers.in_index,
          _base->_minExpression,
-         &_buffers.work_X,
          &_buffers.work_N,
          &_buffers.out_labels
       ).wait();
@@ -124,10 +122,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             _queue,
             globalWorkSize,
             _base->_localWorkSize,
-            &_buffers.work_X,
+            &_baseOpenCL->_expressions,
+            _base->_input->sampleSize(),
+            &_buffers.in_index,
             &_buffers.work_N,
             &_buffers.out_labels,
-            _base->_input->sampleSize(),
             &_buffers.out_K,
             -7,
             &_buffers.work_xy
@@ -141,12 +140,13 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             _queue,
             globalWorkSize,
             _base->_localWorkSize,
+            &_baseOpenCL->_expressions,
             _base->_input->sampleSize(),
+            &_buffers.in_index,
             _base->_minSamples,
             _base->_minClusters,
             _base->_maxClusters,
             (cl_int) _base->_criterion,
-            &_buffers.work_X,
             &_buffers.work_xy,
             &_buffers.work_N,
             &_buffers.work_labels,
@@ -179,10 +179,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             _queue,
             globalWorkSize,
             _base->_localWorkSize,
-            &_buffers.work_X,
+            &_baseOpenCL->_expressions,
+            _base->_input->sampleSize(),
+            &_buffers.in_index,
             &_buffers.work_N,
             &_buffers.out_labels,
-            _base->_input->sampleSize(),
             &_buffers.out_K,
             -8,
             &_buffers.work_xy
@@ -196,10 +197,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             _queue,
             globalWorkSize,
             _base->_localWorkSize,
-            &_buffers.work_X,
+            &_baseOpenCL->_expressions,
+            _base->_input->sampleSize(),
+            &_buffers.in_index,
             _base->_maxClusters,
             &_buffers.out_labels,
-            _base->_input->sampleSize(),
             _base->_minSamples,
             &_buffers.out_correlations
          ).wait();
@@ -210,10 +212,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
             _queue,
             globalWorkSize,
             _base->_localWorkSize,
-            &_buffers.work_X,
+            &_baseOpenCL->_expressions,
+            _base->_input->sampleSize(),
+            &_buffers.in_index,
             _base->_maxClusters,
             &_buffers.out_labels,
-            _base->_input->sampleSize(),
             _base->_minSamples,
             &_buffers.work_xy,
             &_buffers.work_rank,
