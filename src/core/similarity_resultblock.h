@@ -7,7 +7,7 @@
 /*!
  * This class implements the result block of the similarity analytic.
  */
-class Similarity::ResultBlock : public EAbstractAnalytic::Block
+class Similarity::ResultBlock : public EAbstractAnalyticBlock
 {
    Q_OBJECT
 public:

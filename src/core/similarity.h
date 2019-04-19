@@ -56,14 +56,14 @@ public:
    class CUDA;
 public:
    virtual int size() const override final;
-   virtual std::unique_ptr<EAbstractAnalytic::Block> makeWork(int index) const override final;
-   virtual std::unique_ptr<EAbstractAnalytic::Block> makeWork() const override final;
-   virtual std::unique_ptr<EAbstractAnalytic::Block> makeResult() const override final;
-   virtual void process(const EAbstractAnalytic::Block* result) override final;
-   virtual EAbstractAnalytic::Input* makeInput() override final;
-   virtual EAbstractAnalytic::Serial* makeSerial() override final;
-   virtual EAbstractAnalytic::OpenCL* makeOpenCL() override final;
-   virtual EAbstractAnalytic::CUDA* makeCUDA() override final;
+   virtual std::unique_ptr<EAbstractAnalyticBlock> makeWork(int index) const override final;
+   virtual std::unique_ptr<EAbstractAnalyticBlock> makeWork() const override final;
+   virtual std::unique_ptr<EAbstractAnalyticBlock> makeResult() const override final;
+   virtual void process(const EAbstractAnalyticBlock* result) override final;
+   virtual EAbstractAnalyticInput* makeInput() override final;
+   virtual EAbstractAnalyticSerial* makeSerial() override final;
+   virtual EAbstractAnalyticOpenCL* makeOpenCL() override final;
+   virtual EAbstractAnalyticCUDA* makeCUDA() override final;
    virtual void initialize() override final;
    virtual void initializeOutputs() override final;
 private:

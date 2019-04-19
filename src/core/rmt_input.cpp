@@ -31,7 +31,7 @@ const QStringList RMT::Input::REDUCTION_NAMES
  * @param parent
  */
 RMT::Input::Input(RMT* parent):
-   EAbstractAnalytic::Input(parent),
+   EAbstractAnalyticInput(parent),
    _base(parent)
 {
    EDEBUG_FUNC(this,parent);
@@ -62,7 +62,7 @@ int RMT::Input::size() const
  *
  * @param index
  */
-EAbstractAnalytic::Input::Type RMT::Input::type(int index) const
+EAbstractAnalyticInput::Type RMT::Input::type(int index) const
 {
    EDEBUG_FUNC(this,index);
 

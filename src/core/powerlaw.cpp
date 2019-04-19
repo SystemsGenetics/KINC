@@ -34,7 +34,7 @@ int PowerLaw::size() const
  *
  * @param result
  */
-void PowerLaw::process(const EAbstractAnalytic::Block*)
+void PowerLaw::process(const EAbstractAnalyticBlock*)
 {
    EDEBUG_FUNC(this);
 
@@ -101,7 +101,7 @@ void PowerLaw::process(const EAbstractAnalytic::Block*)
 /*!
  * Make a new input object and return its pointer.
  */
-EAbstractAnalytic::Input* PowerLaw::makeInput()
+EAbstractAnalyticInput* PowerLaw::makeInput()
 {
    EDEBUG_FUNC(this);
 

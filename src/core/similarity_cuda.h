@@ -9,7 +9,7 @@
 /*!
  * This class implements the base CUDA class of the similarity analytic.
  */
-class Similarity::CUDA : public EAbstractAnalytic::CUDA
+class Similarity::CUDA : public EAbstractAnalyticCUDA
 {
    Q_OBJECT
 public:
@@ -20,7 +20,7 @@ public:
    class Spearman;
    class Worker;
    explicit CUDA(Similarity* parent);
-   virtual std::unique_ptr<EAbstractAnalytic::CUDA::Worker> makeWorker() override final;
+   virtual std::unique_ptr<EAbstractAnalyticCUDAWorker> makeWorker() override final;
    virtual void initialize(::CUDA::Context* context) override final;
 private:
    /*!

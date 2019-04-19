@@ -26,7 +26,7 @@ const QStringList Extract::Input::FORMAT_NAMES
  * @param parent
  */
 Extract::Input::Input(Extract* parent):
-   EAbstractAnalytic::Input(parent),
+   EAbstractAnalyticInput(parent),
    _base(parent)
 {
    EDEBUG_FUNC(this,parent);
@@ -57,7 +57,7 @@ int Extract::Input::size() const
  *
  * @param index
  */
-EAbstractAnalytic::Input::Type Extract::Input::type(int index) const
+EAbstractAnalyticInput::Type Extract::Input::type(int index) const
 {
    EDEBUG_FUNC(this,index);
 

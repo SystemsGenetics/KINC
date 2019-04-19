@@ -59,7 +59,7 @@ int Similarity::size() const
  *
  * @param index
  */
-std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
+std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeWork(int index) const
 {
    EDEBUG_FUNC(this,index);
 
@@ -71,7 +71,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
    qint64 start {index * static_cast<qint64>(_workBlockSize)};
    qint64 size {min(totalPairs(_input) - start, static_cast<qint64>(_workBlockSize))};
 
-   return unique_ptr<EAbstractAnalytic::Block>(new WorkBlock(index, start, size));
+   return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
 }
 
 
@@ -82,11 +82,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
 /*!
  * Create an empty and uninitialized work block.
  */
-std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork() const
+std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeWork() const
 {
    EDEBUG_FUNC(this);
 
-   return unique_ptr<EAbstractAnalytic::Block>(new WorkBlock);
+   return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock);
 }
 
 
@@ -97,11 +97,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork() const
 /*!
  * Create an empty and uninitialized result block.
  */
-std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeResult() const
+std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeResult() const
 {
    EDEBUG_FUNC(this);
 
-   return unique_ptr<EAbstractAnalytic::Block>(new ResultBlock);
+   return unique_ptr<EAbstractAnalyticBlock>(new ResultBlock);
 }
 
 
@@ -116,7 +116,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeResult() const
  *
  * @param result
  */
-void Similarity::process(const EAbstractAnalytic::Block* result)
+void Similarity::process(const EAbstractAnalyticBlock* result)
 {
    EDEBUG_FUNC(this,result);
 
@@ -181,7 +181,7 @@ void Similarity::process(const EAbstractAnalytic::Block* result)
 /*!
  * Make a new input object and return its pointer.
  */
-EAbstractAnalytic::Input* Similarity::makeInput()
+EAbstractAnalyticInput* Similarity::makeInput()
 {
    EDEBUG_FUNC(this);
 
@@ -196,7 +196,7 @@ EAbstractAnalytic::Input* Similarity::makeInput()
 /*!
  * Make a new serial object and return its pointer.
  */
-EAbstractAnalytic::Serial* Similarity::makeSerial()
+EAbstractAnalyticSerial* Similarity::makeSerial()
 {
    EDEBUG_FUNC(this);
 
@@ -211,7 +211,7 @@ EAbstractAnalytic::Serial* Similarity::makeSerial()
 /*!
  * Make a new OpenCL object and return its pointer.
  */
-EAbstractAnalytic::OpenCL* Similarity::makeOpenCL()
+EAbstractAnalyticOpenCL* Similarity::makeOpenCL()
 {
    EDEBUG_FUNC(this);
 
@@ -226,7 +226,7 @@ EAbstractAnalytic::OpenCL* Similarity::makeOpenCL()
 /*!
  * Make a new CUDA object and return its pointer.
  */
-EAbstractAnalytic::CUDA* Similarity::makeCUDA()
+EAbstractAnalyticCUDA* Similarity::makeCUDA()
 {
    EDEBUG_FUNC(this);
 

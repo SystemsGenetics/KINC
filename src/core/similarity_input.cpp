@@ -61,7 +61,7 @@ const QStringList Similarity::Input::CRITERION_NAMES
  * @param parent
  */
 Similarity::Input::Input(Similarity* parent):
-   EAbstractAnalytic::Input(parent),
+   EAbstractAnalyticInput(parent),
    _base(parent)
 {
    EDEBUG_FUNC(this,parent);
@@ -92,7 +92,7 @@ int Similarity::Input::size() const
  *
  * @param index
  */
-EAbstractAnalytic::Input::Type Similarity::Input::type(int index) const
+EAbstractAnalyticInput::Type Similarity::Input::type(int index) const
 {
    EDEBUG_FUNC(this,index);
 

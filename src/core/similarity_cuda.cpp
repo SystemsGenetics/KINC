@@ -16,7 +16,7 @@ using namespace std;
  * @param parent
  */
 Similarity::CUDA::CUDA(Similarity* parent):
-   EAbstractAnalytic::CUDA(parent),
+   EAbstractAnalyticCUDA(parent),
    _base(parent)
 {
    EDEBUG_FUNC(this,parent);
@@ -30,11 +30,11 @@ Similarity::CUDA::CUDA(Similarity* parent):
 /*!
  * Create and return a new CUDA worker for the analytic.
  */
-std::unique_ptr<EAbstractAnalytic::CUDA::Worker> Similarity::CUDA::makeWorker()
+std::unique_ptr<EAbstractAnalyticCUDAWorker> Similarity::CUDA::makeWorker()
 {
    EDEBUG_FUNC(this);
 
-   return unique_ptr<EAbstractAnalytic::CUDA::Worker>(new Worker(_base, this, _program));
+   return unique_ptr<EAbstractAnalyticCUDAWorker>(new Worker(_base, this, _program));
 }
 
 

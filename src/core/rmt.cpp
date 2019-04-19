@@ -75,7 +75,7 @@ int RMT::size() const
  *
  * @param result
  */
-void RMT::process(const EAbstractAnalytic::Block*)
+void RMT::process(const EAbstractAnalyticBlock*)
 {
    EDEBUG_FUNC(this);
 
@@ -169,7 +169,7 @@ void RMT::process(const EAbstractAnalytic::Block*)
 /*!
  * Make a new input object and return its pointer.
  */
-EAbstractAnalytic::Input* RMT::makeInput()
+EAbstractAnalyticInput* RMT::makeInput()
 {
    EDEBUG_FUNC(this);
 

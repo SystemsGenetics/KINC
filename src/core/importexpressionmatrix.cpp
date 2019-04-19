@@ -33,7 +33,7 @@ int ImportExpressionMatrix::size() const
  *
  * @param result
  */
-void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
+void ImportExpressionMatrix::process(const EAbstractAnalyticBlock* result)
 {
    EDEBUG_FUNC(this, result);
 
@@ -177,7 +177,7 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 /*!
  * Make a new input object and return its pointer.
  */
-EAbstractAnalytic::Input* ImportExpressionMatrix::makeInput()
+EAbstractAnalyticInput* ImportExpressionMatrix::makeInput()
 {
    EDEBUG_FUNC(this);
 

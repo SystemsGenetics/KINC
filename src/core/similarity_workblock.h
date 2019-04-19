@@ -7,7 +7,7 @@
 /*!
  * This class implements the work block of the similarity analytic.
  */
-class Similarity::WorkBlock : public EAbstractAnalytic::Block
+class Similarity::WorkBlock : public EAbstractAnalyticBlock
 {
    Q_OBJECT
 public:

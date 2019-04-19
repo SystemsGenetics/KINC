@@ -12,7 +12,7 @@
  * @param parent
  */
 ExportExpressionMatrix::Input::Input(ExportExpressionMatrix* parent):
-   EAbstractAnalytic::Input(parent),
+   EAbstractAnalyticInput(parent),
    _base(parent)
 {
    EDEBUG_FUNC(this,parent);
@@ -43,7 +43,7 @@ int ExportExpressionMatrix::Input::size() const
  *
  * @param index
  */
-EAbstractAnalytic::Input::Type ExportExpressionMatrix::Input::type(int index) const
+EAbstractAnalyticInput::Type ExportExpressionMatrix::Input::type(int index) const
 {
    EDEBUG_FUNC(this,index);
 

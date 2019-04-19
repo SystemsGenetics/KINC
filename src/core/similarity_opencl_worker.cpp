@@ -69,7 +69,7 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
  *
  * @param block
  */
-std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(const EAbstractAnalytic::Block* block)
+std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(const EAbstractAnalyticBlock* block)
 {
    EDEBUG_FUNC(this,block);
 
@@ -265,5 +265,5 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::OpenCL::Worker::execute(co
    }
 
    // return result block
-   return unique_ptr<EAbstractAnalytic::Block>(resultBlock);
+   return unique_ptr<EAbstractAnalyticBlock>(resultBlock);
 }

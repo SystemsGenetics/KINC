@@ -16,7 +16,7 @@ using namespace std;
  * @param parent
  */
 Similarity::OpenCL::OpenCL(Similarity* parent):
-   EAbstractAnalytic::OpenCL(parent),
+   EAbstractAnalyticOpenCL(parent),
    _base(parent)
 {
    EDEBUG_FUNC(this,parent);
@@ -30,11 +30,11 @@ Similarity::OpenCL::OpenCL(Similarity* parent):
 /*!
  * Create and return a new OpenCL worker for the analytic.
  */
-std::unique_ptr<EAbstractAnalytic::OpenCL::Worker> Similarity::OpenCL::makeWorker()
+std::unique_ptr<EAbstractAnalyticOpenCLWorker> Similarity::OpenCL::makeWorker()
 {
    EDEBUG_FUNC(this);
 
-   return unique_ptr<EAbstractAnalytic::OpenCL::Worker>(new Worker(_base, this, _context, _program));
+   return unique_ptr<EAbstractAnalyticOpenCLWorker>(new Worker(_base, this, _context, _program));
 }
 
 

@@ -36,7 +36,7 @@ int Extract::size() const
  *
  * @param result
  */
-void Extract::process(const EAbstractAnalytic::Block* result)
+void Extract::process(const EAbstractAnalyticBlock* result)
 {
    EDEBUG_FUNC(this,result);
 
@@ -398,7 +398,7 @@ void Extract::writeGraphMLFormat(int index)
 /*!
  * Make a new input object and return its pointer.
  */
-EAbstractAnalytic::Input* Extract::makeInput()
+EAbstractAnalyticInput* Extract::makeInput()
 {
    EDEBUG_FUNC(this);
 

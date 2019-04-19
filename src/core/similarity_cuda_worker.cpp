@@ -67,7 +67,7 @@ Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, :
  *
  * @param block
  */
-std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(const EAbstractAnalytic::Block* block)
+std::unique_ptr<EAbstractAnalyticBlock> Similarity::CUDA::Worker::execute(const EAbstractAnalyticBlock* block)
 {
    EDEBUG_FUNC(this,block);
 
@@ -253,5 +253,5 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
    }
 
    // return result block
-   return unique_ptr<EAbstractAnalytic::Block>(resultBlock);
+   return unique_ptr<EAbstractAnalyticBlock>(resultBlock);
 }

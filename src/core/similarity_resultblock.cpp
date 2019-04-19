@@ -12,7 +12,7 @@
  * @param start
  */
 Similarity::ResultBlock::ResultBlock(int index, qint64 start):
-   EAbstractAnalytic::Block(index),
+   EAbstractAnalyticBlock(index),
    _start(start)
 {
    EDEBUG_FUNC(this,index,start);

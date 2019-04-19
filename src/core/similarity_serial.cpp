@@ -22,7 +22,7 @@ using namespace std;
  * @param parent
  */
 Similarity::Serial::Serial(Similarity* parent):
-   EAbstractAnalytic::Serial(parent),
+   EAbstractAnalyticSerial(parent),
    _base(parent)
 {
    EDEBUG_FUNC(this,parent);
@@ -62,7 +62,7 @@ Similarity::Serial::Serial(Similarity* parent):
  *
  * @param block
  */
-std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbstractAnalytic::Block* block)
+std::unique_ptr<EAbstractAnalyticBlock> Similarity::Serial::execute(const EAbstractAnalyticBlock* block)
 {
    EDEBUG_FUNC(this,block);
 
@@ -142,7 +142,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::Serial::execute(const EAbs
    }
 
    // return result block
-   return unique_ptr<EAbstractAnalytic::Block>(resultBlock);
+   return unique_ptr<EAbstractAnalyticBlock>(resultBlock);
 }
 
 
