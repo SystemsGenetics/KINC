@@ -152,6 +152,6 @@ __kernel void Spearman_compute(
 
    for ( char k = 0; k < clusterSize; ++k )
    {
-      correlations[k] = Spearman_computeCluster(x, y, labels, sampleSize, k, minSamples, x, y, rank);
+      correlations[k] = Spearman_computeCluster(x, y, labels, sampleSize, k, minSamples, x_sorted, y_sorted, rank);
    }
 }
