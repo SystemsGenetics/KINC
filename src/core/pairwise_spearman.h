@@ -11,8 +11,6 @@ namespace Pairwise
    class Spearman : public CorrelationModel
    {
    public:
-      static int nextPower2(int n);
-   public:
       Spearman(ExpressionMatrix* emx);
    protected:
       virtual float computeCluster(

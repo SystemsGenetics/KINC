@@ -55,6 +55,9 @@ public:
    class OpenCL;
    class CUDA;
 public:
+   static int nextPower2(int n);
+   static qint64 totalPairs(const ExpressionMatrix* emx);
+public:
    virtual int size() const override final;
    virtual std::unique_ptr<EAbstractAnalyticBlock> makeWork(int index) const override final;
    virtual std::unique_ptr<EAbstractAnalyticBlock> makeWork() const override final;
@@ -96,7 +99,6 @@ private:
       ,Spearman
    };
 private:
-   qint64 totalPairs(const ExpressionMatrix* emx) const;
    /*!
     * Pointer to the input expression matrix.
     */

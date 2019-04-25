@@ -39,7 +39,7 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    // initialize buffers
    int W {_base->_globalWorkSize};
    int N {_base->_input->sampleSize()};
-   int N_pow2 {Pairwise::Spearman::nextPower2(N)};
+   int N_pow2 {nextPower2(N)};
    int K {_base->_maxClusters};
 
    _buffers.in_index = ::OpenCL::Buffer<cl_int2>(context, 1 * W);

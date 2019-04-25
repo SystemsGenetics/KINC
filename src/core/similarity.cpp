@@ -20,12 +20,33 @@ using namespace std;
 
 
 /*!
+ * Compute the next power of 2 which occurs after a number.
+ *
+ * @param n
+ */
+int Similarity::nextPower2(int n)
+{
+   int pow2 = 2;
+   while ( pow2 < n )
+   {
+      pow2 *= 2;
+   }
+
+   return pow2;
+}
+
+
+
+
+
+
+/*!
  * Return the total number of pairs that must be processed for a given
  * expression matrix.
  *
  * @param emx
  */
-qint64 Similarity::totalPairs(const ExpressionMatrix* emx) const
+qint64 Similarity::totalPairs(const ExpressionMatrix* emx)
 {
    EDEBUG_FUNC(this,emx);
 

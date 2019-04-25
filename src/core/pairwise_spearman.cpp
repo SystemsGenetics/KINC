@@ -10,27 +10,6 @@ using namespace Pairwise;
 
 
 /*!
- * Compute the next power of 2 which occurs after a number.
- *
- * @param n
- */
-int Spearman::nextPower2(int n)
-{
-   int pow2 = 2;
-   while ( pow2 < n )
-   {
-      pow2 *= 2;
-   }
-
-   return pow2;
-}
-
-
-
-
-
-
-/*!
  * Construct a Spearman correlation model.
  *
  * @param emx
@@ -38,11 +17,9 @@ int Spearman::nextPower2(int n)
 Spearman::Spearman(ExpressionMatrix* emx)
 {
    // pre-allocate workspace
-   int workSize = nextPower2(emx->sampleSize());
-
-   _x.resize(workSize);
-   _y.resize(workSize);
-   _rank.resize(workSize);
+   _x.resize(emx->sampleSize());
+   _y.resize(emx->sampleSize());
+   _rank.resize(emx->sampleSize());
 }
 
 

@@ -37,7 +37,7 @@ Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, :
    // initialize buffers
    int W {_base->_globalWorkSize};
    int N {_base->_input->sampleSize()};
-   int N_pow2 {Pairwise::Spearman::nextPower2(N)};
+   int N_pow2 {nextPower2(N)};
    int K {_base->_maxClusters};
 
    _buffers.in_index = ::CUDA::Buffer<int2>(1 * W);

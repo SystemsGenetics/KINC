@@ -7,28 +7,6 @@
 
 
 /*!
- * Compute the next power of 2 which occurs after a number.
- *
- * @param n
- */
-__device__
-int nextPower2(int n)
-{
-   int pow2 = 2;
-   while ( pow2 < n )
-   {
-      pow2 *= 2;
-   }
-
-   return pow2;
-}
-
-
-
-
-
-
-/*!
  * Compute the Spearman correlation of a cluster in a pairwise data array.
  *
  * @param x

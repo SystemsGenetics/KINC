@@ -35,6 +35,7 @@ int removeOutliersCluster(
    __global float *y_sorted)
 {
    // extract samples from the given cluster into separate arrays
+   int N_pow2 = nextPower2(sampleSize);
    int n = 0;
 
    for ( int i = 0; i < sampleSize; i++ )
@@ -47,6 +48,12 @@ int removeOutliersCluster(
       }
    }
 
+   for ( int i = n; i < N_pow2; ++i )
+   {
+      x_sorted[i] = INFINITY;
+      y_sorted[i] = INFINITY;
+   }
+
    // return if the given cluster is empty
    if ( n == 0 )
    {
@@ -54,8 +61,8 @@ int removeOutliersCluster(
    }
 
    // sort samples for each axis
-   heapSort(x_sorted, n);
-   heapSort(y_sorted, n);
+   bitonicSort(x_sorted, n);
+   bitonicSort(y_sorted, n);
 
    // compute interquartile range and thresholds for each axis
    float Q1_x = x_sorted[n * 1 / 4];
