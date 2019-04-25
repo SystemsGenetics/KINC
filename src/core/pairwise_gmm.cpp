@@ -53,12 +53,6 @@ void GMM::Component::initialize(float pi, const Vector2& mu)
 
    // initialize covariance to identity matrix
    matrixInitIdentity(_sigma);
-
-   // initialize precision to zero matrix
-   matrixInitZero(_sigmaInv);
-
-   // initialize normalizer term to 0
-   _normalizer = 0;
 }
 
 
@@ -69,7 +63,7 @@ void GMM::Component::initialize(float pi, const Vector2& mu)
 /*!
  * Pre-compute the precision matrix and normalizer term for a mixture component.
  */
-void GMM::Component::prepare()
+bool GMM::Component::prepare()
 {
    const int D = 2;
 
@@ -77,13 +71,11 @@ void GMM::Component::prepare()
    float det;
    matrixInverse(_sigma, _sigmaInv, &det);
 
-   if ( det <= 0 )
-   {
-      throw std::runtime_error("matrix inverse failed");
-   }
-
    // compute normalizer term for multivariate normal distribution
    _normalizer = -0.5f * (D * logf(2.0f * M_PI) + logf(det));
+
+   // return failure if matrix inverse failed
+   return !(det <= 0);
 }
 
 
@@ -344,9 +336,6 @@ void GMM::computeMStep(const QVector<Vector2>& X, int N, const float *gamma)
       }
 
       matrixScale(sigma, 1.0f / n_k);
-
-      // pre-compute precision matrix and normalizer term
-      _components[k].prepare();
    }
 }
 
@@ -444,7 +433,6 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
       int i = myrand(&state) % N;
 
       _components[k].initialize(1.0f / K, X[i]);
-      _components[k].prepare();
    }
 
    // initialize means with k-means
@@ -458,41 +446,45 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
    const float TOLERANCE = 1e-8f;
    float prevLogL = -INFINITY;
    float currLogL = -INFINITY;
-   bool success;
 
-   try
+   for ( int t = 0; t < MAX_ITERATIONS; ++t )
    {
-      for ( int t = 0; t < MAX_ITERATIONS; ++t )
+      // pre-compute precision matrix and normalizer term
+      bool success = true;
+
+      for ( int k = 0; k < K; ++k )
       {
-         // perform E step
-         prevLogL = currLogL;
-         currLogL = computeEStep(X, N, gamma);
-
-         // check for convergence
-         if ( fabs(currLogL - prevLogL) < TOLERANCE )
-         {
-            break;
-         }
-
-         // perform M step
-         computeMStep(X, N, gamma);
+         success = success && _components[k].prepare();
       }
 
-      // save outputs
-      _logL = currLogL;
-      computeLabels(gamma, N, K, labels);
-      _entropy = computeEntropy(gamma, N, labels);
+      // return failure if matrix inverse failed
+      if ( !success )
+      {
+         return false;
+      }
 
-      success = true;
+      // perform E step
+      prevLogL = currLogL;
+      currLogL = computeEStep(X, N, gamma);
+
+      // check for convergence
+      if ( fabs(currLogL - prevLogL) < TOLERANCE )
+      {
+         break;
+      }
+
+      // perform M step
+      computeMStep(X, N, gamma);
    }
-   catch ( std::runtime_error& e )
-   {
-      success = false;
-   }
+
+   // save outputs
+   _logL = currLogL;
+   computeLabels(gamma, N, K, labels);
+   _entropy = computeEntropy(gamma, N, labels);
 
    delete[] gamma;
 
-   return success;
+   return true;
 }
 
 

@@ -72,12 +72,6 @@ void GMM_Component_initialize(
 
    // initialize covariance to identity matrix
    matrixInitIdentity(&component->sigma);
-
-   // initialize precision to zero matrix
-   matrixInitZero(&component->sigmaInv);
-
-   // initialize normalizer term to 0
-   component->normalizer = 0;
 }
 
 
@@ -98,17 +92,11 @@ bool GMM_Component_prepare(__global Component *component)
    float det;
    matrixInverse(&component->sigma, &component->sigmaInv, &det);
 
-   // return failure if matrix inverse failed
-   if ( det <= 0 || isnan(det) )
-   {
-      return false;
-   }
-
    // compute normalizer term for multivariate normal distribution
    component->normalizer = -0.5f * (D * log(2.0f * M_PI) + log(det));
 
-   // return success
-   return true;
+   // return failure if matrix inverse failed
+   return !(det <= 0 || isnan(det));
 }
 
 
@@ -330,7 +318,7 @@ float GMM_computeEStep(GMM *gmm, __global const Vector2 *X, int N)
  * @param X
  * @param N
  */
-bool GMM_computeMStep(GMM *gmm, __global const Vector2 *X, int N)
+void GMM_computeMStep(GMM *gmm, __global const Vector2 *X, int N)
 {
    const int K = gmm->K;
 
@@ -375,19 +363,7 @@ bool GMM_computeMStep(GMM *gmm, __global const Vector2 *X, int N)
       }
 
       matrixScale(sigma, 1.0f / n_k);
-
-      // pre-compute precision matrix and normalizer term
-      bool success = GMM_Component_prepare(&gmm->components[k]);
-
-      // return failure if matrix inverse failed
-      if ( !success )
-      {
-         return false;
-      }
    }
-
-   // return success
-   return true;
 }
 
 
@@ -492,7 +468,6 @@ bool GMM_fit(
       int i = myrand(&state) % N;
 
       GMM_Component_initialize(&gmm->components[k], 1.0f / K, &X[i]);
-      GMM_Component_prepare(&gmm->components[k]);
    }
 
    // initialize means with k-means
@@ -506,6 +481,20 @@ bool GMM_fit(
 
    for ( int t = 0; t < MAX_ITERATIONS; ++t )
    {
+      // pre-compute precision matrix and normalizer term
+      bool success = true;
+
+      for ( int k = 0; k < K; k++ )
+      {
+         success = success && GMM_Component_prepare(&gmm->components[k]);
+      }
+
+      // return failure if matrix inverse failed
+      if ( !success )
+      {
+         return false;
+      }
+
       // perform E step
       prevLogL = currLogL;
       currLogL = GMM_computeEStep(gmm, X, N);
@@ -517,13 +506,7 @@ bool GMM_fit(
       }
 
       // perform M step
-      bool success = GMM_computeMStep(gmm, X, N);
-
-      // return failure if M-step failed (due to matrix inverse)
-      if ( !success )
-      {
-         return false;
-      }
+      GMM_computeMStep(gmm, X, N);
    }
 
    // save outputs

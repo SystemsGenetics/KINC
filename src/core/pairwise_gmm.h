@@ -17,7 +17,7 @@ namespace Pairwise
       public:
          Component() = default;
          void initialize(float pi, const Vector2& mu);
-         void prepare();
+         bool prepare();
          void computeLogProbNorm(const QVector<Vector2>& X, int N, float *logP);
       public:
          /*!
