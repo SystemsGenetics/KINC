@@ -568,7 +568,8 @@ float GMM::computeICL(int K, int D, float logL, int N, float E)
  * each one having a different number of clusters, are fit to the data and the
  * sub-model with the best criterion value is selected.
  *
- * @param data
+ * @param expressions
+ * @param index
  * @param numSamples
  * @param labels
  * @param minSamples
@@ -577,7 +578,8 @@ float GMM::computeICL(int K, int D, float logL, int N, float E)
  * @param criterion
  */
 qint8 GMM::compute(
-   const QVector<Vector2>& data,
+   const std::vector<float>& expressions,
+   const Index& index,
    int numSamples,
    QVector<qint8>& labels,
    int minSamples,
@@ -585,6 +587,10 @@ qint8 GMM::compute(
    qint8 maxClusters,
    Criterion criterion)
 {
+   // index into gene expressions
+   const float *x = &expressions[index.getX() * labels.size()];
+   const float *y = &expressions[index.getY() * labels.size()];
+
    // perform clustering only if there are enough samples
    qint8 bestK = 0;
 
@@ -595,7 +601,7 @@ qint8 GMM::compute(
       {
          if ( labels[i] >= 0 )
          {
-            _data[j] = data[i];
+            _data[j] = { x[i], y[i] };
             ++j;
          }
       }

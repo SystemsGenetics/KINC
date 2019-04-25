@@ -48,6 +48,9 @@ Similarity::Serial::Serial(Similarity* parent):
       _corrModel = new Pairwise::Spearman(_base->_input);
       break;
    }
+
+   // initialize expression matrix
+   _expressions = _base->_input->dumpRawData();
 }
 
 
@@ -78,7 +81,6 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::Serial::execute(const EAbstr
    ResultBlock* resultBlock {new ResultBlock(workBlock->index(), workBlock->start())};
 
    // initialize workspace
-   QVector<Pairwise::Vector2> data(_base->_input->sampleSize());
    QVector<qint8> labels(_base->_input->sampleSize());
 
    // iterate through all pairs
@@ -87,12 +89,12 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::Serial::execute(const EAbstr
    for ( int i = 0; i < workBlock->size(); ++i )
    {
       // fetch pairwise input data
-      int numSamples = fetchPair(index, data, labels);
+      int numSamples = fetchPair(index, labels);
 
       // remove pre-clustering outliers
       if ( _base->_removePreOutliers )
       {
-         numSamples = removeOutliers(data, numSamples, labels, 1, -7);
+         numSamples = removeOutliers(index, numSamples, labels, 1, -7);
       }
 
       // compute clusters
@@ -101,7 +103,8 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::Serial::execute(const EAbstr
       if ( _base->_clusMethod != ClusteringMethod::None )
       {
          K = _clusModel->compute(
-            data,
+            _expressions,
+            index,
             numSamples,
             labels,
             _base->_minSamples,
@@ -114,12 +117,13 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::Serial::execute(const EAbstr
       // remove post-clustering outliers
       if ( _base->_removePostOutliers )
       {
-         numSamples = removeOutliers(data, numSamples, labels, K, -8);
+         numSamples = removeOutliers(index, numSamples, labels, K, -8);
       }
 
       // compute correlations
       QVector<float> correlations = _corrModel->compute(
-         data,
+         _expressions,
+         index,
          K,
          labels,
          _base->_minSamples
@@ -153,53 +157,46 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::Serial::execute(const EAbstr
 /*!
  * Compute the initial labels for a gene pair in an expression matrix. Samples
  * with missing values and samples that fall below the expression threshold are
- * labeled as such, all other samples are labeled as cluster 0. Additionally,
- * load the pairwise data into an array. The number of clean samples is returned.
+ * labeled as such, all other samples are labeled as cluster 0. The number of
+ * clean samples is returned.
  *
  * @param index
- * @param data
  * @param labels
  */
-int Similarity::Serial::fetchPair(const Pairwise::Index& index, QVector<Pairwise::Vector2>& data, QVector<qint8>& labels)
+int Similarity::Serial::fetchPair(const Pairwise::Index& index, QVector<qint8>& labels)
 {
-   EDEBUG_FUNC(this,&index,&data,&labels);
+   EDEBUG_FUNC(this,&index,&labels);
 
-   // read in gene expressions
-   ExpressionMatrix::Gene gene1(_base->_input);
-   ExpressionMatrix::Gene gene2(_base->_input);
+   // index into gene expressions
+   const float *x = &_expressions[index.getX() * _base->_input->sampleSize()];
+   const float *y = &_expressions[index.getY() * _base->_input->sampleSize()];
 
-   gene1.read(index.getX());
-   gene2.read(index.getY());
-
-   // extract pairwise samples
+   // label the pairwise samples
    int numSamples = 0;
 
    for ( int i = 0; i < _base->_input->sampleSize(); ++i )
    {
-      // exclude samples with missing values
-      if ( std::isnan(gene1.at(i)) || std::isnan(gene2.at(i)) )
+      // label samples with missing values
+      if ( std::isnan(x[i]) || std::isnan(y[i]) )
       {
          labels[i] = -9;
       }
 
-      // exclude samples which fall below the expression threshold
-      else if ( gene1.at(i) < _base->_minExpression || gene2.at(i) < _base->_minExpression )
+      // label samples which fall below the expression threshold
+      else if ( x[i] < _base->_minExpression || y[i] < _base->_minExpression )
       {
          labels[i] = -6;
       }
 
-      // include any remaining samples
+      // label any remaining samples as cluster 0
       else
       {
          numSamples++;
          labels[i] = 0;
       }
-
-      // extract pairwise array
-      data[i] = { gene1.at(i), gene2.at(i) };
    }
 
-   // return number of extracted samples
+   // return number of clean samples
    return numSamples;
 }
 
@@ -217,14 +214,15 @@ int Similarity::Serial::fetchPair(const Pairwise::Index& index, QVector<Pairwise
  * This function returns the number of clean samples remaining in the data array,
  * including samples in other clusters.
  *
- * @param data
+ * @param x
+ * @param y
  * @param labels
  * @param cluster
  * @param marker
  */
-int Similarity::Serial::removeOutliersCluster(const QVector<Pairwise::Vector2>& data, QVector<qint8>& labels, qint8 cluster, qint8 marker)
+int Similarity::Serial::removeOutliersCluster(const float *x, const float *y, QVector<qint8>& labels, qint8 cluster, qint8 marker)
 {
-   EDEBUG_FUNC(this,&data,&labels,cluster,marker);
+   EDEBUG_FUNC(this,x,y,&labels,cluster,marker);
 
    // extract samples from the given cluster into separate arrays
    QVector<float> x_sorted;
@@ -237,8 +235,8 @@ int Similarity::Serial::removeOutliersCluster(const QVector<Pairwise::Vector2>& 
    {
       if ( labels[i] == cluster )
       {
-         x_sorted.append(data[i].s[0]);
-         y_sorted.append(data[i].s[1]);
+         x_sorted.append(x[i]);
+         y_sorted.append(y[i]);
       }
    }
 
@@ -271,7 +269,7 @@ int Similarity::Serial::removeOutliersCluster(const QVector<Pairwise::Vector2>& 
    for ( int i = 0; i < labels.size(); i++ )
    {
       // mark samples in the given cluster that are outliers on either axis
-      if ( labels[i] == cluster && (data[i].s[0] < T_x_min || T_x_max < data[i].s[0] || data[i].s[1] < T_y_min || T_y_max < data[i].s[1]) )
+      if ( labels[i] == cluster && (x[i] < T_x_min || T_x_max < x[i] || y[i] < T_y_min || T_y_max < y[i]) )
       {
          labels[i] = marker;
       }
@@ -295,15 +293,19 @@ int Similarity::Serial::removeOutliersCluster(const QVector<Pairwise::Vector2>& 
 /*!
  * Perform outlier removal on each cluster in a parwise data array.
  *
- * @param data
+ * @param index
  * @param numSamples
  * @param labels
  * @param clusterSize
  * @param marker
  */
-int Similarity::Serial::removeOutliers(const QVector<Pairwise::Vector2>& data, int numSamples, QVector<qint8>& labels, qint8 clusterSize, qint8 marker)
+int Similarity::Serial::removeOutliers(const Pairwise::Index& index, int numSamples, QVector<qint8>& labels, qint8 clusterSize, qint8 marker)
 {
-   EDEBUG_FUNC(this,&data,numSamples,&labels,clusterSize,marker);
+   EDEBUG_FUNC(this,&index,numSamples,&labels,clusterSize,marker);
+
+   // index into gene expressions
+   const float *x = &_expressions[index.getX() * _base->_input->sampleSize()];
+   const float *y = &_expressions[index.getY() * _base->_input->sampleSize()];
 
    // do not perform post-clustering outlier removal if there is only one cluster
    if ( marker == -8 && clusterSize <= 1 )
@@ -314,7 +316,7 @@ int Similarity::Serial::removeOutliers(const QVector<Pairwise::Vector2>& data, i
    // perform outlier removal on each cluster
    for ( qint8 k = 0; k < clusterSize; ++k )
    {
-      numSamples = removeOutliersCluster(data, labels, k, marker);
+      numSamples = removeOutliersCluster(x, y, labels, k, marker);
    }
 
    return numSamples;

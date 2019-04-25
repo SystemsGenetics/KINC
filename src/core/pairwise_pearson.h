@@ -11,7 +11,8 @@ namespace Pairwise
    {
    protected:
       virtual float computeCluster(
-         const QVector<Vector2>& data,
+         const float *x,
+         const float *y,
          const QVector<qint8>& labels,
          qint8 cluster,
          int minSamples

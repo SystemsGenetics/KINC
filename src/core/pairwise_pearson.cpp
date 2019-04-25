@@ -12,13 +12,15 @@ using namespace Pairwise;
 /*!
  * Compute the Pearson correlation of a cluster in a pairwise data array.
  *
- * @param data
+ * @param x
+ * @param y
  * @param labels
  * @param cluster
  * @param minSamples
  */
 float Pearson::computeCluster(
-   const QVector<Vector2>& data,
+   const float *x,
+   const float *y,
    const QVector<qint8>& labels,
    qint8 cluster,
    int minSamples)
@@ -35,8 +37,8 @@ float Pearson::computeCluster(
    {
       if ( labels[i] == cluster )
       {
-         float x_i = data[i].s[0];
-         float y_i = data[i].s[1];
+         float x_i = x[i];
+         float y_i = y[i];
 
          sumx += x_i;
          sumy += y_i;

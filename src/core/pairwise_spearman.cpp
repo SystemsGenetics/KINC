@@ -53,13 +53,15 @@ Spearman::Spearman(ExpressionMatrix* emx)
 /*!
  * Compute the Spearman correlation of a cluster in a pairwise data array.
  *
- * @param data
+ * @param x
+ * @param y
  * @param labels
  * @param cluster
  * @param minSamples
  */
 float Spearman::computeCluster(
-   const QVector<Vector2>& data,
+   const float *x,
+   const float *y,
    const QVector<qint8>& labels,
    qint8 cluster,
    int minSamples)
@@ -72,8 +74,8 @@ float Spearman::computeCluster(
    {
       if ( labels[i] == cluster )
       {
-         _x[n] = data[i].s[0];
-         _y[n] = data[i].s[1];
+         _x[n] = x[i];
+         _y[n] = y[i];
          _rank[n] = n + 1;
          ++n;
       }

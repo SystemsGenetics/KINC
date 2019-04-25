@@ -4,7 +4,6 @@
 
 #include "ccmatrix.h"
 #include "expressionmatrix.h"
-#include "pairwise_linalg.h"
 #include "pairwise_index.h"
 
 namespace Pairwise
@@ -40,7 +39,8 @@ namespace Pairwise
       ~ClusteringModel() = default;
    public:
       virtual qint8 compute(
-         const QVector<Vector2>& data,
+         const std::vector<float>& expressions,
+         const Index& index,
          int numSamples,
          QVector<qint8>& labels,
          int minSamples,

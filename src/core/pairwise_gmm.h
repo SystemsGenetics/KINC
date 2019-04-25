@@ -1,6 +1,7 @@
 #ifndef PAIRWISE_GMM_H
 #define PAIRWISE_GMM_H
 #include "pairwise_clusteringmodel.h"
+#include "pairwise_linalg.h"
 
 namespace Pairwise
 {
@@ -49,7 +50,8 @@ namespace Pairwise
       };
    public:
       virtual qint8 compute(
-         const QVector<Vector2>& data,
+         const std::vector<float>& expressions,
+         const Index& index,
          int numSamples,
          QVector<qint8>& labels,
          int minSamples,

@@ -43,22 +43,27 @@ void fetchPair(
    int *p_N = &out_N[i];
 
    // index into gene expressions
-   const float *gene1 = &expressions[index.x * sampleSize];
-   const float *gene2 = &expressions[index.y * sampleSize];
+   const float *x = &expressions[index.x * sampleSize];
+   const float *y = &expressions[index.y * sampleSize];
 
-   // populate X with shared expressions of gene pair
+   // label the pairwise samples
    int N = 0;
 
    for ( int i = 0; i < sampleSize; ++i )
    {
-      if ( isnan(gene1[i]) || isnan(gene2[i]) )
+      // label samples with missing values
+      if ( isnan(x[i]) || isnan(y[i]) )
       {
          labels[i] = -9;
       }
-      else if ( gene1[i] < minExpression || gene2[i] < minExpression )
+
+      // label samples which fall below the expression threshold
+      else if ( x[i] < minExpression || y[i] < minExpression )
       {
          labels[i] = -6;
       }
+
+      // label any remaining samples as cluster 0
       else
       {
          N++;
