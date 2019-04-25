@@ -28,10 +28,27 @@ int myrand(unsigned long *state)
  * Construct a Gaussian mixture model.
  *
  * @param emx
+ * @param maxClusters
  */
-GMM::GMM(ExpressionMatrix* emx):
+GMM::GMM(ExpressionMatrix* emx, qint8 maxClusters):
    ClusteringModel(emx)
 {
+   // pre-allocate workspace
+   _components.reserve(maxClusters);
+   _gamma = new float[maxClusters * emx->sampleSize()];
+}
+
+
+
+
+
+
+/*!
+ * Destruct a Gaussian mixture model.
+ */
+GMM::~GMM()
+{
+   delete[] _gamma;
 }
 
 
@@ -207,9 +224,8 @@ void GMM::initializeMeans(const QVector<Vector2>& X, int N)
  *
  * @param X
  * @param N
- * @param gamma
  */
-float GMM::computeEStep(const QVector<Vector2>& X, int N, float *gamma)
+float GMM::computeEStep(const QVector<Vector2>& X, int N)
 {
    const int K = _components.size();
 
@@ -222,7 +238,7 @@ float GMM::computeEStep(const QVector<Vector2>& X, int N, float *gamma)
    }
 
    // compute the log-probability for each component and each point in X
-   float *logProb = gamma;
+   float *logProb = _gamma;
 
    for ( int k = 0; k < K; ++k )
    {
@@ -257,8 +273,8 @@ float GMM::computeEStep(const QVector<Vector2>& X, int N, float *gamma)
       // compute gamma_ki
       for (int k = 0; k < K; ++k)
       {
-         gamma[k * N + i] += logpi[k] - logpx;
-         gamma[k * N + i] = expf(gamma[k * N + i]);
+         _gamma[k * N + i] += logpi[k] - logpx;
+         _gamma[k * N + i] = expf(_gamma[k * N + i]);
       }
 
       // update log-likelihood
@@ -289,9 +305,8 @@ float GMM::computeEStep(const QVector<Vector2>& X, int N, float *gamma)
  *
  * @param X
  * @param N
- * @param gamma
  */
-void GMM::computeMStep(const QVector<Vector2>& X, int N, const float *gamma)
+void GMM::computeMStep(const QVector<Vector2>& X, int N)
 {
    const int K = _components.size();
 
@@ -302,7 +317,7 @@ void GMM::computeMStep(const QVector<Vector2>& X, int N, const float *gamma)
 
       for (int i = 0; i < N; ++i)
       {
-         n_k += gamma[k * N + i];
+         n_k += _gamma[k * N + i];
       }
 
       // update mixture weight
@@ -315,7 +330,7 @@ void GMM::computeMStep(const QVector<Vector2>& X, int N, const float *gamma)
 
       for (int i = 0; i < N; ++i)
       {
-         vectorAdd(mu, gamma[k * N + i], X[i]);
+         vectorAdd(mu, _gamma[k * N + i], X[i]);
       }
 
       vectorScale(mu, 1.0f / n_k);
@@ -332,7 +347,7 @@ void GMM::computeMStep(const QVector<Vector2>& X, int N, const float *gamma)
          vectorSubtract(xm, mu);
 
          // compute Sigma_ki = gamma_ki * (x_i - mu_k) (x_i - mu_k)^T
-         matrixAddOuterProduct(sigma, gamma[k * N + i], xm);
+         matrixAddOuterProduct(sigma, _gamma[k * N + i], xm);
       }
 
       matrixScale(sigma, 1.0f / n_k);
@@ -438,9 +453,6 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
    // initialize means with k-means
    initializeMeans(X, N);
 
-   // initialize workspace
-   float *gamma = new float[K * N];
-
    // run EM algorithm
    const int MAX_ITERATIONS = 100;
    const float TOLERANCE = 1e-8f;
@@ -465,7 +477,7 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
 
       // perform E step
       prevLogL = currLogL;
-      currLogL = computeEStep(X, N, gamma);
+      currLogL = computeEStep(X, N);
 
       // check for convergence
       if ( fabs(currLogL - prevLogL) < TOLERANCE )
@@ -474,15 +486,13 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
       }
 
       // perform M step
-      computeMStep(X, N, gamma);
+      computeMStep(X, N);
    }
 
    // save outputs
    _logL = currLogL;
-   computeLabels(gamma, N, K, labels);
-   _entropy = computeEntropy(gamma, N, labels);
-
-   delete[] gamma;
+   computeLabels(_gamma, N, K, labels);
+   _entropy = computeEntropy(_gamma, N, labels);
 
    return true;
 }

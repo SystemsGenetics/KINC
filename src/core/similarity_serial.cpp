@@ -34,7 +34,7 @@ Similarity::Serial::Serial(Similarity* parent):
       _clusModel = nullptr;
       break;
    case ClusteringMethod::GMM:
-      _clusModel = new Pairwise::GMM(_base->_input);
+      _clusModel = new Pairwise::GMM(_base->_input, _base->_maxClusters);
       break;
    }
 

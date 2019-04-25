@@ -10,7 +10,8 @@ namespace Pairwise
    class GMM : public ClusteringModel
    {
    public:
-      GMM(ExpressionMatrix* emx);
+      GMM(ExpressionMatrix* emx, qint8 maxClusters);
+      ~GMM();
    public:
       class Component
       {
@@ -52,8 +53,8 @@ namespace Pairwise
       float computeICL(int K, int D, float logL, int N, float E);
    private:
       void initializeMeans(const QVector<Vector2>& X, int N);
-      float computeEStep(const QVector<Vector2>& X, int N, float *gamma);
-      void computeMStep(const QVector<Vector2>& X, int N, const float *gamma);
+      float computeEStep(const QVector<Vector2>& X, int N);
+      void computeMStep(const QVector<Vector2>& X, int N);
       void computeLabels(const float *gamma, int N, int K, QVector<qint8>& labels);
       float computeEntropy(const float *gamma, int N, const QVector<qint8>& labels);
       /*!
@@ -61,6 +62,10 @@ namespace Pairwise
        * of each cluster in the mixture model.
        */
       QVector<Component> _components;
+      /*!
+       * The array of posterior probabilities used by the EM algorithm.
+       */
+      float *_gamma;
       /*!
        * The log-likelihood of the mixture model.
        */
