@@ -79,23 +79,6 @@ void siftDown(float *array, int start, int end)
 
 
 
-__device__
-void heapify(float *array, int n)
-{
-   int start = ((n-1) - 1) / 2;
-
-   while ( start >= 0 )
-   {
-      siftDown(array, start, n - 1);
-      start -= 1;
-   }
-}
-
-
-
-
-
-
 /*!
  * Sort an array using heapsort.
  *
@@ -105,8 +88,16 @@ void heapify(float *array, int n)
 __device__
 void heapSort(float *array, int n)
 {
-   heapify(array, n);
+   // heapify the array
+   int start = ((n-1) - 1) / 2;
 
+   while ( start >= 0 )
+   {
+      siftDown(array, start, n - 1);
+      start -= 1;
+   }
+
+   // sort the array
    int end = n - 1;
    while ( end > 0 )
    {

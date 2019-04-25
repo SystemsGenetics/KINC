@@ -23,8 +23,9 @@ namespace Pairwise
          int minSamples
       ) override final;
    private:
-      void bitonicSort(int size, QVector<float>& sortList, QVector<float>& extraList);
-      void bitonicSort(int size, QVector<float>& sortList, QVector<int>& extraList);
+      template<typename T> void siftDown(QVector<float>& array, QVector<T>& extra, int start, int end);
+      template<typename T> void heapSort(QVector<float>& array, QVector<T>& extra, int n);
+   private:
       /*!
        * Workspace for the x data.
        */

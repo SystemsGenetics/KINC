@@ -81,7 +81,7 @@ float Spearman_computeCluster(
       // get new power of 2 floor size
       int n_pow2 = nextPower2(n);
 
-      // execute two bitonic sorts that is beginning of spearman algorithm
+      // execute two sorts that are the beginning of the spearman algorithm
       bitonicSortFF(n_pow2, x_sorted, y_sorted);
       bitonicSortFI(n_pow2, y_sorted, rank);
 
