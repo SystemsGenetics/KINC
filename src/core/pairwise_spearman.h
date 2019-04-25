@@ -12,14 +12,15 @@ namespace Pairwise
    {
    public:
       static int nextPower2(int n);
+   public:
       Spearman(ExpressionMatrix* emx);
    protected:
-      float computeCluster(
+      virtual float computeCluster(
          const QVector<Vector2>& data,
          const QVector<qint8>& labels,
          qint8 cluster,
          int minSamples
-      );
+      ) override final;
    private:
       void bitonicSort(int size, QVector<float>& sortList, QVector<float>& extraList);
       void bitonicSort(int size, QVector<float>& sortList, QVector<int>& extraList);

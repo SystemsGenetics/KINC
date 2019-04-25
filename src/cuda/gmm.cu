@@ -718,7 +718,7 @@ void GMM_compute(
             break;
          }
 
-         // save the best model
+         // save the sub-model with the lowest criterion value
          if ( value < bestValue )
          {
             *bestK = K;

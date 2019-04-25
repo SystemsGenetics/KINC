@@ -33,7 +33,6 @@ SOURCES += \
    importcorrelationmatrix.cpp \
    importexpressionmatrix_input.cpp \
    importexpressionmatrix.cpp \
-   pairwise_clusteringmodel.cpp \
    pairwise_correlationmodel.cpp \
    pairwise_gmm.cpp \
    pairwise_index.cpp \
