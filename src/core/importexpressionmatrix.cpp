@@ -46,7 +46,7 @@ void ImportExpressionMatrix::process(const EAbstractAnalyticBlock* result)
       // if sample size is not zero then build sample name list
       if ( _sampleSize != 0 )
       {
-         for (int i = 0; i < _sampleSize ;++i)
+         for ( int i = 0; i < _sampleSize; ++i )
          {
             _sampleNames.append(QString::number(i));
          }

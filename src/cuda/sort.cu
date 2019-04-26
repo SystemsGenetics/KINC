@@ -77,12 +77,12 @@ void bitonicSort(float *array, int size)
    int bsize = size / 2;
    int dir, a, b, t;
 
-   for (int ob = 2; ob <= size; ob *= 2)
+   for ( int ob = 2; ob <= size; ob *= 2 )
    {
-      for (int ib = ob; ib >= 2; ib /= 2)
+      for ( int ib = ob; ib >= 2; ib /= 2 )
       {
          t = ib/2;
-         for (int i = 0; i < bsize; ++i)
+         for ( int i = 0; i < bsize; ++i )
          {
             dir = -((i/(ob/2)) & 0x1);
             a = (i/t) * ib + (i%t);
@@ -116,12 +116,12 @@ void bitonicSortFF(int size, float *array, float *extra)
    int bsize = size / 2;
    int dir, a, b, t;
 
-   for (int ob = 2; ob <= size; ob *= 2)
+   for ( int ob = 2; ob <= size; ob *= 2 )
    {
-      for (int ib = ob; ib >= 2; ib /= 2)
+      for ( int ib = ob; ib >= 2; ib /= 2 )
       {
          t = ib/2;
-         for (int i = 0; i < bsize; ++i)
+         for ( int i = 0; i < bsize; ++i )
          {
             dir = -((i/(ob/2)) & 0x1);
             a = (i/t) * ib + (i%t);
@@ -156,12 +156,12 @@ void bitonicSortFI(int size, float *array, int *extra)
    int bsize = size / 2;
    int dir, a, b, t;
 
-   for (int ob = 2; ob <= size; ob *= 2)
+   for ( int ob = 2; ob <= size; ob *= 2 )
    {
-      for (int ib = ob; ib >= 2; ib /= 2)
+      for ( int ib = ob; ib >= 2; ib /= 2 )
       {
          t = ib/2;
-         for (int i = 0; i < bsize; ++i)
+         for ( int i = 0; i < bsize; ++i )
          {
             dir = -((i/(ob/2)) & 0x1);
             a = (i/t) * ib + (i%t);

@@ -180,7 +180,7 @@ std::vector<float> ExpressionMatrix::dumpRawData() const
    seekExpression(0,0);
 
    // write each expression to the array
-   for (float& sample: ret)
+   for ( float& sample: ret )
    {
       stream() >> sample;
    }

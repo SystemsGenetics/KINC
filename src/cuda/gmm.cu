@@ -129,7 +129,7 @@ void GMM_Component_computeLogProbNorm(
    const Vector2 *X, int N,
    float *logP)
 {
-   for (int i = 0; i < N; ++i)
+   for ( int i = 0; i < N; ++i )
    {
       // compute xm = (x - mu)
       Vector2 xm = X[i];
@@ -173,21 +173,21 @@ void GMM_initializeMeans(GMM *gmm, const Vector2 *X, int N)
    Vector2 *Mu = gmm->_Mu;
    int *counts = gmm->_counts;
 
-   for (int t = 0; t < MAX_ITERATIONS && diff > TOLERANCE; ++t)
+   for ( int t = 0; t < MAX_ITERATIONS && diff > TOLERANCE; ++t )
    {
       // compute mean and sample count for each component
       memset(Mu, 0, K * sizeof(Vector2));
       memset(counts, 0, K * sizeof(int));
 
-      for (int i = 0; i < N; ++i)
+      for ( int i = 0; i < N; ++i )
       {
          // determine the component mean which is nearest to x_i
          float min_dist = INFINITY;
          int min_k = 0;
-         for (int k = 0; k < K; ++k)
+         for ( int k = 0; k < K; ++k )
          {
             float dist = vectorDiffNorm(&X[i], &gmm->components[k].mu);
-            if (min_dist > dist)
+            if ( min_dist > dist )
             {
                min_dist = dist;
                min_k = k;
@@ -200,21 +200,21 @@ void GMM_initializeMeans(GMM *gmm, const Vector2 *X, int N)
       }
 
       // scale each mean by its sample count
-      for (int k = 0; k < K; ++k)
+      for ( int k = 0; k < K; ++k )
       {
          vectorScale(&Mu[k], 1.0f / counts[k]);
       }
 
       // compute the total change of all means
       diff = 0;
-      for (int k = 0; k < K; ++k)
+      for ( int k = 0; k < K; ++k )
       {
          diff += vectorDiffNorm(&Mu[k], &gmm->components[k].mu);
       }
       diff /= K;
 
       // update component means
-      for (int k = 0; k < K; ++k)
+      for ( int k = 0; k < K; ++k )
       {
          gmm->components[k].mu = Mu[k];
       }
@@ -247,7 +247,7 @@ float GMM_computeEStep(GMM *gmm, const Vector2 *X, int N)
    const int K = gmm->K;
 
    // compute logpi
-   for (int k = 0; k < K; ++k)
+   for ( int k = 0; k < K; ++k )
    {
       gmm->_logpi[k] = logf(gmm->components[k].pi);
    }
@@ -263,14 +263,14 @@ float GMM_computeEStep(GMM *gmm, const Vector2 *X, int N)
    // compute gamma and log-likelihood
    float logL = 0;
 
-   for (int i = 0; i < N; ++i)
+   for ( int i = 0; i < N; ++i )
    {
       // compute a = argmax(logpi_k + logProb_ki, k)
       float maxArg = -INFINITY;
-      for (int k = 0; k < K; ++k)
+      for ( int k = 0; k < K; ++k )
       {
          float arg = gmm->_logpi[k] + logProb[k * N + i];
-         if (maxArg < arg)
+         if ( maxArg < arg )
          {
             maxArg = arg;
          }
@@ -278,7 +278,7 @@ float GMM_computeEStep(GMM *gmm, const Vector2 *X, int N)
 
       // compute logpx
       float sum = 0;
-      for (int k = 0; k < K; ++k)
+      for ( int k = 0; k < K; ++k )
       {
          sum += expf(gmm->_logpi[k] + logProb[k * N + i] - maxArg);
       }
@@ -286,7 +286,7 @@ float GMM_computeEStep(GMM *gmm, const Vector2 *X, int N)
       float logpx = maxArg + logf(sum);
 
       // compute gamma_ki
-      for (int k = 0; k < K; ++k)
+      for ( int k = 0; k < K; ++k )
       {
          gmm->_gamma[k * N + i] += gmm->_logpi[k] - logpx;
          gmm->_gamma[k * N + i] = expf(gmm->_gamma[k * N + i]);
@@ -327,12 +327,12 @@ void GMM_computeMStep(GMM *gmm, const Vector2 *X, int N)
 {
    const int K = gmm->K;
 
-   for (int k = 0; k < K; ++k)
+   for ( int k = 0; k < K; ++k )
    {
       // compute n_k = sum(gamma_ki)
       float n_k = 0;
 
-      for (int i = 0; i < N; ++i)
+      for ( int i = 0; i < N; ++i )
       {
          n_k += gmm->_gamma[k * N + i];
       }
@@ -345,7 +345,7 @@ void GMM_computeMStep(GMM *gmm, const Vector2 *X, int N)
 
       vectorInitZero(mu);
 
-      for (int i = 0; i < N; ++i)
+      for ( int i = 0; i < N; ++i )
       {
          vectorAddScaled(mu, gmm->_gamma[k * N + i], &X[i]);
       }
@@ -357,7 +357,7 @@ void GMM_computeMStep(GMM *gmm, const Vector2 *X, int N)
 
       matrixInitZero(sigma);
 
-      for (int i = 0; i < N; ++i)
+      for ( int i = 0; i < N; ++i )
       {
          // compute xm = (x_i - mu_k)
          Vector2 xm = X[i];

@@ -39,7 +39,7 @@ QString CorrelationMatrix::Pair::toString() const
 
    // initialize list of strings and iterate through all clusters
    QStringList ret;
-   for (const auto& correlation : _correlations)
+   for ( const auto& correlation : _correlations )
    {
       // add correlation value as string
       ret << QString::number(correlation);

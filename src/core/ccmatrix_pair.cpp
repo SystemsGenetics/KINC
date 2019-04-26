@@ -39,11 +39,11 @@ QString CCMatrix::Pair::toString() const
 
    // initialize list of strings and iterate through all clusters
    QStringList ret;
-   for (const auto& sampleMask : _sampleMasks)
+   for ( const auto& sampleMask : _sampleMasks )
    {
       // initialize list of strings for sample mask and iterate through each sample
       QString clusterString("(");
-      for (const auto& sample : sampleMask)
+      for ( const auto& sample : sampleMask )
       {
          // add new sample token as hexadecimal allowing 16 different possible values
          switch (sample)
