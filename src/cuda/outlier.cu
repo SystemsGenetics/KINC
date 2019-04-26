@@ -36,7 +36,6 @@ int removeOutliersCluster(
    float *y_sorted)
 {
    // extract samples from the given cluster into separate arrays
-   int N_pow2 = nextPower2(sampleSize);
    int n = 0;
 
    for ( int i = 0; i < sampleSize; i++ )
@@ -48,6 +47,9 @@ int removeOutliersCluster(
          n++;
       }
    }
+
+   // get power of 2 size
+   int N_pow2 = nextPower2(sampleSize);
 
    for ( int i = n; i < N_pow2; ++i )
    {
@@ -62,8 +64,8 @@ int removeOutliersCluster(
    }
 
    // sort samples for each axis
-   bitonicSort(x_sorted, n);
-   bitonicSort(y_sorted, n);
+   bitonicSort(x_sorted, N_pow2);
+   bitonicSort(y_sorted, N_pow2);
 
    // compute interquartile range and thresholds for each axis
    float Q1_x = x_sorted[n * 1 / 4];
@@ -135,14 +137,15 @@ void removeOutliers(
    }
 
    // initialize workspace variables
+   int N_pow2 = nextPower2(sampleSize);
    int2 index = in_index[i];
    const float *x = &expressions[index.x * sampleSize];
    const float *y = &expressions[index.y * sampleSize];
    int *p_N = &in_N[i];
    char *labels = &in_labels[i * sampleSize];
    char clusterSize = in_K[i];
-   float *x_sorted = &work_xy[(2 * i + 0) * sampleSize];
-   float *y_sorted = &work_xy[(2 * i + 1) * sampleSize];
+   float *x_sorted = &work_xy[(2 * i + 0) * N_pow2];
+   float *y_sorted = &work_xy[(2 * i + 1) * N_pow2];
 
    if ( marker == -7 )
    {

@@ -32,7 +32,6 @@ float Spearman_computeCluster(
    int *rank)
 {
    // extract samples in pairwise cluster
-   int N_pow2 = nextPower2(sampleSize);
    int n = 0;
 
    for ( int i = 0; i < sampleSize; ++i )
@@ -46,6 +45,9 @@ float Spearman_computeCluster(
       }
    }
 
+   // get power of 2 size
+   int N_pow2 = nextPower2(sampleSize);
+
    for ( int i = n; i < N_pow2; ++i )
    {
       x_sorted[i] = INFINITY;
@@ -58,12 +60,9 @@ float Spearman_computeCluster(
 
    if ( n >= minSamples )
    {
-      // get new power of 2 floor size
-      int n_pow2 = nextPower2(n);
-
       // execute two sorts that are the beginning of the spearman algorithm
-      bitonicSortFF(n_pow2, x_sorted, y_sorted);
-      bitonicSortFI(n_pow2, y_sorted, rank);
+      bitonicSortFF(N_pow2, x_sorted, y_sorted);
+      bitonicSortFI(N_pow2, y_sorted, rank);
 
       // go through spearman sorted rank list and calculate difference from 1,2,3,... list
       int diff = 0;
