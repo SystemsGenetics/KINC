@@ -43,6 +43,7 @@ Palmetto
    cp /zfs/feltus/mrbende/run_KINC.sh $HOME
 
 ``run_KINC.sh`` will take a plaintext GEM file, and output the following:
+
 - ``.emx``: expression matrix
 - ``.ccm``: cluster composition matrix
 - ``.cmx``: correlation matrix

@@ -11,13 +11,16 @@ Welcome to the KINC documentation!
 KINC is a C++ application for constructing a gene co-expression network (GCN) from a gene expression matrix (GEM). KINC implements several algorithms that are required for this process:
 
 Pairwise Clustering
+
 - Gaussian mixture models
 
 Pairwise Correlation
+
 - Pearson
 - Spearman
 
 Thresholding
+
 - Power-law
 - Random matrix theory
 
