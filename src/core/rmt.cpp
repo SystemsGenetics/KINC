@@ -97,7 +97,7 @@ void RMT::process(const EAbstractAnalyticBlock*)
    while ( maxChi < _chiSquareThreshold2 )
    {
       qInfo("\n");
-      qInfo("threshold: %8.3f", threshold);
+      qInfo("threshold: %0.3f", threshold);
 
       // compute pruned matrix based on threshold
       size_t size;
@@ -107,21 +107,22 @@ void RMT::process(const EAbstractAnalyticBlock*)
 
       // make sure that pruned matrix is not empty
       float chi = -1;
+      std::vector<float> eigens;
 
       if ( size > 0 )
       {
          // compute eigenvalues of pruned matrix
-         std::vector<float> eigens {computeEigenvalues(&pruneMatrix, size)};
+         eigens = computeEigenvalues(&pruneMatrix, size);
 
          qInfo("eigenvalues: %lu", eigens.size());
 
          // compute unique eigenvalues
-         std::vector<float> unique {computeUnique(eigens)};
+         eigens = computeUnique(eigens);
 
-         qInfo("unique eigenvalues: %lu", unique.size());
+         qInfo("unique eigenvalues: %lu", eigens.size());
 
          // compute chi-squared value from NNSD of eigenvalues
-         chi = computeChiSquare(unique);
+         chi = computeChiSquare(eigens);
 
          qInfo("chi-squared: %g", chi);
       }
@@ -144,7 +145,11 @@ void RMT::process(const EAbstractAnalyticBlock*)
       }
 
       // output to log file
-      stream << threshold << "\t" << size << "\t" << chi << "\n";
+      stream
+         << QString::number(threshold, 'f', 3) << "\t"
+         << size << "\t"
+         << eigens.size() << "\t"
+         << chi << "\n";
 
       // decrement threshold and fail if minimum threshold is reached
       threshold -= _thresholdStep;

@@ -51,7 +51,7 @@ void PowerLaw::process(const EAbstractAnalyticBlock*)
    while ( true )
    {
       qInfo("\n");
-      qInfo("threshold: %8.3f", threshold);
+      qInfo("threshold: %0.3f", threshold);
 
       // compute adjacency matrix based on threshold
       size_t size;
@@ -74,7 +74,10 @@ void PowerLaw::process(const EAbstractAnalyticBlock*)
       }
 
       // output to log file
-      stream << threshold << "\t" << size << "\t" << correlation << "\n";
+      stream
+         << QString::number(threshold, 'f', 3) << "\t"
+         << size << "\t"
+         << correlation << "\n";
 
       // TODO: break if network is sufficently scale-free
 
