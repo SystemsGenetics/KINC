@@ -1,5 +1,7 @@
 [![DOI](https://zenodo.org/badge/71836133.svg)](https://zenodo.org/badge/latestdoi/71836133)
 
+![KINC Logo](images/kinc.png)
+
 # Knowledge Independent Network Construction (KINC)
 
 KINC is a Qt/ACE application that produces a gene co-expression network (GCN) from a gene expression matrix (GEM). KINC implements several algorithms that are required for this process:
