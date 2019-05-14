@@ -28,3 +28,4 @@ KINC is built with `ACE <https://github.com/SystemsGenetics/ACE>`__, a framework
    :caption: Contents:
 
    installation
+   usage
