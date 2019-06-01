@@ -10,26 +10,17 @@ KINC provides two executables: ``kinc``, the command-line version, and ``qkinc``
 3. ``threshold``: Determine an appropriate correlation threshold for correlation matrix
 4. ``extract``: Extract an edge list from a correlation matrix given a threshold
 
-Below is an example usage of ``kinc`` on the Yeast dataset:
+The easiest way to learn how to use KINC is to study the ``kinc.sh`` script, which can run the entire KINC workflow. Additionally, you can use the ``make-input-data.py`` script to generate a "fake" GEM with which to test KINC quickly:
 
 .. code:: bash
 
-   # import expression matrix into binary format
-   kinc run import-emx --input Yeast.txt --output Yeast.emx --nan NA
+   # generate fake GEM
+   python scripts/make-input-data.py
 
-   # compute similarity matrix (with GMM clustering)
-   mpirun -np 8 kinc run similarity --input Yeast.emx --ccm Yeast.ccm --cmx Yeast.cmx --clusmethod gmm --corrmethod spearman --minclus 1 --maxclus 5
+   # run KINC
+   scripts/kinc.sh serial 1 GEM.txt
 
-   # determine correlation threshold
-   kinc run rmt --input Yeast.cmx --log Yeast.log
-
-   # read threshold from log file
-   THRESHOLD=$(tail -n 1 Yeast.log)
-
-   # extract network file from thresholded similarity matrix
-   kinc run extract --emx Yeast.emx --ccm Yeast.ccm --cmx Yeast.cmx --output Yeast-net.txt --mincorr $THRESHOLD
-
-A more thorough example usage is provided in ``scripts/kinc.sh``.
+Another recommended option is to use the `KINC-nf <https://github.com/SystemsGenetics/KINC-nf.git>`__ nextflow pipeline, which can run the entire KINC workflow on nearly any computing environment.
 
 Palmetto
 ~~~~~~~~

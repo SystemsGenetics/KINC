@@ -14,12 +14,12 @@ NP="$2"
 DO_IMPORT_EMX=1
 DO_SIMILARITY=1
 DO_EXPORT_CMX=0
-DO_THRESHOLD=0
-DO_EXTRACT=0
+DO_THRESHOLD=1
+DO_EXTRACT=1
 
 # define input/output files
 INFILE="$3"
-DATA="data"
+DATA="$(dirname $INFILE)"
 EMX_FILE="$DATA/$(basename $INFILE .txt).emx"
 CCM_FILE="$DATA/$(basename $EMX_FILE .emx).ccm"
 CMX_FILE="$DATA/$(basename $EMX_FILE .emx).cmx"
