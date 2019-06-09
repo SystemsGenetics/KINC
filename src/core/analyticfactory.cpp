@@ -7,6 +7,7 @@
 #include "powerlaw.h"
 #include "rmt.h"
 #include "extract.h"
+#include "cluster_filter.h"
 
 
 
@@ -51,6 +52,7 @@ QString AnalyticFactory::name(quint16 type) const
    case PowerLawType: return "Threshold (Power-law)";
    case RMTType: return "Threshold (RMT)";
    case ExtractType: return "Extract Network";
+   case ClusterFilterType: return "Filter Clusters";
    default: return QString();
    }
 }
@@ -79,6 +81,7 @@ QString AnalyticFactory::commandName(quint16 type) const
    case PowerLawType: return "powerlaw";
    case RMTType: return "rmt";
    case ExtractType: return "extract";
+   case ClusterFilterType: return "filter";
    default: return QString();
    }
 }
@@ -107,6 +110,7 @@ std::unique_ptr<EAbstractAnalytic> AnalyticFactory::make(quint16 type) const
    case PowerLawType: return unique_ptr<EAbstractAnalytic>(new PowerLaw);
    case RMTType: return unique_ptr<EAbstractAnalytic>(new RMT);
    case ExtractType: return unique_ptr<EAbstractAnalytic>(new Extract);
+   case ClusterFilterType: return unique_ptr<EAbstractAnalytic>(new ClusterFilter);
    default: return nullptr;
    }
 }

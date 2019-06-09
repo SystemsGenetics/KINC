@@ -63,7 +63,12 @@ SOURCES += \
    similarity_resultblock.cpp \
    similarity_serial.cpp \
    similarity_workblock.cpp \
-   similarity.cpp
+   similarity.cpp \
+    cluster_filter.cpp \
+    cluster_filter_input.cpp \
+    cluster_filter_serial.cpp \
+    cluster_filter_resultblock.cpp \
+    cluster_filter_workblock.cpp
 
 # Header files
 HEADERS += \
@@ -119,4 +124,9 @@ HEADERS += \
    similarity_resultblock.h \
    similarity_serial.h \
    similarity_workblock.h \
-   similarity.h
+   similarity.h \
+    cluster_filter.h \
+    cluster_filter_input.h \
+    cluster_filter_serial.h \
+    cluster_filter_resultblock.h \
+    cluster_filter_workblock.h
