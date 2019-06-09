@@ -45,9 +45,27 @@ std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::Serial::execute(const EAb
 {
    EDEBUG_FUNC(this,block);
 
+   if ( ELog::isActive() )
+   {
+      ELog() << tr("Executing(serial) work index %1.\n").arg(block->index());
+   }
 
+   // cast block to work block
+   const WorkBlock* workBlock {block->cast<WorkBlock>()};
+
+   // initialize result block
+   ResultBlock* resultBlock {new ResultBlock(workBlock->index(), workBlock->start())};
+
+   // initialize workspace
+   QVector<qint8> labels(_base->_input->sampleSize());
+
+   // iterate through all pairs
+   Pairwise::Index index {workBlock->start()};
+
+   for ( int i = 0; i < workBlock->size(); ++i )
+   {
+       // fetch pairwise input data
+       int numSamples = fetchPair(index, labels);
+   }
 }
-
-
-
 

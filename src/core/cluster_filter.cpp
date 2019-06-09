@@ -1,8 +1,12 @@
 #include "cluster_filter.h"
 #include "cluster_filter_input.h"
 #include "cluster_filter_serial.h"
+#include "cluster_filter_resultblock.h"
+#include "cluster_filter_workblock.h"
 #include "datafactory.h"
 #include "expressionmatrix_gene.h"
+#include "ccmatrix_pair.h"
+#include "correlationmatrix_pair.h"
 #include <ace/core/ace_qmpi.h>
 #include <ace/core/elog.h>
 
@@ -17,18 +21,53 @@ using namespace std;
 
 /*!
  * Return the total number of blocks this analytic must process as steps
- * or blocks of work. This implementation uses a work block for writing
- * each pair to the output file.
+ * or blocks of work.
  */
 int ClusterFilter::size() const
 {
    EDEBUG_FUNC(this);
 
-   return _cmx->size();
+   return (_ccm->size() + _workBlockSize - 1) / _workBlockSize;
+
+}
+
+
+/*!
+ * Create and return a work block for this analytic with the given index. This
+ * implementation creates a work block with a start index and size denoting the
+ * number of pairs to process.
+ *
+ * @param index
+ */
+std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::makeWork(int index) const
+{
+   EDEBUG_FUNC(this,index);
+
+   if ( ELog::isActive() )
+   {
+      ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
+   }
+
+   qint64 start {index * static_cast<qint64>(_workBlockSize)};
+   qint64 size {min(_ccm->size() - start, static_cast<qint64>(_workBlockSize))};
+
+   return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
 }
 
 
 
+
+
+
+/*!
+ * Create an empty and uninitialized work block.
+ */
+std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::makeWork() const
+{
+   EDEBUG_FUNC(this);
+
+   return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock);
+}
 
 
 
@@ -82,6 +121,15 @@ void ClusterFilter::initialize()
 {
    EDEBUG_FUNC(this);
 
+   // get MPI instance
+   auto& mpi {Ace::QMPI::instance()};
+
+   // only the master process needs to validate arguments
+   if ( !mpi.isMaster() )
+   {
+      return;
+   }
+
    // make sure input/output arguments are valid
    if ( !_emx || !_ccm || !_cmx )
    {
@@ -92,10 +140,18 @@ void ClusterFilter::initialize()
    }
 
    // initialize pairwise iterators
-   _ccmPair = CCMatrix::Pair(_ccm);
-   _cmxPair = CorrelationMatrix::Pair(_cmx);
+   //_ccmPair = CCMatrix::Pair(_ccm);
+   //_cmxPair = CorrelationMatrix::Pair(_cmx);
 
    // initialize output file stream
    //_stream.setDevice(_output);
    //_stream.setRealNumberPrecision(8);
+
+   // initialize work block size
+   if ( _workBlockSize == 0 )
+   {
+      int numWorkers = max(1, mpi.size() - 1);
+
+      _workBlockSize = min(32768LL, _ccm->size() / numWorkers);
+   }
 }

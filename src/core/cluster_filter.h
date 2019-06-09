@@ -8,11 +8,31 @@
 #include "correlationmatrix_pair.h"
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
+#include "pairwise_clusteringmodel.h"
+
 
 class ClusterFilter : public EAbstractAnalytic
 {
     Q_OBJECT
  public:
+    /*!
+     * Defines the pair structure used to send results in result blocks.
+     */
+    struct Pair
+    {
+       /*!
+        * The number of clusters in a pair.
+        */
+       qint8 K;
+       /*!
+        * The cluster labels for a pair.
+        */
+       QVector<qint8> labels;
+       /*!
+        * The correlation for each cluster in a pair.
+        */
+       QVector<float> correlations;
+    };
     class Input;
     class WorkBlock;
     class ResultBlock;
@@ -26,12 +46,6 @@ class ClusterFilter : public EAbstractAnalytic
     virtual EAbstractAnalyticSerial* makeSerial() override final;
     virtual void initialize() override final;
  private:
-    /**
-     * Workspace variables to write to the output file
-     */
-    QTextStream _stream;
-    CCMatrix::Pair _ccmPair;
-    CorrelationMatrix::Pair _cmxPair;
     /*!
      * Pointer to the input expression matrix.
      */
@@ -60,6 +74,10 @@ class ClusterFilter : public EAbstractAnalytic
      * The minimum (absolute) correlation threshold to save a correlation.
      */
     double _powerThresholdPower {0.8};
+    /*!
+     * The number of pairs to process in each work block.
+     */
+    int _workBlockSize {0};
 };
 
 #endif

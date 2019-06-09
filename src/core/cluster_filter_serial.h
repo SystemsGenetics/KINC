@@ -16,7 +16,6 @@ public:
    explicit Serial(ClusterFilter* parent);
    virtual std::unique_ptr<EAbstractAnalyticBlock> execute(const EAbstractAnalyticBlock* block) override final;
 private:
-
 private:
    /*!
     * Pointer to the base analytic for this object.
