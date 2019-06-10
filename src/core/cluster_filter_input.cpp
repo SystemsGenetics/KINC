@@ -126,6 +126,8 @@ QVariant ClusterFilter::Input::data(int index, Role role) const
        case Role::Title: return tr("Signficance Level (Type I error rate, alpha)");
        case Role::WhatsThis: return tr("If 'pwr.th' is TRUE then this is the Type I, alpha, significance level for the power analysis.");
        case Role::Default: return 0.001;
+       case Role::Minimum: return -std::numeric_limits<float>::infinity();
+       case Role::Maximum: return +std::numeric_limits<float>::infinity();
        default: return QVariant();
        }
    case PowerThresholdPower:
@@ -135,6 +137,8 @@ QVariant ClusterFilter::Input::data(int index, Role role) const
        case Role::Title: return tr("The Power (1 - Type II error rate, 1-beta)");
        case Role::WhatsThis: return tr("If pwr.th is TRUE then this is the the power value (i.e. 1-Beta) for the power test.  If for example, the desired Type II error rate is 0.2, then this should be 0.8.");
        case Role::Default: return 0.8;
+       case Role::Minimum: return -std::numeric_limits<float>::infinity();
+       case Role::Maximum: return +std::numeric_limits<float>::infinity();
        default: return QVariant();
        }
    default: return QVariant();
@@ -162,10 +166,10 @@ void ClusterFilter::Input::set(int index, const QVariant& value)
       _base->_doCorrelationPowerFilter = value.toBool();
       break;
    case PowerThresholdAlpha:
-      _base->_powerThresholdAlpha = value.toFloat();
+      _base->_powerThresholdAlpha = value.toDouble();
       break;
    case PowerThresholdPower:
-       _base->_powerThresholdPower = value.toFloat();
+       _base->_powerThresholdPower = value.toDouble();
        break;
    }
 }

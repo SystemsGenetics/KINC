@@ -10,7 +10,13 @@
 #include "expressionmatrix.h"
 #include "pairwise_clusteringmodel.h"
 
-
+/*!
+ * This class implements the cluster filter analytic. This analytic takes an
+ * expression matrix, correlation matrix and cluster composition matrix allows
+ * the user to filter out clusters that do not pass specific tests.
+ *
+ * This analytic can use MPI.
+ */
 class ClusterFilter : public EAbstractAnalytic
 {
     Q_OBJECT
@@ -58,10 +64,7 @@ class ClusterFilter : public EAbstractAnalytic
      * Pointer to the input correlation matrix.
      */
     CorrelationMatrix* _cmx {nullptr};
-    /*!
-     * Pointer to the output text file.
-     */
-    QFile* _output {nullptr};
+
     /*!
      * Whether to remove outliers before clustering.
      */

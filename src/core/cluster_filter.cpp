@@ -55,7 +55,15 @@ std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::makeWork(int index) const
 }
 
 
+/*!
+ * Create an empty and uninitialized result block.
+ */
+std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::makeResult() const
+{
+   EDEBUG_FUNC(this);
 
+   return unique_ptr<EAbstractAnalyticBlock>(new ResultBlock);
+}
 
 
 
@@ -140,8 +148,6 @@ void ClusterFilter::initialize()
    }
 
    // initialize pairwise iterators
-   //_ccmPair = CCMatrix::Pair(_ccm);
-   //_cmxPair = CorrelationMatrix::Pair(_cmx);
 
    // initialize output file stream
    //_stream.setDevice(_output);
