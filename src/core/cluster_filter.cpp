@@ -86,11 +86,59 @@ std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::makeWork() const
  *
  * @param result
  */
-void ClusterFilter::process(const EAbstractAnalyticBlock*)
+void ClusterFilter::process(const EAbstractAnalyticBlock* result)
 {
    EDEBUG_FUNC(this);
 
+   if ( ELog::isActive() )
+   {
+      ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
+   }
 
+   const ResultBlock* resultBlock {result->cast<ResultBlock>()};
+
+   // iterate through all pairs in result block
+   Pairwise::Index index {resultBlock->start()};
+
+   for ( auto& pair : resultBlock->pairs() )
+   {
+      // Create Pair objects for both output data files.
+      CCMatrix::Pair ccmPair(_ccmOut);
+      CorrelationMatrix::Pair cmxPair(_cmxOut);
+
+      for ( qint8 k = 0; k < pair.K; ++k )
+      {
+          // determine whether correlation is within thresholds
+          float corr = pair.correlations[k];
+
+          // save sample string
+          ccmPair.addCluster();
+          int num_clusters =  ccmPair.clusterSize();
+
+          for ( int i = 0; i < _emx->sampleSize(); ++i )
+          {
+             qint8 val = pair.labels[i];
+             val = (val >= 0) ? (k == val) : -val;
+             ccmPair.at(num_clusters - 1, i) = val;
+          }
+
+          // save correlation
+          cmxPair.addCluster();
+          cmxPair.at(cmxPair.clusterSize() - 1) = corr;
+      }
+
+      if ( ccmPair.clusterSize() > 0 )
+      {
+         ccmPair.write(index);
+      }
+
+      if ( cmxPair.clusterSize() > 0 )
+      {
+         cmxPair.write(index);
+      }
+
+      ++index;
+   }
 }
 
 /*!
@@ -139,19 +187,13 @@ void ClusterFilter::initialize()
    }
 
    // make sure input/output arguments are valid
-   if ( !_emx || !_ccm || !_cmx )
+   if ( !_emx || !_ccm || !_cmx)
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Invalid Argument"));
       e.setDetails(tr("Did not get valid input and/or output arguments."));
       throw e;
    }
-
-   // initialize pairwise iterators
-
-   // initialize output file stream
-   //_stream.setDevice(_output);
-   //_stream.setRealNumberPrecision(8);
 
    // initialize work block size
    if ( _workBlockSize == 0 )
@@ -160,4 +202,28 @@ void ClusterFilter::initialize()
 
       _workBlockSize = min(32768LL, _ccm->size() / numWorkers);
    }
+}
+
+/*!
+ * Initialize the output data objects of this analytic.
+ */
+void ClusterFilter::initializeOutputs()
+{
+   EDEBUG_FUNC(this);
+
+   // make sure output data is valid
+   if ( !_ccmOut || !_cmxOut )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Invalid Argument"));
+      e.setDetails(tr("Did not get valid output data objects."));
+      throw e;
+   }
+
+   // initialize cluster matrix
+   _ccmOut->initialize(_emx->geneNames(), _ccm->maxClusterSize(), _emx->sampleNames());
+
+   // initialize correlation matrix
+   QString correlationName = _cmx->correlationName();
+   _cmxOut->initialize(_emx->geneNames(), _cmx->maxClusterSize(), correlationName);
 }

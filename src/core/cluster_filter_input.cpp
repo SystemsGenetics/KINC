@@ -47,9 +47,10 @@ EAbstractAnalyticInput::Type ClusterFilter::Input::type(int index) const
    switch (index)
    {
    case ExpressionData: return Type::DataIn;
-   case ClusterData: return Type::DataIn;
-   case CorrelationData: return Type::DataIn;
-   case OutputFile: return Type::FileOut;
+   case ClusterDataIn: return Type::DataIn;
+   case CorrelationDataIn: return Type::DataIn;
+   case ClusterDataOut: return Type::DataOut;
+   case CorrelationDataOut: return Type::DataOut;
    case DoCorrelationPowerThreshold: return Type::Boolean;
    case PowerThresholdAlpha: return Type::Double;
    case PowerThresholdPower: return Type::Double;
@@ -83,31 +84,40 @@ QVariant ClusterFilter::Input::data(int index, Role role) const
       case Role::DataType: return DataFactory::ExpressionMatrixType;
       default: return QVariant();
       }
-   case ClusterData:
+   case ClusterDataIn:
       switch (role)
       {
       case Role::CommandLineName: return QString("ccm");
-      case Role::Title: return tr("Cluster Matrix:");
+      case Role::Title: return tr("Input Cluster Matrix:");
       case Role::WhatsThis: return tr("Input cluster matrix containing cluster composition data.");
       case Role::DataType: return DataFactory::CCMatrixType;
       default: return QVariant();
       }
-   case CorrelationData:
+   case CorrelationDataIn:
       switch (role)
       {
       case Role::CommandLineName: return QString("cmx");
-      case Role::Title: return tr("Correlation Matrix:");
+      case Role::Title: return tr("Input Correlation Matrix:");
       case Role::WhatsThis: return tr("Input correlation matrix containing correlation data.");
       case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
-   case OutputFile:
+   case ClusterDataOut:
       switch (role)
       {
-      case Role::CommandLineName: return QString("output");
-      case Role::Title: return tr("Output File:");
-      case Role::WhatsThis: return tr("Output text file that will contain pairwise correlation data.");
-      case Role::FileFilters: return tr("Text file %1").arg("(*.txt)");
+      case Role::CommandLineName: return QString("ccmout");
+      case Role::Title: return tr("Output Cluster Matrix:");
+      case Role::WhatsThis: return tr("Output cluster matrix containing cluster composition data.");
+      case Role::DataType: return DataFactory::CCMatrixType;
+      default: return QVariant();
+      }
+   case CorrelationDataOut:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("cmxout");
+      case Role::Title: return tr("Output Correlation Matrix:");
+      case Role::WhatsThis: return tr("Output correlation matrix containing correlation data.");
+      case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
    case DoCorrelationPowerThreshold:
@@ -193,13 +203,21 @@ void ClusterFilter::Input::set(int index, EAbstractData* data)
    {
       _base->_emx = data->cast<ExpressionMatrix>();
    }
-   else if ( index == ClusterData )
+   else if ( index == ClusterDataIn )
    {
       _base->_ccm = data->cast<CCMatrix>();
    }
-   else if ( index == CorrelationData )
+   else if ( index == CorrelationDataIn )
    {
       _base->_cmx = data->cast<CorrelationMatrix>();
+   }
+   else if ( index ==  ClusterDataOut )
+   {
+      _base->_ccmOut = data->cast<CCMatrix>();
+   }
+   else if ( index == CorrelationDataOut )
+   {
+      _base->_cmxOut = data->cast<CorrelationMatrix>();
    }
 }
 

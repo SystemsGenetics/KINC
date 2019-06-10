@@ -56,7 +56,9 @@ QString CorrelationMatrix::correlationName() const
 {
    EDEBUG_FUNC(this);
 
-   return meta().toObject().at("correlation").toString();
+   EMetadata correlations = meta().toObject().at("correlations");
+   EMetaArray carray = correlations.toArray();
+   return carray[0].toString();
 }
 
 

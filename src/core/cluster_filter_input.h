@@ -16,9 +16,10 @@ public:
    enum Argument
    {
       ExpressionData = 0
-      ,ClusterData
-      ,CorrelationData
-      ,OutputFile
+      ,ClusterDataIn
+      ,CorrelationDataIn
+      ,ClusterDataOut
+      ,CorrelationDataOut
       ,DoCorrelationPowerThreshold
       ,PowerThresholdAlpha
       ,PowerThresholdPower

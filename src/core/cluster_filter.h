@@ -51,6 +51,7 @@ class ClusterFilter : public EAbstractAnalytic
     virtual EAbstractAnalyticInput* makeInput() override final;
     virtual EAbstractAnalyticSerial* makeSerial() override final;
     virtual void initialize() override final;
+    virtual void initializeOutputs() override final;
  private:
     /*!
      * Pointer to the input expression matrix.
@@ -64,6 +65,15 @@ class ClusterFilter : public EAbstractAnalytic
      * Pointer to the input correlation matrix.
      */
     CorrelationMatrix* _cmx {nullptr};
+
+    /*!
+     * Pointer to the output cluster matrix.
+     */
+    CCMatrix* _ccmOut {nullptr};
+    /*!
+     * Pointer to the output correlation matrix.
+     */
+    CorrelationMatrix* _cmxOut {nullptr};
 
     /*!
      * Whether to remove outliers before clustering.
