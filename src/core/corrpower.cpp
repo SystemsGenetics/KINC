@@ -111,54 +111,48 @@ void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
    const ResultBlock* resultBlock {result->cast<ResultBlock>()};
    for ( auto& pair : resultBlock->pairs() )
    {
-      // Create pair objects for both output data files.
-      CCMatrix::Pair ccmPair(_ccmOut);
-      CorrelationMatrix::Pair cmxPair(_cmxOut);
-      Pairwise::Index index(pair.x_index, pair.y_index);
-
-      for ( qint8 k = 0; k < pair.K; ++k )
+      if (pair.K > 0)
       {
-          // determine whether correlation is within thresholds
-          float corr = pair.correlations[k];
+          // Create pair objects for both output data files.
+          CCMatrix::Pair ccmPair(_ccmOut);
+          CorrelationMatrix::Pair cmxPair(_cmxOut);
+          Pairwise::Index index(pair.x_index, pair.y_index);
 
-          // save sample string
-          ccmPair.addCluster();
-          int num_clusters =  ccmPair.clusterSize();
-
-          for ( int i = 0; i < _emx->sampleSize(); ++i )
+          for ( qint8 k = 0; k < pair.K; ++k )
           {
-             qint8 val = pair.labels[i];
-             if (k == val) {
-                 val = 1;
-             }
-             // A value of -128 exists if the sample belong to
-             // another cluster but that cluster is not present
-             // in the input files.
-             else if (val == -128) {
-                 val = 0;
-             }
-             else if (val > 0) {
-                 val = 0;
-             }
-             else {
-                 val = -val;
-             }
-             ccmPair.at(num_clusters - 1, i) = val;
+              // determine whether correlation is within thresholds
+              float corr = pair.correlations[k];
+
+              // save sample string
+              ccmPair.addCluster();
+
+              for ( int i = 0; i < _emx->sampleSize(); ++i )
+              {
+                 qint8 val = pair.labels[i];
+                 if (k == val) {
+                     val = 1;
+                 }
+                 // A value of -128 exists if the sample belong to
+                 // another cluster but that cluster is not present
+                 // in the input files.
+                 else if (val == -128) {
+                     val = 0;
+                 }
+                 else if (val > 0) {
+                     val = 0;
+                 }
+                 else {
+                     val = -val;
+                 }
+                 ccmPair.at(k, i) = val;
+              }
+
+              // save correlation
+              cmxPair.addCluster();
+              cmxPair.at(k) = corr;
           }
-
-          // save correlation
-          cmxPair.addCluster();
-          cmxPair.at(cmxPair.clusterSize() - 1) = corr;
-      }
-
-      if ( ccmPair.clusterSize() > 0 )
-      {
-         ccmPair.write(index);
-      }
-
-      if ( cmxPair.clusterSize() > 0 )
-      {
-         cmxPair.write(index);
+          ccmPair.write(index);
+          cmxPair.write(index);
       }
    }
 }
