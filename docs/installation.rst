@@ -6,16 +6,16 @@ Installation
 Ubuntu
 ~~~~~~
 
-Use the following steps to install KINC from source on Ubuntu 16.04:
+Use the following steps to install KINC from source on Ubuntu 18.04:
 
 Install Dependencies
 ====================
 
-Most of the dependencies are available as packages:
+Most of the dependencies are available as packages/
 
 .. code:: bash
 
-   sudo apt install build-essential libgsl-dev libopenblas-dev libopenmpi-dev ocl-icd-opencl-dev liblapacke-dev
+   sudo apt install build-essential libgsl-dev libopenblas-dev libopenmpi-dev ocl-icd-opencl-dev liblapacke-dev nvidia-cuda-dev
 
 For device drivers (AMD, Intel, NVIDIA, etc), refer to the manufacturer's website.
 
