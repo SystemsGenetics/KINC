@@ -1,12 +1,12 @@
 #ifndef CLUSTER_FILTER_INPUT_H
 #define CLUSTER_FILTER_INPUT_H
 
-#include "cluster_filter.h"
+#include "corrpower.h"
 
 /*!
  * This class implements the abstract input of the export correlation matrix analytic.
  */
-class ClusterFilter::Input : public EAbstractAnalyticInput
+class CorrPowerFilter::Input : public EAbstractAnalyticInput
 {
    Q_OBJECT
 public:
@@ -20,12 +20,11 @@ public:
       ,CorrelationDataIn
       ,ClusterDataOut
       ,CorrelationDataOut
-      ,DoCorrelationPowerThreshold
       ,PowerThresholdAlpha
       ,PowerThresholdPower
       ,Total
    };
-   explicit Input(ClusterFilter* parent);
+   explicit Input(CorrPowerFilter* parent);
    virtual int size() const override final;
    virtual EAbstractAnalyticInput::Type type(int index) const override final;
    virtual QVariant data(int index, Role role) const override final;
@@ -36,7 +35,7 @@ private:
    /*!
     * Pointer to the base analytic for this object.
     */
-   ClusterFilter* _base;
+   CorrPowerFilter* _base;
 };
 
 #endif

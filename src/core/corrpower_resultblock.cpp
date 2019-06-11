@@ -1,4 +1,4 @@
-#include "cluster_filter_resultblock.h"
+#include "corrpower_resultblock.h"
 
 
 
@@ -11,7 +11,7 @@
  * @param index
  * @param start
  */
-ClusterFilter::ResultBlock::ResultBlock(int index, qint64 start):
+CorrPowerFilter::ResultBlock::ResultBlock(int index, qint64 start):
    EAbstractAnalyticBlock(index),
    _start(start)
 {
@@ -28,7 +28,7 @@ ClusterFilter::ResultBlock::ResultBlock(int index, qint64 start):
  *
  * @param pair
  */
-void ClusterFilter::ResultBlock::append(const Pair& pair)
+void CorrPowerFilter::ResultBlock::append(const Pair& pair)
 {
    EDEBUG_FUNC(this,&pair);
 
@@ -45,7 +45,7 @@ void ClusterFilter::ResultBlock::append(const Pair& pair)
  *
  * @param stream
  */
-void ClusterFilter::ResultBlock::write(QDataStream& stream) const
+void CorrPowerFilter::ResultBlock::write(QDataStream& stream) const
 {
    EDEBUG_FUNC(this,&stream);
 
@@ -57,6 +57,8 @@ void ClusterFilter::ResultBlock::write(QDataStream& stream) const
       stream << pair.K;
       stream << pair.labels;
       stream << pair.correlations;
+      stream << pair.x_index;
+      stream << pair.y_index;
    }
 }
 
@@ -70,7 +72,7 @@ void ClusterFilter::ResultBlock::write(QDataStream& stream) const
  *
  * @param stream
  */
-void ClusterFilter::ResultBlock::read(QDataStream& stream)
+void CorrPowerFilter::ResultBlock::read(QDataStream& stream)
 {
    EDEBUG_FUNC(this,&stream);
 
@@ -86,5 +88,7 @@ void ClusterFilter::ResultBlock::read(QDataStream& stream)
       stream >> pair.K;
       stream >> pair.labels;
       stream >> pair.correlations;
+      stream >> pair.x_index;
+      stream >> pair.y_index;
    }
 }

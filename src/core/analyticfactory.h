@@ -23,9 +23,9 @@ public:
       ,ExportCorrelationMatrixType
       ,SimilarityType
       ,PowerLawType
+      ,CorrPowerFilterType
       ,RMTType
-      ,ExtractType
-      ,ClusterFilterType
+      ,ExtractType      
       ,Total
    };
    virtual quint16 size() const override final;

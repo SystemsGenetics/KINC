@@ -1,13 +1,13 @@
 #ifndef CLUSTER_FILTER_RESULTBLOCK_H
 #define CLUSTER_FILTER_RESULTBLOCK_H
-#include "cluster_filter.h"
+#include "corrpower.h"
 
 
 
 /*!
  * This class implements the result block of the cluster_filter analytic.
  */
-class ClusterFilter::ResultBlock : public EAbstractAnalyticBlock
+class CorrPowerFilter::ResultBlock : public EAbstractAnalyticBlock
 {
    Q_OBJECT
 public:
@@ -48,7 +48,7 @@ private:
  * @param size
  */
 template<class T>
-QVector<T> ClusterFilter::ResultBlock::makeVector(const T* data, int size)
+QVector<T> CorrPowerFilter::ResultBlock::makeVector(const T* data, int size)
 {
    QVector<T> v(size);
 

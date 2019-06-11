@@ -1,4 +1,4 @@
-#include "cluster_filter_input.h"
+#include "corrpower_input.h"
 #include "datafactory.h"
 
 
@@ -8,7 +8,7 @@
  *
  * @param parent
  */
-ClusterFilter::Input::Input(ClusterFilter* parent):
+CorrPowerFilter::Input::Input(CorrPowerFilter* parent):
    EAbstractAnalyticInput(parent),
    _base(parent)
 {
@@ -23,7 +23,7 @@ ClusterFilter::Input::Input(ClusterFilter* parent):
 /*!
  * Return the total number of arguments this analytic type contains.
  */
-int ClusterFilter::Input::size() const
+int CorrPowerFilter::Input::size() const
 {
    EDEBUG_FUNC(this);
 
@@ -40,7 +40,7 @@ int ClusterFilter::Input::size() const
  *
  * @param index
  */
-EAbstractAnalyticInput::Type ClusterFilter::Input::type(int index) const
+EAbstractAnalyticInput::Type CorrPowerFilter::Input::type(int index) const
 {
    EDEBUG_FUNC(this,index);
 
@@ -51,7 +51,6 @@ EAbstractAnalyticInput::Type ClusterFilter::Input::type(int index) const
    case CorrelationDataIn: return Type::DataIn;
    case ClusterDataOut: return Type::DataOut;
    case CorrelationDataOut: return Type::DataOut;
-   case DoCorrelationPowerThreshold: return Type::Boolean;
    case PowerThresholdAlpha: return Type::Double;
    case PowerThresholdPower: return Type::Double;
    default: return Type::Boolean;
@@ -69,7 +68,7 @@ EAbstractAnalyticInput::Type ClusterFilter::Input::type(int index) const
  * @param index
  * @param role
  */
-QVariant ClusterFilter::Input::data(int index, Role role) const
+QVariant CorrPowerFilter::Input::data(int index, Role role) const
 {
    EDEBUG_FUNC(this,index,role);
 
@@ -120,15 +119,6 @@ QVariant ClusterFilter::Input::data(int index, Role role) const
       case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
-   case DoCorrelationPowerThreshold:
-       switch (role)
-       {
-       case Role::CommandLineName: return QString("pwr.th");
-       case Role::Title: return tr("Apply Correlation Power Threshold:");
-       case Role::WhatsThis: return tr("Performs correlation power analysis to see if the number of samples in a cluster is sufficent to detect the correlation value. If not, then exclude the cluster.");
-       case Role::Default: return true;
-       default: return QVariant();
-       }
    case PowerThresholdAlpha:
        switch (role)
        {
@@ -167,14 +157,11 @@ QVariant ClusterFilter::Input::data(int index, Role role) const
  * @param index
  * @param value
  */
-void ClusterFilter::Input::set(int index, const QVariant& value)
+void CorrPowerFilter::Input::set(int index, const QVariant& value)
 {
    EDEBUG_FUNC(this);
    switch (index)
    {
-   case DoCorrelationPowerThreshold:
-      _base->_doCorrelationPowerFilter = value.toBool();
-      break;
    case PowerThresholdAlpha:
       _base->_powerThresholdAlpha = value.toDouble();
       break;
@@ -195,7 +182,7 @@ void ClusterFilter::Input::set(int index, const QVariant& value)
  * @param index
  * @param data
  */
-void ClusterFilter::Input::set(int index, EAbstractData* data)
+void CorrPowerFilter::Input::set(int index, EAbstractData* data)
 {
    EDEBUG_FUNC(this,index,data);
 
@@ -232,7 +219,7 @@ void ClusterFilter::Input::set(int index, EAbstractData* data)
  * @param index
  * @param file
  */
-void ClusterFilter::Input::set(int index, QFile* file)
+void CorrPowerFilter::Input::set(int index, QFile* file)
 {
    EDEBUG_FUNC(this,index,file);
 

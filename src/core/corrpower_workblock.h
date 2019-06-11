@@ -1,13 +1,13 @@
 #ifndef CLUSTER_FILTER_WORKBLOCK_H
 #define CLUSTER_FILTER_WORKBLOCK_H
-#include "cluster_filter.h"
+#include "corrpower.h"
 
 
 
 /*!
  * This class implements the work block of the cluster_filter analytic.
  */
-class ClusterFilter::WorkBlock : public EAbstractAnalyticBlock
+class CorrPowerFilter::WorkBlock : public EAbstractAnalyticBlock
 {
    Q_OBJECT
 public:

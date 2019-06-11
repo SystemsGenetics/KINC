@@ -1,8 +1,8 @@
-#include "cluster_filter.h"
-#include "cluster_filter_input.h"
-#include "cluster_filter_serial.h"
-#include "cluster_filter_resultblock.h"
-#include "cluster_filter_workblock.h"
+#include "corrpower.h"
+#include "corrpower_input.h"
+#include "corrpower_serial.h"
+#include "corrpower_resultblock.h"
+#include "corrpower_workblock.h"
 #include "datafactory.h"
 #include "expressionmatrix_gene.h"
 #include "ccmatrix_pair.h"
@@ -10,25 +10,35 @@
 #include <ace/core/ace_qmpi.h>
 #include <ace/core/elog.h>
 
-
-
 using namespace std;
 
 
+/*!
+ * Return the total number of pairs that must be processed for a given
+ * expression matrix.
+ *
+ * @param emx
+ */
+qint64 CorrPowerFilter::totalPairs(const ExpressionMatrix* emx)
+{
+   //EDEBUG_FUNC(this,emx);
 
-
+   return static_cast<qint64>(emx->geneSize()) * (emx->geneSize() - 1) / 2;
+}
 
 
 /*!
  * Return the total number of blocks this analytic must process as steps
  * or blocks of work.
  */
-int ClusterFilter::size() const
+int CorrPowerFilter::size() const
 {
    EDEBUG_FUNC(this);
 
-   return (_ccm->size() + _workBlockSize - 1) / _workBlockSize;
+   qint64 total_pairs = totalPairs(_emx);
 
+   int num_workblocks = (total_pairs + _workBlockSize - 1) / _workBlockSize;
+   return num_workblocks;
 }
 
 
@@ -39,7 +49,7 @@ int ClusterFilter::size() const
  *
  * @param index
  */
-std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::makeWork(int index) const
+std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork(int index) const
 {
    EDEBUG_FUNC(this,index);
 
@@ -48,8 +58,10 @@ std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::makeWork(int index) const
       ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
    }
 
+   qint64 total_pairs = totalPairs(_emx);
+
    qint64 start {index * static_cast<qint64>(_workBlockSize)};
-   qint64 size {min(_ccm->size() - start, static_cast<qint64>(_workBlockSize))};
+   qint64 size {min(total_pairs - start, static_cast<qint64>(_workBlockSize))};
 
    return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
 }
@@ -58,7 +70,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::makeWork(int index) const
 /*!
  * Create an empty and uninitialized result block.
  */
-std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::makeResult() const
+std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeResult() const
 {
    EDEBUG_FUNC(this);
 
@@ -70,7 +82,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::makeResult() const
 /*!
  * Create an empty and uninitialized work block.
  */
-std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::makeWork() const
+std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork() const
 {
    EDEBUG_FUNC(this);
 
@@ -86,7 +98,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::makeWork() const
  *
  * @param result
  */
-void ClusterFilter::process(const EAbstractAnalyticBlock* result)
+void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
 {
    EDEBUG_FUNC(this);
 
@@ -95,16 +107,14 @@ void ClusterFilter::process(const EAbstractAnalyticBlock* result)
       ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
    }
 
+   // Itereate through the result block pairs.
    const ResultBlock* resultBlock {result->cast<ResultBlock>()};
-
-   // iterate through all pairs in result block
-   Pairwise::Index index {resultBlock->start()};
-
    for ( auto& pair : resultBlock->pairs() )
    {
-      // Create Pair objects for both output data files.
+      // Create pair objects for both output data files.
       CCMatrix::Pair ccmPair(_ccmOut);
       CorrelationMatrix::Pair cmxPair(_cmxOut);
+      Pairwise::Index index(pair.x_index, pair.y_index);
 
       for ( qint8 k = 0; k < pair.K; ++k )
       {
@@ -118,7 +128,21 @@ void ClusterFilter::process(const EAbstractAnalyticBlock* result)
           for ( int i = 0; i < _emx->sampleSize(); ++i )
           {
              qint8 val = pair.labels[i];
-             val = (val >= 0) ? (k == val) : -val;
+             if (k == val) {
+                 val = 1;
+             }
+             // A value of -128 exists if the sample belong to
+             // another cluster but that cluster is not present
+             // in the input files.
+             else if (val == -128) {
+                 val = 0;
+             }
+             else if (val > 0) {
+                 val = 0;
+             }
+             else {
+                 val = -val;
+             }
              ccmPair.at(num_clusters - 1, i) = val;
           }
 
@@ -136,15 +160,13 @@ void ClusterFilter::process(const EAbstractAnalyticBlock* result)
       {
          cmxPair.write(index);
       }
-
-      ++index;
    }
 }
 
 /*!
  * Make a new serial object and return its pointer.
  */
-EAbstractAnalyticSerial* ClusterFilter::makeSerial()
+EAbstractAnalyticSerial* CorrPowerFilter::makeSerial()
 {
    EDEBUG_FUNC(this);
 
@@ -157,7 +179,7 @@ EAbstractAnalyticSerial* ClusterFilter::makeSerial()
 /*!
  * Make a new input object and return its pointer.
  */
-EAbstractAnalyticInput* ClusterFilter::makeInput()
+EAbstractAnalyticInput* CorrPowerFilter::makeInput()
 {
    EDEBUG_FUNC(this);
 
@@ -173,7 +195,7 @@ EAbstractAnalyticInput* ClusterFilter::makeInput()
  * Initialize this analytic. This implementation checks to make sure the input
  * data objects and output file have been set.
  */
-void ClusterFilter::initialize()
+void CorrPowerFilter::initialize()
 {
    EDEBUG_FUNC(this);
 
@@ -207,7 +229,7 @@ void ClusterFilter::initialize()
 /*!
  * Initialize the output data objects of this analytic.
  */
-void ClusterFilter::initializeOutputs()
+void CorrPowerFilter::initializeOutputs()
 {
    EDEBUG_FUNC(this);
 

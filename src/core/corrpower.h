@@ -17,7 +17,7 @@
  *
  * This analytic can use MPI.
  */
-class ClusterFilter : public EAbstractAnalytic
+class CorrPowerFilter : public EAbstractAnalytic
 {
     Q_OBJECT
  public:
@@ -38,6 +38,12 @@ class ClusterFilter : public EAbstractAnalytic
         * The correlation for each cluster in a pair.
         */
        QVector<float> correlations;
+       /*!
+        * The x/y coordinates in the CCM/CMX matricies that this pair belongs to.
+        */
+       qint32 x_index;
+       qint32 y_index;
+
     };
     class Input;
     class WorkBlock;
@@ -52,6 +58,7 @@ class ClusterFilter : public EAbstractAnalytic
     virtual EAbstractAnalyticSerial* makeSerial() override final;
     virtual void initialize() override final;
     virtual void initializeOutputs() override final;
+    static qint64 totalPairs(const ExpressionMatrix* emx);
  private:
     /*!
      * Pointer to the input expression matrix.

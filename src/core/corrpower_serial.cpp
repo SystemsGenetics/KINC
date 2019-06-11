@@ -1,6 +1,6 @@
-#include "cluster_filter_serial.h"
-#include "cluster_filter_resultblock.h"
-#include "cluster_filter_workblock.h"
+#include "corrpower_serial.h"
+#include "corrpower_resultblock.h"
+#include "corrpower_workblock.h"
 #include "expressionmatrix_gene.h"
 #include "pairwise_gmm.h"
 #include "pairwise_pearson.h"
@@ -17,7 +17,7 @@ using namespace std;
  *
  * @param parent
  */
-ClusterFilter::Serial::Serial(ClusterFilter* parent):
+CorrPowerFilter::Serial::Serial(CorrPowerFilter* parent):
    EAbstractAnalyticSerial(parent),
    _base(parent)
 {
@@ -33,7 +33,7 @@ ClusterFilter::Serial::Serial(ClusterFilter* parent):
  *
  * @param block
  */
-std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::Serial::execute(const EAbstractAnalyticBlock* block)
+std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const EAbstractAnalyticBlock* block)
 {
    EDEBUG_FUNC(this,block);
 
@@ -52,15 +52,16 @@ std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::Serial::execute(const EAb
    CCMatrix::Pair ccmPair = CCMatrix::Pair(_base->_ccm);
    CorrelationMatrix::Pair cmxPair = CorrelationMatrix::Pair(_base->_cmx);
 
-   // Move to the location in the CCM/CMX matrix where the work block starts.
-   Pairwise::Index index {workBlock->start()};
-   cmxPair.read(index);
-   ccmPair.read(cmxPair.index());
-
    // Iterate through the elements in the workblock.
-   qint64 block_size = workBlock->size();
-   for ( qint64 i = 0; i < block_size; ++i )
+   qint64 start = workBlock->start();
+   qint64 size = workBlock->size();
+   for ( qint64 i = start; i < start + size; i++ )
    {
+       // Get the CMX and CCM pair data.
+       Pairwise::Index index(i);
+       cmxPair.read(index);
+       ccmPair.read(index);
+
        // Get the number of samples and clusters.
        int num_clusters = ccmPair.clusterSize();
        int num_samples = _base->_emx->sampleSize();
@@ -76,16 +77,20 @@ std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::Serial::execute(const EAb
        // Get the list of correlations
        QVector<float> correlations = cmxPair.correlations();
 
-       // Rebuild the pair labels from the pair sample mask.
-       QVector<qint8> labels(num_samples, 0);
+       // Rebuild the pair labels from the pair sample mask. These
+       // pair labels are the same as when the similarity analytic makes them.
+       QVector<qint8> labels(num_samples, -128);
        for ( qint8 k = 0; k < num_clusters; k++ ) {
           for ( int j = 0; j < num_samples; j++ ) {
              qint8 val = ccmPair.at(k, j);
+             // If the sample belongs to this cluster the value is 1
              if (val == 1) {
                labels[j] = k;
                k_num_samples[k]++;
              }
-             else {
+             // If the sample is not in another cluster then it was removed
+             // or missing.
+             else if (val != 0) {
                labels[j] = -val;
              }
           }
@@ -102,7 +107,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::Serial::execute(const EAb
            // This code uses functions from the Keith OHare StatsLib at
            // https://www.kthohr.com/statslib.html
            int n = k_num_samples[k];
-           double r = correlations[k];
+           double r =  correlations[k];
            double sig_level = _base->_powerThresholdAlpha;
            double ttt = stats::qt(sig_level / 2, n - 2);
            double ttt_2 = pow(ttt,2);
@@ -131,11 +136,9 @@ std::unique_ptr<EAbstractAnalyticBlock> ClusterFilter::Serial::execute(const EAb
            pair.correlations = new_correlations;
            pair.labels = new_labels;
        }
+       pair.x_index = index.getX();
+       pair.y_index = index.getY();
        resultBlock->append(pair);
-
-       // Move to the location in the CCM/CMX matrix where the work block starts.
-       cmxPair.readNext();
-       ccmPair.read(cmxPair.index());
    }
 
    // We're done! Return the result block.

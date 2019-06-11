@@ -1,4 +1,4 @@
-#include "cluster_filter_workblock.h"
+#include "corrpower_workblock.h"
 
 
 
@@ -13,7 +13,7 @@
  * @param start
  * @param size
  */
-ClusterFilter::WorkBlock::WorkBlock(int index, qint64 start, qint64 size):
+CorrPowerFilter::WorkBlock::WorkBlock(int index, qint64 start, qint64 size):
    EAbstractAnalyticBlock(index),
    _start(start),
    _size(size)
@@ -31,7 +31,7 @@ ClusterFilter::WorkBlock::WorkBlock(int index, qint64 start, qint64 size):
  *
  * @param stream
  */
-void ClusterFilter::WorkBlock::write(QDataStream& stream) const
+void CorrPowerFilter::WorkBlock::write(QDataStream& stream) const
 {
    EDEBUG_FUNC(this,&stream);
 
@@ -48,7 +48,7 @@ void ClusterFilter::WorkBlock::write(QDataStream& stream) const
  *
  * @param stream
  */
-void ClusterFilter::WorkBlock::read(QDataStream& stream)
+void CorrPowerFilter::WorkBlock::read(QDataStream& stream)
 {
    EDEBUG_FUNC(this,&stream);
 
