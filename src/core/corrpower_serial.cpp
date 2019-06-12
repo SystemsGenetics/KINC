@@ -99,28 +99,15 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
        // Iterate through the clusters and perform a correlation power analysis.
        for ( qint8 k = 0; k < num_clusters; k++ ) {
 
-           // Do the correlation power test. The following code is modeled
-           // after the `pwr.r.test` function of the `pwr` package for R. Here
-           // we calculate the power given the signficance level (alpha) provided
-           // by the user, the number of samples in the cluster and we
-           // compare the calculated power to that expected by the user.
-           // This code uses functions from the Keith OHare StatsLib at
-           // https://www.kthohr.com/statslib.html
-           int n = k_num_samples[k];
-           double r =  correlations[k];
-           double sig_level = _base->_powerThresholdAlpha;
-           double ttt = stats::qt(sig_level / 2, n - 2);
-           double ttt_2 = pow(ttt,2);
-           double rc = sqrt(ttt_2/(ttt_2 + n - 2));
-           double zr = atanh(r) + r / (2 * (n - 1));
-           double zrc = atanh(rc);
-           double power = stats::pnorm((zr - zrc) * sqrt(n - 3), 0.0, 1) +
-                          stats::pnorm((-zr - zrc) * sqrt(n - 3), 0.0, 1);
+           // Perform the power analysis test.
+           double power = pwr_r_test(abs(static_cast<double>(correlations[k])),
+                                     k_num_samples[k],
+                                     _base->_powerThresholdAlpha);
 
            // If the calculated power is >= the expected power then we
            // can keep this cluster.  We keep it by adding the correlation
            // and the labels from the original cluster into new variables
-           // for the correlation and labels.
+           // for the correlation and labels.           
            if (power >= _base->_powerThresholdPower) {
              new_correlations.append(correlations[k]);
              new_labels = labels;
@@ -145,3 +132,32 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
    return unique_ptr<EAbstractAnalyticBlock>(resultBlock);
 }
 
+/*!
+ * \brief Performs the correlation power test.
+ *
+ * The following code is modeled after the `pwr.r.test` function
+ * of the `pwr` package for R. Here we calculate the power given the
+ * signficance level (alpha) provided by the user, the number of
+ * samples in the cluster and we compare the calculated power to that
+ * expected by the user. This code uses functions from the Keith OHare StatsLib at
+ * https://www.kthohr.com/statslib.html
+ *
+ * \param r The correlation score
+ * \param n The number of samples in the cluster
+ * \param sig_level The desired signficance level (alpha) value.
+ * \return The power from the test.
+ */
+double CorrPowerFilter::Serial::pwr_r_test(double r, int n, double sig_level)
+{
+    double ttt = stats::qt(sig_level / 2.0, n - 2.0);
+    double ttt_2 = pow(ttt, 2);
+    double rc = sqrt(ttt_2/(ttt_2 + (n - 2.0)));
+    double zr = atanh(r) + r / (2.0 * (n - 1.0));
+    double zrc = atanh(rc);
+    double pnzrc = stats::pnorm((-zr - zrc) * sqrt(n - 3.0), 0.0, 1.0);
+    double power = stats::pnorm((zr - zrc) * sqrt(n - 3.0) + pnzrc, 0.0, 1.0);
+
+    bool test = (n == 30) && (r < 0.66) && (power > 0.8);
+
+    return power;
+}
