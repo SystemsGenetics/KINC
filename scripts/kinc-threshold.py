@@ -13,9 +13,9 @@ import sys
 
 
 
-def load_cmx(filename, num_genes, num_clusters):
-	netlist = pd.read_csv(args.INPUT, sep="\t", header=None)
-	cmx = np.zeros((num_genes * num_clusters, num_genes * num_clusters), dtype=np.float32)
+def load_cmx(filename, n_genes, n_clusters):
+	netlist = pd.read_csv(filename, sep="\t", header=None)
+	cmx = np.zeros((n_genes * n_clusters, n_genes * n_clusters), dtype=np.float32)
 
 	for idx in range(len(netlist.index)):
 		i = netlist.iloc[idx, 0]
@@ -23,8 +23,8 @@ def load_cmx(filename, num_genes, num_clusters):
 		k = netlist.iloc[idx, 2]
 		r = netlist.iloc[idx, 9]
 
-		cmx[i * num_clusters + k, j * num_clusters + k] = r
-		cmx[j * num_clusters + k, i * num_clusters + k] = r
+		cmx[i * n_clusters + k, j * n_clusters + k] = r
+		cmx[j * n_clusters + k, i * n_clusters + k] = r
 
 	return cmx
 
@@ -32,10 +32,10 @@ def load_cmx(filename, num_genes, num_clusters):
 
 def powerlaw(args):
 	# load correlation matrix
-	S = load_cmx(args.INPUT, args.NUM_GENES, args.MAX_CLUSTERS)
+	S = load_cmx(args.input, args.n_genes, args.maxclus)
 
 	# iterate until network is sufficiently scale-free
-	threshold = args.TSTART
+	threshold = args.tstart
 
 	while True:
 		# compute thresholded adjacency matrix
@@ -56,7 +56,7 @@ def powerlaw(args):
 		hist += 1
 
 		# plot degree distribution
-		if args.VISUALIZE:
+		if args.visualize:
 			plt.subplots(1, 2, figsize=(10, 5))
 			plt.subplot(121)
 			plt.title("Degree Distribution")
@@ -81,8 +81,8 @@ def powerlaw(args):
 			break
 
 		# decrement threshold and fail if minimum threshold is reached
-		threshold -= args.TSTEP
-		if threshold < args.TSTOP:
+		threshold -= args.tstep
+		if threshold < args.tstop:
 			print("error: could not find an adequate threshold above stopping threshold")
 			sys.exit(0)
 
@@ -204,13 +204,13 @@ def compute_chi_square(eigens, spline=True):
 
 def rmt(args):
 	# load correlation matrix
-	S = load_cmx(args.INPUT, args.NUM_GENES, args.MAX_CLUSTERS)
+	S = load_cmx(args.input, args.num_genes, args.maxclus)
 
 	# iterate until chi value goes below 99.607 then above 200
 	final_threshold = 0
 	final_chi = float("inf")
 	max_chi = -float("inf")
-	threshold = args.TSTART
+	threshold = args.tstart
 
 	while max_chi < 200:
 		# compute pruned matrix
@@ -231,12 +231,12 @@ def rmt(args):
 			print("unique eigenvalues: %d" % len(eigens))
 
 			# compute chi-square value from NNSD of eigenvalues
-			chi = compute_chi_square(eigens, spline=args.SPLINE)
+			chi = compute_chi_square(eigens, spline=args.spline)
 
 		# make sure chi-square test succeeded
 		if chi != -1:
 			# plot eigenvalue distribution
-			if args.VISUALIZE:
+			if args.visualize:
 				plt.subplots(1, 2, figsize=(10, 5))
 				plt.subplot(121)
 				plt.title("Eigenvalues")
@@ -260,8 +260,8 @@ def rmt(args):
 		print("%f\t%d\t%f" % (threshold, S_pruned.shape[0], chi))
 
 		# decrement threshold and fail if minimum threshold is reached
-		threshold -= args.TSTEP
-		if threshold < args.TSTOP:
+		threshold -= args.tstep
+		if threshold < args.tstop:
 			print("error: could not find an adequate threshold above stopping threshold")
 			sys.exit(0)
 
@@ -278,16 +278,16 @@ if __name__ == "__main__":
 
 	# parse command-line arguments
 	parser = argparse.ArgumentParser()
-	parser.add_argument("-i", "--input", required=True, help="correlation matrix file", dest="INPUT")
-	parser.add_argument("--genes", type=int, required=True, help="number of genes", dest="NUM_GENES")
-	parser.add_argument("--method", default="rmt", choices=["powerlaw", "rmt"], help="thresholding method", dest="METHOD")
-	parser.add_argument("--tstart", type=float, default=0.99, help="starting threshold", dest="TSTART")
-	parser.add_argument("--tstep", type=float, default=0.001, help="threshold step size", dest="TSTEP")
-	parser.add_argument("--tstop", type=float, default=0.5, help="stopping threshold", dest="TSTOP")
-	parser.add_argument("--spline", action="store_true", help="whether to use spline interpolation", dest="SPLINE")
-	parser.add_argument("--minclus", type=int, default=1, help="minimum clusters", dest="MIN_CLUSTERS")
-	parser.add_argument("--maxclus", type=int, default=5, help="maximum clusters", dest="MAX_CLUSTERS")
-	parser.add_argument("--visualize", action="store_true", help="whether to visualize results", dest="VISUALIZE")
+	parser.add_argument("--input", help="correlation matrix file", required=True)
+	parser.add_argument("--n-genes", help="number of genes", type=int, required=True)
+	parser.add_argument("--method", help="thresholding method", default="rmt", choices=["powerlaw", "rmt"])
+	parser.add_argument("--tstart", help="starting threshold", type=float, default=0.99)
+	parser.add_argument("--tstep", help="threshold step size", type=float, default=0.001)
+	parser.add_argument("--tstop", help="stopping threshold", type=float, default=0.5)
+	parser.add_argument("--spline", help="whether to use spline interpolation", action="store_true")
+	parser.add_argument("--minclus", help="minimum clusters", type=int, default=1)
+	parser.add_argument("--maxclus", help="maximum clusters", type=int, default=5)
+	parser.add_argument("--visualize", help="whether to visualize results", action="store_true")
 
 	args = parser.parse_args()
 
@@ -295,10 +295,10 @@ if __name__ == "__main__":
 	pprint.pprint(vars(args))
 
 	# load data
-	cmx = pd.read_csv(args.INPUT, sep="\t")
+	cmx = pd.read_csv(args.input, sep="\t")
 
 	# initialize method
-	compute_threshold = METHODS[args.METHOD]
+	compute_threshold = METHODS[args.method]
 
 	# compute threshold
 	threshold = compute_threshold(args)

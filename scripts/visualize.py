@@ -75,44 +75,44 @@ def plot_pairwise(emx, netlist, output_dir, limits=None):
 if __name__ ==  "__main__":
 	# parse command-line arguments
 	parser = argparse.ArgumentParser()
-	parser.add_argument("-e", "--emx", required=True, help="expression matrix file", dest="EMX")
-	parser.add_argument("-n", "--netlist", required=True, help="netlist file", dest="NETLIST")
-	parser.add_argument("-o", "--output", default="plots", help="output directory", dest="OUTPUT_DIR")
-	parser.add_argument("--clusdist", action="store_true", help="plot cluster distribution", dest="CLUSDIST")
-	parser.add_argument("--corrdist", action="store_true", help="plot correlation distribution", dest="CORRDIST")
-	parser.add_argument("--pairwise", action="store_true", help="plot pairwise plots", dest="PAIRWISE")
-	parser.add_argument("--pw-scale", action="store_true", help="use the same limits for all pairwise plots", dest="SCALE")
+	parser.add_argument("--emx", help="expression matrix file", required=True)
+	parser.add_argument("--netlist", help="netlist file", required=True)
+	parser.add_argument("--output", help="output directory", default="plots")
+	parser.add_argument("--clusdist", help="plot cluster distribution", action="store_true")
+	parser.add_argument("--corrdist", help="plot correlation distribution", action="store_true")
+	parser.add_argument("--pairwise", help="plot pairwise plots", action="store_true")
+	parser.add_argument("--pw-scale", help="use the same limits for all pairwise plots", action="store_true")
 
 	args = parser.parse_args()
 
 	# load input data
-	emx = pd.read_csv(args.EMX, sep="\t", index_col=0)
-	netlist = pd.read_csv(args.NETLIST, sep="\t")
+	emx = pd.read_csv(args.emx, sep="\t", index_col=0)
+	netlist = pd.read_csv(args.netlist, sep="\t")
 
 	print("Loaded expression matrix (%d genes, %d samples)" % emx.shape)
 	print("Loaded netlist (%d edges)" % len(netlist.index))
 
 	# initialize output directory
-	if not os.path.exists(args.OUTPUT_DIR):
-		os.mkdir(args.OUTPUT_DIR)
+	if not os.path.exists(args.output_dir):
+		os.mkdir(args.output_dir)
 
 	# setup plot limits
-	if args.SCALE:
+	if args.pw_scale:
 		limits = (emx.min().min(), emx.max().max())
 	else:
 		limits = None
 
 	# plot cluster distribution
-	if args.CLUSDIST:
+	if args.clusdist:
 		print("Plotting cluster distribution...")
-		plot_clusdist(netlist, output_dir=args.OUTPUT_DIR)
+		plot_clusdist(netlist, output_dir=args.output_dir)
 
 	# plot correlation distribution
-	if args.CORRDIST:
+	if args.corrdist:
 		print("Plotting correlation distribution...")
-		plot_corrdist(netlist, output_dir=args.OUTPUT_DIR)
+		plot_corrdist(netlist, output_dir=args.output_dir)
 
 	# plot pairwise plots
-	if args.PAIRWISE:
+	if args.pairwise:
 		print("Plotting pairwise plots...")
-		plot_pairwise(emx, netlist, output_dir=args.OUTPUT_DIR, limits=limits)
+		plot_pairwise(emx, netlist, output_dir=args.output_dir, limits=limits)

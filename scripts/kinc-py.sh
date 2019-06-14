@@ -31,8 +31,8 @@ if [[ $DO_SIMILARITY = 1 ]]; then
 	MAXCORR=1
 
 	python scripts/kinc-similarity.py \
-	   -i $EMX_FILE \
-	   -o $CMX_FILE \
+	   --input $EMX_FILE \
+	   --output $CMX_FILE \
 	   --clusmethod $CLUSMETHOD \
 	   --corrmethod $CORRMETHOD \
 	   --minexpr=$MINEXPR \
@@ -51,8 +51,8 @@ if [[ $DO_THRESHOLD = 1 ]]; then
 	TSTOP=0.50
 
 	python scripts/kinc-threshold.py \
-	   -i $CMX_FILE \
-	   --genes $NUM_GENES \
+	   --input $CMX_FILE \
+	   --n-genes $NUM_GENES \
 	   --method $METHOD \
 	   --tstart $TSTART \
 	   --tstep $TSTEP \

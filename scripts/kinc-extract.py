@@ -6,17 +6,17 @@ import pandas as pd
 if __name__ == "__main__":
 	# parse command-line arguments
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--emx", required=True, help="expression matrix file", dest="EMX")
-	parser.add_argument("--cmx", required=True, help="correlation matrix file", dest="CMX")
-	parser.add_argument("-o", "--output", required=True, help="output net file", dest="OUTPUT")
-	parser.add_argument("--mincorr", type=float, default=0, help="minimum absolute correlation threshold", dest="MINCORR")
-	parser.add_argument("--maxcorr", type=float, default=1, help="maximum absolute correlation threshold", dest="MAXCORR")
+	parser.add_argument("--emx", help="expression matrix file", required=True)
+	parser.add_argument("--cmx", help="correlation matrix file", required=True)
+	parser.add_argument("--output", help="output net file", required=True)
+	parser.add_argument("--mincorr", help="minimum absolute correlation threshold", type=float, default=0)
+	parser.add_argument("--maxcorr", help="maximum absolute correlation threshold", type=float, default=1)
 
 	args = parser.parse_args()
 
 	# load data
-	emx = pd.read_csv(args.EMX, sep="\t")
-	cmx = pd.read_table(args.CMX, header=None, names=[
+	emx = pd.read_csv(args.emx, sep="\t")
+	cmx = pd.read_table(args.cmx, header=None, names=[
 		"x",
 		"y",
 		"Cluster",
@@ -31,7 +31,7 @@ if __name__ == "__main__":
 	])
 
 	# extract correlations within thresholds
-	cmx = cmx[(args.MINCORR <= abs(cmx["sc"])) & (abs(cmx["sc"]) <= args.MAXCORR)]
+	cmx = cmx[(args.mincorr <= abs(cmx["sc"])) & (abs(cmx["sc"]) <= args.maxcorr)]
 
 	# insert additional columns used in netlist format
 	cmx.insert(len(cmx.columns), "Source", [emx.index[x] for x in cmx["x"]])
@@ -55,4 +55,4 @@ if __name__ == "__main__":
 	]]
 
 	# save output data
-	cmx.to_csv(args.OUTPUT, sep="\t", index=False)
+	cmx.to_csv(args.output, sep="\t", index=False)
