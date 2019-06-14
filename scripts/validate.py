@@ -26,8 +26,8 @@ if __name__ ==  "__main__":
 	args = parser.parse_args()
 
 	# load input data
-	cmx_true = pd.read_table(args.CMX_TRUE, header=None, index_col=False)
-	cmx_test = pd.read_table(args.CMX_TEST, header=None, index_col=False)
+	cmx_true = pd.read_csv(args.CMX_TRUE, sep="\t", header=None, index_col=False)
+	cmx_test = pd.read_csv(args.CMX_TEST, sep="\t", header=None, index_col=False)
 
 	# compore number of pairs
 	print("Number of pairs (true): %d" % len(cmx_true.index))

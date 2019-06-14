@@ -15,7 +15,7 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 	# load data
-	emx = pd.read_table(args.EMX)
+	emx = pd.read_csv(args.EMX, sep="\t")
 	cmx = pd.read_table(args.CMX, header=None, names=[
 		"x",
 		"y",

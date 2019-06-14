@@ -86,8 +86,8 @@ if __name__ ==  "__main__":
 	args = parser.parse_args()
 
 	# load input data
-	emx = pd.read_table(args.EMX, index_col=0)
-	netlist = pd.read_table(args.NETLIST)
+	emx = pd.read_csv(args.EMX, sep="\t", index_col=0)
+	netlist = pd.read_csv(args.NETLIST, sep="\t")
 
 	print("Loaded expression matrix (%d genes, %d samples)" % emx.shape)
 	print("Loaded netlist (%d edges)" % len(netlist.index))

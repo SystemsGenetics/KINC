@@ -14,7 +14,7 @@ import sys
 
 
 def load_cmx(filename, num_genes, num_clusters):
-	netlist = pd.read_table(args.INPUT, header=None)
+	netlist = pd.read_csv(args.INPUT, sep="\t", header=None)
 	cmx = np.zeros((num_genes * num_clusters, num_genes * num_clusters), dtype=np.float32)
 
 	for idx in range(len(netlist.index)):
@@ -265,7 +265,7 @@ if __name__ == "__main__":
 	pprint.pprint(vars(args))
 
 	# load data
-	cmx = pd.read_table(args.INPUT)
+	cmx = pd.read_csv(args.INPUT, sep="\t")
 
 	# initialize method
 	compute_threshold = METHODS[args.METHOD]
