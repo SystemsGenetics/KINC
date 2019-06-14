@@ -55,26 +55,26 @@ def powerlaw(args):
 		# modify histogram values to work with loglog plot
 		hist += 1
 
-		# plot degree distribution
-		if args.visualize:
-			plt.subplots(1, 2, figsize=(10, 5))
-			plt.subplot(121)
-			plt.title("Degree Distribution")
-			plt.plot(bin_edges, hist, "ko")
-			plt.subplot(122)
-			plt.title("Degree Distribution (log-log)")
-			plt.loglog(bin_edges, hist, "ko")
-			plt.savefig("powerlaw_%03d.png" % (int(threshold * 1000)))
-			plt.close()
-
 		# compute correlation
 		x = np.log(bin_edges)
 		y = np.log(hist)
 
 		r, p = scipy.stats.pearsonr(x, y)
 
+		# plot degree distribution
+		if args.visualize:
+			plt.subplots(1, 2, figsize=(10, 5))
+			plt.subplot(121)
+			plt.title("Degree Distribution")
+			plt.plot(bin_edges, hist, "o")
+			plt.subplot(122)
+			plt.title("Degree Distribution (log-log)")
+			sns.regplot(x, y)
+			plt.savefig("powerlaw_%03d.png" % (int(threshold * 1000)))
+			plt.close()
+
 		# output results of threshold test
-		print("%g\t%g\t%g" % (threshold, r, p))
+		print("%0.3f\t%0.3f\t%e" % (threshold, r, p))
 
 		# break if power law is satisfied
 		if r < 0 and p < 1e-20:
@@ -204,7 +204,7 @@ def compute_chi_square(eigens, spline=True):
 
 def rmt(args):
 	# load correlation matrix
-	S = load_cmx(args.input, args.num_genes, args.maxclus)
+	S = load_cmx(args.input, args.n_genes, args.maxclus)
 
 	# iterate until chi value goes below 99.607 then above 200
 	final_threshold = 0
@@ -257,7 +257,7 @@ def rmt(args):
 				max_chi = chi
 
 		# output results of threshold test
-		print("%f\t%d\t%f" % (threshold, S_pruned.shape[0], chi))
+		print("%0.3f\t%d\t%g" % (threshold, S_pruned.shape[0], chi))
 
 		# decrement threshold and fail if minimum threshold is reached
 		threshold -= args.tstep
