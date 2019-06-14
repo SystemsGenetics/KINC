@@ -59,10 +59,12 @@ def powerlaw(args):
 		if args.VISUALIZE:
 			plt.subplots(1, 2, figsize=(10, 5))
 			plt.subplot(121)
+			plt.title("Degree Distribution")
 			plt.plot(bin_edges, hist, "ko")
 			plt.subplot(122)
+			plt.title("Degree Distribution (log-log)")
 			plt.loglog(bin_edges, hist, "ko")
-			plt.savefig("plots/powerlaw/%03d.png" % (int(threshold * 100)))
+			plt.savefig("powerlaw_%03d.png" % (int(threshold * 1000)))
 			plt.close()
 
 		# compute correlation
@@ -98,41 +100,45 @@ def compute_pruned_matrix(S, threshold):
 
 
 
-def compute_degenerate(eigens):
+def compute_unique(values):
 	unique = []
 	
-	for i in range(len(eigens)):
-		if len(unique) == 0 or abs(eigens[i] - unique[-1]) > 1e-6:
-			unique.append(eigens[i])
+	for i in range(len(values)):
+		if len(unique) == 0 or abs(values[i] - unique[-1]) > 1e-6:
+			unique.append(values[i])
 
 	return unique
 
 
 
-def compute_spacings(eigens, pace):
-	# extract eigenvalues for spline based on pace
-	x = eigens[::pace]
+def compute_spline(values, pace):
+	# extract values for spline based on pace
+	x = values[::pace]
 	y = np.linspace(0, 1, len(x))
 
 	# compute spline
 	spl = scipy.interpolate.splrep(x, y)
 
 	# extract interpolated eigenvalues from spline
-	spline_eigens = scipy.interpolate.splev(eigens, spl)
+	spline_values = scipy.interpolate.splev(values, spl)
 
-	# compute spacings between interpolated eigenvalues
-	spacings = np.empty(len(eigens) - 1)
+	return spline_values
+
+
+
+def compute_spacings(values):
+	spacings = np.empty(len(values) - 1)
 	
 	for i in range(len(spacings)):
-		spacings[i] = (spline_eigens[i + 1] - spline_eigens[i]) * len(eigens)
+		spacings[i] = (values[i + 1] - values[i]) * len(values)
 
 	return spacings
 
 
 
-def compute_chi_square_pace(eigens, pace):
+def compute_chi_square_helper(values):
 	# compute eigenvalue spacings
-	spacings = compute_spacings(eigens, pace)
+	spacings = compute_spacings(values)
 
 	# compute nearest-neighbor spacing distribution
 	hist_min = 0.0
@@ -150,45 +156,49 @@ def compute_chi_square_pace(eigens, pace):
 		O_i = hist[i]
 
 		# compute E_i, the expected value of Poisson distribution for bin i
-		E_i = (math.exp(-i * bin_width) - math.exp(-(i + 1) * bin_width)) * len(eigens)
+		E_i = (math.exp(-i * bin_width) - math.exp(-(i + 1) * bin_width)) * len(values)
 
 		# update chi-square value based on difference between O_i and E_i
 		chi += (O_i - E_i) * (O_i - E_i) / E_i
 
-	print("pace: %d, chi: %g" % (pace, chi))
-
 	return chi
 
 
 
-def compute_chi_square(eigens):
-	# compute unique eigenvalues
-	unique = compute_degenerate(eigens)
-
-	print("eigenvalues: %d" % len(eigens))
-	print("unique eigenvalues: %d" % len(unique))
-
+def compute_chi_square(eigens, spline=True):
 	# make sure there are enough eigenvalues
-	if len(unique) < 50:
+	if len(eigens) < 50:
 		return -1
 
-	# perform several chi-square tests by varying the pace
-	chi = 0
-	num_tests = 0
+	# use spline interpolation if specified
+	if spline:
+		# perform several chi-square tests with spline interpolation by varying the pace
+		chi = 0
+		num_tests = 0
 
-	for pace in range(10, 41):
-		# make sure there are enough eigenvalues for pace
-		if len(unique) / pace < 5:
-			break
+		for pace in range(10, 41):
+			# make sure there are enough eigenvalues for pace
+			if len(eigens) / pace < 5:
+				break
 
-		chi += compute_chi_square_pace(unique, pace)
-		num_tests += 1
-	
-	# compute average of chi-square tests
-	chi /= num_tests
+			# compute spline-interpolated eigenvalues
+			eigens = compute_spline(eigens, pace)
 
-	# return chi value
-	return chi
+			# compute chi-squared value
+			chi_pace = compute_chi_square_helper(eigens)
+
+			print("pace: %d, chi-squared: %g" % (pace, chi_pace))
+
+			# compute chi-squared value
+			chi += chi_pace
+			num_tests += 1
+
+		# return average of chi-square tests
+		return chi / num_tests
+
+	# perform a single chi-squared test without spline interpolation
+	else:
+		return compute_chi_square_helper(eigens)
 
 
 
@@ -213,11 +223,30 @@ def rmt(args):
 			# compute eigenvalues of pruned matrix
 			eigens, _ = np.linalg.eigh(S_pruned)
 
+			print("eigenvalues: %d" % len(eigens))
+
+			# compute unique eigenvalues
+			eigens = compute_unique(eigens)
+
+			print("unique eigenvalues: %d" % len(eigens))
+
 			# compute chi-square value from NNSD of eigenvalues
-			chi = compute_chi_square(eigens)
+			chi = compute_chi_square(eigens, spline=args.SPLINE)
 
 		# make sure chi-square test succeeded
 		if chi != -1:
+			# plot eigenvalue distribution
+			if args.VISUALIZE:
+				plt.subplots(1, 2, figsize=(10, 5))
+				plt.subplot(121)
+				plt.title("Eigenvalues")
+				plt.plot(eigens, ".")
+				plt.subplot(122)
+				plt.title("Eigenvalue Spacing Distribution")
+				plt.hist(compute_spacings(eigens))
+				plt.savefig("rmt_%03d.png" % (int(threshold * 1000)))
+				plt.close()
+
 			# save most recent chi-square value less than critical value
 			if chi < 99.607:
 				final_chi = chi
@@ -255,6 +284,7 @@ if __name__ == "__main__":
 	parser.add_argument("--tstart", type=float, default=0.99, help="starting threshold", dest="TSTART")
 	parser.add_argument("--tstep", type=float, default=0.001, help="threshold step size", dest="TSTEP")
 	parser.add_argument("--tstop", type=float, default=0.5, help="stopping threshold", dest="TSTOP")
+	parser.add_argument("--spline", action="store_true", help="whether to use spline interpolation", dest="SPLINE")
 	parser.add_argument("--minclus", type=int, default=1, help="minimum clusters", dest="MIN_CLUSTERS")
 	parser.add_argument("--maxclus", type=int, default=5, help="maximum clusters", dest="MAX_CLUSTERS")
 	parser.add_argument("--visualize", action="store_true", help="whether to visualize results", dest="VISUALIZE")
@@ -270,4 +300,7 @@ if __name__ == "__main__":
 	# initialize method
 	compute_threshold = METHODS[args.METHOD]
 
-	print(compute_threshold(args))
+	# compute threshold
+	threshold = compute_threshold(args)
+
+	print("%0.3f" % (threshold))
