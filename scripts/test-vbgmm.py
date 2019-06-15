@@ -80,7 +80,7 @@ if __name__ == "__main__":
 	weight_threshold = 0.05
 
 	# load data
-	emx = pd.read_table(sys.argv[1])
+	emx = pd.read_csv(sys.argv[1], sep="\t")
 
 	# iterate through each pair
 	for i in range(len(emx.index)):

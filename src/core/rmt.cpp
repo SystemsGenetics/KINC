@@ -645,7 +645,7 @@ std::vector<float> RMT::computeSpline(const std::vector<float>& values, int pace
    using gsl_interp_accel_ptr = unique_ptr<gsl_interp_accel, decltype(&gsl_interp_accel_free)>;
    using gsl_spline_ptr = unique_ptr<gsl_spline, decltype(&gsl_spline_free)>;
 
-   // extract eigenvalues for spline based on pace
+   // extract values for spline based on pace
    int splineSize {(int) values.size() / pace};
    unique_ptr<double[]> x(new double[splineSize]);
    unique_ptr<double[]> y(new double[splineSize]);
@@ -663,7 +663,7 @@ std::vector<float> RMT::computeSpline(const std::vector<float>& values, int pace
    gsl_spline_ptr spline(gsl_spline_alloc(gsl_interp_akima, splineSize), &gsl_spline_free);
    gsl_spline_init(spline.get(), x.get(), y.get(), splineSize);
 
-   // extract interpolated eigenvalues from spline
+   // extract interpolated values from spline
    std::vector<float> splineValues(values.size());
 
    splineValues[0] = 0.0;
@@ -693,7 +693,6 @@ std::vector<float> RMT::computeSpacings(const std::vector<float>& values)
 {
    EDEBUG_FUNC(this,&values);
 
-   // compute spacings between interpolated eigenvalues
    std::vector<float> spacings(values.size() - 1);
 
    for ( size_t i = 0; i < spacings.size(); ++i )
