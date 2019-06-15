@@ -211,16 +211,14 @@ void CorrPowerFilter::Input::set(int index, EAbstractData* data)
 
 
 
-
-
 /*!
- * Set a file argument with the given index to the given qt file pointer.
+ * Set a file argument with the given index to the given qt file pointer. This
+ * implementation does nothing because this analytic has no file arguments.
  *
  * @param index
  * @param file
  */
-void CorrPowerFilter::Input::set(int index, QFile* file)
+void CorrPowerFilter::Input::set(int, QFile*)
 {
-   EDEBUG_FUNC(this,index,file);
-
+   EDEBUG_FUNC(this);
 }

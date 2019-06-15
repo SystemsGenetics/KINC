@@ -28,7 +28,7 @@ CorrPowerFilter::ResultBlock::ResultBlock(int index, qint64 start):
  *
  * @param pair
  */
-void CorrPowerFilter::ResultBlock::append(const Pair& pair)
+void CorrPowerFilter::ResultBlock::append(const CPPair& pair)
 {
    EDEBUG_FUNC(this,&pair);
 

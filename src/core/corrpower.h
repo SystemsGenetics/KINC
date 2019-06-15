@@ -24,12 +24,16 @@ class CorrPowerFilter : public EAbstractAnalytic
     /*!
      * Defines the pair structure used to send results in result blocks.
      */
-    struct Pair
+    struct CPPair
     {
        /*!
         * The number of clusters in a pair.
         */
        qint8 K;
+       /*!
+        * The clusters indexes to keep. All others will have been filtered out.
+        */
+       QVector<int> keep;
        /*!
         * The cluster labels for a pair.
         */

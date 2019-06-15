@@ -73,6 +73,7 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
        QVector<float> new_correlations;
        QVector<qint8> new_labels;
        QVector<int> k_num_samples(num_clusters, 0);
+       QVector<int> k_keep;
 
        // Get the list of correlations
        QVector<float> correlations = cmxPair.correlations();
@@ -102,7 +103,7 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
            // Perform the power analysis test.
            double power = pwr_r_test(abs(static_cast<double>(correlations[k])),
                                      k_num_samples[k],
-                                     _base->_powerThresholdAlpha, cmxPair);
+                                     _base->_powerThresholdAlpha);
 
            // If the calculated power is >= the expected power then we
            // can keep this cluster.  We keep it by adding the correlation
@@ -110,6 +111,7 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
            // for the correlation and labels.           
            if (power >= _base->_powerThresholdPower) {
              new_correlations.append(correlations[k]);
+             k_keep.append(k);
              new_labels = labels;
              num_final_K++;
            }
@@ -117,11 +119,12 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
 
        // Prepare the workblock results by adding a new pair. A pair
        // gets added regardless if there are any clusters in it.
-       Pair pair;
+       CPPair pair;
        pair.K = num_final_K;
        if (num_final_K > 0) {
            pair.correlations = new_correlations;
            pair.labels = new_labels;
+           pair.keep = k_keep;
        }
        pair.x_index = index.getX();
        pair.y_index = index.getY();
@@ -135,20 +138,19 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
 /*!
  * \brief Performs the correlation power test.
  *
- * The following code is modeled after the `pwr.r.test` function
- * of the `pwr` package for R. Here we calculate the power given the
- * signficance level (alpha) provided by the user, the number of
- * samples in the cluster and we compare the calculated power to that
- * expected by the user. This code uses functions from the Keith OHare StatsLib at
- * https://www.kthohr.com/statslib.html
- *
  * \param r The correlation score
  * \param n The number of samples in the cluster
  * \param sig_level The desired signficance level (alpha) value.
  * \return The power from the test.
  */
-double CorrPowerFilter::Serial::pwr_r_test(double r, int n, double sig_level, CorrelationMatrix::Pair cmxPair)
+double CorrPowerFilter::Serial::pwr_r_test(double r, int n, double sig_level)
 {
+    // The following code is modeled after the `pwr.r.test` function
+    // of the `pwr` package for R. Here we calculate the power given the
+    // signficance level (alpha) provided by the user, the number of
+    // samples in the cluster and we compare the calculated power to that
+    // expected by the user. This code uses functions from the Keith OHare StatsLib at
+    // https://www.kthohr.com/statslib.html
     double ttt = stats::qt(sig_level / 2.0, n - 2.0);
     double ttt_2 = pow(ttt, 2);
     double rc = sqrt(ttt_2/(ttt_2 + (n - 2.0)));
@@ -156,15 +158,6 @@ double CorrPowerFilter::Serial::pwr_r_test(double r, int n, double sig_level, Co
     double zrc = atanh(rc);
     double pnzrc = stats::pnorm((-zr - zrc) * sqrt(n - 3.0), 0.0, 1.0);
     double power = stats::pnorm((zr - zrc) * sqrt(n - 3.0) + pnzrc, 0.0, 1.0);
-
-    EMetaArray geneNames {_base->_cmx->geneNames()};
-    QString source {geneNames.at(cmxPair.index().getX()).toString()};
-    QString target {geneNames.at(cmxPair.index().getY()).toString()};
-
-
-    bool test1 = (QString::compare(source, "transcript:YBL046W") == 0) &&
-                 (QString::compare(target, "transcript:YAL016C-A") == 0);
-    bool test = (n == 30) && (r < 0.66) && (power > 0.8);
 
     return power;
 }

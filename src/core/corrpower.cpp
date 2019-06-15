@@ -107,7 +107,7 @@ void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
       ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
    }
 
-   // Itereate through the result block pairs.
+   // Iterate through the result block pairs.
    const ResultBlock* resultBlock {result->cast<ResultBlock>()};
    for ( auto& pair : resultBlock->pairs() )
    {
@@ -118,8 +118,15 @@ void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
           CorrelationMatrix::Pair cmxPair(_cmxOut);
           Pairwise::Index index(pair.x_index, pair.y_index);
 
+          // Iterate through the clusters in the pair.
           for ( qint8 k = 0; k < pair.K; ++k )
           {
+              // The pair.K indicates how many clusters remain in the pair
+              // but the pair.labels are still the same as alwasy, and
+              // we only want to create the sample string for kept clusters.
+              // the pair.keep array lists the clusters that are kept.
+              int ki = pair.keep[k];
+
               // determine whether correlation is within thresholds
               float corr = pair.correlations[k];
 
@@ -129,7 +136,7 @@ void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
               for ( int i = 0; i < _emx->sampleSize(); ++i )
               {
                  qint8 val = pair.labels[i];
-                 if (k == val) {
+                 if (ki == val) {
                      val = 1;
                  }
                  // A value of -128 exists if the sample belong to
