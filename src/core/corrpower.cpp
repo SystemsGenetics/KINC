@@ -9,6 +9,9 @@
 #include "correlationmatrix_pair.h"
 #include <ace/core/ace_qmpi.h>
 #include <ace/core/elog.h>
+#include <iostream>
+
+
 
 using namespace std;
 
@@ -133,6 +136,7 @@ void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
               // save sample string
               ccmPair.addCluster();
 
+              // add each cluster sample string to the pair.
               for ( int i = 0; i < _emx->sampleSize(); ++i )
               {
                  qint8 val = pair.labels[i];

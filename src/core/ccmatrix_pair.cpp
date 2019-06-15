@@ -1,7 +1,6 @@
 #include "ccmatrix_pair.h"
 
 
-
 /*!
  * Add one or more clusters to this pair.
  *

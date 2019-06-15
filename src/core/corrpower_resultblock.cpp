@@ -59,6 +59,7 @@ void CorrPowerFilter::ResultBlock::write(QDataStream& stream) const
       stream << pair.correlations;
       stream << pair.x_index;
       stream << pair.y_index;
+      stream << pair.keep;
    }
 }
 
@@ -90,5 +91,6 @@ void CorrPowerFilter::ResultBlock::read(QDataStream& stream)
       stream >> pair.correlations;
       stream >> pair.x_index;
       stream >> pair.y_index;
+      stream >> pair.keep;
    }
 }

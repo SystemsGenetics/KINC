@@ -31,10 +31,6 @@ class CorrPowerFilter : public EAbstractAnalytic
         */
        qint8 K;
        /*!
-        * The clusters indexes to keep. All others will have been filtered out.
-        */
-       QVector<int> keep;
-       /*!
         * The cluster labels for a pair.
         */
        QVector<qint8> labels;
@@ -47,7 +43,10 @@ class CorrPowerFilter : public EAbstractAnalytic
         */
        qint32 x_index;
        qint32 y_index;
-
+       /*!
+        * The cluster indexes to keep.
+        */
+       QVector<int> keep;
     };
     class Input;
     class WorkBlock;

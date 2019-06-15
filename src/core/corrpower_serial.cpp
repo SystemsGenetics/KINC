@@ -7,6 +7,7 @@
 #include "pairwise_spearman.h"
 #include <ace/core/elog.h>
 #include "stats.hpp"
+#include <iostream>
 
 
 using namespace std;
