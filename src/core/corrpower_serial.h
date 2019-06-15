@@ -16,7 +16,7 @@ public:
    explicit Serial(CorrPowerFilter* parent);
    virtual std::unique_ptr<EAbstractAnalyticBlock> execute(const EAbstractAnalyticBlock* block) override final;
 private:
-    double pwr_r_test(double r, int n, double sig_level);
+    double pwr_r_test(double r, int n, double sig_level,CorrelationMatrix::Pair cmxPair);
 private:
    /*!
     * Pointer to the base analytic for this object.
