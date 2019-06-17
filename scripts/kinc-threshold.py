@@ -243,7 +243,7 @@ def rmt(args):
 				plt.plot(eigens, ".")
 				plt.subplot(122)
 				plt.title("Eigenvalue Spacing Distribution")
-				plt.hist(compute_spacings(eigens))
+				plt.hist(compute_spacings(eigens), bins=60, range=(0, 3))
 				plt.savefig("rmt_%03d.png" % (int(threshold * 1000)))
 				plt.close()
 
