@@ -22,8 +22,8 @@ private:
     * Pointer to the base analytic for this object.
     */
    CorrPowerFilter* _base;
-
 };
+
 
 
 #endif

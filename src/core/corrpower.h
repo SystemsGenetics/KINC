@@ -10,6 +10,8 @@
 #include "expressionmatrix.h"
 #include "pairwise_clusteringmodel.h"
 
+
+
 /*!
  * This class implements the cluster filter analytic. This analytic takes an
  * expression matrix, correlation matrix and cluster composition matrix allows
@@ -102,5 +104,7 @@ class CorrPowerFilter : public EAbstractAnalytic
      */
     int _workBlockSize {0};
 };
+
+
 
 #endif

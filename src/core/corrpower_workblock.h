@@ -32,4 +32,6 @@ private:
    qint64 _size;
 };
 
+
+
 #endif

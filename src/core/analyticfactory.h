@@ -25,7 +25,7 @@ public:
       ,PowerLawType
       ,CorrPowerFilterType
       ,RMTType
-      ,ExtractType      
+      ,ExtractType
       ,Total
    };
    virtual quint16 size() const override final;

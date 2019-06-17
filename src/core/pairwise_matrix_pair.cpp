@@ -1,6 +1,7 @@
 #include "pairwise_matrix_pair.h"
 
 
+
 using namespace Pairwise;
 
 
@@ -27,7 +28,7 @@ void Matrix::Pair::write(const Index& index)
          .arg(clusterSize())
          .arg(_matrix->_maxClusterSize));
       throw e;
-   }      
+   }
 
    // go through each cluster and write it to data object
    for ( qint8 i = 0; i < clusterSize(); ++i )
