@@ -73,6 +73,15 @@ RUN wget -q http://download.qt.io/official_releases/qt/5.11/5.11.1/single/qt-eve
 # install python dependencies
 RUN pip3 install -q argparse matplotlib numpy pandas scipy seaborn
 
+# install StatsLib
+WORKDIR /opt
+
+RUN git clone https://github.com/kthohr/gcem \
+	&& cp -r gcem/include/* /usr/local/include
+
+RUN git clone https://github.com/kthohr/stats \
+	&& cp -r stats/include/* /usr/local/include
+
 # install ACE
 WORKDIR /opt
 

@@ -9,11 +9,14 @@
 #include "correlationmatrix_pair.h"
 #include <ace/core/ace_qmpi.h>
 #include <ace/core/elog.h>
-#include <iostream>
 
 
 
 using namespace std;
+
+
+
+
 
 
 /*!
@@ -24,10 +27,12 @@ using namespace std;
  */
 qint64 CorrPowerFilter::totalPairs(const ExpressionMatrix* emx)
 {
-   //EDEBUG_FUNC(this,emx);
-
    return static_cast<qint64>(emx->geneSize()) * (emx->geneSize() - 1) / 2;
 }
+
+
+
+
 
 
 /*!
@@ -43,6 +48,10 @@ int CorrPowerFilter::size() const
    int num_workblocks = (total_pairs + _workBlockSize - 1) / _workBlockSize;
    return num_workblocks;
 }
+
+
+
+
 
 
 /*!
@@ -70,6 +79,10 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork(int index) con
 }
 
 
+
+
+
+
 /*!
  * Create an empty and uninitialized result block.
  */
@@ -82,6 +95,9 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeResult() const
 
 
 
+
+
+
 /*!
  * Create an empty and uninitialized work block.
  */
@@ -91,6 +107,9 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork() const
 
    return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock);
 }
+
+
+
 
 
 
@@ -168,6 +187,11 @@ void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
    }
 }
 
+
+
+
+
+
 /*!
  * Make a new serial object and return its pointer.
  */
@@ -177,6 +201,8 @@ EAbstractAnalyticSerial* CorrPowerFilter::makeSerial()
 
    return new Serial(this);
 }
+
+
 
 
 
@@ -230,6 +256,11 @@ void CorrPowerFilter::initialize()
       _workBlockSize = min(32768LL, _ccm->size() / numWorkers);
    }
 }
+
+
+
+
+
 
 /*!
  * Initialize the output data objects of this analytic.

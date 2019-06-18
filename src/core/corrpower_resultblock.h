@@ -37,25 +37,4 @@ private:
 
 
 
-
-
-
-/*!
- * Create a vector from the given pointer and size. The contents of the
- * pointer are copied into the vector.
- *
- * @param data
- * @param size
- */
-template<class T>
-QVector<T> CorrPowerFilter::ResultBlock::makeVector(const T* data, int size)
-{
-   QVector<T> v(size);
-
-   memcpy(v.data(), data, size * sizeof(T));
-   return v;
-}
-
-
-
 #endif

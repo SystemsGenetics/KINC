@@ -7,10 +7,14 @@
 #include "pairwise_spearman.h"
 #include <ace/core/elog.h>
 #include "stats.hpp"
-#include <iostream>
+
 
 
 using namespace std;
+
+
+
+
 
 
 /*!
@@ -23,8 +27,11 @@ CorrPowerFilter::Serial::Serial(CorrPowerFilter* parent):
    _base(parent)
 {
    EDEBUG_FUNC(this,parent);
-
 }
+
+
+
+
 
 
 /*!
@@ -135,6 +142,11 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
    // We're done! Return the result block.
    return unique_ptr<EAbstractAnalyticBlock>(resultBlock);
 }
+
+
+
+
+
 
 /*!
  * \brief Performs the correlation power test.
