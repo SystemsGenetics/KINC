@@ -1,7 +1,5 @@
-.. _usage:
-
 Usage
------
+=====
 
 KINC provides two executables: ``kinc``, the command-line version, and ``qkinc``, the GUI version. The command-line version can use MPI while the GUI version can display data object files that are produced by KINC. KINC can construct a gene-coexpression network in the following steps:
 
@@ -21,6 +19,9 @@ The easiest way to learn how to use KINC is to study the ``kinc.sh`` script, whi
    scripts/kinc.sh serial 1 GEM.txt
 
 Another recommended option is to use the `KINC-nf <https://github.com/SystemsGenetics/KINC-nf.git>`__ nextflow pipeline, which can run the entire KINC workflow on nearly any computing environment.
+
+High Performance clusters
+-------------------------
 
 Palmetto
 ~~~~~~~~
@@ -46,6 +47,7 @@ Each script takes a plaintext GEM file, and outputs the following:
 You only need one of these scripts and your GEM file to run KINC. However, you must modify the ``kinc-*.sh`` script to use your GEM file and run the analytics that you want:
 
 .. code:: bash
+
    # define input file
    INFILE="Yeast.txt"
 

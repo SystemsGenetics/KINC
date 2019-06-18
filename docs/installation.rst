@@ -1,26 +1,48 @@
-.. _installation:
-
 Installation
-------------
+============
+Currently, there is no stand-alone binary for KINC. It must be compiled and installed. The instructions on this page provide step-by-step instructions to compile and install KINC.
 
-Ubuntu
-~~~~~~
+Requirements
+------------
+KINC requires the following software packages.
+
+- `The GNU Scientific Library <https://www.gnu.org/software/gsl/>`_
+- `OpenBLAS <https://www.openblas.net/>`_
+- `OpenMPI <https://www.open-mpi.org/>`_
+- `OpenCL <https://www.khronos.org/opencl/>`_
+- `LAPACK <http://www.netlib.org/lapack/>`_
+- `NVidia CUDA developerment libraries <https://developer.nvidia.com/cuda-zone>`_
+- `StatsLib <https://www.kthohr.com/statslib.html>`_
+- `CGEM <https://www.kthohr.com/gcem.html>`_
+- `QT <https://www.qt.io/>`_
+- `ACE <https://github.com/SystemsGenetics/ACE>`_
+
+The instructions on this page provides details for compiling KINC
+
+Ubuntu 18.04
+------------
 
 Use the following steps to install KINC from source on Ubuntu 18.04:
 
 Install Dependencies
-====================
+~~~~~~~~~~~~~~~~~~~~
 
-Most of the dependencies are available as packages/
+Most of these dependencies are available as packages on Ubuntu and can be installed using the `apt` framework:
 
 .. code:: bash
 
-   sudo apt install build-essential libgsl-dev libopenblas-dev libopenmpi-dev ocl-icd-opencl-dev liblapacke-dev nvidia-cuda-dev
+   sudo apt install build-essential \
+     libgsl-dev \
+     libopenblas-dev \
+     libopenmpi-dev \
+     ocl-icd-opencl-dev \
+     liblapacke-dev \
+     nvidia-cuda-dev
 
-For device drivers (AMD, Intel, NVIDIA, etc), refer to the manufacturer's website.
+For specific device drivers other than those provided by Ubuntu (i.e. AMD, Intel, NVIDIA, etc), please refer to the manufacturer's website for installation instructions.
 
 Install Qt (>=5.7)
-==================
+~~~~~~~~~~~~~~~~~~
 
 Select a suitable `version of Qt <http://download.qt.io/official_releases/qt>`__ and install Qt:
 
@@ -37,14 +59,17 @@ If you install Qt locally then you must add Qt to the executable path:
    export QTDIR="$HOME/Qt/5.7.1/gcc_64"
    export PATH="$QTDIR/bin:$PATH"
 
-Install ACE
-===========
+Install StatsLib and CGEM
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Both are StatsLib and CGEM are header-only libraries. To install them, you only need to download the packages and put them where they can be found.  The easiest location is in ``/usr/local/include`` (which requires root access).  For more detailed instructions, please follow the download and installation instructions for each package.
 
-Select a suitable `version of ACE <https://github.com/SystemsGenetics/ACE/releases>`__ and set the following environment variable:
+Install ACE
+~~~~~~~~~~~
+KINC v3.2.3 requires ACE v3.0.3. ACE requires some of the same dependencies as KINC (such as QT, CUDA, OpenMPI, OpenCL, etc).  Therefore, if all dependencies above are installed, ACE should compile. To start, set the following environment variable:
 
 .. code:: bash
 
-   export ACE_VERSION=v3.0.2
+   export ACE_VERSION=v3.0.3
 
 Next, clone the ACE repository:
 
@@ -54,7 +79,21 @@ Next, clone the ACE repository:
    cd ACE/build
    git checkout $ACE_VERSION
 
-By default, ACE will try to install itself into ``/usr/local``. To install ACE to a different directory (e.g. ``/local/software``), set the ``INSTALL_PREFIX`` environment variable accordingly:
+Default installation location
+*****************************
+Next compile:
+
+.. code:: bash
+
+   qmake ../src/ACE.pro
+   make qmake_all
+   make
+   make qmake_all
+   make install
+
+Alternative installation location
+*********************************
+By default, ACE will try to install into ``/usr/local``. To install ACE to a different directory (e.g. ``/local/software``), set the ``INSTALL_PREFIX`` environment variable accordingly:
 
 .. code:: bash
 
@@ -72,15 +111,16 @@ Now, within the ``ACE/build`` directory run the following to build the ACE libra
 
 This will install ACE into the directory specified by ``INSTALL_PREFIX`` in a directory named with the ACE version.
 
+
 Install KINC
-============
+~~~~~~~~~~~~
 
 Select a suitable `version of KINC <https://github.com/SystemsGenetics/KINC/releases>`__ and set the environment variable:
 
 .. code:: bash
 
-   export ACE_VERSION=v3.0.2
-   export KINC_VERSION=v3.2.2
+   export ACE_VERSION=v3.0.3
+   export KINC_VERSION=v3.2.3
 
 Next, clone the KINC repository:
 
@@ -90,13 +130,41 @@ Next, clone the KINC repository:
    cd KINC/build
    git checkout $KINC_VERSION
 
+Default installation location
+*****************************
+
+Next compile:
+
+.. code:: bash
+
+   qmake ../src/KINC.pro
+   make qmake_all
+   make
+   make qmake_all
+   make install
+
+Alternative installation location
+*********************************
+
 By default, KINC will try to install itself into ``/usr/local``. To install KINC to a different directory (e.g. ``/local/software``), set the ``INSTALL_PREFIX`` environment variable accordingly:
 
 .. code:: bash
 
    export INSTALL_PREFIX="/local/software"
 
-Before you can build KINC, the compiler must be able to find the ACE libraries.  Several environment variables help with this:
+Now build and install KINC:
+
+   .. code:: bash
+
+      qmake ../src/KINC.pro PREFIX=$INSTALL_PREFIX/KINC-$KINC_VERSION
+      make qmake_all
+      make
+      make qmake_all
+      make install
+
+If ACE is not in /usr/local
+***************************
+If ACE was not installed into an alternative location other than the default ``/usr/local`` then should set several environment variables help the compiler find ACE libraries and headers:
 
 .. code:: bash
 
@@ -108,17 +176,10 @@ Before you can build KINC, the compiler must be able to find the ACE libraries. 
    export CPLUS_INCLUDE_PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/include:$CPLUS_INCLUDE_PATH"
    export OBJC_INCLUDE_PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/include:$OBJC_INCLUDE_PATH"
 
-Now build and install KINC:
 
-.. code:: bash
-
-   qmake ../src/KINC.pro PREFIX=$INSTALL_PREFIX/KINC-$KINC_VERSION
-   make qmake_all
-   make
-   make qmake_all
-   make install
-
-To run KINC you must update the ``LD_LIBRARY_PATH`` in your ``~/.bashrc`` file.  Use the following command to get the exact text you need to add.
+Preparing to Run KINC
+~~~~~~~~~~~~~~~~~~~~~
+If KINC was installed in the default location you can skip the :doc:`usage` page for futher instructions, otherwise, if you installed KINC in an alternative location, you must update the ``LD_LIBRARY_PATH`` in your ``~/.bashrc`` file.  Use the following command to get the exact text you need to add.
 
 .. code:: bash
 
@@ -128,9 +189,13 @@ To run KINC you must update the ``LD_LIBRARY_PATH`` in your ``~/.bashrc`` file. 
 Append the resulting text to your ``~/.bashrc`` file. You should now be able to run KINC
 
 Windows
-~~~~~~~
+-------
 
 Windows is currently not supported because there is no OpenMPI library for the Windows platform. Future support for Windows will be added when MPI becomes an optional dependency.
+
+High Performance clusters
+-------------------------
+Usage of KINC on HPC clusters will require assistance of the cluster's systems admin to ensure all dependencies are installed and available.  Software management on clusters is specific to each cluster, although there are often commonalities.  Regardless, it is not possible to provide comprehensive instructions that would apply to every cluster.  
 
 Palmetto
 ~~~~~~~~
