@@ -23,6 +23,7 @@ public:
       ,ExportCorrelationMatrixType
       ,SimilarityType
       ,PowerLawType
+      ,CorrPowerFilterType
       ,RMTType
       ,ExtractType
       ,Total
