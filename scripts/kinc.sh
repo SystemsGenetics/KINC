@@ -19,12 +19,13 @@ DO_EXTRACT=1
 
 # define input/output files
 INFILE="$3"
-DATA="$(dirname $INFILE)"
-EMX_FILE="$DATA/$(basename $INFILE .txt).emx"
-CCM_FILE="$DATA/$(basename $EMX_FILE .emx).ccm"
-CMX_FILE="$DATA/$(basename $EMX_FILE .emx).cmx"
-LOGS="logs"
-RMT_FILE="$LOGS/$(basename $CMX_FILE .cmx).txt"
+DIRNAME="$(dirname $INFILE)"
+BASENAME="$(basename $INFILE .txt)"
+EMX_FILE="$DIRNAME/$BASENAME.emx"
+CCM_FILE="$DIRNAME/$BASENAME.ccm"
+CMX_FILE="$DIRNAME/$BASENAME.cmx"
+CMX_TXT_FILE="$DIRNAME/$BASENAME.cmx.txt"
+RMT_FILE="$DIRNAME/$BASENAME.rmt.txt"
 
 # apply settings
 kinc settings set threads 2
@@ -85,19 +86,15 @@ fi
 
 # export cmx
 if [[ $DO_EXPORT_CMX = 1 ]]; then
-	OUTFILE="$DATA/$(basename $CMX_FILE .cmx)-cmx.txt"
-
 	env time -f "%e" kinc run export-cmx \
 		--emx $EMX_FILE \
 		--ccm $CCM_FILE \
 		--cmx $CMX_FILE \
-		--output $OUTFILE
+		--output $CMX_TXT_FILE
 fi
 
 # threshold
 if [[ $DO_THRESHOLD = 1 ]]; then
-	mkdir -p $LOGS
-
 	env time -f "%e" kinc run rmt \
 		--input $CMX_FILE \
 		--log $RMT_FILE \
@@ -106,9 +103,9 @@ fi
 
 # extract
 if [[ $DO_EXTRACT = 1 ]]; then
-	NET_FILE="$DATA/$(basename $EMX_FILE .emx)-net.txt"
 	MINCORR=0
 	MAXCORR=1
+	NET_FILE="$DIRNAME/$BASENAME.coexpnet.txt"
 
 	env time -f "%e" kinc run extract \
 		--emx $EMX_FILE \
