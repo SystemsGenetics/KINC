@@ -22,7 +22,7 @@ def plot_clusdist(netlist, output_dir):
 
 
 def plot_corrdist(netlist, output_dir):
-	sns.distplot(netlist["sc"], kde=False)
+	sns.distplot(netlist["sc"], bins=np.arange(-1, 1.01, 0.01), kde=False)
 	plt.title("Correlation Distribution")
 	plt.xlabel("Correlation")
 	plt.ylabel("Frequency")
@@ -81,15 +81,21 @@ def plot_pairwise(emx, netlist, output_dir, limits=None):
 
 		# create density plot
 		plt.subplot(121)
-		plt.xlim(limits)
-		plt.ylim(limits)
+
+		if limits != None:
+			plt.xlim(limits)
+			plt.ylim(limits)
+
 		sns.kdeplot(data[0], data[1], shade=True, shade_lowest=False)
 
 		# create scatter plot
 		plt.subplot(122)
 		plt.title("k=%d, samples=%d, spearmanr=%0.2f" % (k, edge["Cluster_Samples"], r))
-		plt.xlim(limits)
-		plt.ylim(limits)
+
+		if limits != None:
+			plt.xlim(limits)
+			plt.ylim(limits)
+
 		plt.xlabel(x)
 		plt.ylabel(y)
 		plt.scatter(data[0], data[1], color="w", edgecolors=colors)
