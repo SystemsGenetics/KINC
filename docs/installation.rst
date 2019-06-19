@@ -1,6 +1,9 @@
 Installation
 ============
+
 Currently, there is no stand-alone binary for KINC. It must be compiled and installed. The instructions on this page provide step-by-step instructions to compile and install KINC.
+
+Alternatively, KINC can be run in a Docker container. The Dockerfile for KINC is available in the KINC Github repository, and Docker images are maintained on DockerHub under ``systemsgenetics/kinc``. This method currently does not support the GUI version of KINC.
 
 Requirements
 ------------
@@ -11,9 +14,9 @@ KINC requires the following software packages.
 - `OpenMPI <https://www.open-mpi.org/>`_
 - `OpenCL <https://www.khronos.org/opencl/>`_
 - `LAPACK <http://www.netlib.org/lapack/>`_
-- `NVidia CUDA developerment libraries <https://developer.nvidia.com/cuda-zone>`_
+- `NVIDIA CUDA Toolkit <https://developer.nvidia.com/cuda-zone>`_
 - `StatsLib <https://www.kthohr.com/statslib.html>`_
-- `CGEM <https://www.kthohr.com/gcem.html>`_
+- `GCEM <https://www.kthohr.com/gcem.html>`_
 - `QT <https://www.qt.io/>`_
 - `ACE <https://github.com/SystemsGenetics/ACE>`_
 
@@ -59,9 +62,9 @@ If you install Qt locally then you must add Qt to the executable path:
    export QTDIR="$HOME/Qt/5.7.1/gcc_64"
    export PATH="$QTDIR/bin:$PATH"
 
-Install StatsLib and CGEM
+Install StatsLib and GCEM
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-Both are StatsLib and CGEM are header-only libraries. To install them, you only need to download the packages and put them where they can be found.  The easiest location is in ``/usr/local/include`` (which requires root access).  For more detailed instructions, please follow the download and installation instructions for each package.
+Both StatsLib and GCEM are header-only libraries. To install them, you only need to download the packages and put them where they can be found.  The easiest location is in ``/usr/local/include`` (which requires root access).  For more detailed instructions, please follow the download and installation instructions for each package.
 
 Install ACE
 ~~~~~~~~~~~

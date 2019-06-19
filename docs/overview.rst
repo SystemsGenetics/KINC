@@ -12,7 +12,7 @@ The Knowledge Independent Network Construction (KINC) software is a C++ applicat
 How does KINC work?
 -------------------
 
-A GEM contain an *n*x*m* matrix of data where *n* is the number of genes and *m* is the number of measurements (or samples) and data is typically normalized and log transformed gene expression data from either RNA-Seq or microarray data. The tool `GEMmaker <https://github.com/SystemsGenetics/GEMmaker>`_ can help create GEMs from RNA-Seq data using tools such as `Hisat2 <https://ccb.jhu.edu/software/hisat2/index.shtml>`_, `Kallisto <https://pachterlab.github.io/kallisto/>`_ or `Salmon <https://combine-lab.github.io/salmon/>`_.
+A GEM contain an *n* x *m* data matrix where *n* is the number of genes and *m* is the number of measurements (or samples) and data is typically normalized and log transformed gene expression data from either RNA-Seq or microarray data. The tool `GEMmaker <https://github.com/SystemsGenetics/GEMmaker>`_ can help create GEMs from RNA-Seq data using tools such as `Hisat2 <https://ccb.jhu.edu/software/hisat2/index.shtml>`_, `Kallisto <https://pachterlab.github.io/kallisto/>`_ or `Salmon <https://combine-lab.github.io/salmon/>`_.
 
 Construction of GCNs traditionally involves several steps that includes, pairwise correlation analysis,  thresholding and module discovery.  Currently, the most popular GCN construction tool, `WGCNA <https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/>`_, performs all of these steps. Although for WGCNA, thresholding and module discovery are a single process. KINC builds from such tools, but uses a new approach to reduce noise that leads to false positives, reduces false negatives, and yields context-specific subgraphs. Often, gene interactions that are specific to a particular experimental condition, tissue type, developmental stage, time series or genotype are missing from the network if they do not represent a major component of variation across all samples. KINC helps tease these out, and creates context-specific subgraph, specific to a given condition. In summary KINC provides the following methods:
 
@@ -31,9 +31,12 @@ In KINC, GMM clusters undergo correlation analysis independent of one another. T
 
   KINC does not implement Mutual Information, another common "association" method for GCN construction as literature has shown no significant improvement over methods such as Pearson's or Spearman.
 
-**Thresholding**
+**Filtering**
 
 - *Correlation Power Analysis* removes non-significant edges. Correlations from GMM clusters that had insufficient samples to "trust" a given correlation are removed.
+
+**Thresholding**
+
 - *Power-law* thresholding iterates through decreasing correlation scores, and checks if the resulting network follows a power-law distribution based on node degree. A network that follows a power-law distribution is known as a `scale-free` network. A threshold can be identified at a given correlation score where the resulting network does not appear scale-free.
 - *Random Matrix Theory (RMT)* also iterates through decreasing correlation scores, the resulting similarity matrix is examined for properties of random matricies. If the resulting matrix ceases to look non-random a threshold is identified.
 
