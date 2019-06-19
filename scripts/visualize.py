@@ -9,15 +9,43 @@ import seaborn as sns
 
 
 def plot_clusdist(netlist, output_dir):
+	max_clusters = netlist["Num_Clusters"].max()
+
 	sns.distplot(netlist["Num_Clusters"], kde=False)
+	plt.title("Cluster Size Distribution")
+	plt.xlabel("Cluster Size")
+	plt.ylabel("Frequency")
+	plt.xticks(range(1, max_clusters + 1))
 	plt.savefig("%s/clusdist.png" % output_dir)
 	plt.close()
 
 
 
 def plot_corrdist(netlist, output_dir):
-	sns.distplot(netlist["sc"])
+	sns.distplot(netlist["sc"], kde=False)
+	plt.title("Correlation Distribution")
+	plt.xlabel("Correlation")
+	plt.ylabel("Frequency")
 	plt.savefig("%s/corrdist.png" % output_dir)
+	plt.close()
+
+
+
+def plot_coverage(netlist, output_dir):
+	thresholds = np.arange(0.5, 1.0, 0.01)
+	coverage = np.zeros(len(thresholds))
+
+	for i, threshold in enumerate(thresholds):
+		edges = netlist[abs(netlist["sc"]) >= threshold]
+		genes = set(edges["Source"]).union(set(edges["Target"]))
+		coverage[i] = len(genes)
+
+	plt.plot(thresholds, coverage)
+	plt.title("Gene Coverage")
+	plt.xlabel("Abs. Correlation Threshold")
+	plt.ylabel("Genes")
+	plt.ylim(bottom=0)
+	plt.savefig("%s/coverage.png" % output_dir)
 	plt.close()
 
 
@@ -77,9 +105,10 @@ if __name__ ==  "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--emx", help="expression matrix file", required=True)
 	parser.add_argument("--netlist", help="netlist file", required=True)
-	parser.add_argument("--output", help="output directory", default="plots")
+	parser.add_argument("--output-dir", help="output directory", default=".")
 	parser.add_argument("--clusdist", help="plot cluster distribution", action="store_true")
 	parser.add_argument("--corrdist", help="plot correlation distribution", action="store_true")
+	parser.add_argument("--coverage", help="plot gene coverage vs correlation", action="store_true")
 	parser.add_argument("--pairwise", help="plot pairwise plots", action="store_true")
 	parser.add_argument("--pw-scale", help="use the same limits for all pairwise plots", action="store_true")
 
@@ -91,10 +120,6 @@ if __name__ ==  "__main__":
 
 	print("Loaded expression matrix (%d genes, %d samples)" % emx.shape)
 	print("Loaded netlist (%d edges)" % len(netlist.index))
-
-	# initialize output directory
-	if not os.path.exists(args.output_dir):
-		os.mkdir(args.output_dir)
 
 	# setup plot limits
 	if args.pw_scale:
@@ -111,6 +136,11 @@ if __name__ ==  "__main__":
 	if args.corrdist:
 		print("Plotting correlation distribution...")
 		plot_corrdist(netlist, output_dir=args.output_dir)
+
+	# plot gene coverage
+	if args.coverage:
+		print("Plotting gene coverage...")
+		plot_coverage(netlist, output_dir=args.output_dir)
 
 	# plot pairwise plots
 	if args.pairwise:
