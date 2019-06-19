@@ -133,7 +133,7 @@ void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
    const ResultBlock* resultBlock {result->cast<ResultBlock>()};
    for ( auto& pair : resultBlock->pairs() )
    {
-      if (pair.K > 0)
+      if ( pair.K > 0 )
       {
           // Create pair objects for both output data files.
           CCMatrix::Pair ccmPair(_ccmOut);
@@ -159,19 +159,23 @@ void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
               for ( int i = 0; i < _emx->sampleSize(); ++i )
               {
                  qint8 val = pair.labels[i];
-                 if (ki == val) {
+                 if ( ki == val )
+                 {
                      val = 1;
                  }
                  // A value of -128 exists if the sample belong to
                  // another cluster but that cluster is not present
                  // in the input files.
-                 else if (val == -128) {
+                 else if ( val == -128 )
+                 {
                      val = 0;
                  }
-                 else if (val > 0) {
+                 else if ( val > 0 )
+                 {
                      val = 0;
                  }
-                 else {
+                 else
+                 {
                      val = -val;
                  }
                  ccmPair.at(k, i) = val;

@@ -63,6 +63,7 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
    // Iterate through the elements in the workblock.
    qint64 start = workBlock->start();
    qint64 size = workBlock->size();
+
    for ( qint64 i = start; i < start + size; i++ )
    {
        // Get the CMX and CCM pair data.
@@ -89,25 +90,32 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
        // Rebuild the pair labels from the pair sample mask. These
        // pair labels are the same as when the similarity analytic makes them.
        QVector<qint8> labels(num_samples, -128);
-       for ( qint8 k = 0; k < num_clusters; k++ ) {
-          for ( int j = 0; j < num_samples; j++ ) {
+
+       for ( qint8 k = 0; k < num_clusters; k++ )
+       {
+          for ( int j = 0; j < num_samples; j++ )
+          {
              qint8 val = ccmPair.at(k, j);
+
              // If the sample belongs to this cluster the value is 1
-             if (val == 1) {
+             if ( val == 1 )
+             {
                labels[j] = k;
                k_num_samples[k]++;
              }
+
              // If the sample is not in another cluster then it was removed
              // or missing.
-             else if (val != 0) {
+             else if ( val != 0 )
+             {
                labels[j] = -val;
              }
           }
        }
 
        // Iterate through the clusters and perform a correlation power analysis.
-       for ( qint8 k = 0; k < num_clusters; k++ ) {
-
+       for ( qint8 k = 0; k < num_clusters; k++ )
+       {
            // Perform the power analysis test.
            double power = pwr_r_test(abs(static_cast<double>(correlations[k])),
                                      k_num_samples[k],
@@ -116,8 +124,9 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
            // If the calculated power is >= the expected power then we
            // can keep this cluster.  We keep it by adding the correlation
            // and the labels from the original cluster into new variables
-           // for the correlation and labels.           
-           if (power >= _base->_powerThresholdPower) {
+           // for the correlation and labels.
+           if ( power >= _base->_powerThresholdPower )
+           {
              new_correlations.append(correlations[k]);
              k_keep.append(k);
              new_labels = labels;
@@ -129,13 +138,15 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
        // gets added regardless if there are any clusters in it.
        CPPair pair;
        pair.K = num_final_K;
-       if (num_final_K > 0) {
+       if ( num_final_K > 0 )
+       {
            pair.correlations = new_correlations;
            pair.labels = new_labels;
            pair.keep = k_keep;
        }
        pair.x_index = index.getX();
        pair.y_index = index.getY();
+
        resultBlock->append(pair);
    }
 
@@ -149,12 +160,12 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
 
 
 /*!
- * \brief Performs the correlation power test.
+ * Performs the correlation power test.
  *
- * \param r The correlation score
- * \param n The number of samples in the cluster
- * \param sig_level The desired signficance level (alpha) value.
- * \return The power from the test.
+ * @param r The correlation score
+ * @param n The number of samples in the cluster
+ * @param sig_level The desired signficance level (alpha) value.
+ * @return The power from the test.
  */
 double CorrPowerFilter::Serial::pwr_r_test(double r, int n, double sig_level)
 {
