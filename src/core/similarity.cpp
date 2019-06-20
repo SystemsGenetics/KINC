@@ -135,6 +135,23 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeResult() const
  * index. This implementation takes the Pair objects in the result block and
  * saves them to the output correlation matrix and cluster matrix.
  *
+ * This function converts the labels for each pair into the sample string format
+ * that is used by the cluster matrix. In the pairwise label format, a label k
+ * means that the sample belongs to cluster k, and a negative value means that
+ * the sample was excluded for some reason. In the sample string format, there
+ * is a separate sample string for each pairwise cluster, 0 and 1 denote whether
+ * a sample belongs to that cluster, and all other values (6, 7, 8, 9) denote
+ * that a sample was excluded for some other reason and correspond to the negative
+ * values in the label format. For example, the following label array:
+ *
+ *   0 0 1 2 1 -9 2 -6
+ *
+ * is converted to the following sample string:
+ *
+ *   1 1 0 0 0 9 0 6 ,
+ *   0 0 1 0 1 9 0 6 ,
+ *   0 0 0 1 0 9 1 6
+ *
  * @param result
  */
 void Similarity::process(const EAbstractAnalyticBlock* result)
@@ -169,6 +186,7 @@ void Similarity::process(const EAbstractAnalyticBlock* result)
 
             for ( int i = 0; i < _input->sampleSize(); ++i )
             {
+               // convert label format to sample string format
                ccmPair.at(ccmPair.clusterSize() - 1, i) = (pair.labels[i] >= 0)
                   ? (k == pair.labels[i])
                   : -pair.labels[i];
