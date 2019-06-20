@@ -73,7 +73,7 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
 
        // Get the number of samples and clusters.
        int num_clusters = ccmPair.clusterSize();
-       int num_samples = _base->_emx->sampleSize();
+       int num_samples = _base->_ccm->sampleSize();
 
        // This will store how many clusters will remain.
        qint8 num_final_K = 0;
@@ -117,9 +117,10 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
        for ( qint8 k = 0; k < num_clusters; k++ )
        {
            // Perform the power analysis test.
-           double power = pwr_r_test(abs(static_cast<double>(correlations[k])),
-                                     k_num_samples[k],
-                                     _base->_powerThresholdAlpha);
+           double power = pwr_r_test(
+             abs(static_cast<double>(correlations[k])),
+             k_num_samples[k],
+             _base->_powerThresholdAlpha);
 
            // If the calculated power is >= the expected power then we
            // can keep this cluster.  We keep it by adding the correlation

@@ -41,7 +41,7 @@ class CorrPowerFilter : public EAbstractAnalytic
         */
        QVector<float> correlations;
        /*!
-        * The x/y coordinates in the CCM/CMX matricies that this pair belongs to.
+        * The x/y coordinates in the CCM/CMX matrices that this pair belongs to.
         */
        qint32 x_index;
        qint32 y_index;
@@ -54,6 +54,9 @@ class CorrPowerFilter : public EAbstractAnalytic
     class WorkBlock;
     class ResultBlock;
     class Serial;
+public:
+    static qint64 totalPairs(const CorrelationMatrix* cmx);
+public:
     virtual int size() const override final;
     virtual std::unique_ptr<EAbstractAnalyticBlock> makeWork(int index) const override final;
     virtual std::unique_ptr<EAbstractAnalyticBlock> makeWork() const override final;
@@ -63,12 +66,7 @@ class CorrPowerFilter : public EAbstractAnalytic
     virtual EAbstractAnalyticSerial* makeSerial() override final;
     virtual void initialize() override final;
     virtual void initializeOutputs() override final;
-    static qint64 totalPairs(const ExpressionMatrix* emx);
  private:
-    /*!
-     * Pointer to the input expression matrix.
-     */
-    ExpressionMatrix* _emx {nullptr};
     /*!
      * Pointer to the input cluster matrix.
      */
@@ -77,7 +75,6 @@ class CorrPowerFilter : public EAbstractAnalytic
      * Pointer to the input correlation matrix.
      */
     CorrelationMatrix* _cmx {nullptr};
-
     /*!
      * Pointer to the output cluster matrix.
      */
@@ -86,17 +83,12 @@ class CorrPowerFilter : public EAbstractAnalytic
      * Pointer to the output correlation matrix.
      */
     CorrelationMatrix* _cmxOut {nullptr};
-
     /*!
-     * Whether to remove outliers before clustering.
-     */
-    bool _doCorrelationPowerFilter {false};
-    /*!
-     * The minimum (absolute) correlation threshold to save a correlation.
+     * The significance level (i.e. Type I error rate, alpha) for the power test.
      */
     double _powerThresholdAlpha {0.001};
     /*!
-     * The minimum (absolute) correlation threshold to save a correlation.
+     * The power value (i.e. 1 minus Type II error rate, 1 minus beta) for the power test.
      */
     double _powerThresholdPower {0.8};
     /*!

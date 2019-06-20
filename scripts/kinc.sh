@@ -84,6 +84,22 @@ if [[ $DO_SIMILARITY = 1 ]]; then
 		--lsize $LSIZE
 fi
 
+# correlation power analysis
+if [[ $DO_CORRPOWER = 1 ]]; then
+	CCM_OUT_FILE="$DIRNAME/$BASENAME.corrpower.ccm"
+	CMX_OUT_FILE="$DIRNAME/$BASENAME.corrpower.cmx"
+	ALPHA=0.001
+	POWER=0.8
+
+	env time -f "%e" mpirun -np $NP kinc run corrpower \
+		--ccm-in $CCM_FILE \
+		--cmx-in $CMX_FILE \
+		--ccm-out $CCM_OUT_FILE \
+		--cmx-out $CMX_OUT_FILE \
+		--alpha $ALPHA \
+		--power $POWER
+fi
+
 # export cmx
 if [[ $DO_EXPORT_CMX = 1 ]]; then
 	env time -f "%e" kinc run export-cmx \
@@ -105,7 +121,7 @@ fi
 if [[ $DO_EXTRACT = 1 ]]; then
 	MINCORR=0
 	MAXCORR=1
-	NET_FILE="$DIRNAME/$BASENAME.coexpnet.txt"
+	NET_FILE="$DIRNAME/$BASENAME.th000.coexpnet.txt"
 
 	env time -f "%e" kinc run extract \
 		--emx $EMX_FILE \

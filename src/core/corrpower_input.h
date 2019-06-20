@@ -15,8 +15,7 @@ public:
     */
    enum Argument
    {
-      ExpressionData = 0
-      ,ClusterDataIn
+      ClusterDataIn = 0
       ,CorrelationDataIn
       ,ClusterDataOut
       ,CorrelationDataOut

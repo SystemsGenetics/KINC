@@ -23,11 +23,11 @@ using namespace std;
  * Return the total number of pairs that must be processed for a given
  * expression matrix.
  *
- * @param emx
+ * @param cmx
  */
-qint64 CorrPowerFilter::totalPairs(const ExpressionMatrix* emx)
+qint64 CorrPowerFilter::totalPairs(const CorrelationMatrix* cmx)
 {
-   return static_cast<qint64>(emx->geneSize()) * (emx->geneSize() - 1) / 2;
+   return static_cast<qint64>(cmx->geneSize()) * (cmx->geneSize() - 1) / 2;
 }
 
 
@@ -43,7 +43,7 @@ int CorrPowerFilter::size() const
 {
    EDEBUG_FUNC(this);
 
-   qint64 total_pairs = totalPairs(_emx);
+   qint64 total_pairs = totalPairs(_cmx);
 
    int num_workblocks = (total_pairs + _workBlockSize - 1) / _workBlockSize;
    return num_workblocks;
@@ -70,10 +70,8 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork(int index) con
       ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
    }
 
-   qint64 total_pairs = totalPairs(_emx);
-
    qint64 start {index * static_cast<qint64>(_workBlockSize)};
-   qint64 size {min(total_pairs - start, static_cast<qint64>(_workBlockSize))};
+   qint64 size {min(totalPairs(_cmx) - start, static_cast<qint64>(_workBlockSize))};
 
    return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
 }
@@ -131,6 +129,7 @@ void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
 
    // Iterate through the result block pairs.
    const ResultBlock* resultBlock {result->cast<ResultBlock>()};
+
    for ( auto& pair : resultBlock->pairs() )
    {
       if ( pair.K > 0 )
@@ -156,7 +155,7 @@ void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
               ccmPair.addCluster();
 
               // add each cluster sample string to the pair.
-              for ( int i = 0; i < _emx->sampleSize(); ++i )
+              for ( int i = 0; i < _ccm->sampleSize(); ++i )
               {
                  qint8 val = pair.labels[i];
                  if ( ki == val )
@@ -243,12 +242,12 @@ void CorrPowerFilter::initialize()
       return;
    }
 
-   // make sure input/output arguments are valid
-   if ( !_emx || !_ccm || !_cmx)
+   // make sure input data is valid
+   if ( !_ccm || !_cmx )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Did not get valid input and/or output arguments."));
+      e.setDetails(tr("Did not get valid input data objects."));
       throw e;
    }
 
@@ -283,9 +282,8 @@ void CorrPowerFilter::initializeOutputs()
    }
 
    // initialize cluster matrix
-   _ccmOut->initialize(_emx->geneNames(), _ccm->maxClusterSize(), _emx->sampleNames());
+   _ccmOut->initialize(_ccm->geneNames(), _ccm->maxClusterSize(), _ccm->sampleNames());
 
    // initialize correlation matrix
-   QString correlationName = _cmx->correlationName();
-   _cmxOut->initialize(_emx->geneNames(), _cmx->maxClusterSize(), correlationName);
+   _cmxOut->initialize(_cmx->geneNames(), _cmx->maxClusterSize(), _cmx->correlationName());
 }

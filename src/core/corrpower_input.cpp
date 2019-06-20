@@ -46,7 +46,6 @@ EAbstractAnalyticInput::Type CorrPowerFilter::Input::type(int index) const
 
    switch (index)
    {
-   case ExpressionData: return Type::DataIn;
    case ClusterDataIn: return Type::DataIn;
    case CorrelationDataIn: return Type::DataIn;
    case ClusterDataOut: return Type::DataOut;
@@ -74,19 +73,10 @@ QVariant CorrPowerFilter::Input::data(int index, Role role) const
 
    switch (index)
    {
-   case ExpressionData:
-      switch (role)
-      {
-      case Role::CommandLineName: return QString("emx");
-      case Role::Title: return tr("Expression Matrix:");
-      case Role::WhatsThis: return tr("Input expression matrix containing gene expression data.");
-      case Role::DataType: return DataFactory::ExpressionMatrixType;
-      default: return QVariant();
-      }
    case ClusterDataIn:
       switch (role)
       {
-      case Role::CommandLineName: return QString("ccm");
+      case Role::CommandLineName: return QString("ccm-in");
       case Role::Title: return tr("Input Cluster Matrix:");
       case Role::WhatsThis: return tr("Input cluster matrix containing cluster composition data.");
       case Role::DataType: return DataFactory::CCMatrixType;
@@ -95,7 +85,7 @@ QVariant CorrPowerFilter::Input::data(int index, Role role) const
    case CorrelationDataIn:
       switch (role)
       {
-      case Role::CommandLineName: return QString("cmx");
+      case Role::CommandLineName: return QString("cmx-in");
       case Role::Title: return tr("Input Correlation Matrix:");
       case Role::WhatsThis: return tr("Input correlation matrix containing correlation data.");
       case Role::DataType: return DataFactory::CorrelationMatrixType;
@@ -104,7 +94,7 @@ QVariant CorrPowerFilter::Input::data(int index, Role role) const
    case ClusterDataOut:
       switch (role)
       {
-      case Role::CommandLineName: return QString("ccmout");
+      case Role::CommandLineName: return QString("ccm-out");
       case Role::Title: return tr("Output Cluster Matrix:");
       case Role::WhatsThis: return tr("Output cluster matrix containing cluster composition data.");
       case Role::DataType: return DataFactory::CCMatrixType;
@@ -113,7 +103,7 @@ QVariant CorrPowerFilter::Input::data(int index, Role role) const
    case CorrelationDataOut:
       switch (role)
       {
-      case Role::CommandLineName: return QString("cmxout");
+      case Role::CommandLineName: return QString("cmx-out");
       case Role::Title: return tr("Output Correlation Matrix:");
       case Role::WhatsThis: return tr("Output correlation matrix containing correlation data.");
       case Role::DataType: return DataFactory::CorrelationMatrixType;
@@ -122,9 +112,9 @@ QVariant CorrPowerFilter::Input::data(int index, Role role) const
    case PowerThresholdAlpha:
        switch (role)
        {
-       case Role::CommandLineName: return QString("pwr.alpha");
-       case Role::Title: return tr("Signficance Level (Type I error rate, alpha)");
-       case Role::WhatsThis: return tr("If 'pwr.th' is TRUE then this is the Type I, alpha, significance level for the power analysis.");
+       case Role::CommandLineName: return QString("alpha");
+       case Role::Title: return tr("Signficance Level");
+       case Role::WhatsThis: return tr("The significance level (i.e. Type I error rate, alpha) for the power test.");
        case Role::Default: return 0.001;
        case Role::Minimum: return -std::numeric_limits<float>::infinity();
        case Role::Maximum: return +std::numeric_limits<float>::infinity();
@@ -133,9 +123,9 @@ QVariant CorrPowerFilter::Input::data(int index, Role role) const
    case PowerThresholdPower:
        switch (role)
        {
-       case Role::CommandLineName: return QString("pwr.power");
-       case Role::Title: return tr("The Power (1 - Type II error rate, 1-beta)");
-       case Role::WhatsThis: return tr("If pwr.th is TRUE then this is the the power value (i.e. 1-Beta) for the power test.  If for example, the desired Type II error rate is 0.2, then this should be 0.8.");
+       case Role::CommandLineName: return QString("power");
+       case Role::Title: return tr("Power of test");
+       case Role::WhatsThis: return tr("The power value (i.e. 1 minus Type II error rate, 1 minus beta) for the power test. For example, if the desired Type II error rate is 0.2, then this value should be 0.8.");
        case Role::Default: return 0.8;
        case Role::Minimum: return -std::numeric_limits<float>::infinity();
        case Role::Maximum: return +std::numeric_limits<float>::infinity();
@@ -186,11 +176,7 @@ void CorrPowerFilter::Input::set(int index, EAbstractData* data)
 {
    EDEBUG_FUNC(this,index,data);
 
-   if ( index == ExpressionData )
-   {
-      _base->_emx = data->cast<ExpressionMatrix>();
-   }
-   else if ( index == ClusterDataIn )
+   if ( index == ClusterDataIn )
    {
       _base->_ccm = data->cast<CCMatrix>();
    }
