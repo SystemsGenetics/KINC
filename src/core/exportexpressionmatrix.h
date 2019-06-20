@@ -39,6 +39,10 @@ private:
     * The string token used to represent NAN values.
     */
    QString _nanToken {"NA"};
+   /**
+    * The number of decimals to save for each expression value.
+    */
+   int _precision {8};
 };
 
 

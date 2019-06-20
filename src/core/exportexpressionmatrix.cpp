@@ -44,7 +44,7 @@ void ExportExpressionMatrix::process(const EAbstractAnalyticBlock* result)
 
       // initialize output file stream
       _stream.setDevice(_output);
-      _stream.setRealNumberPrecision(8);
+      _stream.setRealNumberPrecision(_precision);
 
       // write sample names
       for ( int i = 0; i < _input->sampleSize(); i++ )

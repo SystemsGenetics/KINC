@@ -19,6 +19,7 @@ public:
       InputData = 0
       ,OutputFile
       ,NANToken
+      ,Precision
       ,Total
    };
    explicit Input(ExportExpressionMatrix* parent);
