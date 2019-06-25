@@ -20,3 +20,21 @@ The ``kinc-py.sh`` script does the same thing as ``kinc.sh`` but with Python scr
 .. code:: bash
 
    scripts/kinc-py.sh GEM.txt
+
+make-input-data.py
+------------------
+
+The ``make-input-data.py`` script creates a "fake" GEM given the number of genes, samples, and classes, as well as other customization options. This script is useful for testing KINC when you don't have any real data on hand.
+
+.. code:: bash
+
+   python scripts/make-input-data.py
+
+visualize.py
+------------
+
+The ``visualize.py`` script can create several useful visualizations of a network, such as scatter plots of the gene pairs in the network. Consult the help text to see all visualization options.
+
+.. code:: bash
+
+   python scripts/visualize.py --emx GEM.txt --netlist GEM.coexpnet.txt --corrdist

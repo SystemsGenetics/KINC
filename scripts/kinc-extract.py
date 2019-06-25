@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
 	# load data
 	emx = pd.read_csv(args.emx, sep="\t")
-	cmx = pd.read_table(args.cmx, header=None, names=[
+	cmx = pd.read_csv(args.cmx, sep="\t", header=None, names=[
 		"x",
 		"y",
 		"Cluster",

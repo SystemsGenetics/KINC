@@ -16,7 +16,7 @@ INFILE="$1"
 DIRNAME="$(dirname $INFILE)"
 BASENAME="$(basename $INFILE .txt)"
 EMX_FILE="$INFILE"
-CMX_FILE="$DIRNAME/$BASENAME.py-cmx.txt"
+CMX_FILE="$DIRNAME/$BASENAME.cmx-py.txt"
 
 # similarity
 if [[ $DO_SIMILARITY = 1 ]]; then
@@ -28,7 +28,7 @@ if [[ $DO_SIMILARITY = 1 ]]; then
 	CRITERION="bic"
 	PREOUT="--preout"
 	POSTOUT="--postout"
-	MINCORR=0
+	MINCORR=0.5
 	MAXCORR=1
 
 	env time -f "%e" python scripts/kinc-similarity.py \
@@ -64,7 +64,7 @@ fi
 if [[ $DO_EXTRACT = 1 ]]; then
 	MINCORR=0
 	MAXCORR=1
-	NET_FILE="$DIRNAME/$BASENAME.th000.py-coexpnet.txt"
+	NET_FILE="$DIRNAME/$BASENAME.th000.coexpnet-py.txt"
 
 	env time -f "%e" python scripts/kinc-extract.py \
 		--emx $EMX_FILE \
