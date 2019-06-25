@@ -234,7 +234,6 @@ void Extract::writeMinimalFormat(int index)
 
    // read next pair
    _cmxPair.readNext();
-   _ccmPair.read(_cmxPair.index());
 
    // write pairwise data to output file
    for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
@@ -419,11 +418,19 @@ void Extract::initialize()
    EDEBUG_FUNC(this);
 
    // make sure input/output arguments are valid
-   if ( !_emx || !_ccm || !_cmx || !_output )
+   if ( !_emx || !_cmx || !_output )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Invalid Argument"));
       e.setDetails(tr("Did not get valid input and/or output arguments."));
+      throw e;
+   }
+
+   if ( _outputFormat != OutputFormat::Minimal && !_ccm )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Invalid Argument"));
+      e.setDetails(tr("--ccm is required for all output formats except minimal."));
       throw e;
    }
 

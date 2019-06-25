@@ -24,6 +24,7 @@ class Extract : public EAbstractAnalytic
    Q_OBJECT
 public:
    class Input;
+public:
    virtual int size() const override final;
    virtual void process(const EAbstractAnalyticBlock* result) override final;
    virtual EAbstractAnalyticInput* makeInput() override final;
@@ -39,7 +40,7 @@ private:
        */
       Text
       /*!
-       * Minimal format
+       * Minimal format (does not use CCM)
        */
       ,Minimal
       /*!
@@ -47,9 +48,11 @@ private:
        */
       ,GraphML
    };
+private:
    void writeTextFormat(int index);
    void writeMinimalFormat(int index);
    void writeGraphMLFormat(int index);
+private:
    /**
     * Workspace variables to write to the output file
     */
