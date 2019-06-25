@@ -9,18 +9,18 @@ Requirements
 ------------
 KINC requires the following software packages.
 
-- `The GNU Scientific Library <https://www.gnu.org/software/gsl/>`_
-- `OpenBLAS <https://www.openblas.net/>`_
-- `OpenMPI <https://www.open-mpi.org/>`_
-- `OpenCL <https://www.khronos.org/opencl/>`_
-- `LAPACK <http://www.netlib.org/lapack/>`_
 - `NVIDIA CUDA Toolkit <https://developer.nvidia.com/cuda-zone>`_
-- `StatsLib <https://www.kthohr.com/statslib.html>`_
-- `GCEM <https://www.kthohr.com/gcem.html>`_
+- `OpenCL <https://www.khronos.org/opencl/>`_
+- `OpenMPI <https://www.open-mpi.org/>`_
 - `QT <https://www.qt.io/>`_
 - `ACE <https://github.com/SystemsGenetics/ACE>`_
+- `The GNU Scientific Library <https://www.gnu.org/software/gsl/>`_
+- `OpenBLAS <https://www.openblas.net/>`_
+- `LAPACK <http://www.netlib.org/lapack/>`_
+- `GCEM <https://www.kthohr.com/gcem.html>`_
+- `StatsLib <https://www.kthohr.com/statslib.html>`_
 
-The instructions on this page provides details for compiling KINC
+The instructions on this page provides details for compiling KINC.
 
 Ubuntu 18.04
 ------------
@@ -34,7 +34,8 @@ Most of these dependencies are available as packages on Ubuntu and can be instal
 
 .. code:: bash
 
-   sudo apt install build-essential \
+   sudo apt install \
+     qt5-default \
      libgsl-dev \
      libopenblas-dev \
      libopenmpi-dev \
@@ -44,35 +45,17 @@ Most of these dependencies are available as packages on Ubuntu and can be instal
 
 For specific device drivers other than those provided by Ubuntu (i.e. AMD, Intel, NVIDIA, etc), please refer to the manufacturer's website for installation instructions.
 
-Install Qt (>=5.7)
-~~~~~~~~~~~~~~~~~~
-
-Select a suitable `version of Qt <http://download.qt.io/official_releases/qt>`__ and install Qt:
-
-.. code:: bash
-
-   wget http://download.qt.io/official_releases/qt/5.7/5.7.1/qt-opensource-linux-x64-5.7.1.run
-   sh ./qt-opensource-linux-x64-5.7.1.run
-
-If you install Qt locally then you must add Qt to the executable path:
-
-.. code:: bash
-
-   # append to ~/.bashrc
-   export QTDIR="$HOME/Qt/5.7.1/gcc_64"
-   export PATH="$QTDIR/bin:$PATH"
-
 Install StatsLib and GCEM
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 Both StatsLib and GCEM are header-only libraries. To install them, you only need to download the packages and put them where they can be found.  The easiest location is in ``/usr/local/include`` (which requires root access).  For more detailed instructions, please follow the download and installation instructions for each package.
 
 Install ACE
 ~~~~~~~~~~~
-KINC v3.2.3 requires ACE v3.0.3. ACE requires some of the same dependencies as KINC (such as QT, CUDA, OpenMPI, OpenCL, etc).  Therefore, if all dependencies above are installed, ACE should compile. To start, set the following environment variable:
+KINC v3.3.0 requires ACE v3.1.0. ACE requires some of the same dependencies as KINC (such as QT, CUDA, OpenMPI, OpenCL, etc).  Therefore, if all dependencies above are installed, ACE should compile. To start, set the following environment variable:
 
 .. code:: bash
 
-   export ACE_VERSION=v3.0.3
+   export ACE_VERSION=v3.1.0
 
 Next, clone the ACE repository:
 
@@ -122,8 +105,8 @@ Select a suitable `version of KINC <https://github.com/SystemsGenetics/KINC/rele
 
 .. code:: bash
 
-   export ACE_VERSION=v3.0.3
-   export KINC_VERSION=v3.2.3
+   export ACE_VERSION=v3.1.0
+   export KINC_VERSION=v3.3.0
 
 Next, clone the KINC repository:
 
@@ -196,10 +179,10 @@ Windows
 
 Windows is currently not supported because there is no OpenMPI library for the Windows platform. Future support for Windows will be added when MPI becomes an optional dependency.
 
-High Performance clusters
--------------------------
+HPC Systems
+-----------
 
-Usage of KINC on HPC clusters will require assistance of the cluster's systems admin to ensure all dependencies are installed and available.  Software management on clusters is specific to each cluster, although there are often commonalities.  Regardless, it is not possible to provide comprehensive instructions that would apply to every cluster.
+Usage of KINC on high-performance computing (HPC) systems will require assistance of the cluster's systems admin to ensure all dependencies are installed and available.  Software management on clusters is specific to each cluster, although there are often commonalities.  Regardless, it is not possible to provide comprehensive instructions that would apply to every cluster.
 
 Palmetto
 ~~~~~~~~
