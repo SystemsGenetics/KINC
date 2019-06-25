@@ -12,15 +12,16 @@ DO_THRESHOLD=1
 DO_EXTRACT=1
 
 # define input/output files
-DATA="data"
-EMX_FILE="$1"
-CMX_FILE="$DATA/$(basename $EMX_FILE .txt)-cmx-py.txt"
-NET_FILE="$DATA/$(basename $EMX_FILE .txt)-net-py.txt"
+INFILE="$1"
+DIRNAME="$(dirname $INFILE)"
+BASENAME="$(basename $INFILE .txt)"
+EMX_FILE="$INFILE"
+CMX_FILE="$DIRNAME/$BASENAME.py-cmx.txt"
 
 # similarity
 if [[ $DO_SIMILARITY = 1 ]]; then
 	CLUSMETHOD="gmm"
-	CORRMETHOD="pearson"
+	CORRMETHOD="spearman"
 	MINEXPR="-inf"
 	MINCLUS=1
 	MAXCLUS=5
@@ -30,16 +31,16 @@ if [[ $DO_SIMILARITY = 1 ]]; then
 	MINCORR=0
 	MAXCORR=1
 
-	python scripts/kinc-similarity.py \
-	   --input $EMX_FILE \
-	   --output $CMX_FILE \
-	   --clusmethod $CLUSMETHOD \
-	   --corrmethod $CORRMETHOD \
-	   --minexpr=$MINEXPR \
-	   --minclus $MINCLUS --maxclus $MAXCLUS \
-	   --crit $CRITERION \
-	   $PREOUT $POSTOUT \
-	   --mincorr $MINCORR --maxcorr $MAXCORR
+	env time -f "%e" python scripts/kinc-similarity.py \
+		--input $EMX_FILE \
+		--output $CMX_FILE \
+		--clusmethod $CLUSMETHOD \
+		--corrmethod $CORRMETHOD \
+		--minexpr=$MINEXPR \
+		--minclus $MINCLUS --maxclus $MAXCLUS \
+		--crit $CRITERION \
+		$PREOUT $POSTOUT \
+		--mincorr $MINCORR --maxcorr $MAXCORR
 fi
 
 # threshold
@@ -50,24 +51,25 @@ if [[ $DO_THRESHOLD = 1 ]]; then
 	TSTEP=0.001
 	TSTOP=0.50
 
-	python scripts/kinc-threshold.py \
-	   --input $CMX_FILE \
-	   --n-genes $NUM_GENES \
-	   --method $METHOD \
-	   --tstart $TSTART \
-	   --tstep $TSTEP \
-	   --tstop $TSTOP
+	env time -f "%e" python scripts/kinc-threshold.py \
+		--input $CMX_FILE \
+		--n-genes $NUM_GENES \
+		--method $METHOD \
+		--tstart $TSTART \
+		--tstep $TSTEP \
+		--tstop $TSTOP
 fi
 
 # extract
 if [[ $DO_EXTRACT = 1 ]]; then
 	MINCORR=0
 	MAXCORR=1
+	NET_FILE="$DIRNAME/$BASENAME.th000.py-coexpnet.txt"
 
-	python scripts/kinc-extract.py \
-	   --emx $EMX_FILE \
-	   --cmx $CMX_FILE \
-	   --output $NET_FILE \
-	   --mincorr $MINCORR \
-	   --maxcorr $MAXCORR
+	env time -f "%e" python scripts/kinc-extract.py \
+		--emx $EMX_FILE \
+		--cmx $CMX_FILE \
+		--output $NET_FILE \
+		--mincorr $MINCORR \
+		--maxcorr $MAXCORR
 fi
