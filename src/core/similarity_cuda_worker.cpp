@@ -41,15 +41,15 @@ Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, :
    int K {_base->_maxClusters};
 
    _buffers.in_index = ::CUDA::Buffer<int2>(1 * W);
-   _buffers.work_N = ::CUDA::Buffer<int>(1 * W);
-   _buffers.work_xy = ::CUDA::Buffer<float>(2 * N_pow2 * W);
-   _buffers.work_labels = ::CUDA::Buffer<qint8>(N * W);
-   _buffers.work_components = ::CUDA::Buffer<cu_component>(K * W);
-   _buffers.work_MP = ::CUDA::Buffer<float2>(K * W);
-   _buffers.work_counts = ::CUDA::Buffer<int>(K * W);
-   _buffers.work_logpi = ::CUDA::Buffer<float>(K * W);
-   _buffers.work_gamma = ::CUDA::Buffer<float>(N * K * W);
-   _buffers.work_rank = ::CUDA::Buffer<int>(N_pow2 * W);
+   _buffers.work_N = ::CUDA::Buffer<int>(1 * W, false);
+   _buffers.work_xy = ::CUDA::Buffer<float>(2 * N_pow2 * W, false);
+   _buffers.work_labels = ::CUDA::Buffer<qint8>(N * W, false);
+   _buffers.work_components = ::CUDA::Buffer<cu_component>(K * W, false);
+   _buffers.work_MP = ::CUDA::Buffer<float2>(K * W, false);
+   _buffers.work_counts = ::CUDA::Buffer<int>(K * W, false);
+   _buffers.work_logpi = ::CUDA::Buffer<float>(K * W, false);
+   _buffers.work_gamma = ::CUDA::Buffer<float>(N * K * W, false);
+   _buffers.work_rank = ::CUDA::Buffer<int>(N_pow2 * W, false);
    _buffers.out_K = ::CUDA::Buffer<qint8>(1 * W);
    _buffers.out_labels = ::CUDA::Buffer<qint8>(N * W);
    _buffers.out_correlations = ::CUDA::Buffer<float>(K * W);
@@ -81,9 +81,6 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::CUDA::Worker::execute(const 
 
    // initialize result block
    ResultBlock* resultBlock {new ResultBlock(workBlock->index(), workBlock->start())};
-
-   // bind cuda context to current thread
-   _baseCuda->_context->setCurrent();
 
    // iterate through all pairs
    Pairwise::Index index {workBlock->start()};

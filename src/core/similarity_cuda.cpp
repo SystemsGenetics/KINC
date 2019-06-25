@@ -44,12 +44,10 @@ std::unique_ptr<EAbstractAnalyticCUDAWorker> Similarity::CUDA::makeWorker()
 
 /*!
  * Initializes all CUDA resources used by this object's implementation.
- *
- * @param context
  */
-void Similarity::CUDA::initialize(::CUDA::Context* context)
+void Similarity::CUDA::initialize()
 {
-   EDEBUG_FUNC(this,context);
+   EDEBUG_FUNC(this);
 
    // create list of cuda source files
    QStringList paths {
@@ -63,7 +61,6 @@ void Similarity::CUDA::initialize(::CUDA::Context* context)
    };
 
    // create program
-   _context = context;
    _program = new ::CUDA::Program(paths, this);
 
    // create buffer for expression data
