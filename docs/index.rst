@@ -16,5 +16,6 @@ The Knowledge Independent Network Construction (KINC) software is a C++ applicat
   overview
   installation
   usage
+  settings
   scripts
   troubleshooting
