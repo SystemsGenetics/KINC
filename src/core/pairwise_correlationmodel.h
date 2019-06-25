@@ -2,7 +2,7 @@
 #define PAIRWISE_CORRELATIONMODEL_H
 #include <ace/core/core.h>
 
-#include "pairwise_linalg.h"
+#include "pairwise_index.h"
 
 namespace Pairwise
 {
@@ -15,15 +15,19 @@ namespace Pairwise
    class CorrelationModel
    {
    public:
+      ~CorrelationModel() = default;
+   public:
       QVector<float> compute(
-         const QVector<Vector2>& data,
+         const std::vector<float>& expressions,
+         const Index& index,
          int K,
          const QVector<qint8>& labels,
          int minSamples
       );
    protected:
       virtual float computeCluster(
-         const QVector<Vector2>& data,
+         const float *x,
+         const float *y,
          const QVector<qint8>& labels,
          qint8 cluster,
          int minSamples

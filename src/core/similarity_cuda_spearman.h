@@ -18,13 +18,13 @@ public:
    enum Argument
    {
       GlobalWorkSize
-      ,InData
+      ,Expressions
+      ,SampleSize
+      ,InIndex
       ,ClusterSize
       ,InLabels
-      ,SampleSize
       ,MinSamples
-      ,WorkX
-      ,WorkY
+      ,WorkXY
       ,WorkRank
       ,OutCorrelations
    };
@@ -33,13 +33,13 @@ public:
       const ::CUDA::Stream& stream,
       int globalWorkSize,
       int localWorkSize,
-      ::CUDA::Buffer<float2>* in_data,
+      ::CUDA::Buffer<float>* expressions,
+      int sampleSize,
+      ::CUDA::Buffer<int2>* in_index,
       char clusterSize,
       ::CUDA::Buffer<qint8>* in_labels,
-      int sampleSize,
       int minSamples,
-      ::CUDA::Buffer<float>* work_x,
-      ::CUDA::Buffer<float>* work_y,
+      ::CUDA::Buffer<float>* work_xy,
       ::CUDA::Buffer<int>* work_rank,
       ::CUDA::Buffer<float>* out_correlations
    );

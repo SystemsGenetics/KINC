@@ -33,12 +33,14 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
  * @param stream
  * @param globalWorkSize
  * @param localWorkSize
+ * @param expressions
  * @param sampleSize
+ * @param in_index
  * @param minSamples
  * @param minClusters
  * @param maxClusters
  * @param criterion
- * @param work_X
+ * @param work_xy
  * @param work_N
  * @param work_labels
  * @param work_components
@@ -53,12 +55,14 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
    const ::CUDA::Stream& stream,
    int globalWorkSize,
    int localWorkSize,
+   ::CUDA::Buffer<float>* expressions,
    int sampleSize,
+   ::CUDA::Buffer<int2>* in_index,
    int minSamples,
    char minClusters,
    char maxClusters,
    int criterion,
-   ::CUDA::Buffer<float2>* work_X,
+   ::CUDA::Buffer<float>* work_xy,
    ::CUDA::Buffer<int>* work_N,
    ::CUDA::Buffer<qint8>* work_labels,
    ::CUDA::Buffer<cu_component>* work_components,
@@ -71,15 +75,17 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
 )
 {
    EDEBUG_FUNC(this,
-      stream,
+      &stream,
       globalWorkSize,
       localWorkSize,
+      expressions,
       sampleSize,
+      in_index,
       minSamples,
       minClusters,
       maxClusters,
-      &criterion,
-      work_X,
+      criterion,
+      work_xy,
       work_N,
       work_labels,
       work_components,
@@ -92,12 +98,14 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
 
    // set kernel arguments
    setArgument(GlobalWorkSize, globalWorkSize);
+   setBuffer(Expressions, expressions);
    setArgument(SampleSize, sampleSize);
+   setBuffer(InIndex, in_index);
    setArgument(MinSamples, minSamples);
    setArgument(MinClusters, minClusters);
    setArgument(MaxClusters, maxClusters);
    setArgument(Criterion, criterion);
-   setBuffer(WorkX, work_X);
+   setBuffer(WorkXY, work_xy);
    setBuffer(WorkN, work_N);
    setBuffer(WorkLabels, work_labels);
    setBuffer(WorkComponents, work_components);
@@ -109,11 +117,6 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
    setBuffer(OutLabels, out_labels);
 
    // set work sizes
-   if ( localWorkSize == 0 )
-   {
-      localWorkSize = min(globalWorkSize, getAttribute(CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK));
-   }
-
    int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
 
    setSizes(numWorkgroups * localWorkSize, localWorkSize);

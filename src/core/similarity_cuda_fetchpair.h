@@ -22,7 +22,6 @@ public:
       ,SampleSize
       ,InIndex
       ,MinExpression
-      ,OutX
       ,OutN
       ,OutLabels
    };
@@ -35,7 +34,6 @@ public:
       int sampleSize,
       ::CUDA::Buffer<int2>* in_index,
       float minExpression,
-      ::CUDA::Buffer<float2>* out_X,
       ::CUDA::Buffer<int>* out_N,
       ::CUDA::Buffer<qint8>* out_labels
    );

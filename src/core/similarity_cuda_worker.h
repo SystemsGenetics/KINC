@@ -12,12 +12,12 @@
 /*!
  * This class implements the CUDA worker of the similarity analytic.
  */
-class Similarity::CUDA::Worker : public EAbstractAnalytic::CUDA::Worker
+class Similarity::CUDA::Worker : public EAbstractAnalyticCUDAWorker
 {
    Q_OBJECT
 public:
    explicit Worker(Similarity* base, Similarity::CUDA* baseCuda, ::CUDA::Program* program);
-   virtual std::unique_ptr<EAbstractAnalytic::Block> execute(const EAbstractAnalytic::Block* block) override final;
+   virtual std::unique_ptr<EAbstractAnalyticBlock> execute(const EAbstractAnalyticBlock* block) override final;
 private:
    /*!
     * Pointer to the base analytic.
@@ -48,10 +48,8 @@ private:
    struct
    {
       ::CUDA::Buffer<int2> in_index;
-      ::CUDA::Buffer<float2> work_X;
       ::CUDA::Buffer<int> work_N;
-      ::CUDA::Buffer<float> work_x;
-      ::CUDA::Buffer<float> work_y;
+      ::CUDA::Buffer<float> work_xy;
       ::CUDA::Buffer<qint8> work_labels;
       ::CUDA::Buffer<cu_component> work_components;
       ::CUDA::Buffer<float2> work_MP;

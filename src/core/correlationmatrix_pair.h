@@ -31,6 +31,7 @@ public:
    QString toString() const;
    const float& at(int cluster) const { return _correlations.at(cluster); }
    float& at(int cluster) { return _correlations[cluster]; }
+   const QVector<float>& correlations() { return _correlations; }
 private:
    virtual void writeCluster(EDataStream& stream, int cluster);
    virtual void readCluster(const EDataStream& stream, int cluster) const;

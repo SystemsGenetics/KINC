@@ -14,7 +14,7 @@
  * @param size
  */
 Similarity::WorkBlock::WorkBlock(int index, qint64 start, qint64 size):
-   EAbstractAnalytic::Block(index),
+   EAbstractAnalyticBlock(index),
    _start(start),
    _size(size)
 {

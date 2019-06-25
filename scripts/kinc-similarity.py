@@ -147,21 +147,21 @@ if __name__ == "__main__":
 
 	# parse command-line arguments
 	parser = argparse.ArgumentParser()
-	parser.add_argument("-i", "--input", required=True, help="expression matrix file", dest="INPUT")
-	parser.add_argument("-o", "--output", required=True, help="correlation file", dest="OUTPUT")
-	parser.add_argument("--clusmethod", default="none", choices=["none", "gmm", "kmeans"], help="clustering method", dest="CLUSMETHOD")
-	parser.add_argument("--corrmethod", default="pearson", choices=["kendall", "pearson", "spearman"], help="correlation method", dest="CORRMETHOD")
-	parser.add_argument("--minexpr", type=float, default=-float("inf"), help="minimum expression threshold", dest="MINEXPR")
-	parser.add_argument("--minsamp", type=int, default=30, help="minimum sample size", dest="MINSAMP")
-	parser.add_argument("--minclus", type=int, default=1, help="minimum clusters", dest="MINCLUS")
-	parser.add_argument("--maxclus", type=int, default=5, help="maximum clusters", dest="MAXCLUS")
-	parser.add_argument("--crit", default="bic", choices=["aic", "bic"], help="model selection criterion", dest="CRITERION")
-	parser.add_argument("--preout", action="store_true", help="whether to remove pre-clustering outliers", dest="PREOUT")
-	parser.add_argument("--postout", action="store_true", help="whether to remove post-clustering outliers", dest="POSTOUT")
-	parser.add_argument("--mincorr", type=float, default=0, help="minimum absolute correlation threshold", dest="MINCORR")
-	parser.add_argument("--maxcorr", type=float, default=1, help="maximum absolute correlation threshold", dest="MAXCORR")
-	parser.add_argument("--pvalue", type=float, default=float("inf"), help="maximum p-value threshold for correlations", dest="MAXPVALUE")
-	parser.add_argument("--visualize", action="store_true", help="whether to visualize results", dest="VISUALIZE")
+	parser.add_argument("--input", help="expression matrix file", required=True)
+	parser.add_argument("--output", help="correlation file", required=True)
+	parser.add_argument("--clusmethod", help="clustering method", default="none", choices=["none", "gmm", "kmeans"])
+	parser.add_argument("--corrmethod", help="correlation method", default="pearson", choices=["kendall", "pearson", "spearman"])
+	parser.add_argument("--minexpr", help="minimum expression threshold", type=float, default=-float("inf"))
+	parser.add_argument("--minsamp", help="minimum sample size", type=int, default=30)
+	parser.add_argument("--minclus", help="minimum clusters", type=int, default=1)
+	parser.add_argument("--maxclus", help="maximum clusters", type=int, default=5)
+	parser.add_argument("--crit", help="model selection criterion", default="bic", choices=["aic", "bic"])
+	parser.add_argument("--preout", help="whether to remove pre-clustering outliers", action="store_true")
+	parser.add_argument("--postout", help="whether to remove post-clustering outliers", action="store_true")
+	parser.add_argument("--mincorr", help="minimum absolute correlation threshold", type=float, default=0)
+	parser.add_argument("--maxcorr", help="maximum absolute correlation threshold", type=float, default=1)
+	parser.add_argument("--maxp", help="maximum p-value threshold for correlations", type=float, default=float("inf"))
+	parser.add_argument("--visualize", help="whether to visualize results", action="store_true")
 
 	args = parser.parse_args()
 
@@ -169,37 +169,37 @@ if __name__ == "__main__":
 	pprint.pprint(vars(args))
 
 	# load data
-	emx = pd.read_table(args.INPUT)
-	cmx = open(args.OUTPUT, "w");
+	emx = pd.read_csv(args.input, sep="\t")
+	cmx = open(args.output, "w");
 
 	# iterate through each pair
 	for i in range(len(emx.index)):
 		for j in range(i):
 			# fetch pairwise input data
-			X, y = fetch_pair(emx, i, j, args.MINEXPR)
+			X, y = fetch_pair(emx, i, j, args.minexpr)
 
 			# remove pre-clustering outliers
-			if args.PREOUT:
+			if args.preout:
 				mark_outliers(X, y, 0, -7)
 
 			# perform clustering
 			K = 1
 
-			if args.CLUSMETHOD != "none":
-				K, y = compute_clustering(X, y, CLUSTERING_METHODS[args.CLUSMETHOD], args.MINSAMP, args.MINCLUS, args.MAXCLUS, args.CRITERION)
+			if args.clusmethod != "none":
+				K, y = compute_clustering(X, y, CLUSTERING_METHODS[args.clusmethod], args.minsamp, args.minclus, args.maxclus, args.criterion)
 
 			print("%4d %4d %d" % (i, j, K))
 
 			# remove post-clustering outliers
-			if K > 1 and args.POSTOUT:
+			if K > 1 and args.postout:
 				for k in range(K):
 					mark_outliers(X, y, k, -8)
 
 			# perform correlation
-			correlations = [compute_correlation(X, y, k, CORRELATION_METHODS[args.CORRMETHOD], args.MINSAMP, args.VISUALIZE) for k in range(K)]
+			correlations = [compute_correlation(X, y, k, CORRELATION_METHODS[args.corrmethod], args.minsamp, args.visualize) for k in range(K)]
 
 			# save correlation matrix
-			valid = [(corr != None and args.MINCORR <= abs(corr) and abs(corr) <= args.MAXCORR and p <= args.MAXPVALUE) for corr, p in correlations]
+			valid = [(corr != None and args.mincorr <= abs(corr) and abs(corr) <= args.maxcorr and p <= args.maxp) for corr, p in correlations]
 			num_clusters = sum(valid)
 			cluster_idx = 0
 

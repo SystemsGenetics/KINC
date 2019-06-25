@@ -33,7 +33,6 @@ SOURCES += \
    importcorrelationmatrix.cpp \
    importexpressionmatrix_input.cpp \
    importexpressionmatrix.cpp \
-   pairwise_clusteringmodel.cpp \
    pairwise_correlationmodel.cpp \
    pairwise_gmm.cpp \
    pairwise_index.cpp \
@@ -64,7 +63,12 @@ SOURCES += \
    similarity_resultblock.cpp \
    similarity_serial.cpp \
    similarity_workblock.cpp \
-   similarity.cpp
+   similarity.cpp \
+    corrpower.cpp \
+    corrpower_input.cpp \
+    corrpower_resultblock.cpp \
+    corrpower_serial.cpp \
+    corrpower_workblock.cpp
 
 # Header files
 HEADERS += \
@@ -120,4 +124,9 @@ HEADERS += \
    similarity_resultblock.h \
    similarity_serial.h \
    similarity_workblock.h \
-   similarity.h
+   similarity.h \
+    corrpower.h \
+    corrpower_input.h \
+    corrpower_serial.h \
+    corrpower_resultblock.h \
+    corrpower_workblock.h

@@ -26,8 +26,8 @@ class ImportCorrelationMatrix : public EAbstractAnalytic
 public:
    class Input;
    virtual int size() const override final;
-   virtual void process(const EAbstractAnalytic::Block* result) override final;
-   virtual EAbstractAnalytic::Input* makeInput() override final;
+   virtual void process(const EAbstractAnalyticBlock* result) override final;
+   virtual EAbstractAnalyticInput* makeInput() override final;
    virtual void initialize();
 private:
    /**

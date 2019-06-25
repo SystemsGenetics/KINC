@@ -7,7 +7,7 @@
 /*!
  * This class implements the abstract input of the RMT analytic.
  */
-class RMT::Input : public EAbstractAnalytic::Input
+class RMT::Input : public EAbstractAnalyticInput
 {
    Q_OBJECT
 public:
@@ -23,6 +23,7 @@ public:
       ,ThresholdStep
       ,ThresholdStop
       ,NumThreads
+      ,UniqueEpsilon
       ,MinUniqueEigenvalues
       ,SplineInterpolation
       ,MinSplinePace
@@ -32,7 +33,7 @@ public:
    };
    explicit Input(RMT* parent);
    virtual int size() const override final;
-   virtual EAbstractAnalytic::Input::Type type(int index) const override final;
+   virtual EAbstractAnalyticInput::Type type(int index) const override final;
    virtual QVariant data(int index, Role role) const override final;
    virtual void set(int index, const QVariant& value) override final;
    virtual void set(int index, QFile* file) override final;

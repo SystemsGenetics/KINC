@@ -96,7 +96,7 @@ void ExpressionMatrix::Gene::read(int index)
    _matrix->seekExpression(index,0);
 
    // read the entire row into memory
-   for (int i = 0; i < _matrix->sampleSize() ;++i)
+   for ( int i = 0; i < _matrix->sampleSize(); ++i )
    {
       _matrix->stream() >> _expressions[i];
    }
@@ -159,7 +159,7 @@ void ExpressionMatrix::Gene::write(int index)
    _matrix->seekExpression(index,0);
 
    // write the entire row to the data object
-   for (int i = 0; i < _matrix->sampleSize() ;++i)
+   for ( int i = 0; i < _matrix->sampleSize(); ++i )
    {
       _matrix->stream() << _expressions[i];
    }

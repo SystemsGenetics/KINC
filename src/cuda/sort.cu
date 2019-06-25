@@ -5,13 +5,35 @@
 
 
 /*!
+ * Compute the next power of 2 which occurs after a number.
+ *
+ * @param n
+ */
+__device__
+int nextPower2(int n)
+{
+   int pow2 = 2;
+   while ( pow2 < n )
+   {
+      pow2 *= 2;
+   }
+
+   return pow2;
+}
+
+
+
+
+
+
+/*!
  * Swap two values
  *
  * @param a
  * @param b
  */
 __device__
-void swapF(float* a, float* b)
+void swapF(float *a, float *b)
 {
    float c = *a;
    *a = *b;
@@ -30,7 +52,7 @@ void swapF(float* a, float* b)
  * @param b
  */
 __device__
-void swapI(int* a, int* b)
+void swapI(int *a, int *b)
 {
    int c = *a;
    *a = *b;
@@ -42,118 +64,32 @@ void swapI(int* a, int* b)
 
 
 
-__device__
-void siftDown(float *array, int start, int end)
-{
-   int root = start;
-
-   while ( 2 * root + 1 <= end )
-   {
-      int child = 2 * root + 1;
-      int swp = root;
-
-      if ( array[swp] < array[child] )
-      {
-         swp = child;
-      }
-
-      if ( child + 1 <= end && array[swp] < array[child + 1] )
-      {
-         swp = child + 1;
-      }
-
-      if ( swp == root )
-      {
-         return;
-      }
-      else
-      {
-         swapF(&array[root], &array[swp]);
-         root = swp;
-      }
-   }
-}
-
-
-
-
-
-
-__device__
-void heapify(float *array, int n)
-{
-   int start = ((n-1) - 1) / 2;
-
-   while ( start >= 0 )
-   {
-      siftDown(array, start, n - 1);
-      start -= 1;
-   }
-}
-
-
-
-
-
-
 /*!
- * Sort an array using heapsort.
- *
- * @param array
- * @param n
- */
-__device__
-void heapSort(float *array, int n)
-{
-   heapify(array, n);
-
-   int end = n - 1;
-   while ( end > 0 )
-   {
-      swapF(&array[end], &array[0]);
-      end -= 1;
-
-      siftDown(array, 0, end);
-   }
-}
-
-
-
-
-
-
-/*!
- * Sort a list using bitonic sort, while also applying the same swap operations
- * to a second list of the same size. The lists should have a size which is a
+ * Sort an array using bitonic sort. The array should have a size which is a
  * power of two.
  *
+ * @param array
  * @param size
- * @param sortList
- * @param extraList
  */
 __device__
-void bitonicSortFF(int size, float* sortList, float* extraList)
+void bitonicSort(float *array, int size)
 {
-   // initialize all variables
-   int bsize = size/2;
-   int ob,ib,i,dir,a,b,t;
+   int bsize = size / 2;
+   int dir, a, b, t;
 
-   // bitonic algorithm, starting with an outer block of 2 and working up to total size of list
-   for (ob = 2; ob <= size ;ob *= 2)
+   for ( int ob = 2; ob <= size; ob *= 2 )
    {
-      for (ib = ob; ib >= 2 ;ib /= 2)
+      for ( int ib = ob; ib >= 2; ib /= 2 )
       {
          t = ib/2;
-         for (i = 0; i < bsize ;++i)
+         for ( int i = 0; i < bsize; ++i )
          {
-            dir = -((i/(ob/2))&0x1);
-            a = (i/t)*ib+(i%t);
-            b = a+t;
-            if ( ( ( sortList[a] > sortList[b] ) && !dir )
-                 || ( ( sortList[a] < sortList[b] ) && dir ) )
+            dir = -((i/(ob/2)) & 0x1);
+            a = (i/t) * ib + (i%t);
+            b = a + t;
+            if ( ((array[a] > array[b]) && !dir) || ((array[a] < array[b]) && dir) )
             {
-               swapF(&sortList[a],&sortList[b]);
-               swapF(&extraList[a],&extraList[b]);
+               swapF(&array[a], &array[b]);
             }
          }
       }
@@ -166,37 +102,74 @@ void bitonicSortFF(int size, float* sortList, float* extraList)
 
 
 /*!
- * Sort a list using bitonic sort, while also applying the same swap operations
- * to a second list of the same size. The lists should have a size which is a
+ * Sort an array using bitonic sort, while also applying the same swap operations
+ * to a second array of the same size. The arrays should have a size which is a
  * power of two.
  *
  * @param size
- * @param sortList
- * @param extraList
+ * @param array
+ * @param extra
  */
 __device__
-void bitonicSortFI(int size, float* sortList, int* extraList)
+void bitonicSortFF(int size, float *array, float *extra)
 {
-   // initialize all variables
-   int bsize = size/2;
-   int ob,ib,i,dir,a,b,t;
+   int bsize = size / 2;
+   int dir, a, b, t;
 
-   // bitonic algorithm, starting with an outer block of 2 and working up to total size of list
-   for (ob = 2; ob <= size ;ob *= 2)
+   for ( int ob = 2; ob <= size; ob *= 2 )
    {
-      for (ib = ob; ib >= 2 ;ib /= 2)
+      for ( int ib = ob; ib >= 2; ib /= 2 )
       {
          t = ib/2;
-         for (i = 0; i < bsize ;++i)
+         for ( int i = 0; i < bsize; ++i )
          {
-            dir = -((i/(ob/2))&0x1);
-            a = (i/t)*ib+(i%t);
-            b = a+t;
-            if ( ( ( sortList[a] > sortList[b] ) && !dir )
-                 || ( ( sortList[a] < sortList[b] ) && dir ) )
+            dir = -((i/(ob/2)) & 0x1);
+            a = (i/t) * ib + (i%t);
+            b = a + t;
+            if ( ((array[a] > array[b]) && !dir) || ((array[a] < array[b]) && dir) )
             {
-               swapF(&sortList[a],&sortList[b]);
-               swapI(&extraList[a],&extraList[b]);
+               swapF(&array[a], &array[b]);
+               swapF(&extra[a], &extra[b]);
+            }
+         }
+      }
+   }
+}
+
+
+
+
+
+
+/*!
+ * Sort an array using bitonic sort, while also applying the same swap operations
+ * to a second array of the same size. The arrays should have a size which is a
+ * power of two.
+ *
+ * @param size
+ * @param array
+ * @param extra
+ */
+__device__
+void bitonicSortFI(int size, float *array, int *extra)
+{
+   int bsize = size / 2;
+   int dir, a, b, t;
+
+   for ( int ob = 2; ob <= size; ob *= 2 )
+   {
+      for ( int ib = ob; ib >= 2; ib /= 2 )
+      {
+         t = ib/2;
+         for ( int i = 0; i < bsize; ++i )
+         {
+            dir = -((i/(ob/2)) & 0x1);
+            a = (i/t) * ib + (i%t);
+            b = a + t;
+            if ( ((array[a] > array[b]) && !dir) || ((array[a] < array[b]) && dir) )
+            {
+               swapF(&array[a], &array[b]);
+               swapI(&extra[a], &extra[b]);
             }
          }
       }

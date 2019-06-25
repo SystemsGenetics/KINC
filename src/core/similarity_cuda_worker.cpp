@@ -18,7 +18,7 @@ using namespace std;
  * CUDA context, and CUDA program.
  *
  * @param base
- * @param baseCUDA
+ * @param baseCuda
  * @param program
  */
 Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, ::CUDA::Program* program):
@@ -32,19 +32,17 @@ Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, :
       .spearman = CUDA::Spearman(program)
    })
 {
-   EDEBUG_FUNC(this,base,baseCUDA,program);
+   EDEBUG_FUNC(this,base,baseCuda,program);
 
    // initialize buffers
    int W {_base->_globalWorkSize};
    int N {_base->_input->sampleSize()};
-   int N_pow2 {Pairwise::Spearman::nextPower2(N)};
+   int N_pow2 {nextPower2(N)};
    int K {_base->_maxClusters};
 
    _buffers.in_index = ::CUDA::Buffer<int2>(1 * W);
-   _buffers.work_X = ::CUDA::Buffer<float2>(N * W, false);
    _buffers.work_N = ::CUDA::Buffer<int>(1 * W, false);
-   _buffers.work_x = ::CUDA::Buffer<float>(N_pow2 * W, false);
-   _buffers.work_y = ::CUDA::Buffer<float>(N_pow2 * W, false);
+   _buffers.work_xy = ::CUDA::Buffer<float>(2 * N_pow2 * W, false);
    _buffers.work_labels = ::CUDA::Buffer<qint8>(N * W, false);
    _buffers.work_components = ::CUDA::Buffer<cu_component>(K * W, false);
    _buffers.work_MP = ::CUDA::Buffer<float2>(K * W, false);
@@ -69,7 +67,7 @@ Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, :
  *
  * @param block
  */
-std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(const EAbstractAnalytic::Block* block)
+std::unique_ptr<EAbstractAnalyticBlock> Similarity::CUDA::Worker::execute(const EAbstractAnalyticBlock* block)
 {
    EDEBUG_FUNC(this,block);
 
@@ -90,7 +88,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
    for ( int i = 0; i < workBlock->size(); i += _base->_globalWorkSize )
    {
       // write input buffers to device
-      int globalWorkSize {(int) min((qint64)_base->_globalWorkSize, workBlock->size() - i)};
+      int globalWorkSize {static_cast<int>(min(static_cast<qint64>(_base->_globalWorkSize), workBlock->size() - i))};
 
       for ( int j = 0; j < globalWorkSize; ++j )
       {
@@ -109,7 +107,6 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
          _base->_input->sampleSize(),
          &_buffers.in_index,
          _base->_minExpression,
-         &_buffers.work_X,
          &_buffers.work_N,
          &_buffers.out_labels
       );
@@ -121,14 +118,14 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
             _stream,
             globalWorkSize,
             _base->_localWorkSize,
-            &_buffers.work_X,
+            &_baseCuda->_expressions,
+            _base->_input->sampleSize(),
+            &_buffers.in_index,
             &_buffers.work_N,
             &_buffers.out_labels,
-            _base->_input->sampleSize(),
             &_buffers.out_K,
             -7,
-            &_buffers.work_x,
-            &_buffers.work_y
+            &_buffers.work_xy
          );
       }
 
@@ -139,12 +136,14 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
             _stream,
             globalWorkSize,
             _base->_localWorkSize,
+            &_baseCuda->_expressions,
             _base->_input->sampleSize(),
+            &_buffers.in_index,
             _base->_minSamples,
             _base->_minClusters,
             _base->_maxClusters,
             (int) _base->_criterion,
-            &_buffers.work_X,
+            &_buffers.work_xy,
             &_buffers.work_N,
             &_buffers.work_labels,
             &_buffers.work_components,
@@ -174,14 +173,14 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
             _stream,
             globalWorkSize,
             _base->_localWorkSize,
-            &_buffers.work_X,
+            &_baseCuda->_expressions,
+            _base->_input->sampleSize(),
+            &_buffers.in_index,
             &_buffers.work_N,
             &_buffers.out_labels,
-            _base->_input->sampleSize(),
             &_buffers.out_K,
             -8,
-            &_buffers.work_x,
-            &_buffers.work_y
+            &_buffers.work_xy
          );
       }
 
@@ -192,10 +191,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
             _stream,
             globalWorkSize,
             _base->_localWorkSize,
-            &_buffers.work_X,
+            &_baseCuda->_expressions,
+            _base->_input->sampleSize(),
+            &_buffers.in_index,
             _base->_maxClusters,
             &_buffers.out_labels,
-            _base->_input->sampleSize(),
             _base->_minSamples,
             &_buffers.out_correlations
          );
@@ -206,13 +206,13 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
             _stream,
             globalWorkSize,
             _base->_localWorkSize,
-            &_buffers.work_X,
+            &_baseCuda->_expressions,
+            _base->_input->sampleSize(),
+            &_buffers.in_index,
             _base->_maxClusters,
             &_buffers.out_labels,
-            _base->_input->sampleSize(),
             _base->_minSamples,
-            &_buffers.work_x,
-            &_buffers.work_y,
+            &_buffers.work_xy,
             &_buffers.work_rank,
             &_buffers.out_correlations
          );
@@ -238,15 +238,10 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
          // save the number of clusters
          pair.K = _buffers.out_K.at(j);
 
-         // save the cluster labels (if more than one cluster was found)
-         if ( pair.K > 1 )
-         {
-            pair.labels = ResultBlock::makeVector(labels, _base->_input->sampleSize());
-         }
-
-         // save the correlations (if the pair was able to be processed)
+         // save the cluster labels and correlations (if the pair was able to be processed)
          if ( pair.K > 0 )
          {
+            pair.labels = ResultBlock::makeVector(labels, _base->_input->sampleSize());
             pair.correlations = ResultBlock::makeVector(correlations, _base->_maxClusters);
          }
 
@@ -255,5 +250,5 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::CUDA::Worker::execute(cons
    }
 
    // return result block
-   return unique_ptr<EAbstractAnalytic::Block>(resultBlock);
+   return unique_ptr<EAbstractAnalyticBlock>(resultBlock);
 }

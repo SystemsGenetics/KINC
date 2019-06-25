@@ -17,28 +17,28 @@ public:
    enum Argument
    {
       GlobalWorkSize
-      ,InData
+      ,Expressions
+      ,SampleSize
+      ,InIndex
       ,InN
       ,InLabels
-      ,SampleSize
       ,InK
       ,Marker
-      ,WorkX
-      ,WorkY
+      ,WorkXY
    };
    explicit Outlier(::OpenCL::Program* program, QObject* parent = nullptr);
    ::OpenCL::Event execute(
       ::OpenCL::CommandQueue* queue,
       int globalWorkSize,
       int localWorkSize,
-      ::OpenCL::Buffer<cl_float2>* in_data,
+      ::OpenCL::Buffer<cl_float>* expressions,
+      cl_int sampleSize,
+      ::OpenCL::Buffer<cl_int2>* in_index,
       ::OpenCL::Buffer<cl_int>* in_N,
       ::OpenCL::Buffer<cl_char>* in_labels,
-      cl_int sampleSize,
       ::OpenCL::Buffer<cl_char>* in_K,
       cl_char marker,
-      ::OpenCL::Buffer<cl_float>* work_x,
-      ::OpenCL::Buffer<cl_float>* work_y
+      ::OpenCL::Buffer<cl_float>* work_xy
    );
 };
 

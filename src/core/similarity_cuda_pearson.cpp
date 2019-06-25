@@ -33,10 +33,11 @@ Similarity::CUDA::Pearson::Pearson(::CUDA::Program* program):
  * @param stream
  * @param globalWorkSize
  * @param localWorkSize
- * @param in_data
+ * @param expressions
+ * @param sampleSize
+ * @param in_index
  * @param clusterSize
  * @param in_labels
- * @param sampleSize
  * @param minSamples
  * @param out_correlations
  */
@@ -44,40 +45,38 @@ Similarity::CUDA::Pearson::Pearson(::CUDA::Program* program):
    const ::CUDA::Stream& stream,
    int globalWorkSize,
    int localWorkSize,
-   ::CUDA::Buffer<float2>* in_data,
+   ::CUDA::Buffer<float>* expressions,
+   int sampleSize,
+   ::CUDA::Buffer<int2>* in_index,
    char clusterSize,
    ::CUDA::Buffer<qint8>* in_labels,
-   int sampleSize,
    int minSamples,
    ::CUDA::Buffer<float>* out_correlations
 )
 {
    EDEBUG_FUNC(this,
-      stream,
+      &stream,
       globalWorkSize,
       localWorkSize,
-      in_data,
+      expressions,
+      sampleSize,
+      in_index,
       clusterSize,
       in_labels,
-      sampleSize,
       minSamples,
       out_correlations);
 
    // set kernel arguments
    setArgument(GlobalWorkSize, globalWorkSize);
-   setBuffer(InData, in_data);
+   setBuffer(Expressions, expressions);
+   setArgument(SampleSize, sampleSize);
+   setBuffer(InIndex, in_index);
    setArgument(ClusterSize, clusterSize);
    setBuffer(InLabels, in_labels);
-   setArgument(SampleSize, sampleSize);
    setArgument(MinSamples, minSamples);
    setBuffer(OutCorrelations, out_correlations);
 
    // set work sizes
-   if ( localWorkSize == 0 )
-   {
-      localWorkSize = min(globalWorkSize, getAttribute(CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK));
-   }
-
    int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
 
    setSizes(numWorkgroups * localWorkSize, localWorkSize);

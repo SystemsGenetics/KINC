@@ -5,10 +5,10 @@
 
 
 /*!
- * Compute the Pearson correlation of a cluster in a pairwise data array. The
- * data array should only contain samples that have a non-negative label.
+ * Compute the Pearson correlation of a cluster in a pairwise data array.
  *
- * @param data
+ * @param x
+ * @param y
  * @param labels
  * @param sampleSize
  * @param cluster
@@ -16,7 +16,8 @@
  */
 __device__
 float Pearson_computeCluster(
-   const float2 *data,
+   const float *x,
+   const float *y,
    const char *labels,
    int sampleSize,
    char cluster,
@@ -30,25 +31,20 @@ float Pearson_computeCluster(
    float sumy2 = 0;
    float sumxy = 0;
 
-   for ( int i = 0, j = 0; i < sampleSize; ++i )
+   for ( int i = 0; i < sampleSize; ++i )
    {
-      if ( labels[i] >= 0 )
+      if ( labels[i] == cluster )
       {
-         if ( labels[i] == cluster )
-         {
-            float x_i = data[j].x;
-            float y_i = data[j].y;
+         float x_i = x[i];
+         float y_i = y[i];
 
-            sumx += x_i;
-            sumy += y_i;
-            sumx2 += x_i * x_i;
-            sumy2 += y_i * y_i;
-            sumxy += x_i * y_i;
+         sumx += x_i;
+         sumy += y_i;
+         sumx2 += x_i * x_i;
+         sumy2 += y_i * y_i;
+         sumxy += x_i * y_i;
 
-            ++n;
-         }
-
-         ++j;
+         ++n;
       }
    }
 
@@ -74,20 +70,22 @@ float Pearson_computeCluster(
  * matrix, while the labels should contain all samples.
  *
  * @param globalWorkSize
- * @param in_data
+ * @param expressions
+ * @param sampleSize
+ * @param in_index
  * @param clusterSize
  * @param in_labels
- * @param sampleSize
  * @param minSamples
  * @param out_correlations
  */
 __global__
 void Pearson_compute(
    int globalWorkSize,
-   const float2 *in_data,
+   const float *expressions,
+   int sampleSize,
+   const int2 *in_index,
    char clusterSize,
    const char *in_labels,
-   int sampleSize,
    int minSamples,
    float *out_correlations)
 {
@@ -99,12 +97,14 @@ void Pearson_compute(
    }
 
    // initialize workspace variables
-   const float2 *data = &in_data[i * sampleSize];
+   int2 index = in_index[i];
+   const float *x = &expressions[index.x * sampleSize];
+   const float *y = &expressions[index.y * sampleSize];
    const char *labels = &in_labels[i * sampleSize];
    float *correlations = &out_correlations[i * clusterSize];
 
    for ( char k = 0; k < clusterSize; ++k )
    {
-      correlations[k] = Pearson_computeCluster(data, labels, sampleSize, k, minSamples);
+      correlations[k] = Pearson_computeCluster(x, y, labels, sampleSize, k, minSamples);
    }
 }

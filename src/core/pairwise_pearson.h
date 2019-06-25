@@ -10,12 +10,13 @@ namespace Pairwise
    class Pearson : public CorrelationModel
    {
    protected:
-      float computeCluster(
-         const QVector<Vector2>& data,
+      virtual float computeCluster(
+         const float *x,
+         const float *y,
          const QVector<qint8>& labels,
          qint8 cluster,
          int minSamples
-      );
+      ) override final;
    };
 }
 

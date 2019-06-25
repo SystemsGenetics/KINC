@@ -12,12 +12,12 @@
 /*!
  * This class implements the OpenCL worker of the similarity analytic.
  */
-class Similarity::OpenCL::Worker : public EAbstractAnalytic::OpenCL::Worker
+class Similarity::OpenCL::Worker : public EAbstractAnalyticOpenCLWorker
 {
    Q_OBJECT
 public:
    explicit Worker(Similarity* base, Similarity::OpenCL* baseOpenCL, ::OpenCL::Context* context, ::OpenCL::Program* program);
-   virtual std::unique_ptr<EAbstractAnalytic::Block> execute(const EAbstractAnalytic::Block* block) override final;
+   virtual std::unique_ptr<EAbstractAnalyticBlock> execute(const EAbstractAnalyticBlock* block) override final;
 private:
    /*!
     * Pointer to the base analytic.
@@ -48,10 +48,8 @@ private:
    struct
    {
       ::OpenCL::Buffer<cl_int2> in_index;
-      ::OpenCL::Buffer<cl_float2> work_X;
       ::OpenCL::Buffer<cl_int> work_N;
-      ::OpenCL::Buffer<cl_float> work_x;
-      ::OpenCL::Buffer<cl_float> work_y;
+      ::OpenCL::Buffer<cl_float> work_xy;
       ::OpenCL::Buffer<cl_char> work_labels;
       ::OpenCL::Buffer<cl_component> work_components;
       ::OpenCL::Buffer<cl_float2> work_MP;

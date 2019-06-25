@@ -34,62 +34,57 @@ Similarity::OpenCL::Outlier::Outlier(::OpenCL::Program* program, QObject* parent
  * @param queue
  * @param globalWorkSize
  * @param localWorkSize
- * @param in_data
+ * @param expressions
+ * @param sampleSize
+ * @param in_index
  * @param in_N
  * @param in_labels
- * @param sampleSize
  * @param in_K
  * @param marker
- * @param work_x
- * @param work_y
+ * @param work_xy
  */
 ::OpenCL::Event Similarity::OpenCL::Outlier::execute(
    ::OpenCL::CommandQueue* queue,
    int globalWorkSize,
    int localWorkSize,
-   ::OpenCL::Buffer<cl_float2>* in_data,
+   ::OpenCL::Buffer<cl_float>* expressions,
+   cl_int sampleSize,
+   ::OpenCL::Buffer<cl_int2>* in_index,
    ::OpenCL::Buffer<cl_int>* in_N,
    ::OpenCL::Buffer<cl_char>* in_labels,
-   cl_int sampleSize,
    ::OpenCL::Buffer<cl_char>* in_K,
    cl_char marker,
-   ::OpenCL::Buffer<cl_float>* work_x,
-   ::OpenCL::Buffer<cl_float>* work_y
+   ::OpenCL::Buffer<cl_float>* work_xy
 )
 {
    EDEBUG_FUNC(this,
       queue,
       globalWorkSize,
       localWorkSize,
-      in_data,
+      expressions,
+      sampleSize,
+      in_index,
       in_N,
       in_labels,
-      sampleSize,
       in_K,
       marker,
-      work_x,
-      work_y);
+      work_xy);
 
    // acquire lock for this kernel
    Locker locker {lock()};
 
    // set kernel arguments
    setArgument(GlobalWorkSize, globalWorkSize);
-   setBuffer(InData, in_data);
+   setBuffer(Expressions, expressions);
+   setArgument(SampleSize, sampleSize);
+   setBuffer(InIndex, in_index);
    setBuffer(InN, in_N);
    setBuffer(InLabels, in_labels);
-   setArgument(SampleSize, sampleSize);
    setBuffer(InK, in_K);
    setArgument(Marker, marker);
-   setBuffer(WorkX, work_x);
-   setBuffer(WorkY, work_y);
+   setBuffer(WorkXY, work_xy);
 
    // set work sizes
-   if ( localWorkSize == 0 )
-   {
-      localWorkSize = min(globalWorkSize, maxWorkGroupSize(queue->device()));
-   }
-
    int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
 
    setSizes(0, numWorkgroups * localWorkSize, localWorkSize);

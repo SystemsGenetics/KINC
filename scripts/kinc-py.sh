@@ -30,9 +30,9 @@ if [[ $DO_SIMILARITY = 1 ]]; then
 	MINCORR=0
 	MAXCORR=1
 
-	python scripts/similarity.py \
-	   -i $EMX_FILE \
-	   -o $CMX_FILE \
+	python scripts/kinc-similarity.py \
+	   --input $EMX_FILE \
+	   --output $CMX_FILE \
 	   --clusmethod $CLUSMETHOD \
 	   --corrmethod $CORRMETHOD \
 	   --minexpr=$MINEXPR \
@@ -50,9 +50,9 @@ if [[ $DO_THRESHOLD = 1 ]]; then
 	TSTEP=0.001
 	TSTOP=0.50
 
-	python scripts/threshold.py \
-	   -i $CMX_FILE \
-	   --genes $NUM_GENES \
+	python scripts/kinc-threshold.py \
+	   --input $CMX_FILE \
+	   --n-genes $NUM_GENES \
 	   --method $METHOD \
 	   --tstart $TSTART \
 	   --tstep $TSTEP \
@@ -64,7 +64,7 @@ if [[ $DO_EXTRACT = 1 ]]; then
 	MINCORR=0
 	MAXCORR=1
 
-	python scripts/extract.py \
+	python scripts/kinc-extract.py \
 	   --emx $EMX_FILE \
 	   --cmx $CMX_FILE \
 	   --output $NET_FILE \

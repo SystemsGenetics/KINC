@@ -16,28 +16,28 @@ public:
    enum Argument
    {
       GlobalWorkSize
-      ,InData
+      ,Expressions
+      ,SampleSize
+      ,InIndex
       ,InN
       ,InLabels
-      ,SampleSize
       ,InK
       ,Marker
-      ,WorkX
-      ,WorkY
+      ,WorkXY
    };
    explicit Outlier(::CUDA::Program* program);
    ::CUDA::Event execute(
       const ::CUDA::Stream& stream,
       int globalWorkSize,
       int localWorkSize,
-      ::CUDA::Buffer<float2>* in_data,
+      ::CUDA::Buffer<float>* expressions,
+      int sampleSize,
+      ::CUDA::Buffer<int2>* in_index,
       ::CUDA::Buffer<int>* in_N,
       ::CUDA::Buffer<qint8>* in_labels,
-      int sampleSize,
       ::CUDA::Buffer<qint8>* in_K,
       qint8 marker,
-      ::CUDA::Buffer<float>* work_x,
-      ::CUDA::Buffer<float>* work_y
+      ::CUDA::Buffer<float>* work_xy
    );
 };
 

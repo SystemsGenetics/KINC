@@ -31,7 +31,7 @@ void Matrix::Pair::write(const Index& index)
    }
 
    // go through each cluster and write it to data object
-   for (qint8 i = 0; i < clusterSize() ;++i)
+   for ( qint8 i = 0; i < clusterSize(); ++i )
    {
       _matrix->write(index,i);
       writeCluster(_matrix->stream(),i);

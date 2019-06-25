@@ -12,7 +12,7 @@
  * @param parent
  */
 ExportExpressionMatrix::Input::Input(ExportExpressionMatrix* parent):
-   EAbstractAnalytic::Input(parent),
+   EAbstractAnalyticInput(parent),
    _base(parent)
 {
    EDEBUG_FUNC(this,parent);
@@ -43,7 +43,7 @@ int ExportExpressionMatrix::Input::size() const
  *
  * @param index
  */
-EAbstractAnalytic::Input::Type ExportExpressionMatrix::Input::type(int index) const
+EAbstractAnalyticInput::Type ExportExpressionMatrix::Input::type(int index) const
 {
    EDEBUG_FUNC(this,index);
 
@@ -52,6 +52,7 @@ EAbstractAnalytic::Input::Type ExportExpressionMatrix::Input::type(int index) co
    case InputData: return Type::DataIn;
    case OutputFile: return Type::FileOut;
    case NANToken: return Type::String;
+   case Precision: return Type::Integer;
    default: return Type::Boolean;
    }
 }
@@ -100,6 +101,17 @@ QVariant ExportExpressionMatrix::Input::data(int index, Role role) const
       case Role::Default: return "NA";
       default: return QVariant();
       }
+   case Precision:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("precision");
+      case Role::Title: return tr("Precision:");
+      case Role::WhatsThis: return tr("The number of decimals to save for each expression value.");
+      case Role::Default: return 8;
+      case Role::Minimum: return 0;
+      case Role::Maximum: return std::numeric_limits<int>::max();
+      default: return QVariant();
+      }
    default: return QVariant();
    }
 }
@@ -123,6 +135,9 @@ void ExportExpressionMatrix::Input::set(int index, const QVariant& value)
    {
    case NANToken:
       _base->_nanToken = value.toString();
+      break;
+   case Precision:
+      _base->_precision = value.toInt();
       break;
    }
 }

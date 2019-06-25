@@ -33,7 +33,7 @@ int ImportExpressionMatrix::size() const
  *
  * @param result
  */
-void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
+void ImportExpressionMatrix::process(const EAbstractAnalyticBlock* result)
 {
    EDEBUG_FUNC(this, result);
 
@@ -46,7 +46,7 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
       // if sample size is not zero then build sample name list
       if ( _sampleSize != 0 )
       {
-         for (int i = 0; i < _sampleSize ;++i)
+         for ( int i = 0; i < _sampleSize; ++i )
          {
             _sampleNames.append(QString::number(i));
          }
@@ -177,7 +177,7 @@ void ImportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 /*!
  * Make a new input object and return its pointer.
  */
-EAbstractAnalytic::Input* ImportExpressionMatrix::makeInput()
+EAbstractAnalyticInput* ImportExpressionMatrix::makeInput()
 {
    EDEBUG_FUNC(this);
 

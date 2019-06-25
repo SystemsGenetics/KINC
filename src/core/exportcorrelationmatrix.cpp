@@ -36,7 +36,7 @@ int ExportCorrelationMatrix::size() const
  *
  * @param result
  */
-void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block*)
+void ExportCorrelationMatrix::process(const EAbstractAnalyticBlock*)
 {
    EDEBUG_FUNC(this);
 
@@ -150,7 +150,7 @@ void ExportCorrelationMatrix::process(const EAbstractAnalytic::Block*)
 /*!
  * Make a new input object and return its pointer.
  */
-EAbstractAnalytic::Input* ExportCorrelationMatrix::makeInput()
+EAbstractAnalyticInput* ExportCorrelationMatrix::makeInput()
 {
    EDEBUG_FUNC(this);
 

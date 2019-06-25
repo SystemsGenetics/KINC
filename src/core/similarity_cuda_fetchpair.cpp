@@ -37,7 +37,6 @@ Similarity::CUDA::FetchPair::FetchPair(::CUDA::Program* program):
  * @param sampleSize
  * @param in_index
  * @param minExpression
- * @param out_X
  * @param out_N
  * @param out_labels
  */
@@ -49,20 +48,18 @@ Similarity::CUDA::FetchPair::FetchPair(::CUDA::Program* program):
    int sampleSize,
    ::CUDA::Buffer<int2>* in_index,
    float minExpression,
-   ::CUDA::Buffer<float2>* out_X,
    ::CUDA::Buffer<int>* out_N,
    ::CUDA::Buffer<qint8>* out_labels
 )
 {
    EDEBUG_FUNC(this,
-      stream,
+      &stream,
       globalWorkSize,
       localWorkSize,
       expressions,
       sampleSize,
       in_index,
       minExpression,
-      out_X,
       out_N,
       out_labels);
 
@@ -72,16 +69,10 @@ Similarity::CUDA::FetchPair::FetchPair(::CUDA::Program* program):
    setArgument(SampleSize, sampleSize);
    setBuffer(InIndex, in_index);
    setArgument(MinExpression, minExpression);
-   setBuffer(OutX, out_X);
    setBuffer(OutN, out_N);
    setBuffer(OutLabels, out_labels);
 
    // set work sizes
-   if ( localWorkSize == 0 )
-   {
-      localWorkSize = min(globalWorkSize, getAttribute(CU_FUNC_ATTRIBUTE_MAX_THREADS_PER_BLOCK));
-   }
-
    int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
 
    setSizes(numWorkgroups * localWorkSize, localWorkSize);

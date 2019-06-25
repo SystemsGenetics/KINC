@@ -1,5 +1,4 @@
 #include <cblas.h>
-#include <cuda_runtime.h>
 #include <cusolverDn.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
@@ -9,6 +8,7 @@
 #define MINOR_VERSION KINC_MINOR_VERSION
 #define REVISION KINC_REVISION
 #include <ace/core/ace_settings.h>
+#include <ace/core/cudaxx.h>
 
 #include "rmt.h"
 #include "rmt_input.h"
@@ -24,13 +24,13 @@ using RawPair = CorrelationMatrix::RawPair;
 
 
 #define CHECK_ERROR(condition, message)  \
-	if ( !(condition) )                   \
-	{                                     \
+   if ( !(condition) )                   \
+   {                                     \
       E_MAKE_EXCEPTION(e);               \
       e.setTitle(tr("CUDA Error"));      \
       e.setDetails(tr(message));         \
       throw e;                           \
-	}
+   }
 
 
 
@@ -38,7 +38,7 @@ using RawPair = CorrelationMatrix::RawPair;
 
 
 #define CHECK_CUDA(ret) \
-	CHECK_ERROR(ret == cudaSuccess, #ret)
+   CHECK_ERROR(ret == cudaSuccess, #ret)
 
 
 
@@ -46,7 +46,7 @@ using RawPair = CorrelationMatrix::RawPair;
 
 
 #define CHECK_CUSOLVER(ret) \
-	CHECK_ERROR(ret == CUSOLVER_STATUS_SUCCESS, #ret)
+   CHECK_ERROR(ret == CUSOLVER_STATUS_SUCCESS, #ret)
 
 
 
@@ -75,7 +75,7 @@ int RMT::size() const
  *
  * @param result
  */
-void RMT::process(const EAbstractAnalytic::Block*)
+void RMT::process(const EAbstractAnalyticBlock*)
 {
    EDEBUG_FUNC(this);
 
@@ -97,7 +97,7 @@ void RMT::process(const EAbstractAnalytic::Block*)
    while ( maxChi < _chiSquareThreshold2 )
    {
       qInfo("\n");
-      qInfo("threshold: %8.3f", threshold);
+      qInfo("threshold: %0.3f", threshold);
 
       // compute pruned matrix based on threshold
       size_t size;
@@ -107,21 +107,22 @@ void RMT::process(const EAbstractAnalytic::Block*)
 
       // make sure that pruned matrix is not empty
       float chi = -1;
+      std::vector<float> eigens;
 
       if ( size > 0 )
       {
          // compute eigenvalues of pruned matrix
-         std::vector<float> eigens {computeEigenvalues(&pruneMatrix, size)};
+         eigens = computeEigenvalues(&pruneMatrix, size);
 
          qInfo("eigenvalues: %lu", eigens.size());
 
          // compute unique eigenvalues
-         std::vector<float> unique {computeUnique(eigens)};
+         eigens = computeUnique(eigens);
 
-         qInfo("unique eigenvalues: %lu", unique.size());
+         qInfo("unique eigenvalues: %lu", eigens.size());
 
          // compute chi-squared value from NNSD of eigenvalues
-         chi = computeChiSquare(unique);
+         chi = computeChiSquare(eigens);
 
          qInfo("chi-squared: %g", chi);
       }
@@ -144,7 +145,11 @@ void RMT::process(const EAbstractAnalytic::Block*)
       }
 
       // output to log file
-      stream << threshold << "\t" << size << "\t" << chi << "\n";
+      stream
+         << QString::number(threshold, 'f', 3) << "\t"
+         << size << "\t"
+         << eigens.size() << "\t"
+         << chi << "\n";
 
       // decrement threshold and fail if minimum threshold is reached
       threshold -= _thresholdStep;
@@ -169,7 +174,7 @@ void RMT::process(const EAbstractAnalytic::Block*)
 /*!
  * Make a new input object and return its pointer.
  */
-EAbstractAnalytic::Input* RMT::makeInput()
+EAbstractAnalyticInput* RMT::makeInput()
 {
    EDEBUG_FUNC(this);
 
@@ -380,7 +385,7 @@ std::vector<float> RMT::computePruneMatrix(const std::vector<RawPair>& pairs, co
  */
 std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t size)
 {
-   EDEBUG_FUNC(this,matrix,size);
+   EDEBUG_FUNC(this,matrix,&size);
 
    // initialize helper variables
    int n = size;
@@ -395,16 +400,13 @@ std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t si
       CHECK_CUSOLVER(cusolverDnCreate(&cusolver_handle));
 
       // allocate device buffers
-      float *matrix_dev;
-      float *eigens_dev;
-      int *info_dev;
-
-      CHECK_CUDA(cudaMalloc((void **)&matrix_dev, n * n * sizeof(float)));
-      CHECK_CUDA(cudaMalloc((void **)&eigens_dev, n * sizeof(float)));
-      CHECK_CUDA(cudaMalloc((void **)&info_dev, sizeof(int)));
+      ::CUDA::Buffer<float> matrixBuffer(n * n);
+      ::CUDA::Buffer<float> eigensBuffer(n);
+      ::CUDA::Buffer<int> info(1);
 
       // copy pruned matrix to device
-      CHECK_CUDA(cudaMemcpy(matrix_dev, matrix->data(), n * n * sizeof(float), cudaMemcpyHostToDevice));
+      memcpy(matrixBuffer.hostData(), matrix->data(), matrix->size() * sizeof(float));
+      matrixBuffer.write();
 
       // determine the size of the workspace
       int lwork;
@@ -413,47 +415,39 @@ std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t si
          cusolver_handle,
          CUSOLVER_EIG_MODE_NOVECTOR,
          CUBLAS_FILL_MODE_UPPER,
-         n, matrix_dev, lda,
-         eigens_dev,
+         n, (float *)matrixBuffer.deviceData(), lda,
+         (float *)eigensBuffer.deviceData(),
          &lwork
       ));
 
       // allocate device buffer for workspace
-      float *work_dev;
-
-      CHECK_CUDA(cudaMalloc((void **)&work_dev, lwork * sizeof(float)));
+      ::CUDA::Buffer<float> work(lwork);
 
       // compute eigenvalues
       CHECK_CUSOLVER(cusolverDnSsyevd(
          cusolver_handle,
          CUSOLVER_EIG_MODE_NOVECTOR,
          CUBLAS_FILL_MODE_UPPER,
-         n, matrix_dev, lda,
-         eigens_dev,
-         work_dev, lwork,
-         info_dev
+         n, (float *)matrixBuffer.deviceData(), lda,
+         (float *)eigensBuffer.deviceData(),
+         (float *)work.deviceData(), lwork,
+         (int *)info.deviceData()
       ));
 
       // destroy cuSOLVER handle
       CHECK_CUSOLVER(cusolverDnDestroy(cusolver_handle));
 
       // copy results to host
-      int info;
       std::vector<float> eigens(n);
 
-      CHECK_CUDA(cudaMemcpy(&info, info_dev, sizeof(int), cudaMemcpyDeviceToHost));
-      CHECK_CUDA(cudaMemcpy(eigens.data(), eigens_dev, n * sizeof(float), cudaMemcpyDeviceToHost));
-
-      // cleanup
-      CHECK_CUDA(cudaFree(matrix_dev));
-      CHECK_CUDA(cudaFree(work_dev));
-      CHECK_CUDA(cudaFree(eigens_dev));
-      CHECK_CUDA(cudaFree(info_dev));
+      info.read().wait();
+      eigensBuffer.read().wait();
+      memcpy(eigens.data(), eigensBuffer.hostData(), eigens.size() * sizeof(float));
 
       // print warning if cuSOLVER returned error code
-      if ( info != 0 )
+      if ( info.at(0) != 0 )
       {
-         qInfo("warning: cuSOLVER ssyev returned %d", info);
+         qInfo("warning: cuSOLVER ssyev returned %d", info.at(0));
       }
 
       // return eigenvalues
@@ -499,12 +493,11 @@ std::vector<float> RMT::computeUnique(const std::vector<float>& values)
 {
    EDEBUG_FUNC(this,&values);
 
-   const float EPSILON {1e-6f};
    std::vector<float> unique;
 
-   for ( size_t i = 1; i < values.size(); ++i )
+   for ( size_t i = 0; i < values.size(); ++i )
    {
-      if ( unique.empty() || fabs(values.at(i) - unique.back()) > EPSILON )
+      if ( unique.empty() || fabs(values.at(i) - unique.back()) > _uniqueEpsilon )
       {
          unique.push_back(values.at(i));
       }
@@ -652,7 +645,7 @@ std::vector<float> RMT::computeSpline(const std::vector<float>& values, int pace
    using gsl_interp_accel_ptr = unique_ptr<gsl_interp_accel, decltype(&gsl_interp_accel_free)>;
    using gsl_spline_ptr = unique_ptr<gsl_spline, decltype(&gsl_spline_free)>;
 
-   // extract eigenvalues for spline based on pace
+   // extract values for spline based on pace
    int splineSize {(int) values.size() / pace};
    unique_ptr<double[]> x(new double[splineSize]);
    unique_ptr<double[]> y(new double[splineSize]);
@@ -670,7 +663,7 @@ std::vector<float> RMT::computeSpline(const std::vector<float>& values, int pace
    gsl_spline_ptr spline(gsl_spline_alloc(gsl_interp_akima, splineSize), &gsl_spline_free);
    gsl_spline_init(spline.get(), x.get(), y.get(), splineSize);
 
-   // extract interpolated eigenvalues from spline
+   // extract interpolated values from spline
    std::vector<float> splineValues(values.size());
 
    splineValues[0] = 0.0;
@@ -700,7 +693,6 @@ std::vector<float> RMT::computeSpacings(const std::vector<float>& values)
 {
    EDEBUG_FUNC(this,&values);
 
-   // compute spacings between interpolated eigenvalues
    std::vector<float> spacings(values.size() - 1);
 
    for ( size_t i = 0; i < spacings.size(); ++i )

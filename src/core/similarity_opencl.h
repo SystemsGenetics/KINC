@@ -9,7 +9,7 @@
 /*!
  * This class implements the base OpenCL class of the similarity analytic.
  */
-class Similarity::OpenCL : public EAbstractAnalytic::OpenCL
+class Similarity::OpenCL : public EAbstractAnalyticOpenCL
 {
    Q_OBJECT
 public:
@@ -20,7 +20,7 @@ public:
    class Spearman;
    class Worker;
    explicit OpenCL(Similarity* parent);
-   virtual std::unique_ptr<EAbstractAnalytic::OpenCL::Worker> makeWorker() override final;
+   virtual std::unique_ptr<EAbstractAnalyticOpenCLWorker> makeWorker() override final;
    virtual void initialize(::OpenCL::Context* context) override final;
 private:
    /*!

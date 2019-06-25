@@ -29,11 +29,10 @@ namespace Pairwise
 
    void matrixInitIdentity(Matrix2x2& M);
    void matrixInitZero(Matrix2x2& M);
-   void matrixAdd(Matrix2x2& A, float c, const Matrix2x2& B);
    void matrixScale(Matrix2x2& A, float c);
    void matrixInverse(const Matrix2x2& A, Matrix2x2& B, float *p_det);
    void matrixProduct(const Matrix2x2& A, const Vector2& x, Vector2& b);
-   void matrixOuterProduct(const Vector2& a, const Vector2& b, Matrix2x2& C);
+   void matrixAddOuterProduct(Matrix2x2& A, float c, const Vector2& x);
 }
 
 #endif

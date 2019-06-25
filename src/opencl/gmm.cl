@@ -44,7 +44,7 @@ typedef struct
  *
  * @param state
  */
-int rand(ulong *state)
+int myrand(ulong *state)
 {
    *state = (*state) * 1103515245 + 12345;
    return ((unsigned)((*state)/65536) % 32768);
@@ -72,12 +72,6 @@ void GMM_Component_initialize(
 
    // initialize covariance to identity matrix
    matrixInitIdentity(&component->sigma);
-
-   // initialize precision to zero matrix
-   matrixInitZero(&component->sigmaInv);
-
-   // initialize normalizer term to 0
-   component->normalizer = 0;
 }
 
 
@@ -98,17 +92,11 @@ bool GMM_Component_prepare(__global Component *component)
    float det;
    matrixInverse(&component->sigma, &component->sigmaInv, &det);
 
-   // return failure if matrix inverse failed
-   if ( det <= 0 )
-   {
-      return false;
-   }
-
    // compute normalizer term for multivariate normal distribution
    component->normalizer = -0.5f * (D * log(2.0f * M_PI) + log(det));
 
-   // return success
-   return true;
+   // return failure if matrix inverse failed
+   return !(det <= 0 || isnan(det));
 }
 
 
@@ -136,7 +124,7 @@ void GMM_Component_computeLogProbNorm(
    __global const Vector2 *X, int N,
    __global float *logP)
 {
-   for (int i = 0; i < N; ++i)
+   for ( int i = 0; i < N; ++i )
    {
       // compute xm = (x - mu)
       Vector2 xm = X[i];
@@ -172,31 +160,31 @@ void GMM_initializeMeans(GMM *gmm, __global const Vector2 *X, int N)
    const int K = gmm->K;
 
    const int MAX_ITERATIONS = 20;
-   const float TOLERANCE = 1e-3;
+   const float TOLERANCE = 1e-3f;
    float diff = 0;
 
    // initialize workspace
    __global Vector2 *Mu = gmm->_Mu;
    __global int *counts = gmm->_counts;
 
-   for (int t = 0; t < MAX_ITERATIONS && diff > TOLERANCE; ++t)
+   for ( int t = 0; t < MAX_ITERATIONS && diff > TOLERANCE; ++t )
    {
       // compute mean and sample count for each component
-      for (int k = 0; k < K; ++k)
+      for ( int k = 0; k < K; ++k )
       {
          vectorInitZero(&Mu[k]);
          counts[k] = 0;
       }
 
-      for (int i = 0; i < N; ++i)
+      for ( int i = 0; i < N; ++i )
       {
          // determine the component mean which is nearest to x_i
          float min_dist = INFINITY;
          int min_k = 0;
-         for (int k = 0; k < K; ++k)
+         for ( int k = 0; k < K; ++k )
          {
             float dist = vectorDiffNorm(&X[i], &gmm->components[k].mu);
-            if (min_dist > dist)
+            if ( min_dist > dist )
             {
                min_dist = dist;
                min_k = k;
@@ -209,21 +197,21 @@ void GMM_initializeMeans(GMM *gmm, __global const Vector2 *X, int N)
       }
 
       // scale each mean by its sample count
-      for (int k = 0; k < K; ++k)
+      for ( int k = 0; k < K; ++k )
       {
          vectorScale(&Mu[k], 1.0f / counts[k]);
       }
 
       // compute the total change of all means
       diff = 0;
-      for (int k = 0; k < K; ++k)
+      for ( int k = 0; k < K; ++k )
       {
          diff += vectorDiffNorm(&Mu[k], &gmm->components[k].mu);
       }
       diff /= K;
 
       // update component means
-      for (int k = 0; k < K; ++k)
+      for ( int k = 0; k < K; ++k )
       {
          gmm->components[k].mu = Mu[k];
       }
@@ -255,7 +243,7 @@ float GMM_computeEStep(GMM *gmm, __global const Vector2 *X, int N)
    const int K = gmm->K;
 
    // compute logpi
-   for (int k = 0; k < K; ++k)
+   for ( int k = 0; k < K; ++k )
    {
       gmm->_logpi[k] = log(gmm->components[k].pi);
    }
@@ -269,24 +257,24 @@ float GMM_computeEStep(GMM *gmm, __global const Vector2 *X, int N)
    }
 
    // compute gamma and log-likelihood
-   float logL = 0.0;
+   float logL = 0;
 
-   for (int i = 0; i < N; ++i)
+   for ( int i = 0; i < N; ++i )
    {
       // compute a = argmax(logpi_k + logProb_ki, k)
       float maxArg = -INFINITY;
-      for (int k = 0; k < K; ++k)
+      for ( int k = 0; k < K; ++k )
       {
          float arg = gmm->_logpi[k] + logProb[k * N + i];
-         if (maxArg < arg)
+         if ( maxArg < arg )
          {
             maxArg = arg;
          }
       }
 
       // compute logpx
-      float sum = 0.0;
-      for (int k = 0; k < K; ++k)
+      float sum = 0;
+      for ( int k = 0; k < K; ++k )
       {
          sum += exp(gmm->_logpi[k] + logProb[k * N + i] - maxArg);
       }
@@ -294,7 +282,7 @@ float GMM_computeEStep(GMM *gmm, __global const Vector2 *X, int N)
       float logpx = maxArg + log(sum);
 
       // compute gamma_ki
-      for (int k = 0; k < K; ++k)
+      for ( int k = 0; k < K; ++k )
       {
          gmm->_gamma[k * N + i] += gmm->_logpi[k] - logpx;
          gmm->_gamma[k * N + i] = exp(gmm->_gamma[k * N + i]);
@@ -330,16 +318,16 @@ float GMM_computeEStep(GMM *gmm, __global const Vector2 *X, int N)
  * @param X
  * @param N
  */
-bool GMM_computeMStep(GMM *gmm, __global const Vector2 *X, int N)
+void GMM_computeMStep(GMM *gmm, __global const Vector2 *X, int N)
 {
    const int K = gmm->K;
 
-   for (int k = 0; k < K; ++k)
+   for ( int k = 0; k < K; ++k )
    {
       // compute n_k = sum(gamma_ki)
       float n_k = 0;
 
-      for (int i = 0; i < N; ++i)
+      for ( int i = 0; i < N; ++i )
       {
          n_k += gmm->_gamma[k * N + i];
       }
@@ -352,7 +340,7 @@ bool GMM_computeMStep(GMM *gmm, __global const Vector2 *X, int N)
 
       vectorInitZero(mu);
 
-      for (int i = 0; i < N; ++i)
+      for ( int i = 0; i < N; ++i )
       {
          vectorAddScaled(mu, gmm->_gamma[k * N + i], &X[i]);
       }
@@ -364,33 +352,18 @@ bool GMM_computeMStep(GMM *gmm, __global const Vector2 *X, int N)
 
       matrixInitZero(sigma);
 
-      for (int i = 0; i < N; ++i)
+      for ( int i = 0; i < N; ++i )
       {
          // compute xm = (x_i - mu_k)
          Vector2 xm = X[i];
          vectorSubtract(&xm, mu);
 
          // compute Sigma_ki = gamma_ki * (x_i - mu_k) (x_i - mu_k)^T
-         Matrix2x2 outerProduct;
-         matrixOuterProduct(&xm, &xm, &outerProduct);
-
-         matrixAddScaled(sigma, gmm->_gamma[k * N + i], &outerProduct);
+         matrixAddOuterProduct(sigma, gmm->_gamma[k * N + i], &xm);
       }
 
       matrixScale(sigma, 1.0f / n_k);
-
-      // pre-compute precision matrix and normalizer term
-      bool success = GMM_Component_prepare(&gmm->components[k]);
-
-      // return failure if matrix inverse failed
-      if ( !success )
-      {
-         return false;
-      }
    }
-
-   // return success
-   return true;
 }
 
 
@@ -441,7 +414,7 @@ void GMM_computeLabels(
  * Compute the entropy of the mixture model for a dataset using gamma
  * and the given cluster labels:
  *
- *   E = sum(sum(z_ki * log(gamma_ki))), z_ki = (y_i == k)
+ *   E = -sum(sum(z_ki * log(gamma_ki))), z_ki = (y_i == k)
  *
  * @param gamma
  * @param N
@@ -457,7 +430,7 @@ float GMM_computeEntropy(
    {
       int k = labels[i];
 
-      E += log(gamma[k * N + i]);
+      E -= log(gamma[k * N + i]);
    }
 
    return E;
@@ -483,6 +456,7 @@ bool GMM_fit(
    __global const Vector2 *X, int N, int K,
    __global char *labels)
 {
+   // initialize random state
    ulong state = 1;
 
    // initialize components
@@ -491,10 +465,9 @@ bool GMM_fit(
    for ( int k = 0; k < K; ++k )
    {
       // use uniform mixture weight and randomly sampled mean
-      int i = rand(&state) % N;
+      int i = myrand(&state) % N;
 
       GMM_Component_initialize(&gmm->components[k], 1.0f / K, &X[i]);
-      GMM_Component_prepare(&gmm->components[k]);
    }
 
    // initialize means with k-means
@@ -502,12 +475,26 @@ bool GMM_fit(
 
    // run EM algorithm
    const int MAX_ITERATIONS = 100;
-   const float TOLERANCE = 1e-8;
+   const float TOLERANCE = 1e-8f;
    float prevLogL = -INFINITY;
    float currLogL = -INFINITY;
 
    for ( int t = 0; t < MAX_ITERATIONS; ++t )
    {
+      // pre-compute precision matrix and normalizer term
+      bool success = true;
+
+      for ( int k = 0; k < K; k++ )
+      {
+         success = success && GMM_Component_prepare(&gmm->components[k]);
+      }
+
+      // return failure if matrix inverse failed
+      if ( !success )
+      {
+         return false;
+      }
+
       // perform E step
       prevLogL = currLogL;
       currLogL = GMM_computeEStep(gmm, X, N);
@@ -519,13 +506,7 @@ bool GMM_fit(
       }
 
       // perform M step
-      bool success = GMM_computeMStep(gmm, X, N);
-
-      // return failure if M-step failed (due to matrix inverse)
-      if ( !success )
-      {
-         return false;
-      }
+      GMM_computeMStep(gmm, X, N);
    }
 
    // save outputs
@@ -605,7 +586,7 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
 {
    int p = K * (1 + D + D * D);
 
-   return log((float) N) * p - 2 * logL - 2 * E;
+   return log((float) N) * p - 2 * logL + 2 * E;
 }
 
 
@@ -616,11 +597,12 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
 /*!
  * Determine the number of clusters in a pairwise data array. Several sub-models,
  * each one having a different number of clusters, are fit to the data and the
- * sub-model with the best criterion value is selected. The data array should
- * only contain samples that have a non-negative label.
+ * sub-model with the best criterion value is selected.
  *
  * @param globalWorkSize
+ * @param expressions
  * @param sampleSize
+ * @param in_index
  * @param minSamples
  * @param minClusters
  * @param maxClusters
@@ -630,12 +612,14 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
  */
 __kernel void GMM_compute(
    int globalWorkSize,
+   __global const float *expressions,
    int sampleSize,
+   __global const int2 *in_index,
    int minSamples,
    char minClusters,
    char maxClusters,
    Criterion criterion,
-   __global Vector2 *work_X,
+   __global Vector2 *work_xy,
    __global int *work_N,
    __global char *work_labels,
    __global Component *work_components,
@@ -654,7 +638,10 @@ __kernel void GMM_compute(
    }
 
    // initialize workspace variables
-   __global Vector2 *data = &work_X[i * sampleSize];
+   int2 index = in_index[i];
+   __global const float *x = &expressions[index.x * sampleSize];
+   __global const float *y = &expressions[index.y * sampleSize];
+   __global Vector2 *X = &work_xy[i * sampleSize];
    int numSamples = work_N[i];
    __global char *labels = &work_labels[i * sampleSize];
    __global Component *components = &work_components[i * maxClusters];
@@ -679,12 +666,23 @@ __kernel void GMM_compute(
 
    if ( numSamples >= minSamples )
    {
+      // extract clean samples from data array
+      for ( int i = 0, j = 0; i < sampleSize; ++i )
+      {
+         if ( bestLabels[i] >= 0 )
+         {
+            X[j] = (float2) (x[i], y[i]);
+            ++j;
+         }
+      }
+
+      // determine the number of clusters
       float bestValue = INFINITY;
 
       for ( char K = minClusters; K <= maxClusters; ++K )
       {
          // run each clustering sub-model
-         bool success = GMM_fit(&gmm, data, numSamples, K, labels);
+         bool success = GMM_fit(&gmm, X, numSamples, K, labels);
 
          if ( !success )
          {
@@ -707,12 +705,13 @@ __kernel void GMM_compute(
             break;
          }
 
-         // save the best model
+         // save the sub-model with the lowest criterion value
          if ( value < bestValue )
          {
             *bestK = K;
             bestValue = value;
 
+            // save labels for clean samples
             for ( int i = 0, j = 0; i < sampleSize; ++i )
             {
                if ( bestLabels[i] >= 0 )

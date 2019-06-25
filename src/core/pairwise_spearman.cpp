@@ -10,27 +10,6 @@ using namespace Pairwise;
 
 
 /*!
- * Compute the next power of 2 which occurs after a number.
- *
- * @param n
- */
-int Spearman::nextPower2(int n)
-{
-   int pow2 = 2;
-   while ( pow2 < n )
-   {
-      pow2 *= 2;
-   }
-
-   return pow2;
-}
-
-
-
-
-
-
-/*!
  * Construct a Spearman correlation model.
  *
  * @param emx
@@ -38,11 +17,9 @@ int Spearman::nextPower2(int n)
 Spearman::Spearman(ExpressionMatrix* emx)
 {
    // pre-allocate workspace
-   int workSize = nextPower2(emx->sampleSize());
-
-   _x.resize(workSize);
-   _y.resize(workSize);
-   _rank.resize(workSize);
+   _x.resize(emx->sampleSize());
+   _y.resize(emx->sampleSize());
+   _rank.resize(emx->sampleSize());
 }
 
 
@@ -51,45 +28,33 @@ Spearman::Spearman(ExpressionMatrix* emx)
 
 
 /*!
- * Compute the Spearman correlation of a cluster in a pairwise data array. The
- * data array should only contain samples that have a non-negative label.
+ * Compute the Spearman correlation of a cluster in a pairwise data array.
  *
- * @param data
+ * @param x
+ * @param y
  * @param labels
  * @param cluster
  * @param minSamples
  */
 float Spearman::computeCluster(
-   const QVector<Vector2>& data,
+   const float *x,
+   const float *y,
    const QVector<qint8>& labels,
    qint8 cluster,
    int minSamples)
 {
    // extract samples in pairwise cluster
-   int N_pow2 = nextPower2(labels.size());
    int n = 0;
 
-   for ( int i = 0, j = 0; i < labels.size(); ++i )
+   for ( int i = 0; i < labels.size(); ++i )
    {
-      if ( labels[i] >= 0 )
+      if ( labels[i] == cluster )
       {
-         if ( labels[i] == cluster )
-         {
-            _x[n] = data[j].s[0];
-            _y[n] = data[j].s[1];
-            _rank[n] = n + 1;
-            ++n;
-         }
-
-         ++j;
+         _x[n] = x[i];
+         _y[n] = y[i];
+         _rank[n] = n + 1;
+         ++n;
       }
-   }
-
-   for ( int i = n; i < N_pow2; ++i )
-   {
-      _x[i] = INFINITY;
-      _y[i] = INFINITY;
-      _rank[i] = 0;
    }
 
    // compute correlation only if there are enough samples
@@ -97,12 +62,9 @@ float Spearman::computeCluster(
 
    if ( n >= minSamples )
    {
-      // get new power of 2 floor size
-      int n_pow2 = nextPower2(n);
-
-      // execute two bitonic sorts that is beginning of spearman algorithm
-      bitonicSort(n_pow2, _x, _y);
-      bitonicSort(n_pow2, _y, _rank);
+      // execute two sorts that are the beginning of the spearman algorithm
+      heapSort(_x, _y, n);
+      heapSort(_y, _rank, n);
 
       // go through spearman sorted rank list and calculate difference from 1,2,3,... list
       int diff = 0;
@@ -125,38 +87,35 @@ float Spearman::computeCluster(
 
 
 
-/*!
- * Sort a list using bitonic sort, while also applying the same swap operations
- * to a second list of the same size. The lists should have a size which is a
- * power of two.
- *
- * @param size
- * @param sortList
- * @param extraList
- */
-void Spearman::bitonicSort(int size, QVector<float>& sortList, QVector<float>& extraList)
+template<typename T>
+void Spearman::siftDown(QVector<float>& array, QVector<T>& extra, int start, int end)
 {
-   // initialize all variables
-   int bsize = size/2;
+   int root = start;
 
-   // bitonic algorithm, starting with an outer block of 2 and working up to total size of list
-   for (int ob = 2; ob <= size; ob *= 2)
+   while ( 2 * root + 1 <= end )
    {
-      for (int ib = ob; ib >= 2; ib /= 2)
+      int child = 2 * root + 1;
+      int swp = root;
+
+      if ( array[swp] < array[child] )
       {
-         int t = ib/2;
-         for (int i = 0; i < bsize; ++i)
-         {
-            int dir = -((i/(ob/2))&0x1);
-            int a = (i/t)*ib+(i%t);
-            int b = a+t;
-            if ( ( ( sortList[a] > sortList[b] ) && !dir )
-                 || ( ( sortList[a] < sortList[b] ) && dir ) )
-            {
-               std::swap(sortList[a], sortList[b]);
-               std::swap(extraList[a], extraList[b]);
-            }
-         }
+         swp = child;
+      }
+
+      if ( child + 1 <= end && array[swp] < array[child + 1] )
+      {
+         swp = child + 1;
+      }
+
+      if ( swp == root )
+      {
+         return;
+      }
+      else
+      {
+         std::swap(array[root], array[swp]);
+         std::swap(extra[root], extra[swp]);
+         root = swp;
       }
    }
 }
@@ -167,37 +126,33 @@ void Spearman::bitonicSort(int size, QVector<float>& sortList, QVector<float>& e
 
 
 /*!
- * Sort a list using bitonic sort, while also applying the same swap operations
- * to a second list of the same size. The lists should have a size which is a
- * power of two.
+ * Sort an array using heapsort, while also applying the same swap operations
+ * to a second array of the same size.
  *
- * @param size
- * @param sortList
- * @param extraList
+ * @param array
+ * @param extra
+ * @param n
  */
-void Spearman::bitonicSort(int size, QVector<float>& sortList, QVector<int>& extraList)
+template<typename T>
+void Spearman::heapSort(QVector<float>& array, QVector<T>& extra, int n)
 {
-   // initialize all variables
-   int bsize = size/2;
+   // heapify the array
+   int start = ((n-1) - 1) / 2;
 
-   // bitonic algorithm, starting with an outer block of 2 and working up to total size of list
-   for (int ob = 2; ob <= size; ob *= 2)
+   while ( start >= 0 )
    {
-      for (int ib = ob; ib >= 2; ib /= 2)
-      {
-         int t = ib/2;
-         for (int i = 0; i < bsize; ++i)
-         {
-            int dir = -((i/(ob/2))&0x1);
-            int a = (i/t)*ib+(i%t);
-            int b = a+t;
-            if ( ( ( sortList[a] > sortList[b] ) && !dir )
-                 || ( ( sortList[a] < sortList[b] ) && dir ) )
-            {
-               std::swap(sortList[a], sortList[b]);
-               std::swap(extraList[a], extraList[b]);
-            }
-         }
-      }
+      siftDown(array, extra, start, n - 1);
+      start -= 1;
+   }
+
+   // sort the array
+   int end = n - 1;
+   while ( end > 0 )
+   {
+      std::swap(array[end], array[0]);
+      std::swap(extra[end], extra[0]);
+      end -= 1;
+
+      siftDown(array, extra, 0, end);
    }
 }

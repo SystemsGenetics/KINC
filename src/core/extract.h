@@ -25,8 +25,8 @@ class Extract : public EAbstractAnalytic
 public:
    class Input;
    virtual int size() const override final;
-   virtual void process(const EAbstractAnalytic::Block* result) override final;
-   virtual EAbstractAnalytic::Input* makeInput() override final;
+   virtual void process(const EAbstractAnalyticBlock* result) override final;
+   virtual EAbstractAnalyticInput* makeInput() override final;
    virtual void initialize();
 private:
    /*!
@@ -34,16 +34,21 @@ private:
    */
    enum class OutputFormat
    {
-     /*!
-      * Text format
-      */
-     Text
-     /*!
-      * GraphML format
-      */
-     ,GraphML
+      /*!
+       * Text format
+       */
+      Text
+      /*!
+       * Minimal format
+       */
+      ,Minimal
+      /*!
+       * GraphML format
+       */
+      ,GraphML
    };
    void writeTextFormat(int index);
+   void writeMinimalFormat(int index);
    void writeGraphMLFormat(int index);
    /**
     * Workspace variables to write to the output file

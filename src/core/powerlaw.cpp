@@ -34,7 +34,7 @@ int PowerLaw::size() const
  *
  * @param result
  */
-void PowerLaw::process(const EAbstractAnalytic::Block*)
+void PowerLaw::process(const EAbstractAnalyticBlock*)
 {
    EDEBUG_FUNC(this);
 
@@ -51,7 +51,7 @@ void PowerLaw::process(const EAbstractAnalytic::Block*)
    while ( true )
    {
       qInfo("\n");
-      qInfo("threshold: %8.3f", threshold);
+      qInfo("threshold: %0.3f", threshold);
 
       // compute adjacency matrix based on threshold
       size_t size;
@@ -74,7 +74,10 @@ void PowerLaw::process(const EAbstractAnalytic::Block*)
       }
 
       // output to log file
-      stream << threshold << "\t" << size << "\t" << correlation << "\n";
+      stream
+         << QString::number(threshold, 'f', 3) << "\t"
+         << size << "\t"
+         << correlation << "\n";
 
       // TODO: break if network is sufficently scale-free
 
@@ -101,7 +104,7 @@ void PowerLaw::process(const EAbstractAnalytic::Block*)
 /*!
  * Make a new input object and return its pointer.
  */
-EAbstractAnalytic::Input* PowerLaw::makeInput()
+EAbstractAnalyticInput* PowerLaw::makeInput()
 {
    EDEBUG_FUNC(this);
 
@@ -264,7 +267,7 @@ std::vector<bool> PowerLaw::computeAdjacencyMatrix(const std::vector<RawPair>& p
  */
 std::vector<int> PowerLaw::computeDegreeDistribution(const std::vector<bool>& matrix, size_t size)
 {
-   EDEBUG_FUNC(this,&matrix,size);
+   EDEBUG_FUNC(this,&matrix,&size);
 
    // compute degree of each node
    std::vector<int> degrees(size);

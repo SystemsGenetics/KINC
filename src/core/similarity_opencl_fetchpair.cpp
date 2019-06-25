@@ -39,7 +39,6 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
  * @param sampleSize
  * @param in_index
  * @param minExpression
- * @param out_X
  * @param out_N
  * @param out_labels
  */
@@ -51,7 +50,6 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
    cl_int sampleSize,
    ::OpenCL::Buffer<cl_int2>* in_index,
    cl_float minExpression,
-   ::OpenCL::Buffer<cl_float2>* out_X,
    ::OpenCL::Buffer<cl_int>* out_N,
    ::OpenCL::Buffer<cl_char>* out_labels
 )
@@ -64,7 +62,6 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
       sampleSize,
       in_index,
       minExpression,
-      out_X,
       out_N,
       out_labels);
 
@@ -77,16 +74,10 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
    setArgument(SampleSize, sampleSize);
    setBuffer(InIndex, in_index);
    setArgument(MinExpression, minExpression);
-   setBuffer(OutX, out_X);
    setBuffer(OutN, out_N);
    setBuffer(OutLabels, out_labels);
 
    // set work sizes
-   if ( localWorkSize == 0 )
-   {
-      localWorkSize = min(globalWorkSize, maxWorkGroupSize(queue->device()));
-   }
-
    int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
 
    setSizes(0, numWorkgroups * localWorkSize, localWorkSize);

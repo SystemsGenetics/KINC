@@ -7,7 +7,7 @@
 /*!
  * This class implements the abstract input of the similarity analytic.
  */
-class Similarity::Input : public EAbstractAnalytic::Input
+class Similarity::Input : public EAbstractAnalyticInput
 {
    Q_OBJECT
 public:
@@ -37,7 +37,7 @@ public:
    };
    explicit Input(Similarity* parent);
    virtual int size() const override final;
-   virtual EAbstractAnalytic::Input::Type type(int index) const override final;
+   virtual EAbstractAnalyticInput::Type type(int index) const override final;
    virtual QVariant data(int index, Role role) const override final;
    virtual void set(int index, const QVariant& value) override final;
    virtual void set(int index, QFile* file) override final;

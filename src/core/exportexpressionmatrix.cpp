@@ -32,7 +32,7 @@ int ExportExpressionMatrix::size() const
  *
  * @param result
  */
-void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
+void ExportExpressionMatrix::process(const EAbstractAnalyticBlock* result)
 {
    EDEBUG_FUNC(this,result);
 
@@ -44,7 +44,7 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 
       // initialize output file stream
       _stream.setDevice(_output);
-      _stream.setRealNumberPrecision(8);
+      _stream.setRealNumberPrecision(_precision);
 
       // write sample names
       for ( int i = 0; i < _input->sampleSize(); i++ )
@@ -109,7 +109,7 @@ void ExportExpressionMatrix::process(const EAbstractAnalytic::Block* result)
 /*!
  * Make a new input object and return its pointer.
  */
-EAbstractAnalytic::Input* ExportExpressionMatrix::makeInput()
+EAbstractAnalyticInput* ExportExpressionMatrix::makeInput()
 {
    EDEBUG_FUNC(this);
 

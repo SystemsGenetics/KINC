@@ -10,16 +10,17 @@ using namespace Pairwise;
 
 
 /*!
- * Compute the Pearson correlation of a cluster in a pairwise data array. The
- * data array should only contain samples that have a non-negative label.
+ * Compute the Pearson correlation of a cluster in a pairwise data array.
  *
- * @param data
+ * @param x
+ * @param y
  * @param labels
  * @param cluster
  * @param minSamples
  */
 float Pearson::computeCluster(
-   const QVector<Vector2>& data,
+   const float *x,
+   const float *y,
    const QVector<qint8>& labels,
    qint8 cluster,
    int minSamples)
@@ -32,25 +33,20 @@ float Pearson::computeCluster(
    float sumy2 = 0;
    float sumxy = 0;
 
-   for ( int i = 0, j = 0; i < labels.size(); ++i )
+   for ( int i = 0; i < labels.size(); ++i )
    {
-      if ( labels[i] >= 0 )
+      if ( labels[i] == cluster )
       {
-         if ( labels[i] == cluster )
-         {
-            float x_i = data[j].s[0];
-            float y_i = data[j].s[1];
+         float x_i = x[i];
+         float y_i = y[i];
 
-            sumx += x_i;
-            sumy += y_i;
-            sumx2 += x_i * x_i;
-            sumy2 += y_i * y_i;
-            sumxy += x_i * y_i;
+         sumx += x_i;
+         sumy += y_i;
+         sumx2 += x_i * x_i;
+         sumy2 += y_i * y_i;
+         sumxy += x_i * y_i;
 
-            ++n;
-         }
-
-         ++j;
+         ++n;
       }
    }
 

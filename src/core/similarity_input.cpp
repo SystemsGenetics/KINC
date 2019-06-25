@@ -61,7 +61,7 @@ const QStringList Similarity::Input::CRITERION_NAMES
  * @param parent
  */
 Similarity::Input::Input(Similarity* parent):
-   EAbstractAnalytic::Input(parent),
+   EAbstractAnalyticInput(parent),
    _base(parent)
 {
    EDEBUG_FUNC(this,parent);
@@ -92,7 +92,7 @@ int Similarity::Input::size() const
  *
  * @param index
  */
-EAbstractAnalytic::Input::Type Similarity::Input::type(int index) const
+EAbstractAnalyticInput::Type Similarity::Input::type(int index) const
 {
    EDEBUG_FUNC(this,index);
 
@@ -305,8 +305,8 @@ QVariant Similarity::Input::data(int index, Role role) const
       case Role::CommandLineName: return QString("lsize");
       case Role::Title: return tr("Local Work Size:");
       case Role::WhatsThis: return tr("The local work size for each OpenCL worker.");
-      case Role::Default: return 0;
-      case Role::Minimum: return 0;
+      case Role::Default: return 32;
+      case Role::Minimum: return 1;
       case Role::Maximum: return std::numeric_limits<int>::max();
       default: return QVariant();
       }

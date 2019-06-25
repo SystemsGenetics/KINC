@@ -25,8 +25,8 @@ class RMT : public EAbstractAnalytic
 public:
    class Input;
    virtual int size() const override final;
-   virtual void process(const EAbstractAnalytic::Block* result) override final;
-   virtual EAbstractAnalytic::Input* makeInput() override final;
+   virtual void process(const EAbstractAnalyticBlock* result) override final;
+   virtual EAbstractAnalyticInput* makeInput() override final;
    virtual void initialize();
 private:
    /*!
@@ -105,6 +105,11 @@ private:
     * The number of threads to use during eigenvalue computation.
     */
    int _numThreads {1};
+   /*!
+    * The minimum difference required between an eigenvalue and the previous
+    * eigenvalue in ascending order for the eigenvalue to be considered unique.
+    */
+   float _uniqueEpsilon {1e-6f};
    /*!
     * The minimum number of unique eigenvalues which must exist in a pruned matrix
     * for the analytic to compute the NNSD of the eigenvalues. If the number of

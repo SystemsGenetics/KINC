@@ -10,7 +10,7 @@
  * @param parent
  */
 ImportCorrelationMatrix::Input::Input(ImportCorrelationMatrix* parent):
-   EAbstractAnalytic::Input(parent),
+   EAbstractAnalyticInput(parent),
    _base(parent)
 {
    EDEBUG_FUNC(this,parent);
@@ -41,7 +41,7 @@ int ImportCorrelationMatrix::Input::size() const
  *
  * @param index
  */
-EAbstractAnalytic::Input::Type ImportCorrelationMatrix::Input::type(int index) const
+EAbstractAnalyticInput::Type ImportCorrelationMatrix::Input::type(int index) const
 {
    EDEBUG_FUNC(this,index);
 

@@ -20,12 +20,33 @@ using namespace std;
 
 
 /*!
+ * Compute the next power of 2 which occurs after a number.
+ *
+ * @param n
+ */
+int Similarity::nextPower2(int n)
+{
+   int pow2 = 2;
+   while ( pow2 < n )
+   {
+      pow2 *= 2;
+   }
+
+   return pow2;
+}
+
+
+
+
+
+
+/*!
  * Return the total number of pairs that must be processed for a given
  * expression matrix.
  *
  * @param emx
  */
-qint64 Similarity::totalPairs(const ExpressionMatrix* emx) const
+qint64 Similarity::totalPairs(const ExpressionMatrix* emx)
 {
    EDEBUG_FUNC(this,emx);
 
@@ -59,7 +80,7 @@ int Similarity::size() const
  *
  * @param index
  */
-std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
+std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeWork(int index) const
 {
    EDEBUG_FUNC(this,index);
 
@@ -71,7 +92,7 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
    qint64 start {index * static_cast<qint64>(_workBlockSize)};
    qint64 size {min(totalPairs(_input) - start, static_cast<qint64>(_workBlockSize))};
 
-   return unique_ptr<EAbstractAnalytic::Block>(new WorkBlock(index, start, size));
+   return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
 }
 
 
@@ -82,11 +103,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork(int index) const
 /*!
  * Create an empty and uninitialized work block.
  */
-std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork() const
+std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeWork() const
 {
    EDEBUG_FUNC(this);
 
-   return unique_ptr<EAbstractAnalytic::Block>(new WorkBlock);
+   return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock);
 }
 
 
@@ -97,11 +118,11 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeWork() const
 /*!
  * Create an empty and uninitialized result block.
  */
-std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeResult() const
+std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeResult() const
 {
    EDEBUG_FUNC(this);
 
-   return unique_ptr<EAbstractAnalytic::Block>(new ResultBlock);
+   return unique_ptr<EAbstractAnalyticBlock>(new ResultBlock);
 }
 
 
@@ -114,9 +135,26 @@ std::unique_ptr<EAbstractAnalytic::Block> Similarity::makeResult() const
  * index. This implementation takes the Pair objects in the result block and
  * saves them to the output correlation matrix and cluster matrix.
  *
+ * This function converts the labels for each pair into the sample string format
+ * that is used by the cluster matrix. In the pairwise label format, a label k
+ * means that the sample belongs to cluster k, and a negative value means that
+ * the sample was excluded for some reason. In the sample string format, there
+ * is a separate sample string for each pairwise cluster, 0 and 1 denote whether
+ * a sample belongs to that cluster, and all other values (6, 7, 8, 9) denote
+ * that a sample was excluded for some other reason and correspond to the negative
+ * values in the label format. For example, the following label array:
+ *
+ *   0 0 1 2 1 -9 2 -6
+ *
+ * is converted to the following sample string:
+ *
+ *   1 1 0 0 0 9 0 6 ,
+ *   0 0 1 0 1 9 0 6 ,
+ *   0 0 0 1 0 9 1 6
+ *
  * @param result
  */
-void Similarity::process(const EAbstractAnalytic::Block* result)
+void Similarity::process(const EAbstractAnalyticBlock* result)
 {
    EDEBUG_FUNC(this,result);
 
@@ -132,54 +170,42 @@ void Similarity::process(const EAbstractAnalytic::Block* result)
 
    for ( auto& pair : resultBlock->pairs() )
    {
-      // save clusters whose correlations are within thresholds
-      if ( pair.K > 1 )
+      // save correlations that are within thresholds
+      CCMatrix::Pair ccmPair(_ccm);
+      CorrelationMatrix::Pair cmxPair(_cmx);
+
+      for ( qint8 k = 0; k < pair.K; ++k )
       {
-         CCMatrix::Pair ccmPair(_ccm);
+         // determine whether correlation is within thresholds
+         float corr = pair.correlations[k];
 
-         for ( qint8 k = 0; k < pair.K; ++k )
+         if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
          {
-            float corr = pair.correlations[k];
+            // save sample string
+            ccmPair.addCluster();
 
-            if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
+            for ( int i = 0; i < _input->sampleSize(); ++i )
             {
-               ccmPair.addCluster();
-
-               for ( int i = 0; i < _input->sampleSize(); ++i )
-               {
-                  ccmPair.at(ccmPair.clusterSize() - 1, i) = (pair.labels[i] >= 0)
-                     ? (k == pair.labels[i])
-                     : -pair.labels[i];
-               }
+               // convert label format to sample string format
+               ccmPair.at(ccmPair.clusterSize() - 1, i) = (pair.labels[i] >= 0)
+                  ? (k == pair.labels[i])
+                  : -pair.labels[i];
             }
-         }
 
-         if ( ccmPair.clusterSize() > 0 )
-         {
-            ccmPair.write(index);
+            // save correlation
+            cmxPair.addCluster();
+            cmxPair.at(cmxPair.clusterSize() - 1) = corr;
          }
       }
 
-      // save correlations that are within thresholds
-      if ( pair.K > 0 )
+      if ( ccmPair.clusterSize() > 0 )
       {
-         CorrelationMatrix::Pair cmxPair(_cmx);
+         ccmPair.write(index);
+      }
 
-         for ( qint8 k = 0; k < pair.K; ++k )
-         {
-            float corr = pair.correlations[k];
-
-            if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
-            {
-               cmxPair.addCluster();
-               cmxPair.at(cmxPair.clusterSize() - 1) = corr;
-            }
-         }
-
-         if ( cmxPair.clusterSize() > 0 )
-         {
-            cmxPair.write(index);
-         }
+      if ( cmxPair.clusterSize() > 0 )
+      {
+         cmxPair.write(index);
       }
 
       ++index;
@@ -194,7 +220,7 @@ void Similarity::process(const EAbstractAnalytic::Block* result)
 /*!
  * Make a new input object and return its pointer.
  */
-EAbstractAnalytic::Input* Similarity::makeInput()
+EAbstractAnalyticInput* Similarity::makeInput()
 {
    EDEBUG_FUNC(this);
 
@@ -209,7 +235,7 @@ EAbstractAnalytic::Input* Similarity::makeInput()
 /*!
  * Make a new serial object and return its pointer.
  */
-EAbstractAnalytic::Serial* Similarity::makeSerial()
+EAbstractAnalyticSerial* Similarity::makeSerial()
 {
    EDEBUG_FUNC(this);
 
@@ -224,7 +250,7 @@ EAbstractAnalytic::Serial* Similarity::makeSerial()
 /*!
  * Make a new OpenCL object and return its pointer.
  */
-EAbstractAnalytic::OpenCL* Similarity::makeOpenCL()
+EAbstractAnalyticOpenCL* Similarity::makeOpenCL()
 {
    EDEBUG_FUNC(this);
 
@@ -239,7 +265,7 @@ EAbstractAnalytic::OpenCL* Similarity::makeOpenCL()
 /*!
  * Make a new CUDA object and return its pointer.
  */
-EAbstractAnalytic::CUDA* Similarity::makeCUDA()
+EAbstractAnalyticCUDA* Similarity::makeCUDA()
 {
    EDEBUG_FUNC(this);
 

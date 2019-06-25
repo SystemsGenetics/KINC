@@ -11,18 +11,19 @@ namespace Pairwise
    class Spearman : public CorrelationModel
    {
    public:
-      static int nextPower2(int n);
       Spearman(ExpressionMatrix* emx);
    protected:
-      float computeCluster(
-         const QVector<Vector2>& data,
+      virtual float computeCluster(
+         const float *x,
+         const float *y,
          const QVector<qint8>& labels,
          qint8 cluster,
          int minSamples
-      );
+      ) override final;
    private:
-      void bitonicSort(int size, QVector<float>& sortList, QVector<float>& extraList);
-      void bitonicSort(int size, QVector<float>& sortList, QVector<int>& extraList);
+      template<typename T> void siftDown(QVector<float>& array, QVector<T>& extra, int start, int end);
+      template<typename T> void heapSort(QVector<float>& array, QVector<T>& extra, int n);
+   private:
       /*!
        * Workspace for the x data.
        */

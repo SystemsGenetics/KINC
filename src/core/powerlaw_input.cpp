@@ -13,7 +13,7 @@
  * @param parent
  */
 PowerLaw::Input::Input(PowerLaw* parent):
-   EAbstractAnalytic::Input(parent),
+   EAbstractAnalyticInput(parent),
    _base(parent)
 {
    EDEBUG_FUNC(this,parent);
@@ -44,7 +44,7 @@ int PowerLaw::Input::size() const
  *
  * @param index
  */
-EAbstractAnalytic::Input::Type PowerLaw::Input::type(int index) const
+EAbstractAnalyticInput::Type PowerLaw::Input::type(int index) const
 {
    EDEBUG_FUNC(this,index);
 

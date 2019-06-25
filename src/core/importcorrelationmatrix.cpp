@@ -32,7 +32,7 @@ int ImportCorrelationMatrix::size() const
  *
  * @param result
  */
-void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
+void ImportCorrelationMatrix::process(const EAbstractAnalyticBlock* result)
 {
    EDEBUG_FUNC(this,result);
 
@@ -141,7 +141,7 @@ void ImportCorrelationMatrix::process(const EAbstractAnalytic::Block* result)
 /*!
  * Make a new input object and return its pointer.
  */
-EAbstractAnalytic::Input* ImportCorrelationMatrix::makeInput()
+EAbstractAnalyticInput* ImportCorrelationMatrix::makeInput()
 {
    EDEBUG_FUNC(this);
 
