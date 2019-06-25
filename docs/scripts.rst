@@ -30,6 +30,15 @@ The ``make-input-data.py`` script creates a "fake" GEM given the number of genes
 
    python scripts/make-input-data.py
 
+validate.py
+-----------
+
+The ``validate.py`` script attempts to measure the difference between two similarity matrices by comparing the features of each edge (number of clusters, sample statistics, correlation value, sample mask, etc.). This script is useful for comparing similarity matrices from different runs to confirm that they are equivalent or to simply quantify their differences. You must provide the plain-text similarity matrix file, not the network file. This file can be generated using the ``export-cmx`` analytic.
+
+.. code:: bash
+
+   python scripts/validate.py GEM1.cmx.txt GEM2.cmx.txt
+
 visualize.py
 ------------
 
