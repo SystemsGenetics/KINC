@@ -198,7 +198,8 @@ Windows is currently not supported because there is no OpenMPI library for the W
 
 High Performance clusters
 -------------------------
-Usage of KINC on HPC clusters will require assistance of the cluster's systems admin to ensure all dependencies are installed and available.  Software management on clusters is specific to each cluster, although there are often commonalities.  Regardless, it is not possible to provide comprehensive instructions that would apply to every cluster.  
+
+Usage of KINC on HPC clusters will require assistance of the cluster's systems admin to ensure all dependencies are installed and available.  Software management on clusters is specific to each cluster, although there are often commonalities.  Regardless, it is not possible to provide comprehensive instructions that would apply to every cluster.
 
 Palmetto
 ~~~~~~~~
