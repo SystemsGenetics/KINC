@@ -47,7 +47,22 @@ For specific device drivers other than those provided by Ubuntu (i.e. AMD, Intel
 
 Install StatsLib and GCEM
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-Both StatsLib and GCEM are header-only libraries. To install them, you only need to download the packages and put them where they can be found.  The easiest location is in ``/usr/local/include`` (which requires root access).  For more detailed instructions, please follow the download and installation instructions for each package.
+Both StatsLib and GCEM are header-only libraries. To install them, you only need to download the packages and put them where they can be found.  The easiest location is in ``/usr/local/include`` (which requires root access).  Below are example installation instructions:
+
+To install StatsLib into ``/usr/local/``:
+
+.. code:: bash
+
+   git clone -b master --single-branch https://github.com/kthohr/stats ./stats
+   sudo cp -R ./stats/include/* /usr/local/include
+
+
+To install CGEM into ``/usr/local/``:
+
+.. code:: bash
+
+   git clone https://github.com/kthohr/gcem.git ./gcem
+   sudo cp -R ./stats/include/* /usr/local/include
 
 Install ACE
 ~~~~~~~~~~~
