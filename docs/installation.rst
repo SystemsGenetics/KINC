@@ -3,10 +3,11 @@ Installation
 
 Currently, there is no stand-alone binary for KINC. It must be compiled and installed. The instructions on this page provide step-by-step instructions to compile and install KINC.
 
-Alternatively, KINC can be run in a Docker container. The Dockerfile for KINC is available in the KINC Github repository, and Docker images are maintained on DockerHub under ``systemsgenetics/kinc``. This method currently does not support the GUI version of KINC.
+KINC can also be run in a Docker container. Consult the Usage section for more information.
 
-Requirements
+Dependencies
 ------------
+
 KINC requires the following software packages.
 
 - `NVIDIA CUDA Toolkit <https://developer.nvidia.com/cuda-zone>`_
@@ -47,6 +48,7 @@ For specific device drivers other than those provided by Ubuntu (i.e. AMD, Intel
 
 Install StatsLib and GCEM
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Both StatsLib and GCEM are header-only libraries. To install them, you only need to download the packages and put them where they can be found.  The easiest location is in ``/usr/local/include`` (which requires root access).  Below are example installation instructions:
 
 To install StatsLib into ``/usr/local/``:
@@ -66,6 +68,7 @@ To install CGEM into ``/usr/local/``:
 
 Install ACE
 ~~~~~~~~~~~
+
 KINC v3.3.0 requires ACE v3.1.0. ACE requires some of the same dependencies as KINC (such as QT, CUDA, OpenMPI, OpenCL, etc).  Therefore, if all dependencies above are installed, ACE should compile. To start, set the following environment variable:
 
 .. code:: bash
@@ -82,6 +85,7 @@ Next, clone the ACE repository:
 
 Default installation location
 *****************************
+
 Next compile:
 
 .. code:: bash
@@ -94,6 +98,7 @@ Next compile:
 
 Alternative installation location
 *********************************
+
 By default, ACE will try to install into ``/usr/local``. To install ACE to a different directory (e.g. ``/local/software``), set the ``INSTALL_PREFIX`` environment variable accordingly:
 
 .. code:: bash
@@ -165,6 +170,7 @@ Now build and install KINC:
 
 If ACE is not in /usr/local
 ***************************
+
 If ACE was not installed into an alternative location other than the default ``/usr/local`` then should set several environment variables help the compiler find ACE libraries and headers:
 
 .. code:: bash
@@ -180,6 +186,7 @@ If ACE was not installed into an alternative location other than the default ``/
 
 Preparing to Run KINC
 ~~~~~~~~~~~~~~~~~~~~~
+
 If KINC was installed in the default location you can skip the :doc:`usage` page for futher instructions, otherwise, if you installed KINC in an alternative location, you must update the ``LD_LIBRARY_PATH`` in your ``~/.bashrc`` file.  Use the following command to get the exact text you need to add.
 
 .. code:: bash

@@ -82,7 +82,27 @@ Although KINC is an MPI application, generally you can run ``kinc`` as a stand-a
 
    srun --mpi=pmi2 kinc run import-emx --input Yeast.txt --output Yeast.emx --nan NA
 
+Docker
+------
+
+KINC can be run in a Docker container, which does not require any dependencies aside from Docker and nvidia-docker. The Dockerfile for KINC is available in the KINC Github repository, and Docker images are maintained on DockerHub under ``systemsgenetics/kinc``. This method currently does not support the GUI version of KINC.
+
+To use KINC in an interactive Docker container:
+
+.. code:: bash
+
+   nvidia-docker run --rm -it systemsgenetics/kinc:3.3.0 bash
+   > nvidia-smi
+   > kinc settings
+
+You will need to share input/output data between the Docker container and the host machine, which can be done by mounting a directory:
+
+.. code:: bash
+
+   nvidia-docker run --rm -it -v $PWD:/root systemsgenetics/kinc:3.3.0 bash
+   > ls
+
 Nextflow
 --------
 
-Another recommended option is to use the `KINC-nf <https://github.com/SystemsGenetics/KINC-nf.git>`__ nextflow pipeline, which can run the entire KINC workflow on nearly any computing environment. Consult the KINC-nf repository on Github for instructions.
+Another recommended option is to use the `KINC-nf <https://github.com/SystemsGenetics/KINC-nf.git>`__ nextflow pipeline, which can run the entire KINC workflow on nearly any computing environment with very little setup required. Consult the KINC-nf repository on Github for instructions.
