@@ -13,11 +13,9 @@
 
 
 /*!
- * This class implements the cluster filter analytic. This analytic takes an
- * expression matrix, correlation matrix and cluster composition matrix allows
- * the user to filter out clusters that do not pass specific tests.
- *
- * This analytic can use MPI.
+ * This class implements the cluster filter analytic. This analytic takes a
+ * correlation matrix and cluster matrix and filters out clusters that do not
+ * pass specific tests. This analytic can use MPI.
  */
 class CorrPowerFilter : public EAbstractAnalytic
 {

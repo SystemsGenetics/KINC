@@ -8,16 +8,15 @@
 /*!
  * This class implements the RMT analytic. This analytic takes a correlation
  * matrix and attempts to find a threshold which, when applied to the correlation
- * matrix, produces a scale-free network. This analytic uses Random Matrix Theory
+ * matrix, produces a non-random network. This analytic uses Random Matrix Theory
  * (RMT), which involves computing the eigenvalues of a thresholded correlation
  * matrix, computing the nearest-neighbor spacing distribution (NNSD) of the eigenvalues,
  * and comparing the distribution to a Poisson distribution using a chi-squared
  * test. This process is repeated at each threshold step from the starting threshold;
- * as the threshold decreases, the NNSD changes from a Poisson distribution to
- * a Gaussian orthogonal ensemble (GOE) distribution, so the chi-squared value
- * decreases. When the threshold approaches the scale-free threshold, the chi-squared
- * value increases sharply, and the final threshold is chosen as the lowest threshold
- * which produced a chi-squared value below the critical value.
+ * as the threshold decreases, the NNSD transitions from a Poisson distribution
+ * to a Gaussian orthogonal ensemble (GOE) distribution, which causes the
+ * chi-squared value to increase sharply. The final threshold is chosen as the
+ * lowest threshold whose chi-squared value was below the critical value.
  */
 class RMT : public EAbstractAnalytic
 {

@@ -13,14 +13,13 @@
  * This class implements the similarity analytic. This analytic takes an
  * expression matrix and computes a similarity matrix, where each element is
  * a similarity measure of two genes in the expression matrix. The similarity
- * is computed using a correlation measure. The similarity matrix can also have
- * multiple modes within a pair; these modes can be optionally computed using a
- * clustering method. This analytic produces two data objects: a correlation
- * matrix containing the pairwise correlations, and a cluster matrix containing
- * sample masks of the pairwise clusters. Sample masks for unimodal pairs are not
- * saved to the cluster matrix. If clustering is not used, an empty cluster matrix
- * is created. This analytic can also perform pairwise outlier removal before and
- * after clustering, if clustering is used.
+ * of each pair is computed using a correlation measure. The similarity matrix
+ * can also have multiple modes within a pair; these modes can be optionally
+ * computed using a clustering method. This analytic produces two data objects:
+ * a correlation matrix containing the pairwise correlations, and a cluster
+ * matrix containing sample masks of the pairwise clusters. If clustering is
+ * not used, an empty cluster matrix is created. This analytic can also perform
+ * pairwise outlier removal before and after clustering, if clustering is used.
  *
  * This analytic can use MPI and it has both CPU and GPU implementations, as the
  * pairwise clustering significantly increases the amount of computations required

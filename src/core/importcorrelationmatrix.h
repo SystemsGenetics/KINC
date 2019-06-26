@@ -12,13 +12,13 @@
 /*!
  * This class implements the import correlation matrix analytic. This analytic
  * reads in a text file of correlations, where each line is a correlation that
- * includes the pairwise index, correlation value, and sample mask, as well as
- * several other fields which are not used. This analytic produces two data
- * objects: a correlation matrix containing the pairwise correlations, and a
- * cluster matrix containing the sample masks for each pairwise cluster. There
- * are several fields which are not represented in the text file and therefore
- * must be specified manually, including the gene size, sample size, max cluster
- * size, and correlation name.
+ * includes the pairwise index, correlation value, sample mask, and several
+ * other summary statistics. This analytic produces two data objects: a
+ * correlation matrix containing the pairwise correlations, and a cluster matrix
+ * containing the sample masks for each pairwise cluster. There are several
+ * fields which are not represented in the text file and therefore must be
+ * specified manually, including the gene size, sample size, max cluster size,
+ * and correlation name.
  */
 class ImportCorrelationMatrix : public EAbstractAnalytic
 {

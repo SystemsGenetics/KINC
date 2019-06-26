@@ -9,7 +9,7 @@
  * This class implements the Power-law thresholding analytic. This analytic takes
  * a correlation matrix and attempts to find a threshold which, when applied to
  * the correlation matrix, produces a scale-free network. Each thresholded network
- * is evaluted by comparing the degree distribution of the network to a power-law
+ * is evaluated by comparing the degree distribution of the network to a power-law
  * distribution. This process is repeated at each threshold step from the starting
  * threshold.
  */
