@@ -79,7 +79,7 @@ Similarity::CUDA::Pearson::Pearson(::CUDA::Program* program):
    // set work sizes
    int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
 
-   setSizes(numWorkgroups * localWorkSize, localWorkSize);
+   setSizes(numWorkgroups, localWorkSize);
 
    // execute kernel
    return ::CUDA::Kernel::execute(stream);
