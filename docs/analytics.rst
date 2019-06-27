@@ -8,7 +8,7 @@ To view the help text for an analytic, run ``kinc help run <analytic>``. The hel
 Import Expression Matrix
 ------------------------
 
-The Import Expression Matrix analytic takes a plain-text expression matrix and converts it to an EMX object. The input file should have each row on a line, each value separated by whitespace, and the first row and column containing the row names and column names, respectively. Elements which have the given NAN token ("NA" by default) are read in as NAN. If the sample names are not in the input file, the user must provide the number of samples to the analytic, and the samples will be given integer names.
+The Import Expression Matrix analytic takes a plain-text expression matrix and converts it to an EMX object. Elements which have the given NAN token ("NA" by default) are read in as NAN. If the sample names are not in the input file, the user must provide the number of samples to the analytic, and the samples will be given integer names.
 
 .. code:: bash
 
@@ -17,7 +17,7 @@ The Import Expression Matrix analytic takes a plain-text expression matrix and c
 Export Expression Matrix
 ------------------------
 
-The Export Expression Matrix analytic takes an EMX object and converts it to a plain-text expression matrix. The output file will have each row on a line, each value separated by whitespace, and the first row and column containing the row names and column names, respectively. Elements which are NAN in the expression matrix are written as the given NAN token ("NA" by default).
+The Export Expression Matrix analytic takes an EMX object and converts it to a plain-text expression matrix. Elements which are NAN in the expression matrix are written as the given NAN token ("NA" by default).
 
 .. code:: bash
 
@@ -37,7 +37,7 @@ This analytic can use MPI and it has both CPU and GPU implementations, as the pa
 Export Correlation Matrix
 -------------------------
 
-The Export Correlation Matrix analytic takes two data objects, a CMX object and a CCM object, and writes a plain-text correlation matrix, where each line is a correlation that includes the pairwise index, correlation value, sample mask, and several other summary statistics.
+The Export Correlation Matrix analytic takes two data objects, a CMX object and a CCM object, and writes a plain-text correlation matrix.
 
 .. code:: bash
 
@@ -46,7 +46,7 @@ The Export Correlation Matrix analytic takes two data objects, a CMX object and 
 Import Correlation Matrix
 -------------------------
 
-The Import Correlation Matrix analytic takes a plain-text correlation matrix, where each line is a correlation that includes the pairwise index, correlation value, sample mask, and several other summary statistics. This analytic produces two data objects: a CMX object containing the pairwise correlations, and a CCM object containing the sample masks for each pairwise cluster. There are several fields which are not represented in the input file and therefore must be specified manually, including the gene size, sample size, max cluster size, and correlation name.
+The Import Correlation Matrix analytic takes a plain-text correlation matrix and produces two data objects: a CMX object containing the pairwise correlations, and a CCM object containing the sample masks for each pairwise cluster. There are several fields which are not represented in the input file and therefore must be specified manually, including the gene size, sample size, max cluster size, and correlation name.
 
 .. code:: bash
 
@@ -86,7 +86,7 @@ The RMT Thresholding analytic takes a CMX object and attempts to find a threshol
 Extract
 -------
 
-The Extract analytic takes two data objects, a CMX object and a CCM object, and extracts a network by applying a correlation threshold. The network file can be in plain-text format, which is similar to the format used by ``export-cmx``, or "minimal" plain-text format, which does not contain any data from the CCM object, or GraphML format, which is an XML format for networks.
+The Extract analytic takes two data objects, a CMX object and a CCM object, and extracts a co-expression network by applying a correlation threshold. The network file can use the full plain-text format, the "minimal" plain-text format, or the GraphML format.
 
 .. code:: bash
 
