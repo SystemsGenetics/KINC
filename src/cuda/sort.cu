@@ -87,7 +87,7 @@ void bitonicSort(float *array, int size)
             dir = -((i/(ob/2)) & 0x1);
             a = (i/t) * ib + (i%t);
             b = a + t;
-            if ( ((array[a] > array[b]) && !dir) || ((array[a] < array[b]) && dir) )
+            if ( (!dir && (array[a] > array[b])) || (dir && (array[a] < array[b])) )
             {
                swapF(&array[a], &array[b]);
             }
@@ -126,7 +126,7 @@ void bitonicSortFF(int size, float *array, float *extra)
             dir = -((i/(ob/2)) & 0x1);
             a = (i/t) * ib + (i%t);
             b = a + t;
-            if ( ((array[a] > array[b]) && !dir) || ((array[a] < array[b]) && dir) )
+            if ( (!dir && (array[a] > array[b])) || (dir && (array[a] < array[b])) )
             {
                swapF(&array[a], &array[b]);
                swapF(&extra[a], &extra[b]);
@@ -166,7 +166,7 @@ void bitonicSortFI(int size, float *array, int *extra)
             dir = -((i/(ob/2)) & 0x1);
             a = (i/t) * ib + (i%t);
             b = a + t;
-            if ( ((array[a] > array[b]) && !dir) || ((array[a] < array[b]) && dir) )
+            if ( (!dir && (array[a] > array[b])) || (dir && (array[a] < array[b])) )
             {
                swapF(&array[a], &array[b]);
                swapI(&extra[a], &extra[b]);

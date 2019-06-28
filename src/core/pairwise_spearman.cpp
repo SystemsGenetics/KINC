@@ -52,7 +52,7 @@ float Spearman::computeCluster(
       {
          _x[n] = x[i];
          _y[n] = y[i];
-         _rank[n] = n + 1;
+         _rank[n] = n;
          ++n;
       }
    }
@@ -71,7 +71,7 @@ float Spearman::computeCluster(
 
       for ( int i = 0; i < n; ++i )
       {
-         int tmp = (i + 1) - _rank[i];
+         int tmp = i - _rank[i];
          diff += tmp*tmp;
       }
 

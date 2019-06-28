@@ -39,7 +39,7 @@ float Spearman_computeCluster(
       {
          x_sorted[n] = x[i];
          y_sorted[n] = y[i];
-         rank[n] = n + 1;
+         rank[n] = n;
          ++n;
       }
    }
@@ -68,7 +68,7 @@ float Spearman_computeCluster(
 
       for ( int i = 0; i < n; ++i )
       {
-         int tmp = (i + 1) - rank[i];
+         int tmp = i - rank[i];
          diff += tmp*tmp;
       }
 
