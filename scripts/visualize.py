@@ -50,9 +50,16 @@ def plot_coverage(netlist, output_dir):
 
 
 
-def plot_pairwise(emx, netlist, output_dir, limits=None):
+def plot_pairwise(emx, netlist, output_dir, limits=None, range_args=None):
+	# determine range of plots to render
+	if range_args != None:
+		start, stop, step = range_args
+		indices = netlist.index[start:stop:step]
+	else:
+		indices = netlist.index
+
 	# iterate through each network edge
-	for idx in netlist.index:
+	for idx in indices:
 		edge = netlist.iloc[idx]
 		x = edge["Source"]
 		y = edge["Target"]
@@ -116,6 +123,7 @@ if __name__ ==  "__main__":
 	parser.add_argument("--corrdist", help="plot correlation distribution", action="store_true")
 	parser.add_argument("--coverage", help="plot gene coverage vs correlation", action="store_true")
 	parser.add_argument("--pairwise", help="plot pairwise plots", action="store_true")
+	parser.add_argument("--pw-range", help="range of pairwise plots to render", nargs=3, type=int, metavar=("START", "STOP", "STEP"))
 	parser.add_argument("--pw-scale", help="use the same limits for all pairwise plots", action="store_true")
 
 	args = parser.parse_args()
@@ -151,4 +159,4 @@ if __name__ ==  "__main__":
 	# plot pairwise plots
 	if args.pairwise:
 		print("Plotting pairwise plots...")
-		plot_pairwise(emx, netlist, output_dir=args.output_dir, limits=limits)
+		plot_pairwise(emx, netlist, output_dir=args.output_dir, limits=limits, range_args=args.pw_range)
