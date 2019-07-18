@@ -1,10 +1,6 @@
 #include "corrpower_serial.h"
 #include "corrpower_resultblock.h"
 #include "corrpower_workblock.h"
-#include "expressionmatrix_gene.h"
-#include "pairwise_gmm.h"
-#include "pairwise_pearson.h"
-#include "pairwise_spearman.h"
 #include <ace/core/elog.h>
 #include "stats.hpp"
 
