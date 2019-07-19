@@ -155,7 +155,7 @@ if __name__ == "__main__":
 	parser.add_argument("--minsamp", help="minimum sample size", type=int, default=30)
 	parser.add_argument("--minclus", help="minimum clusters", type=int, default=1)
 	parser.add_argument("--maxclus", help="maximum clusters", type=int, default=5)
-	parser.add_argument("--crit", help="model selection criterion", default="bic", choices=["aic", "bic"])
+	parser.add_argument("--criterion", help="model selection criterion", default="bic", choices=["aic", "bic"])
 	parser.add_argument("--preout", help="whether to remove pre-clustering outliers", action="store_true")
 	parser.add_argument("--postout", help="whether to remove post-clustering outliers", action="store_true")
 	parser.add_argument("--mincorr", help="minimum absolute correlation threshold", type=float, default=0)

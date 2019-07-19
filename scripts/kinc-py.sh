@@ -37,10 +37,13 @@ if [[ $DO_SIMILARITY = 1 ]]; then
 		--clusmethod $CLUSMETHOD \
 		--corrmethod $CORRMETHOD \
 		--minexpr=$MINEXPR \
-		--minclus $MINCLUS --maxclus $MAXCLUS \
-		--crit $CRITERION \
-		$PREOUT $POSTOUT \
-		--mincorr $MINCORR --maxcorr $MAXCORR
+		--minclus $MINCLUS \
+		--maxclus $MAXCLUS \
+		--criterion $CRITERION \
+		$PREOUT \
+		$POSTOUT \
+		--mincorr $MINCORR \
+		--maxcorr $MAXCORR
 fi
 
 # threshold
