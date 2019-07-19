@@ -65,7 +65,7 @@ def plot_pairwise(emx, netlist, output_dir, limits=None, range_args=None):
 		y = edge["Target"]
 		k = edge["Cluster"]
 
-		print(x, y, k)
+		print("%-20s %-20s %d" % (x, y, k))
 
 		# extract pairwise data
 		labels = np.array([int(s) for s in edge["Samples"]])
