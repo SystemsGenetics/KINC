@@ -17,9 +17,8 @@ using namespace Pairwise;
 Spearman::Spearman(ExpressionMatrix* emx)
 {
    // pre-allocate workspace
-   _x.resize(emx->sampleSize());
-   _y.resize(emx->sampleSize());
-   _rank.resize(emx->sampleSize());
+   _x_rank.resize(emx->sampleSize());
+   _y_rank.resize(emx->sampleSize());
 }
 
 
@@ -50,9 +49,8 @@ float Spearman::computeCluster(
    {
       if ( labels[i] == cluster )
       {
-         _x[n] = x[i];
-         _y[n] = y[i];
-         _rank[n] = n;
+         _x_rank[n] = x[i];
+         _y_rank[n] = y[i];
          ++n;
       }
    }
@@ -62,21 +60,34 @@ float Spearman::computeCluster(
 
    if ( n >= minSamples )
    {
-      // execute two sorts that are the beginning of the spearman algorithm
-      heapSort(_x, _y, n);
-      heapSort(_y, _rank, n);
+      // compute rank of x
+      heapSort(_x_rank, _y_rank, n);
+      computeRank(_x_rank, n);
 
-      // go through spearman sorted rank list and calculate difference from 1,2,3,... list
-      int diff = 0;
+      // compute rank of y
+      heapSort(_y_rank, _x_rank, n);
+      computeRank(_y_rank, n);
+
+      // compute correlation of rank arrays
+      float sumx = 0;
+      float sumy = 0;
+      float sumx2 = 0;
+      float sumy2 = 0;
+      float sumxy = 0;
 
       for ( int i = 0; i < n; ++i )
       {
-         int tmp = i - _rank[i];
-         diff += tmp*tmp;
+         float x_i = _x_rank[i];
+         float y_i = _y_rank[i];
+
+         sumx += x_i;
+         sumy += y_i;
+         sumx2 += x_i * x_i;
+         sumy2 += y_i * y_i;
+         sumxy += x_i * y_i;
       }
 
-      // compute spearman coefficient
-      result = 1.0f - 6.0f * diff / (n * (n*n - 1));
+      result = (n*sumxy - sumx*sumy) / sqrt((n*sumx2 - sumx*sumx) * (n*sumy2 - sumy*sumy));
    }
 
    return result;
@@ -87,8 +98,7 @@ float Spearman::computeCluster(
 
 
 
-template<typename T>
-void Spearman::siftDown(QVector<float>& array, QVector<T>& extra, int start, int end)
+void Spearman::siftDown(QVector<float>& array, QVector<float>& extra, int start, int end)
 {
    int root = start;
 
@@ -133,8 +143,7 @@ void Spearman::siftDown(QVector<float>& array, QVector<T>& extra, int start, int
  * @param extra
  * @param n
  */
-template<typename T>
-void Spearman::heapSort(QVector<float>& array, QVector<T>& extra, int n)
+void Spearman::heapSort(QVector<float>& array, QVector<float>& extra, int n)
 {
    // heapify the array
    int start = ((n-1) - 1) / 2;
@@ -154,5 +163,67 @@ void Spearman::heapSort(QVector<float>& array, QVector<T>& extra, int n)
       end -= 1;
 
       siftDown(array, extra, 0, end);
+   }
+}
+
+
+
+
+
+
+/*!
+ * Compute the rank of a sorted vector in place. In the event of ties,
+ * the ranks are corrected using fractional ranking.
+ *
+ * @param array
+ * @param n
+ */
+void Spearman::computeRank(QVector<float>& array, int n)
+{
+   int i = 0;
+
+   while ( i < n - 1 )
+   {
+      float a_i = array[i];
+
+      if ( a_i == array[i + 1] )
+      {
+         int j = i + 2;
+         int k;
+         float rank = 0;
+
+         // we have detected a tie, find number of equal elements
+         while ( j < n && a_i == array[j] )
+         {
+            ++j;
+         }
+
+         // compute rank
+         for ( k = i; k < j; ++k )
+         {
+            rank += k;
+         }
+
+         // divide by number of ties
+         rank /= (float) (j - i);
+
+         for ( k = i; k < j; ++k )
+         {
+            array[k] = rank;
+         }
+
+         i = j;
+      }
+      else
+      {
+         // no tie - set rank to natural ordered position
+         array[i] = i;
+         ++i;
+      }
+   }
+
+   if ( i == n - 1 )
+   {
+      array[n - 1] = (float) (n - 1);
    }
 }

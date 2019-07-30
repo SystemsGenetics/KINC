@@ -21,21 +21,18 @@ namespace Pairwise
          int minSamples
       ) override final;
    private:
-      template<typename T> void siftDown(QVector<float>& array, QVector<T>& extra, int start, int end);
-      template<typename T> void heapSort(QVector<float>& array, QVector<T>& extra, int n);
+      void siftDown(QVector<float>& array, QVector<float>& extra, int start, int end);
+      void heapSort(QVector<float>& array, QVector<float>& extra, int n);
+      void computeRank(QVector<float>& array, int n);
    private:
       /*!
-       * Workspace for the x data.
+       * Workspace for the x rank data.
        */
-      QVector<float> _x;
+      QVector<float> _x_rank;
       /*!
-       * Workspace for the y data.
+       * Workspace for the y rank data.
        */
-      QVector<float> _y;
-      /*!
-       * Workspace for the rank data.
-       */
-      QVector<int> _rank;
+      QVector<float> _y_rank;
    };
 }
 
