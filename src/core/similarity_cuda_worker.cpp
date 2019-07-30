@@ -48,7 +48,6 @@ Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, :
    _buffers.work_counts = ::CUDA::Buffer<int>(K * W, false);
    _buffers.work_logpi = ::CUDA::Buffer<float>(K * W, false);
    _buffers.work_gamma = ::CUDA::Buffer<float>(N * K * W, false);
-   _buffers.work_rank = ::CUDA::Buffer<int>(N_pow2 * W, false);
    _buffers.out_K = ::CUDA::Buffer<qint8>(1 * W);
    _buffers.out_labels = ::CUDA::Buffer<qint8>(N * W);
    _buffers.out_correlations = ::CUDA::Buffer<float>(K * W);
@@ -212,7 +211,6 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::CUDA::Worker::execute(const 
             &_buffers.out_labels,
             _base->_minSamples,
             &_buffers.work_xy,
-            &_buffers.work_rank,
             &_buffers.out_correlations
          );
       }

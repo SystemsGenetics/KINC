@@ -56,7 +56,6 @@ private:
       ::CUDA::Buffer<int> work_counts;
       ::CUDA::Buffer<float> work_logpi;
       ::CUDA::Buffer<float> work_gamma;
-      ::CUDA::Buffer<int> work_rank;
       ::CUDA::Buffer<qint8> out_K;
       ::CUDA::Buffer<qint8> out_labels;
       ::CUDA::Buffer<float> out_correlations;

@@ -25,7 +25,6 @@ public:
       ,InLabels
       ,MinSamples
       ,WorkXY
-      ,WorkRank
       ,OutCorrelations
    };
    explicit Spearman(::CUDA::Program* program);
@@ -40,7 +39,6 @@ public:
       ::CUDA::Buffer<qint8>* in_labels,
       int minSamples,
       ::CUDA::Buffer<float>* work_xy,
-      ::CUDA::Buffer<int>* work_rank,
       ::CUDA::Buffer<float>* out_correlations
    );
 };

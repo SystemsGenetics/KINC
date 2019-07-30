@@ -40,7 +40,6 @@ Similarity::CUDA::Spearman::Spearman(::CUDA::Program* program):
  * @param in_labels
  * @param minSamples
  * @param work_xy
- * @param work_rank
  * @param out_correlations
  */
 ::CUDA::Event Similarity::CUDA::Spearman::execute(
@@ -54,7 +53,6 @@ Similarity::CUDA::Spearman::Spearman(::CUDA::Program* program):
    ::CUDA::Buffer<qint8>* in_labels,
    int minSamples,
    ::CUDA::Buffer<float>* work_xy,
-   ::CUDA::Buffer<int>* work_rank,
    ::CUDA::Buffer<float>* out_correlations
 )
 {
@@ -69,7 +67,6 @@ Similarity::CUDA::Spearman::Spearman(::CUDA::Program* program):
       in_labels,
       minSamples,
       work_xy,
-      work_rank,
       out_correlations);
 
    // set kernel arguments
@@ -81,7 +78,6 @@ Similarity::CUDA::Spearman::Spearman(::CUDA::Program* program):
    setBuffer(InLabels, in_labels);
    setArgument(MinSamples, minSamples);
    setBuffer(WorkXY, work_xy);
-   setBuffer(WorkRank, work_rank);
    setBuffer(OutCorrelations, out_correlations);
 
    // set work sizes
