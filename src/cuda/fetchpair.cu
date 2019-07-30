@@ -12,7 +12,7 @@
  * labeled as such, all other samples are labeled as cluster 0. The number of
  * clean samples is returned.
  *
- * @param globalWorkSize
+ * @param numPairs
  * @param expressions
  * @param sampleSize
  * @param in_index
@@ -22,7 +22,7 @@
  */
 __global__
 void fetchPair(
-   int globalWorkSize,
+   int numPairs,
    const float *expressions,
    int sampleSize,
    const int2 *in_index,
@@ -32,7 +32,7 @@ void fetchPair(
 {
    int i = blockIdx.x * blockDim.x + threadIdx.x;
 
-   if ( i >= globalWorkSize )
+   if ( i >= numPairs )
    {
       return;
    }

@@ -34,6 +34,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
  * @param queue
  * @param globalWorkSize
  * @param localWorkSize
+ * @param numPairs
  * @param expressions
  * @param sampleSize
  * @param in_index
@@ -41,7 +42,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
  * @param minClusters
  * @param maxClusters
  * @param criterion
- * @param work_xy
+ * @param work_X
  * @param work_N
  * @param work_labels
  * @param work_components
@@ -56,6 +57,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    ::OpenCL::CommandQueue* queue,
    int globalWorkSize,
    int localWorkSize,
+   int numPairs,
    ::OpenCL::Buffer<cl_float>* expressions,
    cl_int sampleSize,
    ::OpenCL::Buffer<cl_int2>* in_index,
@@ -63,7 +65,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    cl_char minClusters,
    cl_char maxClusters,
    cl_int criterion,
-   ::OpenCL::Buffer<cl_float>* work_xy,
+   ::OpenCL::Buffer<cl_float2>* work_X,
    ::OpenCL::Buffer<cl_int>* work_N,
    ::OpenCL::Buffer<cl_char>* work_labels,
    ::OpenCL::Buffer<cl_component>* work_components,
@@ -79,6 +81,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
       queue,
       globalWorkSize,
       localWorkSize,
+      numPairs,
       expressions,
       sampleSize,
       in_index,
@@ -86,7 +89,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
       minClusters,
       maxClusters,
       &criterion,
-      work_xy,
+      work_X,
       work_N,
       work_labels,
       work_components,
@@ -101,7 +104,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    Locker locker {lock()};
 
    // set kernel arguments
-   setArgument(GlobalWorkSize, globalWorkSize);
+   setArgument(NumPairs, numPairs);
    setBuffer(Expressions, expressions);
    setArgument(SampleSize, sampleSize);
    setBuffer(InIndex, in_index);
@@ -109,7 +112,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    setArgument(MinClusters, minClusters);
    setArgument(MaxClusters, maxClusters);
    setArgument(Criterion, criterion);
-   setBuffer(WorkXY, work_xy);
+   setBuffer(WorkX, work_X);
    setBuffer(WorkN, work_N);
    setBuffer(WorkLabels, work_labels);
    setBuffer(WorkComponents, work_components);
@@ -121,9 +124,7 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
    setBuffer(OutLabels, out_labels);
 
    // set work sizes
-   int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
-
-   setSizes(0, numWorkgroups * localWorkSize, localWorkSize);
+   setSizes(0, globalWorkSize / localWorkSize, localWorkSize);
 
    // execute kernel
    return ::OpenCL::Kernel::execute(queue);

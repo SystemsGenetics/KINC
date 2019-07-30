@@ -43,13 +43,15 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
 
    _buffers.in_index = ::OpenCL::Buffer<cl_int2>(context, 1 * W);
    _buffers.work_N = ::OpenCL::Buffer<cl_int>(context, 1 * W);
-   _buffers.work_xy = ::OpenCL::Buffer<cl_float>(context, 2 * N_pow2 * W);
+   _buffers.work_X = ::OpenCL::Buffer<cl_float2>(context, N * W);
    _buffers.work_labels = ::OpenCL::Buffer<cl_char>(context, N * W);
    _buffers.work_components = ::OpenCL::Buffer<cl_component>(context, K * W);
    _buffers.work_MP = ::OpenCL::Buffer<cl_float2>(context, K * W);
    _buffers.work_counts = ::OpenCL::Buffer<cl_int>(context, K * W);
    _buffers.work_logpi = ::OpenCL::Buffer<cl_float>(context, K * W);
    _buffers.work_gamma = ::OpenCL::Buffer<cl_float>(context, N * K * W);
+   _buffers.work_x = ::OpenCL::Buffer<cl_float>(context, N_pow2 * W);
+   _buffers.work_y = ::OpenCL::Buffer<cl_float>(context, N_pow2 * W);
    _buffers.out_K = ::OpenCL::Buffer<cl_char>(context, 1 * W);
    _buffers.out_labels = ::OpenCL::Buffer<cl_char>(context, N * W);
    _buffers.out_correlations = ::OpenCL::Buffer<cl_float>(context, K * W);
@@ -88,11 +90,11 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
    for ( int i = 0; i < workBlock->size(); i += _base->_globalWorkSize )
    {
       // write input buffers to device
-      int globalWorkSize {static_cast<int>(min(static_cast<qint64>(_base->_globalWorkSize), workBlock->size() - i))};
+      int numPairs {static_cast<int>(min(static_cast<qint64>(_base->_globalWorkSize), workBlock->size() - i))};
 
       _buffers.in_index.mapWrite(_queue).wait();
 
-      for ( int j = 0; j < globalWorkSize; ++j )
+      for ( int j = 0; j < numPairs; ++j )
       {
          _buffers.in_index[j] = { index.getX(), index.getY() };
          ++index;
@@ -103,8 +105,9 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
       // execute fetch-pair kernel
       _kernels.fetchPair->execute(
          _queue,
-         globalWorkSize,
+         _base->_globalWorkSize,
          _base->_localWorkSize,
+         numPairs,
          &_baseOpenCL->_expressions,
          _base->_input->sampleSize(),
          &_buffers.in_index,
@@ -118,8 +121,9 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
       {
          _kernels.outlier->execute(
             _queue,
-            globalWorkSize,
+            _base->_globalWorkSize,
             _base->_localWorkSize,
+            numPairs,
             &_baseOpenCL->_expressions,
             _base->_input->sampleSize(),
             &_buffers.in_index,
@@ -127,7 +131,8 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
             &_buffers.out_labels,
             &_buffers.out_K,
             -7,
-            &_buffers.work_xy
+            &_buffers.work_x,
+            &_buffers.work_y
          ).wait();
       }
 
@@ -136,8 +141,9 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
       {
          _kernels.gmm->execute(
             _queue,
-            globalWorkSize,
+            _base->_globalWorkSize,
             _base->_localWorkSize,
+            numPairs,
             &_baseOpenCL->_expressions,
             _base->_input->sampleSize(),
             &_buffers.in_index,
@@ -145,7 +151,7 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
             _base->_minClusters,
             _base->_maxClusters,
             (cl_int) _base->_criterion,
-            &_buffers.work_xy,
+            &_buffers.work_X,
             &_buffers.work_N,
             &_buffers.work_labels,
             &_buffers.work_components,
@@ -162,7 +168,7 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
          // set cluster size to 1 if clustering is disabled
          _buffers.out_K.mapWrite(_queue).wait();
 
-         for ( int i = 0; i < globalWorkSize; ++i )
+         for ( int i = 0; i < numPairs; ++i )
          {
             _buffers.out_K[i] = 1;
          }
@@ -175,8 +181,9 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
       {
          _kernels.outlier->execute(
             _queue,
-            globalWorkSize,
+            _base->_globalWorkSize,
             _base->_localWorkSize,
+            numPairs,
             &_baseOpenCL->_expressions,
             _base->_input->sampleSize(),
             &_buffers.in_index,
@@ -184,7 +191,8 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
             &_buffers.out_labels,
             &_buffers.out_K,
             -8,
-            &_buffers.work_xy
+            &_buffers.work_x,
+            &_buffers.work_y
          ).wait();
       }
 
@@ -193,8 +201,9 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
       {
          _kernels.pearson->execute(
             _queue,
-            globalWorkSize,
+            _base->_globalWorkSize,
             _base->_localWorkSize,
+            numPairs,
             &_baseOpenCL->_expressions,
             _base->_input->sampleSize(),
             &_buffers.in_index,
@@ -208,15 +217,17 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
       {
          _kernels.spearman->execute(
             _queue,
-            globalWorkSize,
+            _base->_globalWorkSize,
             _base->_localWorkSize,
+            numPairs,
             &_baseOpenCL->_expressions,
             _base->_input->sampleSize(),
             &_buffers.in_index,
             _base->_maxClusters,
             &_buffers.out_labels,
             _base->_minSamples,
-            &_buffers.work_xy,
+            &_buffers.work_x,
+            &_buffers.work_y,
             &_buffers.out_correlations
          ).wait();
       }
@@ -231,7 +242,7 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
       e3.wait();
 
       // save results
-      for ( int j = 0; j < globalWorkSize; ++j )
+      for ( int j = 0; j < numPairs; ++j )
       {
          // get pointers to the cluster labels and correlations for this pair
          const qint8 *labels = &_buffers.out_labels.at(j * _base->_input->sampleSize());

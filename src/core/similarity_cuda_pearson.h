@@ -17,7 +17,7 @@ public:
     */
    enum Argument
    {
-      GlobalWorkSize
+      NumPairs
       ,Expressions
       ,SampleSize
       ,InIndex
@@ -31,6 +31,7 @@ public:
       const ::CUDA::Stream& stream,
       int globalWorkSize,
       int localWorkSize,
+      int numPairs,
       ::CUDA::Buffer<float>* expressions,
       int sampleSize,
       ::CUDA::Buffer<int2>* in_index,

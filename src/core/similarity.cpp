@@ -312,6 +312,15 @@ void Similarity::initialize()
       throw e;
    }
 
+   // make sure kernel work sizes are valid
+   if ( _globalWorkSize % _localWorkSize != 0 )
+   {
+      E_MAKE_EXCEPTION(e);
+      e.setTitle(tr("Invalid Argument"));
+      e.setDetails(tr("Global work size must be divisible by local work size."));
+      throw e;
+   }
+
    // initialize work block size
    if ( _workBlockSize == 0 )
    {

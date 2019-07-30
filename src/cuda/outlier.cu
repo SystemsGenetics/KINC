@@ -108,7 +108,7 @@ int removeOutliersCluster(
 /*!
  * Perform outlier removal on each cluster in a parwise data array.
  *
- * @param globalWorkSize
+ * @param numPairs
  * @param expressions
  * @param sampleSize
  * @param in_index
@@ -119,7 +119,7 @@ int removeOutliersCluster(
  */
 __global__
 void removeOutliers(
-   int globalWorkSize,
+   int numPairs,
    const float *expressions,
    int sampleSize,
    const int2 *in_index,
@@ -127,11 +127,12 @@ void removeOutliers(
    char *in_labels,
    char *in_K,
    char marker,
-   float *work_xy)
+   float *work_x,
+   float *work_y)
 {
    int i = blockIdx.x * blockDim.x + threadIdx.x;
 
-   if ( i >= globalWorkSize )
+   if ( i >= numPairs )
    {
       return;
    }
@@ -144,8 +145,8 @@ void removeOutliers(
    int *p_N = &in_N[i];
    char *labels = &in_labels[i * sampleSize];
    char clusterSize = in_K[i];
-   float *x_sorted = &work_xy[(2 * i + 0) * N_pow2];
-   float *y_sorted = &work_xy[(2 * i + 1) * N_pow2];
+   float *x_sorted = &work_x[i * N_pow2];
+   float *y_sorted = &work_y[i * N_pow2];
 
    if ( marker == -7 )
    {

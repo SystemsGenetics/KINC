@@ -12,7 +12,7 @@
  * labeled as such, all other samples are labeled as cluster 0. The number of
  * clean samples is returned.
  *
- * @param globalWorkSize
+ * @param numPairs
  * @param expressions
  * @param sampleSize
  * @param in_index
@@ -21,7 +21,7 @@
  * @param out_labels
  */
 __kernel void fetchPair(
-   int globalWorkSize,
+   int numPairs,
    __global const float *expressions,
    int sampleSize,
    __global const int2 *in_index,
@@ -31,7 +31,7 @@ __kernel void fetchPair(
 {
    int i = get_global_id(0);
 
-   if ( i >= globalWorkSize )
+   if ( i >= numPairs )
    {
       return;
    }

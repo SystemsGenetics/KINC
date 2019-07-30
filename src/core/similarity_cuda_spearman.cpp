@@ -33,26 +33,30 @@ Similarity::CUDA::Spearman::Spearman(::CUDA::Program* program):
  * @param stream
  * @param globalWorkSize
  * @param localWorkSize
+ * @param numPairs
  * @param expressions
  * @param sampleSize
  * @param in_index
  * @param clusterSize
  * @param in_labels
  * @param minSamples
- * @param work_xy
+ * @param work_x
+ * @param work_y
  * @param out_correlations
  */
 ::CUDA::Event Similarity::CUDA::Spearman::execute(
    const ::CUDA::Stream& stream,
    int globalWorkSize,
    int localWorkSize,
+   int numPairs,
    ::CUDA::Buffer<float>* expressions,
    int sampleSize,
    ::CUDA::Buffer<int2>* in_index,
    char clusterSize,
    ::CUDA::Buffer<qint8>* in_labels,
    int minSamples,
-   ::CUDA::Buffer<float>* work_xy,
+   ::CUDA::Buffer<float>* work_x,
+   ::CUDA::Buffer<float>* work_y,
    ::CUDA::Buffer<float>* out_correlations
 )
 {
@@ -60,30 +64,31 @@ Similarity::CUDA::Spearman::Spearman(::CUDA::Program* program):
       &stream,
       globalWorkSize,
       localWorkSize,
+      numPairs,
       expressions,
       sampleSize,
       in_index,
       clusterSize,
       in_labels,
       minSamples,
-      work_xy,
+      work_x,
+      work_y,
       out_correlations);
 
    // set kernel arguments
-   setArgument(GlobalWorkSize, globalWorkSize);
+   setArgument(NumPairs, numPairs);
    setBuffer(Expressions, expressions);
    setArgument(SampleSize, sampleSize);
    setBuffer(InIndex, in_index);
    setArgument(ClusterSize, clusterSize);
    setBuffer(InLabels, in_labels);
    setArgument(MinSamples, minSamples);
-   setBuffer(WorkXY, work_xy);
+   setBuffer(WorkX, work_x);
+   setBuffer(WorkY, work_y);
    setBuffer(OutCorrelations, out_correlations);
 
    // set work sizes
-   int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
-
-   setSizes(numWorkgroups, localWorkSize);
+   setSizes(globalWorkSize / localWorkSize, localWorkSize);
 
    // execute kernel
    return ::CUDA::Kernel::execute(stream);

@@ -49,13 +49,15 @@ private:
    {
       ::CUDA::Buffer<int2> in_index;
       ::CUDA::Buffer<int> work_N;
-      ::CUDA::Buffer<float> work_xy;
+      ::CUDA::Buffer<float2> work_X;
       ::CUDA::Buffer<qint8> work_labels;
       ::CUDA::Buffer<cu_component> work_components;
       ::CUDA::Buffer<float2> work_MP;
       ::CUDA::Buffer<int> work_counts;
       ::CUDA::Buffer<float> work_logpi;
       ::CUDA::Buffer<float> work_gamma;
+      ::CUDA::Buffer<float> work_x;
+      ::CUDA::Buffer<float> work_y;
       ::CUDA::Buffer<qint8> out_K;
       ::CUDA::Buffer<qint8> out_labels;
       ::CUDA::Buffer<float> out_correlations;

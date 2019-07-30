@@ -18,7 +18,7 @@ public:
     */
    enum Argument
    {
-      GlobalWorkSize
+      NumPairs
       ,Expressions
       ,SampleSize
       ,InIndex
@@ -32,6 +32,7 @@ public:
       ::OpenCL::CommandQueue* queue,
       int globalWorkSize,
       int localWorkSize,
+      int numPairs,
       ::OpenCL::Buffer<cl_float>* expressions,
       cl_int sampleSize,
       ::OpenCL::Buffer<cl_int2>* in_index,

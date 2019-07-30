@@ -108,19 +108,20 @@ float Spearman_computeCluster(
  * @param out_correlations
  */
 __kernel void Spearman_compute(
-   int globalWorkSize,
+   int numPairs,
    __global const float *expressions,
    int sampleSize,
    __global const int2 *in_index,
    char clusterSize,
    __global const char *in_labels,
    int minSamples,
-   __global float *work_xy,
+   __global float *work_x,
+   __global float *work_y,
    __global float *out_correlations)
 {
    int i = get_global_id(0);
 
-   if ( i >= globalWorkSize )
+   if ( i >= numPairs )
    {
       return;
    }
@@ -131,8 +132,8 @@ __kernel void Spearman_compute(
    __global const float *x = &expressions[index.x * sampleSize];
    __global const float *y = &expressions[index.y * sampleSize];
    __global const char *labels = &in_labels[i * sampleSize];
-   __global float *x_rank = &work_xy[(2 * i + 0) * N_pow2];
-   __global float *y_rank = &work_xy[(2 * i + 1) * N_pow2];
+   __global float *x_rank = &work_x[i * N_pow2];
+   __global float *y_rank = &work_y[i * N_pow2];
    __global float *correlations = &out_correlations[i * clusterSize];
 
    for ( char k = 0; k < clusterSize; ++k )

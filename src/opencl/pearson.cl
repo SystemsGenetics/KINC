@@ -68,7 +68,7 @@ float Pearson_computeCluster(
  * should only contain the clean samples that were extracted from the expression
  * matrix, while the labels should contain all samples.
  *
- * @param globalWorkSize
+ * @param numPairs
  * @param expressions
  * @param sampleSize
  * @param in_index
@@ -78,7 +78,7 @@ float Pearson_computeCluster(
  * @param out_correlations
  */
 __kernel void Pearson_compute(
-   int globalWorkSize,
+   int numPairs,
    __global const float *expressions,
    int sampleSize,
    __global const int2 *in_index,
@@ -89,7 +89,7 @@ __kernel void Pearson_compute(
 {
    int i = get_global_id(0);
 
-   if ( i >= globalWorkSize )
+   if ( i >= numPairs )
    {
       return;
    }

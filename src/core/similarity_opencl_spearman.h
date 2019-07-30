@@ -18,14 +18,15 @@ public:
     */
    enum Argument
    {
-      GlobalWorkSize
+      NumPairs
       ,Expressions
       ,SampleSize
       ,InIndex
       ,ClusterSize
       ,InLabels
       ,MinSamples
-      ,WorkXY
+      ,WorkX
+      ,WorkY
       ,OutCorrelations
    };
    explicit Spearman(::OpenCL::Program* program, QObject* parent = nullptr);
@@ -33,13 +34,15 @@ public:
       ::OpenCL::CommandQueue* queue,
       int globalWorkSize,
       int localWorkSize,
+      int numPairs,
       ::OpenCL::Buffer<cl_float>* expressions,
       cl_int sampleSize,
       ::OpenCL::Buffer<cl_int2>* in_index,
       cl_char clusterSize,
       ::OpenCL::Buffer<cl_char>* in_labels,
       cl_int minSamples,
-      ::OpenCL::Buffer<cl_float>* work_xy,
+      ::OpenCL::Buffer<cl_float>* work_x,
+      ::OpenCL::Buffer<cl_float>* work_y,
       ::OpenCL::Buffer<cl_float>* out_correlations
    );
 };

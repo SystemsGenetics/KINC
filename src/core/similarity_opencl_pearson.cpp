@@ -35,6 +35,7 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
  * @param queue
  * @param globalWorkSize
  * @param localWorkSize
+ * @param numPairs
  * @param expressions
  * @param sampleSize
  * @param in_index
@@ -47,6 +48,7 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
    ::OpenCL::CommandQueue* queue,
    int globalWorkSize,
    int localWorkSize,
+   int numPairs,
    ::OpenCL::Buffer<cl_float>* expressions,
    cl_int sampleSize,
    ::OpenCL::Buffer<cl_int2>* in_index,
@@ -60,6 +62,7 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
       queue,
       globalWorkSize,
       localWorkSize,
+      numPairs,
       expressions,
       sampleSize,
       in_index,
@@ -72,7 +75,7 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
    Locker locker {lock()};
 
    // set kernel arguments
-   setArgument(GlobalWorkSize, globalWorkSize);
+   setArgument(NumPairs, numPairs);
    setBuffer(Expressions, expressions);
    setArgument(SampleSize, sampleSize);
    setBuffer(InIndex, in_index);
@@ -82,9 +85,7 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
    setBuffer(OutCorrelations, out_correlations);
 
    // set work sizes
-   int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
-
-   setSizes(0, numWorkgroups * localWorkSize, localWorkSize);
+   setSizes(0, globalWorkSize / localWorkSize, localWorkSize);
 
    // execute kernel
    return ::OpenCL::Kernel::execute(queue);

@@ -17,14 +17,15 @@ public:
     */
    enum Argument
    {
-      GlobalWorkSize
+      NumPairs
       ,Expressions
       ,SampleSize
       ,InIndex
       ,ClusterSize
       ,InLabels
       ,MinSamples
-      ,WorkXY
+      ,WorkX
+      ,WorkY
       ,OutCorrelations
    };
    explicit Spearman(::CUDA::Program* program);
@@ -32,13 +33,15 @@ public:
       const ::CUDA::Stream& stream,
       int globalWorkSize,
       int localWorkSize,
+      int numPairs,
       ::CUDA::Buffer<float>* expressions,
       int sampleSize,
       ::CUDA::Buffer<int2>* in_index,
       char clusterSize,
       ::CUDA::Buffer<qint8>* in_labels,
       int minSamples,
-      ::CUDA::Buffer<float>* work_xy,
+      ::CUDA::Buffer<float>* work_x,
+      ::CUDA::Buffer<float>* work_y,
       ::CUDA::Buffer<float>* out_correlations
    );
 };

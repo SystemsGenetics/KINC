@@ -49,13 +49,15 @@ private:
    {
       ::OpenCL::Buffer<cl_int2> in_index;
       ::OpenCL::Buffer<cl_int> work_N;
-      ::OpenCL::Buffer<cl_float> work_xy;
+      ::OpenCL::Buffer<cl_float2> work_X;
       ::OpenCL::Buffer<cl_char> work_labels;
       ::OpenCL::Buffer<cl_component> work_components;
       ::OpenCL::Buffer<cl_float2> work_MP;
       ::OpenCL::Buffer<cl_int> work_counts;
       ::OpenCL::Buffer<cl_float> work_logpi;
       ::OpenCL::Buffer<cl_float> work_gamma;
+      ::OpenCL::Buffer<cl_float> work_x;
+      ::OpenCL::Buffer<cl_float> work_y;
       ::OpenCL::Buffer<cl_char> out_K;
       ::OpenCL::Buffer<cl_char> out_labels;
       ::OpenCL::Buffer<cl_float> out_correlations;

@@ -599,7 +599,7 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
  * each one having a different number of clusters, are fit to the data and the
  * sub-model with the best criterion value is selected.
  *
- * @param globalWorkSize
+ * @param numPairs
  * @param expressions
  * @param sampleSize
  * @param in_index
@@ -611,7 +611,7 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
  * @param out_labels
  */
 __kernel void GMM_compute(
-   int globalWorkSize,
+   int numPairs,
    __global const float *expressions,
    int sampleSize,
    __global const int2 *in_index,
@@ -619,7 +619,7 @@ __kernel void GMM_compute(
    char minClusters,
    char maxClusters,
    Criterion criterion,
-   __global Vector2 *work_xy,
+   __global Vector2 *work_X,
    __global int *work_N,
    __global char *work_labels,
    __global Component *work_components,
@@ -632,7 +632,7 @@ __kernel void GMM_compute(
 {
    int i = get_global_id(0);
 
-   if ( i >= globalWorkSize )
+   if ( i >= numPairs )
    {
       return;
    }
@@ -641,7 +641,7 @@ __kernel void GMM_compute(
    int2 index = in_index[i];
    __global const float *x = &expressions[index.x * sampleSize];
    __global const float *y = &expressions[index.y * sampleSize];
-   __global Vector2 *X = &work_xy[i * sampleSize];
+   __global Vector2 *X = &work_X[i * sampleSize];
    int numSamples = work_N[i];
    __global char *labels = &work_labels[i * sampleSize];
    __global Component *components = &work_components[i * maxClusters];

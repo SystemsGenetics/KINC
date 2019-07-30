@@ -33,6 +33,7 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
  * @param stream
  * @param globalWorkSize
  * @param localWorkSize
+ * @param numPairs
  * @param expressions
  * @param sampleSize
  * @param in_index
@@ -40,12 +41,14 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
  * @param in_labels
  * @param in_K
  * @param marker
- * @param work_xy
+ * @param work_x
+ * @param work_y
  */
 ::CUDA::Event Similarity::CUDA::Outlier::execute(
    const ::CUDA::Stream& stream,
    int globalWorkSize,
    int localWorkSize,
+   int numPairs,
    ::CUDA::Buffer<float>* expressions,
    int sampleSize,
    ::CUDA::Buffer<int2>* in_index,
@@ -53,13 +56,15 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
    ::CUDA::Buffer<qint8>* in_labels,
    ::CUDA::Buffer<qint8>* in_K,
    qint8 marker,
-   ::CUDA::Buffer<float>* work_xy
+   ::CUDA::Buffer<float>* work_x,
+   ::CUDA::Buffer<float>* work_y
 )
 {
    EDEBUG_FUNC(this,
       &stream,
       globalWorkSize,
       localWorkSize,
+      numPairs,
       expressions,
       sampleSize,
       in_index,
@@ -67,10 +72,11 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
       in_labels,
       in_K,
       marker,
-      work_xy);
+      work_x,
+      work_y);
 
    // set kernel arguments
-   setArgument(GlobalWorkSize, globalWorkSize);
+   setArgument(NumPairs, numPairs);
    setBuffer(Expressions, expressions);
    setArgument(SampleSize, sampleSize);
    setBuffer(InIndex, in_index);
@@ -78,12 +84,11 @@ Similarity::CUDA::Outlier::Outlier(::CUDA::Program* program):
    setBuffer(InLabels, in_labels);
    setBuffer(InK, in_K);
    setArgument(Marker, marker);
-   setBuffer(WorkXY, work_xy);
+   setBuffer(WorkX, work_x);
+   setBuffer(WorkY, work_y);
 
    // set work sizes
-   int numWorkgroups = (globalWorkSize + localWorkSize - 1) / localWorkSize;
-
-   setSizes(numWorkgroups, localWorkSize);
+   setSizes(globalWorkSize / localWorkSize, localWorkSize);
 
    // execute kernel
    return ::CUDA::Kernel::execute(stream);
