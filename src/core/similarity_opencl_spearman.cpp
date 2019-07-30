@@ -42,7 +42,6 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
  * @param in_labels
  * @param minSamples
  * @param work_xy
- * @param work_rank
  * @param out_correlations
  */
 ::OpenCL::Event Similarity::OpenCL::Spearman::execute(
@@ -56,7 +55,6 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
    ::OpenCL::Buffer<cl_char>* in_labels,
    cl_int minSamples,
    ::OpenCL::Buffer<cl_float>* work_xy,
-   ::OpenCL::Buffer<cl_int>* work_rank,
    ::OpenCL::Buffer<cl_float>* out_correlations
 )
 {
@@ -71,7 +69,6 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
       in_labels,
       minSamples,
       work_xy,
-      work_rank,
       out_correlations);
 
    // acquire lock for this kernel
@@ -86,7 +83,6 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
    setBuffer(InLabels, in_labels);
    setArgument(MinSamples, minSamples);
    setBuffer(WorkXY, work_xy);
-   setBuffer(WorkRank, work_rank);
    setBuffer(OutCorrelations, out_correlations);
 
    // set work sizes

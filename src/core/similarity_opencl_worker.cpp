@@ -50,7 +50,6 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    _buffers.work_counts = ::OpenCL::Buffer<cl_int>(context, K * W);
    _buffers.work_logpi = ::OpenCL::Buffer<cl_float>(context, K * W);
    _buffers.work_gamma = ::OpenCL::Buffer<cl_float>(context, N * K * W);
-   _buffers.work_rank = ::OpenCL::Buffer<cl_int>(context, N_pow2 * W);
    _buffers.out_K = ::OpenCL::Buffer<cl_char>(context, 1 * W);
    _buffers.out_labels = ::OpenCL::Buffer<cl_char>(context, N * W);
    _buffers.out_correlations = ::OpenCL::Buffer<cl_float>(context, K * W);
@@ -218,7 +217,6 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
             &_buffers.out_labels,
             _base->_minSamples,
             &_buffers.work_xy,
-            &_buffers.work_rank,
             &_buffers.out_correlations
          ).wait();
       }

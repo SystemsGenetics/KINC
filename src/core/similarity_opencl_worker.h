@@ -56,7 +56,6 @@ private:
       ::OpenCL::Buffer<cl_int> work_counts;
       ::OpenCL::Buffer<cl_float> work_logpi;
       ::OpenCL::Buffer<cl_float> work_gamma;
-      ::OpenCL::Buffer<cl_int> work_rank;
       ::OpenCL::Buffer<cl_char> out_K;
       ::OpenCL::Buffer<cl_char> out_labels;
       ::OpenCL::Buffer<cl_float> out_correlations;

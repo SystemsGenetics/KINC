@@ -26,7 +26,6 @@ public:
       ,InLabels
       ,MinSamples
       ,WorkXY
-      ,WorkRank
       ,OutCorrelations
    };
    explicit Spearman(::OpenCL::Program* program, QObject* parent = nullptr);
@@ -41,7 +40,6 @@ public:
       ::OpenCL::Buffer<cl_char>* in_labels,
       cl_int minSamples,
       ::OpenCL::Buffer<cl_float>* work_xy,
-      ::OpenCL::Buffer<cl_int>* work_rank,
       ::OpenCL::Buffer<cl_float>* out_correlations
    );
 };

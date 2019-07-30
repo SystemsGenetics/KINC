@@ -31,27 +31,9 @@ int nextPower2(int n)
  * @param a
  * @param b
  */
-void swapF(__global float *a, __global float *b)
+void swap(__global float *a, __global float *b)
 {
    float c = *a;
-   *a = *b;
-   *b = c;
-}
-
-
-
-
-
-
-/*!
- * Swap two values
- *
- * @param a
- * @param b
- */
-void swapI(__global int *a, __global int *b)
-{
-   int c = *a;
    *a = *b;
    *b = c;
 }
@@ -85,7 +67,7 @@ void bitonicSort(__global float *array, int size)
             b = a + t;
             if ( (!dir && (array[a] > array[b])) || (dir && (array[a] < array[b])) )
             {
-               swapF(&array[a], &array[b]);
+               swap(&array[a], &array[b]);
             }
          }
       }
@@ -123,8 +105,8 @@ void bitonicSortFF(int size, __global float *array, __global float *extra)
             b = a + t;
             if ( (!dir && (array[a] > array[b])) || (dir && (array[a] < array[b])) )
             {
-               swapF(&array[a], &array[b]);
-               swapF(&extra[a], &extra[b]);
+               swap(&array[a], &array[b]);
+               swap(&extra[a], &extra[b]);
             }
          }
       }
@@ -137,35 +119,58 @@ void bitonicSortFF(int size, __global float *array, __global float *extra)
 
 
 /*!
- * Sort an array using bitonic sort, while also applying the same swap operations
- * to a second array of the same size. The arrays should have a size which is a
- * power of two.
+ * Compute the rank of a sorted vector in place. In the event of ties,
+ * the ranks are corrected using fractional ranking.
  *
- * @param size
  * @param array
- * @param extra
+ * @param n
  */
-void bitonicSortFI(int size, __global float *array, __global int *extra)
+void computeRank(__global float *array, int n)
 {
-   int bsize = size / 2;
-   int dir, a, b, t;
+   int i = 0;
 
-   for ( int ob = 2; ob <= size; ob *= 2 )
+   while ( i < n - 1 )
    {
-      for ( int ib = ob; ib >= 2; ib /= 2 )
+      float a_i = array[i];
+
+      if ( a_i == array[i + 1] )
       {
-         t = ib/2;
-         for ( int i = 0; i < bsize; ++i )
+         int j = i + 2;
+         int k;
+         float rank = 0;
+
+         // we have detected a tie, find number of equal elements
+         while ( j < n && a_i == array[j] )
          {
-            dir = -((i/(ob/2)) & 0x1);
-            a = (i/t) * ib + (i%t);
-            b = a + t;
-            if ( (!dir && (array[a] > array[b])) || (dir && (array[a] < array[b])) )
-            {
-               swapF(&array[a], &array[b]);
-               swapI(&extra[a], &extra[b]);
-            }
+            ++j;
          }
+
+         // compute rank
+         for ( k = i; k < j; ++k )
+         {
+            rank += k;
+         }
+
+         // divide by number of ties
+         rank /= (float) (j - i);
+
+         for ( k = i; k < j; ++k )
+         {
+            array[k] = rank;
+         }
+
+         i = j;
       }
+      else
+      {
+         // no tie - set rank to natural ordered position
+         array[i] = i;
+         ++i;
+      }
+   }
+
+   if ( i == n - 1 )
+   {
+      array[n - 1] = (float) (n - 1);
    }
 }
