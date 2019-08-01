@@ -170,16 +170,27 @@ void Similarity::process(const EAbstractAnalyticBlock* result)
 
    for ( auto& pair : resultBlock->pairs() )
    {
-      // save correlations that are within thresholds
+      // initialize pairwise iterators
       CCMatrix::Pair ccmPair(_ccm);
       CorrelationMatrix::Pair cmxPair(_cmx);
 
+      // determine whether any of the correlations are valid
+      bool valid = false;
+
       for ( qint8 k = 0; k < pair.K; ++k )
       {
-         // determine whether correlation is within thresholds
          float corr = pair.correlations[k];
 
          if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
+         {
+            valid = true;
+         }
+      }
+
+      // save the entire pair if it has any valid correlations
+      if ( valid )
+      {
+         for ( qint8 k = 0; k < pair.K; ++k )
          {
             // save sample string
             ccmPair.addCluster();
@@ -194,17 +205,11 @@ void Similarity::process(const EAbstractAnalyticBlock* result)
 
             // save correlation
             cmxPair.addCluster();
-            cmxPair.at(cmxPair.clusterSize() - 1) = corr;
+
+            cmxPair.at(cmxPair.clusterSize() - 1) = pair.correlations[k];
          }
-      }
 
-      if ( ccmPair.clusterSize() > 0 )
-      {
          ccmPair.write(index);
-      }
-
-      if ( cmxPair.clusterSize() > 0 )
-      {
          cmxPair.write(index);
       }
 
