@@ -41,6 +41,7 @@ if __name__ ==  "__main__":
 	pairs.sort()
 
 	# compute pairwise statistics
+	n_shared_edges = 0
 	error_K = 0.0
 	error_N_c = 0.0
 	error_N_m = 0.0
@@ -67,6 +68,9 @@ if __name__ ==  "__main__":
 
 		# use smaller K for cluster-wise comparisons
 		K = min(K_true, K_test)
+
+		# update number of shared edges
+		n_shared_edges += K
 
 		# compute error in clean sample size
 		error_N_c += pairwise_error(pair_true, pair_test, K, 4) / len(pairs)
@@ -97,7 +101,9 @@ if __name__ ==  "__main__":
 
 		error_S += error_S_pair / len(pairs)
 
-	print("\nError summary:")
+	print("Number of shared edges:     %8d" % (n_shared_edges))
+	print("")
+	print("Error summary:")
 	print("  Number of clusters:       %8.3f" % (error_K))
 	print("  Clean sample size:        %8.3f" % (error_N_c))
 	print("  Missing sample size:      %8.3f" % (error_N_m))
