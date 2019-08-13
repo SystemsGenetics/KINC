@@ -4,20 +4,6 @@
 
 
 
-typedef struct
-{
-   float pi;
-   float2 mu;
-   float4 sigma;
-   float4 sigmaInv;
-   float normalizer;
-} cu_component;
-
-
-
-
-
-
 /*!
  * This class implements the GMM kernel for the similarity analytic. This
  * kernel takes a list of pairwise data arrays and computes the number of
@@ -42,7 +28,11 @@ public:
       ,WorkX
       ,WorkN
       ,WorkLabels
-      ,WorkComponents
+      ,WorkGmmPi
+      ,WorkGmmMu
+      ,WorkGmmSigma
+      ,WorkGmmSigmaInv
+      ,WorkGmmNormalizer
       ,WorkMP
       ,WorkCounts
       ,WorkLogPi
@@ -66,7 +56,11 @@ public:
       ::CUDA::Buffer<float2>* work_X,
       ::CUDA::Buffer<int>* work_N,
       ::CUDA::Buffer<qint8>* work_labels,
-      ::CUDA::Buffer<cu_component>* work_components,
+      ::CUDA::Buffer<float>* work_gmm_pi,
+      ::CUDA::Buffer<float2>* work_gmm_mu,
+      ::CUDA::Buffer<float4>* work_gmm_sigma,
+      ::CUDA::Buffer<float4>* work_gmm_sigmaInv,
+      ::CUDA::Buffer<float>* work_gmm_normalizer,
       ::CUDA::Buffer<float2>* work_MP,
       ::CUDA::Buffer<int>* work_counts,
       ::CUDA::Buffer<float>* work_logpi,

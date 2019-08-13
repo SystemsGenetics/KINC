@@ -44,7 +44,11 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
  * @param work_X
  * @param work_N
  * @param work_labels
- * @param work_components
+ * @param work_gmm_pi
+ * @param work_gmm_mu
+ * @param work_gmm_sigma
+ * @param work_gmm_sigmaInv
+ * @param work_gmm_normalizer
  * @param work_MP
  * @param work_counts
  * @param work_logpi
@@ -67,7 +71,11 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
    ::CUDA::Buffer<float2>* work_X,
    ::CUDA::Buffer<int>* work_N,
    ::CUDA::Buffer<qint8>* work_labels,
-   ::CUDA::Buffer<cu_component>* work_components,
+   ::CUDA::Buffer<float>* work_gmm_pi,
+   ::CUDA::Buffer<float2>* work_gmm_mu,
+   ::CUDA::Buffer<float4>* work_gmm_sigma,
+   ::CUDA::Buffer<float4>* work_gmm_sigmaInv,
+   ::CUDA::Buffer<float>* work_gmm_normalizer,
    ::CUDA::Buffer<float2>* work_MP,
    ::CUDA::Buffer<int>* work_counts,
    ::CUDA::Buffer<float>* work_logpi,
@@ -91,7 +99,11 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
       work_X,
       work_N,
       work_labels,
-      work_components,
+      work_gmm_pi,
+      work_gmm_mu,
+      work_gmm_sigma,
+      work_gmm_sigmaInv,
+      work_gmm_normalizer,
       work_MP,
       work_counts,
       work_logpi,
@@ -111,7 +123,11 @@ Similarity::CUDA::GMM::GMM(::CUDA::Program* program):
    setBuffer(WorkX, work_X);
    setBuffer(WorkN, work_N);
    setBuffer(WorkLabels, work_labels);
-   setBuffer(WorkComponents, work_components);
+   setBuffer(WorkGmmPi, work_gmm_pi);
+   setBuffer(WorkGmmMu, work_gmm_mu);
+   setBuffer(WorkGmmSigma, work_gmm_sigma);
+   setBuffer(WorkGmmSigmaInv, work_gmm_sigmaInv);
+   setBuffer(WorkGmmNormalizer, work_gmm_normalizer);
    setBuffer(WorkMP, work_MP);
    setBuffer(WorkCounts, work_counts);
    setBuffer(WorkLogPi, work_logpi);

@@ -102,6 +102,8 @@ void GMM::initializeComponents(const QVector<Vector2>& X, int N, int K)
 /*!
  * Pre-compute the precision matrix and normalizer term for each
  * mixture component.
+ *
+ * @param K
  */
 bool GMM::prepareComponents(int K)
 {
