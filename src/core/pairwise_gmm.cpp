@@ -146,13 +146,13 @@ void GMM::initializeMeans(const QVector<Vector2>& X, int N, int K)
    float diff = 0;
 
    // initialize workspace
-   Vector2 Mu[K];
+   Vector2 MP[K];
    int counts[K];
 
    for ( int t = 0; t < MAX_ITERATIONS && diff > TOLERANCE; ++t )
    {
       // compute mean and sample count for each component
-      memset(Mu, 0, K * sizeof(Vector2));
+      memset(MP, 0, K * sizeof(Vector2));
       memset(counts, 0, K * sizeof(int));
 
       for ( int i = 0; i < N; ++i )
@@ -171,28 +171,28 @@ void GMM::initializeMeans(const QVector<Vector2>& X, int N, int K)
          }
 
          // update mean and sample count
-         vectorAdd(Mu[min_k], X[i]);
+         vectorAdd(MP[min_k], X[i]);
          ++counts[min_k];
       }
 
       // scale each mean by its sample count
       for ( int k = 0; k < K; ++k )
       {
-         vectorScale(Mu[k], 1.0f / counts[k]);
+         vectorScale(MP[k], 1.0f / counts[k]);
       }
 
       // compute the total change of all means
       diff = 0;
       for ( int k = 0; k < K; ++k )
       {
-         diff += vectorDiffNorm(Mu[k], _mu[k]);
+         diff += vectorDiffNorm(MP[k], _mu[k]);
       }
       diff /= K;
 
       // update component means
       for ( int k = 0; k < K; ++k )
       {
-         _mu[k] = Mu[k];
+         _mu[k] = MP[k];
       }
    }
 }

@@ -88,6 +88,7 @@ void GMM_initializeComponents(
  * Pre-compute the precision matrix and normalizer term for each
  * mixture component.
  *
+ * @param gmm
  * @param K
  */
 __device__

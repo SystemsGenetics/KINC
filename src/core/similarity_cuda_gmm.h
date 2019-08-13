@@ -33,10 +33,10 @@ public:
       ,WorkGmmSigma
       ,WorkGmmSigmaInv
       ,WorkGmmNormalizer
-      ,WorkMP
-      ,WorkCounts
-      ,WorkLogPi
-      ,WorkGamma
+      ,WorkGmmMP
+      ,WorkGmmCounts
+      ,WorkGmmLogPi
+      ,WorkGmmGamma
       ,OutK
       ,OutLabels
    };
@@ -61,10 +61,10 @@ public:
       ::CUDA::Buffer<float4>* work_gmm_sigma,
       ::CUDA::Buffer<float4>* work_gmm_sigmaInv,
       ::CUDA::Buffer<float>* work_gmm_normalizer,
-      ::CUDA::Buffer<float2>* work_MP,
-      ::CUDA::Buffer<int>* work_counts,
-      ::CUDA::Buffer<float>* work_logpi,
-      ::CUDA::Buffer<float>* work_gamma,
+      ::CUDA::Buffer<float2>* work_gmm_MP,
+      ::CUDA::Buffer<int>* work_gmm_counts,
+      ::CUDA::Buffer<float>* work_gmm_logpi,
+      ::CUDA::Buffer<float>* work_gmm_gamma,
       ::CUDA::Buffer<qint8>* out_K,
       ::CUDA::Buffer<qint8>* out_labels
    );
