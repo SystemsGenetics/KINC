@@ -331,33 +331,37 @@ void GMM_computeMStep(GMM *gmm, const Vector2 *X, int N, int K)
       gmm->pi[k] = n_k / N;
 
       // update mean
-      Vector2 *mu = &gmm->mu[k];
+      Vector2 mu;
 
-      vectorInitZero(mu);
+      vectorInitZero(&mu);
 
       for ( int i = 0; i < N; ++i )
       {
-         vectorAddScaled(mu, gmm->gamma[k * N + i], &X[i]);
+         vectorAddScaled(&mu, gmm->gamma[k * N + i], &X[i]);
       }
 
-      vectorScale(mu, 1.0f / n_k);
+      vectorScale(&mu, 1.0f / n_k);
+
+      gmm->mu[k] = mu;
 
       // update covariance matrix
-      Matrix2x2 *sigma = &gmm->sigma[k];
+      Matrix2x2 sigma;
 
-      matrixInitZero(sigma);
+      matrixInitZero(&sigma);
 
       for ( int i = 0; i < N; ++i )
       {
          // compute xm = (x_i - mu_k)
          Vector2 xm = X[i];
-         vectorSubtract(&xm, mu);
+         vectorSubtract(&xm, &mu);
 
          // compute Sigma_ki = gamma_ki * (x_i - mu_k) (x_i - mu_k)^T
-         matrixAddOuterProduct(sigma, gmm->gamma[k * N + i], &xm);
+         matrixAddOuterProduct(&sigma, gmm->gamma[k * N + i], &xm);
       }
 
-      matrixScale(sigma, 1.0f / n_k);
+      matrixScale(&sigma, 1.0f / n_k);
+
+      gmm->sigma[k] = sigma;
    }
 }
 
