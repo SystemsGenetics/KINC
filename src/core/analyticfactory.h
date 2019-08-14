@@ -21,6 +21,7 @@ public:
       ,ExportExpressionMatrixType
       ,ImportCorrelationMatrixType
       ,ExportCorrelationMatrixType
+      ,ImportCorrolatedAnnotationMatrixType
       ,SimilarityType
       ,CorrelationPowerFilterType
       ,PowerLawType

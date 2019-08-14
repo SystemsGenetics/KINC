@@ -3,6 +3,7 @@
 #include "exportexpressionmatrix.h"
 #include "importcorrelationmatrix.h"
 #include "exportcorrelationmatrix.h"
+#include "importcondition-specificclustersmatrix.h"
 #include "similarity.h"
 #include "corrpower.h"
 #include "powerlaw.h"
@@ -48,6 +49,7 @@ QString AnalyticFactory::name(quint16 type) const
    case ExportExpressionMatrixType: return "Export Expression Matrix";
    case ImportCorrelationMatrixType: return "Import Correlation Matrix";
    case ExportCorrelationMatrixType: return "Export Correlation Matrix";
+   case ImportCorrolatedAnnotationMatrixType: return "Import Condition-Specific Clusters Matrix";
    case SimilarityType: return "Similarity";
    case CorrelationPowerFilterType: return "Filter: Correlation Power";
    case PowerLawType: return "Threshold: Power-law";
@@ -77,6 +79,7 @@ QString AnalyticFactory::commandName(quint16 type) const
    case ExportExpressionMatrixType: return "export-emx";
    case ImportCorrelationMatrixType: return "import-cmx";
    case ExportCorrelationMatrixType: return "export-cmx";
+   case ImportCorrolatedAnnotationMatrixType: return "import-cscm";
    case SimilarityType: return "similarity";
    case CorrelationPowerFilterType: return "corrpower";
    case PowerLawType: return "powerlaw";
@@ -106,6 +109,7 @@ std::unique_ptr<EAbstractAnalytic> AnalyticFactory::make(quint16 type) const
    case ExportExpressionMatrixType: return unique_ptr<EAbstractAnalytic>(new ExportExpressionMatrix);
    case ImportCorrelationMatrixType: return unique_ptr<EAbstractAnalytic>(new ImportCorrelationMatrix);
    case ExportCorrelationMatrixType: return unique_ptr<EAbstractAnalytic>(new ExportCorrelationMatrix);
+   case ImportCorrolatedAnnotationMatrixType: return unique_ptr<EAbstractAnalytic>(new importCSCM);
    case SimilarityType: return unique_ptr<EAbstractAnalytic>(new Similarity);
    case CorrelationPowerFilterType: return unique_ptr<EAbstractAnalytic>(new CorrPowerFilter);
    case PowerLawType: return unique_ptr<EAbstractAnalytic>(new PowerLaw);
