@@ -43,11 +43,15 @@ Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, :
    _buffers.work_N = ::CUDA::Buffer<int>(1 * W, false);
    _buffers.work_X = ::CUDA::Buffer<float2>(N * W, false);
    _buffers.work_labels = ::CUDA::Buffer<qint8>(N * W, false);
-   _buffers.work_components = ::CUDA::Buffer<cu_component>(K * W, false);
-   _buffers.work_MP = ::CUDA::Buffer<float2>(K * W, false);
-   _buffers.work_counts = ::CUDA::Buffer<int>(K * W, false);
-   _buffers.work_logpi = ::CUDA::Buffer<float>(K * W, false);
-   _buffers.work_gamma = ::CUDA::Buffer<float>(N * K * W, false);
+   _buffers.work_gmm_pi = ::CUDA::Buffer<float>(K * W, false);
+   _buffers.work_gmm_mu = ::CUDA::Buffer<float2>(K * W, false);
+   _buffers.work_gmm_sigma = ::CUDA::Buffer<float4>(K * W, false);
+   _buffers.work_gmm_sigmaInv = ::CUDA::Buffer<float4>(K * W, false);
+   _buffers.work_gmm_normalizer = ::CUDA::Buffer<float>(K * W, false);
+   _buffers.work_gmm_MP = ::CUDA::Buffer<float2>(K * W, false);
+   _buffers.work_gmm_counts = ::CUDA::Buffer<int>(K * W, false);
+   _buffers.work_gmm_logpi = ::CUDA::Buffer<float>(K * W, false);
+   _buffers.work_gmm_gamma = ::CUDA::Buffer<float>(N * K * W, false);
    _buffers.work_x = ::CUDA::Buffer<float>(N_pow2 * W, false);
    _buffers.work_y = ::CUDA::Buffer<float>(N_pow2 * W, false);
    _buffers.out_K = ::CUDA::Buffer<qint8>(1 * W);
@@ -150,11 +154,15 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::CUDA::Worker::execute(const 
             &_buffers.work_X,
             &_buffers.work_N,
             &_buffers.work_labels,
-            &_buffers.work_components,
-            &_buffers.work_MP,
-            &_buffers.work_counts,
-            &_buffers.work_logpi,
-            &_buffers.work_gamma,
+            &_buffers.work_gmm_pi,
+            &_buffers.work_gmm_mu,
+            &_buffers.work_gmm_sigma,
+            &_buffers.work_gmm_sigmaInv,
+            &_buffers.work_gmm_normalizer,
+            &_buffers.work_gmm_MP,
+            &_buffers.work_gmm_counts,
+            &_buffers.work_gmm_logpi,
+            &_buffers.work_gmm_gamma,
             &_buffers.out_K,
             &_buffers.out_labels
          );

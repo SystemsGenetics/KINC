@@ -35,7 +35,11 @@ GMM::GMM(ExpressionMatrix* emx, qint8 maxClusters)
    // pre-allocate workspace
    _data.resize(emx->sampleSize());
    _labels.resize(emx->sampleSize());
-   _components.reserve(maxClusters);
+   _pi = new float[maxClusters];
+   _mu = new Vector2[maxClusters];
+   _sigma = new Matrix2x2[maxClusters];
+   _sigmaInv = new Matrix2x2[maxClusters];
+   _normalizer = new float[maxClusters];
    _gamma = new float[maxClusters * emx->sampleSize()];
 }
 
@@ -49,6 +53,11 @@ GMM::GMM(ExpressionMatrix* emx, qint8 maxClusters)
  */
 GMM::~GMM()
 {
+   delete[] _pi;
+   delete[] _mu;
+   delete[] _sigma;
+   delete[] _sigmaInv;
+   delete[] _normalizer;
    delete[] _gamma;
 }
 
@@ -58,81 +67,63 @@ GMM::~GMM()
 
 
 /*!
- * Initialize a mixture component with the given mixture weight and mean.
- *
- * @param pi
- * @param mu
- */
-void GMM::Component::initialize(float pi, const Vector2& mu)
-{
-   // initialize mixture weight and mean
-   _pi = pi;
-   _mu = mu;
-
-   // initialize covariance to identity matrix
-   matrixInitIdentity(_sigma);
-}
-
-
-
-
-
-
-/*!
- * Pre-compute the precision matrix and normalizer term for a mixture component.
- */
-bool GMM::Component::prepare()
-{
-   const int D = 2;
-
-   // compute precision (inverse of covariance)
-   float det;
-   matrixInverse(_sigma, _sigmaInv, &det);
-
-   // compute normalizer term for multivariate normal distribution
-   _normalizer = -0.5f * (D * logf(2.0f * M_PI) + logf(det));
-
-   // return failure if matrix inverse failed
-   return !(det <= 0);
-}
-
-
-
-
-
-
-/*!
- * Compute the log of the probability density function of the multivariate normal
- * distribution conditioned on a single component for each point in X:
- *
- *   P(x|k) = exp(-0.5 * (x - mu)^T Sigma^-1 (x - mu)) / sqrt((2pi)^d det(Sigma))
- *
- * Therefore the log-probability is:
- *
- *   log(P(x|k)) = -0.5 * (x - mu)^T Sigma^-1 (x - mu) - 0.5 * (d * log(2pi) + log(det(Sigma)))
+ * Initialize mixture components.
  *
  * @param X
  * @param N
- * @param logP
+ * @param K
  */
-void GMM::Component::computeLogProbNorm(const QVector<Vector2>& X, int N, float *logP)
+void GMM::initializeComponents(const QVector<Vector2>& X, int N, int K)
 {
-   for ( int i = 0; i < N; ++i )
+   // initialize random state
+   unsigned long state = 1;
+
+   // initialize each mixture component
+   for ( int k = 0; k < K; ++k )
    {
-      // compute xm = (x - mu)
-      Vector2 xm = X[i];
-      vectorSubtract(xm, _mu);
+      // initialize mixture weight to uniform distribution
+      _pi[k] = 1.0f / K;
 
-      // compute Sxm = Sigma^-1 xm
-      Vector2 Sxm;
-      matrixProduct(_sigmaInv, xm, Sxm);
+      // initialize mean to a random sample from X
+      int i = myrand(&state) % N;
 
-      // compute xmSxm = xm^T Sigma^-1 xm
-      float xmSxm = vectorDot(xm, Sxm);
+      _mu[k] = X[i];
 
-      // compute log(P) = normalizer - 0.5 * xm^T * Sigma^-1 * xm
-      logP[i] = _normalizer - 0.5f * xmSxm;
+      // initialize covariance to identity matrix
+      matrixInitIdentity(_sigma[k]);
    }
+}
+
+
+
+
+
+
+/*!
+ * Pre-compute the precision matrix and normalizer term for each
+ * mixture component.
+ *
+ * @param K
+ */
+bool GMM::prepareComponents(int K)
+{
+   constexpr int D = 2;
+   bool success = true;
+
+   for ( int k = 0; k < K; ++k )
+   {
+      // compute precision (inverse of covariance)
+      float det;
+      matrixInverse(_sigma[k], _sigmaInv[k], &det);
+
+      // compute normalizer term for multivariate normal distribution
+      _normalizer[k] = -0.5f * (D * logf(2.0f * M_PI) + logf(det));
+
+      // return failure if matrix inverse failed
+      success = success && (det > 0);
+   }
+
+   return success;
 }
 
 
@@ -146,23 +137,22 @@ void GMM::Component::computeLogProbNorm(const QVector<Vector2>& X, int N, float 
  *
  * @param X
  * @param N
+ * @param K
  */
-void GMM::initializeMeans(const QVector<Vector2>& X, int N)
+void GMM::initializeMeans(const QVector<Vector2>& X, int N, int K)
 {
-   const int K = _components.size();
-
    const int MAX_ITERATIONS = 20;
    const float TOLERANCE = 1e-3f;
    float diff = 0;
 
    // initialize workspace
-   Vector2 Mu[K];
+   Vector2 MP[K];
    int counts[K];
 
    for ( int t = 0; t < MAX_ITERATIONS && diff > TOLERANCE; ++t )
    {
       // compute mean and sample count for each component
-      memset(Mu, 0, K * sizeof(Vector2));
+      memset(MP, 0, K * sizeof(Vector2));
       memset(counts, 0, K * sizeof(int));
 
       for ( int i = 0; i < N; ++i )
@@ -172,7 +162,7 @@ void GMM::initializeMeans(const QVector<Vector2>& X, int N)
          int min_k = 0;
          for ( int k = 0; k < K; ++k )
          {
-            float dist = vectorDiffNorm(X[i], _components[k]._mu);
+            float dist = vectorDiffNorm(X[i], _mu[k]);
             if ( min_dist > dist )
             {
                min_dist = dist;
@@ -181,28 +171,28 @@ void GMM::initializeMeans(const QVector<Vector2>& X, int N)
          }
 
          // update mean and sample count
-         vectorAdd(Mu[min_k], X[i]);
+         vectorAdd(MP[min_k], X[i]);
          ++counts[min_k];
       }
 
       // scale each mean by its sample count
       for ( int k = 0; k < K; ++k )
       {
-         vectorScale(Mu[k], 1.0f / counts[k]);
+         vectorScale(MP[k], 1.0f / counts[k]);
       }
 
       // compute the total change of all means
       diff = 0;
       for ( int k = 0; k < K; ++k )
       {
-         diff += vectorDiffNorm(Mu[k], _components[k]._mu);
+         diff += vectorDiffNorm(MP[k], _mu[k]);
       }
       diff /= K;
 
       // update component means
       for ( int k = 0; k < K; ++k )
       {
-         _components[k]._mu = Mu[k];
+         _mu[k] = MP[k];
       }
    }
 }
@@ -215,7 +205,19 @@ void GMM::initializeMeans(const QVector<Vector2>& X, int N)
 /*!
  * Perform the expectation step of the EM algorithm. In this step we compute
  * gamma, the posterior probabilities for each component in the mixture model
- * and each sample in X, as well as the log-likelihood of the model:
+ * and each sample in X, as well as the log-likelihood of the model.
+ *
+ * First we compute the probability density function of the multivariate normal
+ * distribution conditioned on a single component for each point in X:
+ *
+ *   P(x|k) = exp(-0.5 * (x - mu_k)^T Sigma_k^-1 (x - mu_k)) / sqrt((2pi)^d det(Sigma_k))
+ *
+ * We actually use the log-probability to avoid numerical instability:
+ *
+ *   log(P(x|k)) = -0.5 * (x - mu_k)^T Sigma_k^-1 (x - mu_k) - 0.5 * (d * log(2pi) + log(det(Sigma_k)))
+ *
+ * Then we can compute gamma, the posterior probability matrix, and log(L), the
+ * log-likelihood:
  *
  *   log(p(x_i)) = a + log(sum(exp(log(pi_k) + log(P(x_i|k))) - a))
  *
@@ -225,17 +227,16 @@ void GMM::initializeMeans(const QVector<Vector2>& X, int N)
  *
  * @param X
  * @param N
+ * @param K
  */
-float GMM::computeEStep(const QVector<Vector2>& X, int N)
+float GMM::computeEStep(const QVector<Vector2>& X, int N, int K)
 {
-   const int K = _components.size();
-
    // compute logpi
    float logpi[K];
 
    for ( int k = 0; k < K; ++k )
    {
-      logpi[k] = logf(_components[k]._pi);
+      logpi[k] = logf(_pi[k]);
    }
 
    // compute the log-probability for each component and each point in X
@@ -243,7 +244,22 @@ float GMM::computeEStep(const QVector<Vector2>& X, int N)
 
    for ( int k = 0; k < K; ++k )
    {
-      _components[k].computeLogProbNorm(X, N, &logProb[k * N]);
+      for ( int i = 0; i < N; ++i )
+      {
+         // compute xm = (x - mu)
+         Vector2 xm = X[i];
+         vectorSubtract(xm, _mu[k]);
+
+         // compute Sxm = Sigma^-1 xm
+         Vector2 Sxm;
+         matrixProduct(_sigmaInv[k], xm, Sxm);
+
+         // compute xmSxm = xm^T Sigma^-1 xm
+         float xmSxm = vectorDot(xm, Sxm);
+
+         // compute log(P) = normalizer - 0.5 * xm^T * Sigma^-1 * xm
+         logProb[k * N + i] = _normalizer[k] - 0.5f * xmSxm;
+      }
    }
 
    // compute gamma and log-likelihood
@@ -306,11 +322,10 @@ float GMM::computeEStep(const QVector<Vector2>& X, int N)
  *
  * @param X
  * @param N
+ * @param K
  */
-void GMM::computeMStep(const QVector<Vector2>& X, int N)
+void GMM::computeMStep(const QVector<Vector2>& X, int N, int K)
 {
-   const int K = _components.size();
-
    for ( int k = 0; k < K; ++k )
    {
       // compute n_k = sum(gamma_ki)
@@ -322,36 +337,32 @@ void GMM::computeMStep(const QVector<Vector2>& X, int N)
       }
 
       // update mixture weight
-      _components[k]._pi = n_k / N;
+      _pi[k] = n_k / N;
 
       // update mean
-      Vector2& mu = _components[k]._mu;
-
-      vectorInitZero(mu);
+      vectorInitZero(_mu[k]);
 
       for ( int i = 0; i < N; ++i )
       {
-         vectorAdd(mu, _gamma[k * N + i], X[i]);
+         vectorAdd(_mu[k], _gamma[k * N + i], X[i]);
       }
 
-      vectorScale(mu, 1.0f / n_k);
+      vectorScale(_mu[k], 1.0f / n_k);
 
       // update covariance matrix
-      Matrix2x2& sigma = _components[k]._sigma;
-
-      matrixInitZero(sigma);
+      matrixInitZero(_sigma[k]);
 
       for ( int i = 0; i < N; ++i )
       {
          // compute xm = (x_i - mu_k)
          Vector2 xm = X[i];
-         vectorSubtract(xm, mu);
+         vectorSubtract(xm, _mu[k]);
 
          // compute Sigma_ki = gamma_ki * (x_i - mu_k) (x_i - mu_k)^T
-         matrixAddOuterProduct(sigma, _gamma[k * N + i], xm);
+         matrixAddOuterProduct(_sigma[k], _gamma[k * N + i], xm);
       }
 
-      matrixScale(sigma, 1.0f / n_k);
+      matrixScale(_sigma[k], 1.0f / n_k);
    }
 }
 
@@ -437,22 +448,11 @@ float GMM::computeEntropy(const float *gamma, int N, const QVector<qint8>& label
  */
 bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
 {
-   // initialize random state
-   unsigned long state = 1;
-
-   // initialize components
-   _components.resize(K);
-
-   for ( int k = 0; k < K; ++k )
-   {
-      // use uniform mixture weight and randomly sampled mean
-      int i = myrand(&state) % N;
-
-      _components[k].initialize(1.0f / K, X[i]);
-   }
+   // initialize mixture components
+   initializeComponents(X, N, K);
 
    // initialize means with k-means
-   initializeMeans(X, N);
+   initializeMeans(X, N, K);
 
    // run EM algorithm
    const int MAX_ITERATIONS = 100;
@@ -462,13 +462,8 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
 
    for ( int t = 0; t < MAX_ITERATIONS; ++t )
    {
-      // pre-compute precision matrix and normalizer term
-      bool success = true;
-
-      for ( int k = 0; k < K; ++k )
-      {
-         success = success && _components[k].prepare();
-      }
+      // pre-compute precision matrix and normalizer term for each mixture component
+      bool success = prepareComponents(K);
 
       // return failure if matrix inverse failed
       if ( !success )
@@ -478,7 +473,7 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
 
       // perform E step
       prevLogL = currLogL;
-      currLogL = computeEStep(X, N);
+      currLogL = computeEStep(X, N, K);
 
       // check for convergence
       if ( fabs(currLogL - prevLogL) < TOLERANCE )
@@ -487,7 +482,7 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
       }
 
       // perform M step
-      computeMStep(X, N);
+      computeMStep(X, N, K);
    }
 
    // save outputs
