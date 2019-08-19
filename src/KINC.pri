@@ -33,11 +33,11 @@ isEmpty(LINK_LAPACKE) { LINK_LAPACKE = 1 }
 isEmpty(LINK_MPI_CXX) { LINK_MPI_CXX = 1 }
 
 # Include directories
-isEmpty($$(CUDADIR)) {
+isEmpty(CUDADIR) {
    CUDADIR = /usr/local/cuda
 }
 else {
-   CUDADIR = $$(CUDADIR)
+   CUDADIR = $$CUDADIR
 }
 
 INCLUDEPATH += $${CUDADIR}/include

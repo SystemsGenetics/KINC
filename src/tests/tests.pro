@@ -35,5 +35,5 @@ HEADERS += \
 # Installation instructions
 isEmpty(PREFIX) { PREFIX = /usr/local }
 program.path = $${PREFIX}/bin
-program.files = $${PWD}/../../build/tests/$${TARGET}
+program.files = $${OUT_PWD}/$${TARGET}
 INSTALLS += program

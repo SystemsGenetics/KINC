@@ -19,5 +19,5 @@ SOURCES += \
 # Installation instructions
 isEmpty(PREFIX) { PREFIX = /usr/local }
 program.path = $${PREFIX}/bin
-program.files = $${PWD}/../../build/cli/$${TARGET}
+program.files = $${OUT_PWD}/$${TARGET}
 INSTALLS += program
