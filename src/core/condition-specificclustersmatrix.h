@@ -12,10 +12,15 @@ public:
     virtual QAbstractTableModel* model() override final;
 public:
     void initialize(const EMetaArray& geneNames, int maxClusterSize, int subheader);
-    void initialize(const EMetaArray& features, const QVector<EMetaArray>& featureInfo, const QVector<EMetaArray>& data, int& numTests);
+    void initialize(const EMetaArray& features, const QVector<EMetaArray>& featureInfo, const QVector<EMetaArray>& data, int& numTests, QString fileName);
 
     int sampleSize() const;
     void setTestCount(qint32 newData);
+
+    EMetaObject getFeatures() const;
+    QString getFileName() const;
+
+    qint32 getTestCount();
 
 private:
     class Model;
@@ -25,7 +30,6 @@ private:
     qint32 _testcount {0};
     qint64 _sampleSize {0};
     constexpr static qint16 SUBHEADER_SIZE {12};
-    //constexpr static qint16 SUBHEADER_SIZE {1};
     Model* _model {nullptr};
 };
 

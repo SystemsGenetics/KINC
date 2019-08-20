@@ -66,6 +66,8 @@ EAbstractAnalyticInput::Type Extract::Input::type(int index) const
    case ExpressionData: return Type::DataIn;
    case ClusterData: return Type::DataIn;
    case CorrelationData: return Type::DataIn;
+   case AnnotationData : return Type::FileIn;
+   case ConditionSpecificClusterData : return Type::DataIn;
    case OutputFormatArg: return Type::Selection;
    case OutputFile: return Type::FileOut;
    case MinCorrelation: return Type::Double;
@@ -118,6 +120,24 @@ QVariant Extract::Input::data(int index, Role role) const
       case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
+   case AnnotationData :
+       switch (role)
+       {
+       case Role::CommandLineName: return QString("amx");
+       case Role::Title: return tr("Annotation Matrix:");
+       case Role::WhatsThis: return tr("Input text file containing annotations for the data. Needed for the cscm");
+       case Role::FileFilters: return tr("Text file %1").arg("(*.txt)");
+       default: return QVariant();
+       }
+   case ConditionSpecificClusterData :
+       switch (role)
+       {
+       case Role::CommandLineName: return QString("cscm");
+       case Role::Title: return tr("Optional Condition Specific Cluster Matrix:");
+       case Role::WhatsThis: return tr("Input condition specific cluster matrix containing testing information.");
+       case Role::DataType: return DataFactory::CSCMType;
+       default: return QVariant();
+       }
    case OutputFormatArg:
       switch (role)
       {
@@ -217,6 +237,10 @@ void Extract::Input::set(int index, EAbstractData* data)
    else if ( index == CorrelationData )
    {
       _base->_cmx = data->cast<CorrelationMatrix>();
+   }\
+   else if ( index == ConditionSpecificClusterData )
+   {
+      _base->_cscm = data->cast<CSCM>();
    }
 }
 
@@ -238,5 +262,9 @@ void Extract::Input::set(int index, QFile* file)
    if ( index == OutputFile )
    {
       _base->_output = file;
+   }
+   if ( index == AnnotationData )
+   {
+      _base->_amx = file;
    }
 }

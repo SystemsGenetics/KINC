@@ -19,6 +19,7 @@ public:
     virtual int clusterSize() const ;
     virtual bool isEmpty() const;
     QString toString() const;
+    QString toString(QFile* anx) const;
     const double& at(int cluster, int gene) const;
     double& at(int cluster, int gene);
     void addCluster(int amount, int size) const;

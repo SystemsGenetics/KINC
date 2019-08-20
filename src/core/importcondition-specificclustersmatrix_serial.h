@@ -13,7 +13,7 @@ public:
     //helper functions
     int test(CorrelationMatrix::Pair cmxPair, CCMatrix::Pair& ccmPair, qint32 clusterIndex, qint32& testIndex, qint32 featureIndex, qint32 labelIndex, QVector<QVector<double>>& pValues);
     int prepAnxData(QString testLabel, int dataIndex);
-    bool isEmpty(QVector<QVector<double>>& vector);
+    bool isEmpty(QVector<QVector<double>>& matrix);
     int clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label);
 
     //Binomial Tests
@@ -21,13 +21,8 @@ public:
     double testOne();
     double testTwo();
 
-    //Regresion Tests
+    //Regresion Test
     double regresion(QVector<QString>& anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex);
-
-
-    void sort(QVector<double> & labelInfo, QVector<double> & genex, QVector<double> &geney);
-    void mergeSort(QVector<double>& left, QVector<double>& right, QVector<double>& labelInfos, QVector<double>& leftgenex, QVector<double>& rightgenex, QVector<double>& genex, QVector<double> &rightgeney, QVector<double> &leftgeney, QVector<double> &geney);
-
 
 private:
    /*!

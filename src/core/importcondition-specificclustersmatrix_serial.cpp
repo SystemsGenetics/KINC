@@ -11,17 +11,12 @@
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_multifit.h>
-#include <iostream>
-
-#include <stdio.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_math.h>
-
-#include <iomanip>
 //
 
 /*!
-*  Implements an interface to create an serial object.
+*  Implements an interface to create a serial object.
 */
 importCSCM::Serial::Serial(importCSCM* parent) : EAbstractAnalyticSerial(parent), _base(parent)
 {
@@ -33,9 +28,11 @@ importCSCM::Serial::Serial(importCSCM* parent) : EAbstractAnalyticSerial(parent)
 
 
 /*!
-*  Implements an interface to perfomr the desired work on a result block.
+*  Implements an interface to perform the desired work on a result block.
 *
 * @param block The work block you are working on.
+*
+* @return The populated result block.
 */
 std::unique_ptr<EAbstractAnalyticBlock> importCSCM::Serial::execute(const EAbstractAnalyticBlock* block)
 {
@@ -142,11 +139,11 @@ std::unique_ptr<EAbstractAnalyticBlock> importCSCM::Serial::execute(const EAbstr
 /*!
 *  Implements an interface to prerpare the annotation matrix data for testing.
 *
-* @param testLabel The label you are testing.
+* @param testLabel The label you are testing on.
 *
-* @param dataIndex The feature the label is in.
+* @param dataIndex The feature the label is part of.
 *
-* @return True if the matrix is empty, false otherwise.
+* @return The number of samples in total of the test label.
 */
 int importCSCM::Serial::prepAnxData(QString testLabel, int dataIndex)
 {
@@ -174,18 +171,18 @@ int importCSCM::Serial::prepAnxData(QString testLabel, int dataIndex)
 /*!
 *  Implements an interface to check to see if a matrix is empty.
 *
-* @param vector The vector you want to check.
+* @param vector The matrix you want to check.
 *
 * @return True if the matrix is empty, false otherwise.
 */
-bool importCSCM::Serial::isEmpty(QVector<QVector<double>>& vector)
+bool importCSCM::Serial::isEmpty(QVector<QVector<double>>& matrix)
 {
-    EDEBUG_FUNC(this, &vector);
+    EDEBUG_FUNC(this, &matrix);
 
     int index = 0;
-    while(index < vector.size())
+    while(index < matrix.size())
     {
-        if(!vector.at(index++).isEmpty())
+        if(!matrix.at(index++).isEmpty())
         {
             return false;
         }
@@ -198,7 +195,7 @@ bool importCSCM::Serial::isEmpty(QVector<QVector<double>>& vector)
 
 
 /*!
-*  Implements an interface to prepare the cluster catagopry count information.
+*  Implements an interface to prepare the cluster catagory count information.
 *
 * @param ccmPair The gene pair that we are counting the labels for.
 *
@@ -234,19 +231,21 @@ int importCSCM::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, Q
 
 
 /*!
-*  An interface to run the correct tests on the pair..
+*  An interface to choose and run the correct tests on the pair.
 *
 * @param ccmPair The pair thats going to be tested.
 *
-* @param clusterIndex The cluster to test inside the pair, each cluster is tested.
+* @param clusterIndex The cluster to test inside the pair, each cluster is
+*        tested.
 *
 * @param testIndex Which test we are currently performing.
 *
 * @param featureIndex The current feature we are testing.
 *
-* @param labelIndex The sub label in the feature we are running a test on.
+* @param labelIndex The label in the feature we are running a test on.
 *
-* @param pValues The two dimensional array holding all of the results from the tests.
+* @param pValues The two dimensional array holding all of the results from the
+*        tests.
 *
 * @return The test that was just conducted.
 */
@@ -292,8 +291,6 @@ int importCSCM::Serial::test(CorrelationMatrix::Pair cmxPair,
 *
 * @param alpha The threshold for keeping the data.
 *
-* @param clusterInfo The cluster to run the test on.
-*
 * @return Pvalue corrosponding to the test, negative if not accepted.
 */
 double importCSCM::Serial::binomial(double alpha)
@@ -320,16 +317,7 @@ double importCSCM::Serial::binomial(double alpha)
 /*!
 *  Implements an interface to run the first binomial test for given data.
 *
-* @param clusterInfo The cluster to run the test on.
-*
-* @param anxInfo the column information for the feature, used to compare the label
-*        with.
-*
-* @param label The label to compare the anxData with, its the current test label.
-*
-* @param numLabels The number of samples with the same label as the test label.
-*
-* @return Pvalue corrosponding to the test, negative if not accepted.
+* @return Pvalue corrosponding to the test.
 */
 double importCSCM::Serial::testOne()
 {
@@ -341,6 +329,7 @@ double importCSCM::Serial::testOne()
     // failures = number of non-category samples not in the cluster
     // Ho: successes >= 0.15
     // Ha: successes < 0.15
+
     double pvalue = 0.0;
 
     pvalue = gsl_cdf_binomial_P(_clusterInMask - _catInCount, .25, _clusterInMask - _catInCount);
@@ -355,16 +344,7 @@ double importCSCM::Serial::testOne()
 /*!
 *  Implements an interface to run the second binomial test for given data.
 *
-* @param clusterInfo The cluster to run the test on.
-*
-* @param anxInfo the column information for the feature, used to compare the label
-*        with.
-*
-* @param label The label to compare the anxData with, its the current test label.
-*
-* @param numLabels The number of samples with the same label as the test label.
-*
-* @return Pvalue corrosponding to the test, negative if not accepted.
+* @return Pvalue corrosponding to the test.
 */
 double importCSCM::Serial::testTwo()
 {
@@ -375,7 +355,7 @@ double importCSCM::Serial::testTwo()
     // failures = number of category samples out of the cluster
     // Ho: successes = 0.85
     // Ha: successes > 0.85
-    //gsl_ran_binomial_pdf(k, p, n)
+
     double pvalue = 0.0;
 
     pvalue = gsl_cdf_binomial_Q(_catInCount, .75, _catCount);
@@ -388,16 +368,17 @@ double importCSCM::Serial::testTwo()
 
 
 /*!
-*  Implements an interface to run the regresion test for given data, the regresion line is
-*  genex vs geney vs label data.
+*  Implements an interface to run the regresion test for given data, the
+*  regresion line is genex vs geney vs label data.
 *
 * @param anxInfo Annotation matrix information.
 *
 * @param ccmPair Cluster matrix pair.
 *
-* @param clusterIndex The index of the cluster, used to get the right info from the cluster pair
+* @param clusterIndex The index of the cluster, used to get the right info
+*        from the cluster pair
 *
-* @return Pvalue corrosponding to the test, negative if not accepted.
+* @return Pvalue corrosponding to the test.
 */
 double importCSCM::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex)
 {
@@ -412,10 +393,12 @@ double importCSCM::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::Pair& 
     gsl_vector *Y, *C;
     double pValue = 0.0;
 
-    //allocate a matrix to hold the predictior variables, in this cas the gene expression data
+    //allocate a matrix to hold the predictior variables, in this cas the gene
+    //expression data
     X = gsl_matrix_alloc (_clusterInMask, 3);
 
-    //allocate a vector to hold observation data, in this case the data corrosponding ot the features
+    //allocate a vector to hold observation data, in this case the data
+    //corrosponding ot the features
     Y = gsl_vector_alloc (_clusterInMask);
 
     //allocate a vector and matrix for the slop info
@@ -436,11 +419,12 @@ double importCSCM::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::Pair& 
         if(ccmPair.at(clusterIndex, i) == 1)
         {
             //add emx data to the predictions if the sample is in the cluster
-            gsl_matrix_set(X, j, 0, static_cast<double>(1));
+            gsl_matrix_set(X, j, 0, static_cast<double>(1)); //for the intercept
             gsl_matrix_set(X, j, 1, static_cast<double>(geneX.at(i)));
             gsl_matrix_set(X, j, 2, static_cast<double>(geneY.at(i)));
 
-            //add the feature data into the observations vector
+            //convert the obervation data into a "design vector"
+            //each unique number being a ssigned a unique integer.
             if(!labelInfo.contains(anxInfo.at(i).toInt()))
             {
                 labelInfo.append(anxInfo.at(i).toInt());
@@ -462,40 +446,7 @@ double importCSCM::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::Pair& 
     //regrassion calculation
     gsl_multifit_linear(X, Y, C, cov, &chisq, work);
 
-
-    /* vvv For Debugging vvv */
-    std::cout << std::endl << "coefficients:" << std::endl;
-    for (int j = 0; j < 3; j++)
-    {
-        std::cout << "c" << j << " = " << std::setprecision(9);
-        std::cout << gsl_vector_get(C, j) << std::endl;
-    }
-    std::cout << "R squared: " << chisq << std::endl << std::endl;
-
-    std::cout << std::endl;
-    std::cout << "expected <=> predicted" << std::endl;
-    for (int i = 0 ; i < _clusterInMask; i++)
-    {
-        double r = gsl_vector_get(C, 0);
-        r += gsl_matrix_get(X, i, 1) * gsl_vector_get(C, 1);
-        r += gsl_matrix_get(X, i, 2) * gsl_vector_get(C, 2);
-        std::cout << gsl_vector_get(Y, i) << " <=> " << std::setprecision(9) << r << std::endl << std::endl;
-    }
-
-    for(int i = 0; i < _clusterInMask; i++)
-    {
-        //print out the predictor variables matrix
-        std::cout << "Matrix of predictor values:" <<
-        std::cout << gsl_matrix_get(X, i, 0) << "\t";
-        std::cout << gsl_matrix_get(X, i, 1) << "\t";
-        std::cout << gsl_matrix_get(X, i, 2) << std::endl;
-
-        //print out the observation variables matrix
-        std::cout << gsl_vector_get(Y, i) << std::endl;
-    }
-    /* ^^^ For Debugging ^^^ */
-
-    //grab the variable
+    //This gives us the first slope for now.
     pValue = gsl_vector_get(C, 1);
 
     //free all of the data

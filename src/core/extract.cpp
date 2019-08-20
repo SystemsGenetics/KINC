@@ -2,7 +2,7 @@
 #include "extract_input.h"
 #include "datafactory.h"
 #include "expressionmatrix_gene.h"
-
+#include "condition-specificclustersmatrix_pair.h"
 
 
 using namespace std;
@@ -75,6 +75,8 @@ void Extract::writeTextFormat(int index)
    // initialize workspace
    QString sampleMask(_ccm->sampleSize(), '0');
 
+
+
    // write header to file
    if ( index == 0 )
    {
@@ -90,8 +92,16 @@ void Extract::writeTextFormat(int index)
          << "\t" << "Cluster_Outliers"
          << "\t" << "Pair_Outliers"
          << "\t" << "Too_Low"
-         << "\t" << "Samples"
-         << "\n";
+         << "\t" << "Samples";
+      if(_amx)
+      {
+          QVector<QString> headerTitles(formatAnnotations());
+          for(int i = 0; i < headerTitles.size(); i++)
+          {
+              _stream << "\t" << headerTitles.at(i);
+          }
+      }
+      _stream << "\n";
    }
 
    // read next pair
@@ -176,6 +186,8 @@ void Extract::writeTextFormat(int index)
          }
       }
 
+
+
       // write cluster to output file
       _stream
          << source
@@ -189,8 +201,19 @@ void Extract::writeTextFormat(int index)
          << "\t" << numPostOutliers
          << "\t" << numPreOutliers
          << "\t" << numThreshold
-         << "\t" << sampleMask
-         << "\n";
+         << "\t" << sampleMask;
+
+      if(_amx)
+      {
+          //initialize cscm for data values to tack on
+          CSCM::Pair cscm(_cscm);
+          cscm.read(_cmxPair.index());
+          for(int i = 0; i < _cscm->getTestCount(); i++)
+          {
+              _stream << "\t" << cscm.at(k, i);
+          }
+      }
+         _stream << "\n";
    }
 
    // make sure writing output file worked
@@ -202,7 +225,6 @@ void Extract::writeTextFormat(int index)
       throw e;
    }
 }
-
 
 
 
@@ -441,4 +463,63 @@ void Extract::initialize()
    // initialize output file stream
    _stream.setDevice(_output);
    _stream.setRealNumberPrecision(8);
+}
+
+
+
+
+/*!
+ * Implements an interface to crate the header names for the tests done in the
+ * to create the cscm.
+ *
+ * @return Vector of header names to append to the network file.
+ */
+QVector<QString> Extract::formatAnnotations()
+{
+    //set up variables
+    QVector<QString> headerInfo;
+    QTextStream file(_amx);
+    QVector<QVector<QString>> info;
+    QString delimiter = ",";
+
+
+    auto line = file.readLine();
+    //decide on delimiter
+    if(line.contains("\t"))
+        delimiter = "\t";
+    //grab the features
+    auto words = line.split(delimiter);
+    for(int i = 0; i < words.size(); i++)
+    {
+        info.append(QVector<QString>());
+        info[i].append(words.at(i));
+    }
+    //grab the rest of the label information
+    while(!file.atEnd())
+    {
+        auto line = file.readLine();
+        auto words = line.split("\t");
+        for(int i = 0; i < words.size(); i++)
+        {
+            if(!info.at(i).contains(words.at(i)))
+            {
+                info[i].append(words.at(i));
+            }
+        }
+    }
+    EMetaObject features = _cscm->getFeatures();
+    //for each feature
+    for(int i = 0; i < info.size(); i++)
+    {
+        //for each label in the feature
+        for(int j = 1; j < info.at(i).size(); j++)
+        {
+            //for each cluster
+            if(features.at(info.at(i).at(0)).toObject().at("Test").toObject().at("Type").toString() == "Catagorical")
+            {
+                headerInfo.append(info.at(i).at(0) + "__" + info.at(i).at(j));
+            }
+        }
+    }
+    return headerInfo;
 }

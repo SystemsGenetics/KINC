@@ -7,7 +7,7 @@
 #include "correlationmatrix_pair.h"
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
-
+#include "condition-specificclustersmatrix.h"
 
 
 /*!
@@ -29,6 +29,7 @@ public:
    virtual void process(const EAbstractAnalyticBlock* result) override final;
    virtual EAbstractAnalyticInput* makeInput() override final;
    virtual void initialize();
+   QVector<QString> formatAnnotations();
 private:
    /*!
    * Defines the output formats this analytic supports.
@@ -71,6 +72,14 @@ private:
     * Pointer to the input correlation matrix.
     */
    CorrelationMatrix* _cmx {nullptr};
+   /*!
+    * Pointer to the input condition specific cluster matrix.
+    */
+   CSCM* _cscm {nullptr};
+   /*!
+    * Pointer to the annotation file.
+    */
+   QFile* _amx {nullptr};
    /*!
     * The output format to use.
     */

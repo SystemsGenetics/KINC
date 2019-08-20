@@ -142,5 +142,6 @@ QVariant CSCM::Model::data(const QModelIndex& index, int role) const
     }
     pair.read({x,y});
     // Return value of pair as a string
-    return pair.toString();
+    QFile file(_matrix->getFileName());
+    return pair.toString(&file);
 }

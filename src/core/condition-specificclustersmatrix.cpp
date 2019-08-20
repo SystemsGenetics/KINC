@@ -16,7 +16,7 @@
 *
 * @param data All the data in the annotation matrix.
 */
-void CSCM::initialize(const EMetaArray& features, const QVector<EMetaArray>& featureInfo, const QVector<EMetaArray>& data, int& numTests)
+void CSCM::initialize(const EMetaArray& features, const QVector<EMetaArray>& featureInfo, const QVector<EMetaArray>& data, int& numTests, QString fileName)
 {
     EDEBUG_FUNC(this,&features,&featureInfo,&data);
 
@@ -105,6 +105,8 @@ void CSCM::initialize(const EMetaArray& features, const QVector<EMetaArray>& fea
     numTests += num_tests;
     _testcount = numTests;
     metaObject.insert("Number of Tests", numTests);
+
+    metaObject.insert("Annotation File", fileName);
 
     // make sure there are tests provided
     if ( numTests == 0)
@@ -212,4 +214,44 @@ void CSCM::setTestCount(qint32 newData)
 {
     EDEBUG_FUNC(this, newData);
     _testcount = newData;
+}
+
+
+
+
+
+/*!
+*  Implements an interface to get the feature information from the meta data.
+*
+* @return An EMetaObject that the feature information is stored in.
+*/
+EMetaObject CSCM::getFeatures() const
+{
+    return meta().toObject().at("Features").toObject();
+}
+
+
+
+
+
+/*!
+*  Implements an interface to get the file name information from the meta data.
+*
+* @return The file name.
+*/
+QString CSCM::getFileName() const
+{
+    return meta().toObject().at("Annotation File").toString();
+}
+
+
+
+/*!
+*  Implements an interface to get the number of tests that were conducted.
+*
+* @return The number of tests.
+*/
+qint32 CSCM::getTestCount()
+{
+    return _testcount;
 }

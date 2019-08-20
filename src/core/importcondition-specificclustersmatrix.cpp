@@ -15,7 +15,7 @@
 
 
 /*!
-*  Supplies ACE with the number ofg weork blocks it is going to create.
+*  Supplies ACE with the number of work blocks it is going to create.
 *
 * @return How many pieces you want to break up the task your working on.
 */
@@ -34,6 +34,8 @@ int importCSCM::size() const
  * expression matrix.
  *
  * @param cmx The cluster matrix for the data.
+ *
+ * @return The total number of pair to process.
  */
 qint64 importCSCM::totalPairs(const CorrelationMatrix* cmx)
 {
@@ -44,7 +46,8 @@ qint64 importCSCM::totalPairs(const CorrelationMatrix* cmx)
 
 
 /*!
-*  An interface that processes result blocks once the serial is done working on them.
+*  An interface that processes result blocks once the serial is done working on
+*  them.
 *
 * @param result The processed work block from the serial.
 */
@@ -119,6 +122,8 @@ EAbstractAnalyticInput* importCSCM::makeInput()
 *  Creates a block of work at the given index.
 *
 *  @param index The index at which the work block should be made.
+*
+* @return Pointer to the work block.
 */
 std::unique_ptr<EAbstractAnalyticBlock> importCSCM::makeWork(int index) const
 {
@@ -140,7 +145,7 @@ std::unique_ptr<EAbstractAnalyticBlock> importCSCM::makeWork(int index) const
 
 
 /*!
-*  an interface to create uninitialized work blocks
+*  Implements an interface to create uninitialized work blocks.
 *
 *  @return a pointer to an uninitialized work block
 */
@@ -156,7 +161,7 @@ std::unique_ptr<EAbstractAnalyticBlock> importCSCM::makeWork() const
 
 
 /*!
-*  an interface to create uninitialized result blocks
+*  Implements an interface to create uninitialized result blocks.
 *
 *  @return a pointer to an uninitialized result block
 */
@@ -171,9 +176,9 @@ std::unique_ptr<EAbstractAnalyticBlock> importCSCM::makeResult() const
 
 
 /*!
-*  an interface to create uninitialized serial object
+*  Implements an interface to create a new serial object.
 *
-*  @return a pointer to an uninitialized serial onject
+*  @return Pointer to a serial new object.
 */
 EAbstractAnalyticSerial* importCSCM::makeSerial()
 {
@@ -184,8 +189,8 @@ EAbstractAnalyticSerial* importCSCM::makeSerial()
 
 
 /*!
-*  An interface to initialize the analytic process, it reads in the line number of the annotaion
-*  matrix, so we can read in the data properly.
+*  An interface to initialize the analytic process, it reads in the line number
+*  of the annotaion matrix, so we can read in the data properly.
 */
 void importCSCM::initialize()
 {
@@ -272,15 +277,17 @@ void importCSCM::initializeOutputs()
 
 
 /*!
-*  An interface to read in the contents of an annotation matrix and produces useful information from
-*  it.
+*  An interface to read in the contents of an annotation matrix and produces
+*  useful information from it.
 *
-* @param anxdata An initially empty array, stores the features and labels of the annotation matrix.
+* @param anxdata An initially empty array, stores the features and labels of
+*        the annotation matrix.
 *
-* @param data An initially empty array, stores all of the data corrosponding to the features in the
-*             annotation matrix.
+* @param data An initially empty array, stores all of the data corrosponding
+*        to the features in the annotation matrix.
 *
-* @param dataTestType The type of test we will run on the data under a particular feature.
+* @param dataTestType The type of test we will run on the data under a
+*        particular feature.
 */
 void importCSCM::readInANX(QVector<QVector<QString>>& anxdata,
                             QVector<QVector<QVariant>>& data,
@@ -529,11 +536,14 @@ void importCSCM::override()
 
 
 /*!
-*  An interface to initialize the metadata corrosponding to the data retrived from the annotation matrix.
+*  An interface to initialize the metadata corrosponding to the data retrived
+*  from the annotation matrix.
 *
-* @param maxClusterSize The maximum number of clusters that can be stored in a pair.
+* @param maxClusterSize The maximum number of clusters that can be stored in
+*        a pair.
 *
-* @param subHeaderSize The size of the subheader of the matrix, in this case it only stores sample size.
+* @param subHeaderSize The size of the subheader of the matrix, in this case
+*        it only stores sample size.
 *
 * @param anxData Stores feature names from the annotation array.
 *
@@ -541,7 +551,8 @@ void importCSCM::override()
 *
 * @param genenames Names of all the genes from the gene expression matrix.
 *
-* @param data All of the data corrosponding to the features from the annotation array.
+* @param data All of the data corrosponding to the features from the annotation
+*        array.
 */
 void importCSCM::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &anxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data)
 {
@@ -596,6 +607,6 @@ void importCSCM::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVecto
     }
 
     //inserts the Meta Data into the CSCM Object stored on the disk.
-    _out->initialize(Features, featureInfo, Data, _numTests);
+    _out->initialize(Features, featureInfo, Data, _numTests, _anx->fileName());
     _out->initialize(_emx->geneNames(), maxClusterSize, subHeaderSize);
 }
