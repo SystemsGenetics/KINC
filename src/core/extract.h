@@ -8,6 +8,7 @@
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
 #include "condition-specificclustersmatrix.h"
+#include "condition-specificclustersmatrix_pair.h"
 
 
 /*!
@@ -29,7 +30,6 @@ public:
    virtual void process(const EAbstractAnalyticBlock* result) override final;
    virtual EAbstractAnalyticInput* makeInput() override final;
    virtual void initialize();
-   QVector<QString> formatAnnotations();
 private:
    /*!
    * Defines the output formats this analytic supports.
@@ -60,6 +60,7 @@ private:
    QTextStream _stream;
    CCMatrix::Pair _ccmPair;
    CorrelationMatrix::Pair _cmxPair;
+   CSCM::Pair _cscmPair;
    /*!
     * Pointer to the input expression matrix.
     */

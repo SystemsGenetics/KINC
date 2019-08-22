@@ -383,7 +383,7 @@ void importCSCM::readInANX(QVector<QVector<QString>>& anxdata,
                 check = 1;
             }
         }
-        if(check == 0)
+        if(check == 0 || dataTestType.at(j) == QUANTATATIVE || dataTestType.at(j) == ORDINAL)
         {
             dataTestType[j] = NONE;
         }
@@ -534,6 +534,31 @@ void importCSCM::override()
 
 
 
+/*!
+*  An interface to provide the names for the tests, creating an easier way to
+*  label the data in the ouptut file.
+*/
+QString importCSCM::testNames()
+{
+    QString string;
+    for(int i = 0; i < _features.size(); i++)
+    {
+        if(_testType.at(i) == CATEGORICAL)
+        {
+            for(int j = 1; j < _features.at(i).size(); j++)
+            {
+                string += _features.at(i).at(0);
+                string += "__";
+                string += _features.at(i).at(j);
+                string += ":";
+            }
+        }
+    }
+    return string;
+}
+
+
+
 
 /*!
 *  An interface to initialize the metadata corrosponding to the data retrived
@@ -607,6 +632,6 @@ void importCSCM::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVecto
     }
 
     //inserts the Meta Data into the CSCM Object stored on the disk.
-    _out->initialize(Features, featureInfo, Data, _numTests, _anx->fileName());
+    _out->initialize(Features, featureInfo, Data, _numTests, testNames());
     _out->initialize(_emx->geneNames(), maxClusterSize, subHeaderSize);
 }

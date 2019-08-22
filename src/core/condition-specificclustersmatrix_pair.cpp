@@ -122,51 +122,12 @@ bool CSCM::Pair::isEmpty() const
 /*!
 *  Implements an interface to convert the contents of the pair into a string.
 *
-* @return The string representation of the pair.
-*/
-QString CSCM::Pair::toString() const
-{
-    EDEBUG_FUNC(this);
-
-    std::string string;
-    if(!_pValues.isEmpty())
-    {
-        //foir each cluster
-        for(int i = 0; i < _pValues.size(); i++)
-        {
-            //for all tests in that cluster
-            for(int j = 0; j < _pValues.at(i).size(); j++)
-            {
-                string += static_cast<std::ostringstream*>( &(std::ostringstream() << _pValues.at(i).at(j)) )->str();
-                if(j + 1 < _pValues.at(i).size())
-                {
-                  string += ", ";
-                }
-            }
-            string += "\n";
-        }
-    }
-    QString returnString;
-    for(uint i = 0; i < string.size(); i++)
-    {
-        returnString.append(string.at(i));
-    }
-    return returnString;
-}
-
-
-
-
-
-/*!
-*  Implements an interface to convert the contents of the pair into a string.
-*
 * @param anxData The information about the annotation matrix, to help label
 *        the string.
 *
 * @return The string representation of the pair.
 */
-QString CSCM::Pair::toString(QFile* anx) const
+QString CSCM::Pair::toString() const
 {
     EDEBUG_FUNC(this);
 
@@ -175,67 +136,19 @@ QString CSCM::Pair::toString(QFile* anx) const
     //if there is at least one cluster
     if(!_pValues.isEmpty())
     {
-        //Print the cluster number
+        //for each cluster
         for(int i = 0; i < _pValues.size(); i++)
         {
-            //Cluster Numbers
             outputString+= "Cluster: ";
             outputString+= static_cast<std::ostringstream*>( &(std::ostringstream() << i + 1) )->str();
-            outputString+= "\t";
-        }
-        outputString+= "\n";
-
-        //read in the first line of the anx for the feature names
-        anx->open(QIODevice::ReadOnly);
-        QTextStream file(anx);
-        QVector<QVector<QString>> info;
-
-        auto line = file.readLine();
-        auto words = line.split("\t");
-        for(int i = 0; i < words.size(); i++)
-        {
-            info.append(QVector<QString>());
-            info[i].append(words.at(i));
-        }
-
-        //grab the rest of the label and feature information
-        while(!file.atEnd())
-        {
-            auto line = file.readLine();
-            auto words = line.split("\t");
-            for(int i = 0; i < words.size(); i++)
+            outputString+= "\n";
+            for(int j = 0; j < _pValues.at(i).size(); j++)
             {
-                if(!info.at(i).contains(words.at(i)))
-                {
-                    info[i].append(words.at(i));
-                }
-            }
-        }
-
-        //see if the features have a test, and if they do, add that to the line
-        EMetaObject features = _cMatrix->getFeatures();
-
-        //for each cluster
-        for(int m = 0; m < _pValues.size(); m++)
-        {
-            //for each feature
-            for(int i = 0; i < info.size(); i++)
-            {
-                //for each label in the feature
-                for(int j = 1, k = 0; j < info.at(i).size(); j++)
-                {
-                    //for each cluster
-                    if(features.at(info.at(i).at(0)).toObject().at("Test").toObject().at("Type").toString() == "Catagorical")
-                    {
-                        outputString+= "\t";
-                        outputString+= info.at(i).at(0).toStdString();
-                        outputString+= "-";
-                        outputString+= info.at(i).at(j).toStdString();
-                        outputString+= ": ";
-                        outputString+= static_cast<std::ostringstream*>( &(std::ostringstream() << _pValues.at(m).at(k)) )->str();
-                        outputString+= "\n";
-                    }
-                }
+                outputString+= "\t";
+                outputString+= _cMatrix->getTestName(j).toStdString();
+                outputString+= ": ";
+                outputString+= static_cast<std::ostringstream*>( &(std::ostringstream() << _pValues.at(i).at(j)) )->str();
+                outputString+= "\n";
             }
         }
     }

@@ -59,10 +59,14 @@ enum TESTTYPE
     void configureTests(QVector<TESTTYPE>& dataTestType);
     int max(QVector<qint32> &counts) const;
     /*!
-     * Reads through the ccmatrix, creating the clusters.
+     * Test overrides.
      */
     void Test();
     void override();
+    /*!
+     * Crates a dtring of test names, delimited by a colon.
+     */
+    QString testNames();
 
     void initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &anxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data);
 

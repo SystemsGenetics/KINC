@@ -17,8 +17,7 @@ public:
     int sampleSize() const;
     void setTestCount(qint32 newData);
 
-    EMetaObject getFeatures() const;
-    QString getFileName() const;
+    QString getTestName(int index) const;
 
     qint32 getTestCount();
 

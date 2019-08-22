@@ -20,7 +20,6 @@ public:
       ,ClusterData
       ,CorrelationData 
       ,ConditionSpecificClusterData
-      ,AnnotationData
       ,OutputFormatArg
       ,OutputFile
       ,MinCorrelation
