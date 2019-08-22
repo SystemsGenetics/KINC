@@ -48,6 +48,7 @@ private:
    struct
    {
       ::OpenCL::Buffer<cl_int2> in_index;
+      QVector<cl_int2> in_index_host;
       ::OpenCL::Buffer<cl_int> work_N;
       ::OpenCL::Buffer<cl_float2> work_X;
       ::OpenCL::Buffer<cl_char> work_labels;
@@ -59,8 +60,11 @@ private:
       ::OpenCL::Buffer<cl_float> work_x;
       ::OpenCL::Buffer<cl_float> work_y;
       ::OpenCL::Buffer<cl_char> out_K;
+      QVector<cl_char> out_K_host;
       ::OpenCL::Buffer<cl_char> out_labels;
+      QVector<cl_char> out_labels_host;
       ::OpenCL::Buffer<cl_float> out_correlations;
+      QVector<cl_float> out_correlations_host;
    } _buffers;
 };
 
