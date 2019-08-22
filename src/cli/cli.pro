@@ -7,7 +7,7 @@ TARGET = kinc
 TEMPLATE = app
 
 # External libraries
-LIBS += -laceconsole
+LIBS += -lacecli
 
 # Compiler defines
 DEFINES += GUI=0
