@@ -100,7 +100,7 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
          ++index;
       }
 
-      _buffers.in_index.unmap(_queue).wait();
+      _buffers.in_index.unmap(_queue);
 
       // execute fetch-pair kernel
       _kernels.fetchPair->execute(
@@ -114,7 +114,7 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
          _base->_minExpression,
          &_buffers.work_N,
          &_buffers.out_labels
-      ).wait();
+      );
 
       // execute outlier kernel (pre-clustering)
       if ( _base->_removePreOutliers )
@@ -133,7 +133,7 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
             -7,
             &_buffers.work_x,
             &_buffers.work_y
-         ).wait();
+         );
       }
 
       // execute clustering kernel
@@ -161,7 +161,7 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
             &_buffers.work_gamma,
             &_buffers.out_K,
             &_buffers.out_labels
-         ).wait();
+         );
       }
       else
       {
@@ -173,7 +173,7 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
             _buffers.out_K[i] = 1;
          }
 
-         _buffers.out_K.unmap(_queue).wait();
+         _buffers.out_K.unmap(_queue);
       }
 
       // execute outlier kernel (post-clustering)
@@ -193,7 +193,7 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
             -8,
             &_buffers.work_x,
             &_buffers.work_y
-         ).wait();
+         );
       }
 
       // execute correlation kernel
@@ -211,7 +211,7 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
             &_buffers.out_labels,
             _base->_minSamples,
             &_buffers.out_correlations
-         ).wait();
+         );
       }
       else if ( _base->_corrMethod == CorrelationMethod::Spearman )
       {
@@ -229,17 +229,16 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
             &_buffers.work_x,
             &_buffers.work_y,
             &_buffers.out_correlations
-         ).wait();
+         );
       }
 
       // read results from device
-      auto e1 {_buffers.out_K.mapRead(_queue)};
-      auto e2 {_buffers.out_labels.mapRead(_queue)};
-      auto e3 {_buffers.out_correlations.mapRead(_queue)};
+      _buffers.out_K.mapRead(_queue);
+      _buffers.out_labels.mapRead(_queue);
+      _buffers.out_correlations.mapRead(_queue);
 
-      e1.wait();
-      e2.wait();
-      e3.wait();
+      // wait for everything to finish
+      _queue->wait();
 
       // save results
       for ( int j = 0; j < numPairs; ++j )
@@ -263,13 +262,9 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
          resultBlock->append(pair);
       }
 
-      auto e4 {_buffers.out_K.unmap(_queue)};
-      auto e5 {_buffers.out_labels.unmap(_queue)};
-      auto e6 {_buffers.out_correlations.unmap(_queue)};
-
-      e4.wait();
-      e5.wait();
-      e6.wait();
+      _buffers.out_K.unmap(_queue);
+      _buffers.out_labels.unmap(_queue);
+      _buffers.out_correlations.unmap(_queue);
    }
 
    // return result block
