@@ -1,6 +1,6 @@
 #ifndef CSCM_MODEL_H
 #define CSCM_MODEL_H
-#include "condition-specificclustersmatrix.h"
+#include "conditionspecificclustersmatrix.h"
 #include <ace/core/core.h>
 
 class CSCM::Model : public QAbstractTableModel

@@ -1,5 +1,5 @@
-#include "condition-specificclustersmatrix.h"
-#include "condition-specificclustersmatrix_model.h"
+#include "conditionspecificclustersmatrix.h"
+#include "conditionspecificclustersmatrix_model.h"
 //
 
 
@@ -113,15 +113,6 @@ void CSCM::initialize(const EMetaArray& features, const QVector<EMetaArray>& fea
         namesOfTests.append(name);
     }
     metaObject.insert("Test Names", namesOfTests);
-
-    // make sure there are tests provided
-    if ( numTests == 0)
-    {
-       E_MAKE_EXCEPTION(e);
-       e.setTitle(tr("Invalid Argument"));
-       e.setDetails(tr("No Tests Given."));
-       throw e;
-    }
 
     //set the root of the meta data to the changed metaobject
     setMeta(metaObject);

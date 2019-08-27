@@ -2,7 +2,7 @@
 #include "extract_input.h"
 #include "datafactory.h"
 #include "expressionmatrix_gene.h"
-#include "condition-specificclustersmatrix_pair.h"
+#include "conditionspecificclustersmatrix_pair.h"
 
 
 using namespace std;

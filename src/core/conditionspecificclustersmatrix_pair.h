@@ -1,7 +1,7 @@
 #ifndef CSCM_PAIR_H
 #define CSCM_PAIR_H
 #include <ace/core/core.h>
-#include "condition-specificclustersmatrix.h"
+#include "conditionspecificclustersmatrix.h"
 #include "pairwise_matrix_pair.h"
 //
 

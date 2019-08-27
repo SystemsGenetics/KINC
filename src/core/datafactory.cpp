@@ -2,7 +2,7 @@
 #include "expressionmatrix.h"
 #include "ccmatrix.h"
 #include "correlationmatrix.h"
-#include "condition-specificclustersmatrix.h"
+#include "conditionspecificclustersmatrix.h"
 
 
 

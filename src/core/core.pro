@@ -69,14 +69,14 @@ SOURCES += \
     corrpower_resultblock.cpp \
     corrpower_serial.cpp \
     corrpower_workblock.cpp \
-    condition-specificclustersmatrix.cpp \
-    condition-specificclustersmatrix_model.cpp \
-    condition-specificclustersmatrix_pair.cpp \
-    importcondition-specificclustersmatrix.cpp \
-    importcondition-specificclustersmatrix_input.cpp \
-    importcondition-specificclustersmatrix_resultblock.cpp \
-    importcondition-specificclustersmatrix_serial.cpp \
-    importcondition-specificclustersmatrix_workblock.cpp
+    conditionaltest.cpp \
+    conditionaltest_input.cpp \
+    conditionaltest_resultblock.cpp \
+    conditionaltest_serial.cpp \
+    conditionaltest_workblock.cpp \
+    conditionspecificclustersmatrix.cpp \
+    conditionspecificclustersmatrix_model.cpp \
+    conditionspecificclustersmatrix_pair.cpp
 
 # Header files
 HEADERS += \
@@ -138,11 +138,11 @@ HEADERS += \
     corrpower_serial.h \
     corrpower_resultblock.h \
     corrpower_workblock.h \
-    condition-specificclustersmatrix.h \
-    condition-specificclustersmatrix_model.h \
-    condition-specificclustersmatrix_pair.h \
-    importcondition-specificclustersmatrix.h \
-    importcondition-specificclustersmatrix_input.h \
-    importcondition-specificclustersmatrix_resultblock.h \
-    importcondition-specificclustersmatrix_serial.h \
-    importcondition-specificclustersmatrix_workblock.h
+    conditionaltest.h \
+    conditionaltest_input.h \
+    conditionaltest_resultblock.h \
+    conditionaltest_serial.h \
+    conditionaltest_workblock.h \
+    conditionspecificclustersmatrix.h \
+    conditionspecificclustersmatrix_model.h \
+    conditionspecificclustersmatrix_pair.h

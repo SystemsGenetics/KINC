@@ -1,4 +1,4 @@
-#include "importcondition-specificclustersmatrix_resultblock.h"
+#include "conditionaltest_resultblock.h"
 //
 
 
@@ -7,7 +7,7 @@
 /*!
 *  Implements an interface to create a result block object.
 */
-importCSCM::ResultBlock::ResultBlock(int index) : EAbstractAnalyticBlock(index)
+ConditionalTest::ResultBlock::ResultBlock(int index) : EAbstractAnalyticBlock(index)
 {
     EDEBUG_FUNC(this,index);
 }
@@ -19,7 +19,7 @@ importCSCM::ResultBlock::ResultBlock(int index) : EAbstractAnalyticBlock(index)
 /*!
 *  Implements an interface to create a result block object.
 */
-importCSCM::ResultBlock::ResultBlock(int index, int numTests, qint64 start) :
+ConditionalTest::ResultBlock::ResultBlock(int index, int numTests, qint64 start) :
     EAbstractAnalyticBlock(index),
     _numTests(numTests),
     _start(start)
@@ -37,7 +37,7 @@ importCSCM::ResultBlock::ResultBlock(int index, int numTests, qint64 start) :
  *
  * @param pair
  */
-void importCSCM::ResultBlock::append(const CSCMPair& pair)
+void ConditionalTest::ResultBlock::append(const CSCMPair& pair)
 {
    EDEBUG_FUNC(this,&pair);
 
@@ -51,7 +51,7 @@ void importCSCM::ResultBlock::append(const CSCMPair& pair)
 /*!
 *  Implements an interface to write the result block header into the file stream.
 */
-void importCSCM::ResultBlock::write(QDataStream& stream) const
+void ConditionalTest::ResultBlock::write(QDataStream& stream) const
 {
     EDEBUG_FUNC(this,&stream);
     for(auto cell : _pairs)
@@ -71,7 +71,7 @@ void importCSCM::ResultBlock::write(QDataStream& stream) const
 /*!
 *  Implements an interface to read the result block header from the file stream.
 */
-void importCSCM::ResultBlock::read(QDataStream& stream)
+void ConditionalTest::ResultBlock::read(QDataStream& stream)
 {
     EDEBUG_FUNC(this,&stream);
     int size = 0;

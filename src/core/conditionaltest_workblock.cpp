@@ -1,4 +1,4 @@
-#include "importcondition-specificclustersmatrix_workblock.h"
+#include "conditionaltest_workblock.h"
 //
 
 
@@ -10,7 +10,7 @@
 *
 *  @param index The given index to create the block at
 */
-importCSCM::WorkBlock::WorkBlock(int index, Pairwise::Index start, qint64 startpair, qint64 size) :
+ConditionalTest::WorkBlock::WorkBlock(int index, Pairwise::Index start, qint64 startpair, qint64 size) :
     EAbstractAnalyticBlock(index),
     _start(start),
     _startpair(startpair),
@@ -28,7 +28,7 @@ importCSCM::WorkBlock::WorkBlock(int index, Pairwise::Index start, qint64 startp
 *
 *  @param stream The data stream that is used to write out data.
 */
-void importCSCM::WorkBlock::write(QDataStream& stream) const
+void ConditionalTest::WorkBlock::write(QDataStream& stream) const
 {
     EDEBUG_FUNC(this,&stream);
 
@@ -44,7 +44,7 @@ void importCSCM::WorkBlock::write(QDataStream& stream) const
 *
 *  @param stream The data stream that is used to write in data.
 */
-void importCSCM::WorkBlock::read(QDataStream& stream)
+void ConditionalTest::WorkBlock::read(QDataStream& stream)
 {
     EDEBUG_FUNC(this,&stream);
 

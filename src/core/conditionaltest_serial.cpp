@@ -1,6 +1,6 @@
-#include "importcondition-specificclustersmatrix_serial.h"
-#include "importcondition-specificclustersmatrix_workblock.h"
-#include "importcondition-specificclustersmatrix_resultblock.h"
+#include "conditionaltest_serial.h"
+#include "conditionaltest_workblock.h"
+#include "conditionaltest_resultblock.h"
 #include "ccmatrix_pair.h"
 #include "correlationmatrix_pair.h"
 #include "correlationmatrix.h"
@@ -18,7 +18,7 @@
 /*!
 *  Implements an interface to create a serial object.
 */
-importCSCM::Serial::Serial(importCSCM* parent) : EAbstractAnalyticSerial(parent), _base(parent)
+ConditionalTest::Serial::Serial(ConditionalTest* parent) : EAbstractAnalyticSerial(parent), _base(parent)
 {
     EDEBUG_FUNC(this,parent);
 }
@@ -34,7 +34,7 @@ importCSCM::Serial::Serial(importCSCM* parent) : EAbstractAnalyticSerial(parent)
 *
 * @return The populated result block.
 */
-std::unique_ptr<EAbstractAnalyticBlock> importCSCM::Serial::execute(const EAbstractAnalyticBlock* block)
+std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const EAbstractAnalyticBlock* block)
 {
     EDEBUG_FUNC(this, block);
 
@@ -145,7 +145,7 @@ std::unique_ptr<EAbstractAnalyticBlock> importCSCM::Serial::execute(const EAbstr
 *
 * @return The number of samples in total of the test label.
 */
-int importCSCM::Serial::prepAnxData(QString testLabel, int dataIndex)
+int ConditionalTest::Serial::prepAnxData(QString testLabel, int dataIndex)
 {
     EDEBUG_FUNC(this, testLabel, dataIndex);
 
@@ -175,7 +175,7 @@ int importCSCM::Serial::prepAnxData(QString testLabel, int dataIndex)
 *
 * @return True if the matrix is empty, false otherwise.
 */
-bool importCSCM::Serial::isEmpty(QVector<QVector<double>>& matrix)
+bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
 {
     EDEBUG_FUNC(this, &matrix);
 
@@ -203,7 +203,7 @@ bool importCSCM::Serial::isEmpty(QVector<QVector<double>>& matrix)
 *
 * @return The number of labels in the given cluster.
 */
-int importCSCM::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label)
+int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label)
 {
     _catCount = _clusterInMask = _catInCount = 0;
 
@@ -249,7 +249,7 @@ int importCSCM::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, Q
 *
 * @return The test that was just conducted.
 */
-int importCSCM::Serial::test(CorrelationMatrix::Pair cmxPair,
+int ConditionalTest::Serial::test(CorrelationMatrix::Pair cmxPair,
                              CCMatrix::Pair& ccmPair,
                              qint32 clusterIndex,
                              qint32& testIndex,
@@ -293,7 +293,7 @@ int importCSCM::Serial::test(CorrelationMatrix::Pair cmxPair,
 *
 * @return Pvalue corrosponding to the test, negative if not accepted.
 */
-double importCSCM::Serial::binomial(double alpha)
+double ConditionalTest::Serial::binomial(double alpha)
 {
     EDEBUG_FUNC(this, alpha);
 
@@ -319,7 +319,7 @@ double importCSCM::Serial::binomial(double alpha)
 *
 * @return Pvalue corrosponding to the test.
 */
-double importCSCM::Serial::testOne()
+double ConditionalTest::Serial::testOne()
 {
 
     EDEBUG_FUNC(this);
@@ -346,7 +346,7 @@ double importCSCM::Serial::testOne()
 *
 * @return Pvalue corrosponding to the test.
 */
-double importCSCM::Serial::testTwo()
+double ConditionalTest::Serial::testTwo()
 {
     EDEBUG_FUNC(this);
 
@@ -380,7 +380,7 @@ double importCSCM::Serial::testTwo()
 *
 * @return Pvalue corrosponding to the test.
 */
-double importCSCM::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex)
+double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex)
 {
     EDEBUG_FUNC(this, &anxInfo, &ccmPair, clusterIndex);
 

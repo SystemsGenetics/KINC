@@ -1,10 +1,10 @@
-#include "importcondition-specificclustersmatrix.h"
-#include "importcondition-specificclustersmatrix_input.h"
-#include "importcondition-specificclustersmatrix_resultblock.h"
-#include "importcondition-specificclustersmatrix_workblock.h"
-#include "importcondition-specificclustersmatrix_serial.h"
-#include "condition-specificclustersmatrix.h"
-#include "condition-specificclustersmatrix_pair.h"
+#include "conditionaltest.h"
+#include "conditionaltest_input.h"
+#include "conditionaltest_resultblock.h"
+#include "conditionaltest_workblock.h"
+#include "conditionaltest_serial.h"
+#include "conditionspecificclustersmatrix.h"
+#include "conditionspecificclustersmatrix_pair.h"
 #include "ccmatrix_pair.h"
 #include <ace/core/elog.h>
 #include <ace/core/ace_qmpi.h>
@@ -19,7 +19,7 @@
 *
 * @return How many pieces you want to break up the task your working on.
 */
-int importCSCM::size() const
+int ConditionalTest::size() const
 {
     EDEBUG_FUNC(this);
     qint64 size = (_ccm->size() + _workBlockSize - 1) / _workBlockSize;
@@ -37,7 +37,7 @@ int importCSCM::size() const
  *
  * @return The total number of pair to process.
  */
-qint64 importCSCM::totalPairs(const CorrelationMatrix* cmx)
+qint64 ConditionalTest::totalPairs(const CorrelationMatrix* cmx)
 {
     return static_cast<qint64>(cmx->geneSize()) * (cmx->geneSize() - 1) / 2;
 }
@@ -51,7 +51,7 @@ qint64 importCSCM::totalPairs(const CorrelationMatrix* cmx)
 *
 * @param result The processed work block from the serial.
 */
-void importCSCM::process(const EAbstractAnalyticBlock* result)
+void ConditionalTest::process(const EAbstractAnalyticBlock* result)
 {
     EDEBUG_FUNC(this,result);
 
@@ -108,7 +108,7 @@ void importCSCM::process(const EAbstractAnalyticBlock* result)
 *
 * @return Pointer to the new input data object.
 */
-EAbstractAnalyticInput* importCSCM::makeInput()
+EAbstractAnalyticInput* ConditionalTest::makeInput()
 {
     EDEBUG_FUNC(this);
     return new Input(this);
@@ -125,7 +125,7 @@ EAbstractAnalyticInput* importCSCM::makeInput()
 *
 * @return Pointer to the work block.
 */
-std::unique_ptr<EAbstractAnalyticBlock> importCSCM::makeWork(int index) const
+std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork(int index) const
 {
     EDEBUG_FUNC(this,index);
 
@@ -149,7 +149,7 @@ std::unique_ptr<EAbstractAnalyticBlock> importCSCM::makeWork(int index) const
 *
 *  @return a pointer to an uninitialized work block
 */
-std::unique_ptr<EAbstractAnalyticBlock> importCSCM::makeWork() const
+std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork() const
 {
     EDEBUG_FUNC(this);
     return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock());
@@ -165,7 +165,7 @@ std::unique_ptr<EAbstractAnalyticBlock> importCSCM::makeWork() const
 *
 *  @return a pointer to an uninitialized result block
 */
-std::unique_ptr<EAbstractAnalyticBlock> importCSCM::makeResult() const
+std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeResult() const
 {
     EDEBUG_FUNC(this);
     return std::unique_ptr<EAbstractAnalyticBlock>(new EAbstractAnalyticBlock());
@@ -180,7 +180,7 @@ std::unique_ptr<EAbstractAnalyticBlock> importCSCM::makeResult() const
 *
 *  @return Pointer to a serial new object.
 */
-EAbstractAnalyticSerial* importCSCM::makeSerial()
+EAbstractAnalyticSerial* ConditionalTest::makeSerial()
 {
     EDEBUG_FUNC(this);
     return new Serial(this);
@@ -192,14 +192,14 @@ EAbstractAnalyticSerial* importCSCM::makeSerial()
 *  An interface to initialize the analytic process, it reads in the line number
 *  of the annotaion matrix, so we can read in the data properly.
 */
-void importCSCM::initialize()
+void ConditionalTest::initialize()
 {
     EDEBUG_FUNC(this);
 
     auto& mpi {Ace::QMPI::instance()};
 
     // make sure input data is valid
-    if ( !_ccm || !_cmx || !_anx)
+    if ( !_ccm || !_cmx || !_anx || !_emx || !_out)
     {
        E_MAKE_EXCEPTION(e);
        e.setTitle(tr("Invalid Argument"));
@@ -260,7 +260,7 @@ void importCSCM::initialize()
 *  This implements an interface to check the output of the KNNAnalytic.
 *  It is here where we are making sure that the _out is present.
 */
-void importCSCM::initializeOutputs()
+void ConditionalTest::initializeOutputs()
 {
     EDEBUG_FUNC(this);
     if ( !_out )
@@ -289,7 +289,7 @@ void importCSCM::initializeOutputs()
 * @param dataTestType The type of test we will run on the data under a
 *        particular feature.
 */
-void importCSCM::readInANX(QVector<QVector<QString>>& anxdata,
+void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
                             QVector<QVector<QVariant>>& data,
                             QVector<TESTTYPE>& dataTestType)
 {
@@ -398,7 +398,7 @@ void importCSCM::readInANX(QVector<QVector<QString>>& anxdata,
 *
 * @param dataTestType An array storing the test information for each feature.
 */
-void importCSCM::configureTests(QVector<TESTTYPE>& dataTestType)
+void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
 {
     EDEBUG_FUNC(this,&dataTestType);
 
@@ -478,7 +478,7 @@ void importCSCM::configureTests(QVector<TESTTYPE>& dataTestType)
 *
 * @return The index of the maximum balue in the vector.
 */
-int importCSCM::max(QVector<qint32> &counts) const
+int ConditionalTest::max(QVector<qint32> &counts) const
 {
     EDEBUG_FUNC(this,&counts);
     int maxnum = 0;
@@ -504,10 +504,18 @@ int importCSCM::max(QVector<qint32> &counts) const
 /*!
 *  An interface to sperate the test out.
 */
-void importCSCM::Test()
+void ConditionalTest::Test()
 {
     EDEBUG_FUNC(this);
     _Test = _Testing.split(",", QString::SkipEmptyParts, Qt::CaseInsensitive).toVector();
+    // make sure input data is valid
+    if ( _Test.isEmpty() )
+    {
+       E_MAKE_EXCEPTION(e);
+       e.setTitle(tr("Invalid Argument"));
+       e.setDetails(tr("No Tests Given."));
+       throw e;
+    }
 }
 
 
@@ -517,7 +525,7 @@ void importCSCM::Test()
 /*!
 *  An interface to override testing types.
 */
-void importCSCM::override()
+void ConditionalTest::override()
 {
     EDEBUG_FUNC(this);
     auto words = _testOverride.split(",", QString::SkipEmptyParts, Qt::CaseInsensitive).toVector();
@@ -538,7 +546,7 @@ void importCSCM::override()
 *  An interface to provide the names for the tests, creating an easier way to
 *  label the data in the ouptut file.
 */
-QString importCSCM::testNames()
+QString ConditionalTest::testNames()
 {
     QString string;
     for(int i = 0; i < _features.size(); i++)
@@ -579,7 +587,7 @@ QString importCSCM::testNames()
 * @param data All of the data corrosponding to the features from the annotation
 *        array.
 */
-void importCSCM::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &anxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data)
+void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &anxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data)
 {
     EDEBUG_FUNC(this,&maxClusterSize,&subHeaderSize,&anxData,&testType,&data);
     //needed by the CSCM specific initializer

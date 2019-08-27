@@ -1,13 +1,13 @@
-#ifndef IMPORTCSCM_SERIAL_H
-#define IMPORTCSCM_SERIAL_H
+#ifndef ConditionalTest_SERIAL_H
+#define ConditionalTest_SERIAL_H
 #include <ace/core/core.h>
-#include "importcondition-specificclustersmatrix.h"
+#include "conditionaltest.h"
 
-class importCSCM::Serial : public EAbstractAnalyticSerial
+class ConditionalTest::Serial : public EAbstractAnalyticSerial
 {
    Q_OBJECT
 public:
-   explicit Serial(importCSCM* parent);
+   explicit Serial(ConditionalTest* parent);
    virtual std::unique_ptr<EAbstractAnalyticBlock> execute(const EAbstractAnalyticBlock* block) override final;
 
     //helper functions
@@ -28,7 +28,7 @@ private:
    /*!
    *  Pointer to the serials objects parent KNNAnalytic.
    */
-   importCSCM* _base;
+   ConditionalTest* _base;
    /*!
    *  Annotation matrix data for testing.
    */
@@ -47,4 +47,4 @@ private:
    qint32 _clusterInMask {0};
 };
 
-#endif // IMPORTCSCM_SERIAL_H
+#endif // ConditionalTest_SERIAL_H

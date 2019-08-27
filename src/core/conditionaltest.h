@@ -1,13 +1,13 @@
-#ifndef IMPORTCSCM_H
-#define IMPORTCSCM_H
+#ifndef ConditionalTest_H
+#define ConditionalTest_H
 #include <ace/core/core.h>
-#include "condition-specificclustersmatrix.h"
+#include "conditionspecificclustersmatrix.h"
 #include "ccmatrix.h"
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
 //
 
-class importCSCM : public EAbstractAnalytic
+class ConditionalTest : public EAbstractAnalytic
 {
     Q_OBJECT
 public:
@@ -141,4 +141,4 @@ private:
     QVector<QVector<Pairwise::Index>> _clusters;
 };
 
-#endif // IMPORTCSCM_H
+#endif // ConditionalTest_H

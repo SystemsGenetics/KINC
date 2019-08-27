@@ -1,4 +1,4 @@
-#include "condition-specificclustersmatrix_pair.h"
+#include "conditionspecificclustersmatrix_pair.h"
 #include "pairwise_index.h"
 #include <sstream>
 #include <string>

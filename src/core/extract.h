@@ -7,8 +7,8 @@
 #include "correlationmatrix_pair.h"
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
-#include "condition-specificclustersmatrix.h"
-#include "condition-specificclustersmatrix_pair.h"
+#include "conditionspecificclustersmatrix.h"
+#include "conditionspecificclustersmatrix_pair.h"
 
 
 /*!

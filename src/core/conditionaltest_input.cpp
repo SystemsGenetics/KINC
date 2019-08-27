@@ -1,4 +1,4 @@
-#include "importcondition-specificclustersmatrix_input.h"
+#include "conditionaltest_input.h"
 #include "datafactory.h"
 
 
@@ -7,7 +7,7 @@
 *
 * @param parent The parent analytic for this input object
 */
-importCSCM::Input::Input(importCSCM* parent) : EAbstractAnalyticInput(parent), _base(parent)
+ConditionalTest::Input::Input(ConditionalTest* parent) : EAbstractAnalyticInput(parent), _base(parent)
 {
     EDEBUG_FUNC(this,parent);
 }
@@ -22,7 +22,7 @@ importCSCM::Input::Input(importCSCM* parent) : EAbstractAnalyticInput(parent), _
 *
 * @return The integer representation for the total number of inputs.
 */
-int importCSCM::Input::size() const
+int ConditionalTest::Input::size() const
 {
     EDEBUG_FUNC(this);
     return Total;
@@ -40,7 +40,7 @@ int importCSCM::Input::size() const
 *
 * @return The type of the input.
 */
-EAbstractAnalyticInput::Type importCSCM::Input::type(int index) const
+EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
 {
     EDEBUG_FUNC(this, index);
     switch(index)
@@ -72,7 +72,7 @@ EAbstractAnalyticInput::Type importCSCM::Input::type(int index) const
 *
 * @return The information about the input in question.
 */
-QVariant importCSCM::Input::data(int index, Role role) const
+QVariant ConditionalTest::Input::data(int index, Role role) const
 {
     EDEBUG_FUNC(this, index, role);
     switch(index)
@@ -101,7 +101,7 @@ QVariant importCSCM::Input::data(int index, Role role) const
 *
 * @param value The data inputed from the user.
 */
-void importCSCM::Input::set(int index, const QVariant& value)
+void ConditionalTest::Input::set(int index, const QVariant& value)
 {
     EDEBUG_FUNC(this, value);
     switch(index)
@@ -131,7 +131,7 @@ void importCSCM::Input::set(int index, const QVariant& value)
 *
 * @param file The file inputed from the user.
 */
-void importCSCM::Input::set(int index, QFile* file)
+void ConditionalTest::Input::set(int index, QFile* file)
 {
     EDEBUG_FUNC(this, index, file);
     switch(index)
@@ -152,7 +152,7 @@ void importCSCM::Input::set(int index, QFile* file)
 *
 * @param value The data object inputed from the user.
 */
-void importCSCM::Input::set(int index, EAbstractData* data)
+void ConditionalTest::Input::set(int index, EAbstractData* data)
 {
     EDEBUG_FUNC(this, index, data);
     switch(index)
@@ -183,7 +183,7 @@ void importCSCM::Input::set(int index, EAbstractData* data)
 *
 * @return The information requested.
 */
-QVariant importCSCM::Input::emxData(Role role) const
+QVariant ConditionalTest::Input::emxData(Role role) const
 {
     EDEBUG_FUNC(this, role);
     switch(role)
@@ -208,7 +208,7 @@ QVariant importCSCM::Input::emxData(Role role) const
 *
 * @return The information requested.
 */
-QVariant importCSCM::Input::ccmData(Role role) const
+QVariant ConditionalTest::Input::ccmData(Role role) const
 {
     EDEBUG_FUNC(this, role);
     switch(role)
@@ -233,7 +233,7 @@ QVariant importCSCM::Input::ccmData(Role role) const
 *
 * @return The information requested.
 */
-QVariant importCSCM::Input::cmxData(Role role) const
+QVariant ConditionalTest::Input::cmxData(Role role) const
 {
     EDEBUG_FUNC(this, role);
     switch(role)
@@ -258,15 +258,15 @@ QVariant importCSCM::Input::cmxData(Role role) const
 *
 * @return The information requested.
 */
-QVariant importCSCM::Input::anxData(Role role) const
+QVariant ConditionalTest::Input::anxData(Role role) const
 {
     EDEBUG_FUNC(this, role);
     switch(role)
     {
-    case CommandLineName: return QString("anx");
-    case Title          : return tr("Input anx File:");
-    case WhatsThis      : return tr("Raw anx file");
-    case FileFilters    : return tr("Raw anx file (*.txt)");
+    case CommandLineName: return QString("amx");
+    case Title          : return tr("Annotation matrix:");
+    case WhatsThis      : return tr("Tab delimited annotation matrix");
+    case FileFilters    : return tr("Annotation Matrix (*.txt)");
     default             : return QVariant();
     }
 }
@@ -282,14 +282,16 @@ QVariant importCSCM::Input::anxData(Role role) const
 *
 * @return The information requested.
 */
-QVariant importCSCM::Input::CSCMData(Role role) const
+QVariant ConditionalTest::Input::CSCMData(Role role) const
 {
     EDEBUG_FUNC(this, role);
     switch(role)
     {
     case CommandLineName: return QString("out");
     case Title          : return tr("Output:");
-    case WhatsThis      : return tr("CSCM, containis a matrix of clusters and their p-values");
+    case WhatsThis      : return tr("Condition-Specific Cluster Martrix, \
+                                     contains a matrix of clusters and their \
+                                     corrosponding p-values.");
     case DataType       : return DataFactory::CSCMType;
     default             : return QVariant();
     }
@@ -307,14 +309,15 @@ QVariant importCSCM::Input::CSCMData(Role role) const
 *
 * @return The information requested.
 */
-QVariant importCSCM::Input::alphaData(Role role) const
+QVariant ConditionalTest::Input::alphaData(Role role) const
 {
     EDEBUG_FUNC(this, role);
     switch(role)
     {
     case CommandLineName: return QString("alpha");
     case Title          : return tr("Alpha:");
-    case WhatsThis      : return tr("Threshold for keeping data");
+    case WhatsThis      : return tr("Threshold for keeping output data, \
+                                     does not keep p-values higher than this threshold.");
     case Default        : return 0;
     case Minimum        : return 0;
     case Maximum        : return 1;
@@ -332,14 +335,14 @@ QVariant importCSCM::Input::alphaData(Role role) const
 *
 * @return The information requested.
 */
-QVariant importCSCM::Input::overridesData(Role role) const
+QVariant ConditionalTest::Input::overridesData(Role role) const
 {
     EDEBUG_FUNC(this, role);
     switch(role)
     {
     case CommandLineName: return QString("override");
     case Title          : return tr("Test Overrides:");
-    case WhatsThis      : return tr("Tests to override, taken as \"feature::test\",...");
+    case WhatsThis      : return tr("Tests to override, taken as \"feature::test,...\"");
     default             : return QVariant();
     }
 }
@@ -355,14 +358,14 @@ QVariant importCSCM::Input::overridesData(Role role) const
 *
 * @return The information requested.
 */
-QVariant importCSCM::Input::testData(Role role) const
+QVariant ConditionalTest::Input::testData(Role role) const
 {
     EDEBUG_FUNC(this, role);
     switch(role)
     {
     case CommandLineName: return QString("test");
     case Title          : return tr("Test:");
-    case WhatsThis      : return tr("Features to test.");
+    case WhatsThis      : return tr("Features to test, taken as: \"feature,feature,...\"");
     default             : return QVariant();
     }
 }
@@ -378,14 +381,16 @@ QVariant importCSCM::Input::testData(Role role) const
 *
 * @return The information requested.
 */
-QVariant importCSCM::Input::corrThreshData(Role role) const
+QVariant ConditionalTest::Input::corrThreshData(Role role) const
 {
     EDEBUG_FUNC(this, role);
     switch(role)
     {
     case CommandLineName: return QString("corrthresh");
     case Title          : return tr("Corrolation Threshold:");
-    case WhatsThis      : return tr("Threshold for testing data");
+    case WhatsThis      : return tr("Threshold for input data, does not \
+                                     include clusters with corrolations \
+                                     lower than this threshold.");
     case Default        : return 0.85;
     case Minimum        : return 0;
     case Maximum        : return 1;

@@ -1,10 +1,10 @@
 #ifndef IMPORTCSCM_RESULTBLOCK_H
 #define IMPORTCSCM_RESULTBLOCK_H
 #include <ace/core/core.h>
-#include "importcondition-specificclustersmatrix.h"
+#include "conditionaltest.h"
 //
 
-class importCSCM::ResultBlock : public EAbstractAnalyticBlock
+class ConditionalTest::ResultBlock : public EAbstractAnalyticBlock
 {
    Q_OBJECT
 public:

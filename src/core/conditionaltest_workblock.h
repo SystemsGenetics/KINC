@@ -1,10 +1,10 @@
 #ifndef CSCM_WORKBLOCK_H
 #define CSCM_WORKBLOCK_H
 #include <ace/core/core.h>
-#include "importcondition-specificclustersmatrix.h"
+#include "conditionaltest.h"
 //
 
-class importCSCM::WorkBlock : public EAbstractAnalyticBlock
+class ConditionalTest::WorkBlock : public EAbstractAnalyticBlock
 {
    Q_OBJECT
 public:

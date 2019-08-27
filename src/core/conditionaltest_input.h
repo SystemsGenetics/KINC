@@ -1,9 +1,9 @@
-#ifndef IMPORTCSCM_INPUT_H
-#define IMPORTCSCM_INPUT_H
+#ifndef ConditionalTest_INPUT_H
+#define ConditionalTest_INPUT_H
 #include <ace/core/core.h>
-#include "importcondition-specificclustersmatrix.h"
+#include "conditionaltest.h"
 
-class importCSCM::Input : public EAbstractAnalyticInput
+class ConditionalTest::Input : public EAbstractAnalyticInput
 {
    Q_OBJECT
 public:
@@ -54,7 +54,7 @@ public:
       ,Total
    };
 public:
-   explicit Input(importCSCM* parent);
+   explicit Input(ConditionalTest* parent);
    virtual int size() const override final;
    virtual EAbstractAnalyticInput::Type type(int index) const override final;
    virtual QVariant data(int index, Role role) const override final;
@@ -74,7 +74,7 @@ private:
    /*!
    *  pointer to the Inputs base parent object
    */
-   importCSCM* _base;
+   ConditionalTest* _base;
 };
 
-#endif // IMPORTCSCM_INPUT_H
+#endif // ConditionalTest_INPUT_H
