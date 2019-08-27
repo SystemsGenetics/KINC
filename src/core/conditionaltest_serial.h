@@ -22,7 +22,7 @@ public:
     double testTwo();
 
     //Regresion Test
-    double regresion(QVector<QString>& anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex);
+    double regresion();
 
 private:
    /*!
