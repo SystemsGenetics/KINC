@@ -49,8 +49,8 @@ enum CorrelationMethod
  * @param criterion
  * @param work_x
  * @param work_y
- * @param work_X
- * @param work_labels
+ * @param work_gmm_data
+ * @param work_gmm_labels
  * @param work_gmm_pi
  * @param work_gmm_mu
  * @param work_gmm_sigma
@@ -81,8 +81,8 @@ void Similarity_compute(
    Criterion         criterion,
    float *           work_x,
    float *           work_y,
-   Vector2 *         work_X,
-   char *            work_labels,
+   Vector2 *         work_gmm_data,
+   char *            work_gmm_labels,
    float *           work_gmm_pi,
    Vector2 *         work_gmm_mu,
    Matrix2x2 *       work_gmm_sigma,
@@ -111,10 +111,10 @@ void Similarity_compute(
    const float *y = &expressions[index.y * sampleSize];
    float *x_sorted = &work_x[i * N_pow2];
    float *y_sorted = &work_y[i * N_pow2];
-   Vector2 *X = &work_X[i * sampleSize];
-   char *labels = &work_labels[i * sampleSize];
 
    GMM gmm = {
+      &work_gmm_data[i * sampleSize],
+      &work_gmm_labels[i * sampleSize],
       &work_gmm_pi[i * maxClusters],
       &work_gmm_mu[i * maxClusters],
       &work_gmm_sigma[i * maxClusters],
@@ -128,8 +128,8 @@ void Similarity_compute(
       0
    };
 
-   char *bestK = &out_K[i];
-   char *bestLabels = &out_labels[i * sampleSize];
+   char *p_K = &out_K[i];
+   char *labels = &out_labels[i * sampleSize];
    float *correlations = &out_correlations[i * maxClusters];
 
    // fetch pairwise input data
@@ -137,7 +137,7 @@ void Similarity_compute(
       x, y,
       sampleSize,
       minExpression,
-      bestLabels
+      labels
    );
 
    // remove pre-clustering outliers
@@ -147,7 +147,7 @@ void Similarity_compute(
          x, y,
          sampleSize,
          numSamples,
-         bestLabels,
+         labels,
          1,
          -7,
          x_sorted,
@@ -156,22 +156,20 @@ void Similarity_compute(
    }
 
    // compute clusters
-   *bestK = 1;
+   char K = 1;
 
    if ( clusMethod == ClusteringMethod_GMM )
    {
-      *bestK = GMM_compute(
+      K = GMM_compute(
          &gmm,
          x, y,
          sampleSize,
+         numSamples,
+         labels,
          minSamples,
          minClusters,
          maxClusters,
-         criterion,
-         X,
-         numSamples,
-         labels,
-         bestLabels
+         criterion
       );
    }
 
@@ -182,8 +180,8 @@ void Similarity_compute(
          x, y,
          sampleSize,
          numSamples,
-         bestLabels,
-         *bestK,
+         labels,
+         K,
          -8,
          x_sorted,
          y_sorted
@@ -196,8 +194,8 @@ void Similarity_compute(
       Pearson_compute(
          x, y,
          sampleSize,
-         *bestK,
-         bestLabels,
+         K,
+         labels,
          minSamples,
          correlations
       );
@@ -207,12 +205,15 @@ void Similarity_compute(
       Spearman_compute(
          x, y,
          sampleSize,
-         *bestK,
-         bestLabels,
+         K,
+         labels,
          minSamples,
          x_sorted,
          y_sorted,
          correlations
       );
    }
+
+   // save number of clusters
+   *p_K = K;
 }

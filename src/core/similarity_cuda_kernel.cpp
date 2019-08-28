@@ -48,8 +48,8 @@ Similarity::CUDA::Kernel::Kernel(::CUDA::Program* program):
  * @param criterion
  * @param work_x
  * @param work_y
- * @param work_X
- * @param work_labels
+ * @param work_gmm_data
+ * @param work_gmm_labels
  * @param work_gmm_pi
  * @param work_gmm_mu
  * @param work_gmm_sigma
@@ -82,8 +82,8 @@ Similarity::CUDA::Kernel::Kernel(::CUDA::Program* program):
    int criterion,
    ::CUDA::Buffer<float>* work_x,
    ::CUDA::Buffer<float>* work_y,
-   ::CUDA::Buffer<float2>* work_X,
-   ::CUDA::Buffer<qint8>* work_labels,
+   ::CUDA::Buffer<float2>* work_gmm_data,
+   ::CUDA::Buffer<qint8>* work_gmm_labels,
    ::CUDA::Buffer<float>* work_gmm_pi,
    ::CUDA::Buffer<float2>* work_gmm_mu,
    ::CUDA::Buffer<float4>* work_gmm_sigma,
@@ -117,8 +117,8 @@ Similarity::CUDA::Kernel::Kernel(::CUDA::Program* program):
       criterion,
       work_x,
       work_y,
-      work_X,
-      work_labels,
+      work_gmm_data,
+      work_gmm_labels,
       work_gmm_pi,
       work_gmm_mu,
       work_gmm_sigma,
@@ -148,8 +148,8 @@ Similarity::CUDA::Kernel::Kernel(::CUDA::Program* program):
    setArgument(Criterion, criterion);
    setBuffer(WorkX, work_x);
    setBuffer(WorkY, work_y);
-   setBuffer(WorkX_, work_X);
-   setBuffer(WorkLabels, work_labels);
+   setBuffer(WorkGmmData, work_gmm_data);
+   setBuffer(WorkGmmLabels, work_gmm_labels);
    setBuffer(WorkGmmPi, work_gmm_pi);
    setBuffer(WorkGmmMu, work_gmm_mu);
    setBuffer(WorkGmmSigma, work_gmm_sigma);

@@ -10,6 +10,8 @@
 
 struct GMM
 {
+   Vector2 *   data;
+   char *      labels;
    float *     pi;
    Vector2 *   mu;
    Matrix2x2 * sigma;
@@ -597,41 +599,37 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
  * @param x
  * @param y
  * @param sampleSize
+ * @param numSamples
+ * @param labels
  * @param minSamples
  * @param minClusters
  * @param maxClusters
  * @param criterion
- * @param X
- * @param numSamples
- * @param labels
- * @param bestLabels
  */
 __device__
-int GMM_compute(
+char GMM_compute(
    GMM *gmm,
    const float *x,
    const float *y,
    int sampleSize,
+   int numSamples,
+   char *labels,
    int minSamples,
    char minClusters,
    char maxClusters,
-   Criterion criterion,
-   Vector2 *X,
-   int numSamples,
-   char *labels,
-   char *bestLabels)
+   Criterion criterion)
 {
    // perform clustering only if there are enough samples
-   int bestK = 0;
+   char bestK = 0;
 
    if ( numSamples >= minSamples )
    {
       // extract clean samples from data array
       for ( int i = 0, j = 0; i < sampleSize; ++i )
       {
-         if ( bestLabels[i] >= 0 )
+         if ( labels[i] >= 0 )
          {
-            X[j] = make_float2(x[i], y[i]);
+            gmm->data[j] = make_float2(x[i], y[i]);
             ++j;
          }
       }
@@ -642,7 +640,7 @@ int GMM_compute(
       for ( char K = minClusters; K <= maxClusters; ++K )
       {
          // run each clustering sub-model
-         bool success = GMM_fit(gmm, X, numSamples, K, labels);
+         bool success = GMM_fit(gmm, gmm->data, numSamples, K, gmm->labels);
 
          if ( !success )
          {
@@ -674,9 +672,9 @@ int GMM_compute(
             // save labels for clean samples
             for ( int i = 0, j = 0; i < sampleSize; ++i )
             {
-               if ( bestLabels[i] >= 0 )
+               if ( labels[i] >= 0 )
                {
-                  bestLabels[i] = labels[j];
+                  labels[i] = gmm->labels[j];
                   ++j;
                }
             }

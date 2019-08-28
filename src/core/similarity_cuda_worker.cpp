@@ -36,8 +36,8 @@ Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, :
    _buffers.in_index = ::CUDA::Buffer<int2>(1 * W);
    _buffers.work_x = ::CUDA::Buffer<float>(N_pow2 * W, false);
    _buffers.work_y = ::CUDA::Buffer<float>(N_pow2 * W, false);
-   _buffers.work_X = ::CUDA::Buffer<float2>(N * W, false);
-   _buffers.work_labels = ::CUDA::Buffer<qint8>(N * W, false);
+   _buffers.work_gmm_data = ::CUDA::Buffer<float2>(N * W, false);
+   _buffers.work_gmm_labels = ::CUDA::Buffer<qint8>(N * W, false);
    _buffers.work_gmm_pi = ::CUDA::Buffer<float>(K * W, false);
    _buffers.work_gmm_mu = ::CUDA::Buffer<float2>(K * W, false);
    _buffers.work_gmm_sigma = ::CUDA::Buffer<float4>(K * W, false);
@@ -115,8 +115,8 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::CUDA::Worker::execute(const 
          (int) _base->_criterion,
          &_buffers.work_x,
          &_buffers.work_y,
-         &_buffers.work_X,
-         &_buffers.work_labels,
+         &_buffers.work_gmm_data,
+         &_buffers.work_gmm_labels,
          &_buffers.work_gmm_pi,
          &_buffers.work_gmm_mu,
          &_buffers.work_gmm_sigma,

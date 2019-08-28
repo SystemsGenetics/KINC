@@ -30,8 +30,8 @@ public:
       ,Criterion
       ,WorkX
       ,WorkY
-      ,WorkX_
-      ,WorkLabels
+      ,WorkGmmData
+      ,WorkGmmLabels
       ,WorkGmmPi
       ,WorkGmmMu
       ,WorkGmmSigma
@@ -65,8 +65,8 @@ public:
       int criterion,
       ::CUDA::Buffer<float>* work_x,
       ::CUDA::Buffer<float>* work_y,
-      ::CUDA::Buffer<float2>* work_X,
-      ::CUDA::Buffer<qint8>* work_labels,
+      ::CUDA::Buffer<float2>* work_gmm_data,
+      ::CUDA::Buffer<qint8>* work_gmm_labels,
       ::CUDA::Buffer<float>* work_gmm_pi,
       ::CUDA::Buffer<float2>* work_gmm_mu,
       ::CUDA::Buffer<float4>* work_gmm_sigma,
