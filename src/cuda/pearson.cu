@@ -69,42 +69,32 @@ float Pearson_computeCluster(
  * should only contain the clean samples that were extracted from the expression
  * matrix, while the labels should contain all samples.
  *
- * @param numPairs
- * @param expressions
+ * @param x
+ * @param y
  * @param sampleSize
- * @param in_index
  * @param clusterSize
- * @param in_labels
+ * @param labels
  * @param minSamples
- * @param out_correlations
+ * @param correlations
  */
-__global__
+__device__
 void Pearson_compute(
-   int numPairs,
-   const float *expressions,
+   const float *x,
+   const float *y,
    int sampleSize,
-   const int2 *in_index,
    char clusterSize,
-   const char *in_labels,
+   const char *labels,
    int minSamples,
-   float *out_correlations)
+   float *correlations)
 {
-   int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-   if ( i >= numPairs )
-   {
-      return;
-   }
-
-   // initialize workspace variables
-   int2 index = in_index[i];
-   const float *x = &expressions[index.x * sampleSize];
-   const float *y = &expressions[index.y * sampleSize];
-   const char *labels = &in_labels[i * sampleSize];
-   float *correlations = &out_correlations[i * clusterSize];
-
    for ( char k = 0; k < clusterSize; ++k )
    {
-      correlations[k] = Pearson_computeCluster(x, y, labels, sampleSize, k, minSamples);
+      correlations[k] = Pearson_computeCluster(
+         x, y,
+         labels,
+         sampleSize,
+         k,
+         minSamples
+      );
    }
 }

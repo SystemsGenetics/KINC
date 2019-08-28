@@ -108,65 +108,48 @@ int removeOutliersCluster(
 /*!
  * Perform outlier removal on each cluster in a parwise data array.
  *
- * @param numPairs
- * @param expressions
+ * @param x
+ * @param y
  * @param sampleSize
- * @param in_index
- * @param in_N
- * @param in_labels
- * @param in_K
+ * @param numSamples
+ * @param labels
+ * @param clusterSize
  * @param marker
+ * @param x_sorted
+ * @param y_sorted
  */
-__global__
-void removeOutliers(
-   int numPairs,
-   const float *expressions,
+__device__
+int removeOutliers(
+   const float *x,
+   const float *y,
    int sampleSize,
-   const int2 *in_index,
-   int *in_N,
-   char *in_labels,
-   char *in_K,
+   int numSamples,
+   char *labels,
+   char clusterSize,
    char marker,
-   float *work_x,
-   float *work_y)
+   float *x_sorted,
+   float *y_sorted)
 {
-   int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-   if ( i >= numPairs )
-   {
-      return;
-   }
-
-   // initialize workspace variables
-   int N_pow2 = nextPower2(sampleSize);
-   int2 index = in_index[i];
-   const float *x = &expressions[index.x * sampleSize];
-   const float *y = &expressions[index.y * sampleSize];
-   int *p_N = &in_N[i];
-   char *labels = &in_labels[i * sampleSize];
-   char clusterSize = in_K[i];
-   float *x_sorted = &work_x[i * N_pow2];
-   float *y_sorted = &work_y[i * N_pow2];
-
-   if ( marker == -7 )
-   {
-      clusterSize = 1;
-   }
-
    // do not perform post-clustering outlier removal if there is only one cluster
    if ( marker == -8 && clusterSize <= 1 )
    {
-      return;
+      return numSamples;
    }
 
    // perform outlier removal on each cluster
-   int N;
-
    for ( char k = 0; k < clusterSize; ++k )
    {
-      N = removeOutliersCluster(x, y, labels, sampleSize, k, marker, x_sorted, y_sorted);
+      numSamples = removeOutliersCluster(
+         x, y,
+         labels,
+         sampleSize,
+         k,
+         marker,
+         x_sorted,
+         y_sorted
+      );
    }
 
-   // save number of remaining samples
-   *p_N = N;
+   // return number of remaining samples
+   return numSamples;
 }

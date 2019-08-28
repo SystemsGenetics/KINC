@@ -1,32 +1,36 @@
-#ifndef SIMILARITY_CUDA_GMM_H
-#define SIMILARITY_CUDA_GMM_H
+#ifndef SIMILARITY_CUDA_KERNEL_H
+#define SIMILARITY_CUDA_KERNEL_H
 #include "similarity_cuda.h"
 
 
 
 /*!
- * This class implements the GMM kernel for the similarity analytic. This
- * kernel takes a list of pairwise data arrays and computes the number of
- * clusters and a list of cluster labels for each pair.
+ * This class implements the CUDA kernel for the similarity analytic.
  */
-class Similarity::CUDA::GMM : public ::CUDA::Kernel
+class Similarity::CUDA::Kernel : public ::CUDA::Kernel
 {
 public:
    /*!
-    * Defines the arguments passed to the OpenCL kernel.
+    * Defines the arguments passed to the CUDA kernel.
     */
    enum Argument
    {
-      NumPairs
+      ClusMethod
+      ,CorrMethod
+      ,RemovePreOutliers
+      ,RemovePostOutliers
+      ,NumPairs
       ,Expressions
       ,SampleSize
       ,InIndex
+      ,MinExpression
       ,MinSamples
       ,MinClusters
       ,MaxClusters
       ,Criterion
       ,WorkX
-      ,WorkN
+      ,WorkY
+      ,WorkX_
       ,WorkLabels
       ,WorkGmmPi
       ,WorkGmmMu
@@ -39,22 +43,29 @@ public:
       ,WorkGmmGamma
       ,OutK
       ,OutLabels
+      ,OutCorrelations
    };
-   explicit GMM(::CUDA::Program* program);
+   explicit Kernel(::CUDA::Program* program);
    ::CUDA::Event execute(
       const ::CUDA::Stream& stream,
       int globalWorkSize,
       int localWorkSize,
+      int clusMethod,
+      int corrMethod,
+      bool removePreOutliers,
+      bool removePostOutliers,
       int numPairs,
       ::CUDA::Buffer<float>* expressions,
       int sampleSize,
       ::CUDA::Buffer<int2>* in_index,
+      int minExpression,
       int minSamples,
       char minClusters,
       char maxClusters,
       int criterion,
+      ::CUDA::Buffer<float>* work_x,
+      ::CUDA::Buffer<float>* work_y,
       ::CUDA::Buffer<float2>* work_X,
-      ::CUDA::Buffer<int>* work_N,
       ::CUDA::Buffer<qint8>* work_labels,
       ::CUDA::Buffer<float>* work_gmm_pi,
       ::CUDA::Buffer<float2>* work_gmm_mu,
@@ -66,7 +77,8 @@ public:
       ::CUDA::Buffer<float>* work_gmm_logpi,
       ::CUDA::Buffer<float>* work_gmm_gamma,
       ::CUDA::Buffer<qint8>* out_K,
-      ::CUDA::Buffer<qint8>* out_labels
+      ::CUDA::Buffer<qint8>* out_labels,
+      ::CUDA::Buffer<float>* out_correlations
    );
 };
 

@@ -10,17 +10,17 @@
 
 struct GMM
 {
-   float *pi;
-   Vector2 *mu;
-   Matrix2x2 *sigma;
-   Matrix2x2 *sigmaInv;
-   float *normalizer;
-   Vector2 *MP;
-   int *counts;
-   float *logpi;
-   float *gamma;
-   float logL;
-   float entropy;
+   float *     pi;
+   Vector2 *   mu;
+   Matrix2x2 * sigma;
+   Matrix2x2 * sigmaInv;
+   float *     normalizer;
+   Vector2 *   MP;
+   int *       counts;
+   float *     logpi;
+   float *     gamma;
+   float       logL;
+   float       entropy;
 };
 
 
@@ -593,88 +593,36 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
  * each one having a different number of clusters, are fit to the data and the
  * sub-model with the best criterion value is selected.
  *
- * @param numPairs
- * @param expressions
+ * @param gmm
+ * @param x
+ * @param y
  * @param sampleSize
- * @param in_index
  * @param minSamples
  * @param minClusters
  * @param maxClusters
  * @param criterion
- * @param out_K
- * @param out_labels
+ * @param X
+ * @param numSamples
+ * @param labels
+ * @param bestLabels
  */
-__global__
-void GMM_compute(
-   int numPairs,
-   const float *expressions,
+__device__
+int GMM_compute(
+   GMM *gmm,
+   const float *x,
+   const float *y,
    int sampleSize,
-   const int2 *in_index,
    int minSamples,
    char minClusters,
    char maxClusters,
    Criterion criterion,
-   Vector2 *work_X,
-   int *work_N,
-   char *work_labels,
-   float *work_gmm_pi,
-   Vector2 *work_gmm_mu,
-   Matrix2x2 *work_gmm_sigma,
-   Matrix2x2 *work_gmm_sigmaInv,
-   float *work_gmm_normalizer,
-   Vector2 *work_gmm_MP,
-   int *work_gmm_counts,
-   float *work_gmm_logpi,
-   float *work_gmm_gamma,
-   char *out_K,
-   char *out_labels)
+   Vector2 *X,
+   int numSamples,
+   char *labels,
+   char *bestLabels)
 {
-   int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-   if ( i >= numPairs )
-   {
-      return;
-   }
-
-   // initialize workspace variables
-   int2 index = in_index[i];
-   const float *x = &expressions[index.x * sampleSize];
-   const float *y = &expressions[index.y * sampleSize];
-
-   Vector2 *X = &work_X[i * sampleSize];
-   int numSamples = work_N[i];
-   char *labels = &work_labels[i * sampleSize];
-
-   float *     gmm_pi = &work_gmm_pi[i * maxClusters];
-   Vector2 *   gmm_mu = &work_gmm_mu[i * maxClusters];
-   Matrix2x2 * gmm_sigma = &work_gmm_sigma[i * maxClusters];
-   Matrix2x2 * gmm_sigmaInv = &work_gmm_sigmaInv[i * maxClusters];
-   float *     gmm_normalizer = &work_gmm_normalizer[i * maxClusters];
-   Vector2 *   gmm_MP = &work_gmm_MP[i * maxClusters];
-   int *       gmm_counts = &work_gmm_counts[i * maxClusters];
-   float *     gmm_logpi = &work_gmm_logpi[i * maxClusters];
-   float *     gmm_gamma = &work_gmm_gamma[i * maxClusters * sampleSize];
-
-   char *bestK = &out_K[i];
-   char *bestLabels = &out_labels[i * sampleSize];
-
-   // initialize GMM struct
-   GMM gmm = {
-      gmm_pi,
-      gmm_mu,
-      gmm_sigma,
-      gmm_sigmaInv,
-      gmm_normalizer,
-      gmm_MP,
-      gmm_counts,
-      gmm_logpi,
-      gmm_gamma,
-      0,
-      0
-   };
-
    // perform clustering only if there are enough samples
-   *bestK = 0;
+   int bestK = 0;
 
    if ( numSamples >= minSamples )
    {
@@ -694,7 +642,7 @@ void GMM_compute(
       for ( char K = minClusters; K <= maxClusters; ++K )
       {
          // run each clustering sub-model
-         bool success = GMM_fit(&gmm, X, numSamples, K, labels);
+         bool success = GMM_fit(gmm, X, numSamples, K, labels);
 
          if ( !success )
          {
@@ -707,20 +655,20 @@ void GMM_compute(
          switch (criterion)
          {
          case AIC:
-            value = GMM_computeAIC(K, 2, gmm.logL);
+            value = GMM_computeAIC(K, 2, gmm->logL);
             break;
          case BIC:
-            value = GMM_computeBIC(K, 2, gmm.logL, numSamples);
+            value = GMM_computeBIC(K, 2, gmm->logL, numSamples);
             break;
          case ICL:
-            value = GMM_computeICL(K, 2, gmm.logL, numSamples, gmm.entropy);
+            value = GMM_computeICL(K, 2, gmm->logL, numSamples, gmm->entropy);
             break;
          }
 
          // save the sub-model with the lowest criterion value
          if ( value < bestValue )
          {
-            *bestK = K;
+            bestK = K;
             bestValue = value;
 
             // save labels for clean samples
@@ -735,4 +683,7 @@ void GMM_compute(
          }
       }
    }
+
+   // return number of clusters
+   return bestK;
 }
