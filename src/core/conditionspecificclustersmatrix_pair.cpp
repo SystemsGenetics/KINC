@@ -131,7 +131,7 @@ QString CSCM::Pair::toString() const
 {
     EDEBUG_FUNC(this);
 
-    std::string outputString;
+    QString outputString;
 
     //if there is at least one cluster
     if(!_pValues.isEmpty())
@@ -140,25 +140,19 @@ QString CSCM::Pair::toString() const
         for(int i = 0; i < _pValues.size(); i++)
         {
             outputString+= "Cluster: ";
-            outputString+= static_cast<std::ostringstream*>( &(std::ostringstream() << i + 1) )->str();
+            outputString+= QString::number(i + 1);
             outputString+= "\n";
             for(int j = 0; j < _pValues.at(i).size(); j++)
             {
                 outputString+= "\t";
-                outputString+= _cMatrix->getTestName(j).toStdString();
+                outputString+= _cMatrix->getTestName(j);
                 outputString+= ": ";
-                outputString+= static_cast<std::ostringstream*>( &(std::ostringstream() << _pValues.at(i).at(j)) )->str();
+                outputString+= QString::number(_pValues.at(i).at(j));
                 outputString+= "\n";
             }
         }
     }
-
-    QString returnString;
-    for(uint i = 0; i < outputString.size(); i++)
-    {
-        returnString.append(outputString.at(i));
-    }
-    return returnString;
+    return outputString;
 }
 
 

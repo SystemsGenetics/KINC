@@ -35,19 +35,15 @@ public:
        /*!
        *  defines the threshold for data to keep
        */
-      ,ALPHA
-       /*!
-       *  defines the corrolation threshold
-       */
-      ,CORRTHRESH
-       /*!
-       *  defines the overrides for the testtypes at a target location
-       */
-      ,OVERRIDES
+      ,ProbabilitySuccess
        /*!
        *  defines the features not to test
        */
       ,TEST
+       /*!
+       *  defines the overrides for the testtypes at a target location
+       */
+      ,OVERRIDES
        /*!
        *  defines Total number of arguments this class contains
        */
@@ -66,10 +62,10 @@ public:
    QVariant cmxData(Role role) const;
    QVariant anxData(Role role) const;
    QVariant CSCMData(Role role) const;
-   QVariant alphaData(Role role) const;
-   QVariant overridesData(Role role) const;
+   QVariant ProbabilitySuccessData(Role role) const;
    QVariant testData(Role role) const;
-   QVariant corrThreshData(Role role) const;
+   QVariant overridesData(Role role) const;
+
 private:
    /*!
    *  pointer to the Inputs base parent object

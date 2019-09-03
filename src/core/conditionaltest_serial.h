@@ -17,12 +17,12 @@ public:
     int clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label);
 
     //Binomial Tests
-    double binomial(double alpha);
+    double binomial();
     double testOne();
     double testTwo();
 
     //Regresion Test
-    double regresion();
+    double regresion(QVector<QString>& anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex);
 
 private:
    /*!

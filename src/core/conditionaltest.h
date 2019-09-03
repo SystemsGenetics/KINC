@@ -95,7 +95,7 @@ private:
     /*!
      * Data Threshold
      */
-    double _alpha {0.0};
+    double _probabilitySuccess {0.75};
     /*!
      * User provided features not to test.
      */
@@ -106,10 +106,6 @@ private:
      */
     QString _testOverride{""};
     QVector<QVector<QString>> _override;
-    /*!
-     * User provided corrolation threshold.
-     */
-    double _corrthresh {0.85};
     /*!
      * Assosiated stream for the annotation matrix input file.
      */

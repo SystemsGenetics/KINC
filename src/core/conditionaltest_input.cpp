@@ -45,16 +45,15 @@ EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
     EDEBUG_FUNC(this, index);
     switch(index)
     {
-    case EMXINPUT   : return DataIn;
-    case CCMINPUT   : return DataIn;
-    case CMXINPUT   : return DataIn;
-    case ANXINPUT   : return FileIn;
-    case CSCMOUT    : return DataOut;
-    case ALPHA      : return Double;
-    case OVERRIDES  : return String;
-    case TEST       : return String;
-    case CORRTHRESH : return Double;
-    default         : return Boolean;
+    case EMXINPUT           : return DataIn;
+    case CCMINPUT           : return DataIn;
+    case CMXINPUT           : return DataIn;
+    case ANXINPUT           : return FileIn;
+    case CSCMOUT            : return DataOut;
+    case ProbabilitySuccess : return Double;
+    case OVERRIDES          : return String;
+    case TEST               : return String;
+    default                 : return Boolean;
     }
 }
 
@@ -77,16 +76,15 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
     EDEBUG_FUNC(this, index, role);
     switch(index)
     {
-    case EMXINPUT   : return emxData(role);
-    case CCMINPUT   : return ccmData(role);
-    case CMXINPUT   : return cmxData(role);
-    case ANXINPUT   : return anxData(role);
-    case CSCMOUT    : return CSCMData(role);
-    case ALPHA      : return alphaData(role);
-    case OVERRIDES  : return overridesData(role);
-    case TEST       : return testData(role);
-    case CORRTHRESH : return corrThreshData(role);
-    default         : return QVariant();
+    case EMXINPUT           : return emxData(role);
+    case CCMINPUT           : return ccmData(role);
+    case CMXINPUT           : return cmxData(role);
+    case ANXINPUT           : return anxData(role);
+    case CSCMOUT            : return CSCMData(role);
+    case ProbabilitySuccess : return ProbabilitySuccessData(role);
+    case OVERRIDES          : return overridesData(role);
+    case TEST               : return testData(role);
+    default                 : return QVariant();
     }
 }
 
@@ -106,8 +104,8 @@ void ConditionalTest::Input::set(int index, const QVariant& value)
     EDEBUG_FUNC(this, value);
     switch(index)
     {
-    case ALPHA:
-        _base->_alpha = value.toDouble();
+    case ProbabilitySuccess:
+        _base->_probabilitySuccess = value.toDouble();
         break;
     case TEST:
         _base->_Testing = value.toString();
@@ -115,8 +113,6 @@ void ConditionalTest::Input::set(int index, const QVariant& value)
     case OVERRIDES:
         _base->_testOverride = value.toString();
         break;
-    case CORRTHRESH:
-        _base->_corrthresh = value.toDouble();
     }
 }
 
@@ -190,7 +186,9 @@ QVariant ConditionalTest::Input::emxData(Role role) const
     {
     case CommandLineName: return QString("emx");
     case Title          : return tr("Input emx Data File:");
-    case WhatsThis      : return tr("emx table file");
+    case WhatsThis      : return tr("A data file created by KINC containing \
+                                    the gene expression matrix created by \
+                                    the Import Expression Matrix analytic.");
     case DataType       : return DataFactory::ExpressionMatrixType;
     default             : return QVariant();
     }
@@ -215,7 +213,9 @@ QVariant ConditionalTest::Input::ccmData(Role role) const
     {
     case CommandLineName: return QString("ccm");
     case Title          : return tr("Input ccm Data File:");
-    case WhatsThis      : return tr("ccm table file");
+    case WhatsThis      : return tr("A data file created by KINC containing \
+                                    the cluster sample masks created by \
+                                    the similarity analytic.");
     case DataType       : return DataFactory::CCMatrixType;
     default             : return QVariant();
     }
@@ -240,7 +240,9 @@ QVariant ConditionalTest::Input::cmxData(Role role) const
     {
     case CommandLineName: return QString("cmx");
     case Title          : return tr("Input cmx Data File:");
-    case WhatsThis      : return tr("cmx table file");
+    case WhatsThis      : return tr("A data file created by KINC containing \
+                                     the correlation matrix values created by \
+                                     the similarity analytic.");
     case DataType       : return DataFactory::CorrelationMatrixType;
     default             : return QVariant();
     }
@@ -265,7 +267,11 @@ QVariant ConditionalTest::Input::anxData(Role role) const
     {
     case CommandLineName: return QString("amx");
     case Title          : return tr("Annotation matrix:");
-    case WhatsThis      : return tr("Tab delimited annotation matrix");
+    case WhatsThis      : return tr("Tab delimited file where the row names \
+                                     represent samples in the experiment and \
+                                     the column names are conditional features \
+                                     of the experiment and the values are \
+                                     observed or measured values in the experiment.");
     case FileFilters    : return tr("Annotation Matrix (*.txt)");
     default             : return QVariant();
     }
@@ -288,10 +294,10 @@ QVariant ConditionalTest::Input::CSCMData(Role role) const
     switch(role)
     {
     case CommandLineName: return QString("out");
-    case Title          : return tr("Output:");
-    case WhatsThis      : return tr("Condition-Specific Cluster Martrix, \
-                                     contains a matrix of clusters and their \
-                                     corrosponding p-values.");
+    case Title          : return tr("Output Condition-Specific Matrix:");
+    case WhatsThis      : return tr("Condition-Specific Martrix, contains \
+                                     a matrix of clusters and their corrosponding\
+                                     p-values.");
     case DataType       : return DataFactory::CSCMType;
     default             : return QVariant();
     }
@@ -309,41 +315,21 @@ QVariant ConditionalTest::Input::CSCMData(Role role) const
 *
 * @return The information requested.
 */
-QVariant ConditionalTest::Input::alphaData(Role role) const
+QVariant ConditionalTest::Input::ProbabilitySuccessData(Role role) const
 {
     EDEBUG_FUNC(this, role);
     switch(role)
     {
-    case CommandLineName: return QString("alpha");
-    case Title          : return tr("Alpha:");
-    case WhatsThis      : return tr("Threshold for keeping output data, \
-                                     does not keep p-values higher than this threshold.");
-    case Default        : return 0;
+    case CommandLineName: return QString("psuc");
+    case Title          : return tr("Probability Success:");
+    case WhatsThis      : return tr("For categorical features a binomial test \
+                                     is performed. This value should contain the \
+                                     probability of success for samples in a GMM \
+                                     cluster being of the category label.");
+    case Default        : return 0.75;
     case Minimum        : return 0;
     case Maximum        : return 1;
     default: return QVariant();
-    }
-}
-
-
-
-
-/*!
-*  Implements an interface to grab info about the override infromation.
-*
-* @param role The role you are interested in knowing about.
-*
-* @return The information requested.
-*/
-QVariant ConditionalTest::Input::overridesData(Role role) const
-{
-    EDEBUG_FUNC(this, role);
-    switch(role)
-    {
-    case CommandLineName: return QString("override");
-    case Title          : return tr("Test Overrides:");
-    case WhatsThis      : return tr("Tests to override, taken as \"feature::test,...\"");
-    default             : return QVariant();
     }
 }
 
@@ -362,10 +348,17 @@ QVariant ConditionalTest::Input::testData(Role role) const
 {
     EDEBUG_FUNC(this, role);
     switch(role)
-    {
-    case CommandLineName: return QString("test");
-    case Title          : return tr("Test:");
-    case WhatsThis      : return tr("Features to test, taken as: \"feature,feature,...\"");
+   {
+    case CommandLineName: return QString("feat-tests");
+    case Title          : return tr("Features to Test:");
+    case WhatsThis      : return tr("A comma-separated list of features, with \
+                                     no spaces around commas, from column \
+                                     names of the annotation matrix that \
+                                     should be tested. For example, if the \
+                                     annotation matrix has columns 'Treatment' \
+                                     and 'Subspecies' you can enter: \
+                                     \"Treatment,Subspecies\" \
+                                     Note: column names are case-sensitive.");
     default             : return QVariant();
     }
 }
@@ -375,25 +368,29 @@ QVariant ConditionalTest::Input::testData(Role role) const
 
 
 /*!
-*  Implements an interface to grab info about the corrolation threshold.
+*  Implements an interface to grab info about the override infromation.
 *
 * @param role The role you are interested in knowing about.
 *
 * @return The information requested.
 */
-QVariant ConditionalTest::Input::corrThreshData(Role role) const
+QVariant ConditionalTest::Input::overridesData(Role role) const
 {
     EDEBUG_FUNC(this, role);
     switch(role)
     {
-    case CommandLineName: return QString("corrthresh");
-    case Title          : return tr("Corrolation Threshold:");
-    case WhatsThis      : return tr("Threshold for input data, does not \
-                                     include clusters with corrolations \
-                                     lower than this threshold.");
-    case Default        : return 0.85;
-    case Minimum        : return 0;
-    case Maximum        : return 1;
+    case CommandLineName: return QString("feat-types");
+    case Title          : return tr("Feature Types:");
+    case WhatsThis      : return tr("By default, this program will automatically \
+                                     detect the type of feature as 'categorical', \
+                                     'decimal', or 'ordinal'.   You can override \
+                                     the default type by listing the column name \
+                                     from the annotation matrix, two colons and \
+                                     the desired type. You can list as many as \
+                                     features by separating them with commas, \
+                                     with no spaces around commas. \
+                                     For example if a column is named \"Health_Status\" and is \
+                                     numeric with an ordinal enter:  Health_Status::ordinal");
     default             : return QVariant();
     }
 }

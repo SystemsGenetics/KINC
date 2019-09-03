@@ -79,13 +79,6 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
         //for each cluster in the pair, run the binomial and linear regresion tests.
         for(qint32 clusterIndex = 0; clusterIndex < ccmPair.clusterSize(); clusterIndex++)
         {
-            //check to see if the corrolation is high enough to test.
-            if(cmxPair.at(clusterIndex) < _base->_corrthresh)
-            {
-                //if not skip this cluster
-                continue;
-            }
-
             //resize for room for each test.
             pValues[clusterIndex].resize(_base->_numTests);
 
@@ -266,7 +259,7 @@ int ConditionalTest::Serial::test(CorrelationMatrix::Pair cmxPair,
     switch(_base->_testType.at(featureIndex))
     {
         case CATEGORICAL :
-            pValues[clusterIndex][testIndex] = binomial(_base->_alpha);
+            pValues[clusterIndex][testIndex] = binomial();
             testIndex++;
         break;
         case ORDINAL :
@@ -293,19 +286,15 @@ int ConditionalTest::Serial::test(CorrelationMatrix::Pair cmxPair,
 *
 * @return Pvalue corrosponding to the test, negative if not accepted.
 */
-double ConditionalTest::Serial::binomial(double alpha)
+double ConditionalTest::Serial::binomial()
 {
-    EDEBUG_FUNC(this, alpha);
+    EDEBUG_FUNC(this);
 
     //calculate the pvalue, the max out of the two tests
     double test1 = testOne();
     double test2 = testTwo();
     double pvalue = std::max(test1, test2);
 
-    if(pvalue < alpha)
-    {
-        pvalue *= -1;
-    }
     return pvalue;
 }
 
@@ -330,11 +319,7 @@ double ConditionalTest::Serial::testOne()
     // Ho: successes >= 0.15
     // Ha: successes < 0.15
 
-    double pvalue = 0.0;
-
-    pvalue = gsl_cdf_binomial_P(_clusterInMask - _catInCount, .25, _clusterInMask - _catInCount);
-
-    return pvalue;
+    return gsl_cdf_binomial_P(_clusterInMask - _catInCount, 1 - _base->_probabilitySuccess, _clusterInMask - _catInCount);
 }
 
 
@@ -356,11 +341,7 @@ double ConditionalTest::Serial::testTwo()
     // Ho: successes = 0.85
     // Ha: successes > 0.85
 
-    double pvalue = 0.0;
-
-    pvalue = gsl_cdf_binomial_Q(_catInCount, .75, _catCount);
-
-    return pvalue;
+    return gsl_cdf_binomial_Q(_catInCount, _base->_probabilitySuccess, _catCount);
 }
 
 
@@ -370,8 +351,23 @@ double ConditionalTest::Serial::testTwo()
 /*!
 *  Implements an interface to run the regresion test for given data, the
 *  regresion line is genex vs geney vs label data.
+*
+* @param anxInfo Annotation matrix information.
+*
+* @param ccmPair Cluster matrix pair.
+*
+* @param clusterIndex The index of the cluster, used to get the right info
+*        from the cluster pair
+*
+* @return Pvalue corrosponding to the test.
 */
-double ConditionalTest::Serial::regresion()
+double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex)
 {
-    // In planning
+    EDEBUG_FUNC(this, &anxInfo, &ccmPair, clusterIndex);
+
+    Q_UNUSED(anxInfo);
+    Q_UNUSED(ccmPair);
+    Q_UNUSED(clusterIndex);
+
+    return -1;
 }

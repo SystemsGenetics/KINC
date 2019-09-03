@@ -513,7 +513,7 @@ void ConditionalTest::Test()
     {
        E_MAKE_EXCEPTION(e);
        e.setTitle(tr("Invalid Argument"));
-       e.setDetails(tr("No Tests Given."));
+       e.setDetails(tr("Please provide Features to Test"));
        throw e;
     }
 }
