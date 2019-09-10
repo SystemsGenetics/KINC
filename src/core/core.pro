@@ -64,7 +64,10 @@ SOURCES += \
     corrpower_input.cpp \
     corrpower_resultblock.cpp \
     corrpower_serial.cpp \
-    corrpower_workblock.cpp
+    corrpower_workblock.cpp \
+    cpmatrix_model.cpp \
+    cpmatrix_pair.cpp \
+    cpmatrix.cpp
 
 # Header files
 HEADERS += \
@@ -121,4 +124,7 @@ HEADERS += \
     corrpower_input.h \
     corrpower_serial.h \
     corrpower_resultblock.h \
-    corrpower_workblock.h
+    corrpower_workblock.h \
+    cpmatrix_model.h \
+    cpmatrix_pair.h \
+    cpmatrix.h
