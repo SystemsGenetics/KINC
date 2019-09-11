@@ -67,7 +67,9 @@ SOURCES += \
     corrpower_workblock.cpp \
     cpmatrix_model.cpp \
     cpmatrix_pair.cpp \
-    cpmatrix.cpp
+    cpmatrix.cpp \
+    exportparametermatrix_input.cpp \
+    exportparametermatrix.cpp
 
 # Header files
 HEADERS += \
@@ -127,4 +129,6 @@ HEADERS += \
     corrpower_workblock.h \
     cpmatrix_model.h \
     cpmatrix_pair.h \
-    cpmatrix.h
+    cpmatrix.h \
+    exportparametermatrix_input.h \
+    exportparametermatrix.h
