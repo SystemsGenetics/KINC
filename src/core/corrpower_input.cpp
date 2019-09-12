@@ -78,7 +78,9 @@ QVariant CorrPowerFilter::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("ccm-in");
       case Role::Title: return tr("Input Cluster Matrix:");
-      case Role::WhatsThis: return tr("Input cluster matrix containing cluster composition data.");
+      case WhatsThis: return tr("A data file created by KINC containing \
+                                      the cluster sample masks created by \
+                                      the similarity analytic.");
       case Role::DataType: return DataFactory::CCMatrixType;
       default: return QVariant();
       }
@@ -87,7 +89,9 @@ QVariant CorrPowerFilter::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("cmx-in");
       case Role::Title: return tr("Input Correlation Matrix:");
-      case Role::WhatsThis: return tr("Input correlation matrix containing correlation data.");
+      case WhatsThis: return tr("A data file created by KINC containing \
+                                       the correlation matrix values created by \
+                                       the similarity analytic.");
       case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
@@ -96,7 +100,9 @@ QVariant CorrPowerFilter::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("ccm-out");
       case Role::Title: return tr("Output Cluster Matrix:");
-      case Role::WhatsThis: return tr("Output cluster matrix containing cluster composition data.");
+      case WhatsThis: return tr("A data file created by KINC containing \
+                                      the cluster sample masks created by \
+                                      the similarity analytic.");
       case Role::DataType: return DataFactory::CCMatrixType;
       default: return QVariant();
       }
@@ -105,7 +111,9 @@ QVariant CorrPowerFilter::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("cmx-out");
       case Role::Title: return tr("Output Correlation Matrix:");
-      case Role::WhatsThis: return tr("Output correlation matrix containing correlation data.");
+      case WhatsThis: return tr("A data file created by KINC containing \
+                                       the correlation matrix values created by \
+                                       the similarity analytic.");
       case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }

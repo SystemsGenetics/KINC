@@ -1,12 +1,12 @@
-#ifndef CSCM_MODEL_H
-#define CSCM_MODEL_H
+#ifndef CSM_MODEL_H
+#define CSM_MODEL_H
 #include "conditionspecificclustersmatrix.h"
 #include <ace/core/core.h>
 
-class CSCM::Model : public QAbstractTableModel
+class CSM::Model : public QAbstractTableModel
 {
 public:
-   Model(CSCM* matrix);
+   Model(CSM* matrix);
 public:
    virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const override final;
    virtual int columnCount(const QModelIndex&) const override final;
@@ -16,7 +16,7 @@ private:
    /*!
     * Pointer to the data object for this table model.
     */
-   CSCM* _matrix;
+   CSM* _matrix;
 };
 
-#endif // CSCM_MODEL_H
+#endif // CSM_MODEL_H

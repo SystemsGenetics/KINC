@@ -49,7 +49,7 @@ EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
     case CCMINPUT           : return DataIn;
     case CMXINPUT           : return DataIn;
     case ANXINPUT           : return FileIn;
-    case CSCMOUT            : return DataOut;
+    case CSMOUT            : return DataOut;
     case ProbabilitySuccess : return Double;
     case OVERRIDES          : return String;
     case TEST               : return String;
@@ -80,7 +80,7 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
     case CCMINPUT           : return ccmData(role);
     case CMXINPUT           : return cmxData(role);
     case ANXINPUT           : return anxData(role);
-    case CSCMOUT            : return CSCMData(role);
+    case CSMOUT            : return CSMData(role);
     case ProbabilitySuccess : return ProbabilitySuccessData(role);
     case OVERRIDES          : return overridesData(role);
     case TEST               : return testData(role);
@@ -162,8 +162,8 @@ void ConditionalTest::Input::set(int index, EAbstractData* data)
     case CMXINPUT :
         _base->_cmx = data->cast<CorrelationMatrix>();
         break;
-    case CSCMOUT:
-        _base->_out = data->cast<CSCM>();
+    case CSMOUT:
+        _base->_out = data->cast<CSM>();
         break;
     }
 }
@@ -185,7 +185,7 @@ QVariant ConditionalTest::Input::emxData(Role role) const
     switch(role)
     {
     case CommandLineName: return QString("emx");
-    case Title          : return tr("Input emx Data File:");
+    case Title          : return tr("Input Epression Matrix:");
     case WhatsThis      : return tr("A data file created by KINC containing \
                                     the gene expression matrix created by \
                                     the Import Expression Matrix analytic.");
@@ -212,7 +212,7 @@ QVariant ConditionalTest::Input::ccmData(Role role) const
     switch(role)
     {
     case CommandLineName: return QString("ccm");
-    case Title          : return tr("Input ccm Data File:");
+    case Title          : return tr("Input Cluster Matrix:");
     case WhatsThis      : return tr("A data file created by KINC containing \
                                     the cluster sample masks created by \
                                     the similarity analytic.");
@@ -239,7 +239,7 @@ QVariant ConditionalTest::Input::cmxData(Role role) const
     switch(role)
     {
     case CommandLineName: return QString("cmx");
-    case Title          : return tr("Input cmx Data File:");
+    case Title          : return tr("Input Correlation Matrix:");
     case WhatsThis      : return tr("A data file created by KINC containing \
                                      the correlation matrix values created by \
                                      the similarity analytic.");
@@ -266,7 +266,7 @@ QVariant ConditionalTest::Input::anxData(Role role) const
     switch(role)
     {
     case CommandLineName: return QString("amx");
-    case Title          : return tr("Annotation matrix:");
+    case Title          : return tr("Input Annotation matrix:");
     case WhatsThis      : return tr("Tab delimited file where the row names \
                                      represent samples in the experiment and \
                                      the column names are conditional features \
@@ -282,13 +282,13 @@ QVariant ConditionalTest::Input::anxData(Role role) const
 
 
 /*!
-*  Implements an interface to grab info about the CSCM data.
+*  Implements an interface to grab info about the CSM data.
 *
 * @param role The role you are interested in knowing about.
 *
 * @return The information requested.
 */
-QVariant ConditionalTest::Input::CSCMData(Role role) const
+QVariant ConditionalTest::Input::CSMData(Role role) const
 {
     EDEBUG_FUNC(this, role);
     switch(role)
@@ -298,7 +298,7 @@ QVariant ConditionalTest::Input::CSCMData(Role role) const
     case WhatsThis      : return tr("Condition-Specific Martrix, contains \
                                      a matrix of clusters and their corrosponding\
                                      p-values.");
-    case DataType       : return DataFactory::CSCMType;
+    case DataType       : return DataFactory::CSMType;
     default             : return QVariant();
     }
 }

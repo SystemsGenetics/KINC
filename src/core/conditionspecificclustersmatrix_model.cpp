@@ -7,11 +7,11 @@
 
 
 /*!
-*  Implements an interface that initializes a new CSCM model object.
+*  Implements an interface that initializes a new CSM model object.
 *
 * @param matrix The parent matrix of the model.
 */
-CSCM::Model::Model(CSCM* matrix) : _matrix(matrix)
+CSM::Model::Model(CSM* matrix) : _matrix(matrix)
 {
     EDEBUG_FUNC(this,matrix);
     {
@@ -27,7 +27,7 @@ CSCM::Model::Model(CSCM* matrix) : _matrix(matrix)
 
 /*!
 *  Implements an interface to print the header for the tablular representation
-*  of the CSCM model to the screen.
+*  of the CSM model to the screen.
 *
 * @param section The column or row index dependig on the orientation type.
 *
@@ -38,7 +38,7 @@ CSCM::Model::Model(CSCM* matrix) : _matrix(matrix)
 *
 * @return The header cell data at the queried location.
 */
-QVariant CSCM::Model::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant CSM::Model::headerData(int section, Qt::Orientation orientation, int role) const
 {
     EDEBUG_FUNC(this,section,orientation,role);
 
@@ -76,7 +76,7 @@ QVariant CSCM::Model::headerData(int section, Qt::Orientation orientation, int r
 *
 * @return An integer representation of the column count.
 */
-int CSCM::Model::columnCount(const QModelIndex&) const
+int CSM::Model::columnCount(const QModelIndex&) const
 {
     EDEBUG_FUNC(this);
     return _matrix->geneSize();
@@ -92,7 +92,7 @@ int CSCM::Model::columnCount(const QModelIndex&) const
 *
 * @return An integer representation of the row count.
 */
-int CSCM::Model::rowCount(const QModelIndex&) const
+int CSM::Model::rowCount(const QModelIndex&) const
 {
     EDEBUG_FUNC(this);
     return _matrix->geneSize();
@@ -105,7 +105,7 @@ int CSCM::Model::rowCount(const QModelIndex&) const
 
 /*!
 *  Implements an interface to print the data for the tablular representation
-*  of the CSCM model to the screen.
+*  of the CSM model to the screen.
 *
 * @param section The column or row index dependig on the orientation type.
 *
@@ -116,7 +116,7 @@ int CSCM::Model::rowCount(const QModelIndex&) const
 *
 * @return The header cell data at the queried location.
 */
-QVariant CSCM::Model::data(const QModelIndex& index, int role) const
+QVariant CSM::Model::data(const QModelIndex& index, int role) const
 {
     EDEBUG_FUNC(this, &index, role);
 

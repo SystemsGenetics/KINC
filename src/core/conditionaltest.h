@@ -25,7 +25,7 @@ enum TESTTYPE
         NONE
     };
 
-    struct CSCMPair
+    struct CSMPair
     {
       /*!
       * The p values for each cluster in a pair.
@@ -91,7 +91,7 @@ private:
     /*!
      * Pointer to the output cluster annotation matrix.
      */
-    CSCM* _out {nullptr};
+    CSM* _out {nullptr};
     /*!
      * Data Threshold
      */

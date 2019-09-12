@@ -70,31 +70,26 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
 
     for (qint32 i = 0; i < resultBlock->pairs().size(); i++)
     {
-       //copy the values form the pairs to the CSCM
+       //copy the values form the pairs to the CSM
        if ( resultBlock->pairs().at(i).pValues.size() > 0 )
        {
            // Create pair objects for the output data file.
-           CSCM::Pair CSCMPair(_out);
+           CSM::Pair CSMPair(_out);
            Pairwise::Index index(resultBlock->pairs().at(i).x_index, resultBlock->pairs().at(i).y_index);
            _index = index;
-
-           if(i == 26)
-           {
-               _index = index;
-           }
 
            //Iterate through the clusters in the pair.
            for (int j = 0; j < resultBlock->pairs().at(i).pValues.size(); ++j )
            {
-               //add each cluster into the CSCM
-               CSCMPair.addCluster(1, _numTests);
+               //add each cluster into the CSM
+               CSMPair.addCluster(1, _numTests);
                for(int k = 0; k < resultBlock->pairs().at(i).pValues.at(j).size(); k++)
                {
-                   CSCMPair.at(j, k) = resultBlock->pairs().at(i).pValues.at(j).at(k);
+                   CSMPair.at(j, k) = resultBlock->pairs().at(i).pValues.at(j).at(k);
                }
            }
-           //write the info into the CSCM
-           CSCMPair.write(index); //have an error here
+           //write the info into the CSM
+           CSMPair.write(index); //have an error here
        }
     }
 }
@@ -247,7 +242,7 @@ void ConditionalTest::initialize()
        _workBlockSize = std::min(32768LL, _ccm->size() / numWorkers);
     }
 
-    //CSCM specific
+    //CSM specific
     qint32 maxCluster = 64, subHeadersize = 12;
     initialize(maxCluster,subHeadersize,_features,_testType,_data);
 }
@@ -590,7 +585,7 @@ QString ConditionalTest::testNames()
 void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &anxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data)
 {
     EDEBUG_FUNC(this,&maxClusterSize,&subHeaderSize,&anxData,&testType,&data);
-    //needed by the CSCM specific initializer
+    //needed by the CSM specific initializer
     EMetaArray Features;
     QVector<EMetaArray> featureInfo;
     QVector<EMetaArray> Data;
@@ -639,7 +634,7 @@ void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,Q
         }
     }
 
-    //inserts the Meta Data into the CSCM Object stored on the disk.
+    //inserts the Meta Data into the CSM Object stored on the disk.
     _out->initialize(Features, featureInfo, Data, _numTests, testNames());
     _out->initialize(_emx->geneNames(), maxClusterSize, subHeaderSize);
 }

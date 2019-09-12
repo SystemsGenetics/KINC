@@ -1,15 +1,15 @@
-#ifndef CSCM_PAIR_H
-#define CSCM_PAIR_H
+#ifndef CSM_PAIR_H
+#define CSM_PAIR_H
 #include <ace/core/core.h>
 #include "conditionspecificclustersmatrix.h"
 #include "pairwise_matrix_pair.h"
 //
 
-class CSCM::Pair : public Pairwise::Matrix::Pair
+class CSM::Pair : public Pairwise::Matrix::Pair
 {
 public:
-    Pair(CSCM* matrix);
-    Pair(const CSCM* matrix);
+    Pair(CSM* matrix);
+    Pair(const CSM* matrix);
     Pair() = default;
     virtual ~Pair() = default;
 public:
@@ -27,7 +27,7 @@ private:
     virtual void readCluster(const EDataStream& stream, int cluster) const;
 
     mutable QVector<QVector<double>> _pValues;
-    const CSCM* _cMatrix;
+    const CSM* _cMatrix;
 };
 
-#endif // CSCM_PAIR_H
+#endif // CSM_PAIR_H

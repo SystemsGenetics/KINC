@@ -20,7 +20,7 @@ public:
       ExpressionMatrixType = 0
       ,CCMatrixType
       ,CorrelationMatrixType
-      ,CSCMType
+      ,CSMType
       ,Total
    };
    virtual quint16 size() const override final;

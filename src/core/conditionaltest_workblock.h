@@ -1,5 +1,5 @@
-#ifndef CSCM_WORKBLOCK_H
-#define CSCM_WORKBLOCK_H
+#ifndef CSM_WORKBLOCK_H
+#define CSM_WORKBLOCK_H
 #include <ace/core/core.h>
 #include "conditionaltest.h"
 //
@@ -35,4 +35,4 @@ private:
     qint64 _size;
 };
 
-#endif // CSCM_WORKBLOCK_H
+#endif // CSM_WORKBLOCK_H

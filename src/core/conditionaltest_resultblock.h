@@ -1,5 +1,5 @@
-#ifndef IMPORTCSCM_RESULTBLOCK_H
-#define IMPORTCSCM_RESULTBLOCK_H
+#ifndef IMPORTCSM_RESULTBLOCK_H
+#define IMPORTCSM_RESULTBLOCK_H
 #include <ace/core/core.h>
 #include "conditionaltest.h"
 //
@@ -13,9 +13,9 @@ public:
     explicit ResultBlock(int index, int numTests, qint64 start);
 
     qint64 start() const { return _start; }
-    const QVector<CSCMPair>& pairs() const { return _pairs; }
-    QVector<CSCMPair>& pairs() { return _pairs; }
-    void append(const CSCMPair& pair);
+    const QVector<CSMPair>& pairs() const { return _pairs; }
+    QVector<CSMPair>& pairs() { return _pairs; }
+    void append(const CSMPair& pair);
 
 protected:
     virtual void write(QDataStream& stream) const override final;
@@ -32,7 +32,7 @@ private:
     /*!
     *  Row of dynamically populated cluster pvalues.
     */
-    QVector<CSCMPair> _pairs;
+    QVector<CSMPair> _pairs;
 };
 
-#endif // IMPORTCSCM_RESULTBLOCK_H
+#endif // IMPORTCSM_RESULTBLOCK_H

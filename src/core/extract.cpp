@@ -93,11 +93,11 @@ void Extract::writeTextFormat(int index)
          << "\t" << "Pair_Outliers"
          << "\t" << "Too_Low"
          << "\t" << "Samples";
-      if(_cscm)
+      if(_csm)
       {
-          for(int i = 0; i < _cscm->getTestCount(); i++)
+          for(int i = 0; i < _csm->getTestCount(); i++)
           {
-              _stream << "\t" << _cscm->getTestName(i);
+              _stream << "\t" << _csm->getTestName(i);
           }
       }
       _stream << "\n";
@@ -106,9 +106,9 @@ void Extract::writeTextFormat(int index)
    // read next pair
    _cmxPair.readNext();
    _ccmPair.read(_cmxPair.index());
-   if(_cscm)
+   if(_csm)
    {
-      _cscmPair.read(_cmxPair.index());
+      _csmPair.read(_cmxPair.index());
    }
 
    // write pairwise data to output file
@@ -206,11 +206,11 @@ void Extract::writeTextFormat(int index)
          << "\t" << numThreshold
          << "\t" << sampleMask;
 
-      if(_cscm)
+      if(_csm)
       {
-          for(int i = 0; i < _cscm->getTestCount(); i++)
+          for(int i = 0; i < _csm->getTestCount(); i++)
           {
-              _stream << "\t" << _cscmPair.at(k, i);
+              _stream << "\t" << _csmPair.at(k, i);
           }
       }
          _stream << "\n";
@@ -459,9 +459,9 @@ void Extract::initialize()
    // initialize pairwise iterators
    _ccmPair = CCMatrix::Pair(_ccm);
    _cmxPair = CorrelationMatrix::Pair(_cmx);
-   if(_cscm)
+   if(_csm)
    {
-      _cscmPair = CSCM::Pair(_cscm);
+      _csmPair = CSM::Pair(_csm);
    }
 
    // initialize output file stream

@@ -16,7 +16,7 @@
 *
 * @param data All the data in the annotation matrix.
 */
-void CSCM::initialize(const EMetaArray& features, const QVector<EMetaArray>& featureInfo, const QVector<EMetaArray>& data, int& numTests, QString testNames)
+void CSM::initialize(const EMetaArray& features, const QVector<EMetaArray>& featureInfo, const QVector<EMetaArray>& data, int& numTests, QString testNames)
 {
     EDEBUG_FUNC(this,&features,&featureInfo,&data);
 
@@ -133,7 +133,7 @@ void CSCM::initialize(const EMetaArray& features, const QVector<EMetaArray>& fea
 *
 * @param subheader The size of the subheader, only contains the sample size.
 */
-void CSCM::initialize(const EMetaArray& geneNames, int maxClusterSize, int subheader)
+void CSM::initialize(const EMetaArray& geneNames, int maxClusterSize, int subheader)
 {
     EDEBUG_FUNC(this,&geneNames,maxClusterSize,subheader);
     Matrix::initialize(geneNames, maxClusterSize, sizeof(double) * _testcount, subheader);
@@ -148,7 +148,7 @@ void CSCM::initialize(const EMetaArray& geneNames, int maxClusterSize, int subhe
 *
 * @return Pointer to the table model representation of the data.
 */
-QAbstractTableModel* CSCM::model()
+QAbstractTableModel* CSM::model()
 {
     EDEBUG_FUNC(this);
     if ( !_model )
@@ -167,7 +167,7 @@ QAbstractTableModel* CSCM::model()
 *
 * @return Integer representation of the number of samples in the augmented matrix.
 */
-int CSCM::sampleSize() const
+int CSM::sampleSize() const
 {
     EDEBUG_FUNC(this);
     return _sampleSize;
@@ -180,7 +180,7 @@ int CSCM::sampleSize() const
 /*!
 *  Implements an interface to write header information.
 */
-void CSCM::writeHeader()
+void CSM::writeHeader()
 {
     EDEBUG_FUNC(this);
     stream() << _sampleSize << _testcount;
@@ -193,7 +193,7 @@ void CSCM::writeHeader()
 /*!
 *  Implements an interface to read header information.
 */
-void CSCM::readHeader()
+void CSM::readHeader()
 {
     EDEBUG_FUNC(this);
     stream() >> _sampleSize >> _testcount;
@@ -207,7 +207,7 @@ void CSCM::readHeader()
 *
 * @param newData The number of tests you want to set the variable to.
 */
-void CSCM::setTestCount(qint32 newData)
+void CSM::setTestCount(qint32 newData)
 {
     EDEBUG_FUNC(this, newData);
     _testcount = newData;
@@ -224,7 +224,7 @@ void CSCM::setTestCount(qint32 newData)
 *
 * @return The test name.
 */
-QString CSCM::getTestName(int index) const
+QString CSM::getTestName(int index) const
 {
     return meta().toObject().at("Test Names").toArray().at(index).toString();
 }
@@ -238,7 +238,7 @@ QString CSCM::getTestName(int index) const
 *
 * @return The number of tests.
 */
-qint32 CSCM::getTestCount()
+qint32 CSM::getTestCount()
 {
     return _testcount;
 }

@@ -61,7 +61,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
             ccmPair.read(index);
             cmxPair.read(ccmPair.index());
         }
-        if((ccmPair.index().getX() != 1 && ccmPair.index().getY() != 0) || ccmIndex != start)
+        else
         {
             ccmPair.readNext();
             cmxPair.read(ccmPair.index());
@@ -70,6 +70,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
         if(ccmPair.clusterSize() == 0)
         {
             size++;
+            continue;
         }
 
         // Initialize new pvalues, one set of pvalues for each cluster.
@@ -111,15 +112,11 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
             }
         }
 
-        //if the matrix is empty we dont need to keep its data.
-        if(!isEmpty(pValues))
-        {
-            CSCMPair pair;
-            pair.pValues = pValues;
-            pair.x_index = ccmPair.index().getX();
-            pair.y_index = ccmPair.index().getY();
-            resultBlock->append(pair);
-        }
+        CSMPair pair;
+        pair.pValues = pValues;
+        pair.x_index = ccmPair.index().getX();
+        pair.y_index = ccmPair.index().getY();
+        resultBlock->append(pair);
     }
     return std::unique_ptr<EAbstractAnalyticBlock>(resultBlock);
 }

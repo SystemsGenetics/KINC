@@ -96,8 +96,10 @@ QVariant Extract::Input::data(int index, Role role) const
       switch (role)
       {
       case Role::CommandLineName: return QString("emx");
-      case Role::Title: return tr("Expression Matrix:");
-      case Role::WhatsThis: return tr("Input expression matrix containing gene expression data.");
+      case Role::Title: return tr("Input Expression Matrix:");
+      case WhatsThis: return tr("A data file created by KINC containing \
+                                      the gene expression matrix created by \
+                                      the Import Expression Matrix analytic.");
       case Role::DataType: return DataFactory::ExpressionMatrixType;
       default: return QVariant();
       }
@@ -105,8 +107,10 @@ QVariant Extract::Input::data(int index, Role role) const
       switch (role)
       {
       case Role::CommandLineName: return QString("ccm");
-      case Role::Title: return tr("Cluster Matrix:");
-      case Role::WhatsThis: return tr("Input cluster matrix containing cluster composition data.");
+      case Role::Title: return tr("Input Cluster Matrix:");
+      case WhatsThis: return tr("A data file created by KINC containing \
+                                      the cluster sample masks created by \
+                                      the similarity analytic.");
       case Role::DataType: return DataFactory::CCMatrixType;
       default: return QVariant();
       }
@@ -114,18 +118,22 @@ QVariant Extract::Input::data(int index, Role role) const
       switch (role)
       {
       case Role::CommandLineName: return QString("cmx");
-      case Role::Title: return tr("Correlation Matrix:");
-      case Role::WhatsThis: return tr("Input correlation matrix containing correlation data.");
+      case Role::Title: return tr("Input Correlation Matrix:");
+      case WhatsThis: return tr("A data file created by KINC containing \
+                                       the correlation matrix values created by \
+                                       the similarity analytic.");
       case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
    case ConditionSpecificClusterData :
        switch (role)
        {
-       case Role::CommandLineName: return QString("cscm");
+       case Role::CommandLineName: return QString("CSM");
        case Role::Title: return tr("Optional Condition Specific Cluster Matrix:");
-       case Role::WhatsThis: return tr("Input condition specific cluster matrix containing testing information.");
-       case Role::DataType: return DataFactory::CSCMType;
+      case WhatsThis      : return tr("Condition-Specific Martrix, contains \
+                                       a matrix of clusters and their corrosponding\
+                                       p-values.");
+       case Role::DataType: return DataFactory::CSMType;
        default: return QVariant();
        }
    case OutputFormatArg:
@@ -230,7 +238,7 @@ void Extract::Input::set(int index, EAbstractData* data)
    }\
    else if ( index == ConditionSpecificClusterData )
    {
-      _base->_cscm = data->cast<CSCM>();
+      _base->_csm = data->cast<CSM>();
    }
 }
 

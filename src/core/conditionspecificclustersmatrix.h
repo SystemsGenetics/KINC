@@ -1,9 +1,9 @@
-#ifndef CSCM_H
-#define CSCM_H
+#ifndef CSM_H
+#define CSM_H
 #include "pairwise_matrix.h"
 //
 
-class CSCM : public Pairwise::Matrix
+class CSM : public Pairwise::Matrix
 {
     Q_OBJECT
 public:
@@ -32,4 +32,4 @@ private:
     Model* _model {nullptr};
 };
 
-#endif // CSCM_H
+#endif // CSM_H

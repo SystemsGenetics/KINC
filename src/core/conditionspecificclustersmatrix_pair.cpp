@@ -9,11 +9,11 @@
 
 
 /*!
-*  Implements an interface to initialize a new CSCM pair.
+*  Implements an interface to initialize a new CSM pair.
 *
 * @param matrix The parent matrix of the model.
 */
-CSCM::Pair::Pair(CSCM* matrix) : Matrix::Pair(matrix), _cMatrix(matrix)
+CSM::Pair::Pair(CSM* matrix) : Matrix::Pair(matrix), _cMatrix(matrix)
 {
     EDEBUG_FUNC(this,matrix);
 }
@@ -23,11 +23,11 @@ CSCM::Pair::Pair(CSCM* matrix) : Matrix::Pair(matrix), _cMatrix(matrix)
 
 
 /*!
-*  Implements an interface to initialize a new CSCM pair.
+*  Implements an interface to initialize a new CSM pair.
 *
 * @param matrix The parent matrix of the model.
 */
-CSCM::Pair::Pair(const CSCM* matrix) : Matrix::Pair(matrix), _cMatrix(matrix)
+CSM::Pair::Pair(const CSM* matrix) : Matrix::Pair(matrix), _cMatrix(matrix)
 {
     EDEBUG_FUNC(this,matrix);
 }
@@ -40,7 +40,7 @@ CSCM::Pair::Pair(const CSCM* matrix) : Matrix::Pair(matrix), _cMatrix(matrix)
 /*!
 *  Implements an interface to clear all of the clusters out of a pair.
 */
-void CSCM::Pair::clearClusters() const
+void CSM::Pair::clearClusters() const
 {
     EDEBUG_FUNC(this);
     _pValues.clear();
@@ -55,7 +55,7 @@ void CSCM::Pair::clearClusters() const
 *
 * @param amount The number of cluster you want to add.
 */
-void CSCM::Pair::addCluster(int amount) const
+void CSM::Pair::addCluster(int amount) const
 {
     EDEBUG_FUNC(this, amount);
     while ( amount-- > 0 )
@@ -71,11 +71,11 @@ void CSCM::Pair::addCluster(int amount) const
 
 /*!
 *  Implements an interface to add up to the max amount of clusters to the pair. It also
-*  resizes the vector to the chosen size, usually the test size in the case of CSCM.
+*  resizes the vector to the chosen size, usually the test size in the case of CSM.
 *
 * @param amount The number of cluster you want to add.
 */
-void CSCM::Pair::addCluster(int amount, int size) const
+void CSM::Pair::addCluster(int amount, int size) const
 {
     EDEBUG_FUNC(this, amount, size);
     while ( amount-- > 0 )
@@ -94,7 +94,7 @@ void CSCM::Pair::addCluster(int amount, int size) const
 *
 * @return An integer representation of the size of a cluster.
 */
-int CSCM::Pair::clusterSize() const
+int CSM::Pair::clusterSize() const
 {
     EDEBUG_FUNC(this);
     return  _pValues.size();
@@ -109,7 +109,7 @@ int CSCM::Pair::clusterSize() const
 *
 * @return True if the pair is empty and false otherwise.
 */
-bool CSCM::Pair::isEmpty() const
+bool CSM::Pair::isEmpty() const
 {
     EDEBUG_FUNC(this);
     return _pValues.isEmpty();
@@ -127,7 +127,7 @@ bool CSCM::Pair::isEmpty() const
 *
 * @return The string representation of the pair.
 */
-QString CSCM::Pair::toString() const
+QString CSM::Pair::toString() const
 {
     EDEBUG_FUNC(this);
 
@@ -164,7 +164,7 @@ QString CSCM::Pair::toString() const
 *
 * @return The data at the quieried location.
 */
-const double& CSCM::Pair::at(int cluster, int gene) const
+const double& CSM::Pair::at(int cluster, int gene) const
 {
     EDEBUG_FUNC(this, cluster, gene);
     return _pValues.at(cluster).at(gene);
@@ -179,7 +179,7 @@ const double& CSCM::Pair::at(int cluster, int gene) const
 *
 * @return The data at the quieried location.
 */
-double& CSCM::Pair::at(int cluster, int gene)
+double& CSM::Pair::at(int cluster, int gene)
 {
     EDEBUG_FUNC(this, cluster, gene);
     return _pValues[cluster][gene];
@@ -196,7 +196,7 @@ double& CSCM::Pair::at(int cluster, int gene)
 *
 * @param cluster The cluster to write to the stream.
 */
-void CSCM::Pair::writeCluster(EDataStream& stream, int cluster)
+void CSM::Pair::writeCluster(EDataStream& stream, int cluster)
 {
     EDEBUG_FUNC(this,&stream,cluster);
 
@@ -222,7 +222,7 @@ void CSCM::Pair::writeCluster(EDataStream& stream, int cluster)
 *
 * @param cluster The cluster to read from the stream.
 */
-void CSCM::Pair::readCluster(const EDataStream& stream, int cluster) const
+void CSM::Pair::readCluster(const EDataStream& stream, int cluster) const
 {
     EDEBUG_FUNC(this,&stream,cluster);
 

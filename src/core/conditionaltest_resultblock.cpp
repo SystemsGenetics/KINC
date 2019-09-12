@@ -37,7 +37,7 @@ ConditionalTest::ResultBlock::ResultBlock(int index, int numTests, qint64 start)
  *
  * @param pair
  */
-void ConditionalTest::ResultBlock::append(const CSCMPair& pair)
+void ConditionalTest::ResultBlock::append(const CSMPair& pair)
 {
    EDEBUG_FUNC(this,&pair);
 
