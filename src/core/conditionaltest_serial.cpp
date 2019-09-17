@@ -61,7 +61,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
             ccmPair.read(index);
             cmxPair.read(ccmPair.index());
         }
-        else
+        if((ccmPair.index().getX() != 1 && ccmPair.index().getY()!= 0) || ccmIndex != start)
         {
             ccmPair.readNext();
             cmxPair.read(ccmPair.index());
@@ -111,12 +111,14 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                 }
             }
         }
-
-        CSMPair pair;
-        pair.pValues = pValues;
-        pair.x_index = ccmPair.index().getX();
-        pair.y_index = ccmPair.index().getY();
-        resultBlock->append(pair);
+        if(!isEmpty(pValues))
+        {
+            CSMPair pair;
+            pair.pValues = pValues;
+            pair.x_index = ccmPair.index().getX();
+            pair.y_index = ccmPair.index().getY();
+            resultBlock->append(pair);
+        }
     }
     return std::unique_ptr<EAbstractAnalyticBlock>(resultBlock);
 }
@@ -316,7 +318,7 @@ double ConditionalTest::Serial::testOne()
     // Ho: successes >= 0.15
     // Ha: successes < 0.15
 
-    return gsl_cdf_binomial_P(_clusterInMask - _catInCount, 1 - _base->_probabilitySuccess, _clusterInMask - _catInCount);
+    return gsl_cdf_binomial_P(_clusterInMask - _catInCount, 1 - _base->_probabilitySuccess, _base->_emx->sampleSize() - _catCount);
 }
 
 
@@ -338,7 +340,7 @@ double ConditionalTest::Serial::testTwo()
     // Ho: successes = 0.85
     // Ha: successes > 0.85
 
-    return gsl_cdf_binomial_Q(_catInCount, _base->_probabilitySuccess, _catCount);
+    return gsl_cdf_binomial_Q(_catInCount, _base->_probabilitySuccess, _catCount - _catInCount);
 }
 
 

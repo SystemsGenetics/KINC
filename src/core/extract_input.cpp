@@ -71,6 +71,7 @@ EAbstractAnalyticInput::Type Extract::Input::type(int index) const
    case OutputFile: return Type::FileOut;
    case MinCorrelation: return Type::Double;
    case MaxCorrelation: return Type::Double;
+   case CSMPValueFilter: return Type::String;
    default: return Type::Boolean;
    }
 }
@@ -176,6 +177,23 @@ QVariant Extract::Input::data(int index, Role role) const
       case Role::Maximum: return 1;
       default: return QVariant();
       }
+   case CSMPValueFilter:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("filter-pvalue");
+      case Role::Title: return tr("Optional P-Value Filter:");
+      case Role::WhatsThis: return tr("An optional filter applied to the \
+                                       Condition-Specific Martrix provided \
+                                       above. The ouput network will not \
+                                       contain clusters with p-values above \
+                                       the given value for the given test labels.\
+                                       For example if you wanted to threshold at 1e-3 \
+                                       Subspecies Japonica, you would input \
+                                       \"1e-3,Subspecies,Japonica\", \
+                                       followed by \"::\" then any more p-value filters.");
+      case Role::Default: return "";
+      default: return QVariant();
+      }
    default: return QVariant();
    }
 }
@@ -205,6 +223,9 @@ void Extract::Input::set(int index, const QVariant& value)
       break;
    case MaxCorrelation:
       _base->_maxCorrelation = value.toFloat();
+       break;
+    case CSMPValueFilter:
+      _base->_csmPValueFilter = value.toString();
       break;
    }
 }

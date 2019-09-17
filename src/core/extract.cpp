@@ -130,6 +130,20 @@ void Extract::writeTextFormat(int index)
          continue;
       }
 
+      //exclude values filtered out by pValue
+      int notInclude = 0;
+      for(int i = 0; i < _csm->getTestCount(); i++)
+      {
+          if(!_csm || !PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)))
+          {
+            notInclude++;
+          }
+      }
+      if(notInclude > 0)
+      {
+          continue;
+      }
+
       // if cluster data exists then use it
       if ( _ccmPair.clusterSize() > 0 )
       {
@@ -462,9 +476,62 @@ void Extract::initialize()
    if(_csm)
    {
       _csmPair = CSM::Pair(_csm);
+      preparePValueFilter();
    }
 
    // initialize output file stream
    _stream.setDevice(_output);
    _stream.setRealNumberPrecision(8);
+}
+
+
+
+
+/*!
+ * Prepares the PValue filter for the csm.
+ */
+void Extract::preparePValueFilter()
+{
+    if(_csmPValueFilter != "")
+    {
+        QStringList filters = _csmPValueFilter.split("::");
+        for(int i = 0; i < filters.size(); i++)
+        {
+            QStringList data = filters.at(i).split(",");
+            _csmPValueFilterThresh.append(data.at(0).toFloat());
+            _csmPValueFilterFeatureNames.append(data.at(1));
+            _csmPValueFilterLabelNames.append(data.at(2));
+        }
+    }
+}
+
+
+
+
+/*!
+ * Filters the given data by the name of the label and the pvalue.
+ *
+ * @param labelName The test name for the label.
+ *
+ * @param pValue The pValue assosiated with the test.
+ *
+ * @return True if the test should be included, false otherwise.
+ */
+bool Extract::PValuefilter(QString labelName, float pValue)
+{
+    if(_csmPValueFilter != "")
+    {
+        auto names = labelName.split("__");
+        for(int i = 0; i < _csmPValueFilterFeatureNames.size(); i++)
+        {
+            if(names.at(0) == _csmPValueFilterFeatureNames.at(i) && names.at(1) == _csmPValueFilterLabelNames.at(i))
+            {
+                if(pValue > _csmPValueFilterThresh.at(i))
+                {
+                   return false;
+                }
+            }
+        }
+    }
+    return true;
 }

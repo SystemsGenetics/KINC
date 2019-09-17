@@ -24,6 +24,7 @@ public:
       ,OutputFile
       ,MinCorrelation
       ,MaxCorrelation
+      ,CSMPValueFilter
       ,Total
    };
    explicit Input(Extract* parent);

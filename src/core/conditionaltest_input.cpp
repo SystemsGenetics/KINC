@@ -49,7 +49,7 @@ EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
     case CCMINPUT           : return DataIn;
     case CMXINPUT           : return DataIn;
     case ANXINPUT           : return FileIn;
-    case CSMOUT            : return DataOut;
+    case CSMOUT             : return DataOut;
     case ProbabilitySuccess : return Double;
     case OVERRIDES          : return String;
     case TEST               : return String;
@@ -80,7 +80,7 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
     case CCMINPUT           : return ccmData(role);
     case CMXINPUT           : return cmxData(role);
     case ANXINPUT           : return anxData(role);
-    case CSMOUT            : return CSMData(role);
+    case CSMOUT             : return CSMData(role);
     case ProbabilitySuccess : return ProbabilitySuccessData(role);
     case OVERRIDES          : return overridesData(role);
     case TEST               : return testData(role);

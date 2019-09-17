@@ -30,6 +30,8 @@ public:
    virtual void process(const EAbstractAnalyticBlock* result) override final;
    virtual EAbstractAnalyticInput* makeInput() override final;
    virtual void initialize();
+   void preparePValueFilter();
+   bool PValuefilter(QString labelName, float pValue);
 private:
    /*!
    * Defines the output formats this analytic supports.
@@ -97,6 +99,27 @@ private:
     * The maximum (absolute) correlation threshold.
     */
    float _maxCorrelation {1.00f};
+   /*!
+    * Conditional-Specific Cluster Matrix name Filter input.
+    */
+   QString _csmNameFilter {""};
+   /*!
+    * Conditional-Specific Cluster Matrix name Filter data.
+    */
+   QVector<float> _csmNameFilterThresh;
+   QVector<QString> _csmNameFilterFeatureNames;
+   QVector<QString> _csmNameFilterLabelNames;
+   /*!
+    * Conditional-Specific Cluster Matrix PValue Filter input.
+    */
+   QString _csmPValueFilter {""};
+   /*!
+    * Conditional-Specific Cluster Matrix PValue Filter data.
+    */
+   QVector<float> _csmPValueFilterThresh;
+   QVector<QString> _csmPValueFilterFeatureNames;
+   QVector<QString> _csmPValueFilterLabelNames;
+
 };
 
 
