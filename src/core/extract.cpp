@@ -498,9 +498,9 @@ void Extract::preparePValueFilter()
         for(int i = 0; i < filters.size(); i++)
         {
             QStringList data = filters.at(i).split(",");
-            _csmPValueFilterThresh.append(data.at(0).toFloat());
-            _csmPValueFilterFeatureNames.append(data.at(1));
-            _csmPValueFilterLabelNames.append(data.at(2));
+            _csmPValueFilterThresh.append(data.at(2).toFloat());
+            _csmPValueFilterFeatureNames.append(data.at(0));
+            _csmPValueFilterLabelNames.append(data.at(1));
         }
     }
 }

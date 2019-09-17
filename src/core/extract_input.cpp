@@ -189,7 +189,7 @@ QVariant Extract::Input::data(int index, Role role) const
                                        the given value for the given test labels.\
                                        For example if you wanted to threshold at 1e-3 \
                                        Subspecies Japonica, you would input \
-                                       \"1e-3,Subspecies,Japonica\", \
+                                       \"Subspecies,Japonica,1e-3\", \
                                        followed by \"::\" then any more p-value filters.");
       case Role::Default: return "";
       default: return QVariant();
