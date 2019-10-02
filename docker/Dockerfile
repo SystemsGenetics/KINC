@@ -5,6 +5,11 @@ ARG NVIDIA_HEADLESS=0
 ARG ACE_REVISION="develop"
 ARG KINC_REVISION="master"
 
+ENV CUDADIR="/usr/local/cuda"
+ENV CPLUS_INCLUDE_PATH="${CUDADIR}/include:${CPLUS_INCLUDE_PATH}"
+ENV LIBRARY_PATH="${CUDADIR}/lib64:${LIBRARY_PATH}"
+ENV LD_LIBRARY_PATH="${CUDADIR}/lib64:${LD_LIBRARY_PATH}"
+
 # install package dependencies
 RUN apt-get update -qq \
 	&& apt-get install -qq -y \
@@ -34,6 +39,7 @@ RUN git clone -q https://github.com/kthohr/stats \
 # install ACE
 WORKDIR /opt
 
+ADD https://api.github.com/repos/SystemsGenetics/ACE/git/refs/heads/${ACE_REVISION} ace-version.json
 RUN git clone -q https://github.com/SystemsGenetics/ACE.git \
 	&& cd ACE/build \
 	&& git checkout -q ${ACE_REVISION} \
@@ -47,6 +53,7 @@ ENV LD_LIBRARY_PATH "/usr/local/lib:$LD_LIBRARY_PATH"
 # install KINC
 WORKDIR /opt
 
+ADD https://api.github.com/repos/SystemsGenetics/KINC/git/refs/heads/${KINC_REVISION} kinc-version.json
 RUN git clone -q https://github.com/SystemsGenetics/KINC.git \
 	&& cd KINC/build \
 	&& git checkout -q ${KINC_REVISION} \
