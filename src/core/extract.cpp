@@ -131,17 +131,20 @@ void Extract::writeTextFormat(int index)
       }
 
       //exclude values filtered out by pValue
-      int notInclude = 0;
-      for(int i = 0; i < _csm->getTestCount(); i++)
+      if(_csm)
       {
-          if(!_csm || !PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)))
+          int notInclude = 0;
+          for(int i = 0; i < _csm->getTestCount(); i++)
           {
-            notInclude++;
+              if(!PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)))
+              {
+                notInclude++;
+              }
           }
-      }
-      if(notInclude > 0)
-      {
-          continue;
+          if(notInclude > 0)
+          {
+              continue;
+          }
       }
 
       // if cluster data exists then use it
