@@ -1,5 +1,5 @@
 #if(GUI == 0)
-#include <ace/console/eapplication.h>
+#include <ace/cli/eapplication.h>
 #else
 #include <ace/gui/eapplication.h>
 #endif

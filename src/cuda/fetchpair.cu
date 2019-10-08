@@ -12,40 +12,20 @@
  * labeled as such, all other samples are labeled as cluster 0. The number of
  * clean samples is returned.
  *
- * @param numPairs
- * @param expressions
+ * @param x
+ * @param y
  * @param sampleSize
- * @param in_index
  * @param minExpression
- * @param out_N
- * @param out_labels
+ * @param labels
  */
-__global__
-void fetchPair(
-   int numPairs,
-   const float *expressions,
+__device__
+int fetchPair(
+   const float *x,
+   const float *y,
    int sampleSize,
-   const int2 *in_index,
    int minExpression,
-   int *out_N,
-   char *out_labels)
+   char *labels)
 {
-   int i = blockIdx.x * blockDim.x + threadIdx.x;
-
-   if ( i >= numPairs )
-   {
-      return;
-   }
-
-   // initialize variables
-   int2 index = in_index[i];
-   char *labels = &out_labels[i * sampleSize];
-   int *p_N = &out_N[i];
-
-   // index into gene expressions
-   const float *x = &expressions[index.x * sampleSize];
-   const float *y = &expressions[index.y * sampleSize];
-
    // label the pairwise samples
    int N = 0;
 
@@ -71,6 +51,6 @@ void fetchPair(
       }
    }
 
-   // save number of clean samples
-   *p_N = N;
+   // return number of clean samples
+   return N;
 }

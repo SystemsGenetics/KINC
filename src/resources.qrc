@@ -5,6 +5,7 @@
         <file>cuda/linalg.cu</file>
         <file>cuda/outlier.cu</file>
         <file>cuda/pearson.cu</file>
+        <file>cuda/similarity.cu</file>
         <file>cuda/sort.cu</file>
         <file>cuda/spearman.cu</file>
         <file>opencl/fetchpair.cl</file>

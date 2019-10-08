@@ -59,9 +59,9 @@ void Matrix::Pair::read(const Index& index) const
    clearClusters();
 
    // attempt to find cluster index within data object
-   qint64 clusterIndex;
-   if ( _cMatrix->_clusterSize > 0
-        && (clusterIndex = _cMatrix->findPair(index.indent(0),0,_cMatrix->_clusterSize - 1)) != -1 )
+   qint64 clusterIndex {_cMatrix->findPair(index.indent(0), 0, _cMatrix->_clusterSize - 1)};
+
+   if ( _cMatrix->_clusterSize > 0 && clusterIndex != -1 )
    {
       // pair found, read in all clusters
       _rawIndex = clusterIndex;

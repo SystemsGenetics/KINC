@@ -13,11 +13,7 @@ class Similarity::CUDA : public EAbstractAnalyticCUDA
 {
    Q_OBJECT
 public:
-   class FetchPair;
-   class GMM;
-   class Outlier;
-   class Pearson;
-   class Spearman;
+   class Kernel;
    class Worker;
    explicit CUDA(Similarity* parent);
    virtual std::unique_ptr<EAbstractAnalyticCUDAWorker> makeWorker() override final;

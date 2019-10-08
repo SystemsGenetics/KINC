@@ -57,7 +57,8 @@ void Similarity::CUDA::initialize()
       ":/cuda/outlier.cu",
       ":/cuda/gmm.cu",
       ":/cuda/pearson.cu",
-      ":/cuda/spearman.cu"
+      ":/cuda/spearman.cu",
+      ":/cuda/similarity.cu"
    };
 
    // create program

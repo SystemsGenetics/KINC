@@ -23,13 +23,7 @@ using namespace std;
 Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, ::CUDA::Program* program):
    _base(base),
    _baseCuda(baseCuda),
-   _kernels({
-      .fetchPair = CUDA::FetchPair(program),
-      .gmm = CUDA::GMM(program),
-      .outlier = CUDA::Outlier(program),
-      .pearson = CUDA::Pearson(program),
-      .spearman = CUDA::Spearman(program)
-   })
+   _kernel(program)
 {
    EDEBUG_FUNC(this,base,baseCuda,program);
 
@@ -40,16 +34,19 @@ Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, :
    int K {_base->_maxClusters};
 
    _buffers.in_index = ::CUDA::Buffer<int2>(1 * W);
-   _buffers.work_N = ::CUDA::Buffer<int>(1 * W, false);
-   _buffers.work_X = ::CUDA::Buffer<float2>(N * W, false);
-   _buffers.work_labels = ::CUDA::Buffer<qint8>(N * W, false);
-   _buffers.work_components = ::CUDA::Buffer<cu_component>(K * W, false);
-   _buffers.work_MP = ::CUDA::Buffer<float2>(K * W, false);
-   _buffers.work_counts = ::CUDA::Buffer<int>(K * W, false);
-   _buffers.work_logpi = ::CUDA::Buffer<float>(K * W, false);
-   _buffers.work_gamma = ::CUDA::Buffer<float>(N * K * W, false);
    _buffers.work_x = ::CUDA::Buffer<float>(N_pow2 * W, false);
    _buffers.work_y = ::CUDA::Buffer<float>(N_pow2 * W, false);
+   _buffers.work_gmm_data = ::CUDA::Buffer<float2>(N * W, false);
+   _buffers.work_gmm_labels = ::CUDA::Buffer<qint8>(N * W, false);
+   _buffers.work_gmm_pi = ::CUDA::Buffer<float>(K * W, false);
+   _buffers.work_gmm_mu = ::CUDA::Buffer<float2>(K * W, false);
+   _buffers.work_gmm_sigma = ::CUDA::Buffer<float4>(K * W, false);
+   _buffers.work_gmm_sigmaInv = ::CUDA::Buffer<float4>(K * W, false);
+   _buffers.work_gmm_normalizer = ::CUDA::Buffer<float>(K * W, false);
+   _buffers.work_gmm_MP = ::CUDA::Buffer<float2>(K * W, false);
+   _buffers.work_gmm_counts = ::CUDA::Buffer<int>(K * W, false);
+   _buffers.work_gmm_logpi = ::CUDA::Buffer<float>(K * W, false);
+   _buffers.work_gmm_gamma = ::CUDA::Buffer<float>(N * K * W, false);
    _buffers.out_K = ::CUDA::Buffer<qint8>(1 * W);
    _buffers.out_labels = ::CUDA::Buffer<qint8>(N * W);
    _buffers.out_correlations = ::CUDA::Buffer<float>(K * W);
@@ -98,133 +95,41 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::CUDA::Worker::execute(const 
 
       _buffers.in_index.write(_stream);
 
-      // execute fetch-pair kernel
-      _kernels.fetchPair.execute(
+      // execute similiarity kernel
+      _kernel.execute(
          _stream,
          _base->_globalWorkSize,
          _base->_localWorkSize,
+         (int) _base->_clusMethod,
+         (int) _base->_corrMethod,
+         _base->_removePreOutliers,
+         _base->_removePostOutliers,
          numPairs,
          &_baseCuda->_expressions,
          _base->_input->sampleSize(),
          &_buffers.in_index,
          _base->_minExpression,
-         &_buffers.work_N,
-         &_buffers.out_labels
+         _base->_minSamples,
+         _base->_minClusters,
+         _base->_maxClusters,
+         (int) _base->_criterion,
+         &_buffers.work_x,
+         &_buffers.work_y,
+         &_buffers.work_gmm_data,
+         &_buffers.work_gmm_labels,
+         &_buffers.work_gmm_pi,
+         &_buffers.work_gmm_mu,
+         &_buffers.work_gmm_sigma,
+         &_buffers.work_gmm_sigmaInv,
+         &_buffers.work_gmm_normalizer,
+         &_buffers.work_gmm_MP,
+         &_buffers.work_gmm_counts,
+         &_buffers.work_gmm_logpi,
+         &_buffers.work_gmm_gamma,
+         &_buffers.out_K,
+         &_buffers.out_labels,
+         &_buffers.out_correlations
       );
-
-      // execute outlier kernel (pre-clustering)
-      if ( _base->_removePreOutliers )
-      {
-         _kernels.outlier.execute(
-            _stream,
-            _base->_globalWorkSize,
-            _base->_localWorkSize,
-            numPairs,
-            &_baseCuda->_expressions,
-            _base->_input->sampleSize(),
-            &_buffers.in_index,
-            &_buffers.work_N,
-            &_buffers.out_labels,
-            &_buffers.out_K,
-            -7,
-            &_buffers.work_x,
-            &_buffers.work_y
-         );
-      }
-
-      // execute clustering kernel
-      if ( _base->_clusMethod == ClusteringMethod::GMM )
-      {
-         _kernels.gmm.execute(
-            _stream,
-            _base->_globalWorkSize,
-            _base->_localWorkSize,
-            numPairs,
-            &_baseCuda->_expressions,
-            _base->_input->sampleSize(),
-            &_buffers.in_index,
-            _base->_minSamples,
-            _base->_minClusters,
-            _base->_maxClusters,
-            (int) _base->_criterion,
-            &_buffers.work_X,
-            &_buffers.work_N,
-            &_buffers.work_labels,
-            &_buffers.work_components,
-            &_buffers.work_MP,
-            &_buffers.work_counts,
-            &_buffers.work_logpi,
-            &_buffers.work_gamma,
-            &_buffers.out_K,
-            &_buffers.out_labels
-         );
-      }
-      else
-      {
-         // set cluster size to 1 if clustering is disabled
-         for ( int i = 0; i < numPairs; ++i )
-         {
-            _buffers.out_K[i] = 1;
-         }
-
-         _buffers.out_K.write(_stream);
-      }
-
-      // execute outlier kernel (post-clustering)
-      if ( _base->_removePostOutliers )
-      {
-         _kernels.outlier.execute(
-            _stream,
-            _base->_globalWorkSize,
-            _base->_localWorkSize,
-            numPairs,
-            &_baseCuda->_expressions,
-            _base->_input->sampleSize(),
-            &_buffers.in_index,
-            &_buffers.work_N,
-            &_buffers.out_labels,
-            &_buffers.out_K,
-            -8,
-            &_buffers.work_x,
-            &_buffers.work_y
-         );
-      }
-
-      // execute correlation kernel
-      if ( _base->_corrMethod == CorrelationMethod::Pearson )
-      {
-         _kernels.pearson.execute(
-            _stream,
-            _base->_globalWorkSize,
-            _base->_localWorkSize,
-            numPairs,
-            &_baseCuda->_expressions,
-            _base->_input->sampleSize(),
-            &_buffers.in_index,
-            _base->_maxClusters,
-            &_buffers.out_labels,
-            _base->_minSamples,
-            &_buffers.out_correlations
-         );
-      }
-      else if ( _base->_corrMethod == CorrelationMethod::Spearman )
-      {
-         _kernels.spearman.execute(
-            _stream,
-            _base->_globalWorkSize,
-            _base->_localWorkSize,
-            numPairs,
-            &_baseCuda->_expressions,
-            _base->_input->sampleSize(),
-            &_buffers.in_index,
-            _base->_maxClusters,
-            &_buffers.out_labels,
-            _base->_minSamples,
-            &_buffers.work_x,
-            &_buffers.work_y,
-            &_buffers.out_correlations
-         );
-      }
 
       // read results from device
       _buffers.out_K.read(_stream);

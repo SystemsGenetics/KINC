@@ -32,12 +32,13 @@ DEFINES += \
 isEmpty(LINK_LAPACKE) { LINK_LAPACKE = 1 }
 isEmpty(LINK_MPI_CXX) { LINK_MPI_CXX = 1 }
 
-# Include directories
-isEmpty($$(CUDADIR)) {
-   CUDADIR = /usr/local/cuda
-}
-else {
-   CUDADIR = $$(CUDADIR)
+# Set CUDA directory if not already set, first from environment variable if it exists or a default
+# if it does not
+isEmpty(CUDADIR) {
+    CUDADIR = $$(CUDADIR)
+    isEmpty(CUDADIR) {
+        CUDADIR = /usr/local/cuda
+    }
 }
 
 INCLUDEPATH += $${CUDADIR}/include

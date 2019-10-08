@@ -45,11 +45,7 @@ SOURCES += \
    powerlaw.cpp \
    rmt_input.cpp \
    rmt.cpp \
-   similarity_cuda_fetchpair.cpp \
-   similarity_cuda_gmm.cpp \
-   similarity_cuda_outlier.cpp \
-   similarity_cuda_pearson.cpp \
-   similarity_cuda_spearman.cpp \
+   similarity_cuda_kernel.cpp \
    similarity_cuda_worker.cpp \
    similarity_cuda.cpp \
    similarity_input.cpp \
@@ -114,11 +110,7 @@ HEADERS += \
    powerlaw.h \
    rmt_input.h \
    rmt.h \
-   similarity_cuda_fetchpair.h \
-   similarity_cuda_gmm.h \
-   similarity_cuda_outlier.h \
-   similarity_cuda_pearson.h \
-   similarity_cuda_spearman.h \
+   similarity_cuda_kernel.h \
    similarity_cuda_worker.h \
    similarity_cuda.h \
    similarity_input.h \

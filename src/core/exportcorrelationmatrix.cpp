@@ -90,8 +90,8 @@ void ExportCorrelationMatrix::process(const EAbstractAnalyticBlock*)
          }
       }
 
-      // otherwise use expression data
-      else
+      // otherwise use expression data if provided
+      else if ( _emx )
       {
          // read in gene expressions
          ExpressionMatrix::Gene gene1(_emx);
@@ -114,6 +114,15 @@ void ExportCorrelationMatrix::process(const EAbstractAnalyticBlock*)
                numSamples++;
             }
          }
+      }
+
+      // otherwise throw an error
+      else
+      {
+         E_MAKE_EXCEPTION(e);
+         e.setTitle(tr("Invalid Input"));
+         e.setDetails(tr("Expression Matrix was not provided but Cluster Matrix is missing sample data."));
+         throw e;
       }
 
       // write cluster to output file
@@ -171,7 +180,7 @@ void ExportCorrelationMatrix::initialize()
    EDEBUG_FUNC(this);
 
    // make sure input/output arguments are valid
-   if ( !_emx || !_ccm || !_cmx || !_output )
+   if ( !_ccm || !_cmx || !_output )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Invalid Argument"));

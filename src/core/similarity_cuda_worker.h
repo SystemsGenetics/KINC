@@ -1,11 +1,7 @@
 #ifndef SIMILARITY_CUDA_WORKER_H
 #define SIMILARITY_CUDA_WORKER_H
 #include "similarity_cuda.h"
-#include "similarity_cuda_fetchpair.h"
-#include "similarity_cuda_gmm.h"
-#include "similarity_cuda_outlier.h"
-#include "similarity_cuda_pearson.h"
-#include "similarity_cuda_spearman.h"
+#include "similarity_cuda_kernel.h"
 
 
 
@@ -32,32 +28,28 @@ private:
     */
    ::CUDA::Stream _stream;
    /*!
-    * Structure of this worker's kernels.
+    * This worker's kernel.
     */
-   struct
-   {
-      CUDA::FetchPair fetchPair;
-      CUDA::GMM gmm;
-      CUDA::Outlier outlier;
-      CUDA::Pearson pearson;
-      CUDA::Spearman spearman;
-   } _kernels;
+    CUDA::Kernel _kernel;
    /*!
     * Structure of this worker's buffers.
     */
    struct
    {
       ::CUDA::Buffer<int2> in_index;
-      ::CUDA::Buffer<int> work_N;
-      ::CUDA::Buffer<float2> work_X;
-      ::CUDA::Buffer<qint8> work_labels;
-      ::CUDA::Buffer<cu_component> work_components;
-      ::CUDA::Buffer<float2> work_MP;
-      ::CUDA::Buffer<int> work_counts;
-      ::CUDA::Buffer<float> work_logpi;
-      ::CUDA::Buffer<float> work_gamma;
       ::CUDA::Buffer<float> work_x;
       ::CUDA::Buffer<float> work_y;
+      ::CUDA::Buffer<float2> work_gmm_data;
+      ::CUDA::Buffer<qint8> work_gmm_labels;
+      ::CUDA::Buffer<float> work_gmm_pi;
+      ::CUDA::Buffer<float2> work_gmm_mu;
+      ::CUDA::Buffer<float4> work_gmm_sigma;
+      ::CUDA::Buffer<float4> work_gmm_sigmaInv;
+      ::CUDA::Buffer<float> work_gmm_normalizer;
+      ::CUDA::Buffer<float2> work_gmm_MP;
+      ::CUDA::Buffer<int> work_gmm_counts;
+      ::CUDA::Buffer<float> work_gmm_logpi;
+      ::CUDA::Buffer<float> work_gmm_gamma;
       ::CUDA::Buffer<qint8> out_K;
       ::CUDA::Buffer<qint8> out_labels;
       ::CUDA::Buffer<float> out_correlations;

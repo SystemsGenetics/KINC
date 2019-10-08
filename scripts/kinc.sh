@@ -48,7 +48,8 @@ fi
 
 # import emx
 if [[ ${DO_IMPORT_EMX} = 1 ]]; then
-	env time -f "%e" kinc run import-emx \
+	env time -f "%e" \
+	kinc run import-emx \
 		--input ${INFILE} \
 		--output ${EMX_FILE} \
 		--nan NA
@@ -68,7 +69,9 @@ if [[ ${DO_SIMILARITY} = 1 ]]; then
 	MAXCORR=1
 	LSIZE=32
 
-	env time -f "%e" mpirun -np ${NP} kinc run similarity \
+	env time -f "%e" \
+	mpirun -np ${NP} \
+	kinc run similarity \
 		--input ${EMX_FILE} \
 		--ccm ${CCM_FILE} \
 		--cmx ${CMX_FILE} \
@@ -92,7 +95,9 @@ if [[ ${DO_CORRPOWER} = 1 ]]; then
 	ALPHA=0.001
 	POWER=0.8
 
-	env time -f "%e" mpirun -np ${NP} kinc run corrpower \
+	env time -f "%e" \
+	mpirun -np ${NP} \
+	kinc run corrpower \
 		--ccm-in ${CCM_FILE} \
 		--cmx-in ${CMX_FILE} \
 		--ccm-out ${CCM_OUT_FILE} \
@@ -103,7 +108,8 @@ fi
 
 # export cmx
 if [[ ${DO_EXPORT_CMX} = 1 ]]; then
-	env time -f "%e" kinc run export-cmx \
+	env time -f "%e" \
+	kinc run export-cmx \
 		--emx ${EMX_FILE} \
 		--ccm ${CCM_FILE} \
 		--cmx ${CMX_FILE} \
@@ -112,7 +118,8 @@ fi
 
 # threshold
 if [[ ${DO_THRESHOLD} = 1 ]]; then
-	env time -f "%e" kinc run rmt \
+	env time -f "%e" \
+	kinc run rmt \
 		--input ${CMX_FILE} \
 		--log ${RMT_FILE} \
 		--threads ${NP}
@@ -124,7 +131,8 @@ if [[ ${DO_EXTRACT} = 1 ]]; then
 	MAXCORR=1
 	NET_FILE="${DIRNAME}/${BASENAME}.th000.coexpnet.txt"
 
-	env time -f "%e" kinc run extract \
+	env time -f "%e" \
+	kinc run extract \
 		--emx ${EMX_FILE} \
 		--ccm ${CCM_FILE} \
 		--cmx ${CMX_FILE} \

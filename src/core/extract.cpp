@@ -75,8 +75,6 @@ void Extract::writeTextFormat(int index)
    // initialize workspace
    QString sampleMask(_ccm->sampleSize(), '0');
 
-
-
    // write header to file
    if ( index == 0 )
    {
@@ -180,8 +178,8 @@ void Extract::writeTextFormat(int index)
          }
       }
 
-      // otherwise use expression data
-      else
+      // otherwise use expression data if provided
+      else if ( _emx )
       {
          // read in gene expressions
          ExpressionMatrix::Gene gene1(_emx);
@@ -206,7 +204,14 @@ void Extract::writeTextFormat(int index)
          }
       }
 
-
+      // otherwise throw an error
+      else
+      {
+         E_MAKE_EXCEPTION(e);
+         e.setTitle(tr("Invalid Input"));
+         e.setDetails(tr("Expression Matrix was not provided but Cluster Matrix is missing sample data."));
+         throw e;
+      }
 
       // write cluster to output file
       _stream
@@ -242,6 +247,7 @@ void Extract::writeTextFormat(int index)
       throw e;
    }
 }
+
 
 
 
@@ -377,8 +383,8 @@ void Extract::writeGraphMLFormat(int index)
          }
       }
 
-      // otherwise use expression data
-      else
+      // otherwise use expression data if provided
+      else if ( _emx )
       {
          // read in gene expressions
          ExpressionMatrix::Gene gene1(_emx);
@@ -399,6 +405,15 @@ void Extract::writeGraphMLFormat(int index)
                sampleMask[i] = '1';
             }
          }
+      }
+
+      // otherwise throw an error
+      else
+      {
+         E_MAKE_EXCEPTION(e);
+         e.setTitle(tr("Invalid Input"));
+         e.setDetails(tr("Expression Matrix was not provided but Cluster Matrix is missing sample data."));
+         throw e;
       }
 
       // write edge to file
@@ -457,7 +472,7 @@ void Extract::initialize()
    EDEBUG_FUNC(this);
 
    // make sure input/output arguments are valid
-   if ( !_emx || !_cmx || !_output )
+   if ( !_cmx || !_output )
    {
       E_MAKE_EXCEPTION(e);
       e.setTitle(tr("Invalid Argument"));
