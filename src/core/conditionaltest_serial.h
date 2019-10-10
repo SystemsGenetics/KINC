@@ -11,7 +11,7 @@ public:
    virtual std::unique_ptr<EAbstractAnalyticBlock> execute(const EAbstractAnalyticBlock* block) override final;
 
     //helper functions
-    int test(CorrelationMatrix::Pair cmxPair, CCMatrix::Pair& ccmPair, qint32 clusterIndex, qint32& testIndex, qint32 featureIndex, qint32 labelIndex, QVector<QVector<double>>& pValues);
+    int test(CCMatrix::Pair& ccmPair, qint32 clusterIndex, qint32& testIndex, qint32 featureIndex, qint32 labelIndex, QVector<QVector<double>>& pValues);
     int prepAnxData(QString testLabel, int dataIndex);
     bool isEmpty(QVector<QVector<double>>& matrix);
     int clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label);

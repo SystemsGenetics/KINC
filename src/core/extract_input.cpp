@@ -129,7 +129,7 @@ QVariant Extract::Input::data(int index, Role role) const
    case ConditionSpecificClusterData :
        switch (role)
        {
-       case Role::CommandLineName: return QString("CSM");
+       case Role::CommandLineName: return QString("csm");
        case Role::Title: return tr("Optional Condition Specific Cluster Matrix:");
       case WhatsThis      : return tr("Condition-Specific Martrix, contains \
                                        a matrix of clusters and their corrosponding\

@@ -32,6 +32,7 @@ public:
    virtual void initialize();
    void preparePValueFilter();
    bool PValuefilter(QString labelName, float pValue);
+   bool pValueFilterCheck();
 private:
    /*!
    * Defines the output formats this analytic supports.

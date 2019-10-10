@@ -101,12 +101,12 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                         {
                             labelIndex = 1;
                         }
-                        test(cmxPair, ccmPair, clusterIndex, testIndex, featureIndex, labelIndex, pValues);
+                        test(ccmPair, clusterIndex, testIndex, featureIndex, labelIndex, pValues);
                     }
                     //if only the feature needs testing (no sub labels)
                     else
                     {
-                        test(cmxPair,ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues);
+                        test(ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues);
                     }
                 }
             }
@@ -241,15 +241,14 @@ int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterInd
 *
 * @return The test that was just conducted.
 */
-int ConditionalTest::Serial::test(CorrelationMatrix::Pair cmxPair,
-                             CCMatrix::Pair& ccmPair,
+int ConditionalTest::Serial::test(CCMatrix::Pair& ccmPair,
                              qint32 clusterIndex,
                              qint32& testIndex,
                              qint32 featureIndex,
                              qint32 labelIndex,
                              QVector<QVector<double>>& pValues)
 {
-    EDEBUG_FUNC(this, &cmxPair,&ccmPair, clusterIndex, &testIndex, featureIndex, labelIndex, &pValues);
+    EDEBUG_FUNC(this,&ccmPair, clusterIndex, &testIndex, featureIndex, labelIndex, &pValues);
 
     //get informatiopn on the mask
     clusterInfo(ccmPair, clusterIndex, _base->_features.at(featureIndex).at(labelIndex));

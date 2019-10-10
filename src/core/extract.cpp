@@ -131,6 +131,7 @@ void Extract::writeTextFormat(int index)
       //exclude values filtered out by pValue
       if(_csm)
       {
+          pValueFilterCheck();
           int notInclude = 0;
           for(int i = 0; i < _csm->getTestCount(); i++)
           {
@@ -548,8 +549,48 @@ bool Extract::PValuefilter(QString labelName, float pValue)
                 {
                    return false;
                 }
+                else
+                {
+                    return true;
+                }
             }
         }
     }
     return true;
+}
+
+
+
+
+
+/*!
+ * Checks to make sure the filter names are in the tests names. If they
+ * are not, it throws an error.
+ *
+ * @return True if the name apears somewhere in the test names, false
+ *         otherwise.
+ */
+bool Extract::pValueFilterCheck()
+{
+    if(_csmPValueFilter == "")
+    {
+        return true;
+    }
+
+    for(int i = 0; i < _csm->getTestCount(); i++)
+    {
+        auto names = _csm->getTestName(i).split("__");
+        for(int j = 0; j < _csmPValueFilterFeatureNames.size(); j++)
+        {
+            if(names.at(0) == _csmPValueFilterFeatureNames.at(j) && names.at(1) == _csmPValueFilterLabelNames.at(j))
+            {
+                return true;
+            }
+        }
+    }
+    E_MAKE_EXCEPTION(e);
+    e.setTitle(tr("Invalid Input"));
+    e.setDetails(tr("Invalid filter name given."));
+    throw e;
+    return false;
 }
