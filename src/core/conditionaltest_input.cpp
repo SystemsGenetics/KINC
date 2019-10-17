@@ -293,7 +293,7 @@ QVariant ConditionalTest::Input::CSMData(Role role) const
     EDEBUG_FUNC(this, role);
     switch(role)
     {
-    case CommandLineName: return QString("out");
+    case CommandLineName: return QString("output");
     case Title          : return tr("Output Condition-Specific Matrix:");
     case WhatsThis      : return tr("Condition-Specific Martrix, contains \
                                      a matrix of clusters and their corrosponding\
