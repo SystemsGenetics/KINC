@@ -98,7 +98,7 @@ QVariant Extract::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("emx");
       case Role::Title: return tr("Input Expression Matrix:");
-      case WhatsThis: return tr("A data file created by KINC containing the gene expression matrix created by the Import Expression Matrix analytic.");
+      case Role::WhatsThis: return tr("A data file created by KINC containing the gene expression matrix created by the Import Expression Matrix analytic.");
       case Role::DataType: return DataFactory::ExpressionMatrixType;
       default: return QVariant();
       }
@@ -107,7 +107,7 @@ QVariant Extract::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("ccm");
       case Role::Title: return tr("Input Cluster Matrix:");
-      case WhatsThis: return tr("A data file created by KINC containing the cluster sample masks created by the similarity analytic.");
+      case Role::WhatsThis: return tr("A data file created by KINC containing the cluster sample masks created by the similarity analytic.");
       case Role::DataType: return DataFactory::CCMatrixType;
       default: return QVariant();
       }
@@ -116,7 +116,7 @@ QVariant Extract::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("cmx");
       case Role::Title: return tr("Input Correlation Matrix:");
-      case WhatsThis: return tr("A data file created by KINC containing the correlation matrix values created by the similarity analytic.");
+      case Role::WhatsThis: return tr("A data file created by KINC containing the correlation matrix values created by the similarity analytic.");
       case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
@@ -125,7 +125,7 @@ QVariant Extract::Input::data(int index, Role role) const
        {
        case Role::CommandLineName: return QString("csm");
        case Role::Title: return tr("Optional Condition Specific Cluster Matrix:");
-      case WhatsThis: return tr("Condition-Specific Martrix, contains a matrix of clusters and their corrosponding p-values.");
+      case Role::WhatsThis: return tr("Condition-Specific Martrix, contains a matrix of clusters and their corrosponding p-values.");
        case Role::DataType: return DataFactory::CSMatrixType;
        default: return QVariant();
        }
