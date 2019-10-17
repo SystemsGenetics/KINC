@@ -18,7 +18,7 @@ public:
    {
       ExpressionData = 0
       ,ClusterData
-      ,CorrelationData 
+      ,CorrelationData
       ,ConditionSpecificClusterData
       ,OutputFormatArg
       ,OutputFile

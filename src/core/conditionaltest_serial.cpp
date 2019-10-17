@@ -56,18 +56,18 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
     {
         //reads the first value in the ccm
 
-        if(ccmIndex == start)
+        if ( ccmIndex == start )
         {
             ccmPair.read(index);
             cmxPair.read(ccmPair.index());
         }
-        if((ccmPair.index().getX() != 1 && ccmPair.index().getY()!= 0) || ccmIndex != start)
+        if ( (ccmPair.index().getX() != 1 && ccmPair.index().getY()!= 0) || ccmIndex != start )
         {
             ccmPair.readNext();
             cmxPair.read(ccmPair.index());
         }
         //if the first one isnt in the cluster we should not count it.
-        if(ccmPair.clusterSize() == 0)
+        if ( ccmPair.clusterSize() == 0 )
         {
             size++;
             continue;
@@ -78,26 +78,26 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
         pValues.resize(ccmPair.clusterSize());
 
         //for each cluster in the pair, run the binomial and linear regresion tests.
-        for(qint32 clusterIndex = 0; clusterIndex < ccmPair.clusterSize(); clusterIndex++)
+        for ( qint32 clusterIndex = 0; clusterIndex < ccmPair.clusterSize(); clusterIndex++ )
         {
             //resize for room for each test.
             pValues[clusterIndex].resize(_base->_numTests);
 
-            for(qint32 featureIndex = 0, testIndex = 0; featureIndex < _base->_features.size(); featureIndex++)
+            for ( qint32 featureIndex = 0, testIndex = 0; featureIndex < _base->_features.size(); featureIndex++ )
             {
-                if(_base->_testType.at(featureIndex) == NONE || _base->_testType.at(featureIndex) == UNKNOWN)
+                if ( _base->_testType.at(featureIndex) == NONE || _base->_testType.at(featureIndex) == UNKNOWN )
                 {
                     continue;
                 }
 
-                for(qint32 labelIndex = 0; labelIndex < _base->_features.at(featureIndex).size(); labelIndex++)
+                for ( qint32 labelIndex = 0; labelIndex < _base->_features.at(featureIndex).size(); labelIndex++ )
                 {
 
                     prepAnxData(_base->_features.at(featureIndex).at(labelIndex), featureIndex);
                     //if there are sub labels to test for the feature
-                    if(_base->_features.at(featureIndex).size() > 1)
+                    if ( _base->_features.at(featureIndex).size() > 1 )
                     {
-                        if(labelIndex == 0)
+                        if ( labelIndex == 0 )
                         {
                             labelIndex = 1;
                         }
@@ -111,7 +111,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                 }
             }
         }
-        if(!isEmpty(pValues))
+        if ( !isEmpty(pValues) )
         {
             CSMPair pair;
             pair.pValues = pValues;
@@ -145,11 +145,11 @@ int ConditionalTest::Serial::prepAnxData(QString testLabel, int dataIndex)
     _catCount = 0;
     _anxData.resize(_base->_data.at(dataIndex).size());
     //populate array with annotation data
-    for(int j = 0; j < _base->_data.at(dataIndex).size(); j++)
+    for ( int j = 0; j < _base->_data.at(dataIndex).size(); j++ )
     {
         _anxData[j] = _base->_data.at(dataIndex).at(j).toString();
         //if data is the same as the test label add one to the catagory counter
-        if(_anxData[j] == testLabel)
+        if ( _anxData[j] == testLabel )
         {
             _catCount++;
         }
@@ -174,7 +174,7 @@ bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
     int index = 0;
     while(index < matrix.size())
     {
-        if(!matrix.at(index++).isEmpty())
+        if ( !matrix.at(index++).isEmpty() )
         {
             return false;
         }
@@ -200,17 +200,17 @@ int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterInd
     _catCount = _clusterInMask = _catInCount = 0;
 
     //look through all the samples in the mask
-    for(qint32 i = 0; i < _base->_emx->sampleSize(); i++)
+    for ( qint32 i = 0; i < _base->_emx->sampleSize(); i++ )
     {
         //if the sample label matches with the given label'
-        if(_anxData.at(i) == label)
+        if ( _anxData.at(i) == label )
         {
             _catCount++;
         }
-        if(ccmPair.at(clusterIndex, i) == 1)
+        if ( ccmPair.at(clusterIndex, i) == 1 )
         {
             _clusterInMask++;
-            if(_anxData.at(i) == label)
+            if ( _anxData.at(i) == label )
             {
                    _catInCount++;
             }

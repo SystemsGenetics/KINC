@@ -60,7 +60,7 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
        ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
     }
 
-    if(result->index() == 0)
+    if ( result->index() == 0 )
     {
         _out->setTestCount(_numTests);
     }
@@ -83,7 +83,7 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
            {
                //add each cluster into the CSM
                CSMPair.addCluster(1, _numTests);
-               for(int k = 0; k < resultBlock->pairs().at(i).pValues.at(j).size(); k++)
+               for ( int k = 0; k < resultBlock->pairs().at(i).pValues.at(j).size(); k++ )
                {
                    CSMPair.at(j, k) = resultBlock->pairs().at(i).pValues.at(j).at(k);
                }
@@ -300,7 +300,7 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
     //the file can be a csv or a tab delimited ANX
     //default is tab diliniated
     char split = ',';
-    if(line.contains('\t'))
+    if ( line.contains('\t') )
     {
         split = '\t';
     }
@@ -312,7 +312,7 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
     QVector<int> changed;
 
     //put the column names into the anxdata array, that will be later put into the meta data
-    for(int i = 0; i < words.size(); i++)
+    for ( int i = 0; i < words.size(); i++ )
     {
       anxdata.append(QVector<QString>());
       anxdata[i].append(words[i]);
@@ -323,20 +323,20 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
 
     configureTests(dataTestType);
 
-    for(int i = 1; i < _anxNumLines; i++)
+    for ( int i = 1; i < _anxNumLines; i++ )
     {
         line = _stream.readLine();
         //splits the file along the commas
         auto words2 = line.split(split, QString::SkipEmptyParts, Qt::CaseInsensitive);
 
         //add the data to our arrays
-        for(int j = 0; j < words2.size(); j++)
+        for ( int j = 0; j < words2.size(); j++ )
         {
             data[j].append(words2[j]);
-            if(dataTestType.at(j) == CATEGORICAL)
+            if ( dataTestType.at(j) == CATEGORICAL )
             {
                 //this will add treatments types, leaf types, and any other types into the meta data
-                if(!anxdata.at(j).contains(words2[j]))
+                if ( !anxdata.at(j).contains(words2[j]) )
                 {
                     anxdata[j].append(words2[j]);
                     changed[j] = 0;
@@ -346,21 +346,21 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
     }
 
     //we need to change the test types here if the user has overridden them
-    for(int i = 0; i < _override.size(); i++)
+    for ( int i = 0; i < _override.size(); i++ )
     {
-        for(int j = 0; j < dataTestType.size(); j++)
+        for ( int j = 0; j < dataTestType.size(); j++ )
         {
-            if(anxdata.at(j).at(0) == _override.at(i).at(0))
+            if ( anxdata.at(j).at(0) == _override.at(i).at(0) )
             {
-                if(_override.at(i).at(1) == "CATEGORICAL")
+                if ( _override.at(i).at(1) == "CATEGORICAL" )
                 {
                     dataTestType[j] = CATEGORICAL;
                 }
-                if(_override.at(i).at(1) == "ORDINAL")
+                if ( _override.at(i).at(1) == "ORDINAL" )
                 {
                     dataTestType[j] = ORDINAL;
                 }
-                if(_override.at(i).at(1) == "QUANTATATIVE")
+                if ( _override.at(i).at(1) == "QUANTATATIVE" )
                 {
                     dataTestType[j] = QUANTATATIVE;
                 }
@@ -368,17 +368,17 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
         }
     }
     //omit the tests that the user has chosen to omit.
-    for(int j = 0; j < anxdata.size(); j++)
+    for ( int j = 0; j < anxdata.size(); j++ )
     {
         int check = 0;
-        for(int k = 0; k < _Test.size(); k++)
+        for ( int k = 0; k < _Test.size(); k++ )
         {
-            if(anxdata.at(j).at(0) == _Test.at(k))
+            if ( anxdata.at(j).at(0) == _Test.at(k) )
             {
                 check = 1;
             }
         }
-        if(check == 0 || dataTestType.at(j) == QUANTATATIVE || dataTestType.at(j) == ORDINAL)
+        if ( check == 0 || dataTestType.at(j) == QUANTATATIVE || dataTestType.at(j) == ORDINAL )
         {
             dataTestType[j] = NONE;
         }
@@ -400,41 +400,41 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
     //Counts here for an aproximation for what test type it should be.
     QVector<QVector<qint32>> counts;
     counts.resize(dataTestType.size());
-    for(int i = 0 ; i < counts.size(); i++)
+    for ( int i = 0 ; i < counts.size(); i++ )
     {
         counts[i].resize(3);
     }
 
     bool ok;
     QString line;
-    for(int i = 0; i < 10; i++)
+    for ( int i = 0; i < 10; i++ )
     {
         //read in the line
         line = _stream.readLine();
 
         //splits the file along the commas or tabs depending
         char split = '\t';
-        if(line.contains(','))
+        if ( line.contains(',') )
         {
             split = ',';
         }
 
         auto words = line.split(split, QString::SkipEmptyParts, Qt::CaseInsensitive);
-        for(int i = 0; i < words.size(); i++)
+        for ( int i = 0; i < words.size(); i++ )
         {
             //it most likeley a double and should be considered quantatative.
             //will look for (at laest one number)(a '.')(at laest one number)
-            if(words[i].contains(QRegExp("\\d+\\.\\d+")))
+            if ( words[i].contains(QRegExp("\\d+\\.\\d+")) )
             {
-                if(i < dataTestType.size())
+                if ( i < dataTestType.size() )
                 {
                    counts[i][QUANTATATIVE]--;
                 }
             }
             //it is most likely an integer and should ne considered Ordinal.
-            else if(words[i].toInt(&ok) && ok)
+            else if ( words[i].toInt(&ok) && ok )
             {
-                if(i < dataTestType.size())
+                if ( i < dataTestType.size() )
                 {
                    counts[i][ORDINAL]++;
                 }
@@ -442,16 +442,16 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
             //if its neistartingPointther on of those than its a string.
             else
             {
-                if(i < dataTestType.size())
+                if ( i < dataTestType.size() )
                 {
                    counts[i][CATEGORICAL]++;
                 }
             }
         }
     }
-    for(int i = 0; i < counts.size() ; i++)
+    for ( int i = 0; i < counts.size() ; i++ )
     {
-        if(counts.at(i).at(QUANTATATIVE) < 0)
+        if ( counts.at(i).at(QUANTATATIVE) < 0 )
         {
             dataTestType[i] = QUANTATATIVE;
         }
@@ -477,12 +477,12 @@ int ConditionalTest::max(QVector<qint32> &counts) const
 {
     EDEBUG_FUNC(this,&counts);
     int maxnum = 0;
-    if(counts.size() > 0)
+    if ( counts.size() > 0 )
     {
         qint32 max = counts.at(0);
-        for(int i = 1; i < counts.size(); i++)
+        for ( int i = 1; i < counts.size(); i++ )
         {
-            if(counts.at(i) > max)
+            if ( counts.at(i) > max )
             {
                 max = counts.at(i);
                 maxnum = i;
@@ -524,11 +524,11 @@ void ConditionalTest::override()
 {
     EDEBUG_FUNC(this);
     auto words = _testOverride.split(",", QString::SkipEmptyParts, Qt::CaseInsensitive).toVector();
-    for(int i = 0; i < words.size(); i++)
+    for ( int i = 0; i < words.size(); i++ )
     {
         _override.append(QVector<QString>());
         auto word = words.at(i).split(":");
-        for(auto item : word)
+        for ( auto item : word )
         {
             _override[i].append(item);
         }
@@ -544,11 +544,11 @@ void ConditionalTest::override()
 QString ConditionalTest::testNames()
 {
     QString string;
-    for(int i = 0; i < _features.size(); i++)
+    for ( int i = 0; i < _features.size(); i++ )
     {
-        if(_testType.at(i) == CATEGORICAL)
+        if ( _testType.at(i) == CATEGORICAL )
         {
-            for(int j = 1; j < _features.at(i).size(); j++)
+            for ( int j = 1; j < _features.at(i).size(); j++ )
             {
                 string += _features.at(i).at(0);
                 string += "__";
@@ -593,13 +593,13 @@ void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,Q
     featureInfo.resize(anxData.size());
 
     //Meta Data for Features.
-    for(int i = 0; i < anxData.size(); i++)
+    for ( int i = 0; i < anxData.size(); i++ )
     {
         Features.append(anxData.at(i).at(0));
     }
 
     //Meta Data for the test types of the catagories.
-    for(int i = 0; i < featureInfo.size(); i++)
+    for ( int i = 0; i < featureInfo.size(); i++ )
     {
         switch(testType.at(i))
         {
@@ -617,18 +617,18 @@ void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,Q
     }
 
     //Meta Data for the sub catagories.
-    for(int i = 0; i < anxData.size(); i++)
+    for ( int i = 0; i < anxData.size(); i++ )
     {
-        for(int j = 0; j < anxData.at(i).size(); j++)
+        for ( int j = 0; j < anxData.at(i).size(); j++ )
         {
             featureInfo[i].append(anxData.at(i).at(j));
         }
     }
 
     //Meta Data for all the data in the annotation matrix.
-    for(int i = 0; i < data.size(); i++)
+    for ( int i = 0; i < data.size(); i++ )
     {
-        for(int j = 0; j < data.at(i).size(); j++)
+        for ( int j = 0; j < data.at(i).size(); j++ )
         {
             Data[i].append(data.at(i).at(j).toString());
         }

@@ -89,9 +89,7 @@ QVariant ImportCorrelationMatrix::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("ccm");
       case Role::Title: return tr("Output Cluster Matrix:");
-      case WhatsThis      : return tr("A data file created by KINC containing \
-                                      the cluster sample masks created by \
-                                      the similarity analytic.");
+      case WhatsThis: return tr("A data file created by KINC containing the cluster sample masks created by the similarity analytic.");
       case Role::DataType: return DataFactory::CCMatrixType;
       default: return QVariant();
       }
@@ -100,9 +98,7 @@ QVariant ImportCorrelationMatrix::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("cmx");
       case Role::Title: return tr("Output Correlation Matrix:");
-      case WhatsThis      : return tr("A data file created by KINC containing \
-                                       the correlation matrix values created by \
-                                       the similarity analytic.");
+      case WhatsThis: return tr("A data file created by KINC containing the correlation matrix values created by the similarity analytic.");
       case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }

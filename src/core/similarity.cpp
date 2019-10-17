@@ -48,7 +48,7 @@ int Similarity::nextPower2(int n)
  */
 qint64 Similarity::totalPairs(const ExpressionMatrix* emx)
 {
-   //EDEBUG_FUNC(this,emx);
+   EDEBUG_FUNC(this,emx);
 
    return static_cast<qint64>(emx->geneSize()) * (emx->geneSize() - 1) / 2;
 }

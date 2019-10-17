@@ -25,15 +25,15 @@ void CSM::initialize(const EMetaArray& features, const QVector<EMetaArray>& feat
     {
        E_MAKE_EXCEPTION(e);
        e.setTitle(tr("Domain Error"));
-       if(features.isEmpty())
+       if ( features.isEmpty() )
        {
            e.setDetails(tr("No Features Provided"));
        }
-       else if(featureInfo.isEmpty())
+       else if ( featureInfo.isEmpty() )
        {
            e.setDetails(tr("No Feature Info Provided"));
        }
-       else if(data.isEmpty())
+       else if ( data.isEmpty() )
        {
            e.setDetails(tr("No Data Provided"));
        }
@@ -48,18 +48,18 @@ void CSM::initialize(const EMetaArray& features, const QVector<EMetaArray>& feat
     int num_tests = 0;
 
     //set the feature information in the meta data
-    for(int i = 0; i < features.size(); i++)
+    for ( int i = 0; i < features.size(); i++ )
     {
         //set the test type
         type.insert("Type", featureInfo.at(i).at(0));
 
         //set the labels
-        if(featureInfo.at(i).size() > 2)
+        if ( featureInfo.at(i).size() > 2 )
         {
-            for(int j = 2; j < featureInfo.at(i).size(); j++)
+            for ( int j = 2; j < featureInfo.at(i).size(); j++ )
             {
                 labels.append(featureInfo.at(i).at(j));
-                if(featureInfo.at(i).at(0).toString() != "None" && featureInfo.at(i).at(0).toString() != "Unknown")
+                if ( featureInfo.at(i).at(0).toString() != "None" && featureInfo.at(i).at(0).toString() != "Unknown" )
                 {
                     ++num_tests;
                 }
@@ -68,7 +68,7 @@ void CSM::initialize(const EMetaArray& features, const QVector<EMetaArray>& feat
         }
         else
         {
-            if(featureInfo.at(i).at(0).toString() != "None" && featureInfo.at(i).at(0).toString() != "Unknown")
+            if ( featureInfo.at(i).at(0).toString() != "None" && featureInfo.at(i).at(0).toString() != "Unknown" )
             {
                 ++num_tests;
             }
@@ -87,7 +87,7 @@ void CSM::initialize(const EMetaArray& features, const QVector<EMetaArray>& feat
 
     //add the sample names
     EMetaArray sampleNames;
-    for(auto sample : data.at(0))
+    for ( auto sample : data.at(0) )
     {
         sampleNames.append(sample);
     }
@@ -95,7 +95,7 @@ void CSM::initialize(const EMetaArray& features, const QVector<EMetaArray>& feat
 
     //add all the data for the annotation array, exept the sample names
     EMetaObject Data;
-    for(int i = 0; i < features.size(); i++)
+    for ( int i = 0; i < features.size(); i++ )
     {
         Data.insert(features.at(i).toString(), data.at(i));
     }
@@ -108,7 +108,7 @@ void CSM::initialize(const EMetaArray& features, const QVector<EMetaArray>& feat
 
     EMetaArray namesOfTests;
     auto names = testNames.split(":", QString::SkipEmptyParts);
-    for(auto name : names)
+    for ( auto name : names )
     {
         namesOfTests.append(name);
     }

@@ -134,15 +134,15 @@ QString CSM::Pair::toString() const
     QString outputString;
 
     //if there is at least one cluster
-    if(!_pValues.isEmpty())
+    if ( !_pValues.isEmpty() )
     {
         //for each cluster
-        for(int i = 0; i < _pValues.size(); i++)
+        for ( int i = 0; i < _pValues.size(); i++ )
         {
             outputString+= "Cluster: ";
             outputString+= QString::number(i + 1);
             outputString+= "\n";
-            for(int j = 0; j < _pValues.at(i).size(); j++)
+            for ( int j = 0; j < _pValues.at(i).size(); j++ )
             {
                 outputString+= "\t";
                 outputString+= _cMatrix->getTestName(j);

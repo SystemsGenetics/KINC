@@ -185,7 +185,7 @@ QVariant ConditionalTest::Input::emxData(Role role) const
     switch(role)
     {
     case CommandLineName: return QString("emx");
-    case Title          : return tr("Input Epression Matrix:");
+    case Title          : return tr("Input Expression Matrix:");
     case WhatsThis      : return tr("A data file created by KINC containing \
                                     the gene expression matrix created by \
                                     the Import Expression Matrix analytic.");
@@ -298,7 +298,7 @@ QVariant ConditionalTest::Input::CSMData(Role role) const
     case WhatsThis      : return tr("Condition-Specific Martrix, contains \
                                      a matrix of clusters and their corrosponding\
                                      p-values.");
-    case DataType       : return DataFactory::CSMType;
+    case DataType       : return DataFactory::CSMatrixType;
     default             : return QVariant();
     }
 }

@@ -52,8 +52,7 @@ LIBS += \
     -lacecore \
     -lgsl -lopenblas \
     -L$${CUDADIR}/lib64 -lcuda -lnvrtc -lcusolver -fopenmp \
-    -lOpenCL -lmpi\
-    -lgsl -lopenblas
+    -lOpenCL -lmpi
 
 equals(LINK_LAPACKE, 1) { LIBS += -llapacke }
 equals(LINK_MPI_CXX, 1) { LIBS += -lmpi_cxx }

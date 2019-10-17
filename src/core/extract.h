@@ -11,6 +11,7 @@
 #include "conditionspecificclustersmatrix_pair.h"
 
 
+
 /*!
  * This class implements the extract analytic. This analytic is very similar to
  * the export correlation matrix analytic, except for a few differences: (1) this
@@ -120,7 +121,6 @@ private:
    QVector<float> _csmPValueFilterThresh;
    QVector<QString> _csmPValueFilterFeatureNames;
    QVector<QString> _csmPValueFilterLabelNames;
-
 };
 
 

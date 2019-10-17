@@ -42,7 +42,7 @@ QString DataFactory::name(quint16 type) const
    case ExpressionMatrixType: return "Expression Matrix";
    case CCMatrixType: return "Cluster Matrix";
    case CorrelationMatrixType: return "Correlation Matrix";
-   case CSMType: return "Condition-Specific Clusters Matrix";
+   case CSMatrixType: return "Condition-Specific Clusters Matrix";
    default: return QString();
    }
 }
@@ -66,7 +66,7 @@ QString DataFactory::fileExtension(quint16 type) const
    case ExpressionMatrixType: return "emx";
    case CCMatrixType: return "ccm";
    case CorrelationMatrixType: return "cmx";
-   case CSMType: return "csm";
+   case CSMatrixType: return "csm";
    default: return QString();
    }
 }
@@ -84,12 +84,13 @@ QString DataFactory::fileExtension(quint16 type) const
 unique_ptr<EAbstractData> DataFactory::make(quint16 type) const
 {
    EDEBUG_FUNC(this,type);
+
    switch (type)
    {
    case ExpressionMatrixType: return unique_ptr<EAbstractData>(new ExpressionMatrix);
    case CCMatrixType: return unique_ptr<EAbstractData>(new CCMatrix);
    case CorrelationMatrixType: return unique_ptr<EAbstractData>(new CorrelationMatrix);
-   case CSMType: return unique_ptr<CSM>(new CSM);
+   case CSMatrixType: return unique_ptr<CSM>(new CSM);
    default: return nullptr;
    }
 }

@@ -5,6 +5,7 @@
 #include "conditionspecificclustersmatrix_pair.h"
 
 
+
 using namespace std;
 
 
@@ -91,20 +92,23 @@ void Extract::writeTextFormat(int index)
          << "\t" << "Pair_Outliers"
          << "\t" << "Too_Low"
          << "\t" << "Samples";
-      if(_csm)
+
+      if ( _csm )
       {
-          for(int i = 0; i < _csm->getTestCount(); i++)
+          for ( int i = 0; i < _csm->getTestCount(); i++ )
           {
               _stream << "\t" << _csm->getTestName(i);
           }
       }
+
       _stream << "\n";
    }
 
    // read next pair
    _cmxPair.readNext();
    _ccmPair.read(_cmxPair.index());
-   if(_csm)
+
+   if ( _csm )
    {
       _csmPair.read(_cmxPair.index());
    }
@@ -128,19 +132,19 @@ void Extract::writeTextFormat(int index)
          continue;
       }
 
-      //exclude values filtered out by pValue
-      if(_csm)
+      // exclude values filtered out by p-value
+      if ( _csm )
       {
           pValueFilterCheck();
           int notInclude = 0;
-          for(int i = 0; i < _csm->getTestCount(); i++)
+          for ( int i = 0; i < _csm->getTestCount(); i++ )
           {
-              if(!PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)))
+              if ( !PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)) )
               {
                 notInclude++;
               }
           }
-          if(notInclude > 0)
+          if ( notInclude > 0 )
           {
               continue;
           }
@@ -229,14 +233,15 @@ void Extract::writeTextFormat(int index)
          << "\t" << numThreshold
          << "\t" << sampleMask;
 
-      if(_csm)
+      if ( _csm )
       {
-          for(int i = 0; i < _csm->getTestCount(); i++)
+          for ( int i = 0; i < _csm->getTestCount(); i++ )
           {
               _stream << "\t" << _csmPair.at(k, i);
           }
       }
-         _stream << "\n";
+
+      _stream << "\n";
    }
 
    // make sure writing output file worked
@@ -492,7 +497,7 @@ void Extract::initialize()
    // initialize pairwise iterators
    _ccmPair = CCMatrix::Pair(_ccm);
    _cmxPair = CorrelationMatrix::Pair(_cmx);
-   if(_csm)
+   if ( _csm )
    {
       _csmPair = CSM::Pair(_csm);
       preparePValueFilter();
@@ -506,15 +511,17 @@ void Extract::initialize()
 
 
 
+
+
 /*!
  * Prepares the PValue filter for the csm.
  */
 void Extract::preparePValueFilter()
 {
-    if(_csmPValueFilter != "")
+    if ( _csmPValueFilter != "" )
     {
         QStringList filters = _csmPValueFilter.split("::");
-        for(int i = 0; i < filters.size(); i++)
+        for ( int i = 0; i < filters.size(); i++ )
         {
             QStringList data = filters.at(i).split(",");
             _csmPValueFilterThresh.append(data.at(2).toFloat());
@@ -523,6 +530,8 @@ void Extract::preparePValueFilter()
         }
     }
 }
+
+
 
 
 
@@ -538,14 +547,14 @@ void Extract::preparePValueFilter()
  */
 bool Extract::PValuefilter(QString labelName, float pValue)
 {
-    if(_csmPValueFilter != "")
+    if ( _csmPValueFilter != "" )
     {
         auto names = labelName.split("__");
-        for(int i = 0; i < _csmPValueFilterFeatureNames.size(); i++)
+        for ( int i = 0; i < _csmPValueFilterFeatureNames.size(); i++ )
         {
-            if(names.at(0) == _csmPValueFilterFeatureNames.at(i) && names.at(1) == _csmPValueFilterLabelNames.at(i))
+            if ( names.at(0) == _csmPValueFilterFeatureNames.at(i) && names.at(1) == _csmPValueFilterLabelNames.at(i) )
             {
-                if(pValue > _csmPValueFilterThresh.at(i))
+                if ( pValue > _csmPValueFilterThresh.at(i) )
                 {
                    return false;
                 }
@@ -563,6 +572,7 @@ bool Extract::PValuefilter(QString labelName, float pValue)
 
 
 
+
 /*!
  * Checks to make sure the filter names are in the tests names. If they
  * are not, it throws an error.
@@ -572,17 +582,17 @@ bool Extract::PValuefilter(QString labelName, float pValue)
  */
 bool Extract::pValueFilterCheck()
 {
-    if(_csmPValueFilter == "")
+    if ( _csmPValueFilter == "" )
     {
         return true;
     }
 
-    for(int i = 0; i < _csm->getTestCount(); i++)
+    for ( int i = 0; i < _csm->getTestCount(); i++ )
     {
         auto names = _csm->getTestName(i).split("__");
-        for(int j = 0; j < _csmPValueFilterFeatureNames.size(); j++)
+        for ( int j = 0; j < _csmPValueFilterFeatureNames.size(); j++ )
         {
-            if(names.at(0) == _csmPValueFilterFeatureNames.at(j) && names.at(1) == _csmPValueFilterLabelNames.at(j))
+            if ( names.at(0) == _csmPValueFilterFeatureNames.at(j) && names.at(1) == _csmPValueFilterLabelNames.at(j) )
             {
                 return true;
             }

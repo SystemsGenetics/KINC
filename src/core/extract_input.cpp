@@ -98,9 +98,7 @@ QVariant Extract::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("emx");
       case Role::Title: return tr("Input Expression Matrix:");
-      case WhatsThis: return tr("A data file created by KINC containing \
-                                      the gene expression matrix created by \
-                                      the Import Expression Matrix analytic.");
+      case WhatsThis: return tr("A data file created by KINC containing the gene expression matrix created by the Import Expression Matrix analytic.");
       case Role::DataType: return DataFactory::ExpressionMatrixType;
       default: return QVariant();
       }
@@ -109,9 +107,7 @@ QVariant Extract::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("ccm");
       case Role::Title: return tr("Input Cluster Matrix:");
-      case WhatsThis: return tr("A data file created by KINC containing \
-                                      the cluster sample masks created by \
-                                      the similarity analytic.");
+      case WhatsThis: return tr("A data file created by KINC containing the cluster sample masks created by the similarity analytic.");
       case Role::DataType: return DataFactory::CCMatrixType;
       default: return QVariant();
       }
@@ -120,9 +116,7 @@ QVariant Extract::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("cmx");
       case Role::Title: return tr("Input Correlation Matrix:");
-      case WhatsThis: return tr("A data file created by KINC containing \
-                                       the correlation matrix values created by \
-                                       the similarity analytic.");
+      case WhatsThis: return tr("A data file created by KINC containing the correlation matrix values created by the similarity analytic.");
       case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }
@@ -131,10 +125,8 @@ QVariant Extract::Input::data(int index, Role role) const
        {
        case Role::CommandLineName: return QString("csm");
        case Role::Title: return tr("Optional Condition Specific Cluster Matrix:");
-      case WhatsThis      : return tr("Condition-Specific Martrix, contains \
-                                       a matrix of clusters and their corrosponding\
-                                       p-values.");
-       case Role::DataType: return DataFactory::CSMType;
+      case WhatsThis: return tr("Condition-Specific Martrix, contains a matrix of clusters and their corrosponding p-values.");
+       case Role::DataType: return DataFactory::CSMatrixType;
        default: return QVariant();
        }
    case OutputFormatArg:
@@ -182,15 +174,7 @@ QVariant Extract::Input::data(int index, Role role) const
       {
       case Role::CommandLineName: return QString("filter-pvalue");
       case Role::Title: return tr("Optional P-Value Filter:");
-      case Role::WhatsThis: return tr("An optional filter applied to the \
-                                       Condition-Specific Martrix provided \
-                                       above. The ouput network will not \
-                                       contain clusters with p-values above \
-                                       the given value for the given test labels.\
-                                       For example if you wanted to threshold at 1e-3 \
-                                       Subspecies Japonica, you would input \
-                                       \"Subspecies,Japonica,1e-3\", \
-                                       followed by \"::\" then any more p-value filters.");
+      case Role::WhatsThis: return tr("An optional filter applied to the Condition-Specific Martrix provided above. The ouput network will not contain clusters with p-values above the given value for the given test labels. For example if you wanted to threshold at 1e-3 Subspecies Japonica, you would input \"Subspecies,Japonica,1e-3\", followed by \"::\" then any more p-value filters.");
       case Role::Default: return "";
       default: return QVariant();
       }
@@ -256,7 +240,7 @@ void Extract::Input::set(int index, EAbstractData* data)
    else if ( index == CorrelationData )
    {
       _base->_cmx = data->cast<CorrelationMatrix>();
-   }\
+   }
    else if ( index == ConditionSpecificClusterData )
    {
       _base->_csm = data->cast<CSM>();
