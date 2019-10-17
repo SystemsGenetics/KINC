@@ -137,14 +137,19 @@ void Extract::writeTextFormat(int index)
       {
           pValueFilterCheck();
           int notInclude = 0;
+          int include = 0;
           for ( int i = 0; i < _csm->getTestCount(); i++ )
           {
-              if ( !PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)) )
+              if ( !PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)) &&  _csmPValueFilterFeatureNames.size() != 0)
               {
-                notInclude++;
+                  notInclude++;
+              }
+              if ( PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)) && _csmPValueFilterFeatureNames.size() == 0 )
+              {
+                  include++;
               }
           }
-          if ( notInclude > 0 )
+          if ( notInclude > 0  || (_csmPValueFilterFeatureNames.size() == 0 && include == 0))
           {
               continue;
           }
@@ -518,12 +523,19 @@ void Extract::initialize()
  */
 void Extract::preparePValueFilter()
 {
+    bool ok = false;
     if ( _csmPValueFilter != "" )
     {
         QStringList filters = _csmPValueFilter.split("::");
         for ( int i = 0; i < filters.size(); i++ )
         {
             QStringList data = filters.at(i).split(",");
+            data.at(0).toFloat(&ok);
+            if (data.at(0).contains("e") && ok)
+            {
+                _csmPValueFilterThresh.append(data.at(0).toFloat());
+                break;
+            }
             _csmPValueFilterThresh.append(data.at(2).toFloat());
             _csmPValueFilterFeatureNames.append(data.at(0));
             _csmPValueFilterLabelNames.append(data.at(1));
@@ -549,19 +561,33 @@ bool Extract::PValuefilter(QString labelName, float pValue)
 {
     if ( _csmPValueFilter != "" )
     {
-        auto names = labelName.split("__");
-        for ( int i = 0; i < _csmPValueFilterFeatureNames.size(); i++ )
+        if(_csmPValueFilterFeatureNames.size() != 0)
         {
-            if ( names.at(0) == _csmPValueFilterFeatureNames.at(i) && names.at(1) == _csmPValueFilterLabelNames.at(i) )
+            auto names = labelName.split("__");
+            for ( int i = 0; i < _csmPValueFilterFeatureNames.size(); i++ )
             {
-                if ( pValue > _csmPValueFilterThresh.at(i) )
+                if ( names.at(0) == _csmPValueFilterFeatureNames.at(i) && names.at(1) == _csmPValueFilterLabelNames.at(i) )
                 {
-                   return false;
+                    if ( pValue > _csmPValueFilterThresh.at(i) )
+                    {
+                       return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
                 }
-                else
-                {
-                    return true;
-                }
+            }
+        }
+        else
+        {
+            if(pValue > _csmPValueFilterThresh.at(0))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
     }
@@ -582,11 +608,19 @@ bool Extract::PValuefilter(QString labelName, float pValue)
  */
 bool Extract::pValueFilterCheck()
 {
+    //No filter
     if ( _csmPValueFilter == "" )
     {
         return true;
     }
 
+    //default filter all
+    if(_csmPValueFilterFeatureNames.size() == 0 && _csmPValueFilterThresh.size() != 0)
+    {
+        return true;
+    }
+
+    //specific filter
     for ( int i = 0; i < _csm->getTestCount(); i++ )
     {
         auto names = _csm->getTestName(i).split("__");
@@ -602,5 +636,4 @@ bool Extract::pValueFilterCheck()
     e.setTitle(tr("Invalid Input"));
     e.setDetails(tr("Invalid filter name given."));
     throw e;
-    return false;
 }

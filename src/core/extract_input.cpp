@@ -175,7 +175,7 @@ QVariant Extract::Input::data(int index, Role role) const
       case Role::CommandLineName: return QString("filter-pvalue");
       case Role::Title: return tr("Optional P-Value Filter:");
       case Role::WhatsThis: return tr("An optional filter applied to the Condition-Specific Martrix provided above. The ouput network will not contain clusters with p-values above the given value for the given test labels. For example if you wanted to threshold at 1e-3 Subspecies Japonica, you would input \"Subspecies,Japonica,1e-3\", followed by \"::\" then any more p-value filters.");
-      case Role::Default: return "";
+      case Role::Default: return "1e-3";
       default: return QVariant();
       }
    default: return QVariant();
