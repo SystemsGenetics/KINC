@@ -163,7 +163,7 @@ void ConditionalTest::Input::set(int index, EAbstractData* data)
         _base->_cmx = data->cast<CorrelationMatrix>();
         break;
     case CSMOUT:
-        _base->_out = data->cast<CSM>();
+        _base->_out = data->cast<CSMatrix>();
         break;
     }
 }

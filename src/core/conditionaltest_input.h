@@ -3,6 +3,8 @@
 #include <ace/core/core.h>
 #include "conditionaltest.h"
 
+
+
 class ConditionalTest::Input : public EAbstractAnalyticInput
 {
    Q_OBJECT
@@ -73,4 +75,6 @@ private:
    ConditionalTest* _base;
 };
 
-#endif // ConditionalTest_INPUT_H
+
+
+#endif

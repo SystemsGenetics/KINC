@@ -74,7 +74,7 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
        if ( resultBlock->pairs().at(i).pValues.size() > 0 )
        {
            // Create pair objects for the output data file.
-           CSM::Pair CSMPair(_out);
+           CSMatrix::Pair CSMPair(_out);
            Pairwise::Index index(resultBlock->pairs().at(i).x_index, resultBlock->pairs().at(i).y_index);
            _index = index;
 

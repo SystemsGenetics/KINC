@@ -243,7 +243,7 @@ void Extract::Input::set(int index, EAbstractData* data)
    }
    else if ( index == ConditionSpecificClusterData )
    {
-      _base->_csm = data->cast<CSM>();
+      _base->_csm = data->cast<CSMatrix>();
    }
 }
 

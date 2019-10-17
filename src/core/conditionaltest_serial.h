@@ -3,6 +3,8 @@
 #include <ace/core/core.h>
 #include "conditionaltest.h"
 
+
+
 class ConditionalTest::Serial : public EAbstractAnalyticSerial
 {
    Q_OBJECT
@@ -47,4 +49,6 @@ private:
    qint32 _clusterInMask {0};
 };
 
-#endif // ConditionalTest_SERIAL_H
+
+
+#endif

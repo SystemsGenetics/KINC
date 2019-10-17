@@ -5,7 +5,8 @@
 #include "ccmatrix.h"
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
-//
+
+
 
 class ConditionalTest : public EAbstractAnalytic
 {
@@ -16,7 +17,7 @@ public:
     class WorkBlock;
     class ResultBlock;
 
-enum TESTTYPE
+    enum TESTTYPE
     {
         CATEGORICAL = 0,
         ORDINAL,
@@ -71,7 +72,6 @@ enum TESTTYPE
     void initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &anxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data);
 
 private:
-
     /*!
      * Pointer to the input expression matrix.
      */
@@ -91,7 +91,7 @@ private:
     /*!
      * Pointer to the output cluster annotation matrix.
      */
-    CSM* _out {nullptr};
+    CSMatrix* _out {nullptr};
     /*!
      * Data Threshold
      */
@@ -137,4 +137,6 @@ private:
     QVector<QVector<Pairwise::Index>> _clusters;
 };
 
-#endif // ConditionalTest_H
+
+
+#endif

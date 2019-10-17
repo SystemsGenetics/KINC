@@ -64,7 +64,7 @@ private:
    QTextStream _stream;
    CCMatrix::Pair _ccmPair;
    CorrelationMatrix::Pair _cmxPair;
-   CSM::Pair _csmPair;
+   CSMatrix::Pair _csmPair;
    /*!
     * Pointer to the input expression matrix.
     */
@@ -80,7 +80,7 @@ private:
    /*!
     * Pointer to the input condition specific cluster matrix.
     */
-   CSM* _csm {nullptr};
+   CSMatrix* _csm {nullptr};
    /*!
     * Pointer to the annotation file.
     */

@@ -3,13 +3,14 @@
 #include <ace/core/core.h>
 #include "conditionspecificclustersmatrix.h"
 #include "pairwise_matrix_pair.h"
-//
 
-class CSM::Pair : public Pairwise::Matrix::Pair
+
+
+class CSMatrix::Pair : public Pairwise::Matrix::Pair
 {
 public:
-    Pair(CSM* matrix);
-    Pair(const CSM* matrix);
+    Pair(CSMatrix* matrix);
+    Pair(const CSMatrix* matrix);
     Pair() = default;
     virtual ~Pair() = default;
 public:
@@ -27,7 +28,9 @@ private:
     virtual void readCluster(const EDataStream& stream, int cluster) const;
 
     mutable QVector<QVector<double>> _pValues;
-    const CSM* _cMatrix;
+    const CSMatrix* _cMatrix;
 };
 
-#endif // CSM_PAIR_H
+
+
+#endif

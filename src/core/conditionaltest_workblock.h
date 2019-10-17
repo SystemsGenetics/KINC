@@ -2,7 +2,8 @@
 #define CSM_WORKBLOCK_H
 #include <ace/core/core.h>
 #include "conditionaltest.h"
-//
+
+
 
 class ConditionalTest::WorkBlock : public EAbstractAnalyticBlock
 {
@@ -35,4 +36,6 @@ private:
     qint64 _size;
 };
 
-#endif // CSM_WORKBLOCK_H
+
+
+#endif

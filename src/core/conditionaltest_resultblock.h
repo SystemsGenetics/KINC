@@ -2,7 +2,8 @@
 #define IMPORTCSM_RESULTBLOCK_H
 #include <ace/core/core.h>
 #include "conditionaltest.h"
-//
+
+
 
 class ConditionalTest::ResultBlock : public EAbstractAnalyticBlock
 {
@@ -35,4 +36,6 @@ private:
     QVector<CSMPair> _pairs;
 };
 
-#endif // IMPORTCSM_RESULTBLOCK_H
+
+
+#endif

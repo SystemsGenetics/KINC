@@ -499,7 +499,7 @@ void Extract::initialize()
    _cmxPair = CorrelationMatrix::Pair(_cmx);
    if ( _csm )
    {
-      _csmPair = CSM::Pair(_csm);
+      _csmPair = CSMatrix::Pair(_csm);
       preparePValueFilter();
    }
 

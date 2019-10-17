@@ -11,7 +11,7 @@
 *
 * @param matrix The parent matrix of the model.
 */
-CSM::Model::Model(CSM* matrix) : _matrix(matrix)
+CSMatrix::Model::Model(CSMatrix* matrix) : _matrix(matrix)
 {
     EDEBUG_FUNC(this,matrix);
     {
@@ -38,7 +38,7 @@ CSM::Model::Model(CSM* matrix) : _matrix(matrix)
 *
 * @return The header cell data at the queried location.
 */
-QVariant CSM::Model::headerData(int section, Qt::Orientation orientation, int role) const
+QVariant CSMatrix::Model::headerData(int section, Qt::Orientation orientation, int role) const
 {
     EDEBUG_FUNC(this,section,orientation,role);
 
@@ -76,7 +76,7 @@ QVariant CSM::Model::headerData(int section, Qt::Orientation orientation, int ro
 *
 * @return An integer representation of the column count.
 */
-int CSM::Model::columnCount(const QModelIndex&) const
+int CSMatrix::Model::columnCount(const QModelIndex&) const
 {
     EDEBUG_FUNC(this);
     return _matrix->geneSize();
@@ -92,7 +92,7 @@ int CSM::Model::columnCount(const QModelIndex&) const
 *
 * @return An integer representation of the row count.
 */
-int CSM::Model::rowCount(const QModelIndex&) const
+int CSMatrix::Model::rowCount(const QModelIndex&) const
 {
     EDEBUG_FUNC(this);
     return _matrix->geneSize();
@@ -116,7 +116,7 @@ int CSM::Model::rowCount(const QModelIndex&) const
 *
 * @return The header cell data at the queried location.
 */
-QVariant CSM::Model::data(const QModelIndex& index, int role) const
+QVariant CSMatrix::Model::data(const QModelIndex& index, int role) const
 {
     EDEBUG_FUNC(this, &index, role);
 

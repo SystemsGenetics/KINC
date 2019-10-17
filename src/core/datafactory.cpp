@@ -90,7 +90,7 @@ unique_ptr<EAbstractData> DataFactory::make(quint16 type) const
    case ExpressionMatrixType: return unique_ptr<EAbstractData>(new ExpressionMatrix);
    case CCMatrixType: return unique_ptr<EAbstractData>(new CCMatrix);
    case CorrelationMatrixType: return unique_ptr<EAbstractData>(new CorrelationMatrix);
-   case CSMatrixType: return unique_ptr<CSM>(new CSM);
+   case CSMatrixType: return unique_ptr<CSMatrix>(new CSMatrix);
    default: return nullptr;
    }
 }
