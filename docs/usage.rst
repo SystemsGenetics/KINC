@@ -1,12 +1,8 @@
 Usage
 =====
 
-KINC provides two executables: ``kinc``, the command-line version, and ``qkinc``, the GUI version. The command-line version can use MPI while the GUI version can display data object files that are produced by KINC. KINC can construct a gene-coexpression network in the following steps:
 
-1. **Import** expression matrix text file into binary format
-2. Compute a **similarity** matrix from expression matrix
-3. Determine an appropriate correlation **threshold** for similarity matrix
-4. **Extract** an edge list from a similarity matrix given a threshold
+
 
 Basic Usage
 -----------
