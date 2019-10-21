@@ -243,7 +243,7 @@ QVariant Similarity::Input::data(int index, Role role) const
       case Role::CommandLineName: return QString("preout");
       case Role::Title: return tr("Remove pre-outliers:");
       case Role::WhatsThis: return tr("Whether to remove pre-clustering outliers.");
-      case Role::Default: return false;
+      case Role::Default: return true;
       default: return QVariant();
       }
    case RemovePostOutliers:
@@ -252,7 +252,7 @@ QVariant Similarity::Input::data(int index, Role role) const
       case Role::CommandLineName: return QString("postout");
       case Role::Title: return tr("Remove post-outliers:");
       case Role::WhatsThis: return tr("Whether to remove post-clustering outliers.");
-      case Role::Default: return false;
+      case Role::Default: return true;
       default: return QVariant();
       }
    case MinCorrelation:
