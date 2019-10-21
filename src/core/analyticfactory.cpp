@@ -49,9 +49,9 @@ QString AnalyticFactory::name(quint16 type) const
    case ExportExpressionMatrixType: return "Export Expression Matrix";
    case ImportCorrelationMatrixType: return "Import Correlation Matrix";
    case ExportCorrelationMatrixType: return "Export Correlation Matrix";
-   case ConditionalTestType: return "Conditional Test";
    case SimilarityType: return "Similarity";
    case CorrelationPowerFilterType: return "Filter: Correlation Power";
+   case ConditionalTestType: return "Threshold: Condition-Specific";
    case PowerLawType: return "Threshold: Power-law";
    case RMTType: return "Threshold: RMT";
    case ExtractType: return "Extract Network";
