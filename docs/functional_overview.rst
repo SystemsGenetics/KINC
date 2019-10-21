@@ -29,5 +29,5 @@ Step 5: Network Creation
 
 Other Useful Functions
   - ``export-emx``: Export a gene expression matrix, or GEM, from the binary format used by KINC into a tab-delimited format compatible with other tools.
-  - ``import-cmx``: Import a correlation matrix (or similarity matrix) created by another application other than KINC.  This correlation matrix can only be used for traditional network construction.
   - ``export-cmx``: Export a correlation matrix (or similarity matrix) from the binary format that KINC uses into a text-based version.
+  - ``import-cmx``: Import a correlation matrix (or similarity matrix) that was previously exported by KINC.

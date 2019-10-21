@@ -27,8 +27,8 @@ KINC is meant to be used either on a stand-alone workstation or on a heterogenou
 | Network extraction                        | ``qkinc`` or ``kinc`` | Stand-alone or HPC  |
 +-------------------------------------------+-----------------------+---------------------+
 
-Command-Line Usage
-------------------
+Using the Command-Line
+----------------------
 
 Getting Started
 ```````````````
@@ -241,15 +241,138 @@ The settings and their meaning are described in the following table:
 |                  | need not ever enable loggingas this is meant for KINC developers.  |
 +------------------+--------------------------------------------------------------------+
 
-**TODO: add example for settings change**
+To change a setting, use the following command-line:
+
+.. code:: bash
+
+ kinc settings set <parameter> <value>
+
+For example, to disable the CUDA Device:
+
+.. code:: bash
+
+  kinc settings set cuda none
 
 .. note::
 
   Most users will never need to adjust these persistent settings.
 
-Graphical Interface Usage
--------------------------
-KINC provides a graphical user interface (GUI) for viewing binary output files and for executing less computationally intensie jobs.  The graphical interfaceis meant to run only on a stand-alone workstation as it cannot launch multiple worker instances as the command-line version can do.  This section provides a brief over of the GUI.   To launch ``qkinc`` simply call it on the command-line:
+Accessing Metadata
+``````````````````
+KINC strives to ensure reproducibility of results by maintaining system and user metadata within each file.  You can access metadata via the command-line for viewing.  System meta data maintains a complete provenance for how the file was created. System metadata is immutable. User metadata consists of information about the run of the analytic.
+
+Retrieving System Metadata
+::::::::::::::::::::::::::
+To view the system meta data for any KINC file use the following command:
+
+.. code:: bash
+
+  kinc dump <file> system
+
+Where ``<file>`` is the path to a KINC generated file.  Metadata will be output in JSON format similar to the following example from an expression matrix (.emx extension) file:
+
+.. code:: JSON
+
+  {
+      "command": {
+          "analytic": "Import Expression Matrix",
+          "options": {
+              "input": "../../01-input_data/rice_heat_drought/rice_heat_drought.GEM.FPKM.filtered.txt",
+              "nan": "NA",
+              "output": "rice_heat_drought.GEM.FPKM.filtered.emx",
+              "samples": "0"
+          }
+      },
+      "input": {
+      },
+      "uuid": "{ae169a67-363d-4a8c-8a04-de0fd8d974f8}",
+      "version": {
+          "ace": {
+              "major": 3,
+              "minor": 2,
+              "revision": 0
+          },
+          "kinc": {
+              "major": 3,
+              "minor": 4,
+              "revision": 0
+          }
+      }
+  }
+
+Notice that the metadata provides the exact command-line and arguments that were used to produce the file, as well as a unique  UUID for the file and the versions of the ACE and KINC that were used to produce the file.
+
+As KINC files are used in other functions, the system metadata is preserved. Therefore the complete provenance from beginning to end for creation of the file is maintained. Consider the following example of system metadata from a correlation matrix (.cmx extesion) file. Notice it has the exact command-line arguments for the ``similarity`` function, but also includes the system metadata for all of the input files that it used, including the expression matrix.
+
+.. code:: JSON
+
+  {
+      "command": {
+          "analytic": "Similarity",
+          "options": {
+              "bsize": "0",
+              "ccm": "rice_heat_drought.GEM.FPKM.filtered.ccm",
+              "clusmethod": "gmm",
+              "cmx": "rice_heat_drought.GEM.FPKM.filtered.cmx",
+              "corrmethod": "spearman",
+              "crit": "ICL",
+              "gsize": "4096",
+              "input": "rice_heat_drought.GEM.FPKM.filtered.emx",
+              "lsize": "32",
+              "maxclus": "5",
+              "maxcorr": "1",
+              "minclus": "1",
+              "mincorr": "0.5",
+              "minexpr": "-inf",
+              "minsamp": "25",
+              "postout": "TRUE",
+              "preout": "TRUE"
+          }
+      },
+      "input": {
+          "rice_heat_drought.GEM.FPKM.filtered.emx": {
+              "system": {
+                  "command": {
+                      "analytic": "Import Expression Matrix",
+                      "options": {
+                          "input": "../../01-input_data/rice_heat_drought/rice_heat_drought.GEM.FPKM.filtered.txt",
+                          "nan": "NA",
+                          "output": "rice_heat_drought.GEM.FPKM.filtered.emx",
+                          "samples": "0"
+                      }
+                  },
+                  "input": {
+                  },
+                  "uuid": "{ae169a67-363d-4a8c-8a04-de0fd8d974f8}",
+                  "version": {
+                      "ace": {
+                          "major": 0,
+                          "minor": 0,
+                          "revision": 999
+                      },
+                      "kinc": {
+                          "major": 3,
+                          "minor": 3,
+                          "revision": 0
+                      }
+                  }
+              },
+
+   <trimmed here for brevity>
+
+
+Retrieving User Metadata
+::::::::::::::::::::::::
+User metadata can be retrieved using a similar command:
+
+.. code:: bash
+
+  kinc dump <file> user
+
+
+Using the Graphical Interface
+-----------------------------
+KINC provides a graphical user interface (GUI) for viewing binary output files and for executing less computationally intensie jobs.  The graphical interface is meant to run only on a stand-alone workstation as it cannot launch multiple worker instances as the command-line version can do.  This section provides a brief over of the GUI.   To launch ``qkinc`` simply call it on the command-line:
 
 .. code:: bash
 
@@ -263,24 +386,134 @@ When the GUI first appears, it is a simple dialog box with a menu:
 The following items are available in the main menu:
 
 File: for general settings and information.
-  - `Settings`
-  - `About`
-  - `Exit`
+  - `Settings`:  Used to adjust KINC's global persistent settings.
+  - `About`:  Provides information about KINC.
+  - `Exit`: Closes the program.
 
 Open: for opening KINC binary files
-  - `Expression Matrix`
-  - `Cluster Matrix`
-  - `Correlation Matrix`
-  - `Condition-Specific Clusters Matrix`
+  - `Expression Matrix`:  Opens an expression matrix for viewing.
+  - `Cluster Matrix`: Opens GMM cluster details for each edge in the network.
+  - `Correlation Matrix`: Opens the similarity (or correlation) matrix.
+  - `Condition-Specific Clusters Matrix`: Opens the the matrix containing the results from the Cluster-Specific thresholding.
 
 Execute: for running the functions of KINC
-  - `Import Expression Matrix`
-  - `Export Expression Matrix`
-  - `Import Correlation Matrix`
-  - `Export Correlation Matrix`
-  - `Similarity`
-  - `Filter: Correlation Power`
-  - `Threshold: Conditional Test`
-  - `Threshold: Power-law`
-  - `Threshold: RMT`
-  - `Extract Network`
+  - `Import Expression Matrix`:  Imports a GEM. Corresponds to the ``import-emx`` function.
+  - `Export Expression Matrix`:  Exports a GEM. corresponds to the ``export-emx`` function.
+  - `Import Correlation Matrix`:  Imports a correlation matrix.  Correponds to the ``import-cmx`` function
+  - `Export Correlation Matrix`: Exports a correlation matrix. Correponds to the ``export-cmx`` function.
+  - `Similarity`: Performs pairwise correlation analysis for both traditional and GMM approaches. Corresponds to the ``similarity`` function.
+  - `Filter: Correlation Power`: Performs power analysis to remove edges with low power. Corresponds to the  ``corrpower`` function.
+  - `Threshold: Condition-Specific`: Performs condition-specific thresholding. Corresponds to the ``cond-test`` function.
+  - `Threshold: Power-law`: Performs thresholding using the power-law to ensure a scale-free network. Corresponds to the ``powerlaw`` function.
+  - `Threshold: RMT`: Performs thresholding using Random Matrix Theory. Corresponds to the ``rmt`` function.
+  - `Extract Network`:  Extracs the final method by applying the threshold.  Correpsonds to the ``extract function.``
+
+
+Executing a Function
+````````````````````
+To execute a function, simply select it from the `Execute` menu. A dialog box will appear providing a form to enter the argumetns for the function. The form for importing a GEM is shown in the following screenshot:
+
+.. figure:: images/KINC_GUI_import_emx.png
+   :alt: KINC GUI import-exm function
+
+A view of the ``similarity`` function is shown in the following screenshot:
+
+.. figure:: images/KINC_GUI_similarity.png
+   :alt: KINC GUI similarity function
+
+Viewing Help
+````````````
+On each form, as shown in the previous two screenshots, more information about each parameter can be obtained by left clicking on the argument.  A `Whats this?` toolkit will appear.  Click the tooltip to see the help for that parameter.
+
+.. figure:: images/KINC_GUI_whats_this.png
+   :alt: KINC GUI What's this tooltip
+
+Global Settings
+```````````````
+As previously described in the `Global Settings` section for the `Command-line Usage`, KINC provides a set of persistent global settings that remain set even when the KINC GUI is closed.  Settings changes made on the command-line or via the GUI are persistently the same for both the command-line and GUI versions.  You can view and change the global settings via the **File > Settings** menu. A view of the settings form is shown below:
+
+.. figure:: images/KINC_GUI_settings.png
+   :alt: KINC GUI Settings Dialogue
+
+.. note::
+
+  Please see the description of each setting in the `Global Settings` section for the `Command-line Usage` above.
+
+
+Viewing files
+`````````````
+To save storage space and speed calculations, KINC maintains its own compressed file formats in binary.  Despite their reduced size, these files can become quite large. Therefore, the KINC GUI offers highly responsive viewers for these files.  To view any binary file created by KINC, select the appropriate option from the **Open** menu.  An example GEM is shown in the following screenshot by selecting **Open > Expression Matrix**
+
+.. figure:: images/KINC_GUI_emx.png
+   :alt: KINC GUI expression matrix viewer
+
+The similarity (or correlation) matrix can be viewed via the menu **Open > Correlation Matrix** and an example is shown below.
+
+.. figure:: images/KINC_GUI_cmx.png
+   :alt: KINC GUI correlation matrix viewer
+
+Notice, the correlation matrix is sparse in that many values are missing. This is because KINC was instructed to only retain correlation values above an absolute value of 0.5.
+
+Accessing Metadata
+``````````````````
+KINC strives to ensure reproducibility of results by maintaining system and user metadata within each file.  You can access metadata via the GUI for viewing.  System meta data maintains a complete provenance for how the file was created, and is immutable. User metadata consists of information about the run of the analytic.
+
+Viewing System Metadata
+:::::::::::::::::::::::
+To view the system meta data for any KINC file, you must first open the file via the ``Open`` menu.  In the window that appears (as seen in the previous figures), a ``File`` menu is present.  Selecting  **File > System Metadata** will provide a new window with a clickable tree view of the system metadata.  The following view is of the System metadata for the same  file shown in the command-line example above.
+
+.. figure:: images/KINC_GUI_system_metadata.png
+   :alt: KINC GUI system metadata
+
+
+The metadata provides the exact command-line and arguments that were used to produce the file, as well as a unique  UUID for the file and the versions of the ACE and KINC that were used to produce the file.
+
+As KINC files are used in other functions, the system metadata is preserved. Therefore the complete provenance from beginning to end for creation of the file is maintained. The following view of system metadata is from a correlation matrix (.cmx extesion) file that used the expression matrix file as input. Notice it has the exact command-line arguments for the ``similarity`` function, but also includes the system metadata for all of the input files that it used, including the expression matrix.
+
+
+.. figure:: images/KINC_GUI_system_metadata2.png
+   :alt: KINC GUI system metadata 2
+
+
+Retrieving User Metadata
+::::::::::::::::::::::::
+User metadata can be retrieved by selecting the **File > User Metadata** menu item in the file viewer window.  An example of the user metadata from a correlation matrix file:
+
+.. figure:: images/KINC_GUI_user_metadata.png
+   :alt: KINC GUI user metadata
+
+Using KINC with Docker
+----------------------
+KINC can be installed and run on both a stand-alone workstation or via an HPC cluster. However, sometimes it is not possible to install the dependencies required by KINC.  Therefore, a Docker image and a Nextflow workflow are provided to help ease use when installation proves difficult.
+
+This solution does require installation of `Docker <https://www.docker.com/>`_ which does require administrative (i.e. root) access to the machine. You must also follow the instructions on the `nvidia-docker <https://github.com/NVIDIA/nvidia-docker>_` site to make this work.
+
+The KINC docker image comes pre-installed with all dependencies. The Dockerfile for KINC is available in the KINC Github repository, and Docker images are maintained on DockerHub under ``systemsgenetics/kinc``. This method currently does not support the GUI version of KINC.
+
+To use KINC in an interactive Docker container execute the following:
+
+.. code:: bash
+
+  nvidia-docker run --rm -it systemsgenetics/kinc:3.4.0 bash
+
+The command above will provide access to the terminal inside of the image where commands such as the following can be executed:
+
+.. code:: bash
+
+  > nvidia-smi
+  > kinc settings
+
+You will need to share the input and output data between the Docker container and the host machine, which can be done by mounting a directory with the ``-v`` argument.  The example below mounts the current directory specified by the `$PWD` environment variable onto the `/root` directory of the image:
+
+.. code:: bash
+
+  nvidia-docker run --rm -it -v $PWD:/root systemsgenetics/kinc:3.4.0 bash
+  > ls
+
+Automating KINC with Nextflow
+-----------------------------
+Once you are familiar with KINC and wish to automate the full workflow, you can use the `KINC-nf <https://github.com/SystemsGenetics/KINC-nf.git>`__ nextflow pipeline, which can run the full KINC workflow on nearly any computing environment with very little setup required. Consult the KINC-nf repository on Github for instructions.
+
+.. note::
+
+  Before you use the KINC-nf workflow to automate the full process, it is recommended to be fully familiar with KINC and all of its functions.
