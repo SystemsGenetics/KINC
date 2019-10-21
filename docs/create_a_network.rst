@@ -4,8 +4,8 @@ This section describes the two approaches for network construction as well as so
 
 We will assume that these 475 samples have been processed using `GEMmaker <https://gemmaker.readthedocs.io/en/latest/>`_ and the resulting GEM has been `log2` transformed.
 
-Considerations Before Getting Started
--------------------------------------
+Before Getting Started
+----------------------
 
 Traditional or GMM Approach?
 ````````````````````````````
