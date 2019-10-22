@@ -39,11 +39,11 @@ A plain-text expression matrix is a data matrix with each row on a line, each va
 Correlation Matrix
 ~~~~~~~~~~~~~~~~~~
 
-A plain-text correlation matrix is a sparse matrix format where each line is a correlation that includes the pairwise index, correlation value, sample mask, and several other summary statistics.
+A plain-text correlation matrix is a sparse matrix format where each line is a correlation that includes the pairwise index, cluster index and cluster size, sample size, correlation value, and sample mask.
 
 .. code:: bash
 
-	0	1	0	1	30	5	2	1	3	0.979	1199991911111161111111611161111111111770080000000
+	0	1	0	1	30	0.979	1199991911111161111111611161111111111770080000000
 
 Co-expression Network
 ~~~~~~~~~~~~~~~~~~~~~
@@ -52,10 +52,10 @@ A co-expression network is an edge list where each line is an edge between two g
 
 .. code:: bash
 
-	Source	Target	sc	Interaction	Cluster	Num_Clusters	Cluster_Samples	Missing_Samples	Cluster_Outliers	Pair_Outliers	Too_Low	Samples
-	Gene1	Gene2	0.979	co	0	1	30	5	2	1	3	1199991911111161111111611161111111111770080000000
+	Source	Target	sc	Interaction	Cluster	Num_Clusters	Cluster_Size	Samples
+	Gene1	Gene2	0.979	co	0	1	30	1199991911111161111111611161111111111770080000000
 
-There is also a "minimal" plain-text format, which does not contain the sample string or summary statistics. This format is useful for inspecting large networks quickly.
+There is also a "minimal" plain-text format, which does not contain the sample string. This format is useful for inspecting large networks quickly.
 
 .. code:: bash
 

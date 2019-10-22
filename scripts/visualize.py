@@ -97,7 +97,7 @@ def plot_pairwise(emx, netlist, output_dir, limits=None, range_args=None):
 
 		# create scatter plot
 		plt.subplot(122)
-		plt.title("k=%d, samples=%d, spearmanr=%0.2f" % (k, edge["Cluster_Samples"], r))
+		plt.title("k=%d, samples=%d, spearmanr=%0.2f" % (k, edge["Cluster_Size"], r))
 
 		if limits != None:
 			plt.xlim(limits)
