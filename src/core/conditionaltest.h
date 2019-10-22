@@ -71,6 +71,8 @@ public:
 
     void initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &anxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data);
 
+    void rearrangeSamples();
+
 private:
     /*!
      * Pointer to the input expression matrix.
