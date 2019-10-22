@@ -75,7 +75,7 @@ void TestImportCorrelationMatrix::test()
 			stream
 				<< testPair.index.getX()
 				<< "\t" << testPair.index.getY()
-				<< "\t" << k
+				<< "\t" << k + 1
 				<< "\t" << testPair.sampleMasks.size()
 				<< "\t" << numSamples
 				<< "\t" << testPair.correlations[k]

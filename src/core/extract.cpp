@@ -168,7 +168,7 @@ void Extract::writeTextFormat(int index)
          << "\t" << target
          << "\t" << correlation
          << "\t" << interaction
-         << "\t" << k
+         << "\t" << k + 1
          << "\t" << _cmxPair.clusterSize()
          << "\t" << numSamples
          << "\t" << sampleMask
@@ -235,7 +235,7 @@ void Extract::writeMinimalFormat(int index)
          << source
          << "\t" << target
          << "\t" << correlation
-         << "\t" << k
+         << "\t" << k + 1
          << "\t" << _cmxPair.clusterSize()
          << "\n";
    }

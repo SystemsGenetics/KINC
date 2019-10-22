@@ -110,7 +110,7 @@ void ExportCorrelationMatrix::process(const EAbstractAnalyticBlock*)
       _stream
          << _cmxPair.index().getX()
          << "\t" << _cmxPair.index().getY()
-         << "\t" << k
+         << "\t" << k + 1
          << "\t" << _cmxPair.clusterSize()
          << "\t" << numSamples
          << "\t" << correlation
