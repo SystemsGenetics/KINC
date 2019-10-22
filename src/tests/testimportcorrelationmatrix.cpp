@@ -65,11 +65,6 @@ void TestImportCorrelationMatrix::test()
 	{
 		for ( int k = 0; k < testPair.sampleMasks.size(); k++ )
 		{
-			int numSamples = 0;
-			int numMissing = 0;
-			int numPostOutliers = 0;
-			int numPreOutliers = 0;
-			int numThreshold = 0;
 			QString sampleMask(numSamples);
 
 			for ( int i = 0; i < numSamples; i++ )
@@ -83,10 +78,6 @@ void TestImportCorrelationMatrix::test()
 				<< "\t" << k
 				<< "\t" << testPair.sampleMasks.size()
 				<< "\t" << numSamples
-				<< "\t" << numMissing
-				<< "\t" << numPostOutliers
-				<< "\t" << numPreOutliers
-				<< "\t" << numThreshold
 				<< "\t" << testPair.correlations[k]
 				<< "\t" << sampleMask
 				<< "\n";

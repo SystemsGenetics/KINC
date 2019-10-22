@@ -149,14 +149,14 @@ void TestExportCorrelationMatrix::test()
 			QString line = stream.readLine();
 			auto words = line.splitRef(QRegExp("\\s+"), QString::SkipEmptyParts);
 
-			QCOMPARE(words.size(), 11);
+			QCOMPARE(words.size(), 7);
 
 			int geneX = words[0].toInt();
 			int geneY = words[1].toInt();
 			int cluster = words[2].toInt();
 			int clusterSize = words[3].toInt();
-			float correlation = words[9].toFloat();
-			QStringRef sampleMask = words[10];
+			float correlation = words[5].toFloat();
+			QStringRef sampleMask = words[6];
 
 			QCOMPARE(geneX, testPair.index.getX());
 			QCOMPARE(geneY, testPair.index.getY());

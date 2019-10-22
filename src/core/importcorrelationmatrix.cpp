@@ -41,12 +41,12 @@ void ImportCorrelationMatrix::process(const EAbstractAnalyticBlock* result)
    auto words = line.splitRef(QRegExp("\\s+"), QString::SkipEmptyParts);
 
    // make sure the line is valid
-   if ( words.size() == 11 )
+   if ( words.size() == 7 )
    {
       int geneX = words[0].toInt();
       int geneY = words[1].toInt();
-      float correlation = words[9].toFloat();
-      QStringRef sampleMask = words[10];
+      float correlation = words[5].toFloat();
+      QStringRef sampleMask = words[6];
 
       // make sure sample mask has correct length
       if ( sampleMask.size() != _sampleSize )
@@ -105,7 +105,7 @@ void ImportCorrelationMatrix::process(const EAbstractAnalyticBlock* result)
       e.setDetails(tr("Encountered line with incorrect amount of fields. "
                       "Read %1 fields when there should have been %2.")
          .arg(words.size())
-         .arg(11));
+         .arg(7));
       throw e;
    }
 
