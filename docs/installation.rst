@@ -64,7 +64,7 @@ To install CGEM into ``/usr/local/``:
 .. code:: bash
 
    git clone https://github.com/kthohr/gcem.git ./gcem
-   sudo cp -R ./stats/include/* /usr/local/include
+   sudo cp -R ./gcem/include/* /usr/local/include
 
 Install ACE
 ~~~~~~~~~~~
