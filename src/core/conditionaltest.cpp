@@ -234,6 +234,31 @@ void ConditionalTest::initialize()
     override();
     readInANX(_features, _data, _testType);
 
+    for(int i = 0; i < _data.size(); i++)
+    {
+        if(_features.at(i).at(0) == "sample" || _features.at(i).at(0) == "Sample")
+        {
+            if(_data.at(i).size() != _emx->sampleSize())
+            {
+                E_MAKE_EXCEPTION(e);
+                e.setTitle(tr("Sample Size Error"));
+                e.setDetails(tr("Sample size in emx doesn not match annotation matrix."));
+                throw e;
+            }
+
+            for(int j = 0; j < _data.at(i).size(); j++)
+            {
+                if(_data.at(i).at(j) != _emx->sampleNames().at(j).toString())
+                {
+                    E_MAKE_EXCEPTION(e);
+                    e.setTitle(tr("Sample Order Error"));
+                    e.setDetails(tr("Sample order in emx doesn not match annotation matrix."));
+                    throw e;
+                }
+            }
+        }
+    }
+
     // initialize work block size
     if ( _workBlockSize == 0 )
     {
