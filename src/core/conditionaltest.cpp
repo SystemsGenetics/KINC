@@ -234,6 +234,8 @@ void ConditionalTest::initialize()
     override();
     readInANX(_features, _data, _testType);
 
+    rearrangeSamples();
+
     // initialize work block size
     if ( _workBlockSize == 0 )
     {
@@ -637,4 +639,74 @@ void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,Q
     //inserts the Meta Data into the CSM Object stored on the disk.
     _out->initialize(Features, featureInfo, Data, _numTests, testNames());
     _out->initialize(_emx->geneNames(), maxClusterSize, subHeaderSize);
+}
+
+
+
+
+
+/*!
+*  An interface to move the anx data around so that the emx samples and the
+*  annotation matrix samples are in the same order
+*/
+void ConditionalTest::rearrangeSamples()
+{
+    int sampleIndex = 0;
+    int startIndex = 0;
+    QVariant temp;
+
+    //find the sample index.
+    for(int i = 0; i< _features.size(); i++)
+    {
+        if(_features.at(i).at(0) == "samples" || _features.at(i).at(0) == "Samples")
+        {
+            sampleIndex = i;
+            break;
+        }
+    }
+
+    //if the sample size differes break.
+    if(_data.at(sampleIndex).size() != _emx->sampleSize())
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Sample Size Error"));
+        e.setDetails(tr("Sample size in emx doesn not match annotation matrix."));
+        throw e;
+    }
+
+    //look through all the samples, if you find one that doesnt match
+    //switch it for the right sample.
+    for(int i = 0; i < _emx->sampleSize(); i++)
+    {
+        if(_emx->sampleNames().at(i).toString() != _data.at(sampleIndex).at(i))
+        {
+            //find the right sample.
+            for(int j = startIndex; j <  _data.at(sampleIndex).size(); j++)
+            {
+                //switch the samples.
+                if(_emx->sampleNames().at(i).toString() == _data.at(sampleIndex).at(j))
+                {
+                    for(int k = 0; k < _data.size(); k++)
+                    {
+                        //move wrong sample to temp.
+                        temp = _data.at(k).at(i);
+                        //move right sample to the right place.
+                        _data[k][i] = _data.at(k).at(j);
+                        //replace the right sample with the wrong sample.
+                        _data[k][j] = temp;
+                    }
+                    break;
+                }
+                if(j == _emx->sampleSize() - 1)
+                {
+                    E_MAKE_EXCEPTION(e);
+                    e.setTitle(tr("Sample Size Error"));
+                    e.setDetails(tr("Sample not in emx."));
+                    throw e;
+                }
+            }
+            //increment the start nidex so you dont have to start at 0 every time.
+            startIndex++;
+        }
+    }
 }

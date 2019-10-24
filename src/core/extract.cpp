@@ -531,14 +531,24 @@ void Extract::preparePValueFilter()
         {
             QStringList data = filters.at(i).split(",");
             data.at(0).toFloat(&ok);
-            if (data.at(0).contains("e") && ok)
+            if (ok)
             {
                 _csmPValueFilterThresh.append(data.at(0).toFloat());
                 break;
             }
-            _csmPValueFilterThresh.append(data.at(2).toFloat());
-            _csmPValueFilterFeatureNames.append(data.at(0));
-            _csmPValueFilterLabelNames.append(data.at(1));
+            if(data.size() != 3 && !ok)
+            {
+                E_MAKE_EXCEPTION(e);
+                e.setTitle(tr("Invalid Input"));
+                e.setDetails(tr("Invalid filter name given."));
+                throw e;
+            }
+            else
+            {
+                _csmPValueFilterThresh.append(data.at(2).toFloat());
+                _csmPValueFilterFeatureNames.append(data.at(0));
+                _csmPValueFilterLabelNames.append(data.at(1));
+            }
         }
     }
 }
