@@ -88,24 +88,31 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                 {
                     continue;
                 }
-
-                for ( qint32 labelIndex = 0; labelIndex < _base->_features.at(featureIndex).size(); labelIndex++ )
+                if(_base->_testType.at(featureIndex) == QUANTATATIVE || _base->_testType.at(featureIndex) == ORDINAL)
                 {
+                    prepAnxData(_base->_features.at(featureIndex).at(0), featureIndex, _base->_testType.at(featureIndex));
+                    test(ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues);
+                }
+                else if (_base->_testType.at(featureIndex) == CATEGORICAL)
+                {
+                    for ( qint32 labelIndex = 0; labelIndex < _base->_features.at(featureIndex).size(); labelIndex++ )
+                    {
 
-                    prepAnxData(_base->_features.at(featureIndex).at(labelIndex), featureIndex);
-                    //if there are sub labels to test for the feature
-                    if ( _base->_features.at(featureIndex).size() > 1 )
-                    {
-                        if ( labelIndex == 0 )
+                        prepAnxData(_base->_features.at(featureIndex).at(labelIndex), featureIndex, _base->_testType.at(featureIndex));
+                        //if there are sub labels to test for the feature
+                        if ( _base->_features.at(featureIndex).size() > 1 )
                         {
-                            labelIndex = 1;
+                            if ( labelIndex == 0 )
+                            {
+                                labelIndex = 1;
+                            }
+                            test(ccmPair, clusterIndex, testIndex, featureIndex, labelIndex, pValues);
                         }
-                        test(ccmPair, clusterIndex, testIndex, featureIndex, labelIndex, pValues);
-                    }
-                    //if only the feature needs testing (no sub labels)
-                    else
-                    {
-                        test(ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues);
+                        //if only the feature needs testing (no sub labels)
+                        else
+                        {
+                            test(ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues);
+                        }
                     }
                 }
             }
@@ -136,7 +143,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
 *
 * @return The number of samples in total of the test label.
 */
-int ConditionalTest::Serial::prepAnxData(QString testLabel, int dataIndex)
+int ConditionalTest::Serial::prepAnxData(QString testLabel, int dataIndex, TESTTYPE testType)
 {
     EDEBUG_FUNC(this, testLabel, dataIndex);
 
@@ -148,7 +155,7 @@ int ConditionalTest::Serial::prepAnxData(QString testLabel, int dataIndex)
     {
         _anxData[j] = _base->_data.at(dataIndex).at(j).toString();
         //if data is the same as the test label add one to the catagory counter
-        if ( _anxData[j] == testLabel )
+        if ( testType == _base->CATEGORICAL && _anxData[j] == testLabel )
         {
             _catCount++;
         }
@@ -194,7 +201,7 @@ bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
 *
 * @return The number of labels in the given cluster.
 */
-int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label)
+int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label, TESTTYPE testType)
 {
     _catCount = _clusterSize = _catInCluster = 0;
 
@@ -202,14 +209,14 @@ int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterInd
     for ( qint32 i = 0; i < _base->_emx->sampleSize(); i++ )
     {
         // If the sample label matches with the given label.
-        if ( _anxData.at(i) == label )
+        if ( testType == _base->CATEGORICAL && _anxData.at(i) == label )
         {
             _catCount++;
         }
         if ( ccmPair.at(clusterIndex, i) == 1 )
         {
             _clusterSize++;
-            if ( _anxData.at(i) == label )
+            if ( testType == _base->CATEGORICAL && _anxData.at(i) == label )
             {
                    _catInCluster++;
             }
@@ -250,7 +257,7 @@ int ConditionalTest::Serial::test(CCMatrix::Pair& ccmPair,
     EDEBUG_FUNC(this,&ccmPair, clusterIndex, &testIndex, featureIndex, labelIndex, &pValues);
 
     //get informatiopn on the mask
-    clusterInfo(ccmPair, clusterIndex, _base->_features.at(featureIndex).at(labelIndex));
+    clusterInfo(ccmPair, clusterIndex, _base->_features.at(featureIndex).at(labelIndex), _base->_testType.at(featureIndex));
 
     //conduct the correct test based on the type of data
     switch(_base->_testType.at(featureIndex))
@@ -421,8 +428,6 @@ double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::P
 {
     EDEBUG_FUNC(this, &anxInfo, &ccmPair, clusterIndex);
 
-    EDEBUG_FUNC(this, &anxInfo, &ccmPair, clusterIndex);
-
     //temp containers
     QVector<double> labelInfo;
 
@@ -442,7 +447,7 @@ double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::P
 
     //allocate a vector and matrix for the slop info
     C = gsl_vector_alloc (3);
-    cov = gsl_matrix_alloc (_clusterSize, 3);
+    cov = gsl_matrix_alloc (3, 3);
 
     //Read in the gene pairs expression information
     ExpressionMatrix::Gene geneX(_base->_emx);
@@ -452,7 +457,7 @@ double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::P
     geneY.read(ccmPair.index().getY());
 
     //look through all the samples in the mask
-    for(qint32 i = 0, j = 0; i < _base->_emx->sampleSize(); i++)
+    for(int i = 0, j = 0; i < _base->_emx->sampleSize(); i++)
     {
         //if the sample label matches with the given label
         if(ccmPair.at(clusterIndex, i) == 1)
@@ -462,18 +467,25 @@ double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::P
             gsl_matrix_set(X, j, 1, static_cast<double>(geneX.at(i)));
             gsl_matrix_set(X, j, 2, static_cast<double>(geneY.at(i)));
 
-            //convert the observation data into a "design vector"
-            //each unique number being a ssigned a unique integer.
-            if(!labelInfo.contains(anxInfo.at(i).toInt()))
+            if(testType == ORDINAL)
             {
-                labelInfo.append(anxInfo.at(i).toInt());
-            }
-            for(int k = 0; k < labelInfo.size(); k++)
-            {
-                if(labelInfo.at(k) == anxInfo.at(i).toInt())
+                //convert the observation data into a "design vector"
+                //each unique number being a ssigned a unique integer.
+                if(!labelInfo.contains(anxInfo.at(i).toInt()))
                 {
-                    gsl_vector_set(Y, j, k + 1);
+                    labelInfo.append(anxInfo.at(i).toInt());
                 }
+                for(int k = 0; k < labelInfo.size(); k++)
+                {
+                    if(labelInfo.at(k) == anxInfo.at(i).toInt())
+                    {
+                    gsl_vector_set(Y, j, k + 1);
+                    }
+                }
+            }
+            else
+            {
+                gsl_vector_set(Y, j, anxInfo.at(i).toFloat());
             }
             j++;
         }
@@ -553,9 +565,6 @@ double ConditionalTest::Serial::fTest(double chisq, gsl_matrix* X, gsl_matrix* c
 
     //Calc F test
     double pValue = gsl_cdf_fdist_P(fStat, DFM, DFE);
-
-    //std::cout << "p Value: " << pValue << " \tF Stat: " << fStat << "\t\tDFM: " << DFM << " \tDFE: " << DFE << std::endl;
-
 
     return pValue;
 }

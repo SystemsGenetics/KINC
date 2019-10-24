@@ -49,6 +49,7 @@ EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
     case CCMINPUT           : return DataIn;
     case CMXINPUT           : return DataIn;
     case ANXINPUT           : return FileIn;
+    case Delimiter          : return String;
     case CSMOUT             : return DataOut;
     case ProbabilitySuccess : return Double;
     case OVERRIDES          : return String;
@@ -80,6 +81,7 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
     case CCMINPUT           : return ccmData(role);
     case CMXINPUT           : return cmxData(role);
     case ANXINPUT           : return anxData(role);
+    case Delimiter          : return delimiterData(role);
     case CSMOUT             : return CSMData(role);
     case ProbabilitySuccess : return ProbabilitySuccessData(role);
     case OVERRIDES          : return overridesData(role);
@@ -104,6 +106,9 @@ void ConditionalTest::Input::set(int index, const QVariant& value)
     EDEBUG_FUNC(this, value);
     switch(index)
     {
+    case Delimiter:
+        _base->_delimiter = value.toString();
+        break;
     case ProbabilitySuccess:
         _base->_probabilitySuccess = value.toDouble();
         break;
@@ -273,6 +278,24 @@ QVariant ConditionalTest::Input::anxData(Role role) const
                                      of the experiment and the values are \
                                      observed or measured values in the experiment.");
     case FileFilters    : return tr("Annotation Matrix (*.txt)");
+    default             : return QVariant();
+    }
+}
+
+
+
+
+
+
+QVariant ConditionalTest::Input::delimiterData(Role role) const
+{
+    EDEBUG_FUNC(this, role);
+    switch(role)
+    {
+    case CommandLineName: return QString("delim");
+    case Title          : return tr("Annotation Matrix Delimiter:");
+    case WhatsThis      : return tr("Delimiter used to seperate values in the Annotation matrix, usually a tab or comma");
+    case Default        : return tr("tab");
     default             : return QVariant();
     }
 }

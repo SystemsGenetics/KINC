@@ -15,9 +15,9 @@ public:
 
     //helper functions
     int test(CCMatrix::Pair& ccmPair, qint32 clusterIndex, qint32& testIndex, qint32 featureIndex, qint32 labelIndex, QVector<QVector<double>>& pValues);
-    int prepAnxData(QString testLabel, int dataIndex);
+    int prepAnxData(QString testLabel, int dataIndex, TESTTYPE testType);
     bool isEmpty(QVector<QVector<double>>& matrix);
-    int clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label);
+    int clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label, TESTTYPE testType);
 
     //Binomial Tests
     double binomial();
