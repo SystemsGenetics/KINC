@@ -22,6 +22,7 @@ public:
     double binomial();
     double testOne();
     double testTwo();
+    double testThree();
 
     //Regresion Test
     double regresion(QVector<QString>& anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex);
@@ -36,17 +37,17 @@ private:
    */
    QVector<QString> _anxData;
    /*!
-   *  Catagory count.
+   *  Category count.
    */
    qint32 _catCount {0};
    /*!
-   *  Catagory count in cluster.
+   *  Category count in cluster.
    */
-   qint32 _catInCount {0};
+   qint32 _catInCluster {0};
    /*!
-   *  Catagory count in cluster.
+   *  Size of the cluster.
    */
-   qint32 _clusterInMask {0};
+   qint32 _clusterSize {0};
 };
 
 

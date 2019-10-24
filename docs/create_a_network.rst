@@ -9,7 +9,8 @@ Before Getting Started
 
 Traditional or GMM Approach?
 ````````````````````````````
-**Traditional Approach**
+Traditional Approach
+::::::::::::::::::::
 
 Advantages
   - Executes very fast.
@@ -18,7 +19,8 @@ Advantages
 Disadvantages
   - Includes false edges but also misses edges due to improper application of correlation tests.
 
-**GMM Approach**
+GMM Approach
+::::::::::::
 
 Advantages
   - Limits correlation test bias by using GMMs to ensure test assumptions are met.
@@ -30,7 +32,8 @@ Disadvantages
   - May require access to HPC with multiple GPUs for very large GEMs.
   - May not be useful if the experiment that generated the data does not have qualitative conditions. For example, an experiment to explore genes underlying differences in plant height across a range of genotypes would not benefit from GMMs as the phenotype is quantitative. A traditional approach would be better.
 
-**KINC's Advantage for Both**
+Advantage for Both
+::::::::::::::::::
 
 In both cases, when condition-specific thresholding is used, edges that are normally thrown out due to high correlation thresholds are not lost.  But edges that are correlated with qualitative conditions (via bionomial tests) of with quantitative conditions (via regression tests) are identified.
 
@@ -149,5 +152,50 @@ If function fails to find an threshold then see the :doc:`troubleshooting` secti
 Step 4: Extracting the Network File
 ```````````````````````````````````
 
+
+
 GMM approach
 ------------
+Step 1: Import the GEM
+``````````````````````
+.. code:: bash
+
+  kinc run import-emx \
+    --input "rice_heat_drought.GEM.FPKM.filtered.txt" \
+    --output "rice_heat_drought.GEM.FPKM.filtered.emx" \
+    --nan "NA" \
+    --samples 0
+
+In the code above the GEM file is provided to the ``import-emx`` function and the name of an output EMX file is provided.  The file uses "NA" to indicate missing values and  it has a header so the number of samples is set to .
+
+Step 2: Perform GMM + Correlation Analysis
+``````````````````````````````````````````
+.. code:: bash
+
+  kinc run similarity \
+    --input "rice_heat_drought.GEM.FPKM.filtered.emx" \
+    --ccm "rice_heat_drought.GEM.FPKM.filtered.ccm" \
+    --cmx "rice_heat_drought.GEM.FPKM.filtered.cmx" \
+    --clusmethod "gmm" \
+    --corrmethod "spearman" \
+    --minexpr -inf \
+    --minsamp 25 \
+    --minclus 1 \
+    --maxclus 5 \
+    --crit "ICL" \
+    --preout TRUE \
+    --postout TRUE \
+    --mincorr 0.5 \
+    --maxcorr 1
+
+Here the EMX file created in the first step is provided, and the names of the two output (CCM and CMX) files are provided.  Because we are using the GMM approach, the ``--clusmethod`` argument is set to ``"gmm"``.  The correlation method is set to use Spearman and the ``--minexp`` argument isset to negative infinity (``-inf``) to indicate there is no limit on the minimum expression value.  If we wanted to exclude samples whose log2 expression values dipped below 0.2, for instance, we could do so.  To keep the output files relatively small, we will exclude all correlation values below 0.5 using the ``--mincorr`` argument.  Sometimes errors occur in data collection or quantification yielding high numbers of perfectly correlated genes!  We can limit that by excluding perfectly correlated genes by lowering the ``--maxcorr`` argument. In practice we leave this as 1 for the first time we create the network.
+
+
+Step 3: Filter Low-Powered Edges
+````````````````````````````````
+Step 4: Perform Condition-Specific Thresholding
+```````````````````````````````````````````````
+Step 5: Extract the Network
+```````````````````````````
+Step 6: Remove Edges Due to Collinearity
+``````````````````````````````````````

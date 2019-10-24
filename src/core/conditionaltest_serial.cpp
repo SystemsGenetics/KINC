@@ -187,7 +187,7 @@ bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
 
 
 /*!
-*  Implements an interface to prepare the cluster catagory count information.
+*  Implements an interface to prepare the cluster category count information.
 *
 * @param ccmPair The gene pair that we are counting the labels for.
 *
@@ -197,26 +197,26 @@ bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
 */
 int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label)
 {
-    _catCount = _clusterInMask = _catInCount = 0;
+    _catCount = _clusterSize = _catInCluster = 0;
 
-    //look through all the samples in the mask
+    // Look through all the samples in the mask.
     for ( qint32 i = 0; i < _base->_emx->sampleSize(); i++ )
     {
-        //if the sample label matches with the given label'
+        // If the sample label matches with the given label.
         if ( _anxData.at(i) == label )
         {
             _catCount++;
         }
         if ( ccmPair.at(clusterIndex, i) == 1 )
         {
-            _clusterInMask++;
+            _clusterSize++;
             if ( _anxData.at(i) == label )
             {
-                   _catInCount++;
+                   _catInCluster++;
             }
         }
     }
-    return _catInCount;
+    return _catInCluster;
 }
 
 
@@ -289,10 +289,10 @@ double ConditionalTest::Serial::binomial()
     EDEBUG_FUNC(this);
 
     //calculate the pvalue, the max out of the two tests
-    double test1 = testOne();
-    double test2 = testTwo();
-    double pvalue = std::max(test1, test2);
-
+    //double test1 = testOne();
+    //double test2 = testTwo();
+    //double pvalue = std::max(test1, test2);
+    double pvalue = testThree();
     return pvalue;
 }
 
@@ -317,7 +317,18 @@ double ConditionalTest::Serial::testOne()
     // Ho: successes >= 0.15
     // Ha: successes < 0.15
 
-    return gsl_cdf_binomial_P(_clusterInMask - _catInCount, 1 - _base->_probabilitySuccess, _base->_emx->sampleSize() - _catCount);
+    // Number of trials, n: is the number of non-category samples.
+    int n =  _base->_emx->sampleSize() - _catCount;
+
+    // Number of successes, k: is the number of non-category samples in the cluster.
+    int k = _clusterSize - _catInCluster;
+
+    double p = 1 - _base->_probabilitySuccess;
+
+    // The gsl_cdf_binomial_P function uses the lower-tail of the CDF.
+    // gives the probablity of the variate taking a value less than k.
+    double pvalue = gsl_cdf_binomial_P(k, p, n);
+    return pvalue;
 }
 
 
@@ -333,13 +344,61 @@ double ConditionalTest::Serial::testTwo()
 {
     EDEBUG_FUNC(this);
 
-    // Test #2
+    // Test #2:
     // successes = number of category samples in the cluster
     // failures = number of category samples out of the cluster
     // Ho: successes = 0.85
     // Ha: successes > 0.85
 
-    return gsl_cdf_binomial_Q(_catInCount, _base->_probabilitySuccess, _catCount - _catInCount);
+    // Number of trials, n: is the number of category samples.
+    int n = _catCount;
+
+    // Number of successes, k: is the number of category samples in the cluster.
+    int k = _catInCluster;
+
+    double p = _base->_probabilitySuccess;
+
+    // The gsl_cdf_binomial_Q function uses the upper-tail of the CDF.
+    // gives the probablity of the variate taking a value greater than k.
+    double pvalue = gsl_cdf_binomial_Q(k, p, n);
+    return pvalue;
+}
+
+
+
+
+
+
+/*!
+*  Implements an interface to run the first binomial test for given data.
+*
+* @return Pvalue corrosponding to the test.
+*/
+double ConditionalTest::Serial::testThree()
+{
+    EDEBUG_FUNC(this);
+
+    // We use the hypergeometric distribution because the samples are
+    // selected from the population for membership in the cluster without
+    // replacement.
+
+    // If a population contains n_1 elements of “type 1” and n_2 elements of
+    // “type 2” then the hypergeometric distribution gives the probability
+    // of obtaining k elements of “type 1” in t samples from the population
+    // without replacement.
+
+    // Population contains n1 elements of Type 1.
+    int n1 = _catCount;
+    // Population contains n2 elements of Type 2.
+    int n2 = _base->_emx->sampleSize() - _catCount;
+    // k elements of Type 1 were selected.
+    int k = _catInCluster;
+    // t total elements were selected.
+    int t = _clusterSize;
+
+    // The gsl_cdf_hypergeometric_Q function uses the upper-tail of the CDF.
+    double pvalue = gsl_cdf_hypergeometric_Q(k, n1, n2, t);
+    return pvalue;
 }
 
 
