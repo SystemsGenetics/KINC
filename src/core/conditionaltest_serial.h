@@ -1,6 +1,7 @@
 #ifndef ConditionalTest_SERIAL_H
 #define ConditionalTest_SERIAL_H
 #include <ace/core/core.h>
+#include <gsl/gsl_matrix.h>
 #include "conditionaltest.h"
 
 
@@ -25,7 +26,8 @@ public:
     double testThree();
 
     //Regresion Test
-    double regresion(QVector<QString>& anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex);
+    double regresion(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType);
+    double fTest(double chisq, gsl_matrix* X, gsl_matrix* cov, gsl_vector* C);
 
 private:
    /*!
