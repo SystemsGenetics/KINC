@@ -31,8 +31,12 @@ public:
        */
       ,ANXINPUT
        /*!
-       *  defines CSM modlie as an output
+       *  defines delimeter for ANXINPUT
        */
+      ,Delimiter
+        /*!
+        *  defines CSM modlie as an output
+        */
       ,CSMOUT
        /*!
        *  defines the threshold for data to keep
@@ -63,6 +67,7 @@ public:
    QVariant ccmData(Role role) const;
    QVariant cmxData(Role role) const;
    QVariant anxData(Role role) const;
+   QVariant delimiterData(Role role) const;
    QVariant CSMData(Role role) const;
    QVariant ProbabilitySuccessData(Role role) const;
    QVariant testData(Role role) const;

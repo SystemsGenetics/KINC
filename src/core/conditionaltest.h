@@ -129,6 +129,7 @@ private:
     int _numTests {0};
     qint32 _geneSize {0};
     qint32 _sampleSize {0};
+    QString _delimiter = "tab";
     /*!
      * Current pairwise pair index
      */

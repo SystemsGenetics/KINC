@@ -140,11 +140,11 @@ void Extract::writeTextFormat(int index)
           int include = 0;
           for ( int i = 0; i < _csm->getTestCount(); i++ )
           {
-              if ( !PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)) &&  _csmPValueFilterFeatureNames.size() != 0)
+              if ( _csmPValueFilterFeatureNames.size() != 0 && !PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)))
               {
                   notInclude++;
               }
-              if ( PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)) && _csmPValueFilterFeatureNames.size() == 0 )
+              if ( _csmPValueFilterFeatureNames.size() == 0 && PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)))
               {
                   include++;
               }

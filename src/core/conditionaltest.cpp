@@ -301,14 +301,13 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
 
     //the file can be a csv or a tab delimited ANX
     //default is tab diliniated
-    char split = ',';
-    if ( line.contains('\t') )
+    if(_delimiter == "tab")
     {
-        split = '\t';
+        _delimiter = "\t";
     }
 
     //splits the file along the commas or tabs depending on what it has inside
-    auto words = line.split(split, QString::SkipEmptyParts, Qt::CaseInsensitive);
+    auto words = line.split(_delimiter, QString::SkipEmptyParts, Qt::CaseInsensitive);
 
     //If a feild never changes, we dont have to store cpies of that data.
     QVector<int> changed;
@@ -329,7 +328,7 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
     {
         line = _stream.readLine();
         //splits the file along the commas
-        auto words2 = line.split(split, QString::SkipEmptyParts, Qt::CaseInsensitive);
+        auto words2 = line.split(_delimiter, QString::SkipEmptyParts, Qt::CaseInsensitive);
 
         //add the data to our arrays
         for ( int j = 0; j < words2.size(); j++ )
@@ -380,7 +379,7 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
                 check = 1;
             }
         }
-        if ( check == 0 || dataTestType.at(j) == QUANTATATIVE || dataTestType.at(j) == ORDINAL )
+        if ( check == 0 )
         {
             dataTestType[j] = NONE;
         }
@@ -415,13 +414,12 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
         line = _stream.readLine();
 
         //splits the file along the commas or tabs depending
-        char split = '\t';
-        if ( line.contains(',') )
+        if(_delimiter == "tab")
         {
-            split = ',';
+            _delimiter = "\t";
         }
 
-        auto words = line.split(split, QString::SkipEmptyParts, Qt::CaseInsensitive);
+        auto words = line.split(_delimiter, QString::SkipEmptyParts, Qt::CaseInsensitive);
         for ( int i = 0; i < words.size(); i++ )
         {
             //it most likeley a double and should be considered quantatative.
@@ -430,7 +428,7 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
             {
                 if ( i < dataTestType.size() )
                 {
-                   counts[i][QUANTATATIVE]--;
+                   counts[i][QUANTATATIVE]++;
                 }
             }
             //it is most likely an integer and should ne considered Ordinal.
@@ -453,13 +451,17 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
     }
     for ( int i = 0; i < counts.size() ; i++ )
     {
-        if ( counts.at(i).at(QUANTATATIVE) < 0 )
+        if ( counts.at(i).at(QUANTATATIVE) > 0)
         {
             dataTestType[i] = QUANTATATIVE;
         }
+        else if ( counts.at(i).at(ORDINAL) > 0 )
+        {
+            dataTestType[i] = ORDINAL;
+        }
         else
         {
-            dataTestType[i] = ((TESTTYPE)max(counts[i]));
+            dataTestType[i] = CATEGORICAL;
         }
     }
     _stream.seek(0);
@@ -557,6 +559,11 @@ QString ConditionalTest::testNames()
                 string += _features.at(i).at(j);
                 string += ":";
             }
+        }
+        else if ( _testType.at(i) == QUANTATATIVE || _testType.at(i) == ORDINAL )
+        {
+            string += _features.at(i).at(0);
+            string += ":";
         }
     }
     return string;
