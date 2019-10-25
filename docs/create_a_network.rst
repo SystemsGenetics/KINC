@@ -193,9 +193,47 @@ Here the EMX file created in the first step is provided, and the names of the tw
 
 Step 3: Filter Low-Powered Edges
 ````````````````````````````````
+.. code:: bash
+
+  kinc run corrpower \
+  --ccm-in "rice_heat_drought.GEM.FPKM.filtered.ccm" \
+  --cmx-in "rice_heat_drought.GEM.FPKM.filtered.cmx" \
+  --ccm-out "rice_heat_drought.GEM.FPKM.filtered.paf.ccm" \
+  --cmx-out "rice_heat_drought.GEM.FPKM.filtered.paf.cmx" \
+  --alpha 0.001 \
+  --power 0.8
+
+
 Step 4: Perform Condition-Specific Thresholding
 ```````````````````````````````````````````````
+.. code:: bash
+
+  kinc run cond-test \
+    --emx "rice_heat_drought.GEM.FPKM.filtered.emx" \
+    --ccm "rice_heat_drought.GEM.FPKM.filtered.paf.ccm" \
+    --cmx "rice_heat_drought.GEM.FPKM.filtered.paf.cmx" \
+    --amx "../../01-input_data/rice_heat_drought/PRJNA301554.hydroponic.sample_annotations.filtered.txt"   --out "rice_heat_drought.GEM.FPKM.filtered.paf.csm" \
+    --psuc 0.75 \
+    --feat-tests "Subspecies,Treatment,GTAbbr" \
+    --feat-types ""
+
+
 Step 5: Extract the Network
 ```````````````````````````
+.. code:: bash
+
+  kinc run extract \
+    --emx "rice_heat_drought.GEM.FPKM.filtered.emx" \
+    --ccm "rice_heat_drought.GEM.FPKM.filtered.paf.ccm" \
+    --cmx "rice_heat_drought.GEM.FPKM.filtered.paf.cmx" \
+    --csm "rice_heat_drought.GEM.FPKM.filtered.paf.csm" \
+    --format "text" \
+    --output "rice_heat_drought.GEM.FPKM.filtered.th0.5.cs1e-3.gcn.txt" \
+    --mincorr 0.50 \
+    --maxcorr 1 \
+    --filter-pvalue "1e-3"
+
+
+
 Step 6: Remove Edges Due to Collinearity
-``````````````````````````````````````
+````````````````````````````````````````

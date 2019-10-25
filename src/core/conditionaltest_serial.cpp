@@ -256,7 +256,7 @@ int ConditionalTest::Serial::test(CCMatrix::Pair& ccmPair,
     switch(_base->_testType.at(featureIndex))
     {
         case CATEGORICAL :
-            pValues[clusterIndex][testIndex] = binomial();
+            pValues[clusterIndex][testIndex] = hypergeom(ccmPair, clusterIndex);
             testIndex++;
         break;
         case ORDINAL :
@@ -287,11 +287,10 @@ double ConditionalTest::Serial::binomial()
 {
     EDEBUG_FUNC(this);
 
-    //calculate the pvalue, the max out of the two tests
-    //double test1 = testOne();
-    //double test2 = testTwo();
-    //double pvalue = std::max(test1, test2);
-    double pvalue = testThree();
+    // Calculate the pvalue, the max out of the two tests.
+    double test1 = testOne();
+    double test2 = testTwo();
+    double pvalue = std::max(test1, test2);
     return pvalue;
 }
 
@@ -373,9 +372,10 @@ double ConditionalTest::Serial::testTwo()
 *
 * @return Pvalue corrosponding to the test.
 */
-double ConditionalTest::Serial::testThree()
+double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIndex)
 {
     EDEBUG_FUNC(this);
+    // QString samples = ccmPair.toString();
 
     // We use the hypergeometric distribution because the samples are
     // selected from the population for membership in the cluster without
@@ -394,6 +394,64 @@ double ConditionalTest::Serial::testThree()
     int k = _catInCluster;
     // t total elements were selected.
     int t = _clusterSize;
+
+    // If n1 == k we will always get a zero because we've
+    // reached the end of the distribution, so the Ho that
+    // X > k is always 0.  This happens if the cluster is 100%
+    // comprised of the category we're looking for.
+    if (k == n1) {
+      return 1;
+    }
+
+    // If our dataset is large, the power to detect the effect
+    // size increases, resulting in potentially insignificant
+    // proportions having signficant p-values. Using Cohen's H
+    // to set a large-effect size (e.g. 0.8) with a sig.level of
+    // 0.001 and a power of 0.95 we need at least 31 samples.
+    // So, we'll perform a jacknife resampling of our data
+    // to calculate an average proportion of 31 samples
+    if (t > 31)
+    {
+        // Initialize the uniform random number generator.
+        const gsl_rng_type * T;
+        gsl_rng * r;
+        gsl_rng_env_setup();
+        T = gsl_rng_default;
+        r = gsl_rng_alloc (T);
+
+        // Holds the jacknife average proportion.
+        int jkap = 0;
+
+        // To perform the Jacknife resampling we will
+        // perform 30 iterations (central limit thereom)
+        int in = 30;
+        for (int i = 0; i < in; i++) {
+
+            // Keeps track of the number of successes, and the
+            // new proportion average.
+            int ns = 0;
+
+            // Generate 31 random numbers between 0 and the size of
+            // the sample string.  We will use these numbers to
+            // randomly select a sample and if it is a 1 we consider
+            // it a success.
+            for (int j = 0; j < 31; j++)
+            {
+                int u = static_cast<int>(gsl_rng_uniform(r) * _base->_emx->sampleSize());
+                if (ccmPair.at(clusterIndex, u) == 1)
+                {
+                    ns = ns + 1;
+                }
+            }
+            jkap += ns;
+        }
+        jkap = jkap/in;
+        gsl_rng_free(r);
+
+        // Now reset the sample size and the proporiton of success.
+        k = jkap;
+        t = 31;
+    }
 
     // The gsl_cdf_hypergeometric_Q function uses the upper-tail of the CDF.
     double pvalue = gsl_cdf_hypergeometric_Q(k, n1, n2, t);
