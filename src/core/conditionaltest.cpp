@@ -194,11 +194,39 @@ void ConditionalTest::initialize()
     auto& mpi {Ace::QMPI::instance()};
 
     // make sure input data is valid
-    if ( !_ccm || !_cmx || !_anx || !_emx || !_out)
+    if ( !_ccm )
     {
        E_MAKE_EXCEPTION(e);
        e.setTitle(tr("Invalid Argument"));
-       e.setDetails(tr("Did not get valid input data objects."));
+       e.setDetails(tr("Did not get valid CCM data argument."));
+       throw e;
+    }
+    if ( !_cmx )
+    {
+       E_MAKE_EXCEPTION(e);
+       e.setTitle(tr("Invalid Argument"));
+       e.setDetails(tr("Did not get valid CMX data argument."));
+       throw e;
+    }
+    if ( !_anx )
+    {
+       E_MAKE_EXCEPTION(e);
+       e.setTitle(tr("Invalid Argument"));
+       e.setDetails(tr("Did not get valid ANX data argument."));
+       throw e;
+    }
+    if (  !_emx )
+    {
+       E_MAKE_EXCEPTION(e);
+       e.setTitle(tr("Invalid Argument"));
+       e.setDetails(tr("Did not get valid EMX data argument."));
+       throw e;
+    }
+    if (  !_out)
+    {
+       E_MAKE_EXCEPTION(e);
+       e.setTitle(tr("Invalid Argument"));
+       e.setDetails(tr("Did not get valid output file argument."));
        throw e;
     }
 
@@ -309,7 +337,7 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
     //splits the file along the commas or tabs depending on what it has inside
     auto words = line.split(_delimiter, QString::SkipEmptyParts, Qt::CaseInsensitive);
 
-    //If a feild never changes, we dont have to store cpies of that data.
+    //If a field never changes, we don't have to store copies of that data.
     QVector<int> changed;
 
     //put the column names into the anxdata array, that will be later put into the meta data
@@ -662,7 +690,8 @@ void ConditionalTest::rearrangeSamples()
     int startIndex = 0;
     QVariant temp;
 
-    //find the sample index.
+    // find the sample index, if none is found with the name "samples" then
+    // we default to using the first column.
     for(int i = 0; i< _features.size(); i++)
     {
         if(_features.at(i).at(0) == "samples" || _features.at(i).at(0) == "Samples")
@@ -677,7 +706,7 @@ void ConditionalTest::rearrangeSamples()
     {
         E_MAKE_EXCEPTION(e);
         e.setTitle(tr("Sample Size Error"));
-        e.setDetails(tr("Sample size in emx doesn not match annotation matrix."));
+        e.setDetails(tr("Sample size in emx does not match annotation matrix."));
         throw e;
     }
 

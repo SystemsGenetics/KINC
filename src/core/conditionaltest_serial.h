@@ -26,7 +26,7 @@ public:
     double testTwo();
 
     // Hypergeometrix Test.
-    double hypergeom(CCMatrix::Pair& ccmPair, int clusterIndex);
+    double hypergeom(CCMatrix::Pair& ccmPair, int clusterIndex, QString test_label);
 
     // Regresion Test
     double regresion(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType);

@@ -263,7 +263,8 @@ int ConditionalTest::Serial::test(CCMatrix::Pair& ccmPair,
     switch(_base->_testType.at(featureIndex))
     {
         case CATEGORICAL :
-            pValues[clusterIndex][testIndex] = hypergeom(ccmPair, clusterIndex);
+            pValues[clusterIndex][testIndex] = hypergeom(ccmPair, clusterIndex,
+                                                         _base->_features.at(featureIndex).at(labelIndex));
             testIndex++;
         break;
         case ORDINAL :
@@ -379,10 +380,10 @@ double ConditionalTest::Serial::testTwo()
 *
 * @return Pvalue corrosponding to the test.
 */
-double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIndex)
+double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIndex, QString test_label)
 {
     EDEBUG_FUNC(this);
-    // QString samples = ccmPair.toString();
+    //QString samples = ccmPair.toString();
 
     // We use the hypergeometric distribution because the samples are
     // selected from the population for membership in the cluster without
@@ -434,24 +435,25 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
         int in = 30;
         for (int i = 0; i < in; i++) {
 
-            // Keeps track of the number of successes, and the
-            // new proportion average.
+            // Keeps track of the number of successes for each iteration.
             int ns = 0;
 
             // Generate 31 random numbers between 0 and the size of
             // the sample string.  We will use these numbers to
-            // randomly select a sample and if it is a 1 we consider
-            // it a success.
+            // randomly select a sample and if it is a 1 and of the
+            // testing category then we consider it a success.
             for (int j = 0; j < 31; j++)
             {
                 int u = static_cast<int>(gsl_rng_uniform(r) * _base->_emx->sampleSize());
-                if (ccmPair.at(clusterIndex, u) == 1)
+                if (ccmPair.at(clusterIndex, u) == 1 && _anxData.at(u) == test_label)
                 {
                     ns = ns + 1;
                 }
             }
             jkap += ns;
         }
+        // Calculate the average proportion from all iterations
+        // and free the random number struct.
         jkap = jkap/in;
         gsl_rng_free(r);
 
@@ -486,56 +488,56 @@ double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::P
 {
     EDEBUG_FUNC(this, &anxInfo, &ccmPair, clusterIndex);
 
-    //temp containers
+    // Temp containers.
     QVector<double> labelInfo;
 
-    //regression model containers
+    // Regression model containers.
     double chisq;
     gsl_matrix *X, *cov;
     gsl_vector *Y, *C;
     double pValue = 0.0;
 
-    //allocate a matrix to hold the predictior variables, in this cas the gene
-    //expression data
-    X = gsl_matrix_alloc (_clusterSize, 3);
+    // Allocate a matrix to hold the predictior variables, in this case the gene
+    // Expression data.
+    X = gsl_matrix_alloc(_clusterSize, 3);
 
-    //allocate a vector to hold observation data, in this case the data
-    //corrosponding ot the features
-    Y = gsl_vector_alloc (_clusterSize);
+    // Allocate a vector to hold observation data, in this case the data
+    // corrosponding to the features.
+    Y = gsl_vector_alloc(_clusterSize);
 
-    //allocate a vector and matrix for the slop info
+    // Allocate a vector and matrix for the slope info.
     C = gsl_vector_alloc (3);
     cov = gsl_matrix_alloc (3, 3);
 
-    //Read in the gene pairs expression information
+    // Read in the gene pairs expression information.
     ExpressionMatrix::Gene geneX(_base->_emx);
     ExpressionMatrix::Gene geneY(_base->_emx);
-
     geneX.read(ccmPair.index().getX());
     geneY.read(ccmPair.index().getY());
 
-    //look through all the samples in the mask
-    for(int i = 0, j = 0; i < _base->_emx->sampleSize(); i++)
+    // Look through all the samples in the mask.
+    for (int i = 0, j = 0; i < _base->_emx->sampleSize(); i++)
     {
-        //if the sample label matches with the given label
-        if(ccmPair.at(clusterIndex, i) == 1)
+        // If the sample label matches with the given label.
+        if (ccmPair.at(clusterIndex, i) == 1)
         {
-            //add emx data to the predictions if the sample is in the cluster
+            // Add emx data to the predictions if the sample is in the cluster.
             gsl_matrix_set(X, j, 0, static_cast<double>(1)); //for the intercept
             gsl_matrix_set(X, j, 1, static_cast<double>(geneX.at(i)));
             gsl_matrix_set(X, j, 2, static_cast<double>(geneY.at(i)));
 
-            if(testType == ORDINAL)
+            // Next add the annotation observation for this sample to the Y vector.
+            if (testType == ORDINAL)
             {
-                //convert the observation data into a "design vector"
-                //each unique number being a ssigned a unique integer.
-                if(!labelInfo.contains(anxInfo.at(i).toInt()))
+                // Convert the observation data into a "design vector"
+                // Each unique number being a ssigned a unique integer.
+                if (!labelInfo.contains(anxInfo.at(i).toInt()))
                 {
                     labelInfo.append(anxInfo.at(i).toInt());
                 }
-                for(int k = 0; k < labelInfo.size(); k++)
+                for (int k = 0; k < labelInfo.size(); k++)
                 {
-                    if(labelInfo.at(k) == anxInfo.at(i).toInt())
+                    if (labelInfo.at(k) == anxInfo.at(i).toInt())
                     {
                     gsl_vector_set(Y, j, k + 1);
                     }
@@ -549,23 +551,23 @@ double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::P
         }
     }
 
-    //create the workspace for the gnu scientific library to work in
+    // Create the workspace for the gnu scientific library to work in.
     gsl_multifit_linear_workspace * work = gsl_multifit_linear_alloc (_clusterSize, 3);
 
-    //regrassion calculation
+    // Regrassion calculation.
     gsl_multifit_linear(X, Y, C, cov, &chisq, work);
 
-    //From here we use the F-tests to calculate the p-Value for the entire model
+    // From here we use the F-tests to calculate the p-Value for the entire model.
     pValue = fTest(chisq, X, cov, C);
 
-    //free all of the data
+    // Free all of the data.
     gsl_matrix_free(X);
     gsl_vector_free(Y);
     gsl_matrix_free(cov);
     gsl_vector_free(C);
     gsl_multifit_linear_free(work);
 
-    //return the slope of the line
+    // Return the pvalue.
     return pValue;
 }
 
