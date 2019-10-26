@@ -381,17 +381,24 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
         {
             if ( anxdata.at(j).at(0) == _override.at(i).at(0) )
             {
-                if ( _override.at(i).at(1) == "CATEGORICAL" )
+                QString overrid_type = _override.at(i).at(1);
+                if ( QString::compare(_override.at(i).at(1), "CATEGORICAL", Qt::CaseInsensitive) == 0 )
                 {
                     dataTestType[j] = CATEGORICAL;
                 }
-                if ( _override.at(i).at(1) == "ORDINAL" )
+                else if ( QString::compare(_override.at(i).at(1), "ORDINAL", Qt::CaseInsensitive) == 0 )
                 {
                     dataTestType[j] = ORDINAL;
                 }
-                if ( _override.at(i).at(1) == "QUANTATATIVE" )
+                else if ( QString::compare(_override.at(i).at(1), "QUANTITATIVE", Qt::CaseInsensitive) == 0 )
                 {
                     dataTestType[j] = QUANTATATIVE;
+                }
+                else {
+                    E_MAKE_EXCEPTION(e);
+                    e.setTitle(tr("Unknown override type in the --feat_type argument."));
+                    e.setDetails(tr("Unknown override type: ") + _override.at(i).at(1) + tr(".  Valid choices are: categorical, quantitative, ordinal"));
+                    throw e;
                 }
             }
         }

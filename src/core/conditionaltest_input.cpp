@@ -406,14 +406,14 @@ QVariant ConditionalTest::Input::overridesData(Role role) const
     case Title          : return tr("Feature Types:");
     case WhatsThis      : return tr("By default, this program will automatically \
                                      detect the type of feature as 'categorical', \
-                                     'decimal', or 'ordinal'.   You can override \
+                                     'quantitative', or 'ordinal'.   You can override \
                                      the default type by listing the column name \
-                                     from the annotation matrix, two colons and \
-                                     the desired type. You can list as many as \
+                                     from the annotation matrix, followed by a colon and \
+                                     then the desired type. You can list as many \
                                      features by separating them with commas, \
                                      with no spaces around commas. \
                                      For example if a column is named \"Health_Status\" and is \
-                                     numeric with an ordinal enter:  Health_Status::ordinal");
+                                     numeric with an ordinal enter:  Health_Status:ordinal");
     default             : return QVariant();
     }
 }
