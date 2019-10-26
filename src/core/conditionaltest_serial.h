@@ -3,6 +3,7 @@
 #include <ace/core/core.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_rng.h>
+#include <gsl/gsl_statistics_double.h>
 #include "conditionaltest.h"
 
 
@@ -30,7 +31,7 @@ public:
 
     // Regresion Test
     double regresion(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType);
-    double fTest(double chisq, gsl_matrix* X, gsl_matrix* cov, gsl_vector* C);
+    double fTest(double chisq, gsl_matrix* X, gsl_vector* Y, gsl_matrix* cov, gsl_vector* C);
 
 private:
    /*!

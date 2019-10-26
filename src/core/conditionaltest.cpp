@@ -381,7 +381,6 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
         {
             if ( anxdata.at(j).at(0) == _override.at(i).at(0) )
             {
-                QString overrid_type = _override.at(i).at(1);
                 if ( QString::compare(_override.at(i).at(1), "CATEGORICAL", Qt::CaseInsensitive) == 0 )
                 {
                     dataTestType[j] = CATEGORICAL;
@@ -392,7 +391,7 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
                 }
                 else if ( QString::compare(_override.at(i).at(1), "QUANTITATIVE", Qt::CaseInsensitive) == 0 )
                 {
-                    dataTestType[j] = QUANTATATIVE;
+                    dataTestType[j] = QUANTITATIVE;
                 }
                 else {
                     E_MAKE_EXCEPTION(e);
@@ -457,13 +456,13 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
         auto words = line.split(_delimiter, QString::SkipEmptyParts, Qt::CaseInsensitive);
         for ( int i = 0; i < words.size(); i++ )
         {
-            //it most likeley a double and should be considered quantatative.
+            //it most likeley a double and should be considered QUANTITATIVE.
             //will look for (at laest one number)(a '.')(at laest one number)
             if ( words[i].contains(QRegExp("\\d+\\.\\d+")) )
             {
                 if ( i < dataTestType.size() )
                 {
-                   counts[i][QUANTATATIVE]++;
+                   counts[i][QUANTITATIVE]++;
                 }
             }
             //it is most likely an integer and should ne considered Ordinal.
@@ -486,9 +485,9 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
     }
     for ( int i = 0; i < counts.size() ; i++ )
     {
-        if ( counts.at(i).at(QUANTATATIVE) > 0)
+        if ( counts.at(i).at(QUANTITATIVE) > 0)
         {
-            dataTestType[i] = QUANTATATIVE;
+            dataTestType[i] = QUANTITATIVE;
         }
         else if ( counts.at(i).at(ORDINAL) > 0 )
         {
@@ -595,7 +594,7 @@ QString ConditionalTest::testNames()
                 string += ":";
             }
         }
-        else if ( _testType.at(i) == QUANTATATIVE || _testType.at(i) == ORDINAL )
+        else if ( _testType.at(i) == QUANTITATIVE || _testType.at(i) == ORDINAL )
         {
             string += _features.at(i).at(0);
             string += ":";
@@ -651,7 +650,7 @@ void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,Q
             break;
         case ORDINAL : featureInfo[i].append(tr("Ordinal"));
             break;
-        case QUANTATATIVE : featureInfo[i].append(tr("Quantitative"));
+        case QUANTITATIVE : featureInfo[i].append(tr("Quantitative"));
             break;
         case NONE : featureInfo[i].append(tr("None"));
             break;

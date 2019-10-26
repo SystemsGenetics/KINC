@@ -88,7 +88,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                 {
                     continue;
                 }
-                if(_base->_testType.at(featureIndex) == QUANTATATIVE || _base->_testType.at(featureIndex) == ORDINAL)
+                if(_base->_testType.at(featureIndex) == QUANTITATIVE || _base->_testType.at(featureIndex) == ORDINAL)
                 {
                     prepAnxData(_base->_features.at(featureIndex).at(0), featureIndex, _base->_testType.at(featureIndex));
                     test(ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues);
@@ -271,8 +271,8 @@ int ConditionalTest::Serial::test(CCMatrix::Pair& ccmPair,
             pValues[clusterIndex][testIndex] = regresion(_anxData, ccmPair, clusterIndex, ORDINAL);
             testIndex++;
         break;
-        case QUANTATATIVE :
-            pValues[clusterIndex][testIndex] = regresion(_anxData, ccmPair, clusterIndex, QUANTATATIVE);
+        case QUANTITATIVE :
+            pValues[clusterIndex][testIndex] = regresion(_anxData, ccmPair, clusterIndex, QUANTITATIVE);
             testIndex++;
         break;
         default:; //quash a compiler warning
@@ -539,7 +539,7 @@ double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::P
                 {
                     if (labelInfo.at(k) == anxInfo.at(i).toInt())
                     {
-                    gsl_vector_set(Y, j, k + 1);
+                        gsl_vector_set(Y, j, k + 1);
                     }
                 }
             }
@@ -557,8 +557,30 @@ double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::P
     // Regrassion calculation.
     gsl_multifit_linear(X, Y, C, cov, &chisq, work);
 
-    // From here we use the F-tests to calculate the p-Value for the entire model.
-    pValue = fTest(chisq, X, cov, C);
+    // Calculate R^2 and p-value
+    double r2 = 1 - chisq / gsl_stats_tss(Y->data, Y->stride, Y->size);
+    double dl = _clusterSize - 2;
+    double F = r2 * dl / (1 - r2);
+    pValue = 1 - gsl_cdf_fdist_P (F, 1, dl);
+
+    // TODO: we should check the assumptions of the linear regression and
+    // not return if the assumptions are not met.
+
+    // TODO: it would be nice to return a rate of change of the conditioal mean.
+
+    // TODO: it would be nice to return the r2 value along with the p-value.
+
+    // Four scenarios:
+    // 1) low R-square and low p-value (p-value <= 0.05).  Model doesn't explain
+    //    the variation but it does follow the trend or regression line well.
+    // 2) low R-square and high p-value (p-value > 0.05).  Model doesn't explai
+    //    the variation and it doesn't follow the trend line.
+    // 3) high R-square and low p-value.  Model explains the variance it
+    //    follows the trend line.
+    // 4) high R-square and high p-value. Model explains the variance well but
+    //    it does not follow the trend line very well.
+    // In summary, low p-values still indicate a real relationship between the
+    // predictors and the observed values.
 
     // Free all of the data.
     gsl_matrix_free(X);
@@ -568,63 +590,5 @@ double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::P
     gsl_multifit_linear_free(work);
 
     // Return the pvalue.
-    return pValue;
-}
-
-
-
-
-
-/*!
-*  Implements an interface to run the F test for a linear regresion model.
-*
-* @param chisq Sum of the squares of residuals from gsl_multifit_linear.
-*
-* @param X Matrix of predictor variables used in gsl_multifit_linear.
-*
-* @param dov Dovariance matrix poulated by gsl_multifit_linear.
-*
-* @param C Observation vector used in gsl_multifit_linear.
-*
-* @return Pvalue corrosponding to the test.
-*/
-double ConditionalTest::Serial::fTest(double chisq, gsl_matrix* X, gsl_matrix* cov, gsl_vector* C)
-{
-    // gsl_cdf_fdist_P(double x, double nu1, double nu2)
-    // x  : F statistic = Mean of squares (model) / Mean of squares (error)
-    //                  = chisq / sum(Y - Ypred) for all samples in cluster
-    // nu1: Degrees of freedom (Model) = 2 - 1 = 1
-    // nu2: Degrees of freedom (Error) = _clusterInMask - 2
-
-    //Degrees of freedom (Model)
-    int DFM = 2 - 1;
-
-    //Degrees of freedom (Error)
-    int DFE = _clusterSize - 2;
-
-    //Mean of square (Model)
-    double MSM = chisq / DFM;
-
-    //Mean of squares (Error)
-    double SSE = 0.0;
-    gsl_vector *testPoint;
-    testPoint = gsl_vector_alloc (3);
-    for(int i = 0; i < _clusterSize; i++)
-    {
-        double sumSq = 0.0, stDev = 0.0;
-        gsl_vector_set(testPoint, 0, gsl_matrix_get(X, i, 0));
-        gsl_vector_set(testPoint, 1, gsl_matrix_get(X, i, 1));
-        gsl_vector_set(testPoint, 2, gsl_matrix_get(X, i, 2));
-        gsl_multifit_linear_est(testPoint, C, cov, &sumSq, &stDev);
-        SSE += sumSq;
-    }
-    double MSE = SSE / DFE;
-
-    //F statistic
-    double fStat = MSM / MSE;
-
-    //Calc F test
-    double pValue = gsl_cdf_fdist_P(fStat, DFM, DFE);
-
     return pValue;
 }

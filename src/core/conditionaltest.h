@@ -21,7 +21,7 @@ public:
     {
         CATEGORICAL = 0,
         ORDINAL,
-        QUANTATATIVE,
+        QUANTITATIVE,
         UNKNOWN,
         NONE
     };
