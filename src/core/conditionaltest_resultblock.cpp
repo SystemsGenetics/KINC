@@ -60,6 +60,7 @@ void ConditionalTest::ResultBlock::write(QDataStream& stream) const
         for ( int i = 0; i < cell.pValues.size(); i++ )
         {
             stream << cell.pValues.at(i);
+            stream << cell.r2.at(i);
         }
     }
 }
@@ -81,6 +82,7 @@ void ConditionalTest::ResultBlock::read(QDataStream& stream)
         for ( int j = 0; j < size; j++ )
         {
             stream << _pairs[i].pValues[j];
+            stream << _pairs[i].r2[j];
         }
     }
 }

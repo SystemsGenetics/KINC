@@ -20,14 +20,17 @@ public:
     virtual int clusterSize() const ;
     virtual bool isEmpty() const;
     QString toString() const;
-    const double& at(int cluster, int gene) const;
-    double& at(int cluster, int gene);
+    const double& at(int cluster, int gene, QString type) const;
+    double& at(int cluster, int gene, QString type);
     void addCluster(int amount, int size) const;
 private:
     virtual void writeCluster(EDataStream& stream, int cluster);
     virtual void readCluster(const EDataStream& stream, int cluster) const;
 
+    // Vectors for storing the p-values and R^2 values.
+    // R^2 values are only for linear regression.
     mutable QVector<QVector<double>> _pValues;
+    mutable QVector<QVector<double>> _r2;
     const CSMatrix* _cMatrix;
 };
 

@@ -15,7 +15,7 @@
 */
 CSMatrix::Pair::Pair(CSMatrix* matrix) : Matrix::Pair(matrix), _cMatrix(matrix)
 {
-    EDEBUG_FUNC(this,matrix);
+    EDEBUG_FUNC(this, matrix, testType);
 }
 
 
@@ -29,7 +29,7 @@ CSMatrix::Pair::Pair(CSMatrix* matrix) : Matrix::Pair(matrix), _cMatrix(matrix)
 */
 CSMatrix::Pair::Pair(const CSMatrix* matrix) : Matrix::Pair(matrix), _cMatrix(matrix)
 {
-    EDEBUG_FUNC(this,matrix);
+    EDEBUG_FUNC(this, matrix, testType);
 }
 
 
@@ -44,6 +44,7 @@ void CSMatrix::Pair::clearClusters() const
 {
     EDEBUG_FUNC(this);
     _pValues.clear();
+    _r2.clear();
 }
 
 
@@ -61,6 +62,7 @@ void CSMatrix::Pair::addCluster(int amount) const
     while ( amount-- > 0 )
     {
        _pValues.append(QVector<double>());
+       _r2.append(QVector<double>());
     }
 }
 
@@ -82,6 +84,8 @@ void CSMatrix::Pair::addCluster(int amount, int size) const
     {
        _pValues.append(QVector<double>());
        _pValues.last().resize(size);
+       _r2.append(QVector<double>());
+       _r2.last().resize(size);
     }
 }
 
@@ -122,9 +126,6 @@ bool CSMatrix::Pair::isEmpty() const
 /*!
 *  Implements an interface to convert the contents of the pair into a string.
 *
-* @param anxData The information about the annotation matrix, to help label
-*        the string.
-*
 * @return The string representation of the pair.
 */
 QString CSMatrix::Pair::toString() const
@@ -144,10 +145,18 @@ QString CSMatrix::Pair::toString() const
             outputString+= "\n";
             for ( int j = 0; j < _pValues.at(i).size(); j++ )
             {
+                double pvalue = _pValues.at(i).at(j);
+                double r2 = _r2.at(i).at(j);
                 outputString+= "\t";
                 outputString+= _cMatrix->getTestName(j);
-                outputString+= ": ";
-                outputString+= QString::number(_pValues.at(i).at(j));
+                outputString+= ": p-value=";
+                outputString+= QString::number(pvalue);
+                // If r2 is set to NaN then this was not a
+                // test that generated the r2 calculation, so leave it out.
+                if (!qIsNaN(_r2.at(i).at(j))) {
+                    outputString+= ", r2=";
+                    outputString+= QString::number(r2);
+                }
                 outputString+= "\n";
             }
         }
@@ -162,12 +171,29 @@ QString CSMatrix::Pair::toString() const
 /*!
 *  Implements an interface to quiery for a value in a cluster in a sample.
 *
+* @param cluster The numeric index of the cluster
+*
+* @param gene The numeric index of the gene
+*
+* @param type The type of value to retrieve: 'pvalue' or 'r2'.
+*
 * @return The data at the quieried location.
 */
-const double& CSMatrix::Pair::at(int cluster, int gene) const
+const double& CSMatrix::Pair::at(int cluster, int gene, QString type) const
 {
     EDEBUG_FUNC(this, cluster, gene);
-    return _pValues.at(cluster).at(gene);
+    if (QString::compare(type, "pvalue") == 0) {
+        return _pValues.at(cluster).at(gene);
+    }
+    if (QString::compare(type, "r2") == 0) {
+        return _r2.at(cluster).at(gene);
+    }
+    else {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid type"));
+        e.setDetails(tr("CSMatrix::Pair::at. The type argument must be a 0 or 1"));
+        throw e;
+    }
 }
 
 
@@ -177,12 +203,29 @@ const double& CSMatrix::Pair::at(int cluster, int gene) const
 /*!
 *  Implements an interface to quiery for a value in a cluster in a sample.
 *
+* @param cluster The numeric index of the cluster
+*
+* @param gene The numeric index of the gene
+*
+* @param type The type of value to retrieve: 'pvalue' or 'r2'.
+*
 * @return The data at the quieried location.
 */
-double& CSMatrix::Pair::at(int cluster, int gene)
+double& CSMatrix::Pair::at(int cluster, int gene, QString type)
 {
     EDEBUG_FUNC(this, cluster, gene);
-    return _pValues[cluster][gene];
+    if (QString::compare(type, "pvalue") == 0) {
+        return _pValues[cluster][gene];
+    }
+    if (QString::compare(type, "r2") == 0) {
+        return _r2[cluster][gene];
+    }
+    else {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid type"));
+        e.setDetails(tr("CSMatrix::Pair::at. The type argument must be a 0 or 1"));
+        throw e;
+    }
 }
 
 
@@ -203,10 +246,10 @@ void CSMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
     // make sure cluster value is within range
     if ( cluster >= 0 && cluster < _pValues.size() )
     {
-       // write each pvalue to output stream
+       // write each pvalue and r2 value to the output stream
        for ( qint32 i = 0; i < _cMatrix->_testcount; i ++ )
        {
-           stream << _pValues[cluster][i];
+           stream << _pValues[cluster][i] << _r2[cluster][i];
        }
     }
 }
@@ -232,9 +275,11 @@ void CSMatrix::Pair::readCluster(const EDataStream& stream, int cluster) const
        // read each pvalue from input stream
        for ( int i = 0; i < _cMatrix->_testcount; i++ )
        {
-          double num = 0.0;
-          stream >> num;
-          _pValues[cluster].append(num);
+          double pvalue = 0.0;
+          double r2 = 0.0;
+          stream >> pvalue >> r2;
+          _pValues[cluster].append(pvalue);
+          _r2[cluster].append(r2);
        }
     }
 }

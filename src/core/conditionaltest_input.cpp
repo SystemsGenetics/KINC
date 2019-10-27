@@ -51,7 +51,6 @@ EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
     case ANXINPUT           : return FileIn;
     case Delimiter          : return String;
     case CSMOUT             : return DataOut;
-    case ProbabilitySuccess : return Double;
     case OVERRIDES          : return String;
     case TEST               : return String;
     default                 : return Boolean;
@@ -83,7 +82,6 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
     case ANXINPUT           : return anxData(role);
     case Delimiter          : return delimiterData(role);
     case CSMOUT             : return CSMData(role);
-    case ProbabilitySuccess : return ProbabilitySuccessData(role);
     case OVERRIDES          : return overridesData(role);
     case TEST               : return testData(role);
     default                 : return QVariant();
@@ -108,9 +106,6 @@ void ConditionalTest::Input::set(int index, const QVariant& value)
     {
     case Delimiter:
         _base->_delimiter = value.toString();
-        break;
-    case ProbabilitySuccess:
-        _base->_probabilitySuccess = value.toDouble();
         break;
     case TEST:
         _base->_Testing = value.toString();
@@ -328,33 +323,6 @@ QVariant ConditionalTest::Input::CSMData(Role role) const
 
 
 
-
-
-
-/*!
-*  Implements an interface to grab info about the alpha value.
-*
-* @param role The role you are interested in knowing about.
-*
-* @return The information requested.
-*/
-QVariant ConditionalTest::Input::ProbabilitySuccessData(Role role) const
-{
-    EDEBUG_FUNC(this, role);
-    switch(role)
-    {
-    case CommandLineName: return QString("psuc");
-    case Title          : return tr("Probability Success:");
-    case WhatsThis      : return tr("For categorical features a binomial test \
-                                     is performed. This value should contain the \
-                                     probability of success for samples in a GMM \
-                                     cluster being of the category label.");
-    case Default        : return 0.75;
-    case Minimum        : return 0;
-    case Maximum        : return 1;
-    default: return QVariant();
-    }
-}
 
 
 

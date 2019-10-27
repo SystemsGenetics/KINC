@@ -85,7 +85,8 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
                CSMPair.addCluster(1, _numTests);
                for ( int k = 0; k < resultBlock->pairs().at(i).pValues.at(j).size(); k++ )
                {
-                   CSMPair.at(j, k) = resultBlock->pairs().at(i).pValues.at(j).at(k);
+                   CSMPair.at(j, k, "pvalue") = resultBlock->pairs().at(i).pValues.at(j).at(k);
+                   CSMPair.at(j, k, "r2") = resultBlock->pairs().at(i).r2.at(j).at(k);
                }
            }
            //write the info into the CSM
@@ -396,7 +397,9 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
                 else {
                     E_MAKE_EXCEPTION(e);
                     e.setTitle(tr("Unknown override type in the --feat_type argument."));
-                    e.setDetails(tr("Unknown override type: ") + _override.at(i).at(1) + tr(".  Valid choices are: categorical, quantitative, ordinal"));
+                    e.setDetails(tr("Unknown override type: %1.  Valid choices are: %2")
+                                 .arg(_override.at(i).at(1))
+                                 .arg("categorical, quantitative, ordinal"));
                     throw e;
                 }
             }
@@ -646,7 +649,7 @@ void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,Q
     {
         switch(testType.at(i))
         {
-        case CATEGORICAL : featureInfo[i].append(tr("Catagorical"));
+        case CATEGORICAL : featureInfo[i].append(tr("Categorical"));
             break;
         case ORDINAL : featureInfo[i].append(tr("Ordinal"));
             break;

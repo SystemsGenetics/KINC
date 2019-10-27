@@ -16,7 +16,7 @@ public:
    virtual std::unique_ptr<EAbstractAnalyticBlock> execute(const EAbstractAnalyticBlock* block) override final;
 
     // helper functions
-    int test(CCMatrix::Pair& ccmPair, qint32 clusterIndex, qint32& testIndex, qint32 featureIndex, qint32 labelIndex, QVector<QVector<double>>& pValues);
+    int test(CCMatrix::Pair& ccmPair, qint32 clusterIndex, qint32& testIndex, qint32 featureIndex, qint32 labelIndex, QVector<QVector<double>>& pValues, QVector<QVector<double>>& r2);
     int prepAnxData(QString testLabel, int dataIndex, TESTTYPE testType);
     bool isEmpty(QVector<QVector<double>>& matrix);
     int clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label, TESTTYPE testType);
@@ -29,8 +29,8 @@ public:
     // Hypergeometrix Test.
     double hypergeom(CCMatrix::Pair& ccmPair, int clusterIndex, QString test_label);
 
-    // Regresion Test
-    double regresion(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType);
+    // Regression Test
+    void regression(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType, QVector<double>& results);
     double fTest(double chisq, gsl_matrix* X, gsl_vector* Y, gsl_matrix* cov, gsl_vector* C);
 
 private:

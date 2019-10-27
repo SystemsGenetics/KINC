@@ -76,11 +76,16 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
         QVector<QVector<double>> pValues;
         pValues.resize(ccmPair.clusterSize());
 
-        //for each cluster in the pair, run the binomial and linear regresion tests.
+        // Initialize new r2, one set of pvalues for each cluster.
+        QVector<QVector<double>> r2;
+        r2.resize(ccmPair.clusterSize());
+
+        //for each cluster in the pair, run the binomial and linear regression tests.
         for ( qint32 clusterIndex = 0; clusterIndex < ccmPair.clusterSize(); clusterIndex++ )
         {
             //resize for room for each test.
             pValues[clusterIndex].resize(_base->_numTests);
+            r2[clusterIndex].resize(_base->_numTests);
 
             for ( qint32 featureIndex = 0, testIndex = 0; featureIndex < _base->_features.size(); featureIndex++ )
             {
@@ -91,7 +96,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                 if(_base->_testType.at(featureIndex) == QUANTITATIVE || _base->_testType.at(featureIndex) == ORDINAL)
                 {
                     prepAnxData(_base->_features.at(featureIndex).at(0), featureIndex, _base->_testType.at(featureIndex));
-                    test(ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues);
+                    test(ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues, r2);
                 }
                 else if (_base->_testType.at(featureIndex) == CATEGORICAL)
                 {
@@ -106,12 +111,12 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                             {
                                 labelIndex = 1;
                             }
-                            test(ccmPair, clusterIndex, testIndex, featureIndex, labelIndex, pValues);
+                            test(ccmPair, clusterIndex, testIndex, featureIndex, labelIndex, pValues, r2);
                         }
                         //if only the feature needs testing (no sub labels)
                         else
                         {
-                            test(ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues);
+                            test(ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues, r2);
                         }
                     }
                 }
@@ -121,6 +126,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
         {
             CSMPair pair;
             pair.pValues = pValues;
+            pair.r2 = r2;
             pair.x_index = ccmPair.index().getX();
             pair.y_index = ccmPair.index().getY();
             resultBlock->append(pair);
@@ -252,27 +258,37 @@ int ConditionalTest::Serial::test(CCMatrix::Pair& ccmPair,
                              qint32& testIndex,
                              qint32 featureIndex,
                              qint32 labelIndex,
-                             QVector<QVector<double>>& pValues)
+                             QVector<QVector<double>>& pValues,
+                             QVector<QVector<double>>& r2)
 {
     EDEBUG_FUNC(this,&ccmPair, clusterIndex, &testIndex, featureIndex, labelIndex, &pValues);
 
     //get informatiopn on the mask
     clusterInfo(ccmPair, clusterIndex, _base->_features.at(featureIndex).at(labelIndex), _base->_testType.at(featureIndex));
 
-    //conduct the correct test based on the type of data
+    // For linear regresssion we need a variable that will hold the
+    // pvalue and the r2 value.
+    QVector<double> results(2);
+
+    // conduct the correct test based on the type of data
     switch(_base->_testType.at(featureIndex))
     {
         case CATEGORICAL :
             pValues[clusterIndex][testIndex] = hypergeom(ccmPair, clusterIndex,
                                                          _base->_features.at(featureIndex).at(labelIndex));
+            r2[clusterIndex][testIndex] = qQNaN();
             testIndex++;
         break;
-        case ORDINAL :
-            pValues[clusterIndex][testIndex] = regresion(_anxData, ccmPair, clusterIndex, ORDINAL);
+        case ORDINAL :            
+            regression(_anxData, ccmPair, clusterIndex, ORDINAL, results);
+            pValues[clusterIndex][testIndex] = results.at(0);
+            r2[clusterIndex][testIndex] = results.at(1);
             testIndex++;
         break;
         case QUANTITATIVE :
-            pValues[clusterIndex][testIndex] = regresion(_anxData, ccmPair, clusterIndex, QUANTITATIVE);
+            regression(_anxData, ccmPair, clusterIndex, QUANTITATIVE, results);
+            pValues[clusterIndex][testIndex] = results.at(0);
+            r2[clusterIndex][testIndex] = results.at(1);
             testIndex++;
         break;
         default:; //quash a compiler warning
@@ -280,95 +296,6 @@ int ConditionalTest::Serial::test(CCMatrix::Pair& ccmPair,
     return _base->_testType.at(featureIndex);
 }
 
-
-
-
-
-/*!
-*  Implements an interface to run the binomial test for given data.
-*
-* @param alpha The threshold for keeping the data.
-*
-* @return Pvalue corrosponding to the test, negative if not accepted.
-*/
-double ConditionalTest::Serial::binomial()
-{
-    EDEBUG_FUNC(this);
-
-    // Calculate the pvalue, the max out of the two tests.
-    double test1 = testOne();
-    double test2 = testTwo();
-    double pvalue = std::max(test1, test2);
-    return pvalue;
-}
-
-
-
-
-
-
-/*!
-*  Implements an interface to run the first binomial test for given data.
-*
-* @return Pvalue corrosponding to the test.
-*/
-double ConditionalTest::Serial::testOne()
-{
-
-    EDEBUG_FUNC(this);
-
-    // Test #1
-    // successes = number of non-category samples in the cluster
-    // failures = number of non-category samples not in the cluster
-    // Ho: successes >= 0.15
-    // Ha: successes < 0.15
-
-    // Number of trials, n: is the number of non-category samples.
-    int n =  _base->_emx->sampleSize() - _catCount;
-
-    // Number of successes, k: is the number of non-category samples in the cluster.
-    int k = _clusterSize - _catInCluster;
-
-    double p = 1 - _base->_probabilitySuccess;
-
-    // The gsl_cdf_binomial_P function uses the lower-tail of the CDF.
-    // gives the probablity of the variate taking a value less than k.
-    double pvalue = gsl_cdf_binomial_P(k, p, n);
-    return pvalue;
-}
-
-
-
-
-
-/*!
-*  Implements an interface to run the second binomial test for given data.
-*
-* @return Pvalue corrosponding to the test.
-*/
-double ConditionalTest::Serial::testTwo()
-{
-    EDEBUG_FUNC(this);
-
-    // Test #2:
-    // successes = number of category samples in the cluster
-    // failures = number of category samples out of the cluster
-    // Ho: successes = 0.85
-    // Ha: successes > 0.85
-
-    // Number of trials, n: is the number of category samples.
-    int n = _catCount;
-
-    // Number of successes, k: is the number of category samples in the cluster.
-    int k = _catInCluster;
-
-    double p = _base->_probabilitySuccess;
-
-    // The gsl_cdf_binomial_Q function uses the upper-tail of the CDF.
-    // gives the probablity of the variate taking a value greater than k.
-    double pvalue = gsl_cdf_binomial_Q(k, p, n);
-    return pvalue;
-}
 
 
 
@@ -472,8 +399,8 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
 
 
 /*!
-*  Implements an interface to run the regresion test for given data, the
-*  regresion line is genex vs geney vs label data.
+*  Implements an interface to run the regression test for given data, the
+*  regression line is genex vs geney vs label data.
 *
 * @param anxInfo Annotation matrix information.
 *
@@ -484,7 +411,7 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
 *
 * @return Pvalue corrosponding to the test.
 */
-double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType)
+void ConditionalTest::Serial::regression(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType, QVector<double>& results)
 {
     EDEBUG_FUNC(this, &anxInfo, &ccmPair, clusterIndex);
 
@@ -496,18 +423,19 @@ double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::P
     gsl_matrix *X, *cov;
     gsl_vector *Y, *C;
     double pValue = 0.0;
+    double r2 = 0.0;
 
     // Allocate a matrix to hold the predictior variables, in this case the gene
     // Expression data.
-    X = gsl_matrix_alloc(_clusterSize, 3);
+    X = gsl_matrix_alloc(_clusterSize, 4);
 
     // Allocate a vector to hold observation data, in this case the data
     // corrosponding to the features.
     Y = gsl_vector_alloc(_clusterSize);
 
     // Allocate a vector and matrix for the slope info.
-    C = gsl_vector_alloc (3);
-    cov = gsl_matrix_alloc (3, 3);
+    C = gsl_vector_alloc(4);
+    cov = gsl_matrix_alloc(4, 4);
 
     // Read in the gene pairs expression information.
     ExpressionMatrix::Gene geneX(_base->_emx);
@@ -521,10 +449,16 @@ double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::P
         // If the sample label matches with the given label.
         if (ccmPair.at(clusterIndex, i) == 1)
         {
-            // Add emx data to the predictions if the sample is in the cluster.
+            // Add emx data as the predictors but only for samples in the cluster. We
+            // add a 1 for the intercept, gene1, gene2 and the interaction: gene1*gene2.
+            // The interaction term handles the case where the relationship is dependent
+            // on the values of both genes.
+            double g1 = static_cast<double>(geneX.at(i));
+            double g2 = static_cast<double>(geneY.at(i));
             gsl_matrix_set(X, j, 0, static_cast<double>(1)); //for the intercept
-            gsl_matrix_set(X, j, 1, static_cast<double>(geneX.at(i)));
-            gsl_matrix_set(X, j, 2, static_cast<double>(geneY.at(i)));
+            gsl_matrix_set(X, j, 1, g1);
+            gsl_matrix_set(X, j, 2, g2);
+            gsl_matrix_set(X, j, 3, g1*g2);
 
             // Next add the annotation observation for this sample to the Y vector.
             if (testType == ORDINAL)
@@ -552,13 +486,13 @@ double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::P
     }
 
     // Create the workspace for the gnu scientific library to work in.
-    gsl_multifit_linear_workspace * work = gsl_multifit_linear_alloc (_clusterSize, 3);
+    gsl_multifit_linear_workspace * work = gsl_multifit_linear_alloc (X->size1, X->size2);
 
     // Regrassion calculation.
     gsl_multifit_linear(X, Y, C, cov, &chisq, work);
 
     // Calculate R^2 and p-value
-    double r2 = 1 - chisq / gsl_stats_tss(Y->data, Y->stride, Y->size);
+    r2 = 1 - chisq / gsl_stats_tss(Y->data, Y->stride, Y->size);
     double dl = _clusterSize - 2;
     double F = r2 * dl / (1 - r2);
     pValue = 1 - gsl_cdf_fdist_P (F, 1, dl);
@@ -589,6 +523,14 @@ double ConditionalTest::Serial::regresion(QVector<QString> &anxInfo, CCMatrix::P
     gsl_vector_free(C);
     gsl_multifit_linear_free(work);
 
-    // Return the pvalue.
-    return pValue;
+    // Set the results array
+    if(qIsNaN(pValue))
+    {
+        results[0] = 1;
+        results[1] = 0;
+    }
+    else {
+        results[0] = pValue;
+        results[1] = r2;
+    }
 }

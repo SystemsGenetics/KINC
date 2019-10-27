@@ -93,11 +93,20 @@ void Extract::writeTextFormat(int index)
          << "\t" << "Too_Low"
          << "\t" << "Samples";
 
+      // If the condition-specific matrix is provided then add some
+      // additional headers for each test.
       if ( _csm )
       {
           for ( int i = 0; i < _csm->getTestCount(); i++ )
           {
-              _stream << "\t" << _csm->getTestName(i);
+              QString testName = _csm->getTestName(i);
+              QString testType = _csm->getTestType(i);
+              _stream << "\t" << testName + + "_pVal";
+              // If there is an R-squared value add it as well.
+              if (QString::compare(testType, "Quantitative", Qt::CaseInsensitive) == 0 ||
+                  QString::compare(testType, "Ordinal", Qt::CaseInsensitive) == 0) {
+                  _stream << "\t" << testName + "_RSqr";
+              }
           }
       }
 
@@ -132,7 +141,8 @@ void Extract::writeTextFormat(int index)
          continue;
       }
 
-      // exclude values filtered out by p-value
+      // If the condition-specific matrix is provided and there is a p-value filter then
+      // we want to exclude values that are higher than the p-value(s).
       if ( _csm )
       {
           pValueFilterCheck();
@@ -140,11 +150,11 @@ void Extract::writeTextFormat(int index)
           int include = 0;
           for ( int i = 0; i < _csm->getTestCount(); i++ )
           {
-              if ( _csmPValueFilterFeatureNames.size() != 0 && !PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)))
+              if ( _csmPValueFilterFeatureNames.size() != 0 && !PValuefilter(_csm->getTestName(i), _csmPair.at(k, i, "pvalue")))
               {
                   notInclude++;
               }
-              if ( _csmPValueFilterFeatureNames.size() == 0 && PValuefilter(_csm->getTestName(i), _csmPair.at(k, i)))
+              if ( _csmPValueFilterFeatureNames.size() == 0 && PValuefilter(_csm->getTestName(i), _csmPair.at(k, i, "pvalue")))
               {
                   include++;
               }
@@ -242,7 +252,14 @@ void Extract::writeTextFormat(int index)
       {
           for ( int i = 0; i < _csm->getTestCount(); i++ )
           {
-              _stream << "\t" << _csmPair.at(k, i);
+              _stream << "\t" << _csmPair.at(k, i, "pvalue");
+              QString testType = _csm->getTestType(i);
+              // If there is an R-squared value add it as well.
+              if (QString::compare(testType, "Quantitative", Qt::CaseInsensitive) == 0 ||
+                  QString::compare(testType, "Ordinal", Qt::CaseInsensitive) == 0) {
+                  _stream << "\t" << _csmPair.at(k, i, "r2");
+              }
+
           }
       }
 

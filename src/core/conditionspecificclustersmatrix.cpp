@@ -136,7 +136,7 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
 void CSMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, int subheader)
 {
     EDEBUG_FUNC(this,&geneNames,maxClusterSize,subheader);
-    Matrix::initialize(geneNames, maxClusterSize, sizeof(double) * _testcount, subheader);
+    Matrix::initialize(geneNames, maxClusterSize, sizeof(double) * 2 * _testcount, subheader);
 }
 
 
@@ -229,7 +229,14 @@ QString CSMatrix::getTestName(int index) const
     return meta().toObject().at("Test Names").toArray().at(index).toString();
 }
 
-
+QString CSMatrix::getTestType(int index) const
+{
+    QString test_name = getTestName(index);
+    return meta().toObject().at("Features")
+                 .toObject().at(test_name)
+                 .toObject().at("Test")
+                 .toObject().at("Type").toString();
+}
 
 
 

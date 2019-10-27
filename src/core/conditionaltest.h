@@ -32,6 +32,7 @@ public:
       * The p values for each cluster in a pair.
       */
       QVector<QVector<double>> pValues;
+      QVector<QVector<double>> r2;
       /*!
       * The x/y coordinates in the CCM/CMX matrices that this pair belongs to.
       */
