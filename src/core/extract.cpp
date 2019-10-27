@@ -177,12 +177,12 @@ void Extract::writeTextFormat(int index)
           for ( int i = 0; i < _csm->getTestCount(); i++ )
           {
               // Count the number of features that are not signficant for each feature-specific p-value provided.
-              if ( _csmRSquareFilterFeatureNames.size() != 0 && !RSquarefilter(_csm->getTestName(i), _csmPair.at(k, i, "pvalue")))
+              if ( _csmRSquareFilterFeatureNames.size() != 0 && !RSquarefilter(_csm->getTestName(i), _csmPair.at(k, i, "r2")))
               {
                   notInclude++;
               }
               // Count the number of features that are signficant if only a single p-value filter was given.
-              if ( _csmRSquareFilterFeatureNames.size() == 0 && RSquarefilter(_csm->getTestName(i), _csmPair.at(k, i, "pvalue")))
+              if ( _csmRSquareFilterFeatureNames.size() == 0 && RSquarefilter(_csm->getTestName(i), _csmPair.at(k, i, "r2")))
               {
                   include++;
               }
