@@ -25,6 +25,7 @@ public:
       ,MinCorrelation
       ,MaxCorrelation
       ,CSMPValueFilter
+      ,CSMRSquareFilter
       ,Total
    };
    explicit Input(Extract* parent);

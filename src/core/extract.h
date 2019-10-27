@@ -32,8 +32,11 @@ public:
    virtual EAbstractAnalyticInput* makeInput() override final;
    virtual void initialize();
    void preparePValueFilter();
+   void prepareRSquareFilter();
    bool PValuefilter(QString labelName, float pValue);
    bool pValueFilterCheck();
+   bool RSquarefilter(QString labelName, float rSquared);
+   bool rSquareFilterCheck();
 private:
    /*!
    * Defines the output formats this analytic supports.
@@ -112,15 +115,22 @@ private:
    QVector<QString> _csmNameFilterFeatureNames;
    QVector<QString> _csmNameFilterLabelNames;
    /*!
-    * Conditional-Specific Cluster Matrix PValue Filter input.
+    * Conditional-Specific Cluster Matrix PValue and RSquared Filter input.
     */
    QString _csmPValueFilter {""};
+   QString _csmRSquareFilter {""};
    /*!
     * Conditional-Specific Cluster Matrix PValue Filter data.
     */
    QVector<float> _csmPValueFilterThresh;
    QVector<QString> _csmPValueFilterFeatureNames;
    QVector<QString> _csmPValueFilterLabelNames;
+   /*!
+    * Conditional-Specific Cluster Matrix R-squared Filter data.
+    */
+   QVector<float> _csmRSquareFilterThresh;
+   QVector<QString> _csmRSquareFilterFeatureNames;
+   QVector<QString> _csmRSquareFilterLabelNames;
 };
 
 

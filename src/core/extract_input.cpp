@@ -72,6 +72,7 @@ EAbstractAnalyticInput::Type Extract::Input::type(int index) const
    case MinCorrelation: return Type::Double;
    case MaxCorrelation: return Type::Double;
    case CSMPValueFilter: return Type::String;
+   case CSMRSquareFilter: return Type::String;
    default: return Type::Boolean;
    }
 }
@@ -124,8 +125,8 @@ QVariant Extract::Input::data(int index, Role role) const
        switch (role)
        {
        case Role::CommandLineName: return QString("csm");
-       case Role::Title: return tr("Optional Condition Specific Cluster Matrix:");
-      case Role::WhatsThis: return tr("Condition-Specific Martrix, contains a matrix of clusters and their corrosponding p-values.");
+       case Role::Title: return tr("Condition-Specific Matrix (optional):");
+      case Role::WhatsThis: return tr("A data file containing the condition-specific martrix which contains p-values and r-squared values related to tests against phenotypic or conditional data. This file would have been created with the condition-specific thresholding analytic (cond-test).");
        case Role::DataType: return DataFactory::CSMatrixType;
        default: return QVariant();
        }
@@ -173,9 +174,18 @@ QVariant Extract::Input::data(int index, Role role) const
       switch (role)
       {
       case Role::CommandLineName: return QString("filter-pvalue");
-      case Role::Title: return tr("Optional P-Value Filter:");
-      case Role::WhatsThis: return tr("An optional filter applied to the Condition-Specific Martrix provided above. The ouput network will not contain clusters with p-values above the given value for the given test labels. For example if you wanted to threshold at 1e-3 Subspecies Japonica, you would input \"Subspecies,Japonica,1e-3\", followed by \"::\" then any more p-value filters.");
+      case Role::Title: return tr("P-Value Filter (optional):");
+      case Role::WhatsThis: return tr("This is only used if a Condition-Specific Martrix is provided above and applies to categorical, quantitative and ordinal tests. This filters the network such that only edges (clusters) with p-values below the given values are kept. Provide a single p-value to filter all features with the same value. However, you can specify different p-values for different features. For example, suppose you were tesing a categorical feature named 'Subspecies' with a category of 'Japonica' and you wanted edges with an p-value < 1e-3, you would input \"Subspecies,Japonica,1e-3\". You can provide any number of filters but they must be separated using two colons: \"::\".");
       case Role::Default: return "1e-3";
+      default: return QVariant();
+      }
+   case CSMRSquareFilter:
+      switch (role)
+      {
+      case Role::CommandLineName: return QString("filter-rsquare");
+      case Role::Title: return tr("R-Square Filter (optional):");
+      case Role::WhatsThis: return tr("This is only used if a Condition-Specific Martrix is provided above and applies to quantitative and ordinal tests. This filters the network such that only edges (clusters) with r-squared values from liner regression testing above the given values are kept. Provide a single r-squared value to filter all features with the same value. However, you can specify different r-squared values for different features. For example, suppose you were tesing a feature named 'Weight' and you wanted edges with an r-squared value > 0.5, you would input \"Weight,0.5\". You can provide any number of filters but they must be separated using two colons: \"::\".");
+      case Role::Default: return "0.3";
       default: return QVariant();
       }
    default: return QVariant();
@@ -210,6 +220,9 @@ void Extract::Input::set(int index, const QVariant& value)
        break;
     case CSMPValueFilter:
       _base->_csmPValueFilter = value.toString();
+      break;
+    case CSMRSquareFilter:
+      _base->_csmRSquareFilter = value.toString();
       break;
    }
 }
