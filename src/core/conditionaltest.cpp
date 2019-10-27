@@ -357,7 +357,7 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
     {
         line = _stream.readLine();
         //splits the file along the commas
-        auto words2 = line.split(_delimiter, QString::SkipEmptyParts, Qt::CaseInsensitive);
+        auto words2 = line.split(_delimiter, QString::KeepEmptyParts, Qt::CaseInsensitive);
 
         //add the data to our arrays
         for ( int j = 0; j < words2.size(); j++ )
@@ -703,7 +703,8 @@ void ConditionalTest::rearrangeSamples()
     // we default to using the first column.
     for(int i = 0; i< _features.size(); i++)
     {
-        if(_features.at(i).at(0) == "samples" || _features.at(i).at(0) == "Samples")
+        if(QString::compare(_features.at(i).at(0), "samples", Qt::CaseInsensitive) ||
+           QString::compare(_features.at(i).at(0), "sample", Qt::CaseInsensitive))
         {
             sampleIndex = i;
             break;
