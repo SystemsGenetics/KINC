@@ -231,9 +231,10 @@ QString CSMatrix::getTestName(int index) const
 
 QString CSMatrix::getTestType(int index) const
 {
-    QString test_name = getTestName(index);
+    QString testName = getTestName(index);
+    auto names = testName.split("__");
     return meta().toObject().at("Features")
-                 .toObject().at(test_name)
+                 .toObject().at(names.at(0))
                  .toObject().at("Test")
                  .toObject().at("Type").toString();
 }
