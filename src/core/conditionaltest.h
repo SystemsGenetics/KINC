@@ -96,10 +96,6 @@ private:
      */
     CSMatrix* _out {nullptr};
     /*!
-     * Data Threshold
-     */
-    double _probabilitySuccess {0.75};
-    /*!
      * User provided features not to test.
      */
     QString _Testing{""};

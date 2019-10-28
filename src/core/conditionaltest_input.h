@@ -39,10 +39,6 @@ public:
         */
       ,CSMOUT
        /*!
-       *  defines the threshold for data to keep
-       */
-      ,ProbabilitySuccess
-       /*!
        *  defines the features not to test
        */
       ,TEST
@@ -69,7 +65,6 @@ public:
    QVariant anxData(Role role) const;
    QVariant delimiterData(Role role) const;
    QVariant CSMData(Role role) const;
-   QVariant ProbabilitySuccessData(Role role) const;
    QVariant testData(Role role) const;
    QVariant overridesData(Role role) const;
 

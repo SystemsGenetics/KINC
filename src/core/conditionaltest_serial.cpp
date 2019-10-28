@@ -321,10 +321,12 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
     // of obtaining k elements of “type 1” in t samples from the population
     // without replacement.
 
+    int sampleSize =  _base->_emx->sampleSize();
+
     // Population contains n1 elements of Type 1.
     int n1 = _catCount;
     // Population contains n2 elements of Type 2.
-    int n2 = _base->_emx->sampleSize() - _catCount;
+    int n2 = sampleSize- _catCount;
     // k elements of Type 1 were selected.
     int k = _catInCluster;
     // t total elements were selected.
@@ -365,14 +367,21 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
             // Keeps track of the number of successes for each iteration.
             int ns = 0;
 
-            // Generate 31 random numbers between 0 and the size of
+            // Generate 31 random indexes between 0 and the size of
             // the sample string.  We will use these numbers to
             // randomly select a sample and if it is a 1 and of the
             // testing category then we consider it a success.
+            int indexes[sampleSize];
+            int chosen[31];
+            for (int j = 0; j < sampleSize; j++) {
+                indexes[j] = j;
+            }
+
+            // The gsl_ran_choose function randmly choose samples without replacement from a list.
+            gsl_ran_choose(r, chosen, 31, indexes, sampleSize, sizeof(int));
             for (int j = 0; j < 31; j++)
             {
-                int u = static_cast<int>(gsl_rng_uniform(r) * _base->_emx->sampleSize());
-                if (ccmPair.at(clusterIndex, u) == 1 && _anxData.at(u) == test_label)
+                if (ccmPair.at(clusterIndex, chosen[j]) == 1 && _anxData.at(chosen[j]) == test_label)
                 {
                     ns = ns + 1;
                 }
