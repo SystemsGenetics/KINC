@@ -54,7 +54,8 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
         type.insert("Type", featureInfo.at(i).at(0));
 
         //set the labels
-        if ( featureInfo.at(i).size() > 2 )
+        //Catagorical
+        if ( featureInfo.at(i).size() > 2 && featureInfo.at(i).at(0).toString() == "Categorical" )
         {
             for ( int j = 2; j < featureInfo.at(i).size(); j++ )
             {
@@ -66,6 +67,7 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
             }
             info.insert("Labels", labels);
         }
+        //Ordinal and Quantitative
         else
         {
             if ( featureInfo.at(i).at(0).toString() != "None" && featureInfo.at(i).at(0).toString() != "Unknown" )

@@ -405,7 +405,7 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
             }
         }
     }
-    //omit the tests that the user has chosen to omit.
+    //Add in labels the user has chosen to test.
     for ( int j = 0; j < anxdata.size(); j++ )
     {
         int check = 0;
