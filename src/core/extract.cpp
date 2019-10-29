@@ -82,16 +82,12 @@ void Extract::writeTextFormat(int index)
       _stream
          << "Source"
          << "\t" << "Target"
-         << "\t" << "sc"
+         << "\t" << "Similarity_Score"
          << "\t" << "Interaction"
-         << "\t" << "Cluster"
-         << "\t" << "Num_Clusters"
-         << "\t" << "Cluster_Samples"
-         << "\t" << "Missing_Samples"
-         << "\t" << "Cluster_Outliers"
-         << "\t" << "Pair_Outliers"
-         << "\t" << "Too_Low"
-         << "\t" << "Samples";
+         << "\t" << "Cluster_Index"
+         << "\t" << "Cluster_Size"
+         << "\t" << "Samples"
+         << "\n";
 
       // If the condition-specific matrix is provided then add some
       // additional headers for each test.
@@ -129,10 +125,6 @@ void Extract::writeTextFormat(int index)
       float correlation {_cmxPair.at(k)};
       QString interaction {"co"};
       int numSamples {0};
-      int numMissing {0};
-      int numPostOutliers {0};
-      int numPreOutliers {0};
-      int numThreshold {0};
 
       // exclude cluster if correlation is not within thresholds
       if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
@@ -196,26 +188,12 @@ void Extract::writeTextFormat(int index)
       // if cluster data exists then use it
       if ( _ccmPair.clusterSize() > 0 )
       {
-         // compute summary statistics
+         // compute cluster size
          for ( int i = 0; i < _ccm->sampleSize(); i++ )
          {
-            switch ( _ccmPair.at(k, i) )
+            if ( _ccmPair.at(k, i) == 1 )
             {
-            case 1:
                numSamples++;
-               break;
-            case 6:
-               numThreshold++;
-               break;
-            case 7:
-               numPreOutliers++;
-               break;
-            case 8:
-               numPostOutliers++;
-               break;
-            case 9:
-               numMissing++;
-               break;
             }
          }
 
@@ -242,7 +220,6 @@ void Extract::writeTextFormat(int index)
             if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
             {
                sampleMask[i] = '9';
-               numMissing++;
             }
             else
             {
@@ -267,13 +244,9 @@ void Extract::writeTextFormat(int index)
          << "\t" << target
          << "\t" << correlation
          << "\t" << interaction
-         << "\t" << k
+         << "\t" << k + 1
          << "\t" << _cmxPair.clusterSize()
          << "\t" << numSamples
-         << "\t" << numMissing
-         << "\t" << numPostOutliers
-         << "\t" << numPreOutliers
-         << "\t" << numThreshold
          << "\t" << sampleMask;
 
       if ( _csm )
@@ -354,7 +327,7 @@ void Extract::writeMinimalFormat(int index)
          << source
          << "\t" << target
          << "\t" << correlation
-         << "\t" << k
+         << "\t" << k + 1
          << "\t" << _cmxPair.clusterSize()
          << "\n";
    }

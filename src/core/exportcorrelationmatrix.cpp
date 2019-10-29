@@ -52,34 +52,16 @@ void ExportCorrelationMatrix::process(const EAbstractAnalyticBlock*)
    {
       float correlation = _cmxPair.at(k);
       int numSamples = 0;
-      int numMissing = 0;
-      int numPostOutliers = 0;
-      int numPreOutliers = 0;
-      int numThreshold = 0;
 
       // if cluster data exists then use it
       if ( _ccmPair.clusterSize() > 0 )
       {
-         // compute summary statistics
+         // compute cluster size
          for ( int i = 0; i < _ccm->sampleSize(); i++ )
          {
-            switch ( _ccmPair.at(k, i) )
+            if ( _ccmPair.at(k, i) == 1 )
             {
-            case 1:
                numSamples++;
-               break;
-            case 6:
-               numThreshold++;
-               break;
-            case 7:
-               numPreOutliers++;
-               break;
-            case 8:
-               numPostOutliers++;
-               break;
-            case 9:
-               numMissing++;
-               break;
             }
          }
 
@@ -106,7 +88,6 @@ void ExportCorrelationMatrix::process(const EAbstractAnalyticBlock*)
             if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
             {
                sampleMask[i] = '9';
-               numMissing++;
             }
             else
             {
@@ -129,13 +110,9 @@ void ExportCorrelationMatrix::process(const EAbstractAnalyticBlock*)
       _stream
          << _cmxPair.index().getX()
          << "\t" << _cmxPair.index().getY()
-         << "\t" << k
+         << "\t" << k + 1
          << "\t" << _cmxPair.clusterSize()
          << "\t" << numSamples
-         << "\t" << numMissing
-         << "\t" << numPostOutliers
-         << "\t" << numPreOutliers
-         << "\t" << numThreshold
          << "\t" << correlation
          << "\t" << sampleMask
          << "\n";

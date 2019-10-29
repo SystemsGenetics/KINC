@@ -145,11 +145,11 @@ private:
    /*!
     * Whether to remove outliers before clustering.
     */
-   bool _removePreOutliers {false};
+   bool _removePreOutliers {true};
    /*!
     * Whether to remove outliers after clustering.
     */
-   bool _removePostOutliers {false};
+   bool _removePostOutliers {true};
    /*!
     * The minimum (absolute) correlation threshold to save a correlation.
     */
