@@ -26,6 +26,16 @@ A very simple example is shown below:
 
   The GEM is imported into KINC and stored in binary format as an Expression Matrix file (described below).  KINC can also export the expression matrix back into its text-based GEM format.
 
+.. _amx-reference-label:
+
+Sample Annotation Matrix (AMX)
+------------------------------
+The annotation matrix is a tab-delimited or comma-separated file that contains metadata about the RNA-seq samples used to construct the network.  The first column should list the sample names (the same as in the GEM) and each additional column should contain information about the sample such as experimental condtions (e.g. Treatment, Tissue, Developmental Stage, Sampling Time, Genotype, etc.) which are usually categorical data. The file can also contain phenotype information that may have been collected from the individuals from which the samples were taken.
+
+.. note::
+
+  The annotation matrix is only needed if condition-specific subgraphs are wanted.
+
 Binary Output Files
 -------------------
 
@@ -54,6 +64,8 @@ The CCM also uses a sparse matrix format and has a ``.ccm`` extension.
 Condition Specific Matrix (CSM)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The Condition Specific Matrix (CSM) file is created when the ``cond-test`` thresholding function is used. This thresholding approach can only be used if the GMM approach was used. It requires an “Annotation Matrix” as input, which is a tab-delimited file where the rows are samples and each column contains some feature about the sample, such as experimental conditions or phenotypic values. The file will contain a matrix identical to the CMX matrix but instead of similarity scores, it stores p-values for the association of selected feature from the annotation matrix. The CSM also uses a sparse matrix format and has a ``.csm`` extension.
+
+.. _plain-text-reference-label:
 
 Plain-text Output Files
 -----------------------
