@@ -86,8 +86,7 @@ void Extract::writeTextFormat(int index)
          << "\t" << "Interaction"
          << "\t" << "Cluster_Index"
          << "\t" << "Cluster_Size"
-         << "\t" << "Samples"
-         << "\n";
+         << "\t" << "Samples";
 
       // If the condition-specific matrix is provided then add some
       // additional headers for each test.
@@ -114,7 +113,7 @@ void Extract::writeTextFormat(int index)
    _ccmPair.read(_cmxPair.index());
    if ( _csm )
    {
-      _csmPair.read(_csxPair.index());
+      _csmPair.read(_cmxPair.index());
    }
 
    // write pairwise data to output file
@@ -245,7 +244,6 @@ void Extract::writeTextFormat(int index)
          << "\t" << correlation
          << "\t" << interaction
          << "\t" << k + 1
-         << "\t" << _cmxPair.clusterSize()
          << "\t" << numSamples
          << "\t" << sampleMask;
 
