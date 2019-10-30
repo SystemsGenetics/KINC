@@ -114,7 +114,7 @@ void Extract::writeTextFormat(int index)
    _ccmPair.read(_cmxPair.index());
    if ( _csm )
    {
-      _csmPair.read(_cmxPair.index());
+      _csmPair.read(_csxPair.index());
    }
 
    // write pairwise data to output file

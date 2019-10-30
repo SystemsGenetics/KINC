@@ -76,15 +76,10 @@ There are two types of plan-text network files. First is a tab-delimited file wh
 
 - ``Source``:  The first gene in the edge
 - ``Target``:  Thes second gene in the edge
-- ``sc``:  The similarity score value.
+- ``Similarity_Score``:  The similarity score value.
 - ``Interaction``: The interaction type. This always is ``co`` for co-expression.
-- ``Cluster``: The unique cluster index (starting from zero)
-- ``Num_Clusters``: The total number of significant clusters between the gene pairs.
-- ``Cluster_Samples``: The total number of samples in the cluster.
-- ``Missing_Samples``: The total number of samples excluded due to a missing value in  at least one gene.
-- ``Cluster_Outliers``:  The total number of samples removed from the cluster as outliers.
-- ``Pair_Outliers``: The total number of samples removed from the pairwise comparision before similarity testing.
-- ``Too_Low``: The total number of samples removed because the gene expression in at least one gene was too low.
+- ``Cluster_Index``: The unique cluster index (starting from zero)
+- ``Cluster_Size``: The total number of samples in the cluster.
 - ``Samples``:  The sample composition string.
 
 Additionally, if the ``cond-test`` function was performed, a series of additional columns will be present containing the p-values for each test performed.
@@ -93,8 +88,8 @@ The following is a sample line from a network file:
 
 .. code:: bash
 
-	Source	Target	sc	Interaction	Cluster	Num_Clusters	Cluster_Samples	Missing_Samples	Cluster_Outliers	Pair_Outliers	Too_Low	Samples
-	Gene1	Gene2	0.979	co	0	1	30	5	2	1	3	1199991911111161111111611161111111111770080000000
+	Source	Target  Similarity_Score  Interaction	Cluster_Index	Cluster_Size Samples
+	Gene1	Gene2	0.979	co	0	30	1199991911111161111111611161111111111770080000000
 
 Additionally, KINC does support creation of a "minimal" plain-text format, which does not contain the sample string or summary statistics. This format is useful for inspecting large networks quickly. The following is a sample line of a minimal network file:
 
