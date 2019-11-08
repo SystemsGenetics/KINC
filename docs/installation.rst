@@ -204,3 +204,30 @@ Installing on an HPC System
 ---------------------------
 
 Usage of KINC on high-performance computing (HPC) systems will require assistance of the cluster's systems admin to ensure all dependencies are installed and available.  Software management on clusters is specific to each cluster, although there are often commonalities.  Regardless, it is not possible to provide comprehensive instructions that would apply to every cluster.
+
+Palmetto
+~~~~~~~~
+
+The following instructions are specific to the Palmetto cluster at Clemson University, however they can be adapted with some effort to other HPC clusters.
+
+If you have previously used any version of KINC or ACE, be sure to remove the modules from your libraries. Furthermore, check to make sure that your ``.bashrc`` is clear of any designated paths for ACE or KINC.
+
+Obtain an interactive node with at least 8 cores. Run the command:
+
+.. code:: bash
+
+   qsub -I -l select=1:ncpus=8
+
+Once you have obtained an interactive node, run the following commands from your home directory:
+
+.. code:: bash
+
+   /zfs/feltus/btsheal/install-ace.sh
+   /zfs/feltus/btsheal/install-kinc.sh
+
+These scripts will install ACE and KINC into your home directory, establishing them as modules that can be run from anywhere. It will also update your environment so that the modules can be called when necessary. It uses a module called ``use.own``, which when added will make KINC and ACE available to be used interactively. You should now be able to load KINC as a module:
+
+.. code:: bash
+
+   module add use.own
+   module add KINC

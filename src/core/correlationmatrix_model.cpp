@@ -123,6 +123,12 @@ QVariant CorrelationMatrix::Model::data(const QModelIndex& index, int role) cons
       return "";
    }
 
+   // if pairwise matrix is empty return empty string
+   if ( _matrix->size() == 0 )
+   {
+       return "";
+   }
+
    // get constant pair and read in values
    const Pair pair(_matrix);
    int x {index.row()};
