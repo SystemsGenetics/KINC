@@ -49,11 +49,7 @@ SOURCES += \
    similarity_cuda_worker.cpp \
    similarity_cuda.cpp \
    similarity_input.cpp \
-   similarity_opencl_fetchpair.cpp \
-   similarity_opencl_gmm.cpp \
-   similarity_opencl_outlier.cpp \
-   similarity_opencl_pearson.cpp \
-   similarity_opencl_spearman.cpp \
+   similarity_opencl_kernel.cpp \
    similarity_opencl_worker.cpp \
    similarity_opencl.cpp \
    similarity_resultblock.cpp \
@@ -114,11 +110,7 @@ HEADERS += \
    similarity_cuda_worker.h \
    similarity_cuda.h \
    similarity_input.h \
-   similarity_opencl_fetchpair.h \
-   similarity_opencl_gmm.h \
-   similarity_opencl_outlier.h \
-   similarity_opencl_pearson.h \
-   similarity_opencl_spearman.h \
+   similarity_opencl_kernel.h \
    similarity_opencl_worker.h \
    similarity_opencl.h \
    similarity_resultblock.h \

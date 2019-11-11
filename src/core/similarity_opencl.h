@@ -13,11 +13,7 @@ class Similarity::OpenCL : public EAbstractAnalyticOpenCL
 {
    Q_OBJECT
 public:
-   class FetchPair;
-   class GMM;
-   class Outlier;
-   class Pearson;
-   class Spearman;
+   class Kernel;
    class Worker;
    explicit OpenCL(Similarity* parent);
    virtual std::unique_ptr<EAbstractAnalyticOpenCLWorker> makeWorker() override final;

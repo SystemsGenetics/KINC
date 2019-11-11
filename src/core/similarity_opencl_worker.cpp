@@ -22,13 +22,7 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    _base(base),
    _baseOpenCL(baseOpenCL),
    _queue(new ::OpenCL::CommandQueue(context, context->devices().first(), this)),
-   _kernels({
-      .fetchPair = new OpenCL::FetchPair(program, this),
-      .gmm = new OpenCL::GMM(program, this),
-      .outlier = new OpenCL::Outlier(program, this),
-      .pearson = new OpenCL::Pearson(program, this),
-      .spearman = new OpenCL::Spearman(program, this)
-   })
+   _kernel(new OpenCL::Kernel(program, this))
 {
    EDEBUG_FUNC(this,base,baseOpenCL,context,program);
 
@@ -38,20 +32,23 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    int N_pow2 {nextPower2(N)};
    int K {_base->_maxClusters};
 
-   _buffers.in_index = ::OpenCL::Buffer<cl_int2>(context, 1 * W);
-   _buffers.work_N = ::OpenCL::Buffer<cl_int>(context, 1 * W);
-   _buffers.work_X = ::OpenCL::Buffer<cl_float2>(context, N * W);
-   _buffers.work_labels = ::OpenCL::Buffer<cl_char>(context, N * W);
-   _buffers.work_components = ::OpenCL::Buffer<cl_component>(context, K * W);
-   _buffers.work_MP = ::OpenCL::Buffer<cl_float2>(context, K * W);
-   _buffers.work_counts = ::OpenCL::Buffer<cl_int>(context, K * W);
-   _buffers.work_logpi = ::OpenCL::Buffer<cl_float>(context, K * W);
-   _buffers.work_gamma = ::OpenCL::Buffer<cl_float>(context, N * K * W);
-   _buffers.work_x = ::OpenCL::Buffer<cl_float>(context, N_pow2 * W);
-   _buffers.work_y = ::OpenCL::Buffer<cl_float>(context, N_pow2 * W);
-   _buffers.out_K = ::OpenCL::Buffer<cl_char>(context, 1 * W);
-   _buffers.out_labels = ::OpenCL::Buffer<cl_char>(context, N * W);
-   _buffers.out_correlations = ::OpenCL::Buffer<cl_float>(context, K * W);
+   _buffers.in_index            = ::OpenCL::Buffer<cl_int2>   (context, W * 1);
+   _buffers.work_x              = ::OpenCL::Buffer<cl_float>  (context, W * N_pow2);
+   _buffers.work_y              = ::OpenCL::Buffer<cl_float>  (context, W * N_pow2);
+   _buffers.work_gmm_data       = ::OpenCL::Buffer<cl_float2> (context, W * N);
+   _buffers.work_gmm_labels     = ::OpenCL::Buffer<cl_char>   (context, W * N);
+   _buffers.work_gmm_pi         = ::OpenCL::Buffer<cl_float>  (context, W * K);
+   _buffers.work_gmm_mu         = ::OpenCL::Buffer<cl_float2> (context, W * K);
+   _buffers.work_gmm_sigma      = ::OpenCL::Buffer<cl_float4> (context, W * K);
+   _buffers.work_gmm_sigmaInv   = ::OpenCL::Buffer<cl_float4> (context, W * K);
+   _buffers.work_gmm_normalizer = ::OpenCL::Buffer<cl_float>  (context, W * K);
+   _buffers.work_gmm_MP         = ::OpenCL::Buffer<cl_float2> (context, W * K);
+   _buffers.work_gmm_counts     = ::OpenCL::Buffer<cl_int>    (context, W * K);
+   _buffers.work_gmm_logpi      = ::OpenCL::Buffer<cl_float>  (context, W * K);
+   _buffers.work_gmm_gamma      = ::OpenCL::Buffer<cl_float>  (context, W * N * K);
+   _buffers.out_K               = ::OpenCL::Buffer<cl_char>   (context, W * 1);
+   _buffers.out_labels          = ::OpenCL::Buffer<cl_char>   (context, W * N);
+   _buffers.out_correlations    = ::OpenCL::Buffer<cl_float>  (context, W * K);
 }
 
 
@@ -96,135 +93,41 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
 
       _buffers.in_index.unmap(_queue);
 
-      // execute fetch-pair kernel
-      _kernels.fetchPair->execute(
+      // execute similiarity kernel
+      _kernel->execute(
          _queue,
          _base->_globalWorkSize,
          _base->_localWorkSize,
+         (cl_int) _base->_clusMethod,
+         (cl_int) _base->_corrMethod,
+         _base->_removePreOutliers,
+         _base->_removePostOutliers,
          numPairs,
          &_baseOpenCL->_expressions,
          _base->_input->sampleSize(),
          &_buffers.in_index,
          _base->_minExpression,
-         &_buffers.work_N,
-         &_buffers.out_labels
+         _base->_minSamples,
+         _base->_minClusters,
+         _base->_maxClusters,
+         (cl_int) _base->_criterion,
+         &_buffers.work_x,
+         &_buffers.work_y,
+         &_buffers.work_gmm_data,
+         &_buffers.work_gmm_labels,
+         &_buffers.work_gmm_pi,
+         &_buffers.work_gmm_mu,
+         &_buffers.work_gmm_sigma,
+         &_buffers.work_gmm_sigmaInv,
+         &_buffers.work_gmm_normalizer,
+         &_buffers.work_gmm_MP,
+         &_buffers.work_gmm_counts,
+         &_buffers.work_gmm_logpi,
+         &_buffers.work_gmm_gamma,
+         &_buffers.out_K,
+         &_buffers.out_labels,
+         &_buffers.out_correlations
       );
-
-      // execute outlier kernel (pre-clustering)
-      if ( _base->_removePreOutliers )
-      {
-         _kernels.outlier->execute(
-            _queue,
-            _base->_globalWorkSize,
-            _base->_localWorkSize,
-            numPairs,
-            &_baseOpenCL->_expressions,
-            _base->_input->sampleSize(),
-            &_buffers.in_index,
-            &_buffers.work_N,
-            &_buffers.out_labels,
-            &_buffers.out_K,
-            -7,
-            &_buffers.work_x,
-            &_buffers.work_y
-         );
-      }
-
-      // execute clustering kernel
-      if ( _base->_clusMethod == ClusteringMethod::GMM )
-      {
-         _kernels.gmm->execute(
-            _queue,
-            _base->_globalWorkSize,
-            _base->_localWorkSize,
-            numPairs,
-            &_baseOpenCL->_expressions,
-            _base->_input->sampleSize(),
-            &_buffers.in_index,
-            _base->_minSamples,
-            _base->_minClusters,
-            _base->_maxClusters,
-            (cl_int) _base->_criterion,
-            &_buffers.work_X,
-            &_buffers.work_N,
-            &_buffers.work_labels,
-            &_buffers.work_components,
-            &_buffers.work_MP,
-            &_buffers.work_counts,
-            &_buffers.work_logpi,
-            &_buffers.work_gamma,
-            &_buffers.out_K,
-            &_buffers.out_labels
-         );
-      }
-      else
-      {
-         // set cluster size to 1 if clustering is disabled
-         _buffers.out_K.mapWrite(_queue).wait();
-
-         for ( int i = 0; i < numPairs; ++i )
-         {
-            _buffers.out_K[i] = 1;
-         }
-
-         _buffers.out_K.unmap(_queue);
-      }
-
-      // execute outlier kernel (post-clustering)
-      if ( _base->_removePostOutliers )
-      {
-         _kernels.outlier->execute(
-            _queue,
-            _base->_globalWorkSize,
-            _base->_localWorkSize,
-            numPairs,
-            &_baseOpenCL->_expressions,
-            _base->_input->sampleSize(),
-            &_buffers.in_index,
-            &_buffers.work_N,
-            &_buffers.out_labels,
-            &_buffers.out_K,
-            -8,
-            &_buffers.work_x,
-            &_buffers.work_y
-         );
-      }
-
-      // execute correlation kernel
-      if ( _base->_corrMethod == CorrelationMethod::Pearson )
-      {
-         _kernels.pearson->execute(
-            _queue,
-            _base->_globalWorkSize,
-            _base->_localWorkSize,
-            numPairs,
-            &_baseOpenCL->_expressions,
-            _base->_input->sampleSize(),
-            &_buffers.in_index,
-            _base->_maxClusters,
-            &_buffers.out_labels,
-            _base->_minSamples,
-            &_buffers.out_correlations
-         );
-      }
-      else if ( _base->_corrMethod == CorrelationMethod::Spearman )
-      {
-         _kernels.spearman->execute(
-            _queue,
-            _base->_globalWorkSize,
-            _base->_localWorkSize,
-            numPairs,
-            &_baseOpenCL->_expressions,
-            _base->_input->sampleSize(),
-            &_buffers.in_index,
-            _base->_maxClusters,
-            &_buffers.out_labels,
-            _base->_minSamples,
-            &_buffers.work_x,
-            &_buffers.work_y,
-            &_buffers.out_correlations
-         );
-      }
 
       // read results from device
       _buffers.out_K.mapRead(_queue);

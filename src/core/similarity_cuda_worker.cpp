@@ -30,23 +30,23 @@ Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, :
    int N_pow2 {nextPower2(N)};
    int K {_base->_maxClusters};
 
-   _buffers.in_index = ::CUDA::Buffer<int2>(1 * W);
-   _buffers.work_x = ::CUDA::Buffer<float>(N_pow2 * W, false);
-   _buffers.work_y = ::CUDA::Buffer<float>(N_pow2 * W, false);
-   _buffers.work_gmm_data = ::CUDA::Buffer<float2>(N * W, false);
-   _buffers.work_gmm_labels = ::CUDA::Buffer<qint8>(N * W, false);
-   _buffers.work_gmm_pi = ::CUDA::Buffer<float>(K * W, false);
-   _buffers.work_gmm_mu = ::CUDA::Buffer<float2>(K * W, false);
-   _buffers.work_gmm_sigma = ::CUDA::Buffer<float4>(K * W, false);
-   _buffers.work_gmm_sigmaInv = ::CUDA::Buffer<float4>(K * W, false);
-   _buffers.work_gmm_normalizer = ::CUDA::Buffer<float>(K * W, false);
-   _buffers.work_gmm_MP = ::CUDA::Buffer<float2>(K * W, false);
-   _buffers.work_gmm_counts = ::CUDA::Buffer<int>(K * W, false);
-   _buffers.work_gmm_logpi = ::CUDA::Buffer<float>(K * W, false);
-   _buffers.work_gmm_gamma = ::CUDA::Buffer<float>(N * K * W, false);
-   _buffers.out_K = ::CUDA::Buffer<qint8>(1 * W);
-   _buffers.out_labels = ::CUDA::Buffer<qint8>(N * W);
-   _buffers.out_correlations = ::CUDA::Buffer<float>(K * W);
+   _buffers.in_index            = ::CUDA::Buffer<int2>   (W * 1);
+   _buffers.work_x              = ::CUDA::Buffer<float>  (W * N_pow2, false);
+   _buffers.work_y              = ::CUDA::Buffer<float>  (W * N_pow2, false);
+   _buffers.work_gmm_data       = ::CUDA::Buffer<float2> (W * N, false);
+   _buffers.work_gmm_labels     = ::CUDA::Buffer<qint8>  (W * N, false);
+   _buffers.work_gmm_pi         = ::CUDA::Buffer<float>  (W * K, false);
+   _buffers.work_gmm_mu         = ::CUDA::Buffer<float2> (W * K, false);
+   _buffers.work_gmm_sigma      = ::CUDA::Buffer<float4> (W * K, false);
+   _buffers.work_gmm_sigmaInv   = ::CUDA::Buffer<float4> (W * K, false);
+   _buffers.work_gmm_normalizer = ::CUDA::Buffer<float>  (W * K, false);
+   _buffers.work_gmm_MP         = ::CUDA::Buffer<float2> (W * K, false);
+   _buffers.work_gmm_counts     = ::CUDA::Buffer<int>    (W * K, false);
+   _buffers.work_gmm_logpi      = ::CUDA::Buffer<float>  (W * K, false);
+   _buffers.work_gmm_gamma      = ::CUDA::Buffer<float>  (W * N * K, false);
+   _buffers.out_K               = ::CUDA::Buffer<qint8>  (W * 1);
+   _buffers.out_labels          = ::CUDA::Buffer<qint8>  (W * N);
+   _buffers.out_correlations    = ::CUDA::Buffer<float>  (W * K);
 }
 
 

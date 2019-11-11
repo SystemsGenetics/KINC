@@ -101,64 +101,47 @@ int removeOutliersCluster(
 /*!
  * Perform outlier removal on each cluster in a parwise data array.
  *
- * @param numPairs
- * @param expressions
+ * @param x
+ * @param y
  * @param sampleSize
- * @param in_index
- * @param in_N
- * @param in_labels
- * @param in_K
+ * @param numSamples
+ * @param labels
+ * @param clusterSize
  * @param marker
+ * @param x_sorted
+ * @param y_sorted
  */
-__kernel void removeOutliers(
-   int numPairs,
-   __global const float *expressions,
+int removeOutliers(
+   __global const float *x,
+   __global const float *y,
    int sampleSize,
-   __global const int2 *in_index,
-   __global int *in_N,
-   __global char *in_labels,
-   __global char *in_K,
+   int numSamples,
+   __global char *labels,
+   char clusterSize,
    char marker,
-   __global float *work_x,
-   __global float *work_y)
+   __global float *x_sorted,
+   __global float *y_sorted)
 {
-   int i = get_global_id(0);
-
-   if ( i >= numPairs )
-   {
-      return;
-   }
-
-   // initialize workspace variables
-   int N_pow2 = nextPower2(sampleSize);
-   int2 index = in_index[i];
-   __global const float *x = &expressions[index.x * sampleSize];
-   __global const float *y = &expressions[index.y * sampleSize];
-   __global int *p_N = &in_N[i];
-   __global char *labels = &in_labels[i * sampleSize];
-   char clusterSize = in_K[i];
-   __global float *x_sorted = &work_x[i * N_pow2];
-   __global float *y_sorted = &work_y[i * N_pow2];
-
-   if ( marker == -7 )
-   {
-      clusterSize = 1;
-   }
-
    // do not perform post-clustering outlier removal if there is only one cluster
    if ( marker == -8 && clusterSize <= 1 )
    {
-      return;
+      return numSamples;
    }
 
    // perform outlier removal on each cluster
-   int N;
-
    for ( char k = 0; k < clusterSize; ++k )
    {
-      N = removeOutliersCluster(x, y, labels, sampleSize, k, marker, x_sorted, y_sorted);
+      numSamples = removeOutliersCluster(
+         x, y,
+         labels,
+         sampleSize,
+         k,
+         marker,
+         x_sorted,
+         y_sorted
+      );
    }
 
-   // save number of remaining samples
-   *p_N = N;
+   // return number of remaining samples
+   return numSamples;
 }

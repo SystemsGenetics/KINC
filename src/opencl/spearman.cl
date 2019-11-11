@@ -92,46 +92,37 @@ float Spearman_computeCluster(
  * should only contain the clean samples that were extracted from the expression
  * matrix, while the labels should contain all samples.
  *
- * @param globalWorkSize
- * @param expressions
+ * @param x
+ * @param y
  * @param sampleSize
- * @param in_index
  * @param clusterSize
- * @param in_labels
+ * @param labels
  * @param minSamples
- * @param out_correlations
+ * @param x_rank
+ * @param y_rank
+ * @param correlations
  */
-__kernel void Spearman_compute(
-   int numPairs,
-   __global const float *expressions,
+void Spearman_compute(
+   __global const float *x,
+   __global const float *y,
    int sampleSize,
-   __global const int2 *in_index,
    char clusterSize,
-   __global const char *in_labels,
+   __global const char *labels,
    int minSamples,
-   __global float *work_x,
-   __global float *work_y,
-   __global float *out_correlations)
+   __global float *x_rank,
+   __global float *y_rank,
+   __global float *correlations)
 {
-   int i = get_global_id(0);
-
-   if ( i >= numPairs )
-   {
-      return;
-   }
-
-   // initialize workspace variables
-   int N_pow2 = nextPower2(sampleSize);
-   int2 index = in_index[i];
-   __global const float *x = &expressions[index.x * sampleSize];
-   __global const float *y = &expressions[index.y * sampleSize];
-   __global const char *labels = &in_labels[i * sampleSize];
-   __global float *x_rank = &work_x[i * N_pow2];
-   __global float *y_rank = &work_y[i * N_pow2];
-   __global float *correlations = &out_correlations[i * clusterSize];
-
    for ( char k = 0; k < clusterSize; ++k )
    {
-      correlations[k] = Spearman_computeCluster(x, y, labels, sampleSize, k, minSamples, x_rank, y_rank);
+      correlations[k] = Spearman_computeCluster(
+         x, y,
+         labels,
+         sampleSize,
+         k,
+         minSamples,
+         x_rank,
+         y_rank
+      );
    }
 }

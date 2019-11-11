@@ -50,7 +50,8 @@ void Similarity::OpenCL::initialize(::OpenCL::Context* context)
       ":/opencl/outlier.cl",
       ":/opencl/gmm.cl",
       ":/opencl/pearson.cl",
-      ":/opencl/spearman.cl"
+      ":/opencl/spearman.cl",
+      ":/opencl/similarity.cl"
    };
 
    // create program
