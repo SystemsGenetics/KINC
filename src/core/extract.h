@@ -23,114 +23,114 @@
  */
 class Extract : public EAbstractAnalytic
 {
-   Q_OBJECT
+    Q_OBJECT
 public:
-   class Input;
+    class Input;
 public:
-   virtual int size() const override final;
-   virtual void process(const EAbstractAnalyticBlock* result) override final;
-   virtual EAbstractAnalyticInput* makeInput() override final;
-   virtual void initialize();
-   void preparePValueFilter();
-   void prepareRSquareFilter();
-   bool PValuefilter(QString labelName, float pValue);
-   bool pValueFilterCheck();
-   bool RSquarefilter(QString labelName, float rSquared);
-   bool rSquareFilterCheck();
+    virtual int size() const override final;
+    virtual void process(const EAbstractAnalyticBlock* result) override final;
+    virtual EAbstractAnalyticInput* makeInput() override final;
+    virtual void initialize();
+    void preparePValueFilter();
+    void prepareRSquareFilter();
+    bool PValuefilter(QString labelName, float pValue);
+    bool pValueFilterCheck();
+    bool RSquarefilter(QString labelName, float rSquared);
+    bool rSquareFilterCheck();
 private:
-   /*!
-   * Defines the output formats this analytic supports.
-   */
-   enum class OutputFormat
-   {
-      /*!
-       * Text format
-       */
-      Text
-      /*!
-       * Minimal format (does not use CCM)
-       */
-      ,Minimal
-      /*!
-       * GraphML format
-       */
-      ,GraphML
-   };
+    /*!
+    * Defines the output formats this analytic supports.
+    */
+    enum class OutputFormat
+    {
+        /*!
+         * Text format
+         */
+        Text
+        /*!
+         * Minimal format (does not use CCM)
+         */
+        ,Minimal
+        /*!
+         * GraphML format
+         */
+        ,GraphML
+    };
 private:
-   void writeTextFormat(int index);
-   void writeMinimalFormat(int index);
-   void writeGraphMLFormat(int index);
+    void writeTextFormat(int index);
+    void writeMinimalFormat(int index);
+    void writeGraphMLFormat(int index);
 private:
-   /**
-    * Workspace variables to write to the output file
-    */
-   QTextStream _stream;
-   CCMatrix::Pair _ccmPair;
-   CorrelationMatrix::Pair _cmxPair;
-   CSMatrix::Pair _csmPair;
-   /*!
-    * Pointer to the input expression matrix.
-    */
-   ExpressionMatrix* _emx {nullptr};
-   /*!
-    * Pointer to the input cluster matrix.
-    */
-   CCMatrix* _ccm {nullptr};
-   /*!
-    * Pointer to the input correlation matrix.
-    */
-   CorrelationMatrix* _cmx {nullptr};
-   /*!
-    * Pointer to the input condition specific cluster matrix.
-    */
-   CSMatrix* _csm {nullptr};
-   /*!
-    * Pointer to the annotation file.
-    */
-   QFile* _amx {nullptr};
-   /*!
-    * The output format to use.
-    */
-   OutputFormat _outputFormat {OutputFormat::Text};
-   /*!
-    * Pointer to the output text file.
-    */
-   QFile* _output {nullptr};
-   /*!
-    * The minimum (absolute) correlation threshold.
-    */
-   float _minCorrelation {0.85f};
-   /*!
-    * The maximum (absolute) correlation threshold.
-    */
-   float _maxCorrelation {1.00f};
-   /*!
-    * Condition-Specific Cluster Matrix name filter input.
-    */
-   QString _csmNameFilter {""};
-   /*!
-    * Condition-Specific Cluster Matrix name filter data.
-    */
-   QVector<float> _csmNameFilterThresh;
-   QVector<QString> _csmNameFilterFeatureNames;
-   QVector<QString> _csmNameFilterLabelNames;
-   /*!
-    * Condition-Specific Cluster Matrix p-value and r-squared filter input.
-    */
-   QString _csmPValueFilter {""};
-   QString _csmRSquareFilter {""};
-   /*!
-    * Condition-Specific Cluster Matrix p-value filter data.
-    */
-   QVector<float> _csmPValueFilterThresh;
-   QVector<QString> _csmPValueFilterFeatureNames;
-   QVector<QString> _csmPValueFilterLabelNames;
-   /*!
-    * Condition-Specific Cluster Matrix r-squared filter data.
-    */
-   QVector<float> _csmRSquareFilterThresh;
-   QVector<QString> _csmRSquareFilterFeatureNames;
-   QVector<QString> _csmRSquareFilterLabelNames;
+    /**
+     * Workspace variables to write to the output file
+     */
+    QTextStream _stream;
+    CCMatrix::Pair _ccmPair;
+    CorrelationMatrix::Pair _cmxPair;
+    CSMatrix::Pair _csmPair;
+    /*!
+     * Pointer to the input expression matrix.
+     */
+    ExpressionMatrix* _emx {nullptr};
+    /*!
+     * Pointer to the input cluster matrix.
+     */
+    CCMatrix* _ccm {nullptr};
+    /*!
+     * Pointer to the input correlation matrix.
+     */
+    CorrelationMatrix* _cmx {nullptr};
+    /*!
+     * Pointer to the input condition specific cluster matrix.
+     */
+    CSMatrix* _csm {nullptr};
+    /*!
+     * Pointer to the annotation file.
+     */
+    QFile* _amx {nullptr};
+    /*!
+     * The output format to use.
+     */
+    OutputFormat _outputFormat {OutputFormat::Text};
+    /*!
+     * Pointer to the output text file.
+     */
+    QFile* _output {nullptr};
+    /*!
+     * The minimum (absolute) correlation threshold.
+     */
+    float _minCorrelation {0.85f};
+    /*!
+     * The maximum (absolute) correlation threshold.
+     */
+    float _maxCorrelation {1.00f};
+    /*!
+     * Condition-Specific Cluster Matrix name filter input.
+     */
+    QString _csmNameFilter {""};
+    /*!
+     * Condition-Specific Cluster Matrix name filter data.
+     */
+    QVector<float> _csmNameFilterThresh;
+    QVector<QString> _csmNameFilterFeatureNames;
+    QVector<QString> _csmNameFilterLabelNames;
+    /*!
+     * Condition-Specific Cluster Matrix p-value and r-squared filter input.
+     */
+    QString _csmPValueFilter {""};
+    QString _csmRSquareFilter {""};
+    /*!
+     * Condition-Specific Cluster Matrix p-value filter data.
+     */
+    QVector<float> _csmPValueFilterThresh;
+    QVector<QString> _csmPValueFilterFeatureNames;
+    QVector<QString> _csmPValueFilterLabelNames;
+    /*!
+     * Condition-Specific Cluster Matrix r-squared filter data.
+     */
+    QVector<float> _csmRSquareFilterThresh;
+    QVector<QString> _csmRSquareFilterFeatureNames;
+    QVector<QString> _csmRSquareFilterLabelNames;
 };
 
 

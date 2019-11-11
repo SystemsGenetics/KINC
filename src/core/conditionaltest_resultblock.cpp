@@ -33,9 +33,9 @@ ConditionalTest::ResultBlock::ResultBlock(int index, int numTests, qint64 start)
  */
 void ConditionalTest::ResultBlock::append(const CSMPair& pair)
 {
-   EDEBUG_FUNC(this,&pair);
+    EDEBUG_FUNC(this,&pair);
 
-   _pairs.append(pair);
+    _pairs.append(pair);
 }
 
 

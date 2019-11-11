@@ -13,9 +13,9 @@ using namespace Pairwise;
  */
 qint64 Matrix::dataEnd() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return _headerSize + _subHeaderSize + _clusterSize * (_dataSize + _itemHeaderSize);
+    return _headerSize + _subHeaderSize + _clusterSize * (_dataSize + _itemHeaderSize);
 }
 
 
@@ -25,16 +25,16 @@ qint64 Matrix::dataEnd() const
  */
 void Matrix::readData()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // seek to the beginning of the data
-   seek(0);
+    // seek to the beginning of the data
+    seek(0);
 
-   // read the header
-   stream() >> _geneSize >> _maxClusterSize >> _dataSize >> _pairSize >> _clusterSize >> _subHeaderSize;
+    // read the header
+    stream() >> _geneSize >> _maxClusterSize >> _dataSize >> _pairSize >> _clusterSize >> _subHeaderSize;
 
-   // read the sub-header
-   readHeader();
+    // read the sub-header
+    readHeader();
 }
 
 
@@ -44,19 +44,19 @@ void Matrix::readData()
  */
 void Matrix::writeNewData()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // initialize metadata
-   setMeta(EMetaObject());
+    // initialize metadata
+    setMeta(EMetaObject());
 
-   // seek to the beginning of the data
-   seek(0);
+    // seek to the beginning of the data
+    seek(0);
 
-   // write the header
-   stream() << _geneSize << _maxClusterSize << _dataSize << _pairSize << _clusterSize << _subHeaderSize;
+    // write the header
+    stream() << _geneSize << _maxClusterSize << _dataSize << _pairSize << _clusterSize << _subHeaderSize;
 
-   // write the sub-header
-   writeHeader();
+    // write the sub-header
+    writeHeader();
 }
 
 
@@ -67,16 +67,16 @@ void Matrix::writeNewData()
  */
 void Matrix::finish()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // seek to the beginning of the data
-   seek(0);
+    // seek to the beginning of the data
+    seek(0);
 
-   // write the header
-   stream() << _geneSize << _maxClusterSize << _dataSize << _pairSize << _clusterSize << _subHeaderSize;
+    // write the header
+    stream() << _geneSize << _maxClusterSize << _dataSize << _pairSize << _clusterSize << _subHeaderSize;
 
-   // write the sub-header
-   writeHeader();
+    // write the sub-header
+    writeHeader();
 }
 
 
@@ -86,9 +86,9 @@ void Matrix::finish()
  */
 EMetaArray Matrix::geneNames() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return meta().toObject().at("genes").toArray();
+    return meta().toObject().at("genes").toArray();
 }
 
 
@@ -104,47 +104,47 @@ EMetaArray Matrix::geneNames() const
  */
 void Matrix::initialize(const EMetaArray& geneNames, qint32 maxClusterSize, qint32 dataSize, qint16 subHeaderSize)
 {
-   EDEBUG_FUNC(this,&geneNames,maxClusterSize,dataSize,subHeaderSize);
+    EDEBUG_FUNC(this,&geneNames,maxClusterSize,dataSize,subHeaderSize);
 
-   // make sure gene names metadata is not empty
-   if ( geneNames.isEmpty() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Gene names metadata is empty."));
-      throw e;
-   }
+    // make sure gene names metadata is not empty
+    if ( geneNames.isEmpty() )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Domain Error"));
+        e.setDetails(tr("Gene names metadata is empty."));
+        throw e;
+    }
 
-   // make sure arguments are valid
-   if ( maxClusterSize < 1 || dataSize < 1 || subHeaderSize < 0 )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Pairwise Matrix Initialization Error"));
-      e.setDetails(tr("An integer argument given is less than the minimum."));
-      throw e;
-   }
+    // make sure arguments are valid
+    if ( maxClusterSize < 1 || dataSize < 1 || subHeaderSize < 0 )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Pairwise Matrix Initialization Error"));
+        e.setDetails(tr("An integer argument given is less than the minimum."));
+        throw e;
+    }
 
-   if ( maxClusterSize > Index::MAX_CLUSTER_SIZE )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Pairwise Matrix Initialization Error"));
-      e.setDetails(tr("The max cluster size cannot be larger than MAX_CLUSTER_SIZE."));
-      throw e;
-   }
+    if ( maxClusterSize > Index::MAX_CLUSTER_SIZE )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Pairwise Matrix Initialization Error"));
+        e.setDetails(tr("The max cluster size cannot be larger than MAX_CLUSTER_SIZE."));
+        throw e;
+    }
 
-   // save gene names to metadata
-   EMetaObject metaObject {meta().toObject()};
-   metaObject.insert("genes", geneNames);
-   setMeta(metaObject);
+    // save gene names to metadata
+    EMetaObject metaObject {meta().toObject()};
+    metaObject.insert("genes", geneNames);
+    setMeta(metaObject);
 
-   // initiailze new data within object
-   _geneSize = geneNames.size();
-   _maxClusterSize = maxClusterSize;
-   _dataSize = dataSize;
-   _subHeaderSize = subHeaderSize;
-   _pairSize = 0;
-   _clusterSize = 0;
-   _lastWrite = -1;
+    // initiailze new data within object
+    _geneSize = geneNames.size();
+    _maxClusterSize = maxClusterSize;
+    _dataSize = dataSize;
+    _subHeaderSize = subHeaderSize;
+    _pairSize = 0;
+    _clusterSize = 0;
+    _lastWrite = -1;
 }
 
 
@@ -157,35 +157,36 @@ void Matrix::initialize(const EMetaArray& geneNames, qint32 maxClusterSize, qint
  */
 void Matrix::write(const Index& index, qint8 cluster)
 {
-   EDEBUG_FUNC(this,&index,cluster);
+    EDEBUG_FUNC(this,&index,cluster);
 
-   // make sure this is new data object that can be written to
-   if ( _lastWrite == -2 )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Pairwise Matrix Logical Error"));
-      e.setDetails(tr("Attempting to write data to uninitialized object."));
-      throw e;
-   }
+    // make sure this is new data object that can be written to
+    if ( _lastWrite == -2 )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Pairwise Matrix Logical Error"));
+        e.setDetails(tr("Attempting to write data to uninitialized object."));
+        throw e;
+    }
 
-   // make sure the new pair has a higher indent than the previous written so the list of
-   // all indents are sorted
-   if ( index.indent(cluster) <= _lastWrite )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Pairwise Matrix Logical Error"));
-      e.setDetails(tr("Attempting to write indent %1 when last written is %2.")
-                   .arg(index.indent(0)).arg(_lastWrite));
-      throw e;
-   }
+    // make sure the new pair has a higher indent than the previous written so the list of
+    // all indents are sorted
+    if ( index.indent(cluster) <= _lastWrite )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Pairwise Matrix Logical Error"));
+        e.setDetails(tr("Attempting to write indent %1 when last written is %2.")
+            .arg(index.indent(0))
+            .arg(_lastWrite));
+        throw e;
+    }
 
-   // seek to position for next pair and write indent value
-   seek(_headerSize + _subHeaderSize + _clusterSize * (_dataSize + _itemHeaderSize));
-   stream() << index.getX() << index.getY() << cluster;
+    // seek to position for next pair and write indent value
+    seek(_headerSize + _subHeaderSize + _clusterSize * (_dataSize + _itemHeaderSize));
+    stream() << index.getX() << index.getY() << cluster;
 
-   // increment cluster size and set new last index
-   ++_clusterSize;
-   _lastWrite = index.indent(cluster);
+    // increment cluster size and set new last index
+    ++_clusterSize;
+    _lastWrite = index.indent(cluster);
 }
 
 
@@ -199,16 +200,16 @@ void Matrix::write(const Index& index, qint8 cluster)
  */
 Index Matrix::getPair(qint64 index, qint8* cluster) const
 {
-   EDEBUG_FUNC(this,index,cluster);
+    EDEBUG_FUNC(this,index,cluster);
 
-   // seek to index and read item header data
-   seekPair(index);
-   qint32 geneX;
-   qint32 geneY;
-   stream() >> geneX >> geneY >> *cluster;
+    // seek to index and read item header data
+    seekPair(index);
+    qint32 geneX;
+    qint32 geneY;
+    stream() >> geneX >> geneY >> *cluster;
 
-   // return pairwise index
-   return {geneX,geneY};
+    // return pairwise index
+    return {geneX,geneY};
 }
 
 
@@ -222,54 +223,54 @@ Index Matrix::getPair(qint64 index, qint8* cluster) const
  */
 qint64 Matrix::findPair(qint64 indent, qint64 first, qint64 last) const
 {
-   EDEBUG_FUNC(this,indent,first,last);
+    EDEBUG_FUNC(this,indent,first,last);
 
-   // calculate the midway pivot point and seek to it
-   qint64 pivot {first + (last - first)/2};
-   seekPair(pivot);
+    // calculate the midway pivot point and seek to it
+    qint64 pivot {first + (last - first)/2};
+    seekPair(pivot);
 
-   // read in pairwise item header
-   qint32 geneX;
-   qint32 geneY;
-   qint8 cluster;
-   stream() >> geneX >> geneY >> cluster;
-   Index index(geneX,geneY);
+    // read in pairwise item header
+    qint32 geneX;
+    qint32 geneY;
+    qint8 cluster;
+    stream() >> geneX >> geneY >> cluster;
+    Index index(geneX,geneY);
 
-   // if indent values match return index
-   if ( index.indent(cluster) == indent )
-   {
-      return pivot;
-   }
+    // if indent values match return index
+    if ( index.indent(cluster) == indent )
+    {
+        return pivot;
+    }
 
-   // else if the list of indexes is greater than 1 divide it in half and figure out which side
-   // to divide and conquer depending on the value of the pivot
-   else if ( first != last )
-   {
-      if ( index.indent(cluster) > indent )
-      {
-         // if pivot is first add one so pivot is not less than first when passed
-         if ( pivot == first )
-         {
-            ++pivot;
-         }
-         return findPair(indent,first,pivot - 1);
-      }
-      else
-      {
-         // if pivot is last decrement one so pivot is not greater than last when passed
-         if ( pivot == last )
-         {
-            --pivot;
-         }
-         return findPair(indent,pivot + 1,last);
-      }
-   }
+    // else if the list of indexes is greater than 1 divide it in half and figure out which side
+    // to divide and conquer depending on the value of the pivot
+    else if ( first != last )
+    {
+        if ( index.indent(cluster) > indent )
+        {
+            // if pivot is first add one so pivot is not less than first when passed
+            if ( pivot == first )
+            {
+                ++pivot;
+            }
+            return findPair(indent,first,pivot - 1);
+        }
+        else
+        {
+            // if pivot is last decrement one so pivot is not greater than last when passed
+            if ( pivot == last )
+            {
+                --pivot;
+            }
+            return findPair(indent,pivot + 1,last);
+        }
+    }
 
-   // else no pair with given indent exists so return failure
-   else
-   {
-      return -1;
-   }
+    // else no pair with given indent exists so return failure
+    else
+    {
+        return -1;
+    }
 }
 
 
@@ -281,18 +282,19 @@ qint64 Matrix::findPair(qint64 indent, qint64 first, qint64 last) const
  */
 void Matrix::seekPair(qint64 index) const
 {
-   EDEBUG_FUNC(this,index);
+    EDEBUG_FUNC(this,index);
 
-   // make sure index is within range
-   if ( index < 0 || index >= _clusterSize )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Attempting to seek to cluster index %1 when total size is %2.")
-                   .arg(index).arg(_clusterSize));
-      throw e;
-   }
+    // make sure index is within range
+    if ( index < 0 || index >= _clusterSize )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Domain Error"));
+        e.setDetails(tr("Attempting to seek to cluster index %1 when total size is %2.")
+            .arg(index)
+            .arg(_clusterSize));
+        throw e;
+    }
 
-   // seek to the specified index
-   seek(_headerSize + _subHeaderSize + index * (_dataSize + _itemHeaderSize));
+    // seek to the specified index
+    seek(_headerSize + _subHeaderSize + index * (_dataSize + _itemHeaderSize));
 }

@@ -53,7 +53,7 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
 
     if ( ELog::isActive() )
     {
-       ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
+        ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
     }
 
     if ( result->index() == 0 )
@@ -66,28 +66,28 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
 
     for (qint32 i = 0; i < resultBlock->pairs().size(); i++)
     {
-       //copy the values form the pairs to the CSM
-       if ( resultBlock->pairs().at(i).pValues.size() > 0 )
-       {
-           // Create pair objects for the output data file.
-           CSMatrix::Pair CSMPair(_out);
-           Pairwise::Index index(resultBlock->pairs().at(i).x_index, resultBlock->pairs().at(i).y_index);
-           _index = index;
+        //copy the values form the pairs to the CSM
+        if ( resultBlock->pairs().at(i).pValues.size() > 0 )
+        {
+            // Create pair objects for the output data file.
+            CSMatrix::Pair CSMPair(_out);
+            Pairwise::Index index(resultBlock->pairs().at(i).x_index, resultBlock->pairs().at(i).y_index);
+            _index = index;
 
-           //Iterate through the clusters in the pair.
-           for (int j = 0; j < resultBlock->pairs().at(i).pValues.size(); ++j )
-           {
-               //add each cluster into the CSM
-               CSMPair.addCluster(1, _numTests);
-               for ( int k = 0; k < resultBlock->pairs().at(i).pValues.at(j).size(); k++ )
-               {
-                   CSMPair.at(j, k, "pvalue") = resultBlock->pairs().at(i).pValues.at(j).at(k);
-                   CSMPair.at(j, k, "r2") = resultBlock->pairs().at(i).r2.at(j).at(k);
-               }
-           }
-           //write the info into the CSM
-           CSMPair.write(index); //have an error here
-       }
+            //Iterate through the clusters in the pair.
+            for (int j = 0; j < resultBlock->pairs().at(i).pValues.size(); ++j )
+            {
+                //add each cluster into the CSM
+                CSMPair.addCluster(1, _numTests);
+                for ( int k = 0; k < resultBlock->pairs().at(i).pValues.at(j).size(); k++ )
+                {
+                    CSMPair.at(j, k, "pvalue") = resultBlock->pairs().at(i).pValues.at(j).at(k);
+                    CSMPair.at(j, k, "r2") = resultBlock->pairs().at(i).r2.at(j).at(k);
+                }
+            }
+            //write the info into the CSM
+            CSMPair.write(index); //have an error here
+        }
     }
 }
 
@@ -119,7 +119,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork(int index) con
 
     if ( ELog::isActive() )
     {
-       ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
+        ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
     }
 
     qint64 start {index * static_cast<qint64>(_workBlockSize)};
@@ -182,44 +182,44 @@ void ConditionalTest::initialize()
     // make sure input data is valid
     if ( !_ccm )
     {
-       E_MAKE_EXCEPTION(e);
-       e.setTitle(tr("Invalid Argument"));
-       e.setDetails(tr("Did not get valid CCM data argument."));
-       throw e;
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get valid CCM data argument."));
+        throw e;
     }
     if ( !_cmx )
     {
-       E_MAKE_EXCEPTION(e);
-       e.setTitle(tr("Invalid Argument"));
-       e.setDetails(tr("Did not get valid CMX data argument."));
-       throw e;
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get valid CMX data argument."));
+        throw e;
     }
     if ( !_anx )
     {
-       E_MAKE_EXCEPTION(e);
-       e.setTitle(tr("Invalid Argument"));
-       e.setDetails(tr("Did not get valid ANX data argument."));
-       throw e;
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get valid ANX data argument."));
+        throw e;
     }
     if (  !_emx )
     {
-       E_MAKE_EXCEPTION(e);
-       e.setTitle(tr("Invalid Argument"));
-       e.setDetails(tr("Did not get valid EMX data argument."));
-       throw e;
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get valid EMX data argument."));
+        throw e;
     }
     if (  !_out)
     {
-       E_MAKE_EXCEPTION(e);
-       e.setTitle(tr("Invalid Argument"));
-       e.setDetails(tr("Did not get valid output file argument."));
-       throw e;
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get valid output file argument."));
+        throw e;
     }
 
     // only the master process needs to validate arguments
     if ( !mpi.isMaster() )
     {
-       return;
+        return;
     }
     //open the stream to the coprrect file.
     _stream.setDevice(_anx);
@@ -227,8 +227,8 @@ void ConditionalTest::initialize()
     //atain number of lines in the file.
     while ( !_stream.atEnd() )
     {
-       _stream.readLine();
-       _anxNumLines++;
+        _stream.readLine();
+        _anxNumLines++;
     }
 
     //go back to the begginning
@@ -237,10 +237,10 @@ void ConditionalTest::initialize()
     // make sure reading input file worked
     if ( _stream.status() != QTextStream::Ok )
     {
-       E_MAKE_EXCEPTION(e);
-       e.setTitle(tr("File IO Error"));
-       e.setDetails(tr("Qt Text Stream encountered an unknown error."));
-       throw e;
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("File IO Error"));
+        e.setDetails(tr("Qt Text Stream encountered an unknown error."));
+        throw e;
     }
 
     //read in the annotation matrix, as it holds the details on what we need to do for our tests
@@ -253,9 +253,9 @@ void ConditionalTest::initialize()
     // initialize work block size
     if ( _workBlockSize == 0 )
     {
-       int numWorkers = std::max(1, mpi.size() - 1);
+        int numWorkers = std::max(1, mpi.size() - 1);
 
-       _workBlockSize = std::min(32768LL, _ccm->size() / numWorkers);
+        _workBlockSize = std::min(32768LL, _ccm->size() / numWorkers);
     }
 
     //CSM specific
@@ -274,10 +274,10 @@ void ConditionalTest::initializeOutputs()
     EDEBUG_FUNC(this);
     if ( !_out )
     {
-       E_MAKE_EXCEPTION(e);
-       e.setTitle(tr("Invalid Argument"));
-       e.setDetails(tr("The required output data object was not set."));
-       throw e;
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("The required output data object was not set."));
+        throw e;
     }
 }
 
@@ -296,9 +296,10 @@ void ConditionalTest::initializeOutputs()
 * @param dataTestType The type of test we will run on the data under a
 *        particular feature.
 */
-void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
-                            QVector<QVector<QVariant>>& data,
-                            QVector<TESTTYPE>& dataTestType)
+void ConditionalTest::readInANX(
+    QVector<QVector<QString>>& anxdata,
+    QVector<QVector<QVariant>>& data,
+    QVector<TESTTYPE>& dataTestType)
 {
     EDEBUG_FUNC(this,&anxdata,&data,&dataTestType);
 
@@ -325,11 +326,11 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
     //put the column names into the anxdata array, that will be later put into the meta data
     for ( int i = 0; i < words.size(); i++ )
     {
-      anxdata.append(QVector<QString>());
-      anxdata[i].append(words[i]);
-      dataTestType.append(UNKNOWN);
-      data.append(QVector<QVariant>());
-      changed.append(1);
+        anxdata.append(QVector<QString>());
+        anxdata[i].append(words[i]);
+        dataTestType.append(UNKNOWN);
+        data.append(QVector<QVariant>());
+        changed.append(1);
     }
 
     configureTests(dataTestType);
@@ -379,8 +380,8 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
                     E_MAKE_EXCEPTION(e);
                     e.setTitle(tr("Unknown override type in the --feat_type argument."));
                     e.setDetails(tr("Unknown override type: %1.  Valid choices are: %2")
-                                 .arg(_override.at(i).at(1))
-                                 .arg("categorical, quantitative, ordinal"));
+                        .arg(_override.at(i).at(1))
+                        .arg("categorical, quantitative, ordinal"));
                     throw e;
                 }
             }
@@ -445,7 +446,7 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
             {
                 if ( i < dataTestType.size() )
                 {
-                   counts[i][QUANTITATIVE]++;
+                    counts[i][QUANTITATIVE]++;
                 }
             }
             //it is most likely an integer and should ne considered Ordinal.
@@ -453,7 +454,7 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
             {
                 if ( i < dataTestType.size() )
                 {
-                   counts[i][ORDINAL]++;
+                    counts[i][ORDINAL]++;
                 }
             }
             //if its neistartingPointther on of those than its a string.
@@ -461,7 +462,7 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
             {
                 if ( i < dataTestType.size() )
                 {
-                   counts[i][CATEGORICAL]++;
+                    counts[i][CATEGORICAL]++;
                 }
             }
         }
@@ -525,10 +526,10 @@ void ConditionalTest::Test()
     // make sure input data is valid
     if ( _Test.isEmpty() )
     {
-       E_MAKE_EXCEPTION(e);
-       e.setTitle(tr("Invalid Argument"));
-       e.setDetails(tr("Please provide Features to Test"));
-       throw e;
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Please provide Features to Test"));
+        throw e;
     }
 }
 

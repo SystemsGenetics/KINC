@@ -15,19 +15,19 @@ using namespace Pairwise;
  * @param y
  */
 Index::Index(qint32 x, qint32 y):
-   _x(x),
-   _y(y)
+    _x(x),
+    _y(y)
 {
-   EDEBUG_FUNC(this,x,y);
+    EDEBUG_FUNC(this,x,y);
 
-   // make sure pairwise index is valid
-   if ( x < 1 || y < 0 || x <= y )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Pairwise Index Error"));
-      e.setDetails(QObject::tr("Cannot initialize pairwise index (%1, %2).").arg(x).arg(y));
-      throw e;
-   }
+    // make sure pairwise index is valid
+    if ( x < 1 || y < 0 || x <= y )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(QObject::tr("Pairwise Index Error"));
+        e.setDetails(QObject::tr("Cannot initialize pairwise index (%1, %2).").arg(x).arg(y));
+        throw e;
+    }
 }
 
 
@@ -40,29 +40,29 @@ Index::Index(qint32 x, qint32 y):
  */
 Index::Index(qint64 index)
 {
-   EDEBUG_FUNC(this,index);
+    EDEBUG_FUNC(this,index);
 
-   // make sure index is valid
-   if ( index < 0 )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Pairwise Index Error"));
-      e.setDetails(QObject::tr("Cannot initialize pairwise index from %1.").arg(index));
-      throw e;
-   }
+    // make sure index is valid
+    if ( index < 0 )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(QObject::tr("Pairwise Index Error"));
+        e.setDetails(QObject::tr("Cannot initialize pairwise index from %1.").arg(index));
+        throw e;
+    }
 
-   // compute pairwise index from scalar index
-   qint64 pos {0};
-   qint64 x {0};
+    // compute pairwise index from scalar index
+    qint64 pos {0};
+    qint64 x {0};
 
-   while ( pos + x <= index )
-   {
-      pos += x;
-      ++x;
-   }
+    while ( pos + x <= index )
+    {
+        pos += x;
+        ++x;
+    }
 
-   _x = static_cast<qint32>(x);
-   _y = static_cast<qint32>(index - pos);
+    _x = static_cast<qint32>(x);
+    _y = static_cast<qint32>(index - pos);
 }
 
 
@@ -74,20 +74,20 @@ Index::Index(qint64 index)
  */
 qint64 Index::indent(qint8 cluster) const
 {
-   EDEBUG_FUNC(this,cluster);
+    EDEBUG_FUNC(this,cluster);
 
-   // make sure cluster given is valid
-   if ( cluster < 0 || cluster >= MAX_CLUSTER_SIZE )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(QObject::tr("Pairwise Index Error"));
-      e.setDetails(QObject::tr("Cluster %1 is outside limits.").arg(cluster));
-      throw e;
-   }
+    // make sure cluster given is valid
+    if ( cluster < 0 || cluster >= MAX_CLUSTER_SIZE )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(QObject::tr("Pairwise Index Error"));
+        e.setDetails(QObject::tr("Cluster %1 is outside limits.").arg(cluster));
+        throw e;
+    }
 
-   // compute indent with given cluster and return it
-   qint64 index {static_cast<qint64>(_x) * (_x - 1) / 2 + _y};
-   return index * MAX_CLUSTER_SIZE + cluster;
+    // compute indent with given cluster and return it
+    qint64 index {static_cast<qint64>(_x) * (_x - 1) / 2 + _y};
+    return index * MAX_CLUSTER_SIZE + cluster;
 }
 
 
@@ -97,13 +97,13 @@ qint64 Index::indent(qint8 cluster) const
  */
 void Index::operator++()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // increment gene y and check if it reaches gene x
-   if ( ++_y >= _x )
-   {
-      // reset gene y to 0 and increment gene x
-      _y = 0;
-      ++_x;
-   }
+    // increment gene y and check if it reaches gene x
+    if ( ++_y >= _x )
+    {
+        // reset gene y to 0 and increment gene x
+        _y = 0;
+        ++_x;
+    }
 }

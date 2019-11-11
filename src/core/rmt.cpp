@@ -21,23 +21,23 @@ using RawPair = CorrelationMatrix::RawPair;
 
 
 #define CHECK_ERROR(condition, message)  \
-   if ( !(condition) )                   \
-   {                                     \
-      E_MAKE_EXCEPTION(e);               \
-      e.setTitle(tr("CUDA Error"));      \
-      e.setDetails(tr(message));         \
-      throw e;                           \
-   }
+    if ( !(condition) )                  \
+    {                                    \
+        E_MAKE_EXCEPTION(e);             \
+        e.setTitle(tr("CUDA Error"));    \
+        e.setDetails(tr(message));       \
+        throw e;                         \
+    }
 
 
 
 #define CHECK_CUDA(ret) \
-   CHECK_ERROR(ret == cudaSuccess, #ret)
+    CHECK_ERROR(ret == cudaSuccess, #ret)
 
 
 
 #define CHECK_CUSOLVER(ret) \
-   CHECK_ERROR(ret == CUSOLVER_STATUS_SUCCESS, #ret)
+    CHECK_ERROR(ret == CUSOLVER_STATUS_SUCCESS, #ret)
 
 
 
@@ -47,9 +47,9 @@ using RawPair = CorrelationMatrix::RawPair;
  */
 int RMT::size() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return 1;
+    return 1;
 }
 
 
@@ -62,93 +62,93 @@ int RMT::size() const
  */
 void RMT::process(const EAbstractAnalyticBlock*)
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // initialize log text stream
-   QTextStream stream(_logfile);
+    // initialize log text stream
+    QTextStream stream(_logfile);
 
-   // initialize helper variables
-   float finalThreshold {0};
-   float finalChi {numeric_limits<float>::infinity()};
-   float maxChi {-numeric_limits<float>::infinity()};
+    // initialize helper variables
+    float finalThreshold {0};
+    float finalChi {numeric_limits<float>::infinity()};
+    float maxChi {-numeric_limits<float>::infinity()};
 
-   float threshold {_thresholdStart};
+    float threshold {_thresholdStart};
 
-   // load raw correlation data, row-wise maximums
-   std::vector<RawPair> pairs {_input->dumpRawData()};
-   std::vector<float> maximums {computeMaximums(pairs)};
+    // load raw correlation data, row-wise maximums
+    std::vector<RawPair> pairs {_input->dumpRawData()};
+    std::vector<float> maximums {computeMaximums(pairs)};
 
-   // continue while max chi is less than final threshold
-   while ( maxChi < _chiSquareThreshold2 )
-   {
-      qInfo("\n");
-      qInfo("threshold: %0.3f", threshold);
+    // continue while max chi is less than final threshold
+    while ( maxChi < _chiSquareThreshold2 )
+    {
+        qInfo("\n");
+        qInfo("threshold: %0.3f", threshold);
 
-      // compute pruned matrix based on threshold
-      size_t size;
-      std::vector<float> pruneMatrix {computePruneMatrix(pairs, maximums, threshold, &size)};
+        // compute pruned matrix based on threshold
+        size_t size;
+        std::vector<float> pruneMatrix {computePruneMatrix(pairs, maximums, threshold, &size)};
 
-      qInfo("prune matrix: %lu", size);
+        qInfo("prune matrix: %lu", size);
 
-      // make sure that pruned matrix is not empty
-      float chi = -1;
-      std::vector<float> eigens;
+        // make sure that pruned matrix is not empty
+        float chi = -1;
+        std::vector<float> eigens;
 
-      if ( size > 0 )
-      {
-         // compute eigenvalues of pruned matrix
-         eigens = computeEigenvalues(&pruneMatrix, size);
+        if ( size > 0 )
+        {
+            // compute eigenvalues of pruned matrix
+            eigens = computeEigenvalues(&pruneMatrix, size);
 
-         qInfo("eigenvalues: %lu", eigens.size());
+            qInfo("eigenvalues: %lu", eigens.size());
 
-         // compute unique eigenvalues
-         eigens = computeUnique(eigens);
+            // compute unique eigenvalues
+            eigens = computeUnique(eigens);
 
-         qInfo("unique eigenvalues: %lu", eigens.size());
+            qInfo("unique eigenvalues: %lu", eigens.size());
 
-         // compute chi-squared value from NNSD of eigenvalues
-         chi = computeChiSquare(eigens);
+            // compute chi-squared value from NNSD of eigenvalues
+            chi = computeChiSquare(eigens);
 
-         qInfo("chi-squared: %g", chi);
-      }
+            qInfo("chi-squared: %g", chi);
+        }
 
-      // make sure that chi-squared test succeeded
-      if ( chi != -1 )
-      {
-         // save the most recent chi-squared value less than critical value
-         if ( chi < _chiSquareThreshold1 )
-         {
-            finalChi = chi;
-            finalThreshold = threshold;
-         }
+        // make sure that chi-squared test succeeded
+        if ( chi != -1 )
+        {
+            // save the most recent chi-squared value less than critical value
+            if ( chi < _chiSquareThreshold1 )
+            {
+                finalChi = chi;
+                finalThreshold = threshold;
+            }
 
-         // save the largest chi-squared value which occurs after finalChi
-         if ( finalChi < _chiSquareThreshold1 && chi > finalChi )
-         {
-            maxChi = chi;
-         }
-      }
+            // save the largest chi-squared value which occurs after finalChi
+            if ( finalChi < _chiSquareThreshold1 && chi > finalChi )
+            {
+                maxChi = chi;
+            }
+        }
 
-      // output to log file
-      stream
-         << QString::number(threshold, 'f', 3) << "\t"
-         << size << "\t"
-         << eigens.size() << "\t"
-         << chi << "\n";
+        // output to log file
+        stream
+            << QString::number(threshold, 'f', 3) << "\t"
+            << size << "\t"
+            << eigens.size() << "\t"
+            << chi << "\n";
 
-      // decrement threshold and fail if minimum threshold is reached
-      threshold -= _thresholdStep;
-      if ( threshold < _thresholdStop )
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("RMT Threshold Error"));
-         e.setDetails(tr("Could not find non-random threshold above stopping threshold."));
-         throw e;
-      }
-   }
+        // decrement threshold and fail if minimum threshold is reached
+        threshold -= _thresholdStep;
+        if ( threshold < _thresholdStop )
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("RMT Threshold Error"));
+            e.setDetails(tr("Could not find non-random threshold above stopping threshold."));
+            throw e;
+        }
+    }
 
-   // write threshold where chi was first above final threshold
-   stream << finalThreshold << "\n";
+    // write threshold where chi was first above final threshold
+    stream << finalThreshold << "\n";
 }
 
 
@@ -158,9 +158,9 @@ void RMT::process(const EAbstractAnalyticBlock*)
  */
 EAbstractAnalyticInput* RMT::makeInput()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return new Input(this);
+    return new Input(this);
 }
 
 
@@ -172,37 +172,37 @@ EAbstractAnalyticInput* RMT::makeInput()
  */
 void RMT::initialize()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // make sure input and output were set properly
-   if ( !_input || !_logfile )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Did not get valid input or logfile arguments."));
-      throw e;
-   }
+    // make sure input and output were set properly
+    if ( !_input || !_logfile )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get valid input or logfile arguments."));
+        throw e;
+    }
 
-   // make sure threshold arguments are valid
-   if ( _thresholdStart <= _thresholdStop )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Starting threshold must be greater than stopping threshold."));
-      throw e;
-   }
+    // make sure threshold arguments are valid
+    if ( _thresholdStart <= _thresholdStop )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Starting threshold must be greater than stopping threshold."));
+        throw e;
+    }
 
-   // make sure pace arguments are valid
-   if ( _minSplinePace >= _maxSplinePace )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Minimum spline pace must be less than maximum spline pace."));
-      throw e;
-   }
+    // make sure pace arguments are valid
+    if ( _minSplinePace >= _maxSplinePace )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Minimum spline pace must be less than maximum spline pace."));
+        throw e;
+    }
 
-   // set the number of openblas threads
-   openblas_set_num_threads(_numThreads);
+    // set the number of openblas threads
+    openblas_set_num_threads(_numThreads);
 }
 
 
@@ -214,29 +214,29 @@ void RMT::initialize()
  */
 std::vector<float> RMT::computeMaximums(const std::vector<RawPair>& pairs)
 {
-   EDEBUG_FUNC(this,&pairs);
+    EDEBUG_FUNC(this,&pairs);
 
-   // initialize elements to minimum value
-   std::vector<float> maximums(_input->geneSize(), 0);
+    // initialize elements to minimum value
+    std::vector<float> maximums(_input->geneSize(), 0);
 
-   // compute maximum correlation of each row
-   for ( auto& pair : pairs )
-   {
-      int i = pair.index.getX();
+    // compute maximum correlation of each row
+    for ( auto& pair : pairs )
+    {
+        int i = pair.index.getX();
 
-      for ( size_t k = 0; k < pair.correlations.size(); ++k )
-      {
-         float correlation = fabs(pair.correlations[k]);
+        for ( size_t k = 0; k < pair.correlations.size(); ++k )
+        {
+            float correlation = fabs(pair.correlations[k]);
 
-         if ( maximums[i] < correlation )
-         {
-            maximums[i] = correlation;
-         }
-      }
-   }
+            if ( maximums[i] < correlation )
+            {
+                maximums[i] = correlation;
+            }
+        }
+    }
 
-   // return row-wise maximums
-   return maximums;
+    // return row-wise maximums
+    return maximums;
 }
 
 
@@ -255,94 +255,94 @@ std::vector<float> RMT::computeMaximums(const std::vector<RawPair>& pairs)
  */
 std::vector<float> RMT::computePruneMatrix(const std::vector<RawPair>& pairs, const std::vector<float>& maximums, float threshold, size_t* size)
 {
-   EDEBUG_FUNC(this,&pairs,&maximums,threshold,size);
+    EDEBUG_FUNC(this,&pairs,&maximums,threshold,size);
 
-   // generate vector of row indices that have a correlation above threshold
-   std::vector<int> indices(_input->geneSize(), -1);
-   size_t pruneSize = 0;
+    // generate vector of row indices that have a correlation above threshold
+    std::vector<int> indices(_input->geneSize(), -1);
+    size_t pruneSize = 0;
 
-   for ( size_t i = 0; i < maximums.size(); ++i )
-   {
-      if ( maximums[i] >= threshold )
-      {
-         indices[i] = pruneSize;
-         pruneSize++;
-      }
-   }
+    for ( size_t i = 0; i < maximums.size(); ++i )
+    {
+        if ( maximums[i] >= threshold )
+        {
+            indices[i] = pruneSize;
+            pruneSize++;
+        }
+    }
 
-   // extract pruned matrix from correlation matrix
-   std::vector<float> pruneMatrix(pruneSize * pruneSize);
+    // extract pruned matrix from correlation matrix
+    std::vector<float> pruneMatrix(pruneSize * pruneSize);
 
-   // initialize diagonal
-   for ( size_t i = 0; i < pruneSize; ++i )
-   {
-      pruneMatrix[i * pruneSize + i] = 1;
-   }
+    // initialize diagonal
+    for ( size_t i = 0; i < pruneSize; ++i )
+    {
+        pruneMatrix[i * pruneSize + i] = 1;
+    }
 
-   // iterate through all pairs
-   for ( auto& pair : pairs )
-   {
-      // get indices into pruned matrix
-      int i = indices[pair.index.getX()];
-      int j = indices[pair.index.getY()];
+    // iterate through all pairs
+    for ( auto& pair : pairs )
+    {
+        // get indices into pruned matrix
+        int i = indices[pair.index.getX()];
+        int j = indices[pair.index.getY()];
 
-      // skip pair if it was pruned
-      if ( i == -1 || j == -1 )
-      {
-         continue;
-      }
+        // skip pair if it was pruned
+        if ( i == -1 || j == -1 )
+        {
+            continue;
+        }
 
-      // select correlation from pair using reduction method
-      float correlation = 0;
+        // select correlation from pair using reduction method
+        float correlation = 0;
 
-      switch ( _reductionMethod )
-      {
-      case ReductionMethod::First:
-      {
-         correlation = pair.correlations[0];
-         break;
-      }
-      case ReductionMethod::MaximumCorrelation:
-      {
-         for ( size_t k = 0; k < pair.correlations.size(); k++ )
-         {
-            float r = fabs(pair.correlations[k]);
-
-            if ( correlation < r )
+        switch ( _reductionMethod )
+        {
+        case ReductionMethod::First:
+        {
+            correlation = pair.correlations[0];
+            break;
+        }
+        case ReductionMethod::MaximumCorrelation:
+        {
+            for ( size_t k = 0; k < pair.correlations.size(); k++ )
             {
-               correlation = r;
+                float r = fabs(pair.correlations[k]);
+
+                if ( correlation < r )
+                {
+                    correlation = r;
+                }
             }
-         }
-         break;
-      }
-      case ReductionMethod::MaximumSize:
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("Unsupported Option"));
-         e.setDetails(tr("Pairwise reduction by maximum size is not yet supported."));
-         throw e;
-      }
-      case ReductionMethod::Random:
-      {
-         int k = qrand() % pair.correlations.size();
-         correlation = pair.correlations[k];
-         break;
-      }
-      };
+            break;
+        }
+        case ReductionMethod::MaximumSize:
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("Unsupported Option"));
+            e.setDetails(tr("Pairwise reduction by maximum size is not yet supported."));
+            throw e;
+        }
+        case ReductionMethod::Random:
+        {
+            int k = qrand() % pair.correlations.size();
+            correlation = pair.correlations[k];
+            break;
+        }
+        };
 
-      // save correlation if it is above threshold
-      if ( fabs(correlation) >= threshold )
-      {
-         pruneMatrix[i * pruneSize + j] = correlation;
-         pruneMatrix[j * pruneSize + i] = correlation;
-      }
-   }
+        // save correlation if it is above threshold
+        if ( fabs(correlation) >= threshold )
+        {
+            pruneMatrix[i * pruneSize + j] = correlation;
+            pruneMatrix[j * pruneSize + i] = correlation;
+        }
+    }
 
-   // save size of pruned matrix
-   *size = pruneSize;
+    // save size of pruned matrix
+    *size = pruneSize;
 
-   // return pruned matrix
-   return pruneMatrix;
+    // return pruned matrix
+    return pruneMatrix;
 }
 
 
@@ -355,96 +355,96 @@ std::vector<float> RMT::computePruneMatrix(const std::vector<RawPair>& pairs, co
  */
 std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t size)
 {
-   EDEBUG_FUNC(this,matrix,&size);
+    EDEBUG_FUNC(this,matrix,&size);
 
-   // initialize helper variables
-   int n = size;
-   int lda = size;
+    // initialize helper variables
+    int n = size;
+    int lda = size;
 
-   // determine whether a device is available
-   if ( Ace::Settings::instance().cudaDevicePointer() )
-   {
-      // initialize cuSOLVER handle
-      cusolverDnHandle_t cusolver_handle;
+    // determine whether a device is available
+    if ( Ace::Settings::instance().cudaDevicePointer() )
+    {
+        // initialize cuSOLVER handle
+        cusolverDnHandle_t cusolver_handle;
 
-      CHECK_CUSOLVER(cusolverDnCreate(&cusolver_handle));
+        CHECK_CUSOLVER(cusolverDnCreate(&cusolver_handle));
 
-      // allocate device buffers
-      ::CUDA::Buffer<float> matrixBuffer(n * n);
-      ::CUDA::Buffer<float> eigensBuffer(n);
-      ::CUDA::Buffer<int> info(1);
+        // allocate device buffers
+        ::CUDA::Buffer<float> matrixBuffer(n * n);
+        ::CUDA::Buffer<float> eigensBuffer(n);
+        ::CUDA::Buffer<int> info(1);
 
-      // copy pruned matrix to device
-      memcpy(matrixBuffer.hostData(), matrix->data(), matrix->size() * sizeof(float));
-      matrixBuffer.write();
+        // copy pruned matrix to device
+        memcpy(matrixBuffer.hostData(), matrix->data(), matrix->size() * sizeof(float));
+        matrixBuffer.write();
 
-      // determine the size of the workspace
-      int lwork;
+        // determine the size of the workspace
+        int lwork;
 
-      CHECK_CUSOLVER(cusolverDnSsyevd_bufferSize(
-         cusolver_handle,
-         CUSOLVER_EIG_MODE_NOVECTOR,
-         CUBLAS_FILL_MODE_UPPER,
-         n, (float *)matrixBuffer.deviceData(), lda,
-         (float *)eigensBuffer.deviceData(),
-         &lwork
-      ));
+        CHECK_CUSOLVER(cusolverDnSsyevd_bufferSize(
+            cusolver_handle,
+            CUSOLVER_EIG_MODE_NOVECTOR,
+            CUBLAS_FILL_MODE_UPPER,
+            n, (float *)matrixBuffer.deviceData(), lda,
+            (float *)eigensBuffer.deviceData(),
+            &lwork
+        ));
 
-      // allocate device buffer for workspace
-      ::CUDA::Buffer<float> work(lwork);
+        // allocate device buffer for workspace
+        ::CUDA::Buffer<float> work(lwork);
 
-      // compute eigenvalues
-      CHECK_CUSOLVER(cusolverDnSsyevd(
-         cusolver_handle,
-         CUSOLVER_EIG_MODE_NOVECTOR,
-         CUBLAS_FILL_MODE_UPPER,
-         n, (float *)matrixBuffer.deviceData(), lda,
-         (float *)eigensBuffer.deviceData(),
-         (float *)work.deviceData(), lwork,
-         (int *)info.deviceData()
-      ));
+        // compute eigenvalues
+        CHECK_CUSOLVER(cusolverDnSsyevd(
+            cusolver_handle,
+            CUSOLVER_EIG_MODE_NOVECTOR,
+            CUBLAS_FILL_MODE_UPPER,
+            n, (float *)matrixBuffer.deviceData(), lda,
+            (float *)eigensBuffer.deviceData(),
+            (float *)work.deviceData(), lwork,
+            (int *)info.deviceData()
+        ));
 
-      // destroy cuSOLVER handle
-      CHECK_CUSOLVER(cusolverDnDestroy(cusolver_handle));
+        // destroy cuSOLVER handle
+        CHECK_CUSOLVER(cusolverDnDestroy(cusolver_handle));
 
-      // copy results to host
-      std::vector<float> eigens(n);
+        // copy results to host
+        std::vector<float> eigens(n);
 
-      info.read().wait();
-      eigensBuffer.read().wait();
-      memcpy(eigens.data(), eigensBuffer.hostData(), eigens.size() * sizeof(float));
+        info.read().wait();
+        eigensBuffer.read().wait();
+        memcpy(eigens.data(), eigensBuffer.hostData(), eigens.size() * sizeof(float));
 
-      // print warning if cuSOLVER returned error code
-      if ( info.at(0) != 0 )
-      {
-         qInfo("warning: cuSOLVER ssyev returned %d", info.at(0));
-      }
+        // print warning if cuSOLVER returned error code
+        if ( info.at(0) != 0 )
+        {
+            qInfo("warning: cuSOLVER ssyev returned %d", info.at(0));
+        }
 
-      // return eigenvalues
-      return eigens;
-   }
-   else
-   {
-      // initialize eigenvalues and workspace
-      std::vector<float> eigens(n);
-      std::vector<float> work(5 * n);
+        // return eigenvalues
+        return eigens;
+    }
+    else
+    {
+        // initialize eigenvalues and workspace
+        std::vector<float> eigens(n);
+        std::vector<float> work(5 * n);
 
-      // compute eigenvalues
-      int info = LAPACKE_ssyev_work(
-         LAPACK_COL_MAJOR, 'N', 'U',
-         n, matrix->data(), lda,
-         eigens.data(),
-         work.data(), work.size());
+        // compute eigenvalues
+        int info = LAPACKE_ssyev_work(
+            LAPACK_COL_MAJOR, 'N', 'U',
+            n, matrix->data(), lda,
+            eigens.data(),
+            work.data(), work.size());
 
-      // print warning if LAPACKE returned error code
-      if ( info != 0 )
-      {
-         qInfo("warning: LAPACKE ssyev returned %d", info);
-      }
+        // print warning if LAPACKE returned error code
+        if ( info != 0 )
+        {
+            qInfo("warning: LAPACKE ssyev returned %d", info);
+        }
 
-      // return eigenvalues
-      return eigens;
-   }
+        // return eigenvalues
+        return eigens;
+    }
 }
 
 
@@ -458,19 +458,19 @@ std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t si
  */
 std::vector<float> RMT::computeUnique(const std::vector<float>& values)
 {
-   EDEBUG_FUNC(this,&values);
+    EDEBUG_FUNC(this,&values);
 
-   std::vector<float> unique;
+    std::vector<float> unique;
 
-   for ( size_t i = 0; i < values.size(); ++i )
-   {
-      if ( unique.empty() || fabs(values.at(i) - unique.back()) > _uniqueEpsilon )
-      {
-         unique.push_back(values.at(i));
-      }
-   }
+    for ( size_t i = 0; i < values.size(); ++i )
+    {
+        if ( unique.empty() || fabs(values.at(i) - unique.back()) > _uniqueEpsilon )
+        {
+            unique.push_back(values.at(i));
+        }
+    }
 
-   return unique;
+    return unique;
 }
 
 
@@ -487,50 +487,50 @@ std::vector<float> RMT::computeUnique(const std::vector<float>& values)
  */
 float RMT::computeChiSquare(const std::vector<float>& eigens)
 {
-   EDEBUG_FUNC(this,&eigens);
+    EDEBUG_FUNC(this,&eigens);
 
-   // make sure there are enough eigenvalues
-   if ( eigens.size() < (size_t) _minUniqueEigenvalues )
-   {
-      return -1;
-   }
+    // make sure there are enough eigenvalues
+    if ( eigens.size() < (size_t) _minUniqueEigenvalues )
+    {
+        return -1;
+    }
 
-   // determine whether spline interpolation is enabled
-   if ( _splineInterpolation )
-   {
-      // perform several chi-squared tests with spline interpolation by varying the pace
-      float chi {0.0};
-      int chiTestCount {0};
+    // determine whether spline interpolation is enabled
+    if ( _splineInterpolation )
+    {
+        // perform several chi-squared tests with spline interpolation by varying the pace
+        float chi {0.0};
+        int chiTestCount {0};
 
-      for ( int pace = _minSplinePace; pace <= _maxSplinePace; ++pace )
-      {
-         // perform test only if there are enough eigenvalues for pace
-         if ( eigens.size() / pace < 5 )
-         {
-            break;
-         }
+        for ( int pace = _minSplinePace; pace <= _maxSplinePace; ++pace )
+        {
+            // perform test only if there are enough eigenvalues for pace
+            if ( eigens.size() / pace < 5 )
+            {
+                break;
+            }
 
-         // compute spline-interpolated eigenvalues
-         std::vector<float> splineEigens {computeSpline(eigens, pace)};
+            // compute spline-interpolated eigenvalues
+            std::vector<float> splineEigens {computeSpline(eigens, pace)};
 
-         // compute chi-squared value
-         float chiPace {computeChiSquareHelper(splineEigens)};
+            // compute chi-squared value
+            float chiPace {computeChiSquareHelper(splineEigens)};
 
-         qInfo("pace: %d, chi-squared: %g", pace, chiPace);
+            qInfo("pace: %d, chi-squared: %g", pace, chiPace);
 
-         // append chi-squared value to running sum
-         chi += chiPace;
-         ++chiTestCount;
-      }
+            // append chi-squared value to running sum
+            chi += chiPace;
+            ++chiTestCount;
+        }
 
-      // return average of chi-squared tests
-      return chi / chiTestCount;
-   }
-   else
-   {
-      // perform a single chi-squared test without spline interpolation
-      return computeChiSquareHelper(eigens);
-   }
+        // return average of chi-squared tests
+        return chi / chiTestCount;
+    }
+    else
+    {
+        // perform a single chi-squared test without spline interpolation
+        return computeChiSquareHelper(eigens);
+    }
 }
 
 
@@ -544,43 +544,43 @@ float RMT::computeChiSquare(const std::vector<float>& eigens)
  */
 float RMT::computeChiSquareHelper(const std::vector<float>& values)
 {
-   EDEBUG_FUNC(this,&values);
+    EDEBUG_FUNC(this,&values);
 
-   // compute spacings
-   std::vector<float> spacings {computeSpacings(values)};
+    // compute spacings
+    std::vector<float> spacings {computeSpacings(values)};
 
-   // compute histogram of spacings
-   const float histogramMin {0};
-   const float histogramMax {3};
-   const float histogramBinWidth {(histogramMax - histogramMin) / _histogramBinSize};
-   std::vector<float> histogram(_histogramBinSize);
+    // compute histogram of spacings
+    const float histogramMin {0};
+    const float histogramMax {3};
+    const float histogramBinWidth {(histogramMax - histogramMin) / _histogramBinSize};
+    std::vector<float> histogram(_histogramBinSize);
 
-   for ( auto& spacing : spacings )
-   {
-      if ( histogramMin <= spacing && spacing < histogramMax )
-      {
-         size_t index = static_cast<size_t>((spacing - histogramMin) / histogramBinWidth);
+    for ( auto& spacing : spacings )
+    {
+        if ( histogramMin <= spacing && spacing < histogramMax )
+        {
+            size_t index = static_cast<size_t>((spacing - histogramMin) / histogramBinWidth);
 
-         ++histogram[index];
-      }
-   }
+            ++histogram[index];
+        }
+    }
 
-   // compute chi-squared value from the histogram
-   float chi {0.0};
+    // compute chi-squared value from the histogram
+    float chi {0.0};
 
-   for ( int i = 0; i < (int) histogram.size(); ++i )
-   {
-      // compute O_i, the number of elements in bin i
-      float O_i {histogram[i]};
+    for ( int i = 0; i < (int) histogram.size(); ++i )
+    {
+        // compute O_i, the number of elements in bin i
+        float O_i {histogram[i]};
 
-      // compute E_i, the expected value of Poisson distribution for bin i
-      float E_i {(expf(-i * histogramBinWidth) - expf(-(i + 1) * histogramBinWidth)) * values.size()};
+        // compute E_i, the expected value of Poisson distribution for bin i
+        float E_i {(expf(-i * histogramBinWidth) - expf(-(i + 1) * histogramBinWidth)) * values.size()};
 
-      // update chi-squared value based on difference between O_i and E_i
-      chi += (O_i - E_i) * (O_i - E_i) / E_i;
-   }
+        // update chi-squared value based on difference between O_i and E_i
+        chi += (O_i - E_i) * (O_i - E_i) / E_i;
+    }
 
-   return chi;
+    return chi;
 }
 
 
@@ -596,43 +596,43 @@ float RMT::computeChiSquareHelper(const std::vector<float>& values)
  */
 std::vector<float> RMT::computeSpline(const std::vector<float>& values, int pace)
 {
-   EDEBUG_FUNC(this,&values,pace);
+    EDEBUG_FUNC(this,&values,pace);
 
-   // using declarations for gsl resource pointers
-   using gsl_interp_accel_ptr = unique_ptr<gsl_interp_accel, decltype(&gsl_interp_accel_free)>;
-   using gsl_spline_ptr = unique_ptr<gsl_spline, decltype(&gsl_spline_free)>;
+    // using declarations for gsl resource pointers
+    using gsl_interp_accel_ptr = unique_ptr<gsl_interp_accel, decltype(&gsl_interp_accel_free)>;
+    using gsl_spline_ptr = unique_ptr<gsl_spline, decltype(&gsl_spline_free)>;
 
-   // extract values for spline based on pace
-   int splineSize {(int) values.size() / pace};
-   unique_ptr<double[]> x(new double[splineSize]);
-   unique_ptr<double[]> y(new double[splineSize]);
+    // extract values for spline based on pace
+    int splineSize {(int) values.size() / pace};
+    unique_ptr<double[]> x(new double[splineSize]);
+    unique_ptr<double[]> y(new double[splineSize]);
 
-   for ( int i = 0; i < splineSize; ++i )
-   {
-      x[i] = (double)values.at(i*pace);
-      y[i] = (double)(i*pace + 1) / values.size();
-   }
-   x[splineSize - 1] = values.back();
-   y[splineSize - 1] = 1.0;
+    for ( int i = 0; i < splineSize; ++i )
+    {
+        x[i] = (double)values.at(i*pace);
+        y[i] = (double)(i*pace + 1) / values.size();
+    }
+    x[splineSize - 1] = values.back();
+    y[splineSize - 1] = 1.0;
 
-   // initialize gsl spline
-   gsl_interp_accel_ptr interp(gsl_interp_accel_alloc(), &gsl_interp_accel_free);
-   gsl_spline_ptr spline(gsl_spline_alloc(gsl_interp_akima, splineSize), &gsl_spline_free);
-   gsl_spline_init(spline.get(), x.get(), y.get(), splineSize);
+    // initialize gsl spline
+    gsl_interp_accel_ptr interp(gsl_interp_accel_alloc(), &gsl_interp_accel_free);
+    gsl_spline_ptr spline(gsl_spline_alloc(gsl_interp_akima, splineSize), &gsl_spline_free);
+    gsl_spline_init(spline.get(), x.get(), y.get(), splineSize);
 
-   // extract interpolated values from spline
-   std::vector<float> splineValues(values.size());
+    // extract interpolated values from spline
+    std::vector<float> splineValues(values.size());
 
-   splineValues[0] = 0.0;
-   splineValues[values.size() - 1] = 1.0;
+    splineValues[0] = 0.0;
+    splineValues[values.size() - 1] = 1.0;
 
-   for ( size_t i = 1; i < values.size() - 1; ++i )
-   {
-      splineValues[i] = static_cast<float>(gsl_spline_eval(spline.get(), values.at(i), interp.get()));
-   }
+    for ( size_t i = 1; i < values.size() - 1; ++i )
+    {
+        splineValues[i] = static_cast<float>(gsl_spline_eval(spline.get(), values.at(i), interp.get()));
+    }
 
-   // return interpolated values
-   return splineValues;
+    // return interpolated values
+    return splineValues;
 }
 
 
@@ -645,14 +645,14 @@ std::vector<float> RMT::computeSpline(const std::vector<float>& values, int pace
  */
 std::vector<float> RMT::computeSpacings(const std::vector<float>& values)
 {
-   EDEBUG_FUNC(this,&values);
+    EDEBUG_FUNC(this,&values);
 
-   std::vector<float> spacings(values.size() - 1);
+    std::vector<float> spacings(values.size() - 1);
 
-   for ( size_t i = 0; i < spacings.size(); ++i )
-   {
-      spacings[i] = (values.at(i + 1) - values.at(i)) * values.size();
-   }
+    for ( size_t i = 0; i < spacings.size(); ++i )
+    {
+        spacings[i] = (values.at(i + 1) - values.at(i)) * values.size();
+    }
 
-   return spacings;
+    return spacings;
 }

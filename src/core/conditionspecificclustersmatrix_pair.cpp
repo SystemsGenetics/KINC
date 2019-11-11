@@ -52,8 +52,8 @@ void CSMatrix::Pair::addCluster(int amount) const
     EDEBUG_FUNC(this, amount);
     while ( amount-- > 0 )
     {
-       _pValues.append(QVector<double>());
-       _r2.append(QVector<double>());
+        _pValues.append(QVector<double>());
+        _r2.append(QVector<double>());
     }
 }
 
@@ -70,10 +70,10 @@ void CSMatrix::Pair::addCluster(int amount, int size) const
     EDEBUG_FUNC(this, amount, size);
     while ( amount-- > 0 )
     {
-       _pValues.append(QVector<double>());
-       _pValues.last().resize(size);
-       _r2.append(QVector<double>());
-       _r2.last().resize(size);
+        _pValues.append(QVector<double>());
+        _pValues.last().resize(size);
+        _r2.append(QVector<double>());
+        _r2.last().resize(size);
     }
 }
 
@@ -87,7 +87,7 @@ void CSMatrix::Pair::addCluster(int amount, int size) const
 int CSMatrix::Pair::clusterSize() const
 {
     EDEBUG_FUNC(this);
-    return  _pValues.size();
+    return _pValues.size();
 }
 
 
@@ -222,11 +222,11 @@ void CSMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
     // make sure cluster value is within range
     if ( cluster >= 0 && cluster < _pValues.size() )
     {
-       // write each pvalue and r2 value to the output stream
-       for ( qint32 i = 0; i < _cMatrix->_testcount; i ++ )
-       {
-           stream << _pValues[cluster][i] << _r2[cluster][i];
-       }
+        // write each pvalue and r2 value to the output stream
+        for ( qint32 i = 0; i < _cMatrix->_testcount; i ++ )
+        {
+            stream << _pValues[cluster][i] << _r2[cluster][i];
+        }
     }
 }
 
@@ -246,14 +246,14 @@ void CSMatrix::Pair::readCluster(const EDataStream& stream, int cluster) const
     // make sure cluster value is within range
     if ( cluster >= 0 && cluster < _pValues.size() )
     {
-       // read each pvalue from input stream
-       for ( int i = 0; i < _cMatrix->_testcount; i++ )
-       {
-          double pvalue = 0.0;
-          double r2 = 0.0;
-          stream >> pvalue >> r2;
-          _pValues[cluster].append(pvalue);
-          _r2[cluster].append(r2);
-       }
+        // read each pvalue from input stream
+        for ( int i = 0; i < _cMatrix->_testcount; i++ )
+        {
+            double pvalue = 0.0;
+            double r2 = 0.0;
+            stream >> pvalue >> r2;
+            _pValues[cluster].append(pvalue);
+            _r2[cluster].append(r2);
+        }
     }
 }

@@ -9,34 +9,34 @@
  */
 class ImportCorrelationMatrix::Input : public EAbstractAnalyticInput
 {
-   Q_OBJECT
+    Q_OBJECT
 public:
-   /*!
-    * Defines all input arguments for this analytic.
-    */
-   enum Argument
-   {
-      InputFile = 0
-      ,ClusterData
-      ,CorrelationData
-      ,GeneSize
-      ,MaxClusterSize
-      ,SampleSize
-      ,CorrelationName
-      ,Total
-   };
-   explicit Input(ImportCorrelationMatrix* parent);
-   virtual int size() const override final;
-   virtual EAbstractAnalyticInput::Type type(int index) const override final;
-   virtual QVariant data(int index, Role role) const override final;
-   virtual void set(int index, const QVariant& value) override final;
-   virtual void set(int index, QFile* file) override final;
-   virtual void set(int index, EAbstractData* data) override final;
+    /*!
+     * Defines all input arguments for this analytic.
+     */
+    enum Argument
+    {
+        InputFile = 0
+        ,ClusterData
+        ,CorrelationData
+        ,GeneSize
+        ,MaxClusterSize
+        ,SampleSize
+        ,CorrelationName
+        ,Total
+    };
+    explicit Input(ImportCorrelationMatrix* parent);
+    virtual int size() const override final;
+    virtual EAbstractAnalyticInput::Type type(int index) const override final;
+    virtual QVariant data(int index, Role role) const override final;
+    virtual void set(int index, const QVariant& value) override final;
+    virtual void set(int index, QFile* file) override final;
+    virtual void set(int index, EAbstractData* data) override final;
 private:
-   /*!
-    * Pointer to the base analytic for this object.
-    */
-   ImportCorrelationMatrix* _base;
+    /*!
+     * Pointer to the base analytic for this object.
+     */
+    ImportCorrelationMatrix* _base;
 };
 
 

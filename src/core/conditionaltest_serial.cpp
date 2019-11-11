@@ -218,7 +218,7 @@ int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterInd
             _clusterSize++;
             if ( testType == _base->CATEGORICAL && _anxData.at(i) == label )
             {
-                   _catInCluster++;
+                _catInCluster++;
             }
         }
     }
@@ -246,13 +246,14 @@ int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterInd
 *
 * @return The test that was just conducted.
 */
-int ConditionalTest::Serial::test(CCMatrix::Pair& ccmPair,
-                             qint32 clusterIndex,
-                             qint32& testIndex,
-                             qint32 featureIndex,
-                             qint32 labelIndex,
-                             QVector<QVector<double>>& pValues,
-                             QVector<QVector<double>>& r2)
+int ConditionalTest::Serial::test(
+    CCMatrix::Pair& ccmPair,
+    qint32 clusterIndex,
+    qint32& testIndex,
+    qint32 featureIndex,
+    qint32 labelIndex,
+    QVector<QVector<double>>& pValues,
+    QVector<QVector<double>>& r2)
 {
     EDEBUG_FUNC(this,&ccmPair, clusterIndex, &testIndex, featureIndex, labelIndex, &pValues);
 
@@ -326,7 +327,7 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
     // X > k is always 0.  This happens if the cluster is 100%
     // comprised of the category we're looking for.
     if (k == n1) {
-      return 1;
+        return 1;
     }
 
     // If our dataset is large, the power to detect the effect

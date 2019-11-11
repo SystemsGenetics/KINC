@@ -14,29 +14,29 @@
 class ExpressionMatrix::Gene
 {
 public:
-   float& operator[](int index);
+    float& operator[](int index);
 public:
-   Gene(ExpressionMatrix* matrix, bool isInitialized = false);
-   ~Gene();
+    Gene(ExpressionMatrix* matrix, bool isInitialized = false);
+    ~Gene();
 public:
-   void read(int index);
-   bool readNext();
-   void write(int index);
-   bool writeNext();
-   float at(int index) const;
+    void read(int index);
+    bool readNext();
+    void write(int index);
+    bool writeNext();
+    float at(int index) const;
 private:
-   /*!
-    * Pointer to the parent expression matrix.
-    */
-   ExpressionMatrix* _matrix;
-   /*!
-    * The iterator's current position in the expression matrix.
-    */
-   int _index {0};
-   /*!
-    * Pointer to the expression data of the current gene.
-    */
-   float* _expressions;
+    /*!
+     * Pointer to the parent expression matrix.
+     */
+    ExpressionMatrix* _matrix;
+    /*!
+     * The iterator's current position in the expression matrix.
+     */
+    int _index {0};
+    /*!
+     * Pointer to the expression data of the current gene.
+     */
+    float* _expressions;
 };
 
 

@@ -17,9 +17,9 @@ using namespace std;
  */
 int Extract::size() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return _cmx->size();
+    return _cmx->size();
 }
 
 
@@ -33,21 +33,21 @@ int Extract::size() const
  */
 void Extract::process(const EAbstractAnalyticBlock* result)
 {
-   EDEBUG_FUNC(this,result);
+    EDEBUG_FUNC(this,result);
 
-   // write pair according to the output format
-   switch ( _outputFormat )
-   {
-   case OutputFormat::Text:
-      writeTextFormat(result->index());
-      break;
-   case OutputFormat::Minimal:
-      writeMinimalFormat(result->index());
-      break;
-   case OutputFormat::GraphML:
-      writeGraphMLFormat(result->index());
-      break;
-   }
+    // write pair according to the output format
+    switch ( _outputFormat )
+    {
+    case OutputFormat::Text:
+        writeTextFormat(result->index());
+        break;
+    case OutputFormat::Minimal:
+        writeMinimalFormat(result->index());
+        break;
+    case OutputFormat::GraphML:
+        writeGraphMLFormat(result->index());
+        break;
+    }
 }
 
 
@@ -59,211 +59,210 @@ void Extract::process(const EAbstractAnalyticBlock* result)
  */
 void Extract::writeTextFormat(int index)
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // get gene names
-   EMetaArray geneNames {_cmx->geneNames()};
+    // get gene names
+    EMetaArray geneNames {_cmx->geneNames()};
 
-   // initialize workspace
-   QString sampleMask(_ccm->sampleSize(), '0');
+    // initialize workspace
+    QString sampleMask(_ccm->sampleSize(), '0');
 
-   // write header to file
-   if ( index == 0 )
-   {
-      _stream
-         << "Source"
-         << "\t" << "Target"
-         << "\t" << "Similarity_Score"
-         << "\t" << "Interaction"
-         << "\t" << "Cluster_Index"
-         << "\t" << "Cluster_Size"
-         << "\t" << "Samples";
+    // write header to file
+    if ( index == 0 )
+    {
+        _stream
+            << "Source"
+            << "\t" << "Target"
+            << "\t" << "Similarity_Score"
+            << "\t" << "Interaction"
+            << "\t" << "Cluster_Index"
+            << "\t" << "Cluster_Size"
+            << "\t" << "Samples";
 
-      // If the condition-specific matrix is provided then add some
-      // additional headers for each test.
-      if ( _csm )
-      {
-          for ( int i = 0; i < _csm->getTestCount(); i++ )
-          {
-              QString testName = _csm->getTestName(i);
-              QString testType = _csm->getTestType(i);
-              _stream << "\t" << testName + + "_pVal";
-              // If there is an R-squared value add it as well.
-              if (QString::compare(testType, "Quantitative", Qt::CaseInsensitive) == 0 ||
-                  QString::compare(testType, "Ordinal", Qt::CaseInsensitive) == 0) {
-                  _stream << "\t" << testName + "_RSqr";
-              }
-          }
-      }
-
-      _stream << "\n";
-   }
-
-   // read next pair
-   _cmxPair.readNext();
-   _ccmPair.read(_cmxPair.index());
-   if ( _csm )
-   {
-      _csmPair.read(_cmxPair.index());
-   }
-
-   // write pairwise data to output file
-   for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
-   {
-      QString source {geneNames.at(_cmxPair.index().getX()).toString()};
-      QString target {geneNames.at(_cmxPair.index().getY()).toString()};
-      float correlation {_cmxPair.at(k)};
-      QString interaction {"co"};
-      int numSamples {0};
-
-      // exclude cluster if correlation is not within thresholds
-      if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
-      {
-         continue;
-      }
-
-      // If the condition-specific matrix is provided and there is a p-value filter then
-      // we want to exclude values that are higher than the p-value(s).
-      if ( _csm )
-      {
-          // Run some pre-checks on any filters provided.
-          pValueFilterCheck();
-          int notInclude = 0;
-          int include = 0;
-
-          // Iterate through teach test.
-          for ( int i = 0; i < _csm->getTestCount(); i++ )
-          {
-              // Count the number of features that are not signficant for each feature-specific p-value provided.
-              if ( _csmPValueFilterFeatureNames.size() != 0 && !PValuefilter(_csm->getTestName(i), _csmPair.at(k, i, "pvalue")))
-              {
-                  notInclude++;
-              }
-              // Count the number of features that are signficant if only a single p-value filter was given.
-              if ( _csmPValueFilterFeatureNames.size() == 0 && PValuefilter(_csm->getTestName(i), _csmPair.at(k, i, "pvalue")))
-              {
-                  include++;
-              }
-          }
-          if ( notInclude > 0  || (_csmPValueFilterFeatureNames.size() == 0 && include == 0))
-          {
-              continue;
-          }
-
-          // Run some pre-checks on any filters provided.
-          rSquareFilterCheck();
-          notInclude = 0;
-          include = 0;
-
-          // Iterate through teach test.
-          for ( int i = 0; i < _csm->getTestCount(); i++ )
-          {
-              // Count the number of features that are not signficant for each feature-specific p-value provided.
-              if ( _csmRSquareFilterFeatureNames.size() != 0 && !RSquarefilter(_csm->getTestName(i), _csmPair.at(k, i, "r2")))
-              {
-                  notInclude++;
-              }
-              // Count the number of features that are signficant if only a single p-value filter was given.
-              if ( _csmRSquareFilterFeatureNames.size() == 0 && RSquarefilter(_csm->getTestName(i), _csmPair.at(k, i, "r2")))
-              {
-                  include++;
-              }
-          }
-          if ( notInclude > 0  || (_csmPValueFilterFeatureNames.size() == 0 && include == 0))
-          {
-              continue;
-          }
-      }
-
-      // if cluster data exists then use it
-      if ( _ccmPair.clusterSize() > 0 )
-      {
-         // compute cluster size
-         for ( int i = 0; i < _ccm->sampleSize(); i++ )
-         {
-            if ( _ccmPair.at(k, i) == 1 )
+        // If the condition-specific matrix is provided then add some
+        // additional headers for each test.
+        if ( _csm )
+        {
+            for ( int i = 0; i < _csm->getTestCount(); i++ )
             {
-               numSamples++;
+                QString testName = _csm->getTestName(i);
+                QString testType = _csm->getTestType(i);
+                _stream << "\t" << testName + + "_pVal";
+                // If there is an R-squared value add it as well.
+                if ( QString::compare(testType, "Quantitative", Qt::CaseInsensitive) == 0 ||
+                     QString::compare(testType, "Ordinal", Qt::CaseInsensitive) == 0 ) {
+                    _stream << "\t" << testName + "_RSqr";
+                }
             }
-         }
+        }
 
-         // write sample mask to string
-         for ( int i = 0; i < _ccm->sampleSize(); i++ )
-         {
-            sampleMask[i] = '0' + _ccmPair.at(k, i);
-         }
-      }
+        _stream << "\n";
+    }
 
-      // otherwise use expression data if provided
-      else if ( _emx )
-      {
-         // read in gene expressions
-         ExpressionMatrix::Gene gene1(_emx);
-         ExpressionMatrix::Gene gene2(_emx);
+    // read next pair
+    _cmxPair.readNext();
+    _ccmPair.read(_cmxPair.index());
+    if ( _csm )
+    {
+        _csmPair.read(_cmxPair.index());
+    }
 
-         gene1.read(_cmxPair.index().getX());
-         gene2.read(_cmxPair.index().getY());
+    // write pairwise data to output file
+    for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
+    {
+        QString source {geneNames.at(_cmxPair.index().getX()).toString()};
+        QString target {geneNames.at(_cmxPair.index().getY()).toString()};
+        float correlation {_cmxPair.at(k)};
+        QString interaction {"co"};
+        int numSamples {0};
 
-         // determine sample mask, summary statistics from expression data
-         for ( int i = 0; i < _emx->sampleSize(); ++i )
-         {
-            if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
+        // exclude cluster if correlation is not within thresholds
+        if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
+        {
+            continue;
+        }
+
+        // If the condition-specific matrix is provided and there is a p-value filter then
+        // we want to exclude values that are higher than the p-value(s).
+        if ( _csm )
+        {
+            // Run some pre-checks on any filters provided.
+            pValueFilterCheck();
+            int notInclude = 0;
+            int include = 0;
+
+            // Iterate through teach test.
+            for ( int i = 0; i < _csm->getTestCount(); i++ )
             {
-               sampleMask[i] = '9';
+                // Count the number of features that are not signficant for each feature-specific p-value provided.
+                if ( _csmPValueFilterFeatureNames.size() != 0 && !PValuefilter(_csm->getTestName(i), _csmPair.at(k, i, "pvalue")))
+                {
+                    notInclude++;
+                }
+                // Count the number of features that are signficant if only a single p-value filter was given.
+                if ( _csmPValueFilterFeatureNames.size() == 0 && PValuefilter(_csm->getTestName(i), _csmPair.at(k, i, "pvalue")))
+                {
+                    include++;
+                }
             }
-            else
+            if ( notInclude > 0  || (_csmPValueFilterFeatureNames.size() == 0 && include == 0))
             {
-               sampleMask[i] = '1';
-               numSamples++;
+                continue;
             }
-         }
-      }
 
-      // otherwise throw an error
-      else
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("Invalid Input"));
-         e.setDetails(tr("Expression Matrix was not provided but Cluster Matrix is missing sample data."));
-         throw e;
-      }
+            // Run some pre-checks on any filters provided.
+            rSquareFilterCheck();
+            notInclude = 0;
+            include = 0;
 
-      // write cluster to output file
-      _stream
-         << source
-         << "\t" << target
-         << "\t" << correlation
-         << "\t" << interaction
-         << "\t" << k + 1
-         << "\t" << numSamples
-         << "\t" << sampleMask;
+            // Iterate through teach test.
+            for ( int i = 0; i < _csm->getTestCount(); i++ )
+            {
+                // Count the number of features that are not signficant for each feature-specific p-value provided.
+                if ( _csmRSquareFilterFeatureNames.size() != 0 && !RSquarefilter(_csm->getTestName(i), _csmPair.at(k, i, "r2")))
+                {
+                    notInclude++;
+                }
+                // Count the number of features that are signficant if only a single p-value filter was given.
+                if ( _csmRSquareFilterFeatureNames.size() == 0 && RSquarefilter(_csm->getTestName(i), _csmPair.at(k, i, "r2")))
+                {
+                    include++;
+                }
+            }
+            if ( notInclude > 0  || (_csmPValueFilterFeatureNames.size() == 0 && include == 0))
+            {
+                continue;
+            }
+        }
 
-      if ( _csm )
-      {
-          for ( int i = 0; i < _csm->getTestCount(); i++ )
-          {
-              _stream << "\t" << _csmPair.at(k, i, "pvalue");
-              QString testType = _csm->getTestType(i);
-              // If there is an R-squared value add it as well.
-              if (QString::compare(testType, "Quantitative", Qt::CaseInsensitive) == 0 ||
-                  QString::compare(testType, "Ordinal", Qt::CaseInsensitive) == 0) {
-                  _stream << "\t" << _csmPair.at(k, i, "r2");
-              }
+        // if cluster data exists then use it
+        if ( _ccmPair.clusterSize() > 0 )
+        {
+            // compute cluster size
+            for ( int i = 0; i < _ccm->sampleSize(); i++ )
+            {
+                if ( _ccmPair.at(k, i) == 1 )
+                {
+                    numSamples++;
+                }
+            }
 
-          }
-      }
+            // write sample mask to string
+            for ( int i = 0; i < _ccm->sampleSize(); i++ )
+            {
+                sampleMask[i] = '0' + _ccmPair.at(k, i);
+            }
+        }
 
-      _stream << "\n";
-   }
+        // otherwise use expression data if provided
+        else if ( _emx )
+        {
+            // read in gene expressions
+            ExpressionMatrix::Gene gene1(_emx);
+            ExpressionMatrix::Gene gene2(_emx);
 
-   // make sure writing output file worked
-   if ( _stream.status() != QTextStream::Ok )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Qt Text Stream encountered an unknown error."));
-      throw e;
-   }
+            gene1.read(_cmxPair.index().getX());
+            gene2.read(_cmxPair.index().getY());
+
+            // determine sample mask, summary statistics from expression data
+            for ( int i = 0; i < _emx->sampleSize(); ++i )
+            {
+                if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
+                {
+                    sampleMask[i] = '9';
+                }
+                else
+                {
+                    sampleMask[i] = '1';
+                    numSamples++;
+                }
+            }
+        }
+
+        // otherwise throw an error
+        else
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("Invalid Input"));
+            e.setDetails(tr("Expression Matrix was not provided but Cluster Matrix is missing sample data."));
+            throw e;
+        }
+
+        // write cluster to output file
+        _stream
+            << source
+            << "\t" << target
+            << "\t" << correlation
+            << "\t" << interaction
+            << "\t" << k + 1
+            << "\t" << numSamples
+            << "\t" << sampleMask;
+
+        if ( _csm )
+        {
+            for ( int i = 0; i < _csm->getTestCount(); i++ )
+            {
+                _stream << "\t" << _csmPair.at(k, i, "pvalue");
+                QString testType = _csm->getTestType(i);
+                // If there is an R-squared value add it as well.
+                if ( QString::compare(testType, "Quantitative", Qt::CaseInsensitive) == 0 ||
+                     QString::compare(testType, "Ordinal", Qt::CaseInsensitive) == 0 ) {
+                    _stream << "\t" << _csmPair.at(k, i, "r2");
+                }
+            }
+        }
+
+        _stream << "\n";
+    }
+
+    // make sure writing output file worked
+    if ( _stream.status() != QTextStream::Ok )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("File IO Error"));
+        e.setDetails(tr("Qt Text Stream encountered an unknown error."));
+        throw e;
+    }
 }
 
 
@@ -275,57 +274,57 @@ void Extract::writeTextFormat(int index)
  */
 void Extract::writeMinimalFormat(int index)
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // get gene names
-   EMetaArray geneNames {_cmx->geneNames()};
+    // get gene names
+    EMetaArray geneNames {_cmx->geneNames()};
 
-   // write header to file
-   if ( index == 0 )
-   {
-      _stream
-         << "Source"
-         << "\t" << "Target"
-         << "\t" << "Similarity_Score"
-         << "\t" << "Cluster_Index"
-         << "\t" << "Num_Clusters"
-         << "\n";
-   }
+    // write header to file
+    if ( index == 0 )
+    {
+        _stream
+            << "Source"
+            << "\t" << "Target"
+            << "\t" << "Similarity_Score"
+            << "\t" << "Cluster_Index"
+            << "\t" << "Num_Clusters"
+            << "\n";
+    }
 
-   // read next pair
-   _cmxPair.readNext();
+    // read next pair
+    _cmxPair.readNext();
 
-   // write pairwise data to output file
-   for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
-   {
-      QString source {geneNames.at(_cmxPair.index().getX()).toString()};
-      QString target {geneNames.at(_cmxPair.index().getY()).toString()};
-      float correlation {_cmxPair.at(k)};
+    // write pairwise data to output file
+    for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
+    {
+        QString source {geneNames.at(_cmxPair.index().getX()).toString()};
+        QString target {geneNames.at(_cmxPair.index().getY()).toString()};
+        float correlation {_cmxPair.at(k)};
 
-      // exclude cluster if correlation is not within thresholds
-      if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
-      {
-         continue;
-      }
+        // exclude cluster if correlation is not within thresholds
+        if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
+        {
+            continue;
+        }
 
-      // write cluster to output file
-      _stream
-         << source
-         << "\t" << target
-         << "\t" << correlation
-         << "\t" << k + 1
-         << "\t" << _cmxPair.clusterSize()
-         << "\n";
-   }
+        // write cluster to output file
+        _stream
+            << source
+            << "\t" << target
+            << "\t" << correlation
+            << "\t" << k + 1
+            << "\t" << _cmxPair.clusterSize()
+            << "\n";
+    }
 
-   // make sure writing output file worked
-   if ( _stream.status() != QTextStream::Ok )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Qt Text Stream encountered an unknown error."));
-      throw e;
-   }
+    // make sure writing output file worked
+    if ( _stream.status() != QTextStream::Ok )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("File IO Error"));
+        e.setDetails(tr("Qt Text Stream encountered an unknown error."));
+        throw e;
+    }
 }
 
 
@@ -337,122 +336,122 @@ void Extract::writeMinimalFormat(int index)
  */
 void Extract::writeGraphMLFormat(int index)
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // get gene names
-   EMetaArray geneNames {_cmx->geneNames()};
+    // get gene names
+    EMetaArray geneNames {_cmx->geneNames()};
 
-   // initialize workspace
-   QString sampleMask(_ccm->sampleSize(), '0');
+    // initialize workspace
+    QString sampleMask(_ccm->sampleSize(), '0');
 
-   if ( index == 0 )
-   {
-      // write header to file
-      _stream
-         << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-         << "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\"\n"
-         << "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-         << "    xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n"
-         << "  <graph id=\"G\" edgedefault=\"undirected\">\n";
+    if ( index == 0 )
+    {
+        // write header to file
+        _stream
+            << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            << "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\"\n"
+            << "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+            << "         xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n"
+            << "  <graph id=\"G\" edgedefault=\"undirected\">\n";
 
-      // write node list to file
-      for ( int i = 0; i < _cmx->geneSize(); i++ )
-      {
-         QString id {geneNames.at(i).toString()};
+        // write node list to file
+        for ( int i = 0; i < _cmx->geneSize(); i++ )
+        {
+            QString id {geneNames.at(i).toString()};
 
-         _stream << "    <node id=\"" << id << "\"/>\n";
-      }
-   }
+            _stream << "    <node id=\"" << id << "\"/>\n";
+        }
+    }
 
-   // read next pair
-   _cmxPair.readNext();
+    // read next pair
+    _cmxPair.readNext();
 
-   if ( _cmxPair.clusterSize() > 1 )
-   {
-      _ccmPair.read(_cmxPair.index());
-   }
+    if ( _cmxPair.clusterSize() > 1 )
+    {
+        _ccmPair.read(_cmxPair.index());
+    }
 
-   // write pairwise data to net file
-   for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
-   {
-      QString source {geneNames.at(_cmxPair.index().getX()).toString()};
-      QString target {geneNames.at(_cmxPair.index().getY()).toString()};
-      float correlation {_cmxPair.at(k)};
+    // write pairwise data to net file
+    for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
+    {
+        QString source {geneNames.at(_cmxPair.index().getX()).toString()};
+        QString target {geneNames.at(_cmxPair.index().getY()).toString()};
+        float correlation {_cmxPair.at(k)};
 
-      // exclude edge if correlation is not within thresholds
-      if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
-      {
-         continue;
-      }
+        // exclude edge if correlation is not within thresholds
+        if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
+        {
+            continue;
+        }
 
-      // if there are multiple clusters then use cluster data
-      if ( _cmxPair.clusterSize() > 1 )
-      {
-         // write sample mask to string
-         for ( int i = 0; i < _ccm->sampleSize(); i++ )
-         {
-            sampleMask[i] = '0' + _ccmPair.at(k, i);
-         }
-      }
-
-      // otherwise use expression data if provided
-      else if ( _emx )
-      {
-         // read in gene expressions
-         ExpressionMatrix::Gene gene1(_emx);
-         ExpressionMatrix::Gene gene2(_emx);
-
-         gene1.read(_cmxPair.index().getX());
-         gene2.read(_cmxPair.index().getY());
-
-         // determine sample mask from expression data
-         for ( int i = 0; i < _emx->sampleSize(); ++i )
-         {
-            if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
+        // if there are multiple clusters then use cluster data
+        if ( _cmxPair.clusterSize() > 1 )
+        {
+            // write sample mask to string
+            for ( int i = 0; i < _ccm->sampleSize(); i++ )
             {
-               sampleMask[i] = '9';
+                sampleMask[i] = '0' + _ccmPair.at(k, i);
             }
-            else
+        }
+
+        // otherwise use expression data if provided
+        else if ( _emx )
+        {
+            // read in gene expressions
+            ExpressionMatrix::Gene gene1(_emx);
+            ExpressionMatrix::Gene gene2(_emx);
+
+            gene1.read(_cmxPair.index().getX());
+            gene2.read(_cmxPair.index().getY());
+
+            // determine sample mask from expression data
+            for ( int i = 0; i < _emx->sampleSize(); ++i )
             {
-               sampleMask[i] = '1';
+                if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
+                {
+                    sampleMask[i] = '9';
+                }
+                else
+                {
+                    sampleMask[i] = '1';
+                }
             }
-         }
-      }
+        }
 
-      // otherwise throw an error
-      else
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("Invalid Input"));
-         e.setDetails(tr("Expression Matrix was not provided but Cluster Matrix is missing sample data."));
-         throw e;
-      }
+        // otherwise throw an error
+        else
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("Invalid Input"));
+            e.setDetails(tr("Expression Matrix was not provided but Cluster Matrix is missing sample data."));
+            throw e;
+        }
 
-      // write edge to file
-      _stream
-         << "    <edge"
-         << " source=\"" << source << "\""
-         << " target=\"" << target << "\""
-         << " samples=\"" << sampleMask << "\""
-         << "/>\n";
-   }
+        // write edge to file
+        _stream
+            << "    <edge"
+            << "      source=\"" << source << "\""
+            << "      target=\"" << target << "\""
+            << "      samples=\"" << sampleMask << "\""
+            << "    />\n";
+    }
 
-   // write footer to file
-   if ( index == size() - 1 )
-   {
-      _stream
-         << "  </graph>\n"
-         << "</graphml>\n";
-   }
+    // write footer to file
+    if ( index == size() - 1 )
+    {
+        _stream
+            << "  </graph>\n"
+            << "</graphml>\n";
+    }
 
-   // make sure writing output file worked
-   if ( _stream.status() != QTextStream::Ok )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Qt Text Stream encountered an unknown error."));
-      throw e;
-   }
+    // make sure writing output file worked
+    if ( _stream.status() != QTextStream::Ok )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("File IO Error"));
+        e.setDetails(tr("Qt Text Stream encountered an unknown error."));
+        throw e;
+    }
 }
 
 
@@ -462,9 +461,9 @@ void Extract::writeGraphMLFormat(int index)
  */
 EAbstractAnalyticInput* Extract::makeInput()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return new Input(this);
+    return new Input(this);
 }
 
 
@@ -475,38 +474,38 @@ EAbstractAnalyticInput* Extract::makeInput()
  */
 void Extract::initialize()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // make sure input/output arguments are valid
-   if ( !_cmx || !_output )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Did not get valid input and/or output arguments."));
-      throw e;
-   }
+    // make sure input/output arguments are valid
+    if ( !_cmx || !_output )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get valid input and/or output arguments."));
+        throw e;
+    }
 
-   if ( _outputFormat != OutputFormat::Minimal && !_ccm )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("--ccm is required for all output formats except minimal."));
-      throw e;
-   }
+    if ( _outputFormat != OutputFormat::Minimal && !_ccm )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("--ccm is required for all output formats except minimal."));
+        throw e;
+    }
 
-   // initialize pairwise iterators
-   _ccmPair = CCMatrix::Pair(_ccm);
-   _cmxPair = CorrelationMatrix::Pair(_cmx);
-   if ( _csm )
-   {
-      _csmPair = CSMatrix::Pair(_csm);
-      preparePValueFilter();
-      prepareRSquareFilter();
-   }
+    // initialize pairwise iterators
+    _ccmPair = CCMatrix::Pair(_ccm);
+    _cmxPair = CorrelationMatrix::Pair(_cmx);
+    if ( _csm )
+    {
+        _csmPair = CSMatrix::Pair(_csm);
+        preparePValueFilter();
+        prepareRSquareFilter();
+    }
 
-   // initialize output file stream
-   _stream.setDevice(_output);
-   _stream.setRealNumberPrecision(8);
+    // initialize output file stream
+    _stream.setDevice(_output);
+    _stream.setRealNumberPrecision(8);
 }
 
 
@@ -608,7 +607,7 @@ bool Extract::PValuefilter(QString labelName, float pValue)
                 {
                     if ( pValue > _csmPValueFilterThresh.at(i) )
                     {
-                       return false;
+                        return false;
                     }
                     else
                     {
@@ -657,7 +656,7 @@ bool Extract::RSquarefilter(QString labelName, float rSquared)
                 {
                     if ( rSquared > _csmRSquareFilterThresh.at(i) )
                     {
-                       return false;
+                        return false;
                     }
                     else
                     {
@@ -687,8 +686,7 @@ bool Extract::RSquarefilter(QString labelName, float rSquared)
  * Checks to make sure the filter names are in the tests names. If they
  * are not, it throws an error.
  *
- * @return True if the name apears somewhere in the test names, false
- *         otherwise.
+ * @return True if the name apears somewhere in the test names, false otherwise.
  */
 bool Extract::pValueFilterCheck()
 {
@@ -728,8 +726,7 @@ bool Extract::pValueFilterCheck()
  * Checks to make sure the filter names are in the tests names. If they
  * are not, it throws an error.
  *
- * @return True if the name apears somewhere in the test names, false
- *         otherwise.
+ * @return True if the name apears somewhere in the test names, false otherwise.
  */
 bool Extract::rSquareFilterCheck()
 {

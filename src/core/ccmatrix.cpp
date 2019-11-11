@@ -8,13 +8,13 @@
  */
 QAbstractTableModel* CCMatrix::model()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   if ( !_model )
-   {
-      _model = new Model(this);
-   }
-   return _model;
+    if ( !_model )
+    {
+        _model = new Model(this);
+    }
+    return _model;
 }
 
 
@@ -29,25 +29,25 @@ QAbstractTableModel* CCMatrix::model()
  */
 void CCMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, const EMetaArray& sampleNames)
 {
-   EDEBUG_FUNC(this,&geneNames,maxClusterSize,&sampleNames);
+    EDEBUG_FUNC(this,&geneNames,maxClusterSize,&sampleNames);
 
-   // make sure sample names is not empty
-   if ( sampleNames.isEmpty() )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Sample names metadata is empty."));
-      throw e;
-   }
+    // make sure sample names is not empty
+    if ( sampleNames.isEmpty() )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Domain Error"));
+        e.setDetails(tr("Sample names metadata is empty."));
+        throw e;
+    }
 
-   // save sample names to metadata
-   EMetaObject metaObject {meta().toObject()};
-   metaObject.insert("samples", sampleNames);
-   setMeta(metaObject);
+    // save sample names to metadata
+    EMetaObject metaObject {meta().toObject()};
+    metaObject.insert("samples", sampleNames);
+    setMeta(metaObject);
 
-   // save sample size and initialize base class
-   _sampleSize = sampleNames.size();
-   Matrix::initialize(geneNames, maxClusterSize, static_cast<qint32>((_sampleSize + 1) / 2 * sizeof(qint8)), SUBHEADER_SIZE);
+    // save sample size and initialize base class
+    _sampleSize = sampleNames.size();
+    Matrix::initialize(geneNames, maxClusterSize, static_cast<qint32>((_sampleSize + 1) / 2 * sizeof(qint8)), SUBHEADER_SIZE);
 }
 
 
@@ -57,7 +57,7 @@ void CCMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, const
  */
 EMetaArray CCMatrix::sampleNames() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return meta().toObject().at("samples").toArray();
+    return meta().toObject().at("samples").toArray();
 }

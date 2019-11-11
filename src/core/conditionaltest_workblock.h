@@ -7,11 +7,11 @@
 
 class ConditionalTest::WorkBlock : public EAbstractAnalyticBlock
 {
-   Q_OBJECT
+    Q_OBJECT
 public:
-   /*!
-   *  Creates an uninitialized work block
-   */
+    /*!
+     *  Creates an uninitialized work block
+    */
     explicit WorkBlock() = default;
     explicit WorkBlock(int index, Pairwise::Index start, qint64 startpair, qint64 size);
 
@@ -19,8 +19,8 @@ public:
     qint64 size() const { return _size; }
     qint64 startpair() const {return _startpair;}
 protected:
-     virtual void write(QDataStream& stream) const override final;
-     virtual void read(QDataStream& stream) override final;
+    virtual void write(QDataStream& stream) const override final;
+    virtual void read(QDataStream& stream) override final;
 private:
     /*!
      * The pairwise index of the first pair to process.

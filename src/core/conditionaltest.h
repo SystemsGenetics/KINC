@@ -28,16 +28,16 @@ public:
 
     struct CSMPair
     {
-      /*!
-      * The p values for each cluster in a pair.
-      */
-      QVector<QVector<double>> pValues;
-      QVector<QVector<double>> r2;
-      /*!
-      * The x/y coordinates in the CCM/CMX matrices that this pair belongs to.
-      */
-      qint32 x_index;
-      qint32 y_index;
+        /*!
+         * The p values for each cluster in a pair.
+         */
+        QVector<QVector<double>> pValues;
+        QVector<QVector<double>> r2;
+        /*!
+         * The x/y coordinates in the CCM/CMX matrices that this pair belongs to.
+         */
+        qint32 x_index;
+        qint32 y_index;
     };
 
     static qint64 totalPairs(const CorrelationMatrix* cmx);

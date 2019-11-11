@@ -15,9 +15,9 @@ using RawPair = CorrelationMatrix::RawPair;
  */
 int PowerLaw::size() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return 1;
+    return 1;
 }
 
 
@@ -30,64 +30,64 @@ int PowerLaw::size() const
  */
 void PowerLaw::process(const EAbstractAnalyticBlock*)
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // initialize log text stream
-   QTextStream stream(_logfile);
+    // initialize log text stream
+    QTextStream stream(_logfile);
 
-   // load raw correlation data, row-wise maximums
-   std::vector<RawPair> pairs {_input->dumpRawData()};
-   std::vector<float> maximums {computeMaximums(pairs)};
+    // load raw correlation data, row-wise maximums
+    std::vector<RawPair> pairs {_input->dumpRawData()};
+    std::vector<float> maximums {computeMaximums(pairs)};
 
-   // continue until network is sufficiently scale-free
-   float threshold {_thresholdStart};
+    // continue until network is sufficiently scale-free
+    float threshold {_thresholdStart};
 
-   while ( true )
-   {
-      qInfo("\n");
-      qInfo("threshold: %0.3f", threshold);
+    while ( true )
+    {
+        qInfo("\n");
+        qInfo("threshold: %0.3f", threshold);
 
-      // compute adjacency matrix based on threshold
-      size_t size;
-      std::vector<bool> adjacencyMatrix {computeAdjacencyMatrix(pairs, maximums, threshold, &size)};
+        // compute adjacency matrix based on threshold
+        size_t size;
+        std::vector<bool> adjacencyMatrix {computeAdjacencyMatrix(pairs, maximums, threshold, &size)};
 
-      qInfo("adjacency matrix: %lu", size);
+        qInfo("adjacency matrix: %lu", size);
 
-      // make sure that adjacency matrix is not empty
-      float correlation {0};
+        // make sure that adjacency matrix is not empty
+        float correlation {0};
 
-      if ( size > 0 )
-      {
-         // compute degree distribution of matrix
-         std::vector<int> histogram {computeDegreeDistribution(adjacencyMatrix, size)};
+        if ( size > 0 )
+        {
+            // compute degree distribution of matrix
+            std::vector<int> histogram {computeDegreeDistribution(adjacencyMatrix, size)};
 
-         // compute correlation of degree distribution
-         correlation = computeCorrelation(histogram);
+            // compute correlation of degree distribution
+            correlation = computeCorrelation(histogram);
 
-         qInfo("correlation: %8.3f", correlation);
-      }
+            qInfo("correlation: %8.3f", correlation);
+        }
 
-      // output to log file
-      stream
-         << QString::number(threshold, 'f', 3) << "\t"
-         << size << "\t"
-         << correlation << "\n";
+        // output to log file
+        stream
+            << QString::number(threshold, 'f', 3) << "\t"
+            << size << "\t"
+            << correlation << "\n";
 
-      // TODO: break if network is sufficently scale-free
+        // TODO: break if network is sufficently scale-free
 
-      // decrement threshold and fail if minimum threshold is reached
-      threshold -= _thresholdStep;
-      if ( threshold < _thresholdStop )
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("Power-law Threshold Error"));
-         e.setDetails(tr("Could not find scale-free network above stopping threshold."));
-         throw e;
-      }
-   }
+        // decrement threshold and fail if minimum threshold is reached
+        threshold -= _thresholdStep;
+        if ( threshold < _thresholdStop )
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("Power-law Threshold Error"));
+            e.setDetails(tr("Could not find scale-free network above stopping threshold."));
+            throw e;
+        }
+    }
 
-   // write final threshold
-   stream << threshold << "\n";
+    // write final threshold
+    stream << threshold << "\n";
 }
 
 
@@ -97,9 +97,9 @@ void PowerLaw::process(const EAbstractAnalyticBlock*)
  */
 EAbstractAnalyticInput* PowerLaw::makeInput()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return new Input(this);
+    return new Input(this);
 }
 
 
@@ -111,25 +111,25 @@ EAbstractAnalyticInput* PowerLaw::makeInput()
  */
 void PowerLaw::initialize()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // make sure input and output were set properly
-   if ( !_input || !_logfile )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Did not get valid input or logfile arguments."));
-      throw e;
-   }
+    // make sure input and output were set properly
+    if ( !_input || !_logfile )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get valid input or logfile arguments."));
+        throw e;
+    }
 
-   // make sure threshold arguments are valid
-   if ( _thresholdStart <= _thresholdStop )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Starting threshold must be greater than stopping threshold."));
-      throw e;
-   }
+    // make sure threshold arguments are valid
+    if ( _thresholdStart <= _thresholdStop )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Starting threshold must be greater than stopping threshold."));
+        throw e;
+    }
 }
 
 
@@ -141,29 +141,29 @@ void PowerLaw::initialize()
  */
 std::vector<float> PowerLaw::computeMaximums(const std::vector<RawPair>& pairs)
 {
-   EDEBUG_FUNC(this,&pairs);
+    EDEBUG_FUNC(this,&pairs);
 
-   // initialize elements to minimum value
-   std::vector<float> maximums(_input->geneSize(), 0);
+    // initialize elements to minimum value
+    std::vector<float> maximums(_input->geneSize(), 0);
 
-   // compute maximum correlation of each row
-   for ( auto& pair : pairs )
-   {
-      int i = pair.index.getX();
+    // compute maximum correlation of each row
+    for ( auto& pair : pairs )
+    {
+        int i = pair.index.getX();
 
-      for ( size_t k = 0; k < pair.correlations.size(); ++k )
-      {
-         float correlation = fabs(pair.correlations[k]);
+        for ( size_t k = 0; k < pair.correlations.size(); ++k )
+        {
+            float correlation = fabs(pair.correlations[k]);
 
-         if ( maximums[i] < correlation )
-         {
-            maximums[i] = correlation;
-         }
-      }
-   }
+            if ( maximums[i] < correlation )
+            {
+                maximums[i] = correlation;
+            }
+        }
+    }
 
-   // return row-wise maximums
-   return maximums;
+    // return row-wise maximums
+    return maximums;
 }
 
 
@@ -181,59 +181,59 @@ std::vector<float> PowerLaw::computeMaximums(const std::vector<RawPair>& pairs)
  */
 std::vector<bool> PowerLaw::computeAdjacencyMatrix(const std::vector<RawPair>& pairs, const std::vector<float>& maximums, float threshold, size_t* size)
 {
-   EDEBUG_FUNC(this,&pairs,&maximums,threshold,size);
+    EDEBUG_FUNC(this,&pairs,&maximums,threshold,size);
 
-   // generate vector of row indices that have a correlation above threshold
-   std::vector<int> indices(_input->geneSize(), -1);
-   size_t pruneSize = 0;
+    // generate vector of row indices that have a correlation above threshold
+    std::vector<int> indices(_input->geneSize(), -1);
+    size_t pruneSize = 0;
 
-   for ( size_t i = 0; i < maximums.size(); ++i )
-   {
-      if ( maximums[i] >= threshold )
-      {
-         indices[i] = pruneSize;
-         pruneSize++;
-      }
-   }
+    for ( size_t i = 0; i < maximums.size(); ++i )
+    {
+        if ( maximums[i] >= threshold )
+        {
+            indices[i] = pruneSize;
+            pruneSize++;
+        }
+    }
 
-   // extract adjacency matrix from correlation matrix
-   std::vector<bool> adjacencyMatrix(pruneSize * pruneSize);
+    // extract adjacency matrix from correlation matrix
+    std::vector<bool> adjacencyMatrix(pruneSize * pruneSize);
 
-   // initialize diagonal
-   for ( size_t i = 0; i < pruneSize; ++i )
-   {
-      adjacencyMatrix[i * pruneSize + i] = 1;
-   }
+    // initialize diagonal
+    for ( size_t i = 0; i < pruneSize; ++i )
+    {
+        adjacencyMatrix[i * pruneSize + i] = 1;
+    }
 
-   // iterate through all pairs
-   for ( auto& pair : pairs )
-   {
-      // get indices into pruned matrix
-      int i = indices[pair.index.getX()];
-      int j = indices[pair.index.getY()];
+    // iterate through all pairs
+    for ( auto& pair : pairs )
+    {
+        // get indices into pruned matrix
+        int i = indices[pair.index.getX()];
+        int j = indices[pair.index.getY()];
 
-      // skip pair if it was pruned
-      if ( i == -1 || j == -1 )
-      {
-         continue;
-      }
+        // skip pair if it was pruned
+        if ( i == -1 || j == -1 )
+        {
+            continue;
+        }
 
-      // select correlation from pair
-      float correlation = pair.correlations[0];
+        // select correlation from pair
+        float correlation = pair.correlations[0];
 
-      // save correlation if it is above threshold
-      if ( fabs(correlation) >= threshold )
-      {
-         adjacencyMatrix[i * pruneSize + j] = 1;
-         adjacencyMatrix[j * pruneSize + i] = 1;
-      }
-   }
+        // save correlation if it is above threshold
+        if ( fabs(correlation) >= threshold )
+        {
+            adjacencyMatrix[i * pruneSize + j] = 1;
+            adjacencyMatrix[j * pruneSize + i] = 1;
+        }
+    }
 
-   // save size of adjacency matrix
-   *size = pruneSize;
+    // save size of adjacency matrix
+    *size = pruneSize;
 
-   // return adjacency matrix
-   return adjacencyMatrix;
+    // return adjacency matrix
+    return adjacencyMatrix;
 }
 
 
@@ -246,42 +246,42 @@ std::vector<bool> PowerLaw::computeAdjacencyMatrix(const std::vector<RawPair>& p
  */
 std::vector<int> PowerLaw::computeDegreeDistribution(const std::vector<bool>& matrix, size_t size)
 {
-   EDEBUG_FUNC(this,&matrix,&size);
+    EDEBUG_FUNC(this,&matrix,&size);
 
-   // compute degree of each node
-   std::vector<int> degrees(size);
+    // compute degree of each node
+    std::vector<int> degrees(size);
 
-   for ( size_t i = 0; i < size; i++ )
-   {
-      for ( size_t j = 0; j < size; j++ )
-      {
-         degrees[i] += matrix[i * size + j];
-      }
-   }
+    for ( size_t i = 0; i < size; i++ )
+    {
+        for ( size_t j = 0; j < size; j++ )
+        {
+            degrees[i] += matrix[i * size + j];
+        }
+    }
 
-   // compute max degree
-   int max {0};
+    // compute max degree
+    int max {0};
 
-   for ( size_t i = 0; i < degrees.size(); i++ )
-   {
-      if ( max < degrees[i] )
-      {
-         max = degrees[i];
-      }
-   }
+    for ( size_t i = 0; i < degrees.size(); i++ )
+    {
+        if ( max < degrees[i] )
+        {
+            max = degrees[i];
+        }
+    }
 
-   // compute histogram of degrees
-   std::vector<int> histogram(max);
+    // compute histogram of degrees
+    std::vector<int> histogram(max);
 
-   for ( size_t i = 0; i < degrees.size(); i++ )
-   {
-      if ( degrees[i] > 0 )
-      {
-         histogram[degrees[i] - 1]++;
-      }
-   }
+    for ( size_t i = 0; i < degrees.size(); i++ )
+    {
+        if ( degrees[i] > 0 )
+        {
+            histogram[degrees[i] - 1]++;
+        }
+    }
 
-   return histogram;
+    return histogram;
 }
 
 
@@ -294,51 +294,51 @@ std::vector<int> PowerLaw::computeDegreeDistribution(const std::vector<bool>& ma
  */
 float PowerLaw::computeCorrelation(const std::vector<int>& histogram)
 {
-   EDEBUG_FUNC(this,&histogram);
+    EDEBUG_FUNC(this,&histogram);
 
-   // compute log-log transform of histogram data
-   const int n = histogram.size();
-   std::vector<float> x(n);
-   std::vector<float> y(n);
+    // compute log-log transform of histogram data
+    const int n = histogram.size();
+    std::vector<float> x(n);
+    std::vector<float> y(n);
 
-   for ( int i = 0; i < n; i++ )
-   {
-      x[i] = logf(i + 1);
-      y[i] = logf(histogram[i] + 1);
-   }
+    for ( int i = 0; i < n; i++ )
+    {
+        x[i] = logf(i + 1);
+        y[i] = logf(histogram[i] + 1);
+    }
 
-   // visualize log-log histogram
-   qInfo("histogram:");
+    // visualize log-log histogram
+    qInfo("histogram:");
 
-   for ( int i = 0; i < 10; i++ )
-   {
-      float sum {0};
-      for ( int j = i * n / 10; j < (i + 1) * n / 10; j++ )
-      {
-         sum += y[j];
-      }
+    for ( int i = 0; i < 10; i++ )
+    {
+        float sum {0};
+        for ( int j = i * n / 10; j < (i + 1) * n / 10; j++ )
+        {
+            sum += y[j];
+        }
 
-      int len {static_cast<int>(sum / logf(_input->geneSize()))};
-      QString bin(len, '#');
+        int len {static_cast<int>(sum / logf(_input->geneSize()))};
+        QString bin(len, '#');
 
-      qInfo(" | %s", bin.toStdString().c_str());
-   }
+        qInfo(" | %s", bin.toStdString().c_str());
+    }
 
-   // compute Pearson correlation of x, y
-   float sumx = 0;
-   float sumy = 0;
-   float sumx2 = 0;
-   float sumy2 = 0;
-   float sumxy = 0;
+    // compute Pearson correlation of x, y
+    float sumx = 0;
+    float sumy = 0;
+    float sumx2 = 0;
+    float sumy2 = 0;
+    float sumxy = 0;
 
-   for ( int i = 0; i < n; ++i )
-   {
-      sumx += x[i];
-      sumy += y[i];
-      sumx2 += x[i] * x[i];
-      sumy2 += y[i] * y[i];
-      sumxy += x[i] * y[i];
-   }
+    for ( int i = 0; i < n; ++i )
+    {
+        sumx += x[i];
+        sumy += y[i];
+        sumx2 += x[i] * x[i];
+        sumy2 += y[i] * y[i];
+        sumxy += x[i] * y[i];
+    }
 
-   return (n*sumxy - sumx*sumy) / sqrtf((n*sumx2 - sumx*sumx) * (n*sumy2 - sumy*sumy));
+    return (n*sumxy - sumx*sumy) / sqrtf((n*sumx2 - sumx*sumx) * (n*sumy2 - sumy*sumy));
 }

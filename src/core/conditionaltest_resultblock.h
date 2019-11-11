@@ -7,7 +7,7 @@
 
 class ConditionalTest::ResultBlock : public EAbstractAnalyticBlock
 {
-   Q_OBJECT
+    Q_OBJECT
 public:
     explicit ResultBlock() = default;
     explicit ResultBlock(int index);
@@ -23,16 +23,16 @@ protected:
     virtual void read(QDataStream& stream) override final;
 private:
     /*!
-    *  Number of each test to be conducted on each cluster.
-    */
+     *  Number of each test to be conducted on each cluster.
+     */
     int _numTests{0};
     /*!
      * The pairwise index of the first pair in the result block.
      */
     qint64 _start{0};
     /*!
-    *  Row of dynamically populated cluster pvalues.
-    */
+     *  Row of dynamically populated cluster pvalues.
+     */
     QVector<CSMPair> _pairs;
 };
 

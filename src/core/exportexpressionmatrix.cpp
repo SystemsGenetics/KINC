@@ -12,9 +12,9 @@
  */
 int ExportExpressionMatrix::size() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return 1 + _input->geneSize();
+    return 1 + _input->geneSize();
 }
 
 
@@ -28,71 +28,71 @@ int ExportExpressionMatrix::size() const
  */
 void ExportExpressionMatrix::process(const EAbstractAnalyticBlock* result)
 {
-   EDEBUG_FUNC(this,result);
+    EDEBUG_FUNC(this,result);
 
-   // write the sample names in the first step
-   if ( result->index() == 0 )
-   {
-      // get sample names
-      EMetaArray sampleNames {_input->sampleNames()};
+    // write the sample names in the first step
+    if ( result->index() == 0 )
+    {
+        // get sample names
+        EMetaArray sampleNames {_input->sampleNames()};
 
-      // initialize output file stream
-      _stream.setDevice(_output);
-      _stream.setRealNumberPrecision(_precision);
+        // initialize output file stream
+        _stream.setDevice(_output);
+        _stream.setRealNumberPrecision(_precision);
 
-      // write sample names
-      for ( int i = 0; i < _input->sampleSize(); i++ )
-      {
-         _stream << sampleNames.at(i).toString() << "\t";
-      }
-      _stream << "\n";
-   }
+        // write sample names
+        for ( int i = 0; i < _input->sampleSize(); i++ )
+        {
+            _stream << sampleNames.at(i).toString() << "\t";
+        }
+        _stream << "\n";
+    }
 
-   // write each gene to the output file in a separate step
-   else
-   {
-      // get gene index
-      int i = result->index() - 1;
+    // write each gene to the output file in a separate step
+    else
+    {
+        // get gene index
+        int i = result->index() - 1;
 
-      // get gene name
-      QString geneName {_input->geneNames().at(i).toString()};
+        // get gene name
+        QString geneName {_input->geneNames().at(i).toString()};
 
-      // load gene from expression matrix
-      ExpressionMatrix::Gene gene(_input);
-      gene.read(i);
+        // load gene from expression matrix
+        ExpressionMatrix::Gene gene(_input);
+        gene.read(i);
 
-      // write gene name
-      _stream << geneName;
+        // write gene name
+        _stream << geneName;
 
-      // write expression values
-      for ( int j = 0; j < _input->sampleSize(); j++ )
-      {
-         float value {gene.at(j)};
+        // write expression values
+        for ( int j = 0; j < _input->sampleSize(); j++ )
+        {
+            float value {gene.at(j)};
 
-         // if value is NAN use the no sample token
-         if ( std::isnan(value) )
-         {
-            _stream << "\t" << _nanToken;
-         }
+            // if value is NAN use the no sample token
+            if ( std::isnan(value) )
+            {
+                _stream << "\t" << _nanToken;
+            }
 
-         // else this is a normal floating point expression
-         else
-         {
-            _stream << "\t" << value;
-         }
-      }
+            // else this is a normal floating point expression
+            else
+            {
+                _stream << "\t" << value;
+            }
+        }
 
-      _stream << "\n";
-   }
+        _stream << "\n";
+    }
 
-   // make sure writing output file worked
-   if ( _stream.status() != QTextStream::Ok )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Qt Text Stream encountered an unknown error."));
-      throw e;
-   }
+    // make sure writing output file worked
+    if ( _stream.status() != QTextStream::Ok )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("File IO Error"));
+        e.setDetails(tr("Qt Text Stream encountered an unknown error."));
+        throw e;
+    }
 }
 
 
@@ -102,9 +102,9 @@ void ExportExpressionMatrix::process(const EAbstractAnalyticBlock* result)
  */
 EAbstractAnalyticInput* ExportExpressionMatrix::makeInput()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return new Input(this);
+    return new Input(this);
 }
 
 
@@ -115,13 +115,13 @@ EAbstractAnalyticInput* ExportExpressionMatrix::makeInput()
  */
 void ExportExpressionMatrix::initialize()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   if ( !_input || !_output )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Did not get valid input and/or output arguments."));
-      throw e;
-   }
+    if ( !_input || !_output )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get valid input and/or output arguments."));
+        throw e;
+    }
 }

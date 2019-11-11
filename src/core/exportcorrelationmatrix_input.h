@@ -9,31 +9,31 @@
  */
 class ExportCorrelationMatrix::Input : public EAbstractAnalyticInput
 {
-   Q_OBJECT
+    Q_OBJECT
 public:
-   /*!
-    * Defines all input arguments for this analytic.
-    */
-   enum Argument
-   {
-      ExpressionData = 0
-      ,ClusterData
-      ,CorrelationData
-      ,OutputFile
-      ,Total
-   };
-   explicit Input(ExportCorrelationMatrix* parent);
-   virtual int size() const override final;
-   virtual EAbstractAnalyticInput::Type type(int index) const override final;
-   virtual QVariant data(int index, Role role) const override final;
-   virtual void set(int index, const QVariant& value) override final;
-   virtual void set(int index, EAbstractData* data) override final;
-   virtual void set(int index, QFile* file) override final;
+    /*!
+     * Defines all input arguments for this analytic.
+     */
+    enum Argument
+    {
+        ExpressionData = 0
+        ,ClusterData
+        ,CorrelationData
+        ,OutputFile
+        ,Total
+    };
+    explicit Input(ExportCorrelationMatrix* parent);
+    virtual int size() const override final;
+    virtual EAbstractAnalyticInput::Type type(int index) const override final;
+    virtual QVariant data(int index, Role role) const override final;
+    virtual void set(int index, const QVariant& value) override final;
+    virtual void set(int index, EAbstractData* data) override final;
+    virtual void set(int index, QFile* file) override final;
 private:
-   /*!
-    * Pointer to the base analytic for this object.
-    */
-   ExportCorrelationMatrix* _base;
+    /*!
+     * Pointer to the base analytic for this object.
+     */
+    ExportCorrelationMatrix* _base;
 };
 
 

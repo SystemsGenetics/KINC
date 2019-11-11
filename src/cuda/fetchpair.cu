@@ -17,37 +17,37 @@
  */
 __device__
 int fetchPair(
-   const float *x,
-   const float *y,
-   int sampleSize,
-   int minExpression,
-   char *labels)
+    const float *x,
+    const float *y,
+    int sampleSize,
+    int minExpression,
+    char *labels)
 {
-   // label the pairwise samples
-   int N = 0;
+    // label the pairwise samples
+    int N = 0;
 
-   for ( int i = 0; i < sampleSize; ++i )
-   {
-      // label samples with missing values
-      if ( isnan(x[i]) || isnan(y[i]) )
-      {
-         labels[i] = -9;
-      }
+    for ( int i = 0; i < sampleSize; ++i )
+    {
+        // label samples with missing values
+        if ( isnan(x[i]) || isnan(y[i]) )
+        {
+            labels[i] = -9;
+        }
 
-      // label samples which fall below the expression threshold
-      else if ( x[i] < minExpression || y[i] < minExpression )
-      {
-         labels[i] = -6;
-      }
+        // label samples which fall below the expression threshold
+        else if ( x[i] < minExpression || y[i] < minExpression )
+        {
+            labels[i] = -6;
+        }
 
-      // label any remaining samples as cluster 0
-      else
-      {
-         N++;
-         labels[i] = 0;
-      }
-   }
+        // label any remaining samples as cluster 0
+        else
+        {
+            N++;
+            labels[i] = 0;
+        }
+    }
 
-   // return number of clean samples
-   return N;
+    // return number of clean samples
+    return N;
 }

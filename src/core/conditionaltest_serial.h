@@ -11,10 +11,10 @@
 
 class ConditionalTest::Serial : public EAbstractAnalyticSerial
 {
-   Q_OBJECT
+    Q_OBJECT
 public:
-   explicit Serial(ConditionalTest* parent);
-   virtual std::unique_ptr<EAbstractAnalyticBlock> execute(const EAbstractAnalyticBlock* block) override final;
+    explicit Serial(ConditionalTest* parent);
+    virtual std::unique_ptr<EAbstractAnalyticBlock> execute(const EAbstractAnalyticBlock* block) override final;
 
     // helper functions
     int test(CCMatrix::Pair& ccmPair, qint32 clusterIndex, qint32& testIndex, qint32 featureIndex, qint32 labelIndex, QVector<QVector<double>>& pValues, QVector<QVector<double>>& r2);
@@ -35,26 +35,26 @@ public:
     double fTest(double chisq, gsl_matrix* X, gsl_vector* Y, gsl_matrix* cov, gsl_vector* C);
 
 private:
-   /*!
-   *  Pointer to the serials objects parent KNNAnalytic.
-   */
-   ConditionalTest* _base;
-   /*!
-   *  Annotation matrix data for testing.
-   */
-   QVector<QString> _anxData;
-   /*!
-   *  Category count.
-   */
-   qint32 _catCount {0};
-   /*!
-   *  Category count in cluster.
-   */
-   qint32 _catInCluster {0};
-   /*!
-   *  Size of the cluster.
-   */
-   qint32 _clusterSize {0};
+    /*!
+     *  Pointer to the serials objects parent KNNAnalytic.
+     */
+    ConditionalTest* _base;
+    /*!
+     *  Annotation matrix data for testing.
+     */
+    QVector<QString> _anxData;
+    /*!
+     *  Category count.
+     */
+    qint32 _catCount {0};
+    /*!
+     *  Category count in cluster.
+     */
+    qint32 _catInCluster {0};
+    /*!
+     *  Size of the cluster.
+     */
+    qint32 _clusterSize {0};
 };
 
 

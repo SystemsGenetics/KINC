@@ -12,11 +12,8 @@
 CSMatrix::Model::Model(CSMatrix* matrix) : _matrix(matrix)
 {
     EDEBUG_FUNC(this,matrix);
-    {
-       EDEBUG_FUNC(this,matrix);
 
-       setParent(matrix);
-    }
+    setParent(matrix);
 }
 
 
@@ -44,7 +41,7 @@ QVariant CSMatrix::Model::headerData(int section, Qt::Orientation orientation, i
     // if role is not display return nothing
     if ( role != Qt::DisplayRole )
     {
-       return QVariant();
+        return QVariant();
     }
 
     // get gene names
@@ -53,8 +50,8 @@ QVariant CSMatrix::Model::headerData(int section, Qt::Orientation orientation, i
     // make sure section is within limits of gene name array
     if ( section >= 0 && section < geneNames.size() )
     {
-      // return gene name
-      return geneNames.at(section).toString();
+        // return gene name
+        return geneNames.at(section).toString();
     }
 
     // no gene found return nothing
@@ -80,7 +77,7 @@ int CSMatrix::Model::columnCount(const QModelIndex&) const
 
 /*!
 *  Implements an interface that quiries for the number of row.
-*    EDEBUG_FUNC(this,&index,role);
+*
 * @param An unused parameter.
 *
 * @return An integer representation of the row count.
@@ -113,13 +110,13 @@ QVariant CSMatrix::Model::data(const QModelIndex& index, int role) const
     // if role is not display return nothing
     if ( role != Qt::DisplayRole )
     {
-       return QVariant();
+        return QVariant();
     }
 
     // if row and column are equal return empty string
     if ( index.row() == index.column() )
     {
-       return "";
+        return "";
     }
 
     // get constant pair and read in values
@@ -128,7 +125,7 @@ QVariant CSMatrix::Model::data(const QModelIndex& index, int role) const
     int y {index.column()};
     if ( y > x )
     {
-       std::swap(x,y);
+        std::swap(x,y);
     }
     pair.read({x,y});
     return pair.toString();

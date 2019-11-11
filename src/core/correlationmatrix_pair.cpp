@@ -9,13 +9,13 @@
  */
 void CorrelationMatrix::Pair::addCluster(int amount) const
 {
-   EDEBUG_FUNC(this,amount);
+    EDEBUG_FUNC(this,amount);
 
-   // keep adding a new float for given amount
-   while ( amount-- > 0 )
-   {
-      _correlations.append(NAN);
-   }
+    // keep adding a new float for given amount
+    while ( amount-- > 0 )
+    {
+        _correlations.append(NAN);
+    }
 }
 
 
@@ -26,24 +26,24 @@ void CorrelationMatrix::Pair::addCluster(int amount) const
  */
 QString CorrelationMatrix::Pair::toString() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // if there are no correlations simply return null
-   if ( _correlations.isEmpty() )
-   {
-      return tr("");
-   }
+    // if there are no correlations simply return null
+    if ( _correlations.isEmpty() )
+    {
+        return tr("");
+    }
 
-   // initialize list of strings and iterate through all clusters
-   QStringList ret;
-   for ( const auto& correlation : _correlations )
-   {
-      // add correlation value as string
-      ret << QString::number(correlation);
-   }
+    // initialize list of strings and iterate through all clusters
+    QStringList ret;
+    for ( const auto& correlation : _correlations )
+    {
+        // add correlation value as string
+        ret << QString::number(correlation);
+    }
 
-   // join all clusters and return as string
-   return ret.join(',');
+    // join all clusters and return as string
+    return ret.join(',');
 }
 
 
@@ -56,14 +56,14 @@ QString CorrelationMatrix::Pair::toString() const
  */
 void CorrelationMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
 {
-   EDEBUG_FUNC(this,&stream,cluster);
+    EDEBUG_FUNC(this,&stream,cluster);
 
-   // make sure cluster value is within range
-   if ( cluster >= 0 && cluster < _correlations.size() )
-   {
-      // write correlation to output stream
-      stream << _correlations.at(cluster);
-   }
+    // make sure cluster value is within range
+    if ( cluster >= 0 && cluster < _correlations.size() )
+    {
+        // write correlation to output stream
+        stream << _correlations.at(cluster);
+    }
 }
 
 
@@ -76,12 +76,12 @@ void CorrelationMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
  */
 void CorrelationMatrix::Pair::readCluster(const EDataStream& stream, int cluster) const
 {
-   EDEBUG_FUNC(this,&stream,cluster);
+    EDEBUG_FUNC(this,&stream,cluster);
 
-   // make sure cluster value is within range
-   if ( cluster >= 0 && cluster < _correlations.size() )
-   {
-      // read correlation from input stream
-      stream >> _correlations[cluster];
-   }
+    // make sure cluster value is within range
+    if ( cluster >= 0 && cluster < _correlations.size() )
+    {
+        // read correlation from input stream
+        stream >> _correlations[cluster];
+    }
 }

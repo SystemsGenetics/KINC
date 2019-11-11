@@ -11,11 +11,11 @@
  * @param size
  */
 CorrPowerFilter::WorkBlock::WorkBlock(int index, qint64 start, qint64 size):
-   EAbstractAnalyticBlock(index),
-   _start(start),
-   _size(size)
+    EAbstractAnalyticBlock(index),
+    _start(start),
+    _size(size)
 {
-   EDEBUG_FUNC(this,index,start,size);
+    EDEBUG_FUNC(this,index,start,size);
 }
 
 
@@ -27,9 +27,9 @@ CorrPowerFilter::WorkBlock::WorkBlock(int index, qint64 start, qint64 size):
  */
 void CorrPowerFilter::WorkBlock::write(QDataStream& stream) const
 {
-   EDEBUG_FUNC(this,&stream);
+    EDEBUG_FUNC(this,&stream);
 
-   stream << _start << _size;
+    stream << _start << _size;
 }
 
 
@@ -41,7 +41,7 @@ void CorrPowerFilter::WorkBlock::write(QDataStream& stream) const
  */
 void CorrPowerFilter::WorkBlock::read(QDataStream& stream)
 {
-   EDEBUG_FUNC(this,&stream);
+    EDEBUG_FUNC(this,&stream);
 
-   stream >> _start >> _size;
+    stream >> _start >> _size;
 }

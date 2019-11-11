@@ -11,17 +11,17 @@
  */
 class CorrPowerFilter::Serial : public EAbstractAnalyticSerial
 {
-   Q_OBJECT
+    Q_OBJECT
 public:
-   explicit Serial(CorrPowerFilter* parent);
-   virtual std::unique_ptr<EAbstractAnalyticBlock> execute(const EAbstractAnalyticBlock* block) override final;
+    explicit Serial(CorrPowerFilter* parent);
+    virtual std::unique_ptr<EAbstractAnalyticBlock> execute(const EAbstractAnalyticBlock* block) override final;
 private:
-    double pwr_r_test(double r, int n, double sig_level);
+     double pwr_r_test(double r, int n, double sig_level);
 private:
-   /*!
-    * Pointer to the base analytic for this object.
-    */
-   CorrPowerFilter* _base;
+    /*!
+     * Pointer to the base analytic for this object.
+     */
+    CorrPowerFilter* _base;
 };
 
 

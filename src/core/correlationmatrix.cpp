@@ -9,13 +9,13 @@
  */
 QAbstractTableModel* CorrelationMatrix::model()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   if ( !_model )
-   {
-      _model = new Model(this);
-   }
-   return _model;
+    if ( !_model )
+    {
+        _model = new Model(this);
+    }
+    return _model;
 }
 
 
@@ -30,15 +30,15 @@ QAbstractTableModel* CorrelationMatrix::model()
  */
 void CorrelationMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, const QString& correlationName)
 {
-   EDEBUG_FUNC(this,&geneNames,maxClusterSize,&correlationName);
+    EDEBUG_FUNC(this,&geneNames,maxClusterSize,&correlationName);
 
-   // save correlation names to metadata
-   EMetaObject metaObject {meta().toObject()};
-   metaObject.insert("correlation", correlationName);
-   setMeta(metaObject);
+    // save correlation names to metadata
+    EMetaObject metaObject {meta().toObject()};
+    metaObject.insert("correlation", correlationName);
+    setMeta(metaObject);
 
-   // initialize base class
-   Matrix::initialize(geneNames, maxClusterSize, sizeof(float), SUBHEADER_SIZE);
+    // initialize base class
+    Matrix::initialize(geneNames, maxClusterSize, sizeof(float), SUBHEADER_SIZE);
 }
 
 
@@ -48,9 +48,9 @@ void CorrelationMatrix::initialize(const EMetaArray& geneNames, int maxClusterSi
  */
 QString CorrelationMatrix::correlationName() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return meta().toObject().at("correlation").toString();
+    return meta().toObject().at("correlation").toString();
 }
 
 
@@ -60,32 +60,32 @@ QString CorrelationMatrix::correlationName() const
  */
 std::vector<CorrelationMatrix::RawPair> CorrelationMatrix::dumpRawData() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // create list of raw pairs
-   std::vector<RawPair> pairs;
-   pairs.reserve(size());
+    // create list of raw pairs
+    std::vector<RawPair> pairs;
+    pairs.reserve(size());
 
-   // iterate through all pairs
-   Pair pair(this);
+    // iterate through all pairs
+    Pair pair(this);
 
-   while ( pair.hasNext() )
-   {
-      // read in next pair
-      pair.readNext();
+    while ( pair.hasNext() )
+    {
+        // read in next pair
+        pair.readNext();
 
-      // copy pair to raw list
-      RawPair rawPair;
-      rawPair.index = pair.index();
-      rawPair.correlations.resize(pair.clusterSize());
+        // copy pair to raw list
+        RawPair rawPair;
+        rawPair.index = pair.index();
+        rawPair.correlations.resize(pair.clusterSize());
 
-      for ( int k = 0; k < pair.clusterSize(); ++k )
-      {
-         rawPair.correlations[k] = pair.at(k);
-      }
+        for ( int k = 0; k < pair.clusterSize(); ++k )
+        {
+            rawPair.correlations[k] = pair.at(k);
+        }
 
-      pairs.push_back(rawPair);
-   }
+        pairs.push_back(rawPair);
+    }
 
-   return pairs;
+    return pairs;
 }

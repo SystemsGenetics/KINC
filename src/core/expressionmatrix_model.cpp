@@ -9,11 +9,11 @@
  * @param matrix
  */
 ExpressionMatrix::Model::Model(ExpressionMatrix* matrix):
-   _matrix(matrix)
+    _matrix(matrix)
 {
-   EDEBUG_FUNC(this,matrix);
+    EDEBUG_FUNC(this,matrix);
 
-   setParent(matrix);
+    setParent(matrix);
 }
 
 
@@ -28,50 +28,50 @@ ExpressionMatrix::Model::Model(ExpressionMatrix* matrix):
  */
 QVariant ExpressionMatrix::Model::headerData(int section, Qt::Orientation orientation, int role) const
 {
-   EDEBUG_FUNC(this,section,orientation,role);
+    EDEBUG_FUNC(this,section,orientation,role);
 
-   // make sure the role is valid
-   if ( role != Qt::DisplayRole )
-   {
-      return QVariant();
-   }
+    // make sure the role is valid
+    if ( role != Qt::DisplayRole )
+    {
+        return QVariant();
+    }
 
-   // determine whether to return a row name or column name
-   switch (orientation)
-   {
-   case Qt::Vertical:
-   {
-      // get gene names
-      EMetaArray geneNames {_matrix->geneNames()};
+    // determine whether to return a row name or column name
+    switch (orientation)
+    {
+    case Qt::Vertical:
+    {
+        // get gene names
+        EMetaArray geneNames {_matrix->geneNames()};
 
-      // make sure the index is valid
-      if ( section >= 0 && section < geneNames.size() )
-      {
-         // return the specified row name
-         return geneNames.at(section).toString();
-      }
+        // make sure the index is valid
+        if ( section >= 0 && section < geneNames.size() )
+        {
+            // return the specified row name
+            return geneNames.at(section).toString();
+        }
 
-      // otherwise return empty string
-      return QVariant();
-   }
-   case Qt::Horizontal:
-   {
-      // get sample names
-      EMetaArray samples {_matrix->sampleNames()};
+        // otherwise return empty string
+        return QVariant();
+    }
+    case Qt::Horizontal:
+    {
+        // get sample names
+        EMetaArray samples {_matrix->sampleNames()};
 
-      // make sure the index is valid
-      if ( section >= 0 && section < samples.size() )
-      {
-         // return the specified column name
-         return samples.at(section).toString();
-      }
+        // make sure the index is valid
+        if ( section >= 0 && section < samples.size() )
+        {
+            // return the specified column name
+            return samples.at(section).toString();
+        }
 
-      // otherwise return empty string
-      return QVariant();
-   }
-   }
+        // otherwise return empty string
+        return QVariant();
+    }
+    }
 
-   return QVariant();
+    return QVariant();
 }
 
 
@@ -83,9 +83,9 @@ QVariant ExpressionMatrix::Model::headerData(int section, Qt::Orientation orient
  */
 int ExpressionMatrix::Model::rowCount(const QModelIndex&) const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return _matrix->_geneSize;
+    return _matrix->_geneSize;
 }
 
 
@@ -97,9 +97,9 @@ int ExpressionMatrix::Model::rowCount(const QModelIndex&) const
  */
 int ExpressionMatrix::Model::columnCount(const QModelIndex&) const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return _matrix->_sampleSize;
+    return _matrix->_sampleSize;
 }
 
 
@@ -112,25 +112,25 @@ int ExpressionMatrix::Model::columnCount(const QModelIndex&) const
  */
 QVariant ExpressionMatrix::Model::data(const QModelIndex& index, int role) const
 {
-   EDEBUG_FUNC(this,&index,role);
+    EDEBUG_FUNC(this,&index,role);
 
-   // make sure the index and role are valid
-   if ( !index.isValid() || role != Qt::DisplayRole )
-   {
-      return QVariant();
-   }
+    // make sure the index and role are valid
+    if ( !index.isValid() || role != Qt::DisplayRole )
+    {
+        return QVariant();
+    }
 
-   // make sure the index is within the bounds of the expression matrix
-   if ( index.row() >= _matrix->_geneSize || index.column() >= _matrix->_sampleSize )
-   {
-      return QVariant();
-   }
+    // make sure the index is within the bounds of the expression matrix
+    if ( index.row() >= _matrix->_geneSize || index.column() >= _matrix->_sampleSize )
+    {
+        return QVariant();
+    }
 
-   // get the specified value from the expression matrix
-   float value;
-   _matrix->seekExpression(index.row(),index.column());
-   _matrix->stream() >> value;
+    // get the specified value from the expression matrix
+    float value;
+    _matrix->seekExpression(index.row(),index.column());
+    _matrix->stream() >> value;
 
-   // return the specified value
-   return value;
+    // return the specified value
+    return value;
 }

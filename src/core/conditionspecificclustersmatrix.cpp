@@ -21,21 +21,21 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
     // make sure all containers have something in them
     if ( features.isEmpty() || featureInfo.isEmpty() || data.isEmpty())
     {
-       E_MAKE_EXCEPTION(e);
-       e.setTitle(tr("Domain Error"));
-       if ( features.isEmpty() )
-       {
-           e.setDetails(tr("No Features Provided"));
-       }
-       else if ( featureInfo.isEmpty() )
-       {
-           e.setDetails(tr("No Feature Info Provided"));
-       }
-       else if ( data.isEmpty() )
-       {
-           e.setDetails(tr("No Data Provided"));
-       }
-       throw e;
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Domain Error"));
+        if ( features.isEmpty() )
+        {
+            e.setDetails(tr("No Features Provided"));
+        }
+        else if ( featureInfo.isEmpty() )
+        {
+            e.setDetails(tr("No Feature Info Provided"));
+        }
+        else if ( data.isEmpty() )
+        {
+            e.setDetails(tr("No Data Provided"));
+        }
+        throw e;
     }
 
     EMetaObject metaObject {meta().toObject()};
@@ -149,7 +149,7 @@ QAbstractTableModel* CSMatrix::model()
     EDEBUG_FUNC(this);
     if ( !_model )
     {
-       _model = new Model(this);
+        _model = new Model(this);
     }
     return _model;
 }
