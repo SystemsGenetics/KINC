@@ -87,10 +87,13 @@ void Extract::writeTextFormat(int index)
             {
                 QString testName = _csm->getTestName(i);
                 QString testType = _csm->getTestType(i);
+
                 _stream << "\t" << testName + + "_pVal";
+
                 // If there is an R-squared value add it as well.
                 if ( QString::compare(testType, "Quantitative", Qt::CaseInsensitive) == 0 ||
-                     QString::compare(testType, "Ordinal", Qt::CaseInsensitive) == 0 ) {
+                     QString::compare(testType, "Ordinal", Qt::CaseInsensitive) == 0 )
+                {
                     _stream << "\t" << testName + "_RSqr";
                 }
             }
@@ -128,10 +131,11 @@ void Extract::writeTextFormat(int index)
         {
             // Run some pre-checks on any filters provided.
             pValueFilterCheck();
+
+            // Iterate through teach test.
             int notInclude = 0;
             int include = 0;
 
-            // Iterate through teach test.
             for ( int i = 0; i < _csm->getTestCount(); i++ )
             {
                 // Count the number of features that are not signficant for each feature-specific p-value provided.
@@ -139,12 +143,14 @@ void Extract::writeTextFormat(int index)
                 {
                     notInclude++;
                 }
+
                 // Count the number of features that are signficant if only a single p-value filter was given.
                 if ( _csmPValueFilterFeatureNames.size() == 0 && PValuefilter(_csm->getTestName(i), _csmPair.at(k, i, "pvalue")))
                 {
                     include++;
                 }
             }
+
             if ( notInclude > 0  || (_csmPValueFilterFeatureNames.size() == 0 && include == 0))
             {
                 continue;
@@ -152,10 +158,11 @@ void Extract::writeTextFormat(int index)
 
             // Run some pre-checks on any filters provided.
             rSquareFilterCheck();
+
+            // Iterate through teach test.
             notInclude = 0;
             include = 0;
 
-            // Iterate through teach test.
             for ( int i = 0; i < _csm->getTestCount(); i++ )
             {
                 // Count the number of features that are not signficant for each feature-specific p-value provided.
@@ -163,12 +170,14 @@ void Extract::writeTextFormat(int index)
                 {
                     notInclude++;
                 }
+
                 // Count the number of features that are signficant if only a single p-value filter was given.
                 if ( _csmRSquareFilterFeatureNames.size() == 0 && RSquarefilter(_csm->getTestName(i), _csmPair.at(k, i, "r2")))
                 {
                     include++;
                 }
             }
+
             if ( notInclude > 0  || (_csmPValueFilterFeatureNames.size() == 0 && include == 0))
             {
                 continue;
@@ -243,10 +252,13 @@ void Extract::writeTextFormat(int index)
             for ( int i = 0; i < _csm->getTestCount(); i++ )
             {
                 _stream << "\t" << _csmPair.at(k, i, "pvalue");
-                QString testType = _csm->getTestType(i);
+
                 // If there is an R-squared value add it as well.
+                QString testType = _csm->getTestType(i);
+
                 if ( QString::compare(testType, "Quantitative", Qt::CaseInsensitive) == 0 ||
-                     QString::compare(testType, "Ordinal", Qt::CaseInsensitive) == 0 ) {
+                     QString::compare(testType, "Ordinal", Qt::CaseInsensitive) == 0 )
+                {
                     _stream << "\t" << _csmPair.at(k, i, "r2");
                 }
             }
@@ -496,6 +508,7 @@ void Extract::initialize()
     // initialize pairwise iterators
     _ccmPair = CCMatrix::Pair(_ccm);
     _cmxPair = CorrelationMatrix::Pair(_cmx);
+
     if ( _csm )
     {
         _csmPair = CSMatrix::Pair(_csm);
@@ -516,19 +529,23 @@ void Extract::initialize()
 void Extract::preparePValueFilter()
 {
     bool ok = false;
+
     if ( _csmPValueFilter != "" )
     {
         QStringList filters = _csmPValueFilter.split("::");
+
         for ( int i = 0; i < filters.size(); i++ )
         {
             QStringList data = filters.at(i).split(",");
             data.at(0).toFloat(&ok);
-            if (ok)
+
+            if ( ok )
             {
                 _csmPValueFilterThresh.append(data.at(0).toFloat());
                 break;
             }
-            if(data.size() != 3 && !ok)
+
+            if ( data.size() != 3 && !ok )
             {
                 E_MAKE_EXCEPTION(e);
                 e.setTitle(tr("Invalid Input"));
@@ -553,19 +570,23 @@ void Extract::preparePValueFilter()
 void Extract::prepareRSquareFilter()
 {
     bool ok = false;
+
     if ( _csmRSquareFilter != "" )
     {
         QStringList filters = _csmRSquareFilter.split("::");
+
         for ( int i = 0; i < filters.size(); i++ )
         {
             QStringList data = filters.at(i).split(",");
             data.at(0).toFloat(&ok);
-            if (ok)
+
+            if ( ok )
             {
                 _csmRSquareFilterThresh.append(data.at(0).toFloat());
                 break;
             }
-            if(data.size() != 2 && !ok)
+
+            if ( data.size() != 2 && !ok )
             {
                 E_MAKE_EXCEPTION(e);
                 e.setTitle(tr("Invalid Input"));
@@ -598,37 +619,26 @@ bool Extract::PValuefilter(QString labelName, float pValue)
     if ( _csmPValueFilter != "" )
     {
         // If there are feature-specific filters then apply the filter to the respective field.
-        if(_csmPValueFilterFeatureNames.size() != 0)
+        if ( _csmPValueFilterFeatureNames.size() != 0 )
         {
             auto names = labelName.split("__");
+
             for ( int i = 0; i < _csmPValueFilterFeatureNames.size(); i++ )
             {
                 if ( names.at(0) == _csmPValueFilterFeatureNames.at(i) && names.at(1) == _csmPValueFilterLabelNames.at(i) )
                 {
-                    if ( pValue > _csmPValueFilterThresh.at(i) )
-                    {
-                        return false;
-                    }
-                    else
-                    {
-                        return true;
-                    }
+                    return (pValue <= _csmPValueFilterThresh.at(i));
                 }
             }
         }
+
         // If there are no names for the filter, then check any field.
         else
         {
-            if(pValue > _csmPValueFilterThresh.at(0))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return (pValue <= _csmPValueFilterThresh.at(0));
         }
     }
+
     return true;
 }
 
@@ -647,36 +657,24 @@ bool Extract::RSquarefilter(QString labelName, float rSquared)
 {
     if ( _csmRSquareFilter != "" )
     {
-        if(_csmRSquareFilterFeatureNames.size() != 0)
+        if ( _csmRSquareFilterFeatureNames.size() != 0 )
         {
             auto names = labelName.split("__");
+
             for ( int i = 0; i < _csmRSquareFilterFeatureNames.size(); i++ )
             {
                 if ( names.at(0) == _csmRSquareFilterFeatureNames.at(i) && names.at(1) == _csmRSquareFilterLabelNames.at(i) )
                 {
-                    if ( rSquared > _csmRSquareFilterThresh.at(i) )
-                    {
-                        return false;
-                    }
-                    else
-                    {
-                        return true;
-                    }
+                    return (rSquared <= _csmRSquareFilterThresh.at(i));
                 }
             }
         }
         else
         {
-            if(rSquared < _csmRSquareFilterThresh.at(0))
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return (rSquared <= _csmRSquareFilterThresh.at(0));
         }
     }
+
     return true;
 }
 
@@ -697,7 +695,7 @@ bool Extract::pValueFilterCheck()
     }
 
     // default filter all
-    if(_csmPValueFilterFeatureNames.size() == 0 && _csmPValueFilterThresh.size() != 0)
+    if ( _csmPValueFilterFeatureNames.size() == 0 && _csmPValueFilterThresh.size() != 0 )
     {
         return true;
     }
@@ -706,6 +704,7 @@ bool Extract::pValueFilterCheck()
     for ( int i = 0; i < _csm->getTestCount(); i++ )
     {
         auto names = _csm->getTestName(i).split("__");
+
         for ( int j = 0; j < _csmPValueFilterFeatureNames.size(); j++ )
         {
             if ( names.at(0) == _csmPValueFilterFeatureNames.at(j) && names.at(1) == _csmPValueFilterLabelNames.at(j) )
@@ -714,6 +713,7 @@ bool Extract::pValueFilterCheck()
             }
         }
     }
+
     E_MAKE_EXCEPTION(e);
     e.setTitle(tr("Invalid Input"));
     e.setDetails(tr("Invalid filter name given."));
@@ -737,7 +737,7 @@ bool Extract::rSquareFilterCheck()
     }
 
     // default filter all
-    if(_csmRSquareFilterFeatureNames.size() == 0 && _csmRSquareFilterThresh.size() != 0)
+    if ( _csmRSquareFilterFeatureNames.size() == 0 && _csmRSquareFilterThresh.size() != 0 )
     {
         return true;
     }
@@ -746,6 +746,7 @@ bool Extract::rSquareFilterCheck()
     for ( int i = 0; i < _csm->getTestCount(); i++ )
     {
         auto names = _csm->getTestName(i).split("__");
+
         for ( int j = 0; j < _csmRSquareFilterFeatureNames.size(); j++ )
         {
             if ( names.at(0) == _csmRSquareFilterFeatureNames.at(j) && names.at(1) == _csmRSquareFilterLabelNames.at(j) )
@@ -754,6 +755,7 @@ bool Extract::rSquareFilterCheck()
             }
         }
     }
+
     E_MAKE_EXCEPTION(e);
     e.setTitle(tr("Invalid Input"));
     e.setDetails(tr("Invalid filter name given."));

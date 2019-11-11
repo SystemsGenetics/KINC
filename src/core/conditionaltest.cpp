@@ -19,8 +19,8 @@
 int ConditionalTest::size() const
 {
     EDEBUG_FUNC(this);
-    qint64 size = (_ccm->size() + _workBlockSize - 1) / _workBlockSize;
-    return size;
+
+    return (static_cast<qint64>(_ccm->size()) + _workBlockSize - 1) / _workBlockSize;
 }
 
 
@@ -63,7 +63,7 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
     // Iterate through the result block pairs.
     const ResultBlock* resultBlock {result->cast<ResultBlock>()};
 
-    for (qint32 i = 0; i < resultBlock->pairs().size(); i++)
+    for ( qint32 i = 0; i < resultBlock->pairs().size(); i++ )
     {
         // copy the values form the pairs to the CSM
         if ( resultBlock->pairs().at(i).pValues.size() > 0 )
@@ -100,6 +100,7 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
 EAbstractAnalyticInput* ConditionalTest::makeInput()
 {
     EDEBUG_FUNC(this);
+
     return new Input(this);
 }
 
@@ -137,6 +138,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork(int index) con
 std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork() const
 {
     EDEBUG_FUNC(this);
+
     return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock());
 }
 
@@ -150,6 +152,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork() const
 std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeResult() const
 {
     EDEBUG_FUNC(this);
+
     return std::unique_ptr<EAbstractAnalyticBlock>(new EAbstractAnalyticBlock());
 }
 
@@ -163,6 +166,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeResult() const
 EAbstractAnalyticSerial* ConditionalTest::makeSerial()
 {
     EDEBUG_FUNC(this);
+
     return new Serial(this);
 }
 
@@ -176,7 +180,13 @@ void ConditionalTest::initialize()
 {
     EDEBUG_FUNC(this);
 
+    // only the master process needs to validate arguments
     auto& mpi {Ace::QMPI::instance()};
+
+    if ( !mpi.isMaster() )
+    {
+        return;
+    }
 
     // make sure input data is valid
     if ( !_ccm )
@@ -186,6 +196,7 @@ void ConditionalTest::initialize()
         e.setDetails(tr("Did not get valid CCM data argument."));
         throw e;
     }
+
     if ( !_cmx )
     {
         E_MAKE_EXCEPTION(e);
@@ -193,6 +204,7 @@ void ConditionalTest::initialize()
         e.setDetails(tr("Did not get valid CMX data argument."));
         throw e;
     }
+
     if ( !_amx )
     {
         E_MAKE_EXCEPTION(e);
@@ -200,6 +212,7 @@ void ConditionalTest::initialize()
         e.setDetails(tr("Did not get valid AMX data argument."));
         throw e;
     }
+
     if (  !_emx )
     {
         E_MAKE_EXCEPTION(e);
@@ -207,6 +220,7 @@ void ConditionalTest::initialize()
         e.setDetails(tr("Did not get valid EMX data argument."));
         throw e;
     }
+
     if (  !_out)
     {
         E_MAKE_EXCEPTION(e);
@@ -215,11 +229,6 @@ void ConditionalTest::initialize()
         throw e;
     }
 
-    // only the master process needs to validate arguments
-    if ( !mpi.isMaster() )
-    {
-        return;
-    }
     // open the stream to the coprrect file.
     _stream.setDevice(_amx);
 
@@ -270,6 +279,7 @@ void ConditionalTest::initialize()
 void ConditionalTest::initializeOutputs()
 {
     EDEBUG_FUNC(this);
+
     if ( !_out )
     {
         E_MAKE_EXCEPTION(e);
@@ -310,7 +320,7 @@ void ConditionalTest::readInAMX(
 
     // the file can be a csv or a tab delimited AMX
     // default is tab diliniated
-    if(_delimiter == "tab")
+    if ( _delimiter == "tab" )
     {
         _delimiter = "\t";
     }
@@ -385,6 +395,7 @@ void ConditionalTest::readInAMX(
             }
         }
     }
+
     // Add in labels the user has chosen to test.
     for ( int j = 0; j < amxdata.size(); j++ )
     {
@@ -417,6 +428,7 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
     // Counts here for an aproximation for what test type it should be.
     QVector<QVector<qint32>> counts;
     counts.resize(dataTestType.size());
+
     for ( int i = 0 ; i < counts.size(); i++ )
     {
         counts[i].resize(3);
@@ -424,18 +436,20 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
 
     bool ok;
     QString line;
+
     for ( int i = 0; i < 10; i++ )
     {
         // read in the line
         line = _stream.readLine();
 
         // splits the file along the commas or tabs depending
-        if(_delimiter == "tab")
+        if ( _delimiter == "tab" )
         {
             _delimiter = "\t";
         }
 
         auto words = line.split(_delimiter, QString::SkipEmptyParts, Qt::CaseInsensitive);
+
         for ( int i = 0; i < words.size(); i++ )
         {
             // it most likeley a double and should be considered QUANTITATIVE.
@@ -447,6 +461,7 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
                     counts[i][QUANTITATIVE]++;
                 }
             }
+
             // it is most likely an integer and should ne considered Ordinal.
             else if ( words[i].toInt(&ok) && ok )
             {
@@ -455,6 +470,7 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
                     counts[i][ORDINAL]++;
                 }
             }
+
             // if its neistartingPointther on of those than its a string.
             else
             {
@@ -465,6 +481,7 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
             }
         }
     }
+
     for ( int i = 0; i < counts.size() ; i++ )
     {
         if ( counts.at(i).at(QUANTITATIVE) > 0)
@@ -480,6 +497,7 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
             dataTestType[i] = CATEGORICAL;
         }
     }
+
     _stream.seek(0);
     _stream.readLine();
 }
@@ -496,10 +514,13 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
 int ConditionalTest::max(QVector<qint32> &counts) const
 {
     EDEBUG_FUNC(this,&counts);
+
     int maxnum = 0;
+
     if ( counts.size() > 0 )
     {
         qint32 max = counts.at(0);
+
         for ( int i = 1; i < counts.size(); i++ )
         {
             if ( counts.at(i) > max )
@@ -509,6 +530,7 @@ int ConditionalTest::max(QVector<qint32> &counts) const
             }
         }
     }
+
     return maxnum;
 }
 
@@ -520,8 +542,10 @@ int ConditionalTest::max(QVector<qint32> &counts) const
 void ConditionalTest::Test()
 {
     EDEBUG_FUNC(this);
-    _Test = _Testing.split(",", QString::SkipEmptyParts, Qt::CaseInsensitive).toVector();
+
     // make sure input data is valid
+    _Test = _Testing.split(",", QString::SkipEmptyParts, Qt::CaseInsensitive).toVector();
+
     if ( _Test.isEmpty() )
     {
         E_MAKE_EXCEPTION(e);
@@ -539,11 +563,15 @@ void ConditionalTest::Test()
 void ConditionalTest::override()
 {
     EDEBUG_FUNC(this);
+
     auto words = _testOverride.split(",", QString::SkipEmptyParts, Qt::CaseInsensitive).toVector();
+
     for ( int i = 0; i < words.size(); i++ )
     {
         _override.append(QVector<QString>());
+
         auto word = words.at(i).split(":");
+
         for ( auto item : word )
         {
             _override[i].append(item);
@@ -560,6 +588,7 @@ void ConditionalTest::override()
 QString ConditionalTest::testNames()
 {
     QString string;
+
     for ( int i = 0; i < _features.size(); i++ )
     {
         if ( _testType.at(i) == CATEGORICAL )
@@ -578,6 +607,7 @@ QString ConditionalTest::testNames()
             string += ":";
         }
     }
+
     return string;
 }
 
@@ -605,6 +635,7 @@ QString ConditionalTest::testNames()
 void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &amxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data)
 {
     EDEBUG_FUNC(this,&maxClusterSize,&subHeaderSize,&amxData,&testType,&data);
+
     // needed by the CSM specific initializer
     EMetaArray Features;
     QVector<EMetaArray> featureInfo;
@@ -673,10 +704,10 @@ void ConditionalTest::rearrangeSamples()
 
     // find the sample index, if none is found with the name "samples" then
     // we default to using the first column.
-    for(int i = 0; i< _features.size(); i++)
+    for ( int i = 0; i< _features.size(); i++ )
     {
-        if(QString::compare(_features.at(i).at(0), "samples", Qt::CaseInsensitive) ||
-           QString::compare(_features.at(i).at(0), "sample", Qt::CaseInsensitive))
+        if ( QString::compare(_features.at(i).at(0), "samples", Qt::CaseInsensitive) ||
+             QString::compare(_features.at(i).at(0), "sample", Qt::CaseInsensitive) )
         {
             sampleIndex = i;
             break;
@@ -684,7 +715,7 @@ void ConditionalTest::rearrangeSamples()
     }
 
     // if the sample size differes break.
-    if(_data.at(sampleIndex).size() != _emx->sampleSize())
+    if ( _data.at(sampleIndex).size() != _emx->sampleSize() )
     {
         E_MAKE_EXCEPTION(e);
         e.setTitle(tr("Sample Size Error"));
@@ -694,17 +725,17 @@ void ConditionalTest::rearrangeSamples()
 
     // look through all the samples, if you find one that doesnt match
     // switch it for the right sample.
-    for(int i = 0; i < _emx->sampleSize(); i++)
+    for ( int i = 0; i < _emx->sampleSize(); i++ )
     {
-        if(_emx->sampleNames().at(i).toString() != _data.at(sampleIndex).at(i))
+        if ( _emx->sampleNames().at(i).toString() != _data.at(sampleIndex).at(i) )
         {
             // find the right sample.
-            for(int j = startIndex; j <  _data.at(sampleIndex).size(); j++)
+            for ( int j = startIndex; j <  _data.at(sampleIndex).size(); j++ )
             {
                 // switch the samples.
-                if(_emx->sampleNames().at(i).toString() == _data.at(sampleIndex).at(j))
+                if ( _emx->sampleNames().at(i).toString() == _data.at(sampleIndex).at(j) )
                 {
-                    for(int k = 0; k < _data.size(); k++)
+                    for ( int k = 0; k < _data.size(); k++ )
                     {
                         // move wrong sample to temp.
                         temp = _data.at(k).at(i);
@@ -715,7 +746,8 @@ void ConditionalTest::rearrangeSamples()
                     }
                     break;
                 }
-                if(j == _emx->sampleSize() - 1)
+
+                if ( j == _emx->sampleSize() - 1 )
                 {
                     E_MAKE_EXCEPTION(e);
                     e.setTitle(tr("Sample Size Error"));
@@ -723,6 +755,7 @@ void ConditionalTest::rearrangeSamples()
                     throw e;
                 }
             }
+
             // increment the start nidex so you dont have to start at 0 every time.
             startIndex++;
         }

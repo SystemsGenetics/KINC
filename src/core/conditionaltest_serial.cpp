@@ -53,17 +53,18 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
     for ( qint64 ccmIndex = start; ccmIndex < start + size; ccmIndex++ )
     {
         // reads the first value in the ccm
-
         if ( ccmIndex == start )
         {
             ccmPair.read(index);
             cmxPair.read(ccmPair.index());
         }
+
         if ( (ccmPair.index().getX() != 1 && ccmPair.index().getY()!= 0) || ccmIndex != start )
         {
             ccmPair.readNext();
             cmxPair.read(ccmPair.index());
         }
+
         // if the first one isnt in the cluster we should not count it.
         if ( ccmPair.clusterSize() == 0 )
         {
@@ -92,17 +93,18 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                 {
                     continue;
                 }
-                if(_base->_testType.at(featureIndex) == QUANTITATIVE || _base->_testType.at(featureIndex) == ORDINAL)
+
+                if ( _base->_testType.at(featureIndex) == QUANTITATIVE || _base->_testType.at(featureIndex) == ORDINAL )
                 {
                     prepAnxData(_base->_features.at(featureIndex).at(0), featureIndex, _base->_testType.at(featureIndex));
                     test(ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues, r2);
                 }
-                else if (_base->_testType.at(featureIndex) == CATEGORICAL)
+                else if ( _base->_testType.at(featureIndex) == CATEGORICAL )
                 {
                     for ( qint32 labelIndex = 0; labelIndex < _base->_features.at(featureIndex).size(); labelIndex++ )
                     {
-
                         prepAnxData(_base->_features.at(featureIndex).at(labelIndex), featureIndex, _base->_testType.at(featureIndex));
+
                         // if there are sub labels to test for the feature
                         if ( _base->_features.at(featureIndex).size() > 1 )
                         {
@@ -112,6 +114,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                             }
                             test(ccmPair, clusterIndex, testIndex, featureIndex, labelIndex, pValues, r2);
                         }
+
                         // if only the feature needs testing (no sub labels)
                         else
                         {
@@ -121,6 +124,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                 }
             }
         }
+
         if ( !isEmpty(pValues) )
         {
             CSMPair pair;
@@ -152,16 +156,19 @@ int ConditionalTest::Serial::prepAnxData(QString testLabel, int dataIndex, TESTT
     // get the needed data fro the comparison
     _catCount = 0;
     _amxData.resize(_base->_data.at(dataIndex).size());
+
     // populate array with annotation data
     for ( int j = 0; j < _base->_data.at(dataIndex).size(); j++ )
     {
         _amxData[j] = _base->_data.at(dataIndex).at(j).toString();
+
         // if data is the same as the test label add one to the catagory counter
         if ( testType == _base->CATEGORICAL && _amxData[j] == testLabel )
         {
             _catCount++;
         }
     }
+
     return _catCount;
 }
 
@@ -179,13 +186,15 @@ bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
     EDEBUG_FUNC(this, &matrix);
 
     int index = 0;
-    while(index < matrix.size())
+
+    while ( index < matrix.size() )
     {
         if ( !matrix.at(index++).isEmpty() )
         {
             return false;
         }
     }
+
     return true;
 }
 
@@ -212,15 +221,18 @@ int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterInd
         {
             _catCount++;
         }
+
         if ( ccmPair.at(clusterIndex, i) == 1 )
         {
             _clusterSize++;
+
             if ( testType == _base->CATEGORICAL && _amxData.at(i) == label )
             {
                 _catInCluster++;
             }
         }
     }
+
     return _catInCluster;
 }
 
@@ -266,26 +278,28 @@ int ConditionalTest::Serial::test(
     // conduct the correct test based on the type of data
     switch(_base->_testType.at(featureIndex))
     {
-        case CATEGORICAL :
+        case CATEGORICAL:
             pValues[clusterIndex][testIndex] = hypergeom(ccmPair, clusterIndex,
                                                          _base->_features.at(featureIndex).at(labelIndex));
             r2[clusterIndex][testIndex] = qQNaN();
             testIndex++;
-        break;
-        case ORDINAL :
+            break;
+        case ORDINAL:
             regression(_amxData, ccmPair, clusterIndex, ORDINAL, results);
             pValues[clusterIndex][testIndex] = results.at(0);
             r2[clusterIndex][testIndex] = results.at(1);
             testIndex++;
-        break;
-        case QUANTITATIVE :
+            break;
+        case QUANTITATIVE:
             regression(_amxData, ccmPair, clusterIndex, QUANTITATIVE, results);
             pValues[clusterIndex][testIndex] = results.at(0);
             r2[clusterIndex][testIndex] = results.at(1);
             testIndex++;
-        break;
-        default:; // quash a compiler warning
+            break;
+        default:
+            break;
     }
+
     return _base->_testType.at(featureIndex);
 }
 
@@ -299,7 +313,6 @@ int ConditionalTest::Serial::test(
 double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIndex, QString test_label)
 {
     EDEBUG_FUNC(this);
-    // QString samples = ccmPair.toString();
 
     // We use the hypergeometric distribution because the samples are
     // selected from the population for membership in the cluster without
@@ -325,7 +338,8 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
     // reached the end of the distribution, so the Ho that
     // X > k is always 0.  This happens if the cluster is 100%
     // comprised of the category we're looking for.
-    if (k == n1) {
+    if ( k == n1 )
+    {
         return 1;
     }
 
@@ -336,7 +350,7 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
     // 0.001 and a power of 0.95 we need at least 31 samples.
     // So, we'll perform a jacknife resampling of our data
     // to calculate an average proportion of 31 samples
-    if (t > 31)
+    if ( t > 31 )
     {
         // Initialize the uniform random number generator.
         const gsl_rng_type * T;
@@ -351,8 +365,8 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
         // To perform the Jacknife resampling we will
         // perform 30 iterations (central limit thereom)
         int in = 30;
-        for (int i = 0; i < in; i++) {
-
+        for ( int i = 0; i < in; i++ )
+        {
             // Keeps track of the number of successes for each iteration.
             int ns = 0;
 
@@ -362,21 +376,26 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
             // testing category then we consider it a success.
             int indexes[sampleSize];
             int chosen[31];
-            for (int j = 0; j < sampleSize; j++) {
+
+            for ( int j = 0; j < sampleSize; j++ )
+            {
                 indexes[j] = j;
             }
 
             // The gsl_ran_choose function randmly choose samples without replacement from a list.
             gsl_ran_choose(r, chosen, 31, indexes, sampleSize, sizeof(int));
-            for (int j = 0; j < 31; j++)
+
+            for ( int j = 0; j < 31; j++ )
             {
-                if (ccmPair.at(clusterIndex, chosen[j]) == 1 && _amxData.at(chosen[j]) == test_label)
+                if ( ccmPair.at(clusterIndex, chosen[j]) == 1 && _amxData.at(chosen[j]) == test_label )
                 {
                     ns = ns + 1;
                 }
             }
+
             jkap += ns;
         }
+
         // Calculate the average proportion from all iterations
         // and free the random number struct.
         jkap = jkap/in;
@@ -439,10 +458,10 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
     geneY.read(ccmPair.index().getY());
 
     // Look through all the samples in the mask.
-    for (int i = 0, j = 0; i < _base->_emx->sampleSize(); i++)
+    for ( int i = 0, j = 0; i < _base->_emx->sampleSize(); i++ )
     {
         // If the sample label matches with the given label.
-        if (ccmPair.at(clusterIndex, i) == 1)
+        if ( ccmPair.at(clusterIndex, i) == 1 )
         {
             // Add emx data as the predictors but only for samples in the cluster. We
             // add a 1 for the intercept, gene1, gene2 and the interaction: gene1*gene2.
@@ -450,23 +469,25 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
             // on the values of both genes.
             double g1 = static_cast<double>(geneX.at(i));
             double g2 = static_cast<double>(geneY.at(i));
+
             gsl_matrix_set(X, j, 0, static_cast<double>(1)); // for the intercept
             gsl_matrix_set(X, j, 1, g1);
             gsl_matrix_set(X, j, 2, g2);
             gsl_matrix_set(X, j, 3, g1*g2);
 
             // Next add the annotation observation for this sample to the Y vector.
-            if (testType == ORDINAL)
+            if ( testType == ORDINAL )
             {
                 // Convert the observation data into a "design vector"
                 // Each unique number being a ssigned a unique integer.
-                if (!labelInfo.contains(amxInfo.at(i).toInt()))
+                if ( !labelInfo.contains(amxInfo.at(i).toInt()) )
                 {
                     labelInfo.append(amxInfo.at(i).toInt());
                 }
-                for (int k = 0; k < labelInfo.size(); k++)
+
+                for ( int k = 0; k < labelInfo.size(); k++ )
                 {
-                    if (labelInfo.at(k) == amxInfo.at(i).toInt())
+                    if ( labelInfo.at(k) == amxInfo.at(i).toInt() )
                     {
                         gsl_vector_set(Y, j, k + 1);
                     }
@@ -476,6 +497,7 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
             {
                 gsl_vector_set(Y, j, amxInfo.at(i).toFloat());
             }
+
             j++;
         }
     }
@@ -488,8 +510,10 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
 
     // Calculate R^2 and p-value
     r2 = 1 - chisq / gsl_stats_tss(Y->data, Y->stride, Y->size);
+
     double dl = _clusterSize - 2;
     double F = r2 * dl / (1 - r2);
+
     pValue = 1 - gsl_cdf_fdist_P (F, 1, dl);
 
     // TODO: we should check the assumptions of the linear regression and
@@ -519,7 +543,7 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
     gsl_multifit_linear_free(work);
 
     // Set the results array
-    if(qIsNaN(pValue))
+    if ( qIsNaN(pValue) )
     {
         results[0] = 1;
         results[1] = 0;

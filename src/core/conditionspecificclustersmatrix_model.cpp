@@ -68,6 +68,7 @@ QVariant CSMatrix::Model::headerData(int section, Qt::Orientation orientation, i
 int CSMatrix::Model::columnCount(const QModelIndex&) const
 {
     EDEBUG_FUNC(this);
+
     return _matrix->geneSize();
 }
 
@@ -83,6 +84,7 @@ int CSMatrix::Model::columnCount(const QModelIndex&) const
 int CSMatrix::Model::rowCount(const QModelIndex&) const
 {
     EDEBUG_FUNC(this);
+
     return _matrix->geneSize();
 }
 

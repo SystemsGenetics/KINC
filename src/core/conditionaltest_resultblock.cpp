@@ -45,9 +45,11 @@ void ConditionalTest::ResultBlock::append(const CSMPair& pair)
 void ConditionalTest::ResultBlock::write(QDataStream& stream) const
 {
     EDEBUG_FUNC(this,&stream);
+
     for ( auto cell : _pairs )
     {
         stream << cell.pValues.size();
+
         for ( int i = 0; i < cell.pValues.size(); i++ )
         {
             stream << cell.pValues.at(i);
@@ -64,10 +66,13 @@ void ConditionalTest::ResultBlock::write(QDataStream& stream) const
 void ConditionalTest::ResultBlock::read(QDataStream& stream)
 {
     EDEBUG_FUNC(this,&stream);
+
     int size = 0;
+
     for ( int i = 0; i < _pairs.size(); i++ )
     {
         stream >> size;
+
         for ( int j = 0; j < size; j++ )
         {
             stream << _pairs[i].pValues[j];

@@ -133,6 +133,7 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
 void CSMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, int subheader)
 {
     EDEBUG_FUNC(this,&geneNames,maxClusterSize,subheader);
+
     Matrix::initialize(geneNames, maxClusterSize, sizeof(double) * 2 * _testcount, subheader);
 }
 
@@ -146,6 +147,7 @@ void CSMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, int s
 QAbstractTableModel* CSMatrix::model()
 {
     EDEBUG_FUNC(this);
+
     if ( !_model )
     {
         _model = new Model(this);
@@ -163,6 +165,7 @@ QAbstractTableModel* CSMatrix::model()
 int CSMatrix::sampleSize() const
 {
     EDEBUG_FUNC(this);
+
     return _sampleSize;
 }
 
@@ -174,6 +177,7 @@ int CSMatrix::sampleSize() const
 void CSMatrix::writeHeader()
 {
     EDEBUG_FUNC(this);
+
     stream() << _sampleSize << _testcount;
 }
 
@@ -185,6 +189,7 @@ void CSMatrix::writeHeader()
 void CSMatrix::readHeader()
 {
     EDEBUG_FUNC(this);
+
     stream() >> _sampleSize >> _testcount;
 }
 
@@ -198,6 +203,7 @@ void CSMatrix::readHeader()
 void CSMatrix::setTestCount(qint32 newData)
 {
     EDEBUG_FUNC(this, newData);
+
     _testcount = newData;
 }
 
@@ -219,8 +225,8 @@ QString CSMatrix::getTestName(int index) const
 
 QString CSMatrix::getTestType(int index) const
 {
-    QString testName = getTestName(index);
-    auto names = testName.split("__");
+    auto names = getTestName(index).split("__");
+
     return meta().toObject().at("Features")
                  .toObject().at(names.at(0))
                  .toObject().at("Test")

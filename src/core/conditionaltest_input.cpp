@@ -24,6 +24,7 @@ ConditionalTest::Input::Input(ConditionalTest* parent)
 int ConditionalTest::Input::size() const
 {
     EDEBUG_FUNC(this);
+
     return Total;
 }
 
@@ -39,6 +40,7 @@ int ConditionalTest::Input::size() const
 EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
 {
     EDEBUG_FUNC(this, index);
+
     switch(index)
     {
     case EMXINPUT: return DataIn;
@@ -67,6 +69,7 @@ EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
 QVariant ConditionalTest::Input::data(int index, Role role) const
 {
     EDEBUG_FUNC(this, index, role);
+
     switch(index)
     {
     case EMXINPUT:
@@ -156,6 +159,7 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
 void ConditionalTest::Input::set(int index, const QVariant& value)
 {
     EDEBUG_FUNC(this, value);
+
     switch(index)
     {
     case Delimiter:
@@ -182,6 +186,7 @@ void ConditionalTest::Input::set(int index, const QVariant& value)
 void ConditionalTest::Input::set(int index, QFile* file)
 {
     EDEBUG_FUNC(this, index, file);
+
     switch(index)
     {
     case AMXINPUT:
@@ -202,6 +207,7 @@ void ConditionalTest::Input::set(int index, QFile* file)
 void ConditionalTest::Input::set(int index, EAbstractData* data)
 {
     EDEBUG_FUNC(this, index, data);
+
     switch(index)
     {
     case EMXINPUT:
