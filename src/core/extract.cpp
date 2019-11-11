@@ -298,8 +298,8 @@ void Extract::writeMinimalFormat(int index)
       _stream
          << "Source"
          << "\t" << "Target"
-         << "\t" << "sc"
-         << "\t" << "Cluster"
+         << "\t" << "Similarity_Score"
+         << "\t" << "Cluster_Index"
          << "\t" << "Num_Clusters"
          << "\n";
    }

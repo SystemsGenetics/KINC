@@ -222,8 +222,10 @@ Once you have obtained an interactive node, run the following commands from your
 
 .. code:: bash
 
-   /zfs/feltus/btsheal/install-ace.sh
-   /zfs/feltus/btsheal/install-kinc.sh
+   git clone https://github.com/bentsherman/pbs-toolkit.git
+   ./pbs-toolkit/modules/install-ace.sh v3.2.0
+   ./pbs-toolkit/modules/install-statslib.sh
+   ./pbs-toolkit/modules/install-kinc.sh v3.4.0 v3.2.0
 
 These scripts will install ACE and KINC into your home directory, establishing them as modules that can be run from anywhere. It will also update your environment so that the modules can be called when necessary. It uses a module called ``use.own``, which when added will make KINC and ACE available to be used interactively. You should now be able to load KINC as a module:
 

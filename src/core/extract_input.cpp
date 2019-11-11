@@ -126,7 +126,7 @@ QVariant Extract::Input::data(int index, Role role) const
        {
        case Role::CommandLineName: return QString("csm");
        case Role::Title: return tr("Condition-Specific Matrix (optional):");
-      case Role::WhatsThis: return tr("A data file containing the condition-specific martrix which contains p-values and r-squared values related to tests against phenotypic or conditional data. This file would have been created with the condition-specific thresholding analytic (cond-test).");
+      case Role::WhatsThis: return tr("A data file containing the condition-specific matrix which contains p-values and r-squared values related to tests against phenotypic or conditional data. This file would have been created with the condition-specific thresholding analytic (cond-test).");
        case Role::DataType: return DataFactory::CSMatrixType;
        default: return QVariant();
        }

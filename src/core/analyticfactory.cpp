@@ -79,9 +79,9 @@ QString AnalyticFactory::commandName(quint16 type) const
    case ExportExpressionMatrixType: return "export-emx";
    case ImportCorrelationMatrixType: return "import-cmx";
    case ExportCorrelationMatrixType: return "export-cmx";
-   case ConditionalTestType: return "cond-test";
    case SimilarityType: return "similarity";
    case CorrelationPowerFilterType: return "corrpower";
+   case ConditionalTestType: return "cond-test";
    case PowerLawType: return "powerlaw";
    case RMTType: return "rmt";
    case ExtractType: return "extract";
@@ -109,9 +109,9 @@ std::unique_ptr<EAbstractAnalytic> AnalyticFactory::make(quint16 type) const
    case ExportExpressionMatrixType: return unique_ptr<EAbstractAnalytic>(new ExportExpressionMatrix);
    case ImportCorrelationMatrixType: return unique_ptr<EAbstractAnalytic>(new ImportCorrelationMatrix);
    case ExportCorrelationMatrixType: return unique_ptr<EAbstractAnalytic>(new ExportCorrelationMatrix);
-   case ConditionalTestType: return unique_ptr<EAbstractAnalytic>(new ConditionalTest);
    case SimilarityType: return unique_ptr<EAbstractAnalytic>(new Similarity);
    case CorrelationPowerFilterType: return unique_ptr<EAbstractAnalytic>(new CorrPowerFilter);
+   case ConditionalTestType: return unique_ptr<EAbstractAnalytic>(new ConditionalTest);
    case PowerLawType: return unique_ptr<EAbstractAnalytic>(new PowerLaw);
    case RMTType: return unique_ptr<EAbstractAnalytic>(new RMT);
    case ExtractType: return unique_ptr<EAbstractAnalytic>(new Extract);

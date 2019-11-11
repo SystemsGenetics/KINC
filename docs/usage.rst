@@ -68,7 +68,7 @@ You can retrieve a list of all of the functions that KINC provides by executing
 
   kinc help run
 
-The following will be shown for KINC v3.4:
+The following will be shown for KINC v3.4.0:
 
 .. code::
 

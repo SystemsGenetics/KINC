@@ -105,28 +105,28 @@ private:
     */
    float _maxCorrelation {1.00f};
    /*!
-    * Conditional-Specific Cluster Matrix name Filter input.
+    * Condition-Specific Cluster Matrix name filter input.
     */
    QString _csmNameFilter {""};
    /*!
-    * Conditional-Specific Cluster Matrix name Filter data.
+    * Condition-Specific Cluster Matrix name filter data.
     */
    QVector<float> _csmNameFilterThresh;
    QVector<QString> _csmNameFilterFeatureNames;
    QVector<QString> _csmNameFilterLabelNames;
    /*!
-    * Conditional-Specific Cluster Matrix PValue and RSquared Filter input.
+    * Condition-Specific Cluster Matrix p-value and r-squared filter input.
     */
    QString _csmPValueFilter {""};
    QString _csmRSquareFilter {""};
    /*!
-    * Conditional-Specific Cluster Matrix PValue Filter data.
+    * Condition-Specific Cluster Matrix p-value filter data.
     */
    QVector<float> _csmPValueFilterThresh;
    QVector<QString> _csmPValueFilterFeatureNames;
    QVector<QString> _csmPValueFilterLabelNames;
    /*!
-    * Conditional-Specific Cluster Matrix R-squared Filter data.
+    * Condition-Specific Cluster Matrix r-squared filter data.
     */
    QVector<float> _csmRSquareFilterThresh;
    QVector<QString> _csmRSquareFilterFeatureNames;
