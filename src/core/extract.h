@@ -39,8 +39,8 @@ public:
     bool rSquareFilterCheck();
 private:
     /*!
-    * Defines the output formats this analytic supports.
-    */
+     * Defines the output formats this analytic supports.
+     */
     enum class OutputFormat
     {
         /*!

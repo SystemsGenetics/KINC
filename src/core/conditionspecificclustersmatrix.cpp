@@ -1,19 +1,18 @@
 #include "conditionspecificclustersmatrix.h"
 #include "conditionspecificclustersmatrix_model.h"
-//
 
 
 
 /*!
-*  Implements an interface that writes the annotation matrix information into the metadata.
-*
-* @param features The names of all the major feature in the annotation matrix,
-*                 these where the column names.
-*
-* @param featureinfo The information about the feature, their testing type and subcatagory names.
-*
-* @param data All the data in the annotation matrix.
-*/
+ * Writes the annotation matrix information into the metadata.
+ *
+ * @param features The names of all the major feature in the annotation matrix,
+ *                 these where the column names.
+ *
+ * @param featureinfo The information about the feature, their testing type and subcatagory names.
+ *
+ * @param data All the data in the annotation matrix.
+ */
 void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>& featureInfo, const QVector<EMetaArray>& data, int& numTests, QString testNames)
 {
     EDEBUG_FUNC(this,&features,&featureInfo,&data);
@@ -45,14 +44,14 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
     EMetaObject feature;
     int num_tests = 0;
 
-    //set the feature information in the meta data
+    // set the feature information in the meta data
     for ( int i = 0; i < features.size(); i++ )
     {
-        //set the test type
+        // set the test type
         type.insert("Type", featureInfo.at(i).at(0));
 
-        //set the labels
-        //Catagorical
+        // set the labels
+        // Catagorical
         if ( featureInfo.at(i).size() > 2 && featureInfo.at(i).at(0).toString() == "Categorical" )
         {
             for ( int j = 2; j < featureInfo.at(i).size(); j++ )
@@ -65,7 +64,7 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
             }
             info.insert("Labels", labels);
         }
-        //Ordinal and Quantitative
+        // Ordinal and Quantitative
         else
         {
             if ( featureInfo.at(i).at(0).toString() != "None" && featureInfo.at(i).at(0).toString() != "Unknown" )
@@ -73,19 +72,19 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
                 ++num_tests;
             }
         }
-        //create the labels and test drop bar aka label information
+        // create the labels and test drop bar aka label information
         info.insert("Test", type);
-        //pair label information to feature names
+        // pair label information to feature names
         feature.insert(features.at(i).toString(), info);
-        //prepare for the next feature
+        // prepare for the next feature
         type.clear();
         labels.clear();
         info.clear();
     }
-    //create the feature drop bar
+    // create the feature drop bar
     metaObject.insert("Features", feature);
 
-    //add the sample names
+    // add the sample names
     EMetaArray sampleNames;
     for ( auto sample : data.at(0) )
     {
@@ -93,7 +92,7 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
     }
     metaObject.insert("Samples", sampleNames);
 
-    //add all the data for the annotation array, exept the sample names
+    // add all the data for the annotation array, exept the sample names
     EMetaObject Data;
     for ( int i = 0; i < features.size(); i++ )
     {
@@ -101,7 +100,7 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
     }
     metaObject.insert("Data", Data);
 
-    //add num_tests
+    // add num_tests
     numTests += num_tests;
     _testcount = numTests;
     metaObject.insert("Number of Tests", numTests);
@@ -114,7 +113,7 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
     }
     metaObject.insert("Test Names", namesOfTests);
 
-    //set the root of the meta data to the changed metaobject
+    // set the root of the meta data to the changed metaobject
     setMeta(metaObject);
     _sampleSize = sampleNames.size();
 }
@@ -122,15 +121,15 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
 
 
 /*!
-*  Implements an interface that writes the pairwise specific metadata.
-*
-* @param geneNames Names of all the genes in the gene expresion matrix.
-*
-* @param maxClusterSize Maximum amount of pairs a cell can have in the pairwise matrix,
-*                       system max is 64.
-*
-* @param subheader The size of the subheader, only contains the sample size.
-*/
+ * Writes the pairwise specific metadata.
+ *
+ * @param geneNames Names of all the genes in the gene expresion matrix.
+ *
+ * @param maxClusterSize Maximum amount of pairs a cell can have in the pairwise matrix,
+ *                       system max is 64.
+ *
+ * @param subheader The size of the subheader, only contains the sample size.
+ */
 void CSMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, int subheader)
 {
     EDEBUG_FUNC(this,&geneNames,maxClusterSize,subheader);
@@ -140,10 +139,10 @@ void CSMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, int s
 
 
 /*!
-*  Implements an interface to create a new table model representation of the data.
-*
-* @return Pointer to the table model representation of the data.
-*/
+ * Create a new table model representation of the data.
+ *
+ * @return Pointer to the table model representation of the data.
+ */
 QAbstractTableModel* CSMatrix::model()
 {
     EDEBUG_FUNC(this);
@@ -157,10 +156,10 @@ QAbstractTableModel* CSMatrix::model()
 
 
 /*!
-*  Implements an interface to query for the sample size.
-*
-* @return Integer representation of the number of samples in the augmented matrix.
-*/
+ * Query for the sample size.
+ *
+ * @return Integer representation of the number of samples in the augmented matrix.
+ */
 int CSMatrix::sampleSize() const
 {
     EDEBUG_FUNC(this);
@@ -170,8 +169,8 @@ int CSMatrix::sampleSize() const
 
 
 /*!
-*  Implements an interface to write header information.
-*/
+ * Write header information.
+ */
 void CSMatrix::writeHeader()
 {
     EDEBUG_FUNC(this);
@@ -181,8 +180,8 @@ void CSMatrix::writeHeader()
 
 
 /*!
-*  Implements an interface to read header information.
-*/
+ * Read header information.
+ */
 void CSMatrix::readHeader()
 {
     EDEBUG_FUNC(this);
@@ -192,10 +191,10 @@ void CSMatrix::readHeader()
 
 
 /*!
-*  Implements an interface to set the number of tests that are going to be ran.
-*
-* @param newData The number of tests you want to set the variable to.
-*/
+ * Set the number of tests that are going to be ran.
+ *
+ * @param newData The number of tests you want to set the variable to.
+ */
 void CSMatrix::setTestCount(qint32 newData)
 {
     EDEBUG_FUNC(this, newData);
@@ -205,12 +204,12 @@ void CSMatrix::setTestCount(qint32 newData)
 
 
 /*!
-*  Implements an interface to get the test name information from the meta data.
-*
-* @param index The test name index.
-*
-* @return The test name.
-*/
+ * Get the test name information from the meta data.
+ *
+ * @param index The test name index.
+ *
+ * @return The test name.
+ */
 QString CSMatrix::getTestName(int index) const
 {
     return meta().toObject().at("Test Names").toArray().at(index).toString();
@@ -231,10 +230,10 @@ QString CSMatrix::getTestType(int index) const
 
 
 /*!
-*  Implements an interface to get the number of tests that were conducted.
-*
-* @return The number of tests.
-*/
+ * Get the number of tests that were conducted.
+ *
+ * @return The number of tests.
+ */
 qint32 CSMatrix::getTestCount()
 {
     return _testcount;

@@ -36,23 +36,23 @@ public:
 
 private:
     /*!
-     *  Pointer to the serials objects parent KNNAnalytic.
+     * Pointer to the serials objects parent KNNAnalytic.
      */
     ConditionalTest* _base;
     /*!
-     *  Annotation matrix data for testing.
+     * Annotation matrix data for testing.
      */
     QVector<QString> _anxData;
     /*!
-     *  Category count.
+     * Category count.
      */
     qint32 _catCount {0};
     /*!
-     *  Category count in cluster.
+     * Category count in cluster.
      */
     qint32 _catInCluster {0};
     /*!
-     *  Size of the cluster.
+     * Size of the cluster.
      */
     qint32 _clusterSize {0};
 };

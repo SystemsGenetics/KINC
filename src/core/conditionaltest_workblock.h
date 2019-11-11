@@ -10,8 +10,8 @@ class ConditionalTest::WorkBlock : public EAbstractAnalyticBlock
     Q_OBJECT
 public:
     /*!
-     *  Creates an uninitialized work block
-    */
+     * Creates an uninitialized work block
+     */
     explicit WorkBlock() = default;
     explicit WorkBlock(int index, Pairwise::Index start, qint64 startpair, qint64 size);
 

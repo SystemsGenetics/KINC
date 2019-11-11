@@ -1,14 +1,13 @@
 #include "conditionspecificclustersmatrix_model.h"
 #include "conditionspecificclustersmatrix_pair.h"
-//
 
 
 
 /*!
-*  Implements an interface that initializes a new CSM model object.
-*
-* @param matrix The parent matrix of the model.
-*/
+ * Initializes a new CSM model object.
+ *
+ * @param matrix The parent matrix of the model.
+ */
 CSMatrix::Model::Model(CSMatrix* matrix) : _matrix(matrix)
 {
     EDEBUG_FUNC(this,matrix);
@@ -19,18 +18,17 @@ CSMatrix::Model::Model(CSMatrix* matrix) : _matrix(matrix)
 
 
 /*!
-*  Implements an interface to print the header for the tablular representation
-*  of the CSM model to the screen.
-*
-* @param section The column or row index dependig on the orientation type.
-*
-* @param orientation Which header the function is trying to map, vertical or horizontal.
-*
-* @param role The display role the function is querying for, here it only makes sense
-*             with a diaplay role.
-*
-* @return The header cell data at the queried location.
-*/
+ * Print the header for the tablular representation of the CSM model to the screen.
+ *
+ * @param section The column or row index dependig on the orientation type.
+ *
+ * @param orientation Which header the function is trying to map, vertical or horizontal.
+ *
+ * @param role The display role the function is querying for, here it only makes sense
+ *             with a diaplay role.
+ *
+ * @return The header cell data at the queried location.
+ */
 QVariant CSMatrix::Model::headerData(int section, Qt::Orientation orientation, int role) const
 {
     EDEBUG_FUNC(this,section,orientation,role);
@@ -61,12 +59,12 @@ QVariant CSMatrix::Model::headerData(int section, Qt::Orientation orientation, i
 
 
 /*!
-*  Implements an interface that quiries for the number of columns.
-*
-* @param An unused parameter.
-*
-* @return An integer representation of the column count.
-*/
+ * Queries for the number of columns.
+ *
+ * @param An unused parameter.
+ *
+ * @return An integer representation of the column count.
+ */
 int CSMatrix::Model::columnCount(const QModelIndex&) const
 {
     EDEBUG_FUNC(this);
@@ -76,12 +74,12 @@ int CSMatrix::Model::columnCount(const QModelIndex&) const
 
 
 /*!
-*  Implements an interface that quiries for the number of row.
-*
-* @param An unused parameter.
-*
-* @return An integer representation of the row count.
-*/
+ * Queries for the number of row.
+ *
+ * @param An unused parameter.
+ *
+ * @return An integer representation of the row count.
+ */
 int CSMatrix::Model::rowCount(const QModelIndex&) const
 {
     EDEBUG_FUNC(this);
@@ -91,18 +89,17 @@ int CSMatrix::Model::rowCount(const QModelIndex&) const
 
 
 /*!
-*  Implements an interface to print the data for the tablular representation
-*  of the CSM model to the screen.
-*
-* @param section The column or row index dependig on the orientation type.
-*
-* @param orientation Which header the function is trying to map, vertical or horizontal.
-*
-* @param role The display role the function is querying for, here it only makes sense
-*             with a diaplay role.
-*
-* @return The header cell data at the queried location.
-*/
+ * Print the data for the tablular representation of the CSM model to the screen.
+ *
+ * @param section The column or row index dependig on the orientation type.
+ *
+ * @param orientation Which header the function is trying to map, vertical or horizontal.
+ *
+ * @param role The display role the function is querying for, here it only makes sense
+ *             with a diaplay role.
+ *
+ * @return The header cell data at the queried location.
+ */
 QVariant CSMatrix::Model::data(const QModelIndex& index, int role) const
 {
     EDEBUG_FUNC(this, &index, role);

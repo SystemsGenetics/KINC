@@ -1,11 +1,10 @@
 #include "conditionaltest_resultblock.h"
-//
 
 
 
 /*!
-*  Implements an interface to create a result block object.
-*/
+ * Create a result block object.
+ */
 ConditionalTest::ResultBlock::ResultBlock(int index) : EAbstractAnalyticBlock(index)
 {
     EDEBUG_FUNC(this,index);
@@ -14,8 +13,8 @@ ConditionalTest::ResultBlock::ResultBlock(int index) : EAbstractAnalyticBlock(in
 
 
 /*!
-*  Implements an interface to create a result block object.
-*/
+ * Create a result block object.
+ */
 ConditionalTest::ResultBlock::ResultBlock(int index, int numTests, qint64 start) :
     EAbstractAnalyticBlock(index),
     _numTests(numTests),
@@ -41,8 +40,8 @@ void ConditionalTest::ResultBlock::append(const CSMPair& pair)
 
 
 /*!
-*  Implements an interface to write the result block header into the file stream.
-*/
+ * Write the result block header into the file stream.
+ */
 void ConditionalTest::ResultBlock::write(QDataStream& stream) const
 {
     EDEBUG_FUNC(this,&stream);
@@ -60,8 +59,8 @@ void ConditionalTest::ResultBlock::write(QDataStream& stream) const
 
 
 /*!
-*  Implements an interface to read the result block header from the file stream.
-*/
+ * Read the result block header from the file stream.
+ */
 void ConditionalTest::ResultBlock::read(QDataStream& stream)
 {
     EDEBUG_FUNC(this,&stream);

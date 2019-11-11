@@ -3,6 +3,8 @@
 #include "pairwise_clusteringmodel.h"
 #include "pairwise_linalg.h"
 
+
+
 namespace Pairwise
 {
     /*!
@@ -83,5 +85,7 @@ namespace Pairwise
         float _entropy;
     };
 }
+
+
 
 #endif

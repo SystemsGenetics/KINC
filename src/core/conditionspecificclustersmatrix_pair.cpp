@@ -2,15 +2,14 @@
 #include "pairwise_index.h"
 #include <sstream>
 #include <string>
-//
 
 
 
 /*!
-*  Implements an interface to initialize a new CSM pair.
-*
-* @param matrix The parent matrix of the model.
-*/
+ * Initialize a new CSM pair.
+ *
+ * @param matrix The parent matrix of the model.
+ */
 CSMatrix::Pair::Pair(CSMatrix* matrix) : Matrix::Pair(matrix), _cMatrix(matrix)
 {
     EDEBUG_FUNC(this, matrix, testType);
@@ -19,10 +18,10 @@ CSMatrix::Pair::Pair(CSMatrix* matrix) : Matrix::Pair(matrix), _cMatrix(matrix)
 
 
 /*!
-*  Implements an interface to initialize a new CSM pair.
-*
-* @param matrix The parent matrix of the model.
-*/
+ * Initialize a new CSM pair.
+ *
+ * @param matrix The parent matrix of the model.
+ */
 CSMatrix::Pair::Pair(const CSMatrix* matrix) : Matrix::Pair(matrix), _cMatrix(matrix)
 {
     EDEBUG_FUNC(this, matrix, testType);
@@ -31,8 +30,8 @@ CSMatrix::Pair::Pair(const CSMatrix* matrix) : Matrix::Pair(matrix), _cMatrix(ma
 
 
 /*!
-*  Implements an interface to clear all of the clusters out of a pair.
-*/
+ * Clear all of the clusters out of a pair.
+ */
 void CSMatrix::Pair::clearClusters() const
 {
     EDEBUG_FUNC(this);
@@ -43,10 +42,10 @@ void CSMatrix::Pair::clearClusters() const
 
 
 /*!
-*  Implements an interface to add up to the max amount of clusters to the pair.
-*
-* @param amount The number of cluster you want to add.
-*/
+ * Add up to the max amount of clusters to the pair.
+ *
+ * @param amount The number of cluster you want to add.
+ */
 void CSMatrix::Pair::addCluster(int amount) const
 {
     EDEBUG_FUNC(this, amount);
@@ -60,11 +59,11 @@ void CSMatrix::Pair::addCluster(int amount) const
 
 
 /*!
-*  Implements an interface to add up to the max amount of clusters to the pair. It also
-*  resizes the vector to the chosen size, usually the test size in the case of CSM.
-*
-* @param amount The number of cluster you want to add.
-*/
+ * Add up to the max amount of clusters to the pair. It also
+ * resizes the vector to the chosen size, usually the test size in the case of CSM.
+ *
+ * @param amount The number of cluster you want to add.
+ */
 void CSMatrix::Pair::addCluster(int amount, int size) const
 {
     EDEBUG_FUNC(this, amount, size);
@@ -80,10 +79,10 @@ void CSMatrix::Pair::addCluster(int amount, int size) const
 
 
 /*!
-*  Implements an interface to quiery for the size of a cluster.
-*
-* @return An integer representation of the size of a cluster.
-*/
+ * Query for the size of a cluster.
+ *
+ * @return An integer representation of the size of a cluster.
+ */
 int CSMatrix::Pair::clusterSize() const
 {
     EDEBUG_FUNC(this);
@@ -93,10 +92,10 @@ int CSMatrix::Pair::clusterSize() const
 
 
 /*!
-*  Implements an interface to quiery about a pairs contents.
-*
-* @return True if the pair is empty and false otherwise.
-*/
+ * Query about a pairs contents.
+ *
+ * @return True if the pair is empty and false otherwise.
+ */
 bool CSMatrix::Pair::isEmpty() const
 {
     EDEBUG_FUNC(this);
@@ -106,20 +105,20 @@ bool CSMatrix::Pair::isEmpty() const
 
 
 /*!
-*  Implements an interface to convert the contents of the pair into a string.
-*
-* @return The string representation of the pair.
-*/
+ * Convert the contents of the pair into a string.
+ *
+ * @return The string representation of the pair.
+ */
 QString CSMatrix::Pair::toString() const
 {
     EDEBUG_FUNC(this);
 
     QString outputString;
 
-    //if there is at least one cluster
+    // if there is at least one cluster
     if ( !_pValues.isEmpty() )
     {
-        //for each cluster
+        // for each cluster
         for ( int i = 0; i < _pValues.size(); i++ )
         {
             outputString+= "Cluster: ";
@@ -149,16 +148,16 @@ QString CSMatrix::Pair::toString() const
 
 
 /*!
-*  Implements an interface to quiery for a value in a cluster in a sample.
-*
-* @param cluster The numeric index of the cluster
-*
-* @param gene The numeric index of the gene
-*
-* @param type The type of value to retrieve: 'pvalue' or 'r2'.
-*
-* @return The data at the quieried location.
-*/
+ * Query for a value in a cluster in a sample.
+ *
+ * @param cluster The numeric index of the cluster
+ *
+ * @param gene The numeric index of the gene
+ *
+ * @param type The type of value to retrieve: 'pvalue' or 'r2'.
+ *
+ * @return The data at the quieried location.
+ */
 const double& CSMatrix::Pair::at(int cluster, int gene, QString type) const
 {
     EDEBUG_FUNC(this, cluster, gene);
@@ -179,16 +178,16 @@ const double& CSMatrix::Pair::at(int cluster, int gene, QString type) const
 
 
 /*!
-*  Implements an interface to quiery for a value in a cluster in a sample.
-*
-* @param cluster The numeric index of the cluster
-*
-* @param gene The numeric index of the gene
-*
-* @param type The type of value to retrieve: 'pvalue' or 'r2'.
-*
-* @return The data at the quieried location.
-*/
+ * Query for a value in a cluster in a sample.
+ *
+ * @param cluster The numeric index of the cluster
+ *
+ * @param gene The numeric index of the gene
+ *
+ * @param type The type of value to retrieve: 'pvalue' or 'r2'.
+ *
+ * @return The data at the quieried location.
+ */
 double& CSMatrix::Pair::at(int cluster, int gene, QString type)
 {
     EDEBUG_FUNC(this, cluster, gene);
@@ -209,12 +208,12 @@ double& CSMatrix::Pair::at(int cluster, int gene, QString type)
 
 
 /*!
-*  Implements an interface to write cluster data into the file ACE sets up.
-*
-* @param stream The file stream to write into.
-*
-* @param cluster The cluster to write to the stream.
-*/
+ * Write cluster data into the file ACE sets up.
+ *
+ * @param stream The file stream to write into.
+ *
+ * @param cluster The cluster to write to the stream.
+ */
 void CSMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
 {
     EDEBUG_FUNC(this,&stream,cluster);
@@ -233,12 +232,12 @@ void CSMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
 
 
 /*!
-*  Implements an interface to read cluster data into the file ACE sets up.
-*
-* @param stream The file stream to read into.
-*
-* @param cluster The cluster to read from the stream.
-*/
+ * Read cluster data into the file ACE sets up.
+ *
+ * @param stream The file stream to read into.
+ *
+ * @param cluster The cluster to read from the stream.
+ */
 void CSMatrix::Pair::readCluster(const EDataStream& stream, int cluster) const
 {
     EDEBUG_FUNC(this,&stream,cluster);

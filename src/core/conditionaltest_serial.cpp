@@ -12,13 +12,12 @@
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_math.h>
-//
 
 
 
 /*!
-*  Implements an interface to create a serial object.
-*/
+ * Create a serial object.
+ */
 ConditionalTest::Serial::Serial(ConditionalTest* parent) : EAbstractAnalyticSerial(parent), _base(parent)
 {
     EDEBUG_FUNC(this,parent);
@@ -27,17 +26,17 @@ ConditionalTest::Serial::Serial(ConditionalTest* parent) : EAbstractAnalyticSeri
 
 
 /*!
-*  Implements an interface to perform the desired work on a result block.
-*
-* @param block The work block you are working on.
-*
-* @return The populated result block.
-*/
+ * Perform the desired work on a result block.
+ *
+ * @param block The work block you are working on.
+ *
+ * @return The populated result block.
+ */
 std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const EAbstractAnalyticBlock* block)
 {
     EDEBUG_FUNC(this, block);
 
-    //crate the work and result blocks
+    // crate the work and result blocks
     const WorkBlock* workBlock {block->cast<WorkBlock>()};
     ResultBlock* resultBlock {new ResultBlock(workBlock->index(), _base->_numTests, workBlock->startpair())};
 
@@ -50,10 +49,10 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
     qint64 size = workBlock->size();
     Pairwise::Index index(workBlock->start());
 
-    //iterate through each pair in the matrix
+    // iterate through each pair in the matrix
     for ( qint64 ccmIndex = start; ccmIndex < start + size; ccmIndex++ )
     {
-        //reads the first value in the ccm
+        // reads the first value in the ccm
 
         if ( ccmIndex == start )
         {
@@ -65,7 +64,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
             ccmPair.readNext();
             cmxPair.read(ccmPair.index());
         }
-        //if the first one isnt in the cluster we should not count it.
+        // if the first one isnt in the cluster we should not count it.
         if ( ccmPair.clusterSize() == 0 )
         {
             size++;
@@ -80,10 +79,10 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
         QVector<QVector<double>> r2;
         r2.resize(ccmPair.clusterSize());
 
-        //for each cluster in the pair, run the binomial and linear regression tests.
+        // for each cluster in the pair, run the binomial and linear regression tests.
         for ( qint32 clusterIndex = 0; clusterIndex < ccmPair.clusterSize(); clusterIndex++ )
         {
-            //resize for room for each test.
+            // resize for room for each test.
             pValues[clusterIndex].resize(_base->_numTests);
             r2[clusterIndex].resize(_base->_numTests);
 
@@ -104,7 +103,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                     {
 
                         prepAnxData(_base->_features.at(featureIndex).at(labelIndex), featureIndex, _base->_testType.at(featureIndex));
-                        //if there are sub labels to test for the feature
+                        // if there are sub labels to test for the feature
                         if ( _base->_features.at(featureIndex).size() > 1 )
                         {
                             if ( labelIndex == 0 )
@@ -113,7 +112,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                             }
                             test(ccmPair, clusterIndex, testIndex, featureIndex, labelIndex, pValues, r2);
                         }
-                        //if only the feature needs testing (no sub labels)
+                        // if only the feature needs testing (no sub labels)
                         else
                         {
                             test(ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues, r2);
@@ -138,26 +137,26 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
 
 
 /*!
-*  Implements an interface to prerpare the annotation matrix data for testing.
-*
-* @param testLabel The label you are testing on.
-*
-* @param dataIndex The feature the label is part of.
-*
-* @return The number of samples in total of the test label.
-*/
+ * Prepare the annotation matrix data for testing.
+ *
+ * @param testLabel The label you are testing on.
+ *
+ * @param dataIndex The feature the label is part of.
+ *
+ * @return The number of samples in total of the test label.
+ */
 int ConditionalTest::Serial::prepAnxData(QString testLabel, int dataIndex, TESTTYPE testType)
 {
     EDEBUG_FUNC(this, testLabel, dataIndex);
 
-    //get the needed data fro the comparison
+    // get the needed data fro the comparison
     _catCount = 0;
     _anxData.resize(_base->_data.at(dataIndex).size());
-    //populate array with annotation data
+    // populate array with annotation data
     for ( int j = 0; j < _base->_data.at(dataIndex).size(); j++ )
     {
         _anxData[j] = _base->_data.at(dataIndex).at(j).toString();
-        //if data is the same as the test label add one to the catagory counter
+        // if data is the same as the test label add one to the catagory counter
         if ( testType == _base->CATEGORICAL && _anxData[j] == testLabel )
         {
             _catCount++;
@@ -169,12 +168,12 @@ int ConditionalTest::Serial::prepAnxData(QString testLabel, int dataIndex, TESTT
 
 
 /*!
-*  Implements an interface to check to see if a matrix is empty.
-*
-* @param vector The matrix you want to check.
-*
-* @return True if the matrix is empty, false otherwise.
-*/
+ * Check to see if a matrix is empty.
+ *
+ * @param vector The matrix you want to check.
+ *
+ * @return True if the matrix is empty, false otherwise.
+ */
 bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
 {
     EDEBUG_FUNC(this, &matrix);
@@ -193,14 +192,14 @@ bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
 
 
 /*!
-*  Implements an interface to prepare the cluster category count information.
-*
-* @param ccmPair The gene pair that we are counting the labels for.
-*
-* @param clusterIndex The number cluster we are in in the pair
-*
-* @return The number of labels in the given cluster.
-*/
+ * Prepare the cluster category count information.
+ *
+ * @param ccmPair The gene pair that we are counting the labels for.
+ *
+ * @param clusterIndex The number cluster we are in in the pair
+ *
+ * @return The number of labels in the given cluster.
+ */
 int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label, TESTTYPE testType)
 {
     _catCount = _clusterSize = _catInCluster = 0;
@@ -228,24 +227,24 @@ int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterInd
 
 
 /*!
-*  An interface to choose and run the correct tests on the pair.
-*
-* @param ccmPair The pair thats going to be tested.
-*
-* @param clusterIndex The cluster to test inside the pair, each cluster is
-*        tested.
-*
-* @param testIndex Which test we are currently performing.
-*
-* @param featureIndex The current feature we are testing.
-*
-* @param labelIndex The label in the feature we are running a test on.
-*
-* @param pValues The two dimensional array holding all of the results from the
-*        tests.
-*
-* @return The test that was just conducted.
-*/
+ * An interface to choose and run the correct tests on the pair.
+ *
+ * @param ccmPair The pair thats going to be tested.
+ *
+ * @param clusterIndex The cluster to test inside the pair, each cluster is
+ *       tested.
+ *
+ * @param testIndex Which test we are currently performing.
+ *
+ * @param featureIndex The current feature we are testing.
+ *
+ * @param labelIndex The label in the feature we are running a test on.
+ *
+ * @param pValues The two dimensional array holding all of the results from the
+ *       tests.
+ *
+ * @return The test that was just conducted.
+ */
 int ConditionalTest::Serial::test(
     CCMatrix::Pair& ccmPair,
     qint32 clusterIndex,
@@ -257,7 +256,7 @@ int ConditionalTest::Serial::test(
 {
     EDEBUG_FUNC(this,&ccmPair, clusterIndex, &testIndex, featureIndex, labelIndex, &pValues);
 
-    //get informatiopn on the mask
+    // get informatiopn on the mask
     clusterInfo(ccmPair, clusterIndex, _base->_features.at(featureIndex).at(labelIndex), _base->_testType.at(featureIndex));
 
     // For linear regresssion we need a variable that will hold the
@@ -285,7 +284,7 @@ int ConditionalTest::Serial::test(
             r2[clusterIndex][testIndex] = results.at(1);
             testIndex++;
         break;
-        default:; //quash a compiler warning
+        default:; // quash a compiler warning
     }
     return _base->_testType.at(featureIndex);
 }
@@ -293,14 +292,14 @@ int ConditionalTest::Serial::test(
 
 
 /*!
-*  Implements an interface to run the first binomial test for given data.
-*
-* @return Pvalue corrosponding to the test.
-*/
+ * Run the first binomial test for given data.
+ *
+ * @return Pvalue corrosponding to the test.
+ */
 double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIndex, QString test_label)
 {
     EDEBUG_FUNC(this);
-    //QString samples = ccmPair.toString();
+    // QString samples = ccmPair.toString();
 
     // We use the hypergeometric distribution because the samples are
     // selected from the population for membership in the cluster without
@@ -396,18 +395,17 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
 
 
 /*!
-*  Implements an interface to run the regression test for given data, the
-*  regression line is genex vs geney vs label data.
-*
-* @param anxInfo Annotation matrix information.
-*
-* @param ccmPair Cluster matrix pair.
-*
-* @param clusterIndex The index of the cluster, used to get the right info
-*        from the cluster pair
-*
-* @return Pvalue corrosponding to the test.
-*/
+ * Run the regression test for given data, the regression line is genex vs geney vs label data.
+ *
+ * @param anxInfo Annotation matrix information.
+ *
+ * @param ccmPair Cluster matrix pair.
+ *
+ * @param clusterIndex The index of the cluster, used to get the right info
+ *       from the cluster pair
+ *
+ * @return Pvalue corrosponding to the test.
+ */
 void ConditionalTest::Serial::regression(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType, QVector<double>& results)
 {
     EDEBUG_FUNC(this, &anxInfo, &ccmPair, clusterIndex);
@@ -452,7 +450,7 @@ void ConditionalTest::Serial::regression(QVector<QString> &anxInfo, CCMatrix::Pa
             // on the values of both genes.
             double g1 = static_cast<double>(geneX.at(i));
             double g2 = static_cast<double>(geneY.at(i));
-            gsl_matrix_set(X, j, 0, static_cast<double>(1)); //for the intercept
+            gsl_matrix_set(X, j, 0, static_cast<double>(1)); // for the intercept
             gsl_matrix_set(X, j, 1, g1);
             gsl_matrix_set(X, j, 2, g2);
             gsl_matrix_set(X, j, 3, g1*g2);

@@ -23,7 +23,7 @@ protected:
     virtual void read(QDataStream& stream) override final;
 private:
     /*!
-     *  Number of each test to be conducted on each cluster.
+     * Number of each test to be conducted on each cluster.
      */
     int _numTests{0};
     /*!
@@ -31,7 +31,7 @@ private:
      */
     qint64 _start{0};
     /*!
-     *  Row of dynamically populated cluster pvalues.
+     * Row of dynamically populated cluster pvalues.
      */
     QVector<CSMPair> _pairs;
 };

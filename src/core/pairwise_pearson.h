@@ -2,6 +2,8 @@
 #define PAIRWISE_PEARSON_H
 #include "pairwise_correlationmodel.h"
 
+
+
 namespace Pairwise
 {
     /*!
@@ -19,5 +21,7 @@ namespace Pairwise
         ) override final;
     };
 }
+
+
 
 #endif

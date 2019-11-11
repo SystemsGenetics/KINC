@@ -585,7 +585,7 @@ void Extract::prepareRSquareFilter()
 
 
 /*!
- * Used to filter the given data by the name of the label and the pvalue.
+ * Filters the given data by the name of the label and the pvalue.
  *
  * @param labelName The test name for the label.
  *
@@ -690,19 +690,19 @@ bool Extract::RSquarefilter(QString labelName, float rSquared)
  */
 bool Extract::pValueFilterCheck()
 {
-    //No filter
+    // No filter
     if ( _csmPValueFilter == "" )
     {
         return true;
     }
 
-    //default filter all
+    // default filter all
     if(_csmPValueFilterFeatureNames.size() == 0 && _csmPValueFilterThresh.size() != 0)
     {
         return true;
     }
 
-    //specific filter
+    // specific filter
     for ( int i = 0; i < _csm->getTestCount(); i++ )
     {
         auto names = _csm->getTestName(i).split("__");
@@ -730,19 +730,19 @@ bool Extract::pValueFilterCheck()
  */
 bool Extract::rSquareFilterCheck()
 {
-    //No filter
+    // No filter
     if ( _csmRSquareFilter == "" )
     {
         return true;
     }
 
-    //default filter all
+    // default filter all
     if(_csmRSquareFilterFeatureNames.size() == 0 && _csmRSquareFilterThresh.size() != 0)
     {
         return true;
     }
 
-    //specific filter
+    // specific filter
     for ( int i = 0; i < _csm->getTestCount(); i++ )
     {
         auto names = _csm->getTestName(i).split("__");

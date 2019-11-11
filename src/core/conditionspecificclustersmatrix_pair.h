@@ -14,7 +14,6 @@ public:
     Pair() = default;
     virtual ~Pair() = default;
 public:
-    //”cluster is our correlation stats”
     virtual void clearClusters() const;
     virtual void addCluster(int amount = 1) const;
     virtual int clusterSize() const ;

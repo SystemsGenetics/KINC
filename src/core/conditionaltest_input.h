@@ -10,45 +10,18 @@ class ConditionalTest::Input : public EAbstractAnalyticInput
     Q_OBJECT
 public:
     /*!
-     *  Defines all arguments
+     * Defines all input arguments
      */
     enum Argument
     {
-        /*!
-         *  defines Input file argument for expresion matrix
-         */
         EMXINPUT = 0
-        /*!
-         *  defines Input file argument for cluster composition matrix
-         */
         ,CCMINPUT
-        /*!
-         *  defines Input file argument for correlation matrix
-         */
         ,CMXINPUT
-        /*!
-         *  defines Input file argument for annotation matrix
-         */
         ,ANXINPUT
-        /*!
-         *  defines delimeter for ANXINPUT
-         */
         ,Delimiter
-        /*!
-         *  defines CSM modlie as an output
-         */
         ,CSMOUT
-        /*!
-         *  defines the features not to test
-         */
         ,TEST
-        /*!
-         *  defines the overrides for the testtypes at a target location
-         */
         ,OVERRIDES
-        /*!
-         *  defines Total number of arguments this class contains
-         */
         ,Total
     };
 public:
@@ -61,7 +34,7 @@ public:
     virtual void set(int index, EAbstractData* data) override final;
 private:
     /*!
-     *  pointer to the Inputs base parent object
+     * Pointer to the Inputs base parent object
      */
     ConditionalTest* _base;
 };

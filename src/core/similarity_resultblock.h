@@ -37,9 +37,6 @@ private:
 
 
 
-
-
-
 /*!
  * Create a vector from the given pointer and size. The contents of the
  * pointer are copied into the vector.

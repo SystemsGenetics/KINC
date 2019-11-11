@@ -2,6 +2,8 @@
 #define PAIRWISE_LINALG_H
 #include <ace/core/core.h>
 
+
+
 /*!
  * This file provides structure and function definitions for the Vector2 and
  * Matrix2x2 types, which are vector and matrix types with fixed dimensions.
@@ -34,5 +36,7 @@ namespace Pairwise
     void matrixProduct(const Matrix2x2& A, const Vector2& x, Vector2& b);
     void matrixAddOuterProduct(Matrix2x2& A, float c, const Vector2& x);
 }
+
+
 
 #endif

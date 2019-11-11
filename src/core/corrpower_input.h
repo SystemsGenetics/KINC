@@ -3,6 +3,8 @@
 
 #include "corrpower.h"
 
+
+
 /*!
  * This class implements the abstract input of the export correlation matrix analytic.
  */
@@ -36,5 +38,7 @@ private:
      */
     CorrPowerFilter* _base;
 };
+
+
 
 #endif

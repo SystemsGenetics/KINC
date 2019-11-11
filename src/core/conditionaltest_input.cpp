@@ -4,10 +4,10 @@
 
 
 /*!
-*  Implements an interface to create a new input object.
-*
-* @param parent The parent analytic for this input object
-*/
+ * Create a new input object.
+ *
+ * @param parent The parent analytic for this input object
+ */
 ConditionalTest::Input::Input(ConditionalTest* parent)
     : EAbstractAnalyticInput(parent), _base(parent)
 {
@@ -17,10 +17,10 @@ ConditionalTest::Input::Input(ConditionalTest* parent)
 
 
 /*!
-*  Implements an interface to quiery for the number of total inputs for the parent analytic.
-*
-* @return The integer representation for the total number of inputs.
-*/
+ * Query for the number of total inputs for the parent analytic.
+ *
+ * @return The integer representation for the total number of inputs.
+ */
 int ConditionalTest::Input::size() const
 {
     EDEBUG_FUNC(this);
@@ -30,12 +30,12 @@ int ConditionalTest::Input::size() const
 
 
 /*!
-*  Implements an interface to quiery for the data types of the inputs.
-*
-* @param index The input index you want to know the data type for.
-*
-* @return The type of the input.
-*/
+ * Query for the data types of the inputs.
+ *
+ * @param index The input index you want to know the data type for.
+ *
+ * @return The type of the input.
+ */
 EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
 {
     EDEBUG_FUNC(this, index);
@@ -56,14 +56,14 @@ EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
 
 
 /*!
-*  Implements an interface to quiery infomation about the inputs.
-*
-* @param index The input index you want to know the data type for.
-*
-* @param role The role you are interested in knowing about.
-*
-* @return The information about the input in question.
-*/
+ * Query infomation about the inputs.
+ *
+ * @param index The input index you want to know the data type for.
+ *
+ * @param role The role you are interested in knowing about.
+ *
+ * @return The information about the input in question.
+ */
 QVariant ConditionalTest::Input::data(int index, Role role) const
 {
     EDEBUG_FUNC(this, index, role);
@@ -147,12 +147,12 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
 
 
 /*!
-*  Implements an interface to set values to their respective places once they are inputed.
-*
-* @param index The input index you want to know the data type for.
-*
-* @param value The data inputed from the user.
-*/
+ * Set values to their respective places once they are inputed.
+ *
+ * @param index The input index you want to know the data type for.
+ *
+ * @param value The data inputed from the user.
+ */
 void ConditionalTest::Input::set(int index, const QVariant& value)
 {
     EDEBUG_FUNC(this, value);
@@ -173,12 +173,12 @@ void ConditionalTest::Input::set(int index, const QVariant& value)
 
 
 /*!
-*  Implements an interface to set values to their respective places once they are inputed.
-*
-* @param index The input index you want to know the data type for.
-*
-* @param file The file inputed from the user.
-*/
+ * Set values to their respective places once they are inputed.
+ *
+ * @param index The input index you want to know the data type for.
+ *
+ * @param file The file inputed from the user.
+ */
 void ConditionalTest::Input::set(int index, QFile* file)
 {
     EDEBUG_FUNC(this, index, file);
@@ -193,12 +193,12 @@ void ConditionalTest::Input::set(int index, QFile* file)
 
 
 /*!
-*  Implements an interface to set values to their respective places once they are inputed.
-*
-* @param index The input index you want to know the data type for.
-*
-* @param value The data object inputed from the user.
-*/
+ * Set values to their respective places once they are inputed.
+ *
+ * @param index The input index you want to know the data type for.
+ *
+ * @param value The data object inputed from the user.
+ */
 void ConditionalTest::Input::set(int index, EAbstractData* data)
 {
     EDEBUG_FUNC(this, index, data);

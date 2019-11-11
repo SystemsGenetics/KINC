@@ -6,6 +6,8 @@
 #include "expressionmatrix.h"
 #include "pairwise_index.h"
 
+
+
 namespace Pairwise
 {
     /*!
@@ -50,5 +52,7 @@ namespace Pairwise
         ) = 0;
     };
 }
+
+
 
 #endif

@@ -1,7 +1,6 @@
 #ifndef EXPRESSIONMATRIX_GENE_H
 #define EXPRESSIONMATRIX_GENE_H
 #include "expressionmatrix.h"
-//
 
 
 

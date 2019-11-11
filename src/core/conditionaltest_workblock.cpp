@@ -1,13 +1,12 @@
 #include "conditionaltest_workblock.h"
-//
 
 
 
 /*!
-*  Implements the interface to create an uninitialized work block at a given index.
-*
-*  @param index The given index to create the block at
-*/
+ * Implements the interface to create an uninitialized work block at a given index.
+ *
+ * @param index The given index to create the block at
+ */
 ConditionalTest::WorkBlock::WorkBlock(int index, Pairwise::Index start, qint64 startpair, qint64 size) :
     EAbstractAnalyticBlock(index),
     _start(start),
@@ -20,10 +19,10 @@ ConditionalTest::WorkBlock::WorkBlock(int index, Pairwise::Index start, qint64 s
 
 
 /*!
-*  Writes this blocks data to the given data stream.
-*
-*  @param stream The data stream that is used to write out data.
-*/
+ * Writes this blocks data to the given data stream.
+ *
+ * @param stream The data stream that is used to write out data.
+ */
 void ConditionalTest::WorkBlock::write(QDataStream& stream) const
 {
     EDEBUG_FUNC(this,&stream);
@@ -34,10 +33,10 @@ void ConditionalTest::WorkBlock::write(QDataStream& stream) const
 
 
 /*!
-*  Reads a blocks data from the given data stream.
-*
-*  @param stream The data stream that is used to write in data.
-*/
+ * Reads a blocks data from the given data stream.
+ *
+ * @param stream The data stream that is used to write in data.
+ */
 void ConditionalTest::WorkBlock::read(QDataStream& stream)
 {
     EDEBUG_FUNC(this,&stream);

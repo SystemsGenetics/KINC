@@ -1,7 +1,6 @@
 #ifndef EXPRESSIONMATRIX_MODEL_H
 #define EXPRESSIONMATRIX_MODEL_H
 #include "expressionmatrix.h"
-//
 
 
 
