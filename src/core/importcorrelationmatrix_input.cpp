@@ -18,9 +18,6 @@ ImportCorrelationMatrix::Input::Input(ImportCorrelationMatrix* parent):
 
 
 
-
-
-
 /*!
  * Return the total number of arguments this analytic type contains.
  */
@@ -30,9 +27,6 @@ int ImportCorrelationMatrix::Input::size() const
 
    return Total;
 }
-
-
-
 
 
 
@@ -57,9 +51,6 @@ EAbstractAnalyticInput::Type ImportCorrelationMatrix::Input::type(int index) con
    default: return Type::Boolean;
    }
 }
-
-
-
 
 
 
@@ -146,9 +137,6 @@ QVariant ImportCorrelationMatrix::Input::data(int index, Role role) const
 
 
 
-
-
-
 /*!
  * Set an argument with the given index to the given value.
  *
@@ -178,9 +166,6 @@ void ImportCorrelationMatrix::Input::set(int index, const QVariant& value)
 
 
 
-
-
-
 /*!
  * Set a file argument with the given index to the given qt file pointer.
  *
@@ -196,9 +181,6 @@ void ImportCorrelationMatrix::Input::set(int index, QFile* file)
       _base->_input = file;
    }
 }
-
-
-
 
 
 

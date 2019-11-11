@@ -6,9 +6,6 @@ using namespace Pairwise;
 
 
 
-
-
-
 /*!
  * Write the iterator's pairwise data to the data object file with the given
  * pairwise index.
@@ -43,9 +40,6 @@ void Matrix::Pair::write(const Index& index)
 
 
 
-
-
-
 /*!
  * Read the pair with the given pairwise index from the data object file.
  *
@@ -68,9 +62,6 @@ void Matrix::Pair::read(const Index& index) const
       readNext();
    }
 }
-
-
-
 
 
 

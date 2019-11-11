@@ -6,8 +6,6 @@
 
 
 
-
-
 /*!
 *  Implements an interface to initialize a new CSM pair.
 *
@@ -17,8 +15,6 @@ CSMatrix::Pair::Pair(CSMatrix* matrix) : Matrix::Pair(matrix), _cMatrix(matrix)
 {
     EDEBUG_FUNC(this, matrix, testType);
 }
-
-
 
 
 
@@ -34,9 +30,6 @@ CSMatrix::Pair::Pair(const CSMatrix* matrix) : Matrix::Pair(matrix), _cMatrix(ma
 
 
 
-
-
-
 /*!
 *  Implements an interface to clear all of the clusters out of a pair.
 */
@@ -46,8 +39,6 @@ void CSMatrix::Pair::clearClusters() const
     _pValues.clear();
     _r2.clear();
 }
-
-
 
 
 
@@ -65,9 +56,6 @@ void CSMatrix::Pair::addCluster(int amount) const
        _r2.append(QVector<double>());
     }
 }
-
-
-
 
 
 
@@ -91,8 +79,6 @@ void CSMatrix::Pair::addCluster(int amount, int size) const
 
 
 
-
-
 /*!
 *  Implements an interface to quiery for the size of a cluster.
 *
@@ -106,8 +92,6 @@ int CSMatrix::Pair::clusterSize() const
 
 
 
-
-
 /*!
 *  Implements an interface to quiery about a pairs contents.
 *
@@ -118,8 +102,6 @@ bool CSMatrix::Pair::isEmpty() const
     EDEBUG_FUNC(this);
     return _pValues.isEmpty();
 }
-
-
 
 
 
@@ -166,8 +148,6 @@ QString CSMatrix::Pair::toString() const
 
 
 
-
-
 /*!
 *  Implements an interface to quiery for a value in a cluster in a sample.
 *
@@ -195,8 +175,6 @@ const double& CSMatrix::Pair::at(int cluster, int gene, QString type) const
         throw e;
     }
 }
-
-
 
 
 
@@ -230,8 +208,6 @@ double& CSMatrix::Pair::at(int cluster, int gene, QString type)
 
 
 
-
-
 /*!
 *  Implements an interface to write cluster data into the file ACE sets up.
 *
@@ -253,8 +229,6 @@ void CSMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
        }
     }
 }
-
-
 
 
 

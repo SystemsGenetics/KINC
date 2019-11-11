@@ -4,8 +4,6 @@
 
 
 
-
-
 /*!
 *  Implements an interface that initializes a new CSM model object.
 *
@@ -20,8 +18,6 @@ CSMatrix::Model::Model(CSMatrix* matrix) : _matrix(matrix)
        setParent(matrix);
     }
 }
-
-
 
 
 
@@ -67,8 +63,6 @@ QVariant CSMatrix::Model::headerData(int section, Qt::Orientation orientation, i
 
 
 
-
-
 /*!
 *  Implements an interface that quiries for the number of columns.
 *
@@ -84,7 +78,6 @@ int CSMatrix::Model::columnCount(const QModelIndex&) const
 
 
 
-
 /*!
 *  Implements an interface that quiries for the number of row.
 *    EDEBUG_FUNC(this,&index,role);
@@ -97,9 +90,6 @@ int CSMatrix::Model::rowCount(const QModelIndex&) const
     EDEBUG_FUNC(this);
     return _matrix->geneSize();
 }
-
-
-
 
 
 

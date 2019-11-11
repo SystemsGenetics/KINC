@@ -3,7 +3,6 @@
 
 
 
-
 /*!
 *  Implements an interface to create a result block object.
 */
@@ -11,8 +10,6 @@ ConditionalTest::ResultBlock::ResultBlock(int index) : EAbstractAnalyticBlock(in
 {
     EDEBUG_FUNC(this,index);
 }
-
-
 
 
 
@@ -29,9 +26,6 @@ ConditionalTest::ResultBlock::ResultBlock(int index, int numTests, qint64 start)
 
 
 
-
-
-
 /*!
  * Append a pair to the result block's list of pairs.
  *
@@ -43,8 +37,6 @@ void ConditionalTest::ResultBlock::append(const CSMPair& pair)
 
    _pairs.append(pair);
 }
-
-
 
 
 
@@ -64,8 +56,6 @@ void ConditionalTest::ResultBlock::write(QDataStream& stream) const
         }
     }
 }
-
-
 
 
 

@@ -6,9 +6,6 @@ namespace Pairwise {
 
 
 
-
-
-
 /*!
  * Return the i.j element of a matrix.
  *
@@ -20,9 +17,6 @@ inline const float& elem(const Matrix2x2& M, int i, int j)
 {
    return M.s[i * 2 + j];
 }
-
-
-
 
 
 
@@ -40,9 +34,6 @@ inline float& elem(Matrix2x2& M, int i, int j)
 
 
 
-
-
-
 /*!
  * Initialize a vector to the zero vector.
  *
@@ -53,9 +44,6 @@ void vectorInitZero(Vector2& a)
    a.s[0] = 0;
    a.s[1] = 0;
 }
-
-
-
 
 
 
@@ -70,9 +58,6 @@ void vectorAdd(Vector2& a, const Vector2& b)
    a.s[0] += b.s[0];
    a.s[1] += b.s[1];
 }
-
-
-
 
 
 
@@ -92,9 +77,6 @@ void vectorAdd(Vector2& a, float c, const Vector2& b)
 
 
 
-
-
-
 /*!
  * Subtract two vectors in-place. The result is stored in a.
  *
@@ -106,9 +88,6 @@ void vectorSubtract(Vector2& a, const Vector2& b)
    a.s[0] -= b.s[0];
    a.s[1] -= b.s[1];
 }
-
-
-
 
 
 
@@ -126,9 +105,6 @@ void vectorScale(Vector2& a, float c)
 
 
 
-
-
-
 /*!
  * Return the dot product of two vectors.
  *
@@ -139,9 +115,6 @@ float vectorDot(const Vector2& a, const Vector2& b)
 {
    return a.s[0] * b.s[0] + a.s[1] * b.s[1];
 }
-
-
-
 
 
 
@@ -162,9 +135,6 @@ float vectorDiffNorm(const Vector2& a, const Vector2& b)
 
 
 
-
-
-
 /*!
  * Initialize a matrix to the identity matrix.
  *
@@ -177,9 +147,6 @@ void matrixInitIdentity(Matrix2x2& M)
    elem(M, 1, 0) = 0;
    elem(M, 1, 1) = 1;
 }
-
-
-
 
 
 
@@ -198,9 +165,6 @@ void matrixInitZero(Matrix2x2& M)
 
 
 
-
-
-
 /*!
  * Scale a matrix by a constant.
  *
@@ -214,9 +178,6 @@ void matrixScale(Matrix2x2& A, float c)
    elem(A, 1, 0) *= c;
    elem(A, 1, 1) *= c;
 }
-
-
-
 
 
 
@@ -242,9 +203,6 @@ void matrixInverse(const Matrix2x2& A, Matrix2x2& B, float *p_det)
 
 
 
-
-
-
 /*!
  * Compute the matrix-vector product A * x and store the result in b.
  *
@@ -257,9 +215,6 @@ void matrixProduct(const Matrix2x2& A, const Vector2& x, Vector2& b)
    b.s[0] = elem(A, 0, 0) * x.s[0] + elem(A, 0, 1) * x.s[1];
    b.s[1] = elem(A, 1, 0) * x.s[0] + elem(A, 1, 1) * x.s[1];
 }
-
-
-
 
 
 
@@ -277,9 +232,6 @@ void matrixAddOuterProduct(Matrix2x2& A, float c, const Vector2& x)
    elem(A, 1, 0) += c * x.s[1] * x.s[0];
    elem(A, 1, 1) += c * x.s[1] * x.s[1];
 }
-
-
-
 
 
 

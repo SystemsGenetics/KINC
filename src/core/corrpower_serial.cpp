@@ -10,9 +10,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a new serial object with the given analytic as its parent.
  *
@@ -24,9 +21,6 @@ CorrPowerFilter::Serial::Serial(CorrPowerFilter* parent):
 {
    EDEBUG_FUNC(this,parent);
 }
-
-
-
 
 
 
@@ -150,9 +144,6 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
    // We're done! Return the result block.
    return unique_ptr<EAbstractAnalyticBlock>(resultBlock);
 }
-
-
-
 
 
 

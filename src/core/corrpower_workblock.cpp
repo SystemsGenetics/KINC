@@ -2,9 +2,6 @@
 
 
 
-
-
-
 /*!
  * Construct a new block with the given index, starting pairwise index,
  * and pair size.
@@ -23,9 +20,6 @@ CorrPowerFilter::WorkBlock::WorkBlock(int index, qint64 start, qint64 size):
 
 
 
-
-
-
 /*!
  * Write this block's data to the given data stream.
  *
@@ -37,9 +31,6 @@ void CorrPowerFilter::WorkBlock::write(QDataStream& stream) const
 
    stream << _start << _size;
 }
-
-
-
 
 
 

@@ -17,9 +17,6 @@ const QStringList Extract::Input::FORMAT_NAMES
 
 
 
-
-
-
 /*!
  * Construct a new input object with the given analytic as its parent.
  *
@@ -34,9 +31,6 @@ Extract::Input::Input(Extract* parent):
 
 
 
-
-
-
 /*!
  * Return the total number of arguments this analytic type contains.
  */
@@ -46,9 +40,6 @@ int Extract::Input::size() const
 
    return Total;
 }
-
-
-
 
 
 
@@ -76,9 +67,6 @@ EAbstractAnalyticInput::Type Extract::Input::type(int index) const
    default: return Type::Boolean;
    }
 }
-
-
-
 
 
 
@@ -194,9 +182,6 @@ QVariant Extract::Input::data(int index, Role role) const
 
 
 
-
-
-
 /*!
  * Set an argument with the given index to the given value.
  *
@@ -229,9 +214,6 @@ void Extract::Input::set(int index, const QVariant& value)
 
 
 
-
-
-
 /*!
  * Set a data argument with the given index to the given data object pointer.
  *
@@ -259,9 +241,6 @@ void Extract::Input::set(int index, EAbstractData* data)
       _base->_csm = data->cast<CSMatrix>();
    }
 }
-
-
-
 
 
 

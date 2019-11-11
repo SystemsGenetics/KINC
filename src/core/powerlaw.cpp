@@ -9,9 +9,6 @@ using RawPair = CorrelationMatrix::RawPair;
 
 
 
-
-
-
 /*!
  * Return the total number of blocks this analytic must process as steps
  * or blocks of work.
@@ -22,9 +19,6 @@ int PowerLaw::size() const
 
    return 1;
 }
-
-
-
 
 
 
@@ -98,9 +92,6 @@ void PowerLaw::process(const EAbstractAnalyticBlock*)
 
 
 
-
-
-
 /*!
  * Make a new input object and return its pointer.
  */
@@ -110,9 +101,6 @@ EAbstractAnalyticInput* PowerLaw::makeInput()
 
    return new Input(this);
 }
-
-
-
 
 
 
@@ -143,9 +131,6 @@ void PowerLaw::initialize()
       throw e;
    }
 }
-
-
-
 
 
 
@@ -180,9 +165,6 @@ std::vector<float> PowerLaw::computeMaximums(const std::vector<RawPair>& pairs)
    // return row-wise maximums
    return maximums;
 }
-
-
-
 
 
 
@@ -256,9 +238,6 @@ std::vector<bool> PowerLaw::computeAdjacencyMatrix(const std::vector<RawPair>& p
 
 
 
-
-
-
 /*!
  * Compute the degree distribution of an adjacency matrix.
  *
@@ -304,9 +283,6 @@ std::vector<int> PowerLaw::computeDegreeDistribution(const std::vector<bool>& ma
 
    return histogram;
 }
-
-
-
 
 
 

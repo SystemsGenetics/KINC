@@ -3,9 +3,6 @@
 
 
 
-
-
-
 /*!
  * Remove outliers from a vector of pairwise data. Outliers are detected independently
  * on each axis using the Tukey method, and marked with the given marker. Only the
@@ -99,9 +96,6 @@ int removeOutliersCluster(
    // return number of remaining samples
    return numSamples;
 }
-
-
-
 
 
 

@@ -5,9 +5,6 @@
 
 
 
-
-
-
 struct GMM
 {
    Vector2 *   data;
@@ -27,9 +24,6 @@ struct GMM
 
 
 
-
-
-
 /*!
  * Implementation of rand(), taken from POSIX example.
  *
@@ -41,9 +35,6 @@ int myrand(unsigned long *state)
    *state = (*state) * 1103515245 + 12345;
    return ((unsigned)((*state)/65536) % 32768);
 }
-
-
-
 
 
 
@@ -83,9 +74,6 @@ void GMM_initializeComponents(
 
 
 
-
-
-
 /*!
  * Pre-compute the precision matrix and normalizer term for each
  * mixture component.
@@ -114,9 +102,6 @@ bool GMM_prepareComponents(GMM *gmm, int K)
 
    return success;
 }
-
-
-
 
 
 
@@ -187,9 +172,6 @@ void GMM_initializeMeans(GMM *gmm, const Vector2 *X, int N, int K)
       }
    }
 }
-
-
-
 
 
 
@@ -295,9 +277,6 @@ float GMM_computeEStep(GMM *gmm, const Vector2 *X, int N, int K)
 
 
 
-
-
-
 /*!
  * Perform the maximization step of the EM algorithm. In this step we update the
  * parameters of the the mixture model using gamma, which is computed during the
@@ -369,9 +348,6 @@ void GMM_computeMStep(GMM *gmm, const Vector2 *X, int N, int K)
 
 
 
-
-
-
 /*!
  * Compute the cluster labels of a dataset using gamma:
  *
@@ -411,9 +387,6 @@ void GMM_computeLabels(
 
 
 
-
-
-
 /*!
  * Compute the entropy of the mixture model for a dataset using gamma
  * and the given cluster labels:
@@ -441,9 +414,6 @@ float GMM_computeEntropy(
 
    return E;
 }
-
-
-
 
 
 
@@ -512,18 +482,12 @@ bool GMM_fit(
 
 
 
-
-
-
 typedef enum
 {
    AIC,
    BIC,
    ICL
 } Criterion;
-
-
-
 
 
 
@@ -541,9 +505,6 @@ float GMM_computeAIC(int K, int D, float logL)
 
    return 2 * p - 2 * logL;
 }
-
-
-
 
 
 
@@ -565,9 +526,6 @@ float GMM_computeBIC(int K, int D, float logL, int N)
 
 
 
-
-
-
 /*!
  * Compute the Integrated Completed Likelihood of a Gaussian mixture model.
  *
@@ -584,9 +542,6 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
 
    return logf((float) N) * p - 2 * logL + 2 * E;
 }
-
-
-
 
 
 

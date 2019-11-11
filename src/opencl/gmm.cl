@@ -5,9 +5,6 @@
 
 
 
-
-
-
 typedef struct
 {
    float pi;
@@ -16,9 +13,6 @@ typedef struct
    Matrix2x2 sigmaInv;
    float normalizer;
 } Component;
-
-
-
 
 
 
@@ -36,9 +30,6 @@ typedef struct
 
 
 
-
-
-
 /*!
  * Implementation of rand(), taken from POSIX example.
  *
@@ -49,9 +40,6 @@ int myrand(ulong *state)
    *state = (*state) * 1103515245 + 12345;
    return ((unsigned)((*state)/65536) % 32768);
 }
-
-
-
 
 
 /*!
@@ -76,9 +64,6 @@ void GMM_Component_initialize(
 
 
 
-
-
-
 /*!
  * Pre-compute the precision matrix and normalizer term for a mixture component.
  *
@@ -98,9 +83,6 @@ bool GMM_Component_prepare(__global Component *component)
    // return failure if matrix inverse failed
    return !(det <= 0 || isnan(det));
 }
-
-
-
 
 
 
@@ -141,9 +123,6 @@ void GMM_Component_computeLogProbNorm(
       logP[i] = component->normalizer - 0.5f * xmSxm;
    }
 }
-
-
-
 
 
 
@@ -217,9 +196,6 @@ void GMM_initializeMeans(GMM *gmm, __global const Vector2 *X, int N)
       }
    }
 }
-
-
-
 
 
 
@@ -298,9 +274,6 @@ float GMM_computeEStep(GMM *gmm, __global const Vector2 *X, int N)
 
 
 
-
-
-
 /*!
  * Perform the maximization step of the EM algorithm. In this step we update the
  * parameters of the the mixture model using gamma, which is computed during the
@@ -368,9 +341,6 @@ void GMM_computeMStep(GMM *gmm, __global const Vector2 *X, int N)
 
 
 
-
-
-
 /*!
  * Compute the cluster labels of a dataset using gamma:
  *
@@ -407,9 +377,6 @@ void GMM_computeLabels(
 
 
 
-
-
-
 /*!
  * Compute the entropy of the mixture model for a dataset using gamma
  * and the given cluster labels:
@@ -435,9 +402,6 @@ float GMM_computeEntropy(
 
    return E;
 }
-
-
-
 
 
 
@@ -519,18 +483,12 @@ bool GMM_fit(
 
 
 
-
-
-
 typedef enum
 {
    AIC,
    BIC,
    ICL
 } Criterion;
-
-
-
 
 
 
@@ -547,9 +505,6 @@ float GMM_computeAIC(int K, int D, float logL)
 
    return 2 * p - 2 * logL;
 }
-
-
-
 
 
 
@@ -570,9 +525,6 @@ float GMM_computeBIC(int K, int D, float logL, int N)
 
 
 
-
-
-
 /*!
  * Compute the Integrated Completed Likelihood of a Gaussian mixture model.
  *
@@ -588,9 +540,6 @@ float GMM_computeICL(int K, int D, float logL, int N, float E)
 
    return log((float) N) * p - 2 * logL + 2 * E;
 }
-
-
-
 
 
 

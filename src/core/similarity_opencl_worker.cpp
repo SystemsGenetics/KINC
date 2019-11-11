@@ -9,9 +9,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a new OpenCL worker with the given parent analytic, OpenCL object,
  * OpenCL context, and OpenCL program.
@@ -56,9 +53,6 @@ Similarity::OpenCL::Worker::Worker(Similarity* base, Similarity::OpenCL* baseOpe
    _buffers.out_labels = ::OpenCL::Buffer<cl_char>(context, N * W);
    _buffers.out_correlations = ::OpenCL::Buffer<cl_float>(context, K * W);
 }
-
-
-
 
 
 

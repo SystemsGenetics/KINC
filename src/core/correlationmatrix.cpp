@@ -20,9 +20,6 @@ QAbstractTableModel* CorrelationMatrix::model()
 
 
 
-
-
-
 /*!
  * Initialize this correlation matrix with a list of gene names, the max cluster
  * size, and a correlation name.
@@ -46,9 +43,6 @@ void CorrelationMatrix::initialize(const EMetaArray& geneNames, int maxClusterSi
 
 
 
-
-
-
 /*!
  * Return the correlation name for this correlation matrix.
  */
@@ -58,9 +52,6 @@ QString CorrelationMatrix::correlationName() const
 
    return meta().toObject().at("correlation").toString();
 }
-
-
-
 
 
 
@@ -92,7 +83,7 @@ std::vector<CorrelationMatrix::RawPair> CorrelationMatrix::dumpRawData() const
       {
          rawPair.correlations[k] = pair.at(k);
       }
-      
+
       pairs.push_back(rawPair);
    }
 

@@ -6,9 +6,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a new fetch-pair kernel object with the given OpenCL program and
  * qt parent.
@@ -21,9 +18,6 @@ Similarity::OpenCL::FetchPair::FetchPair(::OpenCL::Program* program, QObject* pa
 {
    EDEBUG_FUNC(this,program,parent);
 }
-
-
-
 
 
 

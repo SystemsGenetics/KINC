@@ -7,9 +7,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a table model for a correlation matrix.
  *
@@ -22,9 +19,6 @@ CorrelationMatrix::Model::Model(CorrelationMatrix* matrix):
 
    setParent(matrix);
 }
-
-
-
 
 
 
@@ -64,9 +58,6 @@ QVariant CorrelationMatrix::Model::headerData(int section, Qt::Orientation orien
 
 
 
-
-
-
 /*!
  * Return the number of rows in the table model.
  *
@@ -81,9 +72,6 @@ int CorrelationMatrix::Model::rowCount(const QModelIndex&) const
 
 
 
-
-
-
 /*!
  * Return the number of columns in the table model.
  *
@@ -95,9 +83,6 @@ int CorrelationMatrix::Model::columnCount(const QModelIndex&) const
 
    return _matrix->geneSize();
 }
-
-
-
 
 
 

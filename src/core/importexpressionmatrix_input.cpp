@@ -3,9 +3,6 @@
 
 
 
-
-
-
 /*!
  * Construct a new input object with the given analytic as its parent.
  *
@@ -20,9 +17,6 @@ ImportExpressionMatrix::Input::Input(ImportExpressionMatrix* parent):
 
 
 
-
-
-
 /*!
  * Return the total number of arguments this analytic type contains.
  */
@@ -32,9 +26,6 @@ int ImportExpressionMatrix::Input::size() const
 
    return Total;
 }
-
-
-
 
 
 
@@ -56,9 +47,6 @@ EAbstractAnalyticInput::Type ImportExpressionMatrix::Input::type(int index) cons
    default: return Type::Boolean;
    }
 }
-
-
-
 
 
 
@@ -118,9 +106,6 @@ QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
 
 
 
-
-
-
 /*!
  * Set an argument with the given index to the given value.
  *
@@ -144,9 +129,6 @@ void ImportExpressionMatrix::Input::set(int index, const QVariant& value)
 
 
 
-
-
-
 /*!
  * Set a file argument with the given index to the given qt file pointer.
  *
@@ -162,9 +144,6 @@ void ImportExpressionMatrix::Input::set(int index, QFile* file)
       _base->_input = file;
    }
 }
-
-
-
 
 
 

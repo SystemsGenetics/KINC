@@ -14,6 +14,8 @@
 #include <gsl/gsl_math.h>
 //
 
+
+
 /*!
 *  Implements an interface to create a serial object.
 */
@@ -21,8 +23,6 @@ ConditionalTest::Serial::Serial(ConditionalTest* parent) : EAbstractAnalyticSeri
 {
     EDEBUG_FUNC(this,parent);
 }
-
-
 
 
 
@@ -137,9 +137,6 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
 
 
 
-
-
-
 /*!
 *  Implements an interface to prerpare the annotation matrix data for testing.
 *
@@ -171,7 +168,6 @@ int ConditionalTest::Serial::prepAnxData(QString testLabel, int dataIndex, TESTT
 
 
 
-
 /*!
 *  Implements an interface to check to see if a matrix is empty.
 *
@@ -193,8 +189,6 @@ bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
     }
     return true;
 }
-
-
 
 
 
@@ -230,7 +224,6 @@ int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterInd
     }
     return _catInCluster;
 }
-
 
 
 
@@ -279,7 +272,7 @@ int ConditionalTest::Serial::test(CCMatrix::Pair& ccmPair,
             r2[clusterIndex][testIndex] = qQNaN();
             testIndex++;
         break;
-        case ORDINAL :            
+        case ORDINAL :
             regression(_anxData, ccmPair, clusterIndex, ORDINAL, results);
             pValues[clusterIndex][testIndex] = results.at(0);
             r2[clusterIndex][testIndex] = results.at(1);
@@ -295,10 +288,6 @@ int ConditionalTest::Serial::test(CCMatrix::Pair& ccmPair,
     }
     return _base->_testType.at(featureIndex);
 }
-
-
-
-
 
 
 
@@ -402,8 +391,6 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
     double pvalue = gsl_cdf_hypergeometric_Q(k, n1, n2, t);
     return pvalue;
 }
-
-
 
 
 

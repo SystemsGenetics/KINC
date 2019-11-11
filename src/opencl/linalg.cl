@@ -20,15 +20,9 @@ typedef float4 Matrix2x2;
 
 
 
-
-
-
 #define vectorInitZero(a) \
    (a)->x = 0; \
    (a)->y = 0;
-
-
-
 
 
 
@@ -38,15 +32,9 @@ typedef float4 Matrix2x2;
 
 
 
-
-
-
 #define vectorAddScaled(a, c, b) \
    (a)->x += (c) * (b)->x; \
    (a)->y += (c) * (b)->y;
-
-
-
 
 
 
@@ -56,15 +44,9 @@ typedef float4 Matrix2x2;
 
 
 
-
-
-
 #define vectorScale(a, c) \
    (a)->x *= (c); \
    (a)->y *= (c);
-
-
-
 
 
 
@@ -73,15 +55,9 @@ typedef float4 Matrix2x2;
 
 
 
-
-
-
 #define SQR(x) ((x)*(x))
 #define vectorDiffNorm(a, b) \
    sqrt(SQR((a)->x - (b)->x) + SQR((a)->y - (b)->y))
-
-
-
 
 
 
@@ -93,9 +69,6 @@ typedef float4 Matrix2x2;
 
 
 
-
-
-
 #define matrixInitZero(M) \
    (M)->x = 0; \
    (M)->y = 0; \
@@ -104,17 +77,11 @@ typedef float4 Matrix2x2;
 
 
 
-
-
-
 #define matrixScale(A, c) \
    (A)->x *= (c); \
    (A)->y *= (c); \
    (A)->z *= (c); \
    (A)->w *= (c);
-
-
-
 
 
 
@@ -127,15 +94,9 @@ typedef float4 Matrix2x2;
 
 
 
-
-
-
 #define matrixProduct(A, x_, b) \
    (b)->x = (A)->x * (x_)->x + (A)->y * (x_)->y; \
    (b)->y = (A)->z * (x_)->x + (A)->w * (x_)->y;
-
-
-
 
 
 

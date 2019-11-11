@@ -7,9 +7,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a new OpenCL object with the given analytic as its parent.
  *
@@ -24,9 +21,6 @@ Similarity::OpenCL::OpenCL(Similarity* parent):
 
 
 
-
-
-
 /*!
  * Create and return a new OpenCL worker for the analytic.
  */
@@ -36,9 +30,6 @@ std::unique_ptr<EAbstractAnalyticOpenCLWorker> Similarity::OpenCL::makeWorker()
 
    return unique_ptr<EAbstractAnalyticOpenCLWorker>(new Worker(_base, this, _context, _program));
 }
-
-
-
 
 
 

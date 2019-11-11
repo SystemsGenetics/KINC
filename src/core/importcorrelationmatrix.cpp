@@ -4,9 +4,6 @@
 
 
 
-
-
-
 /*!
  * Return the total number of blocks this analytic must process as steps
  * or blocks of work. This implementation uses a work block for each line
@@ -18,10 +15,6 @@ int ImportCorrelationMatrix::size() const
 
    return _numLines;
 }
-
-
-
-
 
 
 
@@ -135,9 +128,6 @@ void ImportCorrelationMatrix::process(const EAbstractAnalyticBlock* result)
 
 
 
-
-
-
 /*!
  * Make a new input object and return its pointer.
  */
@@ -147,9 +137,6 @@ EAbstractAnalyticInput* ImportCorrelationMatrix::makeInput()
 
    return new Input(this);
 }
-
-
-
 
 
 

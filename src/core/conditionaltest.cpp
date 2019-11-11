@@ -12,8 +12,6 @@
 
 
 
-
-
 /*!
 *  Supplies ACE with the number of work blocks it is going to create.
 *
@@ -25,7 +23,6 @@ int ConditionalTest::size() const
     qint64 size = (_ccm->size() + _workBlockSize - 1) / _workBlockSize;
     return size;
 }
-
 
 
 
@@ -41,7 +38,6 @@ qint64 ConditionalTest::totalPairs(const CorrelationMatrix* cmx)
 {
     return static_cast<qint64>(cmx->geneSize()) * (cmx->geneSize() - 1) / 2;
 }
-
 
 
 
@@ -97,8 +93,6 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
 
 
 
-
-
 /*!
 *  An interface to create a new input data object.
 *
@@ -109,8 +103,6 @@ EAbstractAnalyticInput* ConditionalTest::makeInput()
     EDEBUG_FUNC(this);
     return new Input(this);
 }
-
-
 
 
 
@@ -138,8 +130,6 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork(int index) con
 
 
 
-
-
 /*!
 *  Implements an interface to create uninitialized work blocks.
 *
@@ -153,9 +143,6 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork() const
 
 
 
-
-
-
 /*!
 *  Implements an interface to create uninitialized result blocks.
 *
@@ -166,8 +153,6 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeResult() const
     EDEBUG_FUNC(this);
     return std::unique_ptr<EAbstractAnalyticBlock>(new EAbstractAnalyticBlock());
 }
-
-
 
 
 
@@ -280,8 +265,6 @@ void ConditionalTest::initialize()
 
 
 
-
-
 /*!
 *  This implements an interface to check the output of the KNNAnalytic.
 *  It is here where we are making sure that the _out is present.
@@ -297,8 +280,6 @@ void ConditionalTest::initializeOutputs()
        throw e;
     }
 }
-
-
 
 
 
@@ -425,7 +406,6 @@ void ConditionalTest::readInANX(QVector<QVector<QString>>& anxdata,
 
 
 
-
 /*!
 *  An interface to decide what the test types are going to be for each feature.
 *
@@ -535,8 +515,6 @@ int ConditionalTest::max(QVector<qint32> &counts) const
 
 
 
-
-
 /*!
 *  An interface to sperate the test out.
 */
@@ -553,8 +531,6 @@ void ConditionalTest::Test()
        throw e;
     }
 }
-
-
 
 
 
@@ -605,7 +581,6 @@ QString ConditionalTest::testNames()
     }
     return string;
 }
-
 
 
 
@@ -684,8 +659,6 @@ void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,Q
     _out->initialize(Features, featureInfo, Data, _numTests, testNames());
     _out->initialize(_emx->geneNames(), maxClusterSize, subHeaderSize);
 }
-
-
 
 
 

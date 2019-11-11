@@ -1,9 +1,6 @@
 
 
 
-
-
-
 /*!
  * Compute the Pearson correlation of a cluster in a pairwise data array.
  *
@@ -58,9 +55,6 @@ float Pearson_computeCluster(
 
    return result;
 }
-
-
-
 
 
 

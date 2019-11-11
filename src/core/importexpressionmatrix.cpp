@@ -5,9 +5,6 @@
 
 
 
-
-
-
 /*!
  * Return the total number of blocks this analytic must process as steps
  * or blocks of work. This implementation uses a work block for reading
@@ -20,9 +17,6 @@ int ImportExpressionMatrix::size() const
 
    return _numLines + 1;
 }
-
-
-
 
 
 
@@ -171,9 +165,6 @@ void ImportExpressionMatrix::process(const EAbstractAnalyticBlock* result)
 
 
 
-
-
-
 /*!
  * Make a new input object and return its pointer.
  */
@@ -183,9 +174,6 @@ EAbstractAnalyticInput* ImportExpressionMatrix::makeInput()
 
    return new Input(this);
 }
-
-
-
 
 
 

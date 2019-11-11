@@ -7,9 +7,6 @@ using namespace Pairwise;
 
 
 
-
-
-
 /*!
  * Construct a pairwise index from a row index and a column index. The row
  * index must be greater than the column index.
@@ -32,9 +29,6 @@ Index::Index(qint32 x, qint32 y):
       throw e;
    }
 }
-
-
-
 
 
 
@@ -73,9 +67,6 @@ Index::Index(qint64 index)
 
 
 
-
-
-
 /*!
  * Return the indent value of this pairwise index with a given cluster index.
  *
@@ -98,9 +89,6 @@ qint64 Index::indent(qint8 cluster) const
    qint64 index {static_cast<qint64>(_x) * (_x - 1) / 2 + _y};
    return index * MAX_CLUSTER_SIZE + cluster;
 }
-
-
-
 
 
 

@@ -2,6 +2,7 @@
 #include "datafactory.h"
 
 
+
 /*!
 *  Implements an interface to create a new input object.
 *
@@ -11,9 +12,6 @@ ConditionalTest::Input::Input(ConditionalTest* parent) : EAbstractAnalyticInput(
 {
     EDEBUG_FUNC(this,parent);
 }
-
-
-
 
 
 
@@ -27,9 +25,6 @@ int ConditionalTest::Input::size() const
     EDEBUG_FUNC(this);
     return Total;
 }
-
-
-
 
 
 
@@ -56,9 +51,6 @@ EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
     default                 : return Boolean;
     }
 }
-
-
-
 
 
 
@@ -90,8 +82,6 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
 
 
 
-
-
 /*!
 *  Implements an interface to set values to their respective places once they are inputed.
 *
@@ -118,8 +108,6 @@ void ConditionalTest::Input::set(int index, const QVariant& value)
 
 
 
-
-
 /*!
 *  Implements an interface to set values to their respective places once they are inputed.
 *
@@ -137,7 +125,6 @@ void ConditionalTest::Input::set(int index, QFile* file)
         break;
     }
 }
-
 
 
 
@@ -170,8 +157,6 @@ void ConditionalTest::Input::set(int index, EAbstractData* data)
 
 
 
-
-
 /*!
 *  Implements an interface to grab info about the emx data.
 *
@@ -193,9 +178,6 @@ QVariant ConditionalTest::Input::emxData(Role role) const
     default             : return QVariant();
     }
 }
-
-
-
 
 
 
@@ -223,9 +205,6 @@ QVariant ConditionalTest::Input::ccmData(Role role) const
 
 
 
-
-
-
 /*!
 *  Implements an interface to grab info about the cmx data.
 *
@@ -247,9 +226,6 @@ QVariant ConditionalTest::Input::cmxData(Role role) const
     default             : return QVariant();
     }
 }
-
-
-
 
 
 
@@ -279,9 +255,6 @@ QVariant ConditionalTest::Input::anxData(Role role) const
 
 
 
-
-
-
 QVariant ConditionalTest::Input::delimiterData(Role role) const
 {
     EDEBUG_FUNC(this, role);
@@ -294,8 +267,6 @@ QVariant ConditionalTest::Input::delimiterData(Role role) const
     default             : return QVariant();
     }
 }
-
-
 
 
 
@@ -320,11 +291,6 @@ QVariant ConditionalTest::Input::CSMData(Role role) const
     default             : return QVariant();
     }
 }
-
-
-
-
-
 
 
 
@@ -353,8 +319,6 @@ QVariant ConditionalTest::Input::testData(Role role) const
     default             : return QVariant();
     }
 }
-
-
 
 
 

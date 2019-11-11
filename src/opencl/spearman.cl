@@ -3,9 +3,6 @@
 
 
 
-
-
-
 /*!
  * Compute the Spearman correlation of a cluster in a pairwise data array.
  *
@@ -87,9 +84,6 @@ float Spearman_computeCluster(
 
    return result;
 }
-
-
-
 
 
 

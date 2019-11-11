@@ -3,9 +3,6 @@
 
 
 
-
-
-
 /*!
  * Construct a new input object with the given analytic as its parent.
  *
@@ -20,9 +17,6 @@ ExportExpressionMatrix::Input::Input(ExportExpressionMatrix* parent):
 
 
 
-
-
-
 /*!
  * Return the total number of arguments this analytic type contains.
  */
@@ -32,9 +26,6 @@ int ExportExpressionMatrix::Input::size() const
 
    return Total;
 }
-
-
-
 
 
 
@@ -56,9 +47,6 @@ EAbstractAnalyticInput::Type ExportExpressionMatrix::Input::type(int index) cons
    default: return Type::Boolean;
    }
 }
-
-
-
 
 
 
@@ -118,9 +106,6 @@ QVariant ExportExpressionMatrix::Input::data(int index, Role role) const
 
 
 
-
-
-
 /*!
  * Set an argument with the given index to the given value.
  *
@@ -144,9 +129,6 @@ void ExportExpressionMatrix::Input::set(int index, const QVariant& value)
 
 
 
-
-
-
 /*!
  * Set a data argument with the given index to the given data object pointer.
  *
@@ -162,9 +144,6 @@ void ExportExpressionMatrix::Input::set(int index, EAbstractData* data)
       _base->_input = data->cast<ExpressionMatrix>();
    }
 }
-
-
-
 
 
 

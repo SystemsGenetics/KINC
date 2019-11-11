@@ -6,9 +6,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a new CUDA kernel object with the given CUDA program.
  *
@@ -19,9 +16,6 @@ Similarity::CUDA::Kernel::Kernel(::CUDA::Program* program):
 {
    EDEBUG_FUNC(this,program);
 }
-
-
-
 
 
 

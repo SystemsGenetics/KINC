@@ -6,9 +6,6 @@ using namespace Pairwise;
 
 
 
-
-
-
 /*!
  * Construct a Spearman correlation model.
  *
@@ -20,9 +17,6 @@ Spearman::Spearman(ExpressionMatrix* emx)
    _x_rank.resize(emx->sampleSize());
    _y_rank.resize(emx->sampleSize());
 }
-
-
-
 
 
 
@@ -95,9 +89,6 @@ float Spearman::computeCluster(
 
 
 
-
-
-
 void Spearman::siftDown(QVector<float>& array, QVector<float>& extra, int start, int end)
 {
    int root = start;
@@ -132,9 +123,6 @@ void Spearman::siftDown(QVector<float>& array, QVector<float>& extra, int start,
 
 
 
-
-
-
 /*!
  * Sort an array using heapsort, while also applying the same swap operations
  * to a second array of the same size.
@@ -165,9 +153,6 @@ void Spearman::heapSort(QVector<float>& array, QVector<float>& extra, int n)
       siftDown(array, extra, 0, end);
    }
 }
-
-
-
 
 
 

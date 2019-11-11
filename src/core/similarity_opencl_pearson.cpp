@@ -6,9 +6,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a new Pearson kernel object with the given OpenCL program and
  * qt parent.
@@ -21,9 +18,6 @@ Similarity::OpenCL::Pearson::Pearson(::OpenCL::Program* program, QObject* parent
 {
    EDEBUG_FUNC(this,program,parent);
 }
-
-
-
 
 
 

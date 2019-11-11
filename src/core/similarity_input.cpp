@@ -3,9 +3,6 @@
 
 
 
-
-
-
 /*!
  * String list of clustering methods for this analytic that correspond exactly
  * to its enumeration. Used for handling the clustering method argument for this
@@ -19,9 +16,6 @@ const QStringList Similarity::Input::CLUSTERING_NAMES
 
 
 
-
-
-
 /*!
  * String list of correlation methods for this analytic that correspond exactly
  * to its enumeration. Used for handling the correlation method argument for this
@@ -32,9 +26,6 @@ const QStringList Similarity::Input::CORRELATION_NAMES
    "pearson"
    ,"spearman"
 };
-
-
-
 
 
 
@@ -52,9 +43,6 @@ const QStringList Similarity::Input::CRITERION_NAMES
 
 
 
-
-
-
 /*!
  * Construct a new input object with the given analytic as its parent.
  *
@@ -69,9 +57,6 @@ Similarity::Input::Input(Similarity* parent):
 
 
 
-
-
-
 /*!
  * Return the total number of arguments this analytic type contains.
  */
@@ -81,9 +66,6 @@ int Similarity::Input::size() const
 
    return Total;
 }
-
-
-
 
 
 
@@ -118,9 +100,6 @@ EAbstractAnalyticInput::Type Similarity::Input::type(int index) const
    default: return Type::Boolean;
    }
 }
-
-
-
 
 
 
@@ -316,9 +295,6 @@ QVariant Similarity::Input::data(int index, Role role) const
 
 
 
-
-
-
 /*!
  * Set an argument with the given index to the given value.
  *
@@ -379,9 +355,6 @@ void Similarity::Input::set(int index, const QVariant& value)
 
 
 
-
-
-
 /*!
  * Set a file argument with the given index to the given qt file pointer. This
  * implementation does nothing because this analytic has no file arguments.
@@ -393,9 +366,6 @@ void Similarity::Input::set(int, QFile*)
 {
    EDEBUG_FUNC(this);
 }
-
-
-
 
 
 

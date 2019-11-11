@@ -17,9 +17,6 @@ ExportCorrelationMatrix::Input::Input(ExportCorrelationMatrix* parent):
 
 
 
-
-
-
 /*!
  * Return the total number of arguments this analytic type contains.
  */
@@ -29,9 +26,6 @@ int ExportCorrelationMatrix::Input::size() const
 
    return Total;
 }
-
-
-
 
 
 
@@ -53,9 +47,6 @@ EAbstractAnalyticInput::Type ExportCorrelationMatrix::Input::type(int index) con
    default: return Type::Boolean;
    }
 }
-
-
-
 
 
 
@@ -113,9 +104,6 @@ QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
 
 
 
-
-
-
 /*!
  * Set an argument with the given index to the given value. This analytic has
  * no basic arguments so this function does nothing.
@@ -127,9 +115,6 @@ void ExportCorrelationMatrix::Input::set(int, const QVariant&)
 {
    EDEBUG_FUNC(this);
 }
-
-
-
 
 
 
@@ -156,9 +141,6 @@ void ExportCorrelationMatrix::Input::set(int index, EAbstractData* data)
       _base->_cmx = data->cast<CorrelationMatrix>();
    }
 }
-
-
-
 
 
 

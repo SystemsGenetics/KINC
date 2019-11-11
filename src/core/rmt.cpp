@@ -20,9 +20,6 @@ using RawPair = CorrelationMatrix::RawPair;
 
 
 
-
-
-
 #define CHECK_ERROR(condition, message)  \
    if ( !(condition) )                   \
    {                                     \
@@ -34,22 +31,13 @@ using RawPair = CorrelationMatrix::RawPair;
 
 
 
-
-
-
 #define CHECK_CUDA(ret) \
    CHECK_ERROR(ret == cudaSuccess, #ret)
 
 
 
-
-
-
 #define CHECK_CUSOLVER(ret) \
    CHECK_ERROR(ret == CUSOLVER_STATUS_SUCCESS, #ret)
-
-
-
 
 
 
@@ -63,9 +51,6 @@ int RMT::size() const
 
    return 1;
 }
-
-
-
 
 
 
@@ -168,9 +153,6 @@ void RMT::process(const EAbstractAnalyticBlock*)
 
 
 
-
-
-
 /*!
  * Make a new input object and return its pointer.
  */
@@ -180,9 +162,6 @@ EAbstractAnalyticInput* RMT::makeInput()
 
    return new Input(this);
 }
-
-
-
 
 
 
@@ -221,13 +200,10 @@ void RMT::initialize()
       e.setDetails(tr("Minimum spline pace must be less than maximum spline pace."));
       throw e;
    }
-   
+
    // set the number of openblas threads
    openblas_set_num_threads(_numThreads);
 }
-
-
-
 
 
 
@@ -262,9 +238,6 @@ std::vector<float> RMT::computeMaximums(const std::vector<RawPair>& pairs)
    // return row-wise maximums
    return maximums;
 }
-
-
-
 
 
 
@@ -374,9 +347,6 @@ std::vector<float> RMT::computePruneMatrix(const std::vector<RawPair>& pairs, co
 
 
 
-
-
-
 /*!
  * Compute the eigenvalues of a correlation matrix.
  *
@@ -479,9 +449,6 @@ std::vector<float> RMT::computeEigenvalues(std::vector<float>* matrix, size_t si
 
 
 
-
-
-
 /*!
  * Return the unique values of a sorted list of real numbers. Two real numbers
  * are unique if their absolute difference is greater than some small value
@@ -505,10 +472,6 @@ std::vector<float> RMT::computeUnique(const std::vector<float>& values)
 
    return unique;
 }
-
-
-
-
 
 
 
@@ -572,9 +535,6 @@ float RMT::computeChiSquare(const std::vector<float>& eigens)
 
 
 
-
-
-
 /*!
  * Compute the chi-squared test for the nearest-neighbor spacing distribution
  * (NNSD) of a list of values. The list should be sorted and should contain only
@@ -622,9 +582,6 @@ float RMT::computeChiSquareHelper(const std::vector<float>& values)
 
    return chi;
 }
-
-
-
 
 
 
@@ -677,9 +634,6 @@ std::vector<float> RMT::computeSpline(const std::vector<float>& values, int pace
    // return interpolated values
    return splineValues;
 }
-
-
-
 
 
 

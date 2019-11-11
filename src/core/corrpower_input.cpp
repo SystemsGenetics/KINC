@@ -17,9 +17,6 @@ CorrPowerFilter::Input::Input(CorrPowerFilter* parent):
 
 
 
-
-
-
 /*!
  * Return the total number of arguments this analytic type contains.
  */
@@ -29,9 +26,6 @@ int CorrPowerFilter::Input::size() const
 
    return Total;
 }
-
-
-
 
 
 
@@ -55,9 +49,6 @@ EAbstractAnalyticInput::Type CorrPowerFilter::Input::type(int index) const
    default: return Type::Boolean;
    }
 }
-
-
-
 
 
 
@@ -137,9 +128,6 @@ QVariant CorrPowerFilter::Input::data(int index, Role role) const
 
 
 
-
-
-
 /*!
  * Set an argument with the given index to the given value. This analytic has
  * no basic arguments so this function does nothing.
@@ -160,9 +148,6 @@ void CorrPowerFilter::Input::set(int index, const QVariant& value)
        break;
    }
 }
-
-
-
 
 
 
@@ -193,9 +178,6 @@ void CorrPowerFilter::Input::set(int index, EAbstractData* data)
       _base->_cmxOut = data->cast<CorrelationMatrix>();
    }
 }
-
-
-
 
 
 

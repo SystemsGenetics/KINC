@@ -9,9 +9,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Return the total number of blocks this analytic must process as steps
  * or blocks of work. This implementation uses a work block for writing
@@ -23,9 +20,6 @@ int ExportCorrelationMatrix::size() const
 
    return _cmx->size();
 }
-
-
-
 
 
 
@@ -130,9 +124,6 @@ void ExportCorrelationMatrix::process(const EAbstractAnalyticBlock*)
 
 
 
-
-
-
 /*!
  * Make a new input object and return its pointer.
  */
@@ -142,9 +133,6 @@ EAbstractAnalyticInput* ExportCorrelationMatrix::makeInput()
 
    return new Input(this);
 }
-
-
-
 
 
 

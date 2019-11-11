@@ -16,9 +16,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Compute the next power of 2 which occurs after a number.
  *
@@ -37,9 +34,6 @@ int Similarity::nextPower2(int n)
 
 
 
-
-
-
 /*!
  * Return the total number of pairs that must be processed for a given
  * expression matrix.
@@ -55,9 +49,6 @@ qint64 Similarity::totalPairs(const ExpressionMatrix* emx)
 
 
 
-
-
-
 /*!
  * Return the total number of work blocks this analytic must process.
  */
@@ -67,9 +58,6 @@ int Similarity::size() const
 
    return (totalPairs(_input) + _workBlockSize - 1) / _workBlockSize;
 }
-
-
-
 
 
 
@@ -97,9 +85,6 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeWork(int index) const
 
 
 
-
-
-
 /*!
  * Create an empty and uninitialized work block.
  */
@@ -112,9 +97,6 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeWork() const
 
 
 
-
-
-
 /*!
  * Create an empty and uninitialized result block.
  */
@@ -124,9 +106,6 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeResult() const
 
    return unique_ptr<EAbstractAnalyticBlock>(new ResultBlock);
 }
-
-
-
 
 
 
@@ -214,9 +193,6 @@ void Similarity::process(const EAbstractAnalyticBlock* result)
 
 
 
-
-
-
 /*!
  * Make a new input object and return its pointer.
  */
@@ -226,9 +202,6 @@ EAbstractAnalyticInput* Similarity::makeInput()
 
    return new Input(this);
 }
-
-
-
 
 
 
@@ -244,9 +217,6 @@ EAbstractAnalyticSerial* Similarity::makeSerial()
 
 
 
-
-
-
 /*!
  * Make a new OpenCL object and return its pointer.
  */
@@ -259,9 +229,6 @@ EAbstractAnalyticOpenCL* Similarity::makeOpenCL()
 
 
 
-
-
-
 /*!
  * Make a new CUDA object and return its pointer.
  */
@@ -271,9 +238,6 @@ EAbstractAnalyticCUDA* Similarity::makeCUDA()
 
    return new CUDA(this);
 }
-
-
-
 
 
 
@@ -329,9 +293,6 @@ void Similarity::initialize()
       _workBlockSize = min(32768LL, totalPairs(_input) / numWorkers);
    }
 }
-
-
-
 
 
 

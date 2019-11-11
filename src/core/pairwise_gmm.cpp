@@ -6,8 +6,6 @@ using namespace Pairwise;
 
 
 
-
-
 /*!
  * Implementation of rand(), taken from POSIX example.
  *
@@ -18,9 +16,6 @@ int myrand(unsigned long *state)
    *state = (*state) * 1103515245 + 12345;
    return ((unsigned)((*state)/65536) % 32768);
 }
-
-
-
 
 
 
@@ -45,9 +40,6 @@ GMM::GMM(ExpressionMatrix* emx, qint8 maxClusters)
 
 
 
-
-
-
 /*!
  * Destruct a Gaussian mixture model.
  */
@@ -60,9 +52,6 @@ GMM::~GMM()
    delete[] _normalizer;
    delete[] _gamma;
 }
-
-
-
 
 
 
@@ -96,9 +85,6 @@ void GMM::initializeComponents(const QVector<Vector2>& X, int N, int K)
 
 
 
-
-
-
 /*!
  * Pre-compute the precision matrix and normalizer term for each
  * mixture component.
@@ -125,9 +111,6 @@ bool GMM::prepareComponents(int K)
 
    return success;
 }
-
-
-
 
 
 
@@ -196,9 +179,6 @@ void GMM::initializeMeans(const QVector<Vector2>& X, int N, int K)
       }
    }
 }
-
-
-
 
 
 
@@ -304,9 +284,6 @@ float GMM::computeEStep(const QVector<Vector2>& X, int N, int K)
 
 
 
-
-
-
 /*!
  * Perform the maximization step of the EM algorithm. In this step we update the
  * parameters of the the mixture model using gamma, which is computed during the
@@ -368,9 +345,6 @@ void GMM::computeMStep(const QVector<Vector2>& X, int N, int K)
 
 
 
-
-
-
 /*!
  * Compute the cluster labels of a dataset using gamma:
  *
@@ -405,9 +379,6 @@ void GMM::computeLabels(const float *gamma, int N, int K, QVector<qint8>& labels
 
 
 
-
-
-
 /*!
  * Compute the entropy of the mixture model for a dataset using gamma
  * and the given cluster labels:
@@ -431,9 +402,6 @@ float GMM::computeEntropy(const float *gamma, int N, const QVector<qint8>& label
 
    return E;
 }
-
-
-
 
 
 
@@ -495,9 +463,6 @@ bool GMM::fit(const QVector<Vector2>& X, int N, int K, QVector<qint8>& labels)
 
 
 
-
-
-
 /*!
  * Compute the Akaike Information Criterion of a Gaussian mixture model.
  *
@@ -511,9 +476,6 @@ float GMM::computeAIC(int K, int D, float logL)
 
    return 2 * p - 2 * logL;
 }
-
-
-
 
 
 
@@ -534,9 +496,6 @@ float GMM::computeBIC(int K, int D, float logL, int N)
 
 
 
-
-
-
 /*!
  * Compute the Integrated Completed Likelihood of a Gaussian mixture model.
  *
@@ -552,9 +511,6 @@ float GMM::computeICL(int K, int D, float logL, int N, float E)
 
    return logf(N) * p - 2 * logL + 2 * E;
 }
-
-
-
 
 
 

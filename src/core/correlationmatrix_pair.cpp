@@ -20,9 +20,6 @@ void CorrelationMatrix::Pair::addCluster(int amount) const
 
 
 
-
-
-
 /*!
  * Return the string representation of this pair, which is a comma-delimited
  * string of each correlation in the pair.
@@ -51,9 +48,6 @@ QString CorrelationMatrix::Pair::toString() const
 
 
 
-
-
-
 /*!
  * Write a cluster in the iterator's pairwise data to the data object file.
  *
@@ -71,9 +65,6 @@ void CorrelationMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
       stream << _correlations.at(cluster);
    }
 }
-
-
-
 
 
 

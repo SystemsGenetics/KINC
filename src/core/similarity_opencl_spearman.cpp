@@ -6,9 +6,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a new Spearman kernel object with the given OpenCL program and
  * qt parent.
@@ -21,9 +18,6 @@ Similarity::OpenCL::Spearman::Spearman(::OpenCL::Program* program, QObject* pare
 {
    EDEBUG_FUNC(this,parent);
 }
-
-
-
 
 
 

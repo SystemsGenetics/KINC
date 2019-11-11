@@ -7,8 +7,6 @@
 
 
 
-
-
 enum ClusteringMethod
 {
    ClusteringMethod_None
@@ -17,17 +15,11 @@ enum ClusteringMethod
 
 
 
-
-
-
 enum CorrelationMethod
 {
    CorrelationMethod_Pearson
    ,CorrelationMethod_Spearman
 };
-
-
-
 
 
 

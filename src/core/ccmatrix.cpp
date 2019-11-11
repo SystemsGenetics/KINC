@@ -19,9 +19,6 @@ QAbstractTableModel* CCMatrix::model()
 
 
 
-
-
-
 /*!
  * Initialize this cluster matrix with a list of gene names, the max cluster
  * size, and a list of sample names.
@@ -52,9 +49,6 @@ void CCMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, const
    _sampleSize = sampleNames.size();
    Matrix::initialize(geneNames, maxClusterSize, static_cast<qint32>((_sampleSize + 1) / 2 * sizeof(qint8)), SUBHEADER_SIZE);
 }
-
-
-
 
 
 

@@ -10,9 +10,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Return the total number of blocks this analytic must process as steps
  * or blocks of work. This implementation uses a work block for writing
@@ -24,9 +21,6 @@ int Extract::size() const
 
    return _cmx->size();
 }
-
-
-
 
 
 
@@ -55,9 +49,6 @@ void Extract::process(const EAbstractAnalyticBlock* result)
       break;
    }
 }
-
-
-
 
 
 
@@ -277,9 +268,6 @@ void Extract::writeTextFormat(int index)
 
 
 
-
-
-
 /*!
  * Write the next pair using the minimal format.
  *
@@ -339,9 +327,6 @@ void Extract::writeMinimalFormat(int index)
       throw e;
    }
 }
-
-
-
 
 
 
@@ -472,9 +457,6 @@ void Extract::writeGraphMLFormat(int index)
 
 
 
-
-
-
 /*!
  * Make a new input object and return its pointer.
  */
@@ -484,9 +466,6 @@ EAbstractAnalyticInput* Extract::makeInput()
 
    return new Input(this);
 }
-
-
-
 
 
 
@@ -532,9 +511,6 @@ void Extract::initialize()
 
 
 
-
-
-
 /*!
  * Prepares the PValue filter for the csm.
  */
@@ -570,6 +546,8 @@ void Extract::preparePValueFilter()
     }
 }
 
+
+
 /*!
  * Prepares the RSquared filter for the csm.
  */
@@ -604,8 +582,6 @@ void Extract::prepareRSquareFilter()
         }
     }
 }
-
-
 
 
 
@@ -657,6 +633,8 @@ bool Extract::PValuefilter(QString labelName, float pValue)
     return true;
 }
 
+
+
 /*!
  * Filters the given data by the name of the label and the pvalue.
  *
@@ -705,7 +683,6 @@ bool Extract::RSquarefilter(QString labelName, float rSquared)
 
 
 
-
 /*!
  * Checks to make sure the filter names are in the tests names. If they
  * are not, it throws an error.
@@ -744,6 +721,7 @@ bool Extract::pValueFilterCheck()
     e.setDetails(tr("Invalid filter name given."));
     throw e;
 }
+
 
 
 /*!

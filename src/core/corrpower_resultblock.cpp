@@ -2,9 +2,6 @@
 
 
 
-
-
-
 /*!
  * Construct a new block with the given index and starting pairwise index.
  *
@@ -20,9 +17,6 @@ CorrPowerFilter::ResultBlock::ResultBlock(int index, qint64 start):
 
 
 
-
-
-
 /*!
  * Append a pair to the result block's list of pairs.
  *
@@ -34,9 +28,6 @@ void CorrPowerFilter::ResultBlock::append(const CPPair& pair)
 
    _pairs.append(pair);
 }
-
-
-
 
 
 
@@ -62,9 +53,6 @@ void CorrPowerFilter::ResultBlock::write(QDataStream& stream) const
       stream << pair.keep;
    }
 }
-
-
-
 
 
 

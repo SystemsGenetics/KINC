@@ -17,9 +17,6 @@ qint64 ExpressionMatrix::dataEnd() const
 
 
 
-
-
-
 /*!
  * Read in the data of an existing data object that was just opened.
  */
@@ -33,9 +30,6 @@ void ExpressionMatrix::readData()
    // read the header
    stream() >> _geneSize >> _sampleSize;
 }
-
-
-
 
 
 
@@ -58,9 +52,6 @@ void ExpressionMatrix::writeNewData()
 
 
 
-
-
-
 /*!
  * Finalize this data object's data after the analytic that created it has
  * finished giving it new data.
@@ -75,9 +66,6 @@ void ExpressionMatrix::finish()
    // write the header
    stream() << _geneSize << _sampleSize;
 }
-
-
-
 
 
 
@@ -97,9 +85,6 @@ QAbstractTableModel* ExpressionMatrix::model()
 
 
 
-
-
-
 /*!
  * Return the number of genes (rows) in this expression matrix.
  */
@@ -109,9 +94,6 @@ qint32 ExpressionMatrix::geneSize() const
 
    return _geneSize;
 }
-
-
-
 
 
 
@@ -127,9 +109,6 @@ qint32 ExpressionMatrix::sampleSize() const
 
 
 
-
-
-
 /*!
  * Return the list of gene names in this expression matrix.
  */
@@ -142,9 +121,6 @@ EMetaArray ExpressionMatrix::geneNames() const
 
 
 
-
-
-
 /*!
  * Return the list of sample names in this expression matrix.
  */
@@ -154,9 +130,6 @@ EMetaArray ExpressionMatrix::sampleNames() const
 
    return meta().toObject().at("samples").toArray();
 }
-
-
-
 
 
 
@@ -188,9 +161,6 @@ std::vector<float> ExpressionMatrix::dumpRawData() const
    // return the array
    return ret;
 }
-
-
-
 
 
 
@@ -229,9 +199,6 @@ void ExpressionMatrix::initialize(const QStringList& geneNames, const QStringLis
    _geneSize = geneNames.size();
    _sampleSize = sampleNames.size();
 }
-
-
-
 
 
 

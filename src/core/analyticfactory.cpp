@@ -16,9 +16,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Return the total number of analytic types that this program implements.
  */
@@ -28,9 +25,6 @@ quint16 AnalyticFactory::size() const
 
    return Total;
 }
-
-
-
 
 
 
@@ -61,9 +55,6 @@ QString AnalyticFactory::name(quint16 type) const
 
 
 
-
-
-
 /*!
  * Return the command line name for the given analytic type.
  *
@@ -88,9 +79,6 @@ QString AnalyticFactory::commandName(quint16 type) const
    default: return QString();
    }
 }
-
-
-
 
 
 

@@ -3,9 +3,6 @@
 
 
 
-
-
-
 /*!
  * Construct a table model for an expression matrix.
  *
@@ -18,9 +15,6 @@ ExpressionMatrix::Model::Model(ExpressionMatrix* matrix):
 
    setParent(matrix);
 }
-
-
-
 
 
 
@@ -82,9 +76,6 @@ QVariant ExpressionMatrix::Model::headerData(int section, Qt::Orientation orient
 
 
 
-
-
-
 /*!
  * Return the number of rows in the table model.
  *
@@ -99,9 +90,6 @@ int ExpressionMatrix::Model::rowCount(const QModelIndex&) const
 
 
 
-
-
-
 /*!
  * Return the number of columns in the table model.
  *
@@ -113,9 +101,6 @@ int ExpressionMatrix::Model::columnCount(const QModelIndex&) const
 
    return _matrix->_sampleSize;
 }
-
-
-
 
 
 

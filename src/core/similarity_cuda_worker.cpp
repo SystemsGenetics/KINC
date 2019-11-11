@@ -9,9 +9,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a new CUDA worker with the given parent analytic, CUDA object,
  * CUDA context, and CUDA program.
@@ -51,9 +48,6 @@ Similarity::CUDA::Worker::Worker(Similarity* base, Similarity::CUDA* baseCuda, :
    _buffers.out_labels = ::CUDA::Buffer<qint8>(N * W);
    _buffers.out_correlations = ::CUDA::Buffer<float>(K * W);
 }
-
-
-
 
 
 

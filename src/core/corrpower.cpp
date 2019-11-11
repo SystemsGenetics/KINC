@@ -16,9 +16,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Return the total number of pairs that must be processed for a given
  * expression matrix.
@@ -29,9 +26,6 @@ qint64 CorrPowerFilter::totalPairs(const CorrelationMatrix* cmx)
 {
    return static_cast<qint64>(cmx->geneSize()) * (cmx->geneSize() - 1) / 2;
 }
-
-
-
 
 
 
@@ -48,9 +42,6 @@ int CorrPowerFilter::size() const
    int num_workblocks = (total_pairs + _workBlockSize - 1) / _workBlockSize;
    return num_workblocks;
 }
-
-
-
 
 
 
@@ -78,9 +69,6 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork(int index) con
 
 
 
-
-
-
 /*!
  * Create an empty and uninitialized result block.
  */
@@ -93,9 +81,6 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeResult() const
 
 
 
-
-
-
 /*!
  * Create an empty and uninitialized work block.
  */
@@ -105,9 +90,6 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork() const
 
    return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock);
 }
-
-
-
 
 
 
@@ -192,9 +174,6 @@ void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
 
 
 
-
-
-
 /*!
  * Make a new serial object and return its pointer.
  */
@@ -207,9 +186,6 @@ EAbstractAnalyticSerial* CorrPowerFilter::makeSerial()
 
 
 
-
-
-
 /*!
  * Make a new input object and return its pointer.
  */
@@ -219,9 +195,6 @@ EAbstractAnalyticInput* CorrPowerFilter::makeInput()
 
    return new Input(this);
 }
-
-
-
 
 
 
@@ -259,9 +232,6 @@ void CorrPowerFilter::initialize()
       _workBlockSize = min(32768LL, _ccm->size() / numWorkers);
    }
 }
-
-
-
 
 
 

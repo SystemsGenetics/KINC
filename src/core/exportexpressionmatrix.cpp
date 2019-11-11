@@ -5,9 +5,6 @@
 
 
 
-
-
-
 /*!
  * Return the total number of blocks this analytic must process as steps
  * or blocks of work. This implementation uses a work block for writing the
@@ -19,9 +16,6 @@ int ExportExpressionMatrix::size() const
 
    return 1 + _input->geneSize();
 }
-
-
-
 
 
 
@@ -103,9 +97,6 @@ void ExportExpressionMatrix::process(const EAbstractAnalyticBlock* result)
 
 
 
-
-
-
 /*!
  * Make a new input object and return its pointer.
  */
@@ -115,9 +106,6 @@ EAbstractAnalyticInput* ExportExpressionMatrix::makeInput()
 
    return new Input(this);
 }
-
-
-
 
 
 

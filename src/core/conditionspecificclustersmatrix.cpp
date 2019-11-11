@@ -4,8 +4,6 @@
 
 
 
-
-
 /*!
 *  Implements an interface that writes the annotation matrix information into the metadata.
 *
@@ -123,8 +121,6 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
 
 
 
-
-
 /*!
 *  Implements an interface that writes the pairwise specific metadata.
 *
@@ -140,8 +136,6 @@ void CSMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, int s
     EDEBUG_FUNC(this,&geneNames,maxClusterSize,subheader);
     Matrix::initialize(geneNames, maxClusterSize, sizeof(double) * 2 * _testcount, subheader);
 }
-
-
 
 
 
@@ -162,8 +156,6 @@ QAbstractTableModel* CSMatrix::model()
 
 
 
-
-
 /*!
 *  Implements an interface to query for the sample size.
 *
@@ -174,8 +166,6 @@ int CSMatrix::sampleSize() const
     EDEBUG_FUNC(this);
     return _sampleSize;
 }
-
-
 
 
 
@@ -190,8 +180,6 @@ void CSMatrix::writeHeader()
 
 
 
-
-
 /*!
 *  Implements an interface to read header information.
 */
@@ -200,7 +188,6 @@ void CSMatrix::readHeader()
     EDEBUG_FUNC(this);
     stream() >> _sampleSize >> _testcount;
 }
-
 
 
 
@@ -217,8 +204,6 @@ void CSMatrix::setTestCount(qint32 newData)
 
 
 
-
-
 /*!
 *  Implements an interface to get the test name information from the meta data.
 *
@@ -230,6 +215,8 @@ QString CSMatrix::getTestName(int index) const
 {
     return meta().toObject().at("Test Names").toArray().at(index).toString();
 }
+
+
 
 QString CSMatrix::getTestType(int index) const
 {

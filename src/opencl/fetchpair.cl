@@ -3,9 +3,6 @@
 
 
 
-
-
-
 /*!
  * Compute the initial labels for a gene pair in an expression matrix. Samples
  * with missing values and samples that fall below the expression threshold are

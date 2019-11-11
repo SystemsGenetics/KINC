@@ -6,9 +6,6 @@ using namespace Pairwise;
 
 
 
-
-
-
 /*!
  * Return the index of the first byte in this data object after the end of
  * the data section. Defined as the size of the header and sub-header plus the
@@ -20,9 +17,6 @@ qint64 Matrix::dataEnd() const
 
    return _headerSize + _subHeaderSize + _clusterSize * (_dataSize + _itemHeaderSize);
 }
-
-
-
 
 
 
@@ -42,9 +36,6 @@ void Matrix::readData()
    // read the sub-header
    readHeader();
 }
-
-
-
 
 
 
@@ -70,9 +61,6 @@ void Matrix::writeNewData()
 
 
 
-
-
-
 /*!
  * Finalize this data object's data after the analytic that created it has
  * finished giving it new data.
@@ -93,9 +81,6 @@ void Matrix::finish()
 
 
 
-
-
-
 /*!
  * Return the list of gene names in this pairwise matrix.
  */
@@ -105,9 +90,6 @@ EMetaArray Matrix::geneNames() const
 
    return meta().toObject().at("genes").toArray();
 }
-
-
-
 
 
 
@@ -167,9 +149,6 @@ void Matrix::initialize(const EMetaArray& geneNames, qint32 maxClusterSize, qint
 
 
 
-
-
-
 /*!
  * Write the header of a new pair given a pairwise index and cluster index.
  *
@@ -211,9 +190,6 @@ void Matrix::write(const Index& index, qint8 cluster)
 
 
 
-
-
-
 /*!
  * Get a pair at the given index in the data object file and return the
  * pairwise index and cluster index of that pair.
@@ -234,9 +210,6 @@ Index Matrix::getPair(qint64 index, qint8* cluster) const
    // return pairwise index
    return {geneX,geneY};
 }
-
-
-
 
 
 
@@ -298,9 +271,6 @@ qint64 Matrix::findPair(qint64 indent, qint64 first, qint64 last) const
       return -1;
    }
 }
-
-
-
 
 
 

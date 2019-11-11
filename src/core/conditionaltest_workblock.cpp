@@ -3,8 +3,6 @@
 
 
 
-
-
 /*!
 *  Implements the interface to create an uninitialized work block at a given index.
 *
@@ -21,8 +19,6 @@ ConditionalTest::WorkBlock::WorkBlock(int index, Pairwise::Index start, qint64 s
 
 
 
-
-
 /*!
 *  Writes this blocks data to the given data stream.
 *
@@ -34,8 +30,6 @@ void ConditionalTest::WorkBlock::write(QDataStream& stream) const
 
     stream << _startpair << _size;
 }
-
-
 
 
 

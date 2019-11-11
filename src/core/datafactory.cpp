@@ -10,9 +10,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Return the total number of data types this program implements.
  */
@@ -22,9 +19,6 @@ quint16 DataFactory::size() const
 
    return Total;
 }
-
-
-
 
 
 
@@ -49,9 +43,6 @@ QString DataFactory::name(quint16 type) const
 
 
 
-
-
-
 /*!
  * Return the file extension for the given data type as a string.
  *
@@ -70,9 +61,6 @@ QString DataFactory::fileExtension(quint16 type) const
    default: return QString();
    }
 }
-
-
-
 
 
 

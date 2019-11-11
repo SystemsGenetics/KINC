@@ -7,9 +7,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a new CUDA object with the given analytic as its parent.
  *
@@ -24,9 +21,6 @@ Similarity::CUDA::CUDA(Similarity* parent):
 
 
 
-
-
-
 /*!
  * Create and return a new CUDA worker for the analytic.
  */
@@ -36,9 +30,6 @@ std::unique_ptr<EAbstractAnalyticCUDAWorker> Similarity::CUDA::makeWorker()
 
    return unique_ptr<EAbstractAnalyticCUDAWorker>(new Worker(_base, this, _program));
 }
-
-
-
 
 
 

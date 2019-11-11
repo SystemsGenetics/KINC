@@ -4,9 +4,6 @@
 
 
 
-
-
-
 /*!
  * String list of reduction methods for this analytic that correspond exactly
  * to its enumeration. Used for handling the reduction method argument for this
@@ -19,9 +16,6 @@ const QStringList RMT::Input::REDUCTION_NAMES
    ,"maxsize"
    ,"random"
 };
-
-
-
 
 
 
@@ -39,9 +33,6 @@ RMT::Input::Input(RMT* parent):
 
 
 
-
-
-
 /*!
  * Return the total number of arguments this analytic type contains.
  */
@@ -51,9 +42,6 @@ int RMT::Input::size() const
 
    return Total;
 }
-
-
-
 
 
 
@@ -84,9 +72,6 @@ EAbstractAnalyticInput::Type RMT::Input::type(int index) const
    default: return Type::Boolean;
    }
 }
-
-
-
 
 
 
@@ -244,9 +229,6 @@ QVariant RMT::Input::data(int index, Role role) const
 
 
 
-
-
-
 /*!
  * Set an argument with the given index to the given value.
  *
@@ -297,9 +279,6 @@ void RMT::Input::set(int index, const QVariant& value)
 
 
 
-
-
-
 /*!
  * Set a file argument with the given index to the given qt file pointer.
  *
@@ -315,9 +294,6 @@ void RMT::Input::set(int index, QFile* file)
       _base->_logfile = file;
    }
 }
-
-
-
 
 
 

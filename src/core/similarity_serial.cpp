@@ -13,9 +13,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a new serial object with the given analytic as its parent.
  *
@@ -52,9 +49,6 @@ Similarity::Serial::Serial(Similarity* parent):
    // initialize expression matrix
    _expressions = _base->_input->dumpRawData();
 }
-
-
-
 
 
 
@@ -151,9 +145,6 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::Serial::execute(const EAbstr
 
 
 
-
-
-
 /*!
  * Compute the initial labels for a gene pair in an expression matrix. Samples
  * with missing values and samples that fall below the expression threshold are
@@ -199,9 +190,6 @@ int Similarity::Serial::fetchPair(const Pairwise::Index& index, QVector<qint8>& 
    // return number of clean samples
    return numSamples;
 }
-
-
-
 
 
 
@@ -284,9 +272,6 @@ int Similarity::Serial::removeOutliersCluster(const float *x, const float *y, QV
    // return number of remaining samples
    return numSamples;
 }
-
-
-
 
 
 

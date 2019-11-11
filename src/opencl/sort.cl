@@ -1,9 +1,6 @@
 
 
 
-
-
-
 /*!
  * Compute the next power of 2 which occurs after a number.
  *
@@ -22,9 +19,6 @@ int nextPower2(int n)
 
 
 
-
-
-
 /*!
  * Swap two values
  *
@@ -37,9 +31,6 @@ void swap(__global float *a, __global float *b)
    *a = *b;
    *b = c;
 }
-
-
-
 
 
 
@@ -76,9 +67,6 @@ void bitonicSort(__global float *array, int size)
 
 
 
-
-
-
 /*!
  * Sort an array using bitonic sort, while also applying the same swap operations
  * to a second array of the same size. The arrays should have a size which is a
@@ -112,9 +100,6 @@ void bitonicSortFF(int size, __global float *array, __global float *extra)
       }
    }
 }
-
-
-
 
 
 

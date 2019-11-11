@@ -20,9 +20,6 @@ void CCMatrix::Pair::addCluster(int amount) const
 
 
 
-
-
-
 /*!
  * Return the string representation of this pair, which is a comma-delimited
  * string of each sample mask in the pair.
@@ -91,9 +88,6 @@ QString CCMatrix::Pair::toString() const
 
 
 
-
-
-
 /*!
  * Write a cluster in the iterator's pairwise data to the data object file.
  *
@@ -123,9 +117,6 @@ void CCMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
       }
    }
 }
-
-
-
 
 
 

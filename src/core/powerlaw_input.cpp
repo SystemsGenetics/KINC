@@ -4,9 +4,6 @@
 
 
 
-
-
-
 /*!
  * Construct a new input object with the given analytic as its parent.
  *
@@ -21,9 +18,6 @@ PowerLaw::Input::Input(PowerLaw* parent):
 
 
 
-
-
-
 /*!
  * Return the total number of arguments this analytic type contains.
  */
@@ -33,9 +27,6 @@ int PowerLaw::Input::size() const
 
    return Total;
 }
-
-
-
 
 
 
@@ -58,9 +49,6 @@ EAbstractAnalyticInput::Type PowerLaw::Input::type(int index) const
    default: return Type::Boolean;
    }
 }
-
-
-
 
 
 
@@ -133,9 +121,6 @@ QVariant PowerLaw::Input::data(int index, Role role) const
 
 
 
-
-
-
 /*!
  * Set an argument with the given index to the given value.
  *
@@ -162,9 +147,6 @@ void PowerLaw::Input::set(int index, const QVariant& value)
 
 
 
-
-
-
 /*!
  * Set a file argument with the given index to the given qt file pointer.
  *
@@ -180,9 +162,6 @@ void PowerLaw::Input::set(int index, QFile* file)
       _base->_logfile = file;
    }
 }
-
-
-
 
 
 

@@ -3,9 +3,6 @@
 
 
 
-
-
-
 /*!
  * Return the expression value at the given index.
  *
@@ -31,9 +28,6 @@ float& ExpressionMatrix::Gene::operator[](int index)
 
 
 
-
-
-
 /*!
  * Construct a gene iterator for an expression matrix. Additionally, if the
  * matrix is already initialized, read the first gene into memory.
@@ -55,9 +49,6 @@ ExpressionMatrix::Gene::Gene(ExpressionMatrix* matrix, bool isInitialized):
 
 
 
-
-
-
 /*!
  * Destruct a gene iterator.
  */
@@ -67,9 +58,6 @@ ExpressionMatrix::Gene::~Gene()
 
    delete[] _expressions;
 }
-
-
-
 
 
 
@@ -107,9 +95,6 @@ void ExpressionMatrix::Gene::read(int index)
 
 
 
-
-
-
 /*!
  * Read the next row of the expression matrix into memory.
  */
@@ -129,9 +114,6 @@ bool ExpressionMatrix::Gene::readNext()
    // return success
    return true;
 }
-
-
-
 
 
 
@@ -170,9 +152,6 @@ void ExpressionMatrix::Gene::write(int index)
 
 
 
-
-
-
 /*!
  * Write the iterator's row data to the next row in the data object file.
  */
@@ -192,9 +171,6 @@ bool ExpressionMatrix::Gene::writeNext()
    // return success
    return true;
 }
-
-
-
 
 
 

@@ -6,9 +6,6 @@ using namespace Pairwise;
 
 
 
-
-
-
 /*!
  * Compute the Pearson correlation of a cluster in a pairwise data array.
  *

@@ -6,9 +6,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a new GMM kernel object with the given OpenCL program and qt parent.
  *
@@ -20,9 +17,6 @@ Similarity::OpenCL::GMM::GMM(::OpenCL::Program* program, QObject* parent):
 {
    EDEBUG_FUNC(this,program,parent);
 }
-
-
-
 
 
 
