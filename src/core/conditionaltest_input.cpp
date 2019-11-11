@@ -69,14 +69,77 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
     EDEBUG_FUNC(this, index, role);
     switch(index)
     {
-    case EMXINPUT: return emxData(role);
-    case CCMINPUT: return ccmData(role);
-    case CMXINPUT: return cmxData(role);
-    case ANXINPUT: return anxData(role);
-    case Delimiter: return delimiterData(role);
-    case CSMOUT: return CSMData(role);
-    case OVERRIDES: return overridesData(role);
-    case TEST: return testData(role);
+    case EMXINPUT:
+        switch(role)
+        {
+        case CommandLineName: return QString("emx");
+        case Title: return tr("Input Expression Matrix:");
+        case WhatsThis: return tr("A data file created by KINC containing the gene expression matrix created by the Import Expression Matrix analytic.");
+        case DataType: return DataFactory::ExpressionMatrixType;
+        default: return QVariant();
+        }
+    case CCMINPUT:
+        switch(role)
+        {
+        case CommandLineName: return QString("ccm");
+        case Title: return tr("Input Cluster Matrix:");
+        case WhatsThis: return tr("A data file created by KINC containing the cluster sample masks created by the similarity analytic.");
+        case DataType: return DataFactory::CCMatrixType;
+        default: return QVariant();
+        }
+    case CMXINPUT:
+        switch(role)
+        {
+        case CommandLineName: return QString("cmx");
+        case Title: return tr("Input Correlation Matrix:");
+        case WhatsThis: return tr("A data file created by KINC containing the correlation matrix values created by the similarity analytic.");
+        case DataType: return DataFactory::CorrelationMatrixType;
+        default: return QVariant();
+        }
+    case ANXINPUT:
+        switch(role)
+        {
+        case CommandLineName: return QString("amx");
+        case Title: return tr("Input Annotation matrix:");
+        case WhatsThis: return tr("Tab delimited file where the row names represent samples in the experiment and the column names are conditional features of the experiment and the values are observed or measured values in the experiment.");
+        case FileFilters: return tr("Annotation Matrix (*.txt)");
+        default: return QVariant();
+        }
+    case Delimiter:
+        switch(role)
+        {
+        case CommandLineName: return QString("delim");
+        case Title: return tr("Annotation Matrix Delimiter:");
+        case WhatsThis: return tr("Delimiter used to seperate values in the Annotation matrix, usually a tab or comma");
+        case Default: return tr("tab");
+        default: return QVariant();
+        }
+    case CSMOUT:
+        EDEBUG_FUNC(this, role);
+        switch(role)
+        {
+        case CommandLineName: return QString("output");
+        case Title: return tr("Output Condition-Specific Matrix:");
+        case WhatsThis: return tr("Condition-Specific Martrix, contains a matrix of clusters and their corrosponding p-values.");
+        case DataType: return DataFactory::CSMatrixType;
+        default: return QVariant();
+        }
+    case OVERRIDES:
+        switch(role)
+        {
+        case CommandLineName: return QString("feat-types");
+        case Title: return tr("Feature Types:");
+        case WhatsThis: return tr("By default, this program will automatically detect the type of feature as 'categorical', 'quantitative', or 'ordinal'.   You can override the default type by listing the column name from the annotation matrix, followed by a colon and then the desired type. You can list as many features by separating them with commas, with no spaces around commas. For example if a column is named \"Health_Status\" and is numeric with an ordinal enter:  Health_Status:ordinal");
+        default: return QVariant();
+        }
+    case TEST:
+        switch(role)
+        {
+        case CommandLineName: return QString("feat-tests");
+        case Title: return tr("Features to Test:");
+        case WhatsThis: return tr("A comma-separated list of features, with no spaces around commas, from column names of the annotation matrix that should be tested. For example, if the annotation matrix has columns 'Treatment' and 'Subspecies' you can enter: \"Treatment,Subspecies\" Note: column names are case-sensitive.");
+        default: return QVariant();
+        }
     default: return QVariant();
     }
 }
@@ -153,172 +216,5 @@ void ConditionalTest::Input::set(int index, EAbstractData* data)
     case CSMOUT:
         _base->_out = data->cast<CSMatrix>();
         break;
-    }
-}
-
-
-
-/*!
-*  Implements an interface to grab info about the emx data.
-*
-* @param role The role you are interested in knowing about.
-*
-* @return The information requested.
-*/
-QVariant ConditionalTest::Input::emxData(Role role) const
-{
-    EDEBUG_FUNC(this, role);
-    switch(role)
-    {
-    case CommandLineName: return QString("emx");
-    case Title: return tr("Input Expression Matrix:");
-    case WhatsThis: return tr("A data file created by KINC containing the gene expression matrix created by the Import Expression Matrix analytic.");
-    case DataType: return DataFactory::ExpressionMatrixType;
-    default: return QVariant();
-    }
-}
-
-
-
-/*!
-*  Implements an interface to grab info about the ccm data.
-*
-* @param role The role you are interested in knowing about.
-*
-* @return The information requested.
-*/
-QVariant ConditionalTest::Input::ccmData(Role role) const
-{
-    EDEBUG_FUNC(this, role);
-    switch(role)
-    {
-    case CommandLineName: return QString("ccm");
-    case Title: return tr("Input Cluster Matrix:");
-    case WhatsThis: return tr("A data file created by KINC containing the cluster sample masks created by the similarity analytic.");
-    case DataType: return DataFactory::CCMatrixType;
-    default: return QVariant();
-    }
-}
-
-
-
-/*!
-*  Implements an interface to grab info about the cmx data.
-*
-* @param role The role you are interested in knowing about.
-*
-* @return The information requested.
-*/
-QVariant ConditionalTest::Input::cmxData(Role role) const
-{
-    EDEBUG_FUNC(this, role);
-    switch(role)
-    {
-    case CommandLineName: return QString("cmx");
-    case Title: return tr("Input Correlation Matrix:");
-    case WhatsThis: return tr("A data file created by KINC containing the correlation matrix values created by the similarity analytic.");
-    case DataType: return DataFactory::CorrelationMatrixType;
-    default: return QVariant();
-    }
-}
-
-
-
-/*!
-*  Implements an interface to grab info about the anx data.
-*
-* @param role The role you are interested in knowing about.
-*
-* @return The information requested.
-*/
-QVariant ConditionalTest::Input::anxData(Role role) const
-{
-    EDEBUG_FUNC(this, role);
-    switch(role)
-    {
-    case CommandLineName: return QString("amx");
-    case Title: return tr("Input Annotation matrix:");
-    case WhatsThis: return tr("Tab delimited file where the row names represent samples in the experiment and the column names are conditional features of the experiment and the values are observed or measured values in the experiment.");
-    case FileFilters: return tr("Annotation Matrix (*.txt)");
-    default: return QVariant();
-    }
-}
-
-
-
-QVariant ConditionalTest::Input::delimiterData(Role role) const
-{
-    EDEBUG_FUNC(this, role);
-    switch(role)
-    {
-    case CommandLineName: return QString("delim");
-    case Title: return tr("Annotation Matrix Delimiter:");
-    case WhatsThis: return tr("Delimiter used to seperate values in the Annotation matrix, usually a tab or comma");
-    case Default: return tr("tab");
-    default: return QVariant();
-    }
-}
-
-
-
-/*!
-*  Implements an interface to grab info about the CSM data.
-*
-* @param role The role you are interested in knowing about.
-*
-* @return The information requested.
-*/
-QVariant ConditionalTest::Input::CSMData(Role role) const
-{
-    EDEBUG_FUNC(this, role);
-    switch(role)
-    {
-    case CommandLineName: return QString("output");
-    case Title: return tr("Output Condition-Specific Matrix:");
-    case WhatsThis: return tr("Condition-Specific Martrix, contains a matrix of clusters and their corrosponding p-values.");
-    case DataType: return DataFactory::CSMatrixType;
-    default: return QVariant();
-    }
-}
-
-
-
-/*!
-*  Implements an interface to grab info about the test.
-*
-* @param role The role you are interested in knowing about.
-*
-* @return The information requested.
-*/
-QVariant ConditionalTest::Input::testData(Role role) const
-{
-    EDEBUG_FUNC(this, role);
-    switch(role)
-    {
-    case CommandLineName: return QString("feat-tests");
-    case Title: return tr("Features to Test:");
-    case WhatsThis: return tr("A comma-separated list of features, with no spaces around commas, from column names of the annotation matrix that should be tested. For example, if the annotation matrix has columns 'Treatment' and 'Subspecies' you can enter: \"Treatment,Subspecies\" Note: column names are case-sensitive.");
-    default: return QVariant();
-    }
-}
-
-
-
-/*!
-*  Implements an interface to grab info about the override infromation.
-*
-* @param role The role you are interested in knowing about.
-*
-* @return The information requested.
-*/
-QVariant ConditionalTest::Input::overridesData(Role role) const
-{
-    EDEBUG_FUNC(this, role);
-    switch(role)
-    {
-    case CommandLineName: return QString("feat-types");
-    case Title: return tr("Feature Types:");
-    case WhatsThis: return tr("By default, this program will automatically detect the type of feature as 'categorical', 'quantitative', or 'ordinal'.   You can override the default type by listing the column name from the annotation matrix, followed by a colon and then the desired type. You can list as many features by separating them with commas, with no spaces around commas. For example if a column is named \"Health_Status\" and is numeric with an ordinal enter:  Health_Status:ordinal");
-    default: return QVariant();
     }
 }

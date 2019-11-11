@@ -59,15 +59,6 @@ public:
     virtual void set(int index, const QVariant& value) override final;
     virtual void set(int index, QFile* file) override final;
     virtual void set(int index, EAbstractData* data) override final;
-    QVariant emxData(Role role) const;
-    QVariant ccmData(Role role) const;
-    QVariant cmxData(Role role) const;
-    QVariant anxData(Role role) const;
-    QVariant delimiterData(Role role) const;
-    QVariant CSMData(Role role) const;
-    QVariant testData(Role role) const;
-    QVariant overridesData(Role role) const;
-
 private:
     /*!
      *  pointer to the Inputs base parent object
