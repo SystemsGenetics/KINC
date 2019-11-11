@@ -78,8 +78,8 @@ QVariant ExportExpressionMatrix::Input::data(int index, Role role) const
       switch (role)
       {
       case Role::CommandLineName: return QString("input");
-      case Role::Title: return tr("Input:");
-      case Role::WhatsThis: return tr("Input expression matrix containing expression data.");
+      case Role::Title: return tr("Input Expression Matrix:");
+      case Role::WhatsThis: return tr("A data file created by KINC containing the gene expression matrix created by the Import Expression Matrix analytic.");
       case Role::DataType: return DataFactory::ExpressionMatrixType;
       default: return QVariant();
       }

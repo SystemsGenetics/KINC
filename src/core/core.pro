@@ -64,7 +64,15 @@ SOURCES += \
     corrpower_input.cpp \
     corrpower_resultblock.cpp \
     corrpower_serial.cpp \
-    corrpower_workblock.cpp
+    corrpower_workblock.cpp \
+    conditionaltest.cpp \
+    conditionaltest_input.cpp \
+    conditionaltest_resultblock.cpp \
+    conditionaltest_serial.cpp \
+    conditionaltest_workblock.cpp \
+    conditionspecificclustersmatrix.cpp \
+    conditionspecificclustersmatrix_model.cpp \
+    conditionspecificclustersmatrix_pair.cpp
 
 # Header files
 HEADERS += \
@@ -121,4 +129,12 @@ HEADERS += \
     corrpower_input.h \
     corrpower_serial.h \
     corrpower_resultblock.h \
-    corrpower_workblock.h
+    corrpower_workblock.h \
+    conditionaltest.h \
+    conditionaltest_input.h \
+    conditionaltest_resultblock.h \
+    conditionaltest_serial.h \
+    conditionaltest_workblock.h \
+    conditionspecificclustersmatrix.h \
+    conditionspecificclustersmatrix_model.h \
+    conditionspecificclustersmatrix_pair.h

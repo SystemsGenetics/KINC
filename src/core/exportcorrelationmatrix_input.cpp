@@ -75,8 +75,8 @@ QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
       switch (role)
       {
       case Role::CommandLineName: return QString("emx");
-      case Role::Title: return tr("Expression Matrix:");
-      case Role::WhatsThis: return tr("Input expression matrix containing gene expression data.");
+      case Role::Title: return tr("Input Expression Matrix:");
+      case Role::WhatsThis: return tr("A data file created by KINC containing the gene expression matrix created by the Import Expression Matrix analytic.");
       case Role::DataType: return DataFactory::ExpressionMatrixType;
       default: return QVariant();
       }
@@ -84,8 +84,8 @@ QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
       switch (role)
       {
       case Role::CommandLineName: return QString("ccm");
-      case Role::Title: return tr("Cluster Matrix:");
-      case Role::WhatsThis: return tr("Input cluster matrix containing cluster composition data.");
+      case Role::Title: return tr("Input Cluster Matrix:");
+      case Role::WhatsThis: return tr("A data file created by KINC containing the cluster sample masks created by the similarity analytic.");
       case Role::DataType: return DataFactory::CCMatrixType;
       default: return QVariant();
       }
@@ -93,8 +93,8 @@ QVariant ExportCorrelationMatrix::Input::data(int index, Role role) const
       switch (role)
       {
       case Role::CommandLineName: return QString("cmx");
-      case Role::Title: return tr("Correlation Matrix:");
-      case Role::WhatsThis: return tr("Input correlation matrix containing correlation data.");
+      case Role::Title: return tr("Input Correlation Matrix:");
+      case Role::WhatsThis: return tr("A data file created by KINC containing the correlation matrix values created by the similarity analytic.");
       case Role::DataType: return DataFactory::CorrelationMatrixType;
       default: return QVariant();
       }

@@ -1,9 +1,11 @@
 Installation
 ============
 
-Currently, there is no stand-alone binary for KINC. It must be compiled and installed. The instructions on this page provide step-by-step instructions to compile and install KINC.
+This page provides step-by-step instructions to download, compile and install KINC as well as its dependencies on a stand-alone Ubuntu 18.04 system. However, the same set of dependencies are required for installation on any other platform or on a High Performance Computing (HPC) platform.
 
-KINC can also be run in a Docker container. Consult the Usage section for more information.
+Even if you install KINC on an HPC system, you may want to install KINC on a local stand-alone machine so that you can view output files using the `qkinc` graphical interface, export network files more easily or perform other tasks.
+
+Additionally, KINC can also be run in a Docker container. Consult the :doc:`usage` section for more information.
 
 Dependencies
 ------------
@@ -21,17 +23,14 @@ KINC requires the following software packages.
 - `GCEM <https://www.kthohr.com/gcem.html>`_
 - `StatsLib <https://www.kthohr.com/statslib.html>`_
 
-The instructions on this page provides details for compiling KINC.
 
-Ubuntu 18.04
-------------
-
-Use the following steps to install KINC from source on Ubuntu 18.04:
+Installing on Ubuntu 18.04
+--------------------------
 
 Install Dependencies
 ~~~~~~~~~~~~~~~~~~~~
 
-Most of these dependencies are available as packages on Ubuntu and can be installed using the `apt` framework:
+Most dependencies are available as packages via Ubuntu and can be installed using the `apt` framework:
 
 .. code:: bash
 
@@ -69,11 +68,11 @@ To install CGEM into ``/usr/local/``:
 Install ACE
 ~~~~~~~~~~~
 
-KINC v3.3.0 requires ACE v3.1.0. ACE requires some of the same dependencies as KINC (such as QT, CUDA, OpenMPI, OpenCL, etc).  Therefore, if all dependencies above are installed, ACE should compile. To start, set the following environment variable:
+KINC v3.4 requires ACE v3.2. ACE requires some of the same dependencies as KINC (such as QT, CUDA, OpenMPI, OpenCL, etc).  Therefore, if all dependencies above are installed, ACE should compile. To start, set the following environment variable:
 
 .. code:: bash
 
-   export ACE_VERSION=v3.1.0
+   export ACE_VERSION=v3.2.0
 
 Next, clone the ACE repository:
 
@@ -125,8 +124,8 @@ Select a suitable `version of KINC <https://github.com/SystemsGenetics/KINC/rele
 
 .. code:: bash
 
-   export ACE_VERSION=v3.1.0
-   export KINC_VERSION=v3.3.0
+   export ACE_VERSION=v3.2.0
+   export KINC_VERSION=v3.4.0
 
 Next, clone the KINC repository:
 
@@ -196,13 +195,13 @@ If KINC was installed in the default location you can skip the :doc:`usage` page
 
 Append the resulting text to your ``~/.bashrc`` file. You should now be able to run KINC
 
-Windows
--------
+Installing on Windows
+---------------------
 
 Windows is currently not supported because there is no OpenMPI library for the Windows platform. Future support for Windows will be added when MPI becomes an optional dependency.
 
-HPC Systems
------------
+Installing on an HPC System
+---------------------------
 
 Usage of KINC on high-performance computing (HPC) systems will require assistance of the cluster's systems admin to ensure all dependencies are installed and available.  Software management on clusters is specific to each cluster, although there are often commonalities.  Regardless, it is not possible to provide comprehensive instructions that would apply to every cluster.
 
@@ -224,9 +223,9 @@ Once you have obtained an interactive node, run the following commands from your
 .. code:: bash
 
    git clone https://github.com/bentsherman/pbs-toolkit.git
-   ./pbs-toolkit/modules/install-ace.sh v3.1.0
+   ./pbs-toolkit/modules/install-ace.sh v3.2.0
    ./pbs-toolkit/modules/install-statslib.sh
-   ./pbs-toolkit/modules/install-kinc.sh v3.3.0 v3.1.0
+   ./pbs-toolkit/modules/install-kinc.sh v3.4.0 v3.2.0
 
 These scripts will install ACE and KINC into your home directory, establishing them as modules that can be run from anywhere. It will also update your environment so that the modules can be called when necessary. It uses a module called ``use.own``, which when added will make KINC and ACE available to be used interactively. You should now be able to load KINC as a module:
 

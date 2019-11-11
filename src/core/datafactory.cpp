@@ -2,6 +2,7 @@
 #include "expressionmatrix.h"
 #include "ccmatrix.h"
 #include "correlationmatrix.h"
+#include "conditionspecificclustersmatrix.h"
 
 
 
@@ -41,6 +42,7 @@ QString DataFactory::name(quint16 type) const
    case ExpressionMatrixType: return "Expression Matrix";
    case CCMatrixType: return "Cluster Matrix";
    case CorrelationMatrixType: return "Correlation Matrix";
+   case CSMatrixType: return "Condition-Specific Clusters Matrix";
    default: return QString();
    }
 }
@@ -64,6 +66,7 @@ QString DataFactory::fileExtension(quint16 type) const
    case ExpressionMatrixType: return "emx";
    case CCMatrixType: return "ccm";
    case CorrelationMatrixType: return "cmx";
+   case CSMatrixType: return "csm";
    default: return QString();
    }
 }
@@ -87,6 +90,7 @@ unique_ptr<EAbstractData> DataFactory::make(quint16 type) const
    case ExpressionMatrixType: return unique_ptr<EAbstractData>(new ExpressionMatrix);
    case CCMatrixType: return unique_ptr<EAbstractData>(new CCMatrix);
    case CorrelationMatrixType: return unique_ptr<EAbstractData>(new CorrelationMatrix);
+   case CSMatrixType: return unique_ptr<CSMatrix>(new CSMatrix);
    default: return nullptr;
    }
 }

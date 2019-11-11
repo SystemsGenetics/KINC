@@ -2,6 +2,7 @@
 #include "extract_input.h"
 #include "datafactory.h"
 #include "expressionmatrix_gene.h"
+#include "conditionspecificclustersmatrix_pair.h"
 
 
 
@@ -81,18 +82,39 @@ void Extract::writeTextFormat(int index)
       _stream
          << "Source"
          << "\t" << "Target"
-         << "\t" << "sc"
+         << "\t" << "Similarity_Score"
          << "\t" << "Interaction"
-         << "\t" << "Cluster"
-         << "\t" << "Num_Clusters"
+         << "\t" << "Cluster_Index"
          << "\t" << "Cluster_Size"
-         << "\t" << "Samples"
-         << "\n";
+         << "\t" << "Samples";
+
+      // If the condition-specific matrix is provided then add some
+      // additional headers for each test.
+      if ( _csm )
+      {
+          for ( int i = 0; i < _csm->getTestCount(); i++ )
+          {
+              QString testName = _csm->getTestName(i);
+              QString testType = _csm->getTestType(i);
+              _stream << "\t" << testName + + "_pVal";
+              // If there is an R-squared value add it as well.
+              if (QString::compare(testType, "Quantitative", Qt::CaseInsensitive) == 0 ||
+                  QString::compare(testType, "Ordinal", Qt::CaseInsensitive) == 0) {
+                  _stream << "\t" << testName + "_RSqr";
+              }
+          }
+      }
+
+      _stream << "\n";
    }
 
    // read next pair
    _cmxPair.readNext();
    _ccmPair.read(_cmxPair.index());
+   if ( _csm )
+   {
+      _csmPair.read(_cmxPair.index());
+   }
 
    // write pairwise data to output file
    for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
@@ -107,6 +129,59 @@ void Extract::writeTextFormat(int index)
       if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
       {
          continue;
+      }
+
+      // If the condition-specific matrix is provided and there is a p-value filter then
+      // we want to exclude values that are higher than the p-value(s).
+      if ( _csm )
+      {
+          // Run some pre-checks on any filters provided.
+          pValueFilterCheck();
+          int notInclude = 0;
+          int include = 0;
+
+          // Iterate through teach test.
+          for ( int i = 0; i < _csm->getTestCount(); i++ )
+          {
+              // Count the number of features that are not signficant for each feature-specific p-value provided.
+              if ( _csmPValueFilterFeatureNames.size() != 0 && !PValuefilter(_csm->getTestName(i), _csmPair.at(k, i, "pvalue")))
+              {
+                  notInclude++;
+              }
+              // Count the number of features that are signficant if only a single p-value filter was given.
+              if ( _csmPValueFilterFeatureNames.size() == 0 && PValuefilter(_csm->getTestName(i), _csmPair.at(k, i, "pvalue")))
+              {
+                  include++;
+              }
+          }
+          if ( notInclude > 0  || (_csmPValueFilterFeatureNames.size() == 0 && include == 0))
+          {
+              continue;
+          }
+
+          // Run some pre-checks on any filters provided.
+          rSquareFilterCheck();
+          notInclude = 0;
+          include = 0;
+
+          // Iterate through teach test.
+          for ( int i = 0; i < _csm->getTestCount(); i++ )
+          {
+              // Count the number of features that are not signficant for each feature-specific p-value provided.
+              if ( _csmRSquareFilterFeatureNames.size() != 0 && !RSquarefilter(_csm->getTestName(i), _csmPair.at(k, i, "r2")))
+              {
+                  notInclude++;
+              }
+              // Count the number of features that are signficant if only a single p-value filter was given.
+              if ( _csmRSquareFilterFeatureNames.size() == 0 && RSquarefilter(_csm->getTestName(i), _csmPair.at(k, i, "r2")))
+              {
+                  include++;
+              }
+          }
+          if ( notInclude > 0  || (_csmPValueFilterFeatureNames.size() == 0 && include == 0))
+          {
+              continue;
+          }
       }
 
       // if cluster data exists then use it
@@ -169,10 +244,25 @@ void Extract::writeTextFormat(int index)
          << "\t" << correlation
          << "\t" << interaction
          << "\t" << k + 1
-         << "\t" << _cmxPair.clusterSize()
          << "\t" << numSamples
-         << "\t" << sampleMask
-         << "\n";
+         << "\t" << sampleMask;
+
+      if ( _csm )
+      {
+          for ( int i = 0; i < _csm->getTestCount(); i++ )
+          {
+              _stream << "\t" << _csmPair.at(k, i, "pvalue");
+              QString testType = _csm->getTestType(i);
+              // If there is an R-squared value add it as well.
+              if (QString::compare(testType, "Quantitative", Qt::CaseInsensitive) == 0 ||
+                  QString::compare(testType, "Ordinal", Qt::CaseInsensitive) == 0) {
+                  _stream << "\t" << _csmPair.at(k, i, "r2");
+              }
+
+          }
+      }
+
+      _stream << "\n";
    }
 
    // make sure writing output file worked
@@ -208,8 +298,8 @@ void Extract::writeMinimalFormat(int index)
       _stream
          << "Source"
          << "\t" << "Target"
-         << "\t" << "sc"
-         << "\t" << "Cluster"
+         << "\t" << "Similarity_Score"
+         << "\t" << "Cluster_Index"
          << "\t" << "Num_Clusters"
          << "\n";
    }
@@ -428,8 +518,269 @@ void Extract::initialize()
    // initialize pairwise iterators
    _ccmPair = CCMatrix::Pair(_ccm);
    _cmxPair = CorrelationMatrix::Pair(_cmx);
+   if ( _csm )
+   {
+      _csmPair = CSMatrix::Pair(_csm);
+      preparePValueFilter();
+      prepareRSquareFilter();
+   }
 
    // initialize output file stream
    _stream.setDevice(_output);
    _stream.setRealNumberPrecision(8);
+}
+
+
+
+
+
+
+/*!
+ * Prepares the PValue filter for the csm.
+ */
+void Extract::preparePValueFilter()
+{
+    bool ok = false;
+    if ( _csmPValueFilter != "" )
+    {
+        QStringList filters = _csmPValueFilter.split("::");
+        for ( int i = 0; i < filters.size(); i++ )
+        {
+            QStringList data = filters.at(i).split(",");
+            data.at(0).toFloat(&ok);
+            if (ok)
+            {
+                _csmPValueFilterThresh.append(data.at(0).toFloat());
+                break;
+            }
+            if(data.size() != 3 && !ok)
+            {
+                E_MAKE_EXCEPTION(e);
+                e.setTitle(tr("Invalid Input"));
+                e.setDetails(tr("Invalid filter name given."));
+                throw e;
+            }
+            else
+            {
+                _csmPValueFilterThresh.append(data.at(2).toFloat());
+                _csmPValueFilterFeatureNames.append(data.at(0));
+                _csmPValueFilterLabelNames.append(data.at(1));
+            }
+        }
+    }
+}
+
+/*!
+ * Prepares the RSquared filter for the csm.
+ */
+void Extract::prepareRSquareFilter()
+{
+    bool ok = false;
+    if ( _csmRSquareFilter != "" )
+    {
+        QStringList filters = _csmRSquareFilter.split("::");
+        for ( int i = 0; i < filters.size(); i++ )
+        {
+            QStringList data = filters.at(i).split(",");
+            data.at(0).toFloat(&ok);
+            if (ok)
+            {
+                _csmRSquareFilterThresh.append(data.at(0).toFloat());
+                break;
+            }
+            if(data.size() != 2 && !ok)
+            {
+                E_MAKE_EXCEPTION(e);
+                e.setTitle(tr("Invalid Input"));
+                e.setDetails(tr("Invalid filter name given."));
+                throw e;
+            }
+            else
+            {
+                _csmRSquareFilterThresh.append(data.at(2).toFloat());
+                _csmRSquareFilterFeatureNames.append(data.at(0));
+                _csmRSquareFilterLabelNames.append(data.at(1));
+            }
+        }
+    }
+}
+
+
+
+
+
+/*!
+ * Used to filter the given data by the name of the label and the pvalue.
+ *
+ * @param labelName The test name for the label.
+ *
+ * @param pValue The pValue assosiated with the test.
+ *
+ * @return True if the test should be included, false otherwise.
+ */
+bool Extract::PValuefilter(QString labelName, float pValue)
+{
+    if ( _csmPValueFilter != "" )
+    {
+        // If there are feature-specific filters then apply the filter to the respective field.
+        if(_csmPValueFilterFeatureNames.size() != 0)
+        {
+            auto names = labelName.split("__");
+            for ( int i = 0; i < _csmPValueFilterFeatureNames.size(); i++ )
+            {
+                if ( names.at(0) == _csmPValueFilterFeatureNames.at(i) && names.at(1) == _csmPValueFilterLabelNames.at(i) )
+                {
+                    if ( pValue > _csmPValueFilterThresh.at(i) )
+                    {
+                       return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        // If there are no names for the filter, then check any field.
+        else
+        {
+            if(pValue > _csmPValueFilterThresh.at(0))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+    }
+    return true;
+}
+
+/*!
+ * Filters the given data by the name of the label and the pvalue.
+ *
+ * @param labelName The test name for the label.
+ *
+ * @param pValue The pValue assosiated with the test.
+ *
+ * @return True if the test should be included, false otherwise.
+ */
+bool Extract::RSquarefilter(QString labelName, float rSquared)
+{
+    if ( _csmRSquareFilter != "" )
+    {
+        if(_csmRSquareFilterFeatureNames.size() != 0)
+        {
+            auto names = labelName.split("__");
+            for ( int i = 0; i < _csmRSquareFilterFeatureNames.size(); i++ )
+            {
+                if ( names.at(0) == _csmRSquareFilterFeatureNames.at(i) && names.at(1) == _csmRSquareFilterLabelNames.at(i) )
+                {
+                    if ( rSquared > _csmRSquareFilterThresh.at(i) )
+                    {
+                       return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if(rSquared < _csmRSquareFilterThresh.at(0))
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+    }
+    return true;
+}
+
+
+
+
+/*!
+ * Checks to make sure the filter names are in the tests names. If they
+ * are not, it throws an error.
+ *
+ * @return True if the name apears somewhere in the test names, false
+ *         otherwise.
+ */
+bool Extract::pValueFilterCheck()
+{
+    //No filter
+    if ( _csmPValueFilter == "" )
+    {
+        return true;
+    }
+
+    //default filter all
+    if(_csmPValueFilterFeatureNames.size() == 0 && _csmPValueFilterThresh.size() != 0)
+    {
+        return true;
+    }
+
+    //specific filter
+    for ( int i = 0; i < _csm->getTestCount(); i++ )
+    {
+        auto names = _csm->getTestName(i).split("__");
+        for ( int j = 0; j < _csmPValueFilterFeatureNames.size(); j++ )
+        {
+            if ( names.at(0) == _csmPValueFilterFeatureNames.at(j) && names.at(1) == _csmPValueFilterLabelNames.at(j) )
+            {
+                return true;
+            }
+        }
+    }
+    E_MAKE_EXCEPTION(e);
+    e.setTitle(tr("Invalid Input"));
+    e.setDetails(tr("Invalid filter name given."));
+    throw e;
+}
+
+
+/*!
+ * Checks to make sure the filter names are in the tests names. If they
+ * are not, it throws an error.
+ *
+ * @return True if the name apears somewhere in the test names, false
+ *         otherwise.
+ */
+bool Extract::rSquareFilterCheck()
+{
+    //No filter
+    if ( _csmRSquareFilter == "" )
+    {
+        return true;
+    }
+
+    //default filter all
+    if(_csmRSquareFilterFeatureNames.size() == 0 && _csmRSquareFilterThresh.size() != 0)
+    {
+        return true;
+    }
+
+    //specific filter
+    for ( int i = 0; i < _csm->getTestCount(); i++ )
+    {
+        auto names = _csm->getTestName(i).split("__");
+        for ( int j = 0; j < _csmRSquareFilterFeatureNames.size(); j++ )
+        {
+            if ( names.at(0) == _csmRSquareFilterFeatureNames.at(j) && names.at(1) == _csmRSquareFilterLabelNames.at(j) )
+            {
+                return true;
+            }
+        }
+    }
+    E_MAKE_EXCEPTION(e);
+    e.setTitle(tr("Invalid Input"));
+    e.setDetails(tr("Invalid filter name given."));
+    throw e;
 }

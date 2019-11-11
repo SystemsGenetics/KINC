@@ -3,6 +3,7 @@
 #include "exportexpressionmatrix.h"
 #include "importcorrelationmatrix.h"
 #include "exportcorrelationmatrix.h"
+#include "conditionaltest.h"
 #include "similarity.h"
 #include "corrpower.h"
 #include "powerlaw.h"
@@ -50,6 +51,7 @@ QString AnalyticFactory::name(quint16 type) const
    case ExportCorrelationMatrixType: return "Export Correlation Matrix";
    case SimilarityType: return "Similarity";
    case CorrelationPowerFilterType: return "Filter: Correlation Power";
+   case ConditionalTestType: return "Threshold: Condition-Specific";
    case PowerLawType: return "Threshold: Power-law";
    case RMTType: return "Threshold: RMT";
    case ExtractType: return "Extract Network";
@@ -79,6 +81,7 @@ QString AnalyticFactory::commandName(quint16 type) const
    case ExportCorrelationMatrixType: return "export-cmx";
    case SimilarityType: return "similarity";
    case CorrelationPowerFilterType: return "corrpower";
+   case ConditionalTestType: return "cond-test";
    case PowerLawType: return "powerlaw";
    case RMTType: return "rmt";
    case ExtractType: return "extract";
@@ -108,6 +111,7 @@ std::unique_ptr<EAbstractAnalytic> AnalyticFactory::make(quint16 type) const
    case ExportCorrelationMatrixType: return unique_ptr<EAbstractAnalytic>(new ExportCorrelationMatrix);
    case SimilarityType: return unique_ptr<EAbstractAnalytic>(new Similarity);
    case CorrelationPowerFilterType: return unique_ptr<EAbstractAnalytic>(new CorrPowerFilter);
+   case ConditionalTestType: return unique_ptr<EAbstractAnalytic>(new ConditionalTest);
    case PowerLawType: return unique_ptr<EAbstractAnalytic>(new PowerLaw);
    case RMTType: return unique_ptr<EAbstractAnalytic>(new RMT);
    case ExtractType: return unique_ptr<EAbstractAnalytic>(new Extract);

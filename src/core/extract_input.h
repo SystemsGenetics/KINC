@@ -19,10 +19,13 @@ public:
       ExpressionData = 0
       ,ClusterData
       ,CorrelationData
+      ,ConditionSpecificClusterData
       ,OutputFormatArg
       ,OutputFile
       ,MinCorrelation
       ,MaxCorrelation
+      ,CSMPValueFilter
+      ,CSMRSquareFilter
       ,Total
    };
    explicit Input(Extract* parent);

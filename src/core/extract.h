@@ -7,6 +7,8 @@
 #include "correlationmatrix_pair.h"
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
+#include "conditionspecificclustersmatrix.h"
+#include "conditionspecificclustersmatrix_pair.h"
 
 
 
@@ -29,6 +31,12 @@ public:
    virtual void process(const EAbstractAnalyticBlock* result) override final;
    virtual EAbstractAnalyticInput* makeInput() override final;
    virtual void initialize();
+   void preparePValueFilter();
+   void prepareRSquareFilter();
+   bool PValuefilter(QString labelName, float pValue);
+   bool pValueFilterCheck();
+   bool RSquarefilter(QString labelName, float rSquared);
+   bool rSquareFilterCheck();
 private:
    /*!
    * Defines the output formats this analytic supports.
@@ -59,6 +67,7 @@ private:
    QTextStream _stream;
    CCMatrix::Pair _ccmPair;
    CorrelationMatrix::Pair _cmxPair;
+   CSMatrix::Pair _csmPair;
    /*!
     * Pointer to the input expression matrix.
     */
@@ -71,6 +80,14 @@ private:
     * Pointer to the input correlation matrix.
     */
    CorrelationMatrix* _cmx {nullptr};
+   /*!
+    * Pointer to the input condition specific cluster matrix.
+    */
+   CSMatrix* _csm {nullptr};
+   /*!
+    * Pointer to the annotation file.
+    */
+   QFile* _amx {nullptr};
    /*!
     * The output format to use.
     */
@@ -87,6 +104,33 @@ private:
     * The maximum (absolute) correlation threshold.
     */
    float _maxCorrelation {1.00f};
+   /*!
+    * Condition-Specific Cluster Matrix name filter input.
+    */
+   QString _csmNameFilter {""};
+   /*!
+    * Condition-Specific Cluster Matrix name filter data.
+    */
+   QVector<float> _csmNameFilterThresh;
+   QVector<QString> _csmNameFilterFeatureNames;
+   QVector<QString> _csmNameFilterLabelNames;
+   /*!
+    * Condition-Specific Cluster Matrix p-value and r-squared filter input.
+    */
+   QString _csmPValueFilter {""};
+   QString _csmRSquareFilter {""};
+   /*!
+    * Condition-Specific Cluster Matrix p-value filter data.
+    */
+   QVector<float> _csmPValueFilterThresh;
+   QVector<QString> _csmPValueFilterFeatureNames;
+   QVector<QString> _csmPValueFilterLabelNames;
+   /*!
+    * Condition-Specific Cluster Matrix r-squared filter data.
+    */
+   QVector<float> _csmRSquareFilterThresh;
+   QVector<QString> _csmRSquareFilterFeatureNames;
+   QVector<QString> _csmRSquareFilterLabelNames;
 };
 
 
