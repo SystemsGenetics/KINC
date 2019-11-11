@@ -44,7 +44,7 @@ EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
     case EMXINPUT: return DataIn;
     case CCMINPUT: return DataIn;
     case CMXINPUT: return DataIn;
-    case ANXINPUT: return FileIn;
+    case AMXINPUT: return FileIn;
     case Delimiter: return String;
     case CSMOUT: return DataOut;
     case OVERRIDES: return String;
@@ -96,7 +96,7 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
         case DataType: return DataFactory::CorrelationMatrixType;
         default: return QVariant();
         }
-    case ANXINPUT:
+    case AMXINPUT:
         switch(role)
         {
         case CommandLineName: return QString("amx");
@@ -184,8 +184,8 @@ void ConditionalTest::Input::set(int index, QFile* file)
     EDEBUG_FUNC(this, index, file);
     switch(index)
     {
-    case ANXINPUT:
-        _base->_anx = file;
+    case AMXINPUT:
+        _base->_amx = file;
         break;
     }
 }

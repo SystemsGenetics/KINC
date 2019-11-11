@@ -17,7 +17,7 @@ public:
         EMXINPUT = 0
         ,CCMINPUT
         ,CMXINPUT
-        ,ANXINPUT
+        ,AMXINPUT
         ,Delimiter
         ,CSMOUT
         ,TEST

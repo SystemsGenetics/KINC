@@ -151,13 +151,13 @@ int ConditionalTest::Serial::prepAnxData(QString testLabel, int dataIndex, TESTT
 
     // get the needed data fro the comparison
     _catCount = 0;
-    _anxData.resize(_base->_data.at(dataIndex).size());
+    _amxData.resize(_base->_data.at(dataIndex).size());
     // populate array with annotation data
     for ( int j = 0; j < _base->_data.at(dataIndex).size(); j++ )
     {
-        _anxData[j] = _base->_data.at(dataIndex).at(j).toString();
+        _amxData[j] = _base->_data.at(dataIndex).at(j).toString();
         // if data is the same as the test label add one to the catagory counter
-        if ( testType == _base->CATEGORICAL && _anxData[j] == testLabel )
+        if ( testType == _base->CATEGORICAL && _amxData[j] == testLabel )
         {
             _catCount++;
         }
@@ -208,14 +208,14 @@ int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterInd
     for ( qint32 i = 0; i < _base->_emx->sampleSize(); i++ )
     {
         // If the sample label matches with the given label.
-        if ( testType == _base->CATEGORICAL && _anxData.at(i) == label )
+        if ( testType == _base->CATEGORICAL && _amxData.at(i) == label )
         {
             _catCount++;
         }
         if ( ccmPair.at(clusterIndex, i) == 1 )
         {
             _clusterSize++;
-            if ( testType == _base->CATEGORICAL && _anxData.at(i) == label )
+            if ( testType == _base->CATEGORICAL && _amxData.at(i) == label )
             {
                 _catInCluster++;
             }
@@ -273,13 +273,13 @@ int ConditionalTest::Serial::test(
             testIndex++;
         break;
         case ORDINAL :
-            regression(_anxData, ccmPair, clusterIndex, ORDINAL, results);
+            regression(_amxData, ccmPair, clusterIndex, ORDINAL, results);
             pValues[clusterIndex][testIndex] = results.at(0);
             r2[clusterIndex][testIndex] = results.at(1);
             testIndex++;
         break;
         case QUANTITATIVE :
-            regression(_anxData, ccmPair, clusterIndex, QUANTITATIVE, results);
+            regression(_amxData, ccmPair, clusterIndex, QUANTITATIVE, results);
             pValues[clusterIndex][testIndex] = results.at(0);
             r2[clusterIndex][testIndex] = results.at(1);
             testIndex++;
@@ -370,7 +370,7 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
             gsl_ran_choose(r, chosen, 31, indexes, sampleSize, sizeof(int));
             for (int j = 0; j < 31; j++)
             {
-                if (ccmPair.at(clusterIndex, chosen[j]) == 1 && _anxData.at(chosen[j]) == test_label)
+                if (ccmPair.at(clusterIndex, chosen[j]) == 1 && _amxData.at(chosen[j]) == test_label)
                 {
                     ns = ns + 1;
                 }
@@ -397,7 +397,7 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
 /*!
  * Run the regression test for given data, the regression line is genex vs geney vs label data.
  *
- * @param anxInfo Annotation matrix information.
+ * @param amxInfo Annotation matrix information.
  *
  * @param ccmPair Cluster matrix pair.
  *
@@ -406,9 +406,9 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
  *
  * @return Pvalue corrosponding to the test.
  */
-void ConditionalTest::Serial::regression(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType, QVector<double>& results)
+void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType, QVector<double>& results)
 {
-    EDEBUG_FUNC(this, &anxInfo, &ccmPair, clusterIndex);
+    EDEBUG_FUNC(this, &amxInfo, &ccmPair, clusterIndex);
 
     // Temp containers.
     QVector<double> labelInfo;
@@ -460,13 +460,13 @@ void ConditionalTest::Serial::regression(QVector<QString> &anxInfo, CCMatrix::Pa
             {
                 // Convert the observation data into a "design vector"
                 // Each unique number being a ssigned a unique integer.
-                if (!labelInfo.contains(anxInfo.at(i).toInt()))
+                if (!labelInfo.contains(amxInfo.at(i).toInt()))
                 {
-                    labelInfo.append(anxInfo.at(i).toInt());
+                    labelInfo.append(amxInfo.at(i).toInt());
                 }
                 for (int k = 0; k < labelInfo.size(); k++)
                 {
-                    if (labelInfo.at(k) == anxInfo.at(i).toInt())
+                    if (labelInfo.at(k) == amxInfo.at(i).toInt())
                     {
                         gsl_vector_set(Y, j, k + 1);
                     }
@@ -474,7 +474,7 @@ void ConditionalTest::Serial::regression(QVector<QString> &anxInfo, CCMatrix::Pa
             }
             else
             {
-                gsl_vector_set(Y, j, anxInfo.at(i).toFloat());
+                gsl_vector_set(Y, j, amxInfo.at(i).toFloat());
             }
             j++;
         }

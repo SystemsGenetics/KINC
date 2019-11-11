@@ -31,7 +31,7 @@ public:
     double hypergeom(CCMatrix::Pair& ccmPair, int clusterIndex, QString test_label);
 
     // Regression Test
-    void regression(QVector<QString> &anxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType, QVector<double>& results);
+    void regression(QVector<QString> &amxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType, QVector<double>& results);
     double fTest(double chisq, gsl_matrix* X, gsl_vector* Y, gsl_matrix* cov, gsl_vector* C);
 
 private:
@@ -42,7 +42,7 @@ private:
     /*!
      * Annotation matrix data for testing.
      */
-    QVector<QString> _anxData;
+    QVector<QString> _amxData;
     /*!
      * Category count.
      */

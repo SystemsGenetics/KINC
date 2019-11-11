@@ -55,7 +55,7 @@ public:
     /*!
      * Reads in the annotation matrix populating the metadata when its done.
      */
-    void readInANX(QVector<QVector<QString>>& anxdata,
+    void readInAMX(QVector<QVector<QString>>& amxdata,
                    QVector<QVector<QVariant>>& data,
                    QVector<TESTTYPE>& dataTestType);
     void configureTests(QVector<TESTTYPE>& dataTestType);
@@ -70,7 +70,7 @@ public:
      */
     QString testNames();
 
-    void initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &anxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data);
+    void initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &amxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data);
 
     void rearrangeSamples();
 
@@ -90,7 +90,7 @@ private:
     /*!
      * Pointer to the input annotation matrix file.
      */
-    QFile* _anx {nullptr};
+    QFile* _amx {nullptr};
     /*!
      * Pointer to the output cluster annotation matrix.
      */
@@ -112,7 +112,7 @@ private:
     /*!
      * Number of lines in the input annotation matrix file.
      */
-    qint32 _anxNumLines {0};
+    qint32 _amxNumLines {0};
     /*!
      * The number of pairs to process in each work block.
      */

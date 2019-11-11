@@ -193,11 +193,11 @@ void ConditionalTest::initialize()
         e.setDetails(tr("Did not get valid CMX data argument."));
         throw e;
     }
-    if ( !_anx )
+    if ( !_amx )
     {
         E_MAKE_EXCEPTION(e);
         e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid ANX data argument."));
+        e.setDetails(tr("Did not get valid AMX data argument."));
         throw e;
     }
     if (  !_emx )
@@ -221,13 +221,13 @@ void ConditionalTest::initialize()
         return;
     }
     // open the stream to the coprrect file.
-    _stream.setDevice(_anx);
+    _stream.setDevice(_amx);
 
     // atain number of lines in the file.
     while ( !_stream.atEnd() )
     {
         _stream.readLine();
-        _anxNumLines++;
+        _amxNumLines++;
     }
 
     // go back to the begginning
@@ -245,7 +245,7 @@ void ConditionalTest::initialize()
     // read in the annotation matrix, as it holds the details on what we need to do for our tests
     Test();
     override();
-    readInANX(_features, _data, _testType);
+    readInAMX(_features, _data, _testType);
 
     rearrangeSamples();
 
@@ -285,7 +285,7 @@ void ConditionalTest::initializeOutputs()
  * An interface to read in the contents of an annotation matrix and produces
  * useful information from it.
  *
- * @param anxdata An initially empty array, stores the features and labels of
+ * @param amxdata An initially empty array, stores the features and labels of
  *       the annotation matrix.
  *
  * @param data An initially empty array, stores all of the data corrosponding
@@ -294,21 +294,21 @@ void ConditionalTest::initializeOutputs()
  * @param dataTestType The type of test we will run on the data under a
  *       particular feature.
  */
-void ConditionalTest::readInANX(
-    QVector<QVector<QString>>& anxdata,
+void ConditionalTest::readInAMX(
+    QVector<QVector<QString>>& amxdata,
     QVector<QVector<QVariant>>& data,
     QVector<TESTTYPE>& dataTestType)
 {
-    EDEBUG_FUNC(this,&anxdata,&data,&dataTestType);
+    EDEBUG_FUNC(this,&amxdata,&data,&dataTestType);
 
     // set the stream to the right file
-    _stream.setDevice(_anx);
+    _stream.setDevice(_amx);
     _stream.seek(0);
 
     // read a line form the input file
     QString line = _stream.readLine();
 
-    // the file can be a csv or a tab delimited ANX
+    // the file can be a csv or a tab delimited AMX
     // default is tab diliniated
     if(_delimiter == "tab")
     {
@@ -321,11 +321,11 @@ void ConditionalTest::readInANX(
     // If a field never changes, we don't have to store copies of that data.
     QVector<int> changed;
 
-    // put the column names into the anxdata array, that will be later put into the meta data
+    // put the column names into the amxdata array, that will be later put into the meta data
     for ( int i = 0; i < words.size(); i++ )
     {
-        anxdata.append(QVector<QString>());
-        anxdata[i].append(words[i]);
+        amxdata.append(QVector<QString>());
+        amxdata[i].append(words[i]);
         dataTestType.append(UNKNOWN);
         data.append(QVector<QVariant>());
         changed.append(1);
@@ -333,7 +333,7 @@ void ConditionalTest::readInANX(
 
     configureTests(dataTestType);
 
-    for ( int i = 1; i < _anxNumLines; i++ )
+    for ( int i = 1; i < _amxNumLines; i++ )
     {
         line = _stream.readLine();
         // splits the file along the commas
@@ -346,9 +346,9 @@ void ConditionalTest::readInANX(
             if ( dataTestType.at(j) == CATEGORICAL )
             {
                 // this will add treatments types, leaf types, and any other types into the meta data
-                if ( !anxdata.at(j).contains(words2[j]) )
+                if ( !amxdata.at(j).contains(words2[j]) )
                 {
-                    anxdata[j].append(words2[j]);
+                    amxdata[j].append(words2[j]);
                     changed[j] = 0;
                 }
             }
@@ -360,7 +360,7 @@ void ConditionalTest::readInANX(
     {
         for ( int j = 0; j < dataTestType.size(); j++ )
         {
-            if ( anxdata.at(j).at(0) == _override.at(i).at(0) )
+            if ( amxdata.at(j).at(0) == _override.at(i).at(0) )
             {
                 if ( QString::compare(_override.at(i).at(1), "CATEGORICAL", Qt::CaseInsensitive) == 0 )
                 {
@@ -386,12 +386,12 @@ void ConditionalTest::readInANX(
         }
     }
     // Add in labels the user has chosen to test.
-    for ( int j = 0; j < anxdata.size(); j++ )
+    for ( int j = 0; j < amxdata.size(); j++ )
     {
         int check = 0;
         for ( int k = 0; k < _Test.size(); k++ )
         {
-            if ( anxdata.at(j).at(0) == _Test.at(k) )
+            if ( amxdata.at(j).at(0) == _Test.at(k) )
             {
                 check = 1;
             }
@@ -593,7 +593,7 @@ QString ConditionalTest::testNames()
  * @param subHeaderSize The size of the subheader of the matrix, in this case
  *       it only stores sample size.
  *
- * @param anxData Stores feature names from the annotation array.
+ * @param amxData Stores feature names from the annotation array.
  *
  * @param testtype The type of test that was ran on the features.
  *
@@ -602,20 +602,20 @@ QString ConditionalTest::testNames()
  * @param data All of the data corrosponding to the features from the annotation
  *       array.
  */
-void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &anxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data)
+void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &amxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data)
 {
-    EDEBUG_FUNC(this,&maxClusterSize,&subHeaderSize,&anxData,&testType,&data);
+    EDEBUG_FUNC(this,&maxClusterSize,&subHeaderSize,&amxData,&testType,&data);
     // needed by the CSM specific initializer
     EMetaArray Features;
     QVector<EMetaArray> featureInfo;
     QVector<EMetaArray> Data;
     Data.resize(data.size());
-    featureInfo.resize(anxData.size());
+    featureInfo.resize(amxData.size());
 
     // Meta Data for Features.
-    for ( int i = 0; i < anxData.size(); i++ )
+    for ( int i = 0; i < amxData.size(); i++ )
     {
-        Features.append(anxData.at(i).at(0));
+        Features.append(amxData.at(i).at(0));
     }
 
     // Meta Data for the test types of the catagories.
@@ -637,11 +637,11 @@ void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,Q
     }
 
     // Meta Data for the sub catagories.
-    for ( int i = 0; i < anxData.size(); i++ )
+    for ( int i = 0; i < amxData.size(); i++ )
     {
-        for ( int j = 0; j < anxData.at(i).size(); j++ )
+        for ( int j = 0; j < amxData.at(i).size(); j++ )
         {
-            featureInfo[i].append(anxData.at(i).at(j));
+            featureInfo[i].append(amxData.at(i).at(j));
         }
     }
 
@@ -662,7 +662,7 @@ void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,Q
 
 
 /*!
- * An interface to move the anx data around so that the emx samples and the
+ * An interface to move the amx data around so that the emx samples and the
  * annotation matrix samples are in the same order
  */
 void ConditionalTest::rearrangeSamples()
