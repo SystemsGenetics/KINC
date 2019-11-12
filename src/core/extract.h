@@ -34,6 +34,7 @@ public:
    void preparePValueFilter();
    void prepareRSquareFilter();
    bool PValuefilter(QString labelName, float pValue);
+   bool PValuefilterStage2(float pValue);
    bool pValueFilterCheck();
    bool RSquarefilter(QString labelName, float rSquared);
    bool rSquareFilterCheck();
@@ -125,6 +126,7 @@ private:
    QVector<float> _csmPValueFilterThresh;
    QVector<QString> _csmPValueFilterFeatureNames;
    QVector<QString> _csmPValueFilterLabelNames;
+   QVector<QString> _csmPValueFilterComparisonLogic;
    /*!
     * Conditional-Specific Cluster Matrix R-squared Filter data.
     */

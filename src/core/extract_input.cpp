@@ -176,7 +176,7 @@ QVariant Extract::Input::data(int index, Role role) const
       case Role::CommandLineName: return QString("filter-pvalue");
       case Role::Title: return tr("P-Value Filter (optional):");
       case Role::WhatsThis: return tr("This is only used if a Condition-Specific Martrix is provided above and applies to categorical, quantitative and ordinal tests. This filters the network such that only edges (clusters) with p-values below the given values are kept. Provide a single p-value to filter all features with the same value. However, you can specify different p-values for different features. For example, suppose you were tesing a categorical feature named 'Subspecies' with a category of 'Japonica' and you wanted edges with an p-value < 1e-3, you would input \"Subspecies,Japonica,1e-3\". You can provide any number of filters but they must be separated using two colons: \"::\".");
-      case Role::Default: return "1e-3";
+      case Role::Default: return "";
       default: return QVariant();
       }
    case CSMRSquareFilter:
@@ -185,7 +185,7 @@ QVariant Extract::Input::data(int index, Role role) const
       case Role::CommandLineName: return QString("filter-rsquare");
       case Role::Title: return tr("R-Square Filter (optional):");
       case Role::WhatsThis: return tr("This is only used if a Condition-Specific Martrix is provided above and applies to quantitative and ordinal tests. This filters the network such that only edges (clusters) with r-squared values from liner regression testing above the given values are kept. Provide a single r-squared value to filter all features with the same value. However, you can specify different r-squared values for different features. For example, suppose you were tesing a feature named 'Weight' and you wanted edges with an r-squared value > 0.5, you would input \"Weight,0.5\". You can provide any number of filters but they must be separated using two colons: \"::\".");
-      case Role::Default: return "0.3";
+      case Role::Default: return "";
       default: return QVariant();
       }
    default: return QVariant();

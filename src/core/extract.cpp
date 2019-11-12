@@ -149,9 +149,13 @@ void Extract::writeTextFormat(int index)
                   notInclude++;
               }
               // Count the number of features that are signficant if only a single p-value filter was given.
-              if ( _csmPValueFilterFeatureNames.size() == 0 && PValuefilter(_csm->getTestName(i), _csmPair.at(k, i, "pvalue")))
+              if ( _csmPValueFilterFeatureNames.size() == 0 && PValuefilterStage2(_csmPair.at(k, i, "pvalue")))
               {
                   include++;
+              }
+              if (notInclude == 0 && include == 0 && !PValuefilterStage2(_csmPair.at(k, i, "pvalue")))
+              {
+                  notInclude++;
               }
           }
           if ( notInclude > 0  || (_csmPValueFilterFeatureNames.size() == 0 && include == 0))
@@ -550,21 +554,60 @@ void Extract::preparePValueFilter()
             data.at(0).toFloat(&ok);
             if (ok)
             {
+                _csmPValueFilterComparisonLogic.append("lt");
                 _csmPValueFilterThresh.append(data.at(0).toFloat());
                 break;
             }
-            if(data.size() != 3 && !ok)
+            if(!ok && data.size() == 1)
             {
                 E_MAKE_EXCEPTION(e);
                 e.setTitle(tr("Invalid Input"));
-                e.setDetails(tr("Invalid filter name given."));
+                e.setDetails(tr("Invalid filter arguments given."));
                 throw e;
             }
             else
             {
-                _csmPValueFilterThresh.append(data.at(2).toFloat());
-                _csmPValueFilterFeatureNames.append(data.at(0));
-                _csmPValueFilterLabelNames.append(data.at(1));
+                for(int j = 0; j < data.size(); j++)
+                {
+                    if(data.at(j) == "gt" || data.at(j) == "lt")
+                    {
+                        _csmPValueFilterComparisonLogic.append(data.at(j));
+                        _csmPValueFilterThresh.append(data.at(j + 1).toFloat(&ok));
+                        if(!ok)
+                        {
+                            E_MAKE_EXCEPTION(e);
+                            e.setTitle(tr("Invalid Input"));
+                            e.setDetails(tr("Invalid filter value given."));
+                            throw e;
+                        }
+                        j+=1;
+                    }
+                    else
+                    {
+                        _csmPValueFilterFeatureNames.append(data.at(j));
+                        _csmPValueFilterLabelNames.append(data.at(j + 1));
+                        if((data.at(j + 2) != "lt" && data.at(j + 2) != "gt"))
+                        {
+                            _csmPValueFilterComparisonLogic.append("lt");
+                            _csmPValueFilterThresh.append(data.at(j + 2).toFloat(&ok));
+                            j+=2;
+                        }
+                        else
+                        {
+                            _csmPValueFilterComparisonLogic.append(data.at(j + 2));
+                            _csmPValueFilterThresh.append(data.at(j + 3).toFloat(&ok));
+                            j+=3;
+                        }
+                        if(!ok)
+                        {
+                            E_MAKE_EXCEPTION(e);
+                            e.setTitle(tr("Invalid Input"));
+                            e.setDetails(tr("Invalid filter value given."));
+                            throw e;
+                        }
+
+                    }
+                }
             }
         }
     }
@@ -620,42 +663,64 @@ void Extract::prepareRSquareFilter()
  */
 bool Extract::PValuefilter(QString labelName, float pValue)
 {
-    if ( _csmPValueFilter != "" )
+    bool keep = true;
+    if ( _csmPValueFilter == "" )
     {
-        // If there are feature-specific filters then apply the filter to the respective field.
-        if(_csmPValueFilterFeatureNames.size() != 0)
+        return keep;
+    }
+    auto names = labelName.split("__");
+    for ( int i = 0; i < _csmPValueFilterFeatureNames.size(); i++ )
+    {
+        if ( names.at(0) == _csmPValueFilterFeatureNames.at(i) && names.at(1) == _csmPValueFilterLabelNames.at(i) )
         {
-            auto names = labelName.split("__");
-            for ( int i = 0; i < _csmPValueFilterFeatureNames.size(); i++ )
+            if (_csmPValueFilterComparisonLogic.at(i) == "gt")
             {
-                if ( names.at(0) == _csmPValueFilterFeatureNames.at(i) && names.at(1) == _csmPValueFilterLabelNames.at(i) )
+                if ( pValue < _csmPValueFilterThresh.at(i) )
                 {
-                    if ( pValue > _csmPValueFilterThresh.at(i) )
-                    {
-                       return false;
-                    }
-                    else
-                    {
-                        return true;
-                    }
+                   keep = false;
                 }
-            }
-        }
-        // If there are no names for the filter, then check any field.
-        else
-        {
-            if(pValue > _csmPValueFilterThresh.at(0))
-            {
-                return false;
             }
             else
             {
-                return true;
+                if ( pValue > _csmPValueFilterThresh.at(i) )
+                {
+                   keep = false;
+                }
             }
         }
     }
-    return true;
+    return keep;
 }
+
+
+
+bool Extract::PValuefilterStage2(float pValue)
+{
+    bool keep = true;
+    if ( _csmPValueFilter == "" )
+    {
+        return keep;
+    }
+    for(int i = _csmPValueFilterFeatureNames.size(); i < _csmPValueFilterComparisonLogic.size(); i++)
+    {
+        if (_csmPValueFilterComparisonLogic.at(i) == "gt")
+        {
+            if ( pValue < _csmPValueFilterThresh.at(i) )
+            {
+               keep = false;
+            }
+        }
+        else
+        {
+            if ( pValue > _csmPValueFilterThresh.at(i) )
+            {
+               keep = false;
+            }
+        }
+    }
+    return keep;
+}
+
 
 /*!
  * Filters the given data by the name of the label and the pvalue.
