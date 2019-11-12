@@ -74,7 +74,7 @@ The first step is to import the GEM into a binary format suitable for KINC. The 
     --nan "NA" \
     --samples 0
 
-In the example code above the GEM file is provided to the ``--input`` argument and the name of an output EMX file is provided using the ``--output`` argument.  In the example above, the ``--nan`` argument indicates that the file uses ``NA`` to represent missing values and the GEM file has a header describing each column so the number of samples provided to the ``--samples`` argument is set to 0. If the file did not have a header the number of samples would need to be provided.
+In the example code above the GEM file is provided to the ``--input`` argument and the name of an output EMX file is provided using the ``--output`` argument.  In the example above, the ``--nan`` argument indicates that the file uses ``"NA"`` to represent missing values. This value should be set to whatever indicates missing values. This could be ``"0.0"``, ``"-Inf"``, etc. and the GEM file has a header describing each column so the number of samples provided to the ``--samples`` argument is set to 0. If the file did not have a header the number of samples would need to be provided.
 
 Step 2: Perform Correlation Analysis
 ````````````````````````````````````
@@ -88,11 +88,12 @@ Construction of a similarity matrix (or correlation matrix) is the second step. 
     --cmx "rice_heat_drought.GEM.FPKM.filtered.traditional.cmx" \
     --clusmethod "none" \
     --corrmethod "spearman" \
+    --minsamp 30 \
     --minexpr -inf \
     --mincorr 0.5 \
     --maxcorr 1
 
-Here the EMX file created in the first step is provided using the ``--emx`` argument and the names of two output files are provided using the ``--cmx`` and ``--ccm`` arguments. These are the correlation matrix and clustering matrix  respectively.  Because we are using the traditional approach, the ``--clusmethod`` argument is set to ``"none"``.  The correlation method is set to use Spearman and the ``--minexp`` argument isset to negative infinity (``-inf``) to indicate there is no limit on the minimum expression value.  If we wanted to exclude samples whose log2 expression values dipped below 0.2, for instance, we could do so with this argument.  To keep the output files relatively small, we will exclude all correlation values below 0.5 using the ``--mincorr`` argument.  Sometimes errors occur in data collection or quantification yielding high numbers of perfectly correlated genes!  We can limit that by excluding perfectly correlated genes by lowering the ``--maxcorr`` argument. In practice we leave this as 1 for the first time we create the network, if we fail to find a proper threshold in a later step then one cause may be large numbers of perfectly correlated genes.
+Here the EMX file created in the first step is provided using the ``--emx`` argument and the names of two output files are provided using the ``--cmx`` and ``--ccm`` arguments. These are the correlation matrix and clustering matrix  respectively.  Because we are using the traditional approach, the ``--clusmethod`` argument is set to ``"none"``.  The correlation method is set to use Spearman, and the minimum number of samples required to perform correlation is set to 30 using the ``--minsamp`` argument. Any gene pairs where one gene has fewer that ``--minsamp`` samples will be excluded.  This will exclude genes that have missing values in samples that causes the number of samples to dip below this level.  The ``--minsamp`` argument should be set equal to or lower than the number of samples present in the origin GEM input file and higher than an expected level of missigness (e.g. 10% missing values allowed).  The ``--minexp`` argument isset to negative infinity (``-inf``) to indicate there is no limit on the minimum expression value.  If we wanted to exclude samples whose log2 expression values dipped below 0.2, for instance, we could do so with this argument.  To keep the output files relatively small, we will exclude all correlation values below 0.5 using the ``--mincorr`` argument.  Sometimes errors occur in data collection or quantification yielding high numbers of perfectly correlated genes!  We can limit that by excluding perfectly correlated genes by lowering the ``--maxcorr`` argument. In practice we leave this as 1 for the first time we create the network, if we fail to find a proper threshold in a later step then one cause may be large numbers of perfectly correlated genes.
 
 Step 3: Thresholding
 ````````````````````
