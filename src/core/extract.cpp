@@ -177,12 +177,16 @@ void Extract::writeTextFormat(int index)
                   notInclude++;
               }
               // Count the number of features that are signficant if only a single p-value filter was given.
-              if ( _csmRSquareFilterFeatureNames.size() == 0 && RSquarefilter(_csm->getTestName(i), _csmPair.at(k, i, "r2")))
+              if ( _csmRSquareFilterFeatureNames.size() == 0 && RSquarefilterStage2(_csmPair.at(k, i, "r2")))
               {
                   include++;
               }
+              if (notInclude == 0 && include == 0 && !RSquarefilterStage2(_csmPair.at(k, i, "r2")))
+              {
+                  notInclude++;
+              }
           }
-          if ( notInclude > 0  || (_csmPValueFilterFeatureNames.size() == 0 && include == 0))
+          if ( notInclude > 0  || (_csmRSquareFilterFeatureNames.size() == 0 && include == 0))
           {
               continue;
           }
@@ -556,7 +560,6 @@ void Extract::preparePValueFilter()
             {
                 _csmPValueFilterComparisonLogic.append("lt");
                 _csmPValueFilterThresh.append(data.at(0).toFloat());
-                break;
             }
             if(!ok && data.size() == 1)
             {
@@ -621,28 +624,61 @@ void Extract::prepareRSquareFilter()
     bool ok = false;
     if ( _csmRSquareFilter != "" )
     {
-        QStringList filters = _csmRSquareFilter.split("::");
-        for ( int i = 0; i < filters.size(); i++ )
+        QStringList data = _csmRSquareFilter.split(",");
+        data.at(0).toFloat(&ok);
+        if (ok)
         {
-            QStringList data = filters.at(i).split(",");
-            data.at(0).toFloat(&ok);
-            if (ok)
+            _csmRSquareFilterThresh.append(data.at(0).toFloat());
+            _csmRSquareFilterComparisonLogic.append("gt");
+        }
+        if(data.size() != 2 && !ok)
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("Invalid Input"));
+            e.setDetails(tr("Invalid filter name given."));
+            throw e;
+        }
+        else
+        {
+            for(int j = 0; j < data.size(); j++)
             {
-                _csmRSquareFilterThresh.append(data.at(0).toFloat());
-                break;
-            }
-            if(data.size() != 2 && !ok)
-            {
-                E_MAKE_EXCEPTION(e);
-                e.setTitle(tr("Invalid Input"));
-                e.setDetails(tr("Invalid filter name given."));
-                throw e;
-            }
-            else
-            {
-                _csmRSquareFilterThresh.append(data.at(2).toFloat());
-                _csmRSquareFilterFeatureNames.append(data.at(0));
-                _csmRSquareFilterLabelNames.append(data.at(1));
+                if(data.at(j) == "gt" || data.at(j) == "lt")
+                {
+                    _csmRSquareFilterComparisonLogic.append(data.at(j));
+                    _csmRSquareFilterThresh.append(data.at(j + 1).toFloat(&ok));
+                    if(!ok)
+                    {
+                        E_MAKE_EXCEPTION(e);
+                        e.setTitle(tr("Invalid Input"));
+                        e.setDetails(tr("Invalid filter value given."));
+                        throw e;
+                    }
+                    j+=1;
+                }
+                else
+                {
+                    _csmRSquareFilterFeatureNames.append(data.at(j));
+                    _csmRSquareFilterLabelNames.append(data.at(j + 1));
+                    if((data.at(j + 2) != "lt" && data.at(j + 2) != "gt"))
+                    {
+                        _csmRSquareFilterComparisonLogic.append("gt");
+                        _csmRSquareFilterThresh.append(data.at(j + 2).toFloat(&ok));
+                        j+=2;
+                    }
+                    else
+                    {
+                        _csmRSquareFilterComparisonLogic.append(data.at(j + 2));
+                        _csmRSquareFilterThresh.append(data.at(j + 3).toFloat(&ok));
+                        j+=3;
+                    }
+                    if(!ok)
+                    {
+                        E_MAKE_EXCEPTION(e);
+                        e.setTitle(tr("Invalid Input"));
+                        e.setDetails(tr("Invalid filter value given."));
+                        throw e;
+                    }
+                }
             }
         }
     }
@@ -654,6 +690,7 @@ void Extract::prepareRSquareFilter()
 
 /*!
  * Used to filter the given data by the name of the label and the pvalue.
+ * Used for targeted PValue filteres.
  *
  * @param labelName The test name for the label.
  *
@@ -694,6 +731,16 @@ bool Extract::PValuefilter(QString labelName, float pValue)
 
 
 
+
+
+/*!
+ * Filters the given data by the name of the label and the pvalue. Used for 
+ * global PValue filters.
+ *
+ * @param pValue The pValue assosiated with the test.
+ *
+ * @return True if the test should be included, false otherwise.
+ */
 bool Extract::PValuefilterStage2(float pValue)
 {
     bool keep = true;
@@ -723,50 +770,85 @@ bool Extract::PValuefilterStage2(float pValue)
 
 
 /*!
- * Filters the given data by the name of the label and the pvalue.
+ * Filters the given data by the name of the label and the rSquared. Used for 
+ * feature targeted RSquare filters.
  *
  * @param labelName The test name for the label.
  *
- * @param pValue The pValue assosiated with the test.
+ * @param rSquared The rSquared assosiated with the test.
  *
  * @return True if the test should be included, false otherwise.
  */
 bool Extract::RSquarefilter(QString labelName, float rSquared)
 {
-    if ( _csmRSquareFilter != "" )
+        bool keep = true;
+    if ( _csmRSquareFilter == "" )
     {
-        if(_csmRSquareFilterFeatureNames.size() != 0)
+        return keep;
+    }
+    auto names = labelName.split("__");
+    for ( int i = 0; i <  _csmRSquareFilterFeatureNames.size(); i++ )
+    {
+        if ( names.at(0) ==  _csmRSquareFilterFeatureNames.at(i) && names.at(1) == _csmRSquareFilterLabelNames.at(i) )
         {
-            auto names = labelName.split("__");
-            for ( int i = 0; i < _csmRSquareFilterFeatureNames.size(); i++ )
+            if (_csmRSquareFilterComparisonLogic.at(i) == "gt")
             {
-                if ( names.at(0) == _csmRSquareFilterFeatureNames.at(i) && names.at(1) == _csmRSquareFilterLabelNames.at(i) )
+                if ( rSquared < _csmRSquareFilterThresh.at(i) )
                 {
-                    if ( rSquared > _csmRSquareFilterThresh.at(i) )
-                    {
-                       return false;
-                    }
-                    else
-                    {
-                        return true;
-                    }
+                   keep = false;
                 }
+            }
+            else
+            {
+                if ( rSquared > _csmRSquareFilterThresh.at(i) )
+                {
+                   keep = false;
+                }
+            }
+        }
+    }
+    return keep;
+}
+
+
+
+
+
+/*!
+ * Filters the given data by the name of the label and the rSquared. Used for 
+ * global RSquare filters.
+ *
+ * @param rSquared The rSquared assosiated with the test.
+ *
+ * @return True if the test should be included, false otherwise.
+ */
+bool Extract::RSquarefilterStage2(float rSquared)
+{
+    bool keep = true;
+    if ( _csmRSquareFilter == "" )
+    {
+        return keep;
+    }
+    for(int i = _csmRSquareFilterFeatureNames.size(); i < _csmRSquareFilterComparisonLogic.size(); i++)
+    {
+        if (_csmRSquareFilterComparisonLogic.at(i) == "gt")
+        {
+            if ( rSquared < _csmRSquareFilterThresh.at(i) )
+            {
+               keep = false;
             }
         }
         else
         {
-            if(rSquared < _csmRSquareFilterThresh.at(0))
+            if ( rSquared > _csmRSquareFilterThresh.at(i) )
             {
-                return false;
-            }
-            else
-            {
-                return true;
+               keep = false;
             }
         }
     }
-    return true;
+    return keep;
 }
+
 
 
 

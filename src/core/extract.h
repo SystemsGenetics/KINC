@@ -37,7 +37,9 @@ public:
    bool PValuefilterStage2(float pValue);
    bool pValueFilterCheck();
    bool RSquarefilter(QString labelName, float rSquared);
+   bool RSquarefilterStage2(float pValue);
    bool rSquareFilterCheck();
+   
 private:
    /*!
    * Defines the output formats this analytic supports.
@@ -133,6 +135,7 @@ private:
    QVector<float> _csmRSquareFilterThresh;
    QVector<QString> _csmRSquareFilterFeatureNames;
    QVector<QString> _csmRSquareFilterLabelNames;
+   QVector<QString> _csmRSquareFilterComparisonLogic;
 };
 
 
