@@ -624,59 +624,63 @@ void Extract::prepareRSquareFilter()
     bool ok = false;
     if ( _csmRSquareFilter != "" )
     {
-        QStringList data = _csmRSquareFilter.split(",");
-        data.at(0).toFloat(&ok);
-        if (ok)
+        QStringList filters = _csmRSquareFilter.split("::");
+        for ( int i = 0; i < filters.size(); i++ )
         {
-            _csmRSquareFilterThresh.append(data.at(0).toFloat());
-            _csmRSquareFilterComparisonLogic.append("gt");
-        }
-        if(data.size() != 2 && !ok)
-        {
-            E_MAKE_EXCEPTION(e);
-            e.setTitle(tr("Invalid Input"));
-            e.setDetails(tr("Invalid filter name given."));
-            throw e;
-        }
-        else
-        {
-            for(int j = 0; j < data.size(); j++)
+            QStringList data = filters.at(i).split(",");
+            data.at(0).toFloat(&ok);
+            if (ok)
             {
-                if(data.at(j) == "gt" || data.at(j) == "lt")
+                _csmRSquareFilterThresh.append(data.at(0).toFloat());
+                _csmRSquareFilterComparisonLogic.append("gt");
+            }
+            if(data.size() != 2 && !ok)
+            {
+                E_MAKE_EXCEPTION(e);
+                e.setTitle(tr("Invalid Input"));
+                e.setDetails(tr("Invalid filter name given."));
+                throw e;
+            }
+            else
+            {
+                for(int j = 0; j < data.size(); j++)
                 {
-                    _csmRSquareFilterComparisonLogic.append(data.at(j));
-                    _csmRSquareFilterThresh.append(data.at(j + 1).toFloat(&ok));
-                    if(!ok)
+                    if(data.at(j) == "gt" || data.at(j) == "lt")
                     {
-                        E_MAKE_EXCEPTION(e);
-                        e.setTitle(tr("Invalid Input"));
-                        e.setDetails(tr("Invalid filter value given."));
-                        throw e;
-                    }
-                    j+=1;
-                }
-                else
-                {
-                    _csmRSquareFilterFeatureNames.append(data.at(j));
-                    _csmRSquareFilterLabelNames.append(data.at(j + 1));
-                    if((data.at(j + 2) != "lt" && data.at(j + 2) != "gt"))
-                    {
-                        _csmRSquareFilterComparisonLogic.append("gt");
-                        _csmRSquareFilterThresh.append(data.at(j + 2).toFloat(&ok));
-                        j+=2;
+                        _csmRSquareFilterComparisonLogic.append(data.at(j));
+                        _csmRSquareFilterThresh.append(data.at(j + 1).toFloat(&ok));
+                        if(!ok)
+                        {
+                            E_MAKE_EXCEPTION(e);
+                            e.setTitle(tr("Invalid Input"));
+                            e.setDetails(tr("Invalid filter value given."));
+                            throw e;
+                        }
+                        j+=1;
                     }
                     else
                     {
-                        _csmRSquareFilterComparisonLogic.append(data.at(j + 2));
-                        _csmRSquareFilterThresh.append(data.at(j + 3).toFloat(&ok));
-                        j+=3;
-                    }
-                    if(!ok)
-                    {
-                        E_MAKE_EXCEPTION(e);
-                        e.setTitle(tr("Invalid Input"));
-                        e.setDetails(tr("Invalid filter value given."));
-                        throw e;
+                        _csmRSquareFilterFeatureNames.append(data.at(j));
+                        _csmRSquareFilterLabelNames.append(data.at(j + 1));
+                        if((data.at(j + 2) != "lt" && data.at(j + 2) != "gt"))
+                        {
+                            _csmRSquareFilterComparisonLogic.append("gt");
+                            _csmRSquareFilterThresh.append(data.at(j + 2).toFloat(&ok));
+                            j+=2;
+                        }
+                        else
+                        {
+                            _csmRSquareFilterComparisonLogic.append(data.at(j + 2));
+                            _csmRSquareFilterThresh.append(data.at(j + 3).toFloat(&ok));
+                            j+=3;
+                        }
+                        if(!ok)
+                        {
+                            E_MAKE_EXCEPTION(e);
+                            e.setTitle(tr("Invalid Input"));
+                            e.setDetails(tr("Invalid filter value given."));
+                            throw e;
+                        }
                     }
                 }
             }
