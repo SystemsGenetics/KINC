@@ -549,68 +549,96 @@ void Extract::initialize()
 void Extract::preparePValueFilter()
 {
     bool ok = false;
+    bool failure = true;
     if ( _csmPValueFilter != "" )
     {
         QStringList filters = _csmPValueFilter.split("::");
         for ( int i = 0; i < filters.size(); i++ )
         {
+            failure = true;
             QStringList data = filters.at(i).split(",");
-            data.at(0).toFloat(&ok);
-            if (ok)
+
+            // Case #1: the user provided a single global threshold (e.g. 1e-3)
+            if (data.size() == 1)
             {
-                _csmPValueFilterComparisonLogic.append("lt");
-                _csmPValueFilterThresh.append(data.at(0).toFloat());
-            }
-            if(!ok && data.size() == 1)
-            {
-                E_MAKE_EXCEPTION(e);
-                e.setTitle(tr("Invalid Input"));
-                e.setDetails(tr("Invalid filter arguments given."));
-                throw e;
-            }
-            else
-            {
-                for(int j = 0; j < data.size(); j++)
+                data.at(0).toFloat(&ok);
+                if (ok)
                 {
-                    if(data.at(j) == "gt" || data.at(j) == "lt")
+                    _csmPValueFilterComparisonLogic.append("lt");
+                    _csmPValueFilterThresh.append(data.at(0).toFloat());
+                    failure = false;
+                }
+            }
+
+            // Case #2 the user provided two values. There are two cases.
+            else if (data.size() == 2)
+            {
+                data.at(1).toFloat(&ok);
+                if (ok) {
+
+                    // Case 2a:  global setting. e.g.: gt,1e-3
+                    if (data.at(0) == "gt" || data.at(0) == "lt")
                     {
-                        _csmPValueFilterComparisonLogic.append(data.at(j));
-                        _csmPValueFilterThresh.append(data.at(j + 1).toFloat(&ok));
-                        if(!ok)
-                        {
-                            E_MAKE_EXCEPTION(e);
-                            e.setTitle(tr("Invalid Input"));
-                            e.setDetails(tr("Invalid filter value given."));
-                            throw e;
-                        }
-                        j+=1;
+                        _csmPValueFilterComparisonLogic.append(data.at(0));
+                        _csmPValueFilterThresh.append(data.at(1).toFloat());
+                        failure = false;
                     }
+                    // Case 2b: e.g.:  Subspecies,1e-3
                     else
                     {
-                        _csmPValueFilterFeatureNames.append(data.at(j));
-                        _csmPValueFilterLabelNames.append(data.at(j + 1));
-                        if((data.at(j + 2) != "lt" && data.at(j + 2) != "gt"))
-                        {
-                            _csmPValueFilterComparisonLogic.append("lt");
-                            _csmPValueFilterThresh.append(data.at(j + 2).toFloat(&ok));
-                            j+=2;
-                        }
-                        else
-                        {
-                            _csmPValueFilterComparisonLogic.append(data.at(j + 2));
-                            _csmPValueFilterThresh.append(data.at(j + 3).toFloat(&ok));
-                            j+=3;
-                        }
-                        if(!ok)
-                        {
-                            E_MAKE_EXCEPTION(e);
-                            e.setTitle(tr("Invalid Input"));
-                            e.setDetails(tr("Invalid filter value given."));
-                            throw e;
-                        }
-
+                        _csmPValueFilterFeatureNames.append(data.at(0));
+                        _csmPValueFilterComparisonLogic.append("lt");
+                        _csmPValueFilterThresh.append(data.at(1).toFloat());
+                        failure = false;
                     }
                 }
+            }
+
+            // Case #3: the user provided three values
+            if (data.size() == 3) {
+                data.at(2).toFloat(&ok);
+                if (ok)
+                {
+                    // Case 3a: Subspecies,gt,1e-3
+                    if (data.at(1) == "gt" || data.at(1) == "lt")
+                    {
+                        _csmPValueFilterFeatureNames.append(data.at(0));
+                        _csmPValueFilterComparisonLogic.append(data.at(1));
+                        _csmPValueFilterThresh.append(data.at(2).toFloat());
+                        failure = false;
+                    }
+                    // Case 3b: Subspecies,Janpoica,1e-3
+                    else
+                    {
+                        _csmPValueFilterFeatureNames.append(data.at(0));
+                        _csmPValueFilterLabelNames.append(data.at(1));
+                        _csmPValueFilterComparisonLogic.append("lt");
+                        _csmPValueFilterThresh.append(data.at(2).toFloat());
+                        failure = false;
+                    }
+                }
+            }
+
+            // Case #4: the user provided four values (e.g. Subspecies,Japonica,lt,1e-3)
+            if (data.size() == 4)
+            {
+                data.at(3).toFloat(&ok);
+                if (ok && (data.at(2) == "gt" || data.at(2) == "lt"))
+                {
+                    _csmPValueFilterFeatureNames.append(data.at(0));
+                    _csmPValueFilterLabelNames.append(data.at(1));
+                    _csmPValueFilterComparisonLogic.append(data.at(2));
+                    _csmPValueFilterThresh.append(data.at(3).toFloat());
+                    failure = false;
+                }
+            }
+
+            if (failure)
+            {
+                E_MAKE_EXCEPTION(e);
+                e.setTitle(tr("Invalid P-Value Filter Input"));
+                e.setDetails(tr("Invalid P-Value Filter arguments given."));
+                throw e;
             }
         }
     }
@@ -622,67 +650,96 @@ void Extract::preparePValueFilter()
 void Extract::prepareRSquareFilter()
 {
     bool ok = false;
+    bool failure = true;
     if ( _csmRSquareFilter != "" )
     {
         QStringList filters = _csmRSquareFilter.split("::");
         for ( int i = 0; i < filters.size(); i++ )
         {
+            failure = true;
             QStringList data = filters.at(i).split(",");
-            data.at(0).toFloat(&ok);
-            if (ok)
+
+            // Case #1: the user provided a single global threshold (e.g. 1e-3)
+            if (data.size() == 1)
             {
-                _csmRSquareFilterThresh.append(data.at(0).toFloat());
-                _csmRSquareFilterComparisonLogic.append("gt");
-            }
-            if(data.size() != 2 && !ok)
-            {
-                E_MAKE_EXCEPTION(e);
-                e.setTitle(tr("Invalid Input"));
-                e.setDetails(tr("Invalid filter name given."));
-                throw e;
-            }
-            else
-            {
-                for(int j = 0; j < data.size(); j++)
+                data.at(0).toFloat(&ok);
+                if (ok)
                 {
-                    if(data.at(j) == "gt" || data.at(j) == "lt")
+                    _csmRSquareFilterComparisonLogic.append("lt");
+                    _csmRSquareFilterThresh.append(data.at(0).toFloat());
+                    failure = false;
+                }
+            }
+
+            // Case #2 the user provided two values. There are two cases.
+            else if (data.size() == 2)
+            {
+                data.at(1).toFloat(&ok);
+                if (ok) {
+
+                    // Case 2a:  global setting. e.g.: gt,1e-3
+                    if (data.at(0) == "gt" || data.at(0) == "lt")
                     {
-                        _csmRSquareFilterComparisonLogic.append(data.at(j));
-                        _csmRSquareFilterThresh.append(data.at(j + 1).toFloat(&ok));
-                        if(!ok)
-                        {
-                            E_MAKE_EXCEPTION(e);
-                            e.setTitle(tr("Invalid Input"));
-                            e.setDetails(tr("Invalid filter value given."));
-                            throw e;
-                        }
-                        j+=1;
+                        _csmRSquareFilterComparisonLogic.append(data.at(0));
+                        _csmRSquareFilterThresh.append(data.at(1).toFloat());
+                        failure = false;
                     }
+                    // Case 2b: e.g.:  Subspecies,1e-3
                     else
                     {
-                        _csmRSquareFilterFeatureNames.append(data.at(j));
-                        _csmRSquareFilterLabelNames.append(data.at(j + 1));
-                        if((data.at(j + 2) != "lt" && data.at(j + 2) != "gt"))
-                        {
-                            _csmRSquareFilterComparisonLogic.append("gt");
-                            _csmRSquareFilterThresh.append(data.at(j + 2).toFloat(&ok));
-                            j+=2;
-                        }
-                        else
-                        {
-                            _csmRSquareFilterComparisonLogic.append(data.at(j + 2));
-                            _csmRSquareFilterThresh.append(data.at(j + 3).toFloat(&ok));
-                            j+=3;
-                        }
-                        if(!ok)
-                        {
-                            E_MAKE_EXCEPTION(e);
-                            e.setTitle(tr("Invalid Input"));
-                            e.setDetails(tr("Invalid filter value given."));
-                            throw e;
-                        }
+                        _csmRSquareFilterFeatureNames.append(data.at(0));
+                        _csmRSquareFilterComparisonLogic.append("lt");
+                        _csmRSquareFilterThresh.append(data.at(1).toFloat());
+                        failure = false;
                     }
                 }
+            }
+
+            // Case #3: the user provided three values
+            if (data.size() == 3) {
+                data.at(2).toFloat(&ok);
+                if (ok)
+                {
+                    // Case 3a: Subspecies,gt,1e-3
+                    if (data.at(1) == "gt" || data.at(1) == "lt")
+                    {
+                        _csmRSquareFilterFeatureNames.append(data.at(0));
+                        _csmRSquareFilterComparisonLogic.append(data.at(1));
+                        _csmRSquareFilterThresh.append(data.at(2).toFloat());
+                        failure = false;
+                    }
+                    // Case 3b: Subspecies,Janpoica,1e-3
+                    else
+                    {
+                        _csmRSquareFilterFeatureNames.append(data.at(0));
+                        _csmRSquareFilterLabelNames.append(data.at(1));
+                        _csmRSquareFilterComparisonLogic.append("lt");
+                        _csmRSquareFilterThresh.append(data.at(2).toFloat());
+                        failure = false;
+                    }
+                }
+            }
+
+            // Case #4: the user provided four values (e.g. Subspecies,Japonica,lt,1e-3)
+            if (data.size() == 4)
+            {
+                data.at(3).toFloat(&ok);
+                if (ok && (data.at(2) == "gt" || data.at(2) == "lt"))
+                {
+                    _csmRSquareFilterFeatureNames.append(data.at(0));
+                    _csmRSquareFilterLabelNames.append(data.at(1));
+                    _csmRSquareFilterComparisonLogic.append(data.at(2));
+                    _csmRSquareFilterThresh.append(data.at(3).toFloat());
+                    failure = false;
+                }
+            }
+
+            if (failure)
+            {
+                E_MAKE_EXCEPTION(e);
+                e.setTitle(tr("Invalid P-Value Filter Input"));
+                e.setDetails(tr("Invalid P-Value Filter arguments given."));
+                throw e;
             }
         }
     }
