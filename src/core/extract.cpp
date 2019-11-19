@@ -595,7 +595,7 @@ void Extract::preparePValueFilter()
             }
 
             // Case #3: the user provided three values
-            if (data.size() == 3) {
+            else if (data.size() == 3) {
                 data.at(2).toFloat(&ok);
                 if (ok)
                 {
@@ -620,7 +620,7 @@ void Extract::preparePValueFilter()
             }
 
             // Case #4: the user provided four values (e.g. Subspecies,Japonica,lt,1e-3)
-            if (data.size() == 4)
+            else if (data.size() == 4)
             {
                 data.at(3).toFloat(&ok);
                 if (ok && (data.at(2) == "gt" || data.at(2) == "lt"))
