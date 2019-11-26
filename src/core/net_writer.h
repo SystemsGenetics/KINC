@@ -43,14 +43,14 @@ protected:
 
     QVector<QString> _sampleStrings;
     QVector<int> _numSamples;
-    void setEdgeSampleStrings();
+    void setPairSampleStrings();
     void setTestNames();
 
     QVector<QString> _testNames;
 
 public:
 
-    void setEdge(Pairwise::Index cmx_index);
+    void setPair(Pairwise::Index cmx_index);
     QString getEdgeGene1();
     QString getEdgeGene2();
     QString getEdgeSampleString(int cluster_index);

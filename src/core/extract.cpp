@@ -32,7 +32,7 @@ void Extract::process(const EAbstractAnalyticBlock* result)
 
     // Each time this function is called we will read the next cluster pair.
     _cmxPair.readNext();
-    _netWriter->setEdge(_cmxPair.index());
+    _netWriter->setPair(_cmxPair.index());
 
     // Write clusters to the output file if they pass filters.
     for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
@@ -210,8 +210,20 @@ void Extract::setFilters(QString input_filters, QString type) {
         return;
     }
 
-    QStringList filters = input_filters.split("::");
 
+    // If the comparision is unspecified we should set a
+    // default based on the type of filter.
+    QString defaultComp {""};
+    if (type == "rSqr")
+    {
+         defaultComp = "gt";
+    }
+    else
+    {
+        defaultComp = "lt";
+    }
+
+    QStringList filters = input_filters.split("::");
     for ( int i = 0; i < filters.size(); i++ )
     {
         QStringList data = filters.at(i).split(",");
@@ -223,7 +235,7 @@ void Extract::setFilters(QString input_filters, QString type) {
            if (ok)
            {
                QPair<QString, float> fpair;
-               fpair.first = "lt";
+               fpair.first = defaultComp;
                fpair.second = data.at(0).toFloat();
                _filters.insert(type, fpair);
                failure = false;
@@ -250,7 +262,7 @@ void Extract::setFilters(QString input_filters, QString type) {
                else
                {
                    QPair<QString, float> fpair;
-                   fpair.first = "lt";
+                   fpair.first = defaultComp;
                    fpair.second = data.at(1).toFloat();
                    QString test_name = data.at(0) + "_" + type;
                    _filters.insert(test_name, fpair);
@@ -278,7 +290,7 @@ void Extract::setFilters(QString input_filters, QString type) {
                else
                {
                    QPair<QString, float> fpair;
-                   fpair.first = "lt";
+                   fpair.first = defaultComp;
                    fpair.second = data.at(2).toFloat();
                    QString test_name = data.at(0) + "__" + data.at(1) + "_" + type;
                    _filters.insert(test_name, fpair);
