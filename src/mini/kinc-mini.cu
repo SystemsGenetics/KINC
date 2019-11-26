@@ -236,23 +236,23 @@ int main(int argc, char **argv)
 	int N_pow2 {nextPowerTwo(N)};
 	int K {maxClusters};
 
-	int2 *	in_index			= CUDABuffer<int2>(1 * W);
-	float *  work_x			  = CUDABuffer<float>(N_pow2 * W);
-	float *  work_y			  = CUDABuffer<float>(N_pow2 * W);
-	float2 * work_gmm_data		= CUDABuffer<float2>(N * W);
-	char *	work_gmm_labels	 = CUDABuffer<char>(N * W);
-	float *  work_gmm_pi		 = CUDABuffer<float>(K * W);
-	float2 * work_gmm_mu		 = CUDABuffer<float2>(K * W);
-	float4 * work_gmm_sigma	  = CUDABuffer<float4>(K * W);
-	float4 * work_gmm_sigmaInv	= CUDABuffer<float4>(K * W);
-	float *  work_gmm_normalizer = CUDABuffer<float>(K * W);
-	float2 * work_gmm_MP		 = CUDABuffer<float2>(K * W);
-	int *	work_gmm_counts	 = CUDABuffer<int>(K * W);
-	float *  work_gmm_logpi	  = CUDABuffer<float>(K * W);
-	float *  work_gmm_gamma	  = CUDABuffer<float>(N * K * W);
-	char *	out_K				= CUDABuffer<char>(1 * W);
-	char *	out_labels		  = CUDABuffer<char>(N * W);
-	float *  out_correlations	= CUDABuffer<float>(K * W);
+	int2 *   in_index            = CUDABuffer<int2>   (1 * W);
+	float *  work_x              = CUDABuffer<float>  (N_pow2 * W);
+	float *  work_y              = CUDABuffer<float>  (N_pow2 * W);
+	float2 * work_gmm_data       = CUDABuffer<float2> (N * W);
+	char *   work_gmm_labels     = CUDABuffer<char>   (N * W);
+	float *  work_gmm_pi         = CUDABuffer<float>  (K * W);
+	float2 * work_gmm_mu         = CUDABuffer<float2> (K * W);
+	float4 * work_gmm_sigma      = CUDABuffer<float4> (K * W);
+	float4 * work_gmm_sigmaInv   = CUDABuffer<float4> (K * W);
+	float *  work_gmm_normalizer = CUDABuffer<float>  (K * W);
+	float2 * work_gmm_MP         = CUDABuffer<float2> (K * W);
+	int *    work_gmm_counts     = CUDABuffer<int>    (K * W);
+	float *  work_gmm_logpi      = CUDABuffer<float>  (K * W);
+	float *  work_gmm_gamma      = CUDABuffer<float>  (N * K * W);
+	char *   out_K               = CUDABuffer<char>   (1 * W);
+	char *   out_labels          = CUDABuffer<char>   (N * W);
+	float *  out_correlations    = CUDABuffer<float>  (K * W);
 
 	// initialize output
 	std::vector<Pair> pairs;
