@@ -14,7 +14,7 @@ int Extract::size() const
 {
     EDEBUG_FUNC(this);
 
-    return _cmx->size();
+    return static_cast<int>(_cmx->size());
 }
 
 
@@ -51,7 +51,7 @@ void Extract::process(const EAbstractAnalyticBlock* result)
     // make sure writing output file worked
     if ( _stream.status() != QTextStream::Ok )
     {
-        E_MAKE_EXCEPTION(e);
+        E_MAKE_EXCEPTION(e)
         e.setTitle(tr("File IO Error"));
         e.setDetails(tr("Qt Text Stream encountered an unknown error."));
         throw e;
@@ -86,7 +86,7 @@ bool Extract::filterEdge(int k)
         }
         // Third check if there is a test-specific setting.
         else if (_filters.contains(test_name)) {
-            filter = _filters.find("rSqr").value();
+            filter = _filters.find(test_name).value();
         }
         // If there are no filters then skip to the next one.
         else {
@@ -96,7 +96,7 @@ bool Extract::filterEdge(int k)
 
         // Now perform the filter check.
         float filter_value = filter.second;
-        double test_value = _netWriter->getEdgeTestValue(k, i);
+        float test_value = static_cast<float>(_netWriter->getEdgeTestValue(k, i));
         if (filter.first == "lt" && test_value < filter_value)
         {
             keep = true;
@@ -145,7 +145,7 @@ void Extract::initialize()
     // make sure input/output arguments are valid
     if ( !_cmx || !_output )
     {
-        E_MAKE_EXCEPTION(e);
+        E_MAKE_EXCEPTION(e)
         e.setTitle(tr("Invalid Argument"));
         e.setDetails(tr("Did not get valid input and/or output arguments."));
         throw e;
@@ -153,7 +153,7 @@ void Extract::initialize()
 
     if ( _outputFormat != OutputFormat::Minimal && !_ccm )
     {
-        E_MAKE_EXCEPTION(e);
+        E_MAKE_EXCEPTION(e)
         e.setTitle(tr("Invalid Argument"));
         e.setDetails(tr("--ccm is required for all output formats except minimal."));
         throw e;
@@ -316,7 +316,7 @@ void Extract::setFilters(QString input_filters, QString type) {
 
         if (failure)
         {
-           E_MAKE_EXCEPTION(e);
+           E_MAKE_EXCEPTION(e)
            e.setTitle(tr("Invalid P-Value Filter Input"));
            e.setDetails(tr("Invalid P-Value Filter arguments given."));
            throw e;

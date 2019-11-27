@@ -34,124 +34,6 @@ NetWriter::NetWriter(QTextStream * stream, ExpressionMatrix * emx,
 
 
 
-/*!
- * The initialization function. This function is a virtual function
- * and should be implemented in a child class.
- */
-void NetWriter::initialize()
-{
-    EDEBUG_FUNC(this);
-}
-
-
-
-
-/*!
- * Writes an edge to the file. This function is a virtual function and
- * should be implemented in a child class.
- *
- * \param cluster_index The index in a cluster to write an edge for.
- */
-void NetWriter::writeEdgeCluster(int cluster_index)
-{
-    EDEBUG_FUNC(this, cluster_index);
-}
-
-
-
-
-
-/*!
- * Completes the writing of the network file. This function is
- * a virtual function and should be implemented in a child class.
- */
-void NetWriter::finish()
-{
-    EDEBUG_FUNC(this);
-}
-
-
-
-
-
-/*!
- * Generates the sample strings and determimes the sample sizes for
- * all the clusters of the current gene pair. The gene pair must first
- * be set using the setPair() function.
- */
-void NetWriter::setPairSampleStrings()
-{
-    EDEBUG_FUNC(this);
-
-    int numSamples {0};
-
-    for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
-    {
-
-        // Initialize the sample string with zeros.
-       QString sampleMask(_ccm->sampleSize(), '0');
-
-        // If cluster data exists then use it.
-        if ( _ccmPair.clusterSize() > 0 )
-        {
-            // Compute cluster size.
-            for ( int i = 0; i < _ccm->sampleSize(); i++ )
-            {
-                if ( _ccmPair.at(k, i) == 1 )
-                {
-                    numSamples++;
-                }
-            }
-
-            // Write sample mask to string.
-            for ( int i = 0; i < _ccm->sampleSize(); i++ )
-            {
-                sampleMask[i] = '0' + _ccmPair.at(k, i);
-            }
-        }
-
-        // Otherwise use expression data if provided.
-        else if ( _emx )
-        {
-            // Read in gene expressions.
-            ExpressionMatrix::Gene gene1(_emx);
-            ExpressionMatrix::Gene gene2(_emx);
-
-            gene1.read(_cmxPair.index().getX());
-            gene2.read(_cmxPair.index().getY());
-
-            // Determine sample mask, summary statistics from expression data.
-            for ( int i = 0; i < _emx->sampleSize(); ++i )
-            {
-                if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
-                {
-                    sampleMask[i] = '9';
-                }
-                else
-                {
-                    sampleMask[i] = '1';
-                    numSamples++;
-                }
-            }
-        }
-        // Otherwise throw an error.
-        else
-        {
-            E_MAKE_EXCEPTION(e);
-            e.setTitle(QObject::tr("Invalid Input"));
-            e.setDetails(QObject::tr("Expression Matrix was not provided but Cluster Matrix is missing sample data."));
-            throw e;
-        }
-
-        // Save the sample string.
-        _sampleStrings.append(sampleMask);
-        _numSamples.append(numSamples);
-    }
-}
-
-
-
-
 
 /*!
  * Returns the name of the first gene in a gene pair. The gene pair must first
@@ -220,8 +102,6 @@ void NetWriter::setPair(Pairwise::Index cmx_index)
     if (_csm) {
         _csmPair.read(_index);
     }
-
-    setPairSampleStrings();
 }
 
 
@@ -242,7 +122,52 @@ QString NetWriter::getEdgeSampleString(int cluster_index)
 {
     EDEBUG_FUNC(this, cluster_index);
 
-    return _sampleStrings[cluster_index];
+    // Initialize the sample string with zeros.
+    QString sampleMask(_ccm->sampleSize(), '0');
+
+    // If cluster data exists then use it.
+    if ( _ccmPair.clusterSize() > 0 )
+    {
+        // Write sample mask to string.
+        for ( int i = 0; i < _ccm->sampleSize(); i++ )
+        {
+            sampleMask[i] = '0' + _ccmPair.at(cluster_index, i);
+        }
+    }
+
+    // Otherwise use expression data if provided.
+    else if ( _emx )
+    {
+        // Read in gene expressions.
+        ExpressionMatrix::Gene gene1(_emx);
+        ExpressionMatrix::Gene gene2(_emx);
+
+        gene1.read(_cmxPair.index().getX());
+        gene2.read(_cmxPair.index().getY());
+
+        // Determine sample mask, summary statistics from expression data.
+        for ( int i = 0; i < _emx->sampleSize(); ++i )
+        {
+            if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
+            {
+                sampleMask[i] = '9';
+            }
+            else
+            {
+                sampleMask[i] = '1';
+            }
+        }
+    }
+    // Otherwise throw an error.
+    else
+    {
+        E_MAKE_EXCEPTION(e)
+        e.setTitle(QObject::tr("Invalid Input"));
+        e.setDetails(QObject::tr("Expression Matrix was not provided but Cluster Matrix is missing sample data."));
+        throw e;
+    }
+
+    return sampleMask;
 }
 
 
@@ -251,16 +176,15 @@ QString NetWriter::getEdgeSampleString(int cluster_index)
 
 /*!
  * Retrieves the total number of samples in the specified cluster
- * in the current gene pair.  The gene pair must first
- * be set using the setPair() function.
+ * in the current gene pair.
  *
- * \param cluster_index  The index of the cluster in the current gene pair.
+ * \param sample_string  The sample string as returned by the
+ * getEdgeSampleString function.
  */
-int NetWriter::getEdgeNumSamples(int cluster_index)
+int NetWriter::getEdgeNumSamples(QString sample_string)
 {
     EDEBUG_FUNC(this, cluster_index);
-
-    return _numSamples[cluster_index];
+    return sample_string.count("1");
 }
 
 
@@ -325,15 +249,15 @@ float NetWriter::getEdgeTestValue(int cluster_index, int test_index)
        {
            if (fullTestName.contains("_pVal"))
            {
-               return _csmPair.at(cluster_index, i, "pvalue");
+               return static_cast<float>(_csmPair.at(cluster_index, i, "pvalue"));
            }
            if (fullTestName.contains("_RSqr"))
            {
-               return _csmPair.at(cluster_index, i, "r2");
+               return  static_cast<float>(_csmPair.at(cluster_index, i, "r2"));
            }
        }
     }
-    return qQNaN();
+    return static_cast<float>(qQNaN());
 }
 
 
@@ -389,8 +313,8 @@ void FullNetWriter::writeEdgeCluster(int cluster_index)
     float correlation = getEdgeSimilarity(cluster_index);
     QString interaction {"co"};
     int cluster_num = cluster_index + 1;
-    int num_samples = getEdgeNumSamples(cluster_index);
     QString sample_string = getEdgeSampleString(cluster_index);
+    int num_samples = getEdgeNumSamples(sample_string);
 
      *(_stream)
             << source
@@ -403,7 +327,7 @@ void FullNetWriter::writeEdgeCluster(int cluster_index)
 
     // Add each conditional test to the network file too.
     for (int i = 0; i < _testNames.size(); ++i) {
-        double test_value = getEdgeTestValue(cluster_index, i);
+        float test_value = getEdgeTestValue(cluster_index, i);
         *(_stream) << "\t" << test_value;
     }
 
@@ -464,7 +388,7 @@ void MinimalNetWriter::writeEdgeCluster(int cluster_index)
 
 /*!
  * The initialization function for the GraphML output. This
- * function adds XML headers, attribute keys and nodes to the
+ * function adds XML headers, and attribute keys to the
  * output file.
  */
 void GMLNetWriter::initialize()
@@ -482,31 +406,21 @@ void GMLNetWriter::initialize()
 
     // Add the attributes definitions
     *(_stream)
-        << "  <key id=\"sc\" for=\"node\" att.name=\"Similarity_Score\" attr.type=\"string\"/>\n"
-        << "  <key id=\"int\" for=\"node\" att.name=\"Interaction\" attr.type=\"string\"/>\n"
-        << "  <key id=\"ci\" for=\"node\" att.name=\"Cluster_Index\" attr.type=\"integer\"/>\n"
-        << "  <key id=\"cs\" for=\"node\" att.name=\"Cluster_Size\" attr.type=\"integer\"/>\n"
-        << "  <key id=\"s\" for=\"node\" att.name=\"Samples\" attr.type=\"string\"/>\n";
+        << "  <key id=\"sc\" for=\"edge\" attr.name=\"Similarity_Score\" attr.type=\"string\"/>\n"
+        << "  <key id=\"int\" for=\"edge\" attr.name=\"Interaction\" attr.type=\"string\"/>\n"
+        << "  <key id=\"ci\" for=\"edge\" attr.name=\"Cluster_Index\" attr.type=\"int\"/>\n"
+        << "  <key id=\"cs\" for=\"edge\" attr.name=\"Cluster_Size\" attr.type=\"int\"/>\n"
+        << "  <key id=\"s\" for=\"edge\" attr.name=\"Samples\" attr.type=\"string\"/>\n";
 
     // Add attributes for the tests.
     for (int i = 0; i < _testNames.size(); ++i) {
         *(_stream)
-          << "  <key id=\"t" << i << "\" for=\"node\" att.name=\"" << _testNames[i] << "\" attr.type=\"float\"/>\n";
+          << "  <key id=\"t" << i << "\" for=\"node\" attr.name=\"" << _testNames[i] << "\" attr.type=\"double\"/>\n";
     }
 
     // Start the graph.
     *(_stream)
         << "  <graph id=\"G01\" edgedefault=\"undirected\">\n";
-
-
-    // Write the node list to file.
-    EMetaArray geneNames {_cmx->geneNames()};
-    for ( int i = 0; i < _cmx->geneSize(); i++ )
-    {
-        QString id {geneNames.at(i).toString()};
-
-        *(_stream) << "    <node id=\"" << id << "\"/>\n";
-    }
 }
 
 
@@ -528,8 +442,21 @@ void GMLNetWriter::writeEdgeCluster(int cluster_index)
     float correlation = getEdgeSimilarity(cluster_index);
     QString interaction {"co"};
     int cluster_num = cluster_index + 1;
-    int num_samples = getEdgeNumSamples(cluster_index);
     QString sample_string = getEdgeSampleString(cluster_index);
+    int num_samples = getEdgeNumSamples(sample_string);
+
+    // If we've never seen this node before then add it to
+    // our list and to the output file.
+    if (!_nodes.contains(source)) {
+        _nodes.insert(source, true);
+        *(_stream)
+            << "    <node id=\"" << source << "\"/>\n";
+    }
+    if (!_nodes.contains(target)) {
+        _nodes.insert(target, true);
+        *(_stream)
+            << "    <node id=\"" << target << "\"/>\n";
+    }
 
     // Start the edge and add in the attributes.
      *(_stream)
@@ -542,7 +469,7 @@ void GMLNetWriter::writeEdgeCluster(int cluster_index)
 
     // Add each conditional test to the network file too.
     for (int i = 0; i < _testNames.size(); ++i) {
-        double test_value = getEdgeTestValue(cluster_index, i);
+        float test_value = getEdgeTestValue(cluster_index, i);
         *(_stream)
                 << "      <data key=\"t" << i << "\">" << test_value << "</data>\n";
     }
@@ -562,7 +489,6 @@ void GMLNetWriter::writeEdgeCluster(int cluster_index)
 void GMLNetWriter::finish()
 {
     EDEBUG_FUNC(this);
-
 
     // Write the XML header to file.
     *(_stream)

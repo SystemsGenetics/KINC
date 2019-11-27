@@ -11,6 +11,12 @@
 #include "conditionspecificclustersmatrix.h"
 #include "conditionspecificclustersmatrix_pair.h"
 
+/*!
+ * The parent class for writing a network to an output file.
+ *
+ * Child classes need only implement the initialize(), writeEdge() and
+ * finish() functions.
+ */
 class NetWriter : public QObject
 {
     Q_OBJECT
@@ -39,13 +45,16 @@ protected:
     CSMatrix* _csm {nullptr};
     CSMatrix::Pair _csmPair;
 
+    /*!
+     * Ther index of the current pair.
+     */
     Pairwise::Index _index;
 
-    QVector<QString> _sampleStrings;
-    QVector<int> _numSamples;
-    void setPairSampleStrings();
+    /**
+     * The variable that houses the test names for easy lookup and
+     * the function that should be used to set the test names.
+     */
     void setTestNames();
-
     QVector<QString> _testNames;
 
 public:
@@ -54,7 +63,7 @@ public:
     QString getEdgeGene1();
     QString getEdgeGene2();
     QString getEdgeSampleString(int cluster_index);
-    int getEdgeNumSamples(int cluster_index);
+    int getEdgeNumSamples(QString sample_string);
     float getEdgeSimilarity(int cluster_index);
     float getEdgeTestValue(int cluster_index, int test_index);
     QVector<QString> getTestNames() { return _testNames; }
@@ -63,13 +72,18 @@ public:
                       CorrelationMatrix * cmx, CCMatrix * ccm,
                       CSMatrix * csm);
     virtual ~NetWriter() {}
-    virtual void initialize();
-    virtual void writeEdgeCluster(int cluster_index);
-    virtual void finish();
+    virtual void initialize() = 0;
+    virtual void writeEdgeCluster(int cluster_index) = 0;
+    virtual void finish() = 0;
 };
 
 class GMLNetWriter: public NetWriter
 {
+private:
+    /*!
+     * A hash lookup for storing nodes in the network.
+     */
+    QHash<QString, bool> _nodes;
 public:
     GMLNetWriter(QTextStream * stream, ExpressionMatrix * emx, CorrelationMatrix * cmx,
                  CCMatrix * ccm, CSMatrix * csm) : NetWriter(stream, emx, cmx, ccm, csm) {}

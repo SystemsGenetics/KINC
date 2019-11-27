@@ -348,7 +348,7 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
     // proportions having signficant p-values. Using Cohen's H
     // to set a large-effect size (e.g. 0.8) with a sig.level of
     // 0.001 and a power of 0.95 we need at least 31 samples.
-    // So, we'll perform a jacknife resampling of our data
+    // So, we'll perform a bootstrap resampling of our data
     // to calculate an average proportion of 31 samples
     if ( t > 31 )
     {
@@ -362,7 +362,7 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
         // Holds the jacknife average proportion.
         int jkap = 0;
 
-        // To perform the Jacknife resampling we will
+        // To perform the bootstrap resampling we will
         // perform 30 iterations (central limit thereom)
         int in = 30;
         for ( int i = 0; i < in; i++ )
@@ -382,8 +382,8 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
                 indexes[j] = j;
             }
 
-            // The gsl_ran_choose function randmly choose samples without replacement from a list.
-            gsl_ran_choose(r, chosen, 31, indexes, sampleSize, sizeof(int));
+            // The gsl_ran_sample function randomly chooses samples with replacement from a list.
+            gsl_ran_sample(r, chosen, 31, indexes, sampleSize, sizeof(int));
 
             for ( int j = 0; j < 31; j++ )
             {
