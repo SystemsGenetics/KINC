@@ -76,15 +76,19 @@ bool Extract::filterEdge(int k)
         QString test_name = _testNames[i];
         QPair<QString, float> filter;
 
-        // First check if there is a global pValue setting.
+        // First, check if this is a global pValue setting. If there
+        // is a global p-value filter then we'll ignore any other
+        // pvalue filter specified.
         if (test_name.contains("_pVal") && _filters.contains("pVal")) {
             filter = _filters.find("pVal").value();
         }
-        // Second check if there is a global rSqr setting.
+        // Second, check if this is a global rSqr setting. If there
+        // is a global r-squared filter then we'll ignore any other
+        // r-squared filter specified.
         else if (test_name.contains("_rSqr") && _filters.contains("rSqr")) {
             filter = _filters.find("rSqr").value();
         }
-        // Third check if there is a test-specific setting.
+        // Third, check if there is a test-specific setting.
         else if (_filters.contains(test_name)) {
             filter = _filters.find(test_name).value();
         }
@@ -264,6 +268,22 @@ void Extract::setFilters(QString input_filters, QString type) {
                    QPair<QString, float> fpair;
                    fpair.first = defaultComp;
                    fpair.second = data.at(1).toFloat();
+                   // If this is a filter on a categorical field then it means
+                   // that the user did not specify a category and they want
+                   // to apply the filter on any category.  We need to
+                   // iterate through the tests and insert a filter for each
+                   // one that matches.
+                   QVectorIterator<QString> testNamesIter(_testNames);
+                   while (testNamesIter.hasNext())
+                   {
+                       QString test_name = testNamesIter.next();
+                       if (test_name.contains(data.at(0) + "__"))
+                       {
+                           _filters.insert(test_name, fpair);
+                       }
+                   }
+                   // If this isn't a categorical field then we can just
+                   // insert the filter as is.
                    QString test_name = data.at(0) + "_" + type;
                    _filters.insert(test_name, fpair);
                    failure = false;
@@ -282,6 +302,22 @@ void Extract::setFilters(QString input_filters, QString type) {
                    QPair<QString, float> fpair;
                    fpair.first = data.at(1);
                    fpair.second = data.at(2).toFloat();
+                   // If this is a filter on a categorical field then it means
+                   // that the user did not specify a category and they want
+                   // to apply the filter on any category.  We need to
+                   // iterate through the tests and insert a filter for each
+                   // one that matches.
+                   QVectorIterator<QString> testNamesIter(_testNames);
+                   while (testNamesIter.hasNext())
+                   {
+                       QString test_name = testNamesIter.next();
+                       if (test_name.contains(data.at(0) + "__"))
+                       {
+                           _filters.insert(test_name, fpair);
+                       }
+                   }
+                   // If this isn't a categorical field then we can just
+                   // insert the filter as is.
                    QString test_name = data.at(0) + "_" + type;
                    _filters.insert(test_name, fpair);
                    failure = false;

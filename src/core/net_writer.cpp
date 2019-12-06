@@ -245,16 +245,13 @@ float NetWriter::getEdgeTestValue(int cluster_index, int test_index)
     for ( int i = 0; i < _csm->getTestCount(); i++ )
     {
        QString testName = _csm->getTestName(i);
-       if (fullTestName.contains(testName))
+       if (fullTestName.contains("_pVal") && fullTestName.compare(testName + "_pVal") == 0)
        {
-           if (fullTestName.contains("_pVal"))
-           {
-               return static_cast<float>(_csmPair.at(cluster_index, i, "pvalue"));
-           }
-           if (fullTestName.contains("_RSqr"))
-           {
-               return  static_cast<float>(_csmPair.at(cluster_index, i, "r2"));
-           }
+           return static_cast<float>(_csmPair.at(cluster_index, i, "pvalue"));
+       }
+       if (fullTestName.contains("_RSqr") && fullTestName.compare(testName + "_RSqr") == 0)
+       {
+           return  static_cast<float>(_csmPair.at(cluster_index, i, "r2"));
        }
     }
     return static_cast<float>(qQNaN());

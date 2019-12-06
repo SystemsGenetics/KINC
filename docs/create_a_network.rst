@@ -320,10 +320,39 @@ When using the GMM approach, the goal is to identiy condition-specific subgraphs
 
 As in previous steps, the ``--emx``, ``--cmx``, ``--ccm`` and ``--csm`` arguments provide the exrpession matrix, correlation,  clustering matrix and the new condition-specific matrix. A threshold is provided to the ``--mincorr`` argument typically as a lower-bound. No edges with absolute correlation values below this value will be extracted.   Additinally, if you would like to exclude high correlations (such as perfect correlations), you can do so with the ``--maxcorr`` argument. You should only need to change the ``--maxcorr`` argument if it was determined that there is error in the data resulting in an inordinate number of high correlations.  To limit the size of the condition-specific subgraphs you should then set the ``--filter-pvalue`` and ``--filter-rsquare`` values to lower-bounds for signficant p-values and meaningful r-square values from test.  The r-square values are only present for quantitative features where the regression test was performed.  The p-value in this case indicates how well the data follows a trend and the r-square indicates how much of the variation the trend line accounts for.  Ideally, low p-values and high r-squre are desired. However, there are no rules for the best setting, but choose settings that provide a signficance level you are comfortable with.
 
-Finally, the ``--format`` argument can be ``text``, ``minimal`` or ``graphml``. The ``text`` format currently contains the most data. It is easily imported into Cytoscape or R for other analyses and visualizations. The ``minimal`` format simply contains the list of edges with only the two genes and the correlation value. The ``graphml`` format provides the same information as the ``minimal`` format but using the `GraphML <http://graphml.graphdrawing.org/>`_ file format.
+Finally, the ``--format`` argument can be ``text``, ``minimal`` or ``graphml``. The ``text`` and ``graphml`` format contain the most data although, the `GraphML <http://graphml.graphdrawing.org/>`_ version is larger in size. Both are easily imported into Cytoscape and the text version is easily imported into R for other analyses and visualizations. The ``minimal`` format contains the list of edges with only the two genes and the correlation value. See the :ref:`plain-text-reference-label`  section for specific details about these files.
 
-See the :ref:`plain-text-reference-label`  section for specific details about these files.
+Complex Filtering
+:::::::::::::::::
 
+For either the ``--filter-pvalue`` or ``--filter-rsquare`` you can specify more complex filters in any of the following forms:
+
+1.  ``[value]``
+2.  ``[label],[value]``
+3.  ``[label],["gt","lt"],[value]``
+4.  ``[label],[category],[value]``
+5.  ``[label],[category],["gt","lt"],[value]``
+
+Where:
+
+- ``[value]`` is a p-value or r-squared value on which edges should be filtered.
+- ``[label]`` is the name of the column label in the annotation matrix where any tests performed by the ``cond-test`` function should be applied.
+- ``["gt","lt"]`` is either the abbreviation "gt" or "lt" indicating if values "greater than" or "less than" that specified by ``[value]`` should be extracted.
+- ``[category]`` is set to a category to further refine filtering of categorical test results.
+
+If a ``[value]`` filter is provided (i.e. only a single numeric value), as in the example code above, then the filter applies to all tests that were performed. For example, a filter of ``1e-3`` indicates that any test performed in the ``cond-test`` step that has a value less than 1e-3 should be  extracted.
+
+If a ``[label],[value]`` filter is provided then the filter applies to only tests for the given label, and all other tests are ignored.  For example. To find edges that are specific to any Subspecies with a p-value < 1-e3, the following filter could be supplied:  ``Subspecies,1e-3``. If "gt" or "lt" is missing it is implied as "lt" for p-value filters and "gt" for r-squared filters.
+
+If a ``[label],["gt","lt"],[value]`` filter is provided then the filter is the same as the ``[label],[value]`` except that the selection of greater than or less than is excplicitly stated.
+
+Finally, the filters, ``[label],[category],[value]`` and ``[label],[category],["gt","lt"],[value]``, are only applicable to tests were categorical data was used. The latter explicitly provides the "greater than" or "less than" specification. Here the filter specifically expects a given category.  For example. To find edges that are specific to only the Indica subspecies with a p-value < 1-e3, the following filter could be supplied:  ``Subspecies,Indica,lt,1e-3``. If "gt" or "lt" is missing it is implied as "lt" for p-value filters and "gt" for r-squared filters.
+
+Filters can be combined by separating them with two colons: ``::``.  For example, to find edges that are specific to heat but not heat recovery the following would require a signficant p-value for Heat and a non-signficant p-value for heat recoery:  ``Treatment,Heat,1e-3::Treatment,Heat Recovery,gt,1-e3``
+
+.. note::
+
+  Filters limit the extracted edge list by finding matches that meet the criteria but do not exclude edges that may be signficant for other tests. For example, If the filter ``Treatment,Heat,1e-3`` is supplied it will find edges that meet that filter but does imply the other tests such as a signficant Supspecies is not also present.
 
 Step 6: Remove Edges Due to Collinearity
 ````````````````````````````````````````
