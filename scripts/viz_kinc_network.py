@@ -39,7 +39,6 @@ class KINCnetworkViz(param.Parameterized):
     Network vizualization application for (plain-text) KINC co-expression files.
 
     The plain text KINC co-expression file is an edge list.
-    The overall edge weight is given by the "sc" column.
 
     """
 
@@ -49,10 +48,9 @@ class KINCnetworkViz(param.Parameterized):
     graph = param.Parameter(precedence=-1.0, doc=dedent("""\
     A networkx.Graph object sourced from the `data` parameter. This is populated automatically."""))
 
-    standard_edge_attrs = param.List(default=['Source', 'Target', 'sc', 'Interaction', 'Cluster', 'Num_Clusters',
-                                              'Cluster_Samples', 'Missing_Samples', 'Cluster_Outliers',
-                                              'Pair_Outliers', 'Too_Low', 'Samples', 'SourceDiff', 'TargetDiff'],
-                                     precedence=-1.0, doc=dedent("""\
+    standard_edge_attrs = param.List(default=['Source', 'Target', 'Similarity_Score', 'Interaction', 'Cluster_Index', 'Cluster_Size', 'Samples'],
+    precedence=-1.0,
+    doc=dedent("""\
     The list of standard edge attributes in the plain-text KINC co-expression files. This should not require
     modification by the user."""))
 
@@ -62,8 +60,10 @@ class KINCnetworkViz(param.Parameterized):
 
     node_size = param.Integer(default=5, doc=dedent("""\
     The base size of the nodes."""))
+
     edge_color = param.Selector(default=None)
-    # edge_line_width = param.Selector(default=None)
+
+    edge_line_width = param.Selector(default=None)
 
     # bundle_edges = param.Boolean(default=False)
 
@@ -116,7 +116,7 @@ class KINCnetworkViz(param.Parameterized):
     @param.depends('update_graph', 'edge_color', 'edge_line_width', 'node_size')
     def view(self):
         layout_kwargs = {"iterations": self.iterations,
-                         "weight": "sc"}
+                         "weight": "Similarity_Score"}
         frozen_layout_kwargs = frozenset(layout_kwargs.items())
         layout = self.create_layout(frozen_layout_kwargs)
         hv_graph = hv.Graph.from_networkx(self.graph, positions=layout)
