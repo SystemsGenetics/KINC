@@ -139,7 +139,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork() const
 {
     EDEBUG_FUNC(this);
 
-    return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock());
+    return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock);
 }
 
 
@@ -153,7 +153,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeResult() const
 {
     EDEBUG_FUNC(this);
 
-    return std::unique_ptr<EAbstractAnalyticBlock>(new EAbstractAnalyticBlock());
+    return std::unique_ptr<EAbstractAnalyticBlock>(new ResultBlock);
 }
 
 
