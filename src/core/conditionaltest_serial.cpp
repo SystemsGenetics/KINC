@@ -469,6 +469,11 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
         // If the sample label matches with the given label.
         if ( ccmPair.at(clusterIndex, i) == 1 )
         {
+            // Skip samples with a missing value in the annotation matrix
+            if (QString::compare(amxInfo.at(i), _base->_missing) == 0) {
+                continue;
+            }
+
             // Add emx data as the predictors but only for samples in the cluster. We
             // add a 1 for the intercept, gene1, gene2 and the interaction: gene1*gene2.
             // The interaction term handles the case where the relationship is dependent
@@ -485,7 +490,7 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
             if ( testType == ORDINAL )
             {
                 // Convert the observation data into a "design vector"
-                // Each unique number being a ssigned a unique integer.
+                // Each unique number being assigned a unique integer.
                 if ( !labelInfo.contains(amxInfo.at(i).toInt()) )
                 {
                     labelInfo.append(amxInfo.at(i).toInt());

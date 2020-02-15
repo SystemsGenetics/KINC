@@ -343,28 +343,6 @@ void ConditionalTest::readInAMX(
 
     configureTests(dataTestType);
 
-    for ( int i = 1; i < _amxNumLines; i++ )
-    {
-        line = _stream.readLine();
-        // splits the file along the commas
-        auto words2 = line.split(_delimiter, QString::KeepEmptyParts, Qt::CaseInsensitive);
-
-        // add the data to our arrays
-        for ( int j = 0; j < words2.size(); j++ )
-        {
-            data[j].append(words2[j]);
-            if ( dataTestType.at(j) == CATEGORICAL )
-            {
-                // this will add treatments types, leaf types, and any other types into the meta data
-                if ( !amxdata.at(j).contains(words2[j]) )
-                {
-                    amxdata[j].append(words2[j]);
-                    changed[j] = 0;
-                }
-            }
-        }
-    }
-
     // we need to change the test types here if the user has overridden them
     for ( int i = 0; i < _override.size(); i++ )
     {
@@ -391,6 +369,28 @@ void ConditionalTest::readInAMX(
                         .arg(_override.at(i).at(1))
                         .arg("categorical, quantitative, ordinal"));
                     throw e;
+                }
+            }
+        }
+    }
+
+    for ( int i = 1; i < _amxNumLines; i++ )
+    {
+        line = _stream.readLine();
+        // splits the file along the delemeter
+        auto words2 = line.split(_delimiter, QString::KeepEmptyParts, Qt::CaseInsensitive);
+
+        // add the data to our arrays
+        for ( int j = 0; j < words2.size(); j++ )
+        {
+            data[j].append(words2[j]);
+            if ( dataTestType.at(j) == CATEGORICAL )
+            {
+                // this will add treatments types, leaf types, and any other types into the meta data
+                if ( !amxdata.at(j).contains(words2[j]) )
+                {
+                    amxdata[j].append(words2[j]);
+                    changed[j] = 0;
                 }
             }
         }
@@ -431,16 +431,17 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
 
     for ( int i = 0 ; i < counts.size(); i++ )
     {
-        counts[i].resize(3);
+        counts[i].resize(4);
     }
 
-    bool ok;
     QString line;
+    int num_lines = 0;
 
-    for ( int i = 0; i < 10; i++ )
+    while(!_stream.atEnd())
     {
         // read in the line
         line = _stream.readLine();
+        num_lines++;
 
         // splits the file along the commas or tabs depending
         if ( _delimiter == "tab" )
@@ -452,49 +453,54 @@ void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
 
         for ( int i = 0; i < words.size(); i++ )
         {
-            // it most likeley a double and should be considered QUANTITATIVE.
-            // will look for (at laest one number)(a '.')(at laest one number)
-            if ( words[i].contains(QRegExp("\\d+\\.\\d+")) )
-            {
-                if ( i < dataTestType.size() )
-                {
-                    counts[i][QUANTITATIVE]++;
-                }
-            }
+            // Check if the word is an integer or float.
+            bool isFloat = 0;
+            bool isInt = 0;
+            words[i].toFloat(&isFloat);
+            words[i].toInt(&isInt);
 
-            // it is most likely an integer and should ne considered Ordinal.
-            else if ( words[i].toInt(&ok) && ok )
-            {
-                if ( i < dataTestType.size() )
-                {
-                    counts[i][ORDINAL]++;
-                }
+            // Count the missing values, ints, floats and strings.
+            if ( QString::compare(words[i], _missing) == 0 ) {
+                counts[i][UNKNOWN]++;
             }
-
-            // if its neistartingPointther on of those than its a string.
+            else if (isInt)
+            {
+                 counts[i][ORDINAL]++;
+            }
+            else if (isFloat)
+            {
+                counts[i][QUANTITATIVE]++;
+            }
             else
             {
-                if ( i < dataTestType.size() )
-                {
-                    counts[i][CATEGORICAL]++;
-                }
+                 counts[i][CATEGORICAL]++;
             }
         }
     }
 
     for ( int i = 0; i < counts.size() ; i++ )
     {
-        if ( counts.at(i).at(QUANTITATIVE) > 0)
-        {
-            dataTestType[i] = QUANTITATIVE;
-        }
-        else if ( counts.at(i).at(ORDINAL) > 0 )
+        // If all of the values are ordinal (integer) then we'll consdier this
+        // column ordinal.
+        if ( counts.at(i).at(ORDINAL) + counts[i][UNKNOWN] == num_lines )
         {
             dataTestType[i] = ORDINAL;
         }
-        else
+        // If all of the values are quantitative or ordinal (integer) or missing
+        // then we'll consider this column quantitative.
+        else if ( counts.at(i).at(QUANTITATIVE) + counts.at(i).at(ORDINAL) + counts[i][UNKNOWN] == num_lines )
+        {
+            dataTestType[i] = QUANTITATIVE;
+        }
+        // If all of the values are strings then it's categorical
+        else if ( counts.at(i).at(CATEGORICAL) + counts[i][UNKNOWN]== num_lines )
         {
             dataTestType[i] = CATEGORICAL;
+        }
+        // If we're here then it means we have some combination of strings and
+        // numbers. This column cannot be considered.
+        else {
+            dataTestType[i] = NONE;
         }
     }
 
