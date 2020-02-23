@@ -49,6 +49,10 @@ private:
          * GraphML format
          */
         ,GraphML
+        /*!
+         * GraphML format
+         */
+        ,Tidy
     };
 
 private:
@@ -131,7 +135,7 @@ private:
     /*!
      * Performs filtering of a cluster of the current edge.
      */
-    bool filterEdge(int cluster_index);
+    QVector<QString> filterEdge(int cluster_index);
 };
 
 

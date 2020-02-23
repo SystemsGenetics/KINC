@@ -300,10 +300,11 @@ void FullNetWriter::initialize()
  * must first be set using the setPair() function.
  *
  * \param cluster_index The index of cluster in the current gene pair.
+ * \param passed the set of tests that passed.
  */
-void FullNetWriter::writeEdgeCluster(int cluster_index)
+void FullNetWriter::writeEdgeCluster(int cluster_index, QVector<QString> passed)
 {
-    EDEBUG_FUNC(this, cluster_index);
+    EDEBUG_FUNC(this, cluster_index, passed);
 
     QString source = getEdgeGene1();
     QString target = getEdgeGene2();
@@ -334,6 +335,107 @@ void FullNetWriter::writeEdgeCluster(int cluster_index)
 
 
 
+/*!
+ * The initialization function for the full text output. This
+ * function adds the tab-delimited header to the output file.
+ */
+void TidyNetWriter::initialize()
+{
+    EDEBUG_FUNC(this);
+
+    setTestNames();
+
+    // Start by writing the tab-delimited header.
+    *(_stream)
+        << "Source"
+        << "\t" << "Target"
+        << "\t" << "Similarity_Score"
+        << "\t" << "Interaction"
+        << "\t" << "Cluster_Index"
+        << "\t" << "Cluster_Size"
+        << "\t" << "Samples";
+
+    if (_testNames.size() > 0) {
+        *(_stream)
+                << "\t" << "Test_Name"
+                << "\t" << "p_value"
+                << "\t" << "r_squared";
+    }
+
+    *(_stream)
+        << "\n";
+}
+
+
+
+
+
+/*!
+ * Writes a single edge corresponding to the given cluster of the current
+ * gene pair to the full tab-delimited text output file. The gene pair
+ * must first be set using the setPair() function.
+ *
+ * \param cluster_index The index of cluster in the current gene pair.
+ * \param passed the set of tests that passed.
+ */
+void TidyNetWriter::writeEdgeCluster(int cluster_index, QVector<QString> passed)
+{
+    EDEBUG_FUNC(this, cluster_index, passed);
+
+    QString source = getEdgeGene1();
+    QString target = getEdgeGene2();
+    float correlation = getEdgeSimilarity(cluster_index);
+    QString interaction {"co"};
+    int cluster_num = cluster_index + 1;
+    QString sample_string = getEdgeSampleString(cluster_index);
+    int num_samples = getEdgeNumSamples(sample_string);
+
+    // If there are no tests then we are here becaues the cluster
+    // passed the correlation threshold test, so write it out.
+    if (_testNames.size() == 0) {
+        *(_stream)
+            << source
+            << "\t" << target
+            << "\t" << correlation
+            << "\t" << interaction
+            << "\t" << cluster_num
+            << "\t" << num_samples
+            << "\t" << sample_string
+            << "\n";
+    }
+    // Otherwise, write out an edge for each passed test.
+    else
+    {
+        for (int i = 0; i < passed.size(); ++i)
+        {
+            QString test_name = passed[i];
+            int pVali = _testNames.lastIndexOf(test_name + "_pVal");
+            int rSqri = _testNames.lastIndexOf(test_name + "_RSqr");
+            float pVal = qQNaN();
+            float rSqr = qQNaN();
+            if (pVali > -1)
+            {
+                pVal = getEdgeTestValue(cluster_index, pVali);
+            }
+            if (rSqri > -1)
+            {
+                rSqr = getEdgeTestValue(cluster_index, rSqri);
+            }
+            *(_stream)
+                   << source
+                   << "\t" << target
+                   << "\t" << correlation
+                   << "\t" << interaction
+                   << "\t" << cluster_num
+                   << "\t" << num_samples
+                   << "\t" << sample_string
+                   << "\t" << test_name
+                   << "\t" << pVal
+                   << "\t" << rSqr
+                   << "\n";
+        }
+    }
+}
 
 
 /*!
@@ -360,10 +462,11 @@ void MinimalNetWriter::initialize()
  * must first be set using the setPair() function.
  *
  * \param cluster_index The index of cluster in the current gene pair.
+ * \param passed the set of tests that passed.
  */
-void MinimalNetWriter::writeEdgeCluster(int cluster_index)
+void MinimalNetWriter::writeEdgeCluster(int cluster_index, QVector<QString> passed)
 {
-    EDEBUG_FUNC(this, cluster_index);
+    EDEBUG_FUNC(this, cluster_index, passed);
 
     QString source = getEdgeGene1();
     QString target = getEdgeGene2();
@@ -429,10 +532,11 @@ void GMLNetWriter::initialize()
  * must first be set using the setPair() function.
  *
  * \param cluster_index The index of cluster in the current gene pair.
+ * \param passed the set of tests that passed.
  */
-void GMLNetWriter::writeEdgeCluster(int cluster_index)
+void GMLNetWriter::writeEdgeCluster(int cluster_index, QVector<QString> passed)
 {
-    EDEBUG_FUNC(this, cluster_index);
+    EDEBUG_FUNC(this, cluster_index, passed);
 
     QString source = getEdgeGene1();
     QString target = getEdgeGene2();

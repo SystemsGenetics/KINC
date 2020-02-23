@@ -38,8 +38,9 @@ void Extract::process(const EAbstractAnalyticBlock* result)
     for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
     {
         // If the cluster passed all of the tests, then write it to the file.
-        if (filterEdge(k)) {
-            _netWriter->writeEdgeCluster(k);
+        QVector<QString> passed = filterEdge(k);
+        if (passed.size() > 0) {
+            _netWriter->writeEdgeCluster(k, passed);
         }
     }
 
@@ -58,22 +59,36 @@ void Extract::process(const EAbstractAnalyticBlock* result)
     }
 }
 
-bool Extract::filterEdge(int k)
+QVector<QString> Extract::filterEdge(int k)
 {
-    float correlation = _netWriter->getEdgeSimilarity(k);
+    // Stores the tests that passed and failed
+    QVector<QString> passed;
+    QVector<QString> failed;
 
     // Exclude cluster if correlation is not within thresholds.
+    float correlation = _netWriter->getEdgeSimilarity(k);
     if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
     {
-        return false;
+        return passed;
+    }
+
+    // If no filters are present then just return as we've passed
+    // the correlation threshold test.
+    if (_testNames.size() == 0)
+    {
+        passed.append("th");
+        return passed;
     }
 
     // Iterate through any filters and check those. If any pass we keep the edge.
-    int num_filters = 0;
-    bool keep = false;
     for (int i = 0; i < _testNames.size(); i++)
     {
+        // The test_name as a _pVal or _rSqr suffix, the
+        // offical (or real) test name does not.
         QString test_name = _testNames[i];
+        QString real_test_name = _testNames[i];
+        real_test_name.replace("_pVal","");
+        real_test_name.replace("_RSqr","");
         QPair<QString, float> filter;
 
         // First, check if this is a global pValue setting. If there
@@ -85,7 +100,7 @@ bool Extract::filterEdge(int k)
         // Second, check if this is a global rSqr setting. If there
         // is a global r-squared filter then we'll ignore any other
         // r-squared filter specified.
-        else if (test_name.contains("_rSqr") && _filters.contains("rSqr")) {
+        else if (test_name.contains("_RSqr") && _filters.contains("rSqr")) {
             filter = _filters.find("rSqr").value();
         }
         // Third, check if there is a test-specific setting.
@@ -96,33 +111,58 @@ bool Extract::filterEdge(int k)
         else {
             continue;
         }
-        num_filters++;
 
         // Now perform the filter check.
         float filter_value = filter.second;
         float test_value = static_cast<float>(_netWriter->getEdgeTestValue(k, i));
         if (filter.first == "lt" && test_value < filter_value)
         {
-            keep = true;
+            passed.append(real_test_name);
         }
-        if (filter.first == "gt" && test_value > filter_value)
+        else if (filter.first == "gt" && test_value > filter_value)
         {
-            keep = true;
+
+            passed.append(real_test_name);
+        }
+        else
+        {
+            failed.append(real_test_name);
         }
     }
 
-    // If any of the filters passed then keep this edge.
-    if (keep == true) {
-        return true;
+    // If the user requested a filter on both the pVal and the RSqr
+    // then we need to enforce a logical "and" and we need
+    // to check that both tests passed (not just one).
+    for (int i = 0; i < _testNames.size(); i++)
+    {
+        QString real_test_name = _testNames[i];
+        real_test_name.replace("_pVal","");
+        real_test_name.replace("_RSqr","");
+        if (passed.count(real_test_name) == 1 && failed.count(real_test_name) == 1) {
+            passed.removeAll(real_test_name);
+        }
     }
-    // If no filters passed but we had no filters then keep this edge
-    // beause we've already passed the min/max correlation filter above.
-    if (keep == false && num_filters == 0) {
-        return true;
+
+    // Remove any duplicates from the passed list before returning.
+    for (int i = 0; i < _testNames.size(); i++)
+    {
+        QString real_test_name = _testNames[i];
+        real_test_name.replace("_pVal","");
+        real_test_name.replace("_RSqr","");
+        if (passed.count(real_test_name) > 1) {
+            passed.removeAll(real_test_name);
+            passed.append(real_test_name);
+        }
     }
+
+    // If any of the tests passed then keep this edge.
+    if (passed.size() > 0) {
+        return passed;
+    }
+
 
     // If we're here then we did not pass any of the filters.
-    return false;
+    return passed;
 }
 
 
@@ -182,6 +222,9 @@ void Extract::initialize()
         break;
     case OutputFormat::GraphML:
         _netWriter = new GMLNetWriter(&_stream, _emx, _cmx, _ccm, _csm);
+        break;
+    case OutputFormat::Tidy:
+        _netWriter = new TidyNetWriter(&_stream, _emx, _cmx, _ccm, _csm);
         break;
     }
 

@@ -73,7 +73,7 @@ public:
                       CSMatrix * csm);
     virtual ~NetWriter() {}
     virtual void initialize() = 0;
-    virtual void writeEdgeCluster(int cluster_index) = 0;
+    virtual void writeEdgeCluster(int cluster_index, QVector<QString> passed) = 0;
     virtual void finish() = 0;
 };
 
@@ -88,7 +88,7 @@ public:
     GMLNetWriter(QTextStream * stream, ExpressionMatrix * emx, CorrelationMatrix * cmx,
                  CCMatrix * ccm, CSMatrix * csm) : NetWriter(stream, emx, cmx, ccm, csm) {}
     void initialize();
-    void writeEdgeCluster(int cluster_index);
+    void writeEdgeCluster(int cluster_index, QVector<QString> passed);
     void finish();
 };
 
@@ -98,7 +98,17 @@ public:
     FullNetWriter(QTextStream * stream, ExpressionMatrix * emx, CorrelationMatrix * cmx,
                   CCMatrix * ccm, CSMatrix * csm) : NetWriter(stream, emx, cmx, ccm, csm) {}
     void initialize();
-    void writeEdgeCluster(int cluster_index);
+    void writeEdgeCluster(int cluster_index, QVector<QString> passed);
+    void finish() {}
+};
+
+class TidyNetWriter: public NetWriter
+{
+public:
+    TidyNetWriter(QTextStream * stream, ExpressionMatrix * emx, CorrelationMatrix * cmx,
+                  CCMatrix * ccm, CSMatrix * csm) : NetWriter(stream, emx, cmx, ccm, csm) {}
+    void initialize();
+    void writeEdgeCluster(int cluster_index, QVector<QString> passed);
     void finish() {}
 };
 
@@ -108,7 +118,7 @@ public:
     MinimalNetWriter(QTextStream * stream, ExpressionMatrix * emx, CorrelationMatrix * cmx,
                      CCMatrix * ccm, CSMatrix * csm) : NetWriter(stream, emx, cmx, ccm, csm) {}
     void initialize();
-    void writeEdgeCluster(int cluster_index);
+    void writeEdgeCluster(int cluster_index, QVector<QString> passed);
     void finish() {}
 };
 
