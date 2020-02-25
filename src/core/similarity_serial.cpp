@@ -13,48 +13,42 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a new serial object with the given analytic as its parent.
  *
  * @param parent
  */
 Similarity::Serial::Serial(Similarity* parent):
-   EAbstractAnalyticSerial(parent),
-   _base(parent)
+    EAbstractAnalyticSerial(parent),
+    _base(parent)
 {
-   EDEBUG_FUNC(this,parent);
+    EDEBUG_FUNC(this,parent);
 
-   // initialize clustering model
-   switch ( _base->_clusMethod )
-   {
-   case ClusteringMethod::None:
-      _clusModel = nullptr;
-      break;
-   case ClusteringMethod::GMM:
-      _clusModel = new Pairwise::GMM(_base->_input, _base->_maxClusters);
-      break;
-   }
+    // initialize clustering model
+    switch ( _base->_clusMethod )
+    {
+    case ClusteringMethod::None:
+        _clusModel = nullptr;
+        break;
+    case ClusteringMethod::GMM:
+        _clusModel = new Pairwise::GMM(_base->_input, _base->_maxClusters);
+        break;
+    }
 
-   // initialize correlation model
-   switch ( _base->_corrMethod )
-   {
-   case CorrelationMethod::Pearson:
-      _corrModel = new Pairwise::Pearson();
-      break;
-   case CorrelationMethod::Spearman:
-      _corrModel = new Pairwise::Spearman(_base->_input);
-      break;
-   }
+    // initialize correlation model
+    switch ( _base->_corrMethod )
+    {
+    case CorrelationMethod::Pearson:
+        _corrModel = new Pairwise::Pearson();
+        break;
+    case CorrelationMethod::Spearman:
+        _corrModel = new Pairwise::Spearman(_base->_input);
+        break;
+    }
 
-   // initialize expression matrix
-   _expressions = _base->_input->dumpRawData();
+    // initialize expression matrix
+    _expressions = _base->_input->dumpRawData();
 }
-
-
-
 
 
 
@@ -67,90 +61,87 @@ Similarity::Serial::Serial(Similarity* parent):
  */
 std::unique_ptr<EAbstractAnalyticBlock> Similarity::Serial::execute(const EAbstractAnalyticBlock* block)
 {
-   EDEBUG_FUNC(this,block);
+    EDEBUG_FUNC(this,block);
 
-   if ( ELog::isActive() )
-   {
-      ELog() << tr("Executing(serial) work index %1.\n").arg(block->index());
-   }
+    if ( ELog::isActive() )
+    {
+        ELog() << tr("Executing(serial) work index %1.\n").arg(block->index());
+    }
 
-   // cast block to work block
-   const WorkBlock* workBlock {block->cast<WorkBlock>()};
+    // cast block to work block
+    const WorkBlock* workBlock {block->cast<WorkBlock>()};
 
-   // initialize result block
-   ResultBlock* resultBlock {new ResultBlock(workBlock->index(), workBlock->start())};
+    // initialize result block
+    ResultBlock* resultBlock {new ResultBlock(workBlock->index(), workBlock->start())};
 
-   // initialize workspace
-   QVector<qint8> labels(_base->_input->sampleSize());
+    // initialize workspace
+    QVector<qint8> labels(_base->_input->sampleSize());
 
-   // iterate through all pairs
-   Pairwise::Index index {workBlock->start()};
+    // iterate through all pairs
+    Pairwise::Index index {workBlock->start()};
 
-   for ( int i = 0; i < workBlock->size(); ++i )
-   {
-      // fetch pairwise input data
-      int numSamples = fetchPair(index, labels);
+    for ( int i = 0; i < workBlock->size(); ++i )
+    {
+        // fetch pairwise input data
+        int numSamples = fetchPair(index, labels);
 
-      // remove pre-clustering outliers
-      if ( _base->_removePreOutliers )
-      {
-         numSamples = removeOutliers(index, numSamples, labels, 1, -7);
-      }
+        // remove pre-clustering outliers
+        if ( _base->_removePreOutliers )
+        {
+            numSamples = removeOutliers(index, numSamples, labels, 1, -7);
+        }
 
-      // compute clusters
-      qint8 K {1};
+        // compute clusters
+        qint8 K {1};
 
-      if ( _base->_clusMethod != ClusteringMethod::None )
-      {
-         K = _clusModel->compute(
+        if ( _base->_clusMethod != ClusteringMethod::None )
+        {
+            K = _clusModel->compute(
+                _expressions,
+                index,
+                numSamples,
+                labels,
+                _base->_minSamples,
+                _base->_minClusters,
+                _base->_maxClusters,
+                _base->_criterion
+            );
+        }
+
+        // remove post-clustering outliers
+        if ( _base->_removePostOutliers )
+        {
+            numSamples = removeOutliers(index, numSamples, labels, K, -8);
+        }
+
+        // compute correlations
+        QVector<float> correlations = _corrModel->compute(
             _expressions,
             index,
-            numSamples,
+            K,
             labels,
-            _base->_minSamples,
-            _base->_minClusters,
-            _base->_maxClusters,
-            _base->_criterion
-         );
-      }
+            _base->_minSamples
+        );
 
-      // remove post-clustering outliers
-      if ( _base->_removePostOutliers )
-      {
-         numSamples = removeOutliers(index, numSamples, labels, K, -8);
-      }
+        // save pairwise output data
+        Pair pair;
+        pair.K = K;
 
-      // compute correlations
-      QVector<float> correlations = _corrModel->compute(
-         _expressions,
-         index,
-         K,
-         labels,
-         _base->_minSamples
-      );
+        if ( K > 0 )
+        {
+            pair.labels = labels;
+            pair.correlations = correlations;
+        }
 
-      // save pairwise output data
-      Pair pair;
-      pair.K = K;
+        resultBlock->append(pair);
 
-      if ( K > 0 )
-      {
-         pair.labels = labels;
-         pair.correlations = correlations;
-      }
+        // increment to next pair
+        ++index;
+    }
 
-      resultBlock->append(pair);
-
-      // increment to next pair
-      ++index;
-   }
-
-   // return result block
-   return unique_ptr<EAbstractAnalyticBlock>(resultBlock);
+    // return result block
+    return unique_ptr<EAbstractAnalyticBlock>(resultBlock);
 }
-
-
-
 
 
 
@@ -165,43 +156,40 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::Serial::execute(const EAbstr
  */
 int Similarity::Serial::fetchPair(const Pairwise::Index& index, QVector<qint8>& labels)
 {
-   EDEBUG_FUNC(this,&index,&labels);
+    EDEBUG_FUNC(this,&index,&labels);
 
-   // index into gene expressions
-   const float *x = &_expressions[index.getX() * _base->_input->sampleSize()];
-   const float *y = &_expressions[index.getY() * _base->_input->sampleSize()];
+    // index into gene expressions
+    const float *x = &_expressions[index.getX() * _base->_input->sampleSize()];
+    const float *y = &_expressions[index.getY() * _base->_input->sampleSize()];
 
-   // label the pairwise samples
-   int numSamples = 0;
+    // label the pairwise samples
+    int numSamples = 0;
 
-   for ( int i = 0; i < _base->_input->sampleSize(); ++i )
-   {
-      // label samples with missing values
-      if ( std::isnan(x[i]) || std::isnan(y[i]) )
-      {
-         labels[i] = -9;
-      }
+    for ( int i = 0; i < _base->_input->sampleSize(); ++i )
+    {
+        // label samples with missing values
+        if ( std::isnan(x[i]) || std::isnan(y[i]) )
+        {
+            labels[i] = -9;
+        }
 
-      // label samples which fall below the expression threshold
-      else if ( x[i] < _base->_minExpression || y[i] < _base->_minExpression )
-      {
-         labels[i] = -6;
-      }
+        // label samples which fall below the expression threshold
+        else if ( x[i] < _base->_minExpression || y[i] < _base->_minExpression )
+        {
+            labels[i] = -6;
+        }
 
-      // label any remaining samples as cluster 0
-      else
-      {
-         numSamples++;
-         labels[i] = 0;
-      }
-   }
+        // label any remaining samples as cluster 0
+        else
+        {
+            numSamples++;
+            labels[i] = 0;
+        }
+    }
 
-   // return number of clean samples
-   return numSamples;
+    // return number of clean samples
+    return numSamples;
 }
-
-
-
 
 
 
@@ -222,71 +210,68 @@ int Similarity::Serial::fetchPair(const Pairwise::Index& index, QVector<qint8>& 
  */
 int Similarity::Serial::removeOutliersCluster(const float *x, const float *y, QVector<qint8>& labels, qint8 cluster, qint8 marker)
 {
-   EDEBUG_FUNC(this,x,y,&labels,cluster,marker);
+    EDEBUG_FUNC(this,x,y,&labels,cluster,marker);
 
-   // extract samples from the given cluster into separate arrays
-   QVector<float> x_sorted;
-   QVector<float> y_sorted;
+    // extract samples from the given cluster into separate arrays
+    QVector<float> x_sorted;
+    QVector<float> y_sorted;
 
-   x_sorted.reserve(labels.size());
-   y_sorted.reserve(labels.size());
+    x_sorted.reserve(labels.size());
+    y_sorted.reserve(labels.size());
 
-   for ( int i = 0; i < labels.size(); i++ )
-   {
-      if ( labels[i] == cluster )
-      {
-         x_sorted.append(x[i]);
-         y_sorted.append(y[i]);
-      }
-   }
+    for ( int i = 0; i < labels.size(); i++ )
+    {
+        if ( labels[i] == cluster )
+        {
+            x_sorted.append(x[i]);
+            y_sorted.append(y[i]);
+        }
+    }
 
-   // return if the given cluster is empty
-   if ( x_sorted.size() == 0 || y_sorted.size() == 0 )
-   {
-      return 0;
-   }
+    // return if the given cluster is empty
+    if ( x_sorted.size() == 0 || y_sorted.size() == 0 )
+    {
+        return 0;
+    }
 
-   // sort samples for each axis
-   std::sort(x_sorted.begin(), x_sorted.end());
-   std::sort(y_sorted.begin(), y_sorted.end());
+    // sort samples for each axis
+    std::sort(x_sorted.begin(), x_sorted.end());
+    std::sort(y_sorted.begin(), y_sorted.end());
 
-   // compute quartiles and thresholds for each axis
-   const int n = x_sorted.size();
+    // compute quartiles and thresholds for each axis
+    const int n = x_sorted.size();
 
-   float Q1_x = x_sorted[n * 1 / 4];
-   float Q3_x = x_sorted[n * 3 / 4];
-   float T_x_min = Q1_x - 1.5f * (Q3_x - Q1_x);
-   float T_x_max = Q3_x + 1.5f * (Q3_x - Q1_x);
+    float Q1_x = x_sorted[n * 1 / 4];
+    float Q3_x = x_sorted[n * 3 / 4];
+    float T_x_min = Q1_x - 1.5f * (Q3_x - Q1_x);
+    float T_x_max = Q3_x + 1.5f * (Q3_x - Q1_x);
 
-   float Q1_y = y_sorted[n * 1 / 4];
-   float Q3_y = y_sorted[n * 3 / 4];
-   float T_y_min = Q1_y - 1.5f * (Q3_y - Q1_y);
-   float T_y_max = Q3_y + 1.5f * (Q3_y - Q1_y);
+    float Q1_y = y_sorted[n * 1 / 4];
+    float Q3_y = y_sorted[n * 3 / 4];
+    float T_y_min = Q1_y - 1.5f * (Q3_y - Q1_y);
+    float T_y_max = Q3_y + 1.5f * (Q3_y - Q1_y);
 
-   // mark outliers
-   int numSamples = 0;
+    // mark outliers
+    int numSamples = 0;
 
-   for ( int i = 0; i < labels.size(); i++ )
-   {
-      // mark samples in the given cluster that are outliers on either axis
-      if ( labels[i] == cluster && (x[i] < T_x_min || T_x_max < x[i] || y[i] < T_y_min || T_y_max < y[i]) )
-      {
-         labels[i] = marker;
-      }
+    for ( int i = 0; i < labels.size(); i++ )
+    {
+        // mark samples in the given cluster that are outliers on either axis
+        if ( labels[i] == cluster && (x[i] < T_x_min || T_x_max < x[i] || y[i] < T_y_min || T_y_max < y[i]) )
+        {
+            labels[i] = marker;
+        }
 
-      // count the number of remaining samples in the entire data array
-      else if ( labels[i] >= 0 )
-      {
-         numSamples++;
-      }
-   }
+        // count the number of remaining samples in the entire data array
+        else if ( labels[i] >= 0 )
+        {
+            numSamples++;
+        }
+    }
 
-   // return number of remaining samples
-   return numSamples;
+    // return number of remaining samples
+    return numSamples;
 }
-
-
-
 
 
 
@@ -301,23 +286,23 @@ int Similarity::Serial::removeOutliersCluster(const float *x, const float *y, QV
  */
 int Similarity::Serial::removeOutliers(const Pairwise::Index& index, int numSamples, QVector<qint8>& labels, qint8 clusterSize, qint8 marker)
 {
-   EDEBUG_FUNC(this,&index,numSamples,&labels,clusterSize,marker);
+    EDEBUG_FUNC(this,&index,numSamples,&labels,clusterSize,marker);
 
-   // index into gene expressions
-   const float *x = &_expressions[index.getX() * _base->_input->sampleSize()];
-   const float *y = &_expressions[index.getY() * _base->_input->sampleSize()];
+    // index into gene expressions
+    const float *x = &_expressions[index.getX() * _base->_input->sampleSize()];
+    const float *y = &_expressions[index.getY() * _base->_input->sampleSize()];
 
-   // do not perform post-clustering outlier removal if there is only one cluster
-   if ( marker == -8 && clusterSize <= 1 )
-   {
-      return numSamples;
-   }
+    // do not perform post-clustering outlier removal if there is only one cluster
+    if ( marker == -8 && clusterSize <= 1 )
+    {
+        return numSamples;
+    }
 
-   // perform outlier removal on each cluster
-   for ( qint8 k = 0; k < clusterSize; ++k )
-   {
-      numSamples = removeOutliersCluster(x, y, labels, k, marker);
-   }
+    // perform outlier removal on each cluster
+    for ( qint8 k = 0; k < clusterSize; ++k )
+    {
+        numSamples = removeOutliersCluster(x, y, labels, k, marker);
+    }
 
-   return numSamples;
+    return numSamples;
 }

@@ -16,9 +16,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Compute the next power of 2 which occurs after a number.
  *
@@ -26,17 +23,14 @@ using namespace std;
  */
 int Similarity::nextPower2(int n)
 {
-   int pow2 = 2;
-   while ( pow2 < n )
-   {
-      pow2 *= 2;
-   }
+    int pow2 = 2;
+    while ( pow2 < n )
+    {
+        pow2 *= 2;
+    }
 
-   return pow2;
+    return pow2;
 }
-
-
-
 
 
 
@@ -48,13 +42,10 @@ int Similarity::nextPower2(int n)
  */
 qint64 Similarity::totalPairs(const ExpressionMatrix* emx)
 {
-   EDEBUG_FUNC(this,emx);
+    EDEBUG_FUNC(this,emx);
 
-   return static_cast<qint64>(emx->geneSize()) * (emx->geneSize() - 1) / 2;
+    return static_cast<qint64>(emx->geneSize()) * (emx->geneSize() - 1) / 2;
 }
-
-
-
 
 
 
@@ -63,13 +54,10 @@ qint64 Similarity::totalPairs(const ExpressionMatrix* emx)
  */
 int Similarity::size() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return (totalPairs(_input) + _workBlockSize - 1) / _workBlockSize;
+    return (totalPairs(_input) + _workBlockSize - 1) / _workBlockSize;
 }
-
-
-
 
 
 
@@ -82,21 +70,18 @@ int Similarity::size() const
  */
 std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeWork(int index) const
 {
-   EDEBUG_FUNC(this,index);
+    EDEBUG_FUNC(this,index);
 
-   if ( ELog::isActive() )
-   {
-      ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
-   }
+    if ( ELog::isActive() )
+    {
+        ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
+    }
 
-   qint64 start {index * static_cast<qint64>(_workBlockSize)};
-   qint64 size {min(totalPairs(_input) - start, static_cast<qint64>(_workBlockSize))};
+    qint64 start {index * static_cast<qint64>(_workBlockSize)};
+    qint64 size {min(totalPairs(_input) - start, static_cast<qint64>(_workBlockSize))};
 
-   return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
+    return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
 }
-
-
-
 
 
 
@@ -105,13 +90,10 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeWork(int index) const
  */
 std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeWork() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock);
+    return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock);
 }
-
-
-
 
 
 
@@ -120,13 +102,10 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeWork() const
  */
 std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeResult() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return unique_ptr<EAbstractAnalyticBlock>(new ResultBlock);
+    return unique_ptr<EAbstractAnalyticBlock>(new ResultBlock);
 }
-
-
-
 
 
 
@@ -156,64 +135,61 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::makeResult() const
  */
 void Similarity::process(const EAbstractAnalyticBlock* result)
 {
-   EDEBUG_FUNC(this,result);
+    EDEBUG_FUNC(this,result);
 
-   if ( ELog::isActive() )
-   {
-      ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
-   }
+    if ( ELog::isActive() )
+    {
+        ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
+    }
 
-   const ResultBlock* resultBlock {result->cast<ResultBlock>()};
+    const ResultBlock* resultBlock {result->cast<ResultBlock>()};
 
-   // iterate through all pairs in result block
-   Pairwise::Index index {resultBlock->start()};
+    // iterate through all pairs in result block
+    Pairwise::Index index {resultBlock->start()};
 
-   for ( auto& pair : resultBlock->pairs() )
-   {
-      // save correlations that are within thresholds
-      CCMatrix::Pair ccmPair(_ccm);
-      CorrelationMatrix::Pair cmxPair(_cmx);
+    for ( auto& pair : resultBlock->pairs() )
+    {
+        // save correlations that are within thresholds
+        CCMatrix::Pair ccmPair(_ccm);
+        CorrelationMatrix::Pair cmxPair(_cmx);
 
-      for ( qint8 k = 0; k < pair.K; ++k )
-      {
-         // determine whether correlation is within thresholds
-         float corr = pair.correlations[k];
+        for ( qint8 k = 0; k < pair.K; ++k )
+        {
+            // determine whether correlation is within thresholds
+            float corr = pair.correlations[k];
 
-         if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
-         {
-            // save sample string
-            ccmPair.addCluster();
-
-            for ( int i = 0; i < _input->sampleSize(); ++i )
+            if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
             {
-               // convert label format to sample string format
-               ccmPair.at(ccmPair.clusterSize() - 1, i) = (pair.labels[i] >= 0)
-                  ? (k == pair.labels[i])
-                  : -pair.labels[i];
+                // save sample string
+                ccmPair.addCluster();
+
+                for ( int i = 0; i < _input->sampleSize(); ++i )
+                {
+                    // convert label format to sample string format
+                    ccmPair.at(ccmPair.clusterSize() - 1, i) = (pair.labels[i] >= 0)
+                        ? (k == pair.labels[i])
+                        : -pair.labels[i];
+                }
+
+                // save correlation
+                cmxPair.addCluster();
+                cmxPair.at(cmxPair.clusterSize() - 1) = corr;
             }
+        }
 
-            // save correlation
-            cmxPair.addCluster();
-            cmxPair.at(cmxPair.clusterSize() - 1) = corr;
-         }
-      }
+        if ( ccmPair.clusterSize() > 0 )
+        {
+            ccmPair.write(index);
+        }
 
-      if ( ccmPair.clusterSize() > 0 )
-      {
-         ccmPair.write(index);
-      }
+        if ( cmxPair.clusterSize() > 0 )
+        {
+            cmxPair.write(index);
+        }
 
-      if ( cmxPair.clusterSize() > 0 )
-      {
-         cmxPair.write(index);
-      }
-
-      ++index;
-   }
+        ++index;
+    }
 }
-
-
-
 
 
 
@@ -222,13 +198,10 @@ void Similarity::process(const EAbstractAnalyticBlock* result)
  */
 EAbstractAnalyticInput* Similarity::makeInput()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return new Input(this);
+    return new Input(this);
 }
-
-
-
 
 
 
@@ -237,13 +210,10 @@ EAbstractAnalyticInput* Similarity::makeInput()
  */
 EAbstractAnalyticSerial* Similarity::makeSerial()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return new Serial(this);
+    return new Serial(this);
 }
-
-
-
 
 
 
@@ -252,13 +222,10 @@ EAbstractAnalyticSerial* Similarity::makeSerial()
  */
 EAbstractAnalyticOpenCL* Similarity::makeOpenCL()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return new OpenCL(this);
+    return new OpenCL(this);
 }
-
-
-
 
 
 
@@ -267,13 +234,10 @@ EAbstractAnalyticOpenCL* Similarity::makeOpenCL()
  */
 EAbstractAnalyticCUDA* Similarity::makeCUDA()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return new CUDA(this);
+    return new CUDA(this);
 }
-
-
-
 
 
 
@@ -283,55 +247,52 @@ EAbstractAnalyticCUDA* Similarity::makeCUDA()
  */
 void Similarity::initialize()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // get MPI instance
-   auto& mpi {Ace::QMPI::instance()};
+    // get MPI instance
+    auto& mpi {Ace::QMPI::instance()};
 
-   // only the master process needs to validate arguments
-   if ( !mpi.isMaster() )
-   {
-      return;
-   }
+    // only the master process needs to validate arguments
+    if ( !mpi.isMaster() )
+    {
+        return;
+    }
 
-   // make sure input data is valid
-   if ( !_input )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Did not get a valid input data object."));
-      throw e;
-   }
+    // make sure input data is valid
+    if ( !_input )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get a valid input data object."));
+        throw e;
+    }
 
-   // make sure cluster range is valid
-   if ( _maxClusters < _minClusters )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Minimum clusters must be less than or equal to maximum clusters."));
-      throw e;
-   }
+    // make sure cluster range is valid
+    if ( _maxClusters < _minClusters )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Minimum clusters must be less than or equal to maximum clusters."));
+        throw e;
+    }
 
-   // make sure kernel work sizes are valid
-   if ( _globalWorkSize % _localWorkSize != 0 )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Global work size must be divisible by local work size."));
-      throw e;
-   }
+    // make sure kernel work sizes are valid
+    if ( _globalWorkSize % _localWorkSize != 0 )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Global work size must be divisible by local work size."));
+        throw e;
+    }
 
-   // initialize work block size
-   if ( _workBlockSize == 0 )
-   {
-      int numWorkers = max(1, mpi.size() - 1);
+    // initialize work block size
+    if ( _workBlockSize == 0 )
+    {
+        int numWorkers = max(1, mpi.size() - 1);
 
-      _workBlockSize = min(32768LL, totalPairs(_input) / numWorkers);
-   }
+        _workBlockSize = min(32768LL, totalPairs(_input) / numWorkers);
+    }
 }
-
-
-
 
 
 
@@ -340,20 +301,20 @@ void Similarity::initialize()
  */
 void Similarity::initializeOutputs()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // make sure output data is valid
-   if ( !_ccm || !_cmx )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Did not get valid output data objects."));
-      throw e;
-   }
+    // make sure output data is valid
+    if ( !_ccm || !_cmx )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get valid output data objects."));
+        throw e;
+    }
 
-   // initialize cluster matrix
-   _ccm->initialize(_input->geneNames(), _maxClusters, _input->sampleNames());
+    // initialize cluster matrix
+    _ccm->initialize(_input->geneNames(), _maxClusters, _input->sampleNames());
 
-   // initialize correlation matrix
-   _cmx->initialize(_input->geneNames(), _maxClusters, _corrName);
+    // initialize correlation matrix
+    _cmx->initialize(_input->geneNames(), _maxClusters, _corrName);
 }

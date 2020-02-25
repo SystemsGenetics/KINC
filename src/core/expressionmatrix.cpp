@@ -1,6 +1,5 @@
 #include "expressionmatrix.h"
 #include "expressionmatrix_model.h"
-//
 
 
 
@@ -10,13 +9,10 @@
  */
 qint64 ExpressionMatrix::dataEnd() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return _headerSize + static_cast<qint64>(_geneSize) * _sampleSize * sizeof(float);
+    return _headerSize + static_cast<qint64>(_geneSize) * _sampleSize * sizeof(float);
 }
-
-
-
 
 
 
@@ -25,17 +21,14 @@ qint64 ExpressionMatrix::dataEnd() const
  */
 void ExpressionMatrix::readData()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // seek to the beginning of the data
-   seek(0);
+    // seek to the beginning of the data
+    seek(0);
 
-   // read the header
-   stream() >> _geneSize >> _sampleSize;
+    // read the header
+    stream() >> _geneSize >> _sampleSize;
 }
-
-
-
 
 
 
@@ -44,20 +37,17 @@ void ExpressionMatrix::readData()
  */
 void ExpressionMatrix::writeNewData()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // initialize metadata object
-   setMeta(EMetaObject());
+    // initialize metadata object
+    setMeta(EMetaObject());
 
-   // seek to the beginning of the data
-   seek(0);
+    // seek to the beginning of the data
+    seek(0);
 
-   // write the header
-   stream() << _geneSize << _sampleSize;
+    // write the header
+    stream() << _geneSize << _sampleSize;
 }
-
-
-
 
 
 
@@ -67,17 +57,14 @@ void ExpressionMatrix::writeNewData()
  */
 void ExpressionMatrix::finish()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // seek to the beginning of the data
-   seek(0);
+    // seek to the beginning of the data
+    seek(0);
 
-   // write the header
-   stream() << _geneSize << _sampleSize;
+    // write the header
+    stream() << _geneSize << _sampleSize;
 }
-
-
-
 
 
 
@@ -86,17 +73,14 @@ void ExpressionMatrix::finish()
  */
 QAbstractTableModel* ExpressionMatrix::model()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   if ( !_model )
-   {
-      _model = new Model(this);
-   }
-   return _model;
+    if ( !_model )
+    {
+        _model = new Model(this);
+    }
+    return _model;
 }
-
-
-
 
 
 
@@ -105,13 +89,10 @@ QAbstractTableModel* ExpressionMatrix::model()
  */
 qint32 ExpressionMatrix::geneSize() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return _geneSize;
+    return _geneSize;
 }
-
-
-
 
 
 
@@ -120,13 +101,10 @@ qint32 ExpressionMatrix::geneSize() const
  */
 qint32 ExpressionMatrix::sampleSize() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return _sampleSize;
+    return _sampleSize;
 }
-
-
-
 
 
 
@@ -135,13 +113,10 @@ qint32 ExpressionMatrix::sampleSize() const
  */
 EMetaArray ExpressionMatrix::geneNames() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return meta().toObject().at("genes").toArray();
+    return meta().toObject().at("genes").toArray();
 }
-
-
-
 
 
 
@@ -150,13 +125,10 @@ EMetaArray ExpressionMatrix::geneNames() const
  */
 EMetaArray ExpressionMatrix::sampleNames() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return meta().toObject().at("samples").toArray();
+    return meta().toObject().at("samples").toArray();
 }
-
-
-
 
 
 
@@ -165,32 +137,29 @@ EMetaArray ExpressionMatrix::sampleNames() const
  */
 std::vector<float> ExpressionMatrix::dumpRawData() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // return empty array if expression matrix is empty
-   if ( _geneSize == 0 )
-   {
-      return std::vector<float>();
-   }
+    // return empty array if expression matrix is empty
+    if ( _geneSize == 0 )
+    {
+        return std::vector<float>();
+    }
 
-   // allocate an array with the same size as the expression matrix
-   std::vector<float> ret(static_cast<qint64>(_geneSize) * _sampleSize);
+    // allocate an array with the same size as the expression matrix
+    std::vector<float> ret(static_cast<qint64>(_geneSize) * _sampleSize);
 
-   // seek to the beginning of the expression data
-   seekExpression(0,0);
+    // seek to the beginning of the expression data
+    seekExpression(0,0);
 
-   // write each expression to the array
-   for ( float& sample: ret )
-   {
-      stream() >> sample;
-   }
+    // write each expression to the array
+    for ( float& sample: ret )
+    {
+        stream() >> sample;
+    }
 
-   // return the array
-   return ret;
+    // return the array
+    return ret;
 }
-
-
-
 
 
 
@@ -203,35 +172,32 @@ std::vector<float> ExpressionMatrix::dumpRawData() const
  */
 void ExpressionMatrix::initialize(const QStringList& geneNames, const QStringList& sampleNames)
 {
-   EDEBUG_FUNC(this,&geneNames,&sampleNames);
+    EDEBUG_FUNC(this,&geneNames,&sampleNames);
 
-   // create a metadata array of gene names
-   EMetaArray metaGeneNames;
-   for ( auto& geneName : geneNames )
-   {
-      metaGeneNames.append(geneName);
-   }
+    // create a metadata array of gene names
+    EMetaArray metaGeneNames;
+    for ( auto& geneName : geneNames )
+    {
+        metaGeneNames.append(geneName);
+    }
 
-   // create a metadata array of sample names
-   EMetaArray metaSampleNames;
-   for ( auto& sampleName : sampleNames )
-   {
-      metaSampleNames.append(sampleName);
-   }
+    // create a metadata array of sample names
+    EMetaArray metaSampleNames;
+    for ( auto& sampleName : sampleNames )
+    {
+        metaSampleNames.append(sampleName);
+    }
 
-   // save the gene names and sample names to metadata
-   EMetaObject metaObject {meta().toObject()};
-   metaObject.insert("genes",metaGeneNames);
-   metaObject.insert("samples",metaSampleNames);
-   setMeta(metaObject);
+    // save the gene names and sample names to metadata
+    EMetaObject metaObject {meta().toObject()};
+    metaObject.insert("genes",metaGeneNames);
+    metaObject.insert("samples",metaSampleNames);
+    setMeta(metaObject);
 
-   // initialize the gene size and sample size accordingly
-   _geneSize = geneNames.size();
-   _sampleSize = sampleNames.size();
+    // initialize the gene size and sample size accordingly
+    _geneSize = geneNames.size();
+    _sampleSize = sampleNames.size();
 }
-
-
-
 
 
 
@@ -244,21 +210,21 @@ void ExpressionMatrix::initialize(const QStringList& geneNames, const QStringLis
  */
 void ExpressionMatrix::seekExpression(int gene, int sample) const
 {
-   EDEBUG_FUNC(this,gene,sample);
+    EDEBUG_FUNC(this,gene,sample);
 
-   // make sure that the indices are valid
-   if ( gene < 0 || gene >= _geneSize || sample < 0 || sample >= _sampleSize )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Invalid (gene,sample) index (%1,%2) with size of (%1,%2).")
-                   .arg(gene)
-                   .arg(sample)
-                   .arg(_geneSize)
-                   .arg(_sampleSize));
-      throw e;
-   }
+    // make sure that the indices are valid
+    if ( gene < 0 || gene >= _geneSize || sample < 0 || sample >= _sampleSize )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Invalid (gene,sample) index (%1,%2) with size of (%1,%2).")
+            .arg(gene)
+            .arg(sample)
+            .arg(_geneSize)
+            .arg(_sampleSize));
+        throw e;
+    }
 
-   // seek to the specified position in the data
-   seek(_headerSize + (static_cast<qint64>(gene) * _sampleSize + sample) * sizeof(float));
+    // seek to the specified position in the data
+    seek(_headerSize + (static_cast<qint64>(gene) * _sampleSize + sample) * sizeof(float));
 }

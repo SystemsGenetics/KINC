@@ -40,14 +40,10 @@ if __name__ ==  "__main__":
 
 	pairs.sort()
 
-	# compute pairwise statistics
+	# compute error between each pair
 	n_shared_edges = 0
 	error_K = 0.0
-	error_N_c = 0.0
-	error_N_m = 0.0
-	error_N_t = 0.0
-	error_N_o1 = 0.0
-	error_N_o2 = 0.0
+	error_N = 0.0
 	error_r = 0.0
 	error_S = 0.0
 
@@ -72,23 +68,11 @@ if __name__ ==  "__main__":
 		# update number of shared edges
 		n_shared_edges += K
 
-		# compute error in clean sample size
-		error_N_c += pairwise_error(pair_true, pair_test, K, 4) / len(pairs)
-
-		# compute error in missing sample size
-		error_N_m += pairwise_error(pair_true, pair_test, K, 5) / len(pairs)
-
-		# compute error in thresholded sample size
-		error_N_t += pairwise_error(pair_true, pair_test, K, 6) / len(pairs)
-
-		# compute error in thresholded sample size
-		error_N_o1 += pairwise_error(pair_true, pair_test, K, 7) / len(pairs)
-
-		# compute error in thresholded sample size
-		error_N_o2 += pairwise_error(pair_true, pair_test, K, 8) / len(pairs)
+		# compute error in cluster size
+		error_N += pairwise_error(pair_true, pair_test, K, 4) / len(pairs)
 
 		# compute error in correlation
-		error_r += pairwise_error(pair_true, pair_test, K, 9) / len(pairs)
+		error_r += pairwise_error(pair_true, pair_test, K, 5) / len(pairs)
 
 		# compute error in sample mask
 		error_S_pair = 0.0
@@ -101,14 +85,10 @@ if __name__ ==  "__main__":
 
 		error_S += error_S_pair / len(pairs)
 
-	print("Number of shared edges:     %8d" % (n_shared_edges))
+	print("Number of shared edges: %8d" % (n_shared_edges))
 	print("")
 	print("Error summary:")
-	print("  Number of clusters:       %8.3f" % (error_K))
-	print("  Clean sample size:        %8.3f" % (error_N_c))
-	print("  Missing sample size:      %8.3f" % (error_N_m))
-	print("  Thresholded sample size:  %8.3f" % (error_N_t))
-	print("  Pre-outlier sample size:  %8.3f" % (error_N_o1))
-	print("  Post-outlier sample size: %8.3f" % (error_N_o2))
-	print("  Correlation:              %8.3f" % (error_r))
-	print("  Sample mask:              %8.3f" % (error_S))
+	print("  Number of clusters:   %8.3f" % (error_K))
+	print("  Cluster size:         %8.3f" % (error_N))
+	print("  Correlation:          %8.3f" % (error_r))
+	print("  Sample mask:          %8.3f" % (error_S))

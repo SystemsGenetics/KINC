@@ -15,7 +15,12 @@ DEFINES += GUI=1
 
 # Source files
 SOURCES += \
+    customizer.cpp \
     ../main.cpp
+
+# Header files
+HEADERS += \
+    customizer.h
 
 # Installation instructions
 isEmpty(PREFIX) { PREFIX = /usr/local }

@@ -15,34 +15,34 @@
  */
 class ExportExpressionMatrix : public EAbstractAnalytic
 {
-   Q_OBJECT
+    Q_OBJECT
 public:
-   class Input;
-   virtual int size() const override final;
-   virtual void process(const EAbstractAnalyticBlock* result) override final;
-   virtual EAbstractAnalyticInput* makeInput() override final;
-   virtual void initialize();
+    class Input;
+    virtual int size() const override final;
+    virtual void process(const EAbstractAnalyticBlock* result) override final;
+    virtual EAbstractAnalyticInput* makeInput() override final;
+    virtual void initialize();
 private:
-   /**
-    * Workspace variables to write to the output file
-    */
-   QTextStream _stream;
-   /*!
-    * Pointer to the input expression matrix.
-    */
-   ExpressionMatrix* _input {nullptr};
-   /*!
-    * Pointer to the output text file.
-    */
-   QFile* _output {nullptr};
-   /*!
-    * The string token used to represent NAN values.
-    */
-   QString _nanToken {"NA"};
-   /**
-    * The number of decimals to save for each expression value.
-    */
-   int _precision {8};
+    /**
+     * Workspace variables to write to the output file
+     */
+    QTextStream _stream;
+    /*!
+     * Pointer to the input expression matrix.
+     */
+    ExpressionMatrix* _input {nullptr};
+    /*!
+     * Pointer to the output text file.
+     */
+    QFile* _output {nullptr};
+    /*!
+     * The string token used to represent NAN values.
+     */
+    QString _nanToken {"NA"};
+    /**
+     * The number of decimals to save for each expression value.
+     */
+    int _precision {8};
 };
 
 

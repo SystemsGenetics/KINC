@@ -201,7 +201,7 @@ if __name__ == "__main__":
 			# save correlation matrix
 			valid = [(corr != None and args.mincorr <= abs(corr) and abs(corr) <= args.maxcorr and p <= args.maxp) for corr, p in correlations]
 			num_clusters = sum(valid)
-			cluster_idx = 0
+			cluster_idx = 1
 
 			for k in range(K):
 				corr, p = correlations[k]
@@ -218,13 +218,9 @@ if __name__ == "__main__":
 
 					# compute summary statistics
 					num_samples = sum(y_k == 1)
-					num_threshold = sum(y_k == 6)
-					num_preout = sum(y_k == 7)
-					num_postout = sum(y_k == 8)
-					num_missing = sum(y_k == 9)
 
 					# write correlation to file
-					cmx.write("%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%0.8f\t%s\n" % (i, j, cluster_idx, num_clusters, num_samples, num_missing, num_postout, num_preout, num_threshold, corr, sample_mask))
+					cmx.write("%d\t%d\t%d\t%d\t%d\t%0.8f\t%s\n" % (i, j, cluster_idx, num_clusters, num_samples, corr, sample_mask))
 
 					# increment cluster index
 					cluster_idx += 1

@@ -21,11 +21,7 @@ if __name__ == "__main__":
 		"y",
 		"Cluster",
 		"Num_Clusters",
-		"Cluster_Samples",
-		"Missing_Samples",
-		"Cluster_Outliers",
-		"Pair_Outliers",
-		"Too_Low",
+		"Cluster_Size",
 		"sc",
 		"Samples"
 	])
@@ -46,11 +42,7 @@ if __name__ == "__main__":
 		"Interaction",
 		"Cluster",
 		"Num_Clusters",
-		"Cluster_Samples",
-		"Missing_Samples",
-		"Cluster_Outliers",
-		"Pair_Outliers",
-		"Too_Low",
+		"Cluster_Size",
 		"Samples"
 	]]
 

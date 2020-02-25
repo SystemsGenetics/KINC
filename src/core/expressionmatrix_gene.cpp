@@ -1,8 +1,4 @@
 #include "expressionmatrix_gene.h"
-//
-
-
-
 
 
 
@@ -13,24 +9,22 @@
  */
 float& ExpressionMatrix::Gene::operator[](int index)
 {
-   EDEBUG_FUNC(this,index);
+    EDEBUG_FUNC(this,index);
 
-   // make sure the index is valid
-   if ( index < 0 || index >= _matrix->_sampleSize )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Attempting to access gene expression %1 when maximum is %2.").arg(index)
-                   .arg(_matrix->_sampleSize-1));
-      throw e;
-   }
+    // make sure the index is valid
+    if ( index < 0 || index >= _matrix->_sampleSize )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Domain Error"));
+        e.setDetails(tr("Attempting to access gene expression %1 when maximum is %2.")
+            .arg(index)
+            .arg(_matrix->_sampleSize-1));
+        throw e;
+    }
 
-   // return the specified value
-   return _expressions[index];
+    // return the specified value
+    return _expressions[index];
 }
-
-
-
 
 
 
@@ -42,19 +36,16 @@ float& ExpressionMatrix::Gene::operator[](int index)
  * @param isInitialized
  */
 ExpressionMatrix::Gene::Gene(ExpressionMatrix* matrix, bool isInitialized):
-   _matrix(matrix),
-   _expressions(new float[matrix->sampleSize()])
+    _matrix(matrix),
+    _expressions(new float[matrix->sampleSize()])
 {
-   EDEBUG_FUNC(this,matrix,isInitialized);
+    EDEBUG_FUNC(this,matrix,isInitialized);
 
-   if ( isInitialized )
-   {
-      read(_index);
-   }
+    if ( isInitialized )
+    {
+        read(_index);
+    }
 }
-
-
-
 
 
 
@@ -63,13 +54,10 @@ ExpressionMatrix::Gene::Gene(ExpressionMatrix* matrix, bool isInitialized):
  */
 ExpressionMatrix::Gene::~Gene()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   delete[] _expressions;
+    delete[] _expressions;
 }
-
-
-
 
 
 
@@ -80,33 +68,31 @@ ExpressionMatrix::Gene::~Gene()
  */
 void ExpressionMatrix::Gene::read(int index)
 {
-   EDEBUG_FUNC(this,index);
+    EDEBUG_FUNC(this,index);
 
-   // make sure the index is valid
-   if ( index < 0 || index >= _matrix->_geneSize )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Attempting to read gene %1 when maximum is %2.").arg(index)
-                   .arg(_matrix->_geneSize-1));
-      throw e;
-   }
+    // make sure the index is valid
+    if ( index < 0 || index >= _matrix->_geneSize )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Domain Error"));
+        e.setDetails(tr("Attempting to read gene %1 when maximum is %2.")
+            .arg(index)
+            .arg(_matrix->_geneSize-1));
+        throw e;
+    }
 
-   // seek to the beginning of the specified row in the data object file
-   _matrix->seekExpression(index,0);
+    // seek to the beginning of the specified row in the data object file
+    _matrix->seekExpression(index,0);
 
-   // read the entire row into memory
-   for ( int i = 0; i < _matrix->sampleSize(); ++i )
-   {
-      _matrix->stream() >> _expressions[i];
-   }
+    // read the entire row into memory
+    for ( int i = 0; i < _matrix->sampleSize(); ++i )
+    {
+        _matrix->stream() >> _expressions[i];
+    }
 
-   // set the iterator's current index
-   _index = index;
+    // set the iterator's current index
+    _index = index;
 }
-
-
-
 
 
 
@@ -115,23 +101,20 @@ void ExpressionMatrix::Gene::read(int index)
  */
 bool ExpressionMatrix::Gene::readNext()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // make sure that there is another row in the expression matrix
-   if ( (_index + 1) >= _matrix->_geneSize )
-   {
-      return false;
-   }
+    // make sure that there is another row in the expression matrix
+    if ( (_index + 1) >= _matrix->_geneSize )
+    {
+        return false;
+    }
 
-   // read the next row
-   read(_index + 1);
+    // read the next row
+    read(_index + 1);
 
-   // return success
-   return true;
+    // return success
+    return true;
 }
-
-
-
 
 
 
@@ -143,33 +126,31 @@ bool ExpressionMatrix::Gene::readNext()
  */
 void ExpressionMatrix::Gene::write(int index)
 {
-   EDEBUG_FUNC(this,index);
+    EDEBUG_FUNC(this,index);
 
-   // make sure the index is valid
-   if ( index < 0 || index >= _matrix->_geneSize )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Attempting to write gene %1 when maximum is %2.").arg(index)
-                   .arg(_matrix->_geneSize-1));
-      throw e;
-   }
+    // make sure the index is valid
+    if ( index < 0 || index >= _matrix->_geneSize )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Domain Error"));
+        e.setDetails(tr("Attempting to write gene %1 when maximum is %2.")
+            .arg(index)
+            .arg(_matrix->_geneSize-1));
+        throw e;
+    }
 
-   // seek to the beginning of the specified row in the data object file
-   _matrix->seekExpression(index,0);
+    // seek to the beginning of the specified row in the data object file
+    _matrix->seekExpression(index,0);
 
-   // write the entire row to the data object
-   for ( int i = 0; i < _matrix->sampleSize(); ++i )
-   {
-      _matrix->stream() << _expressions[i];
-   }
+    // write the entire row to the data object
+    for ( int i = 0; i < _matrix->sampleSize(); ++i )
+    {
+        _matrix->stream() << _expressions[i];
+    }
 
-   // set the iterator's current index
-   _index = index;
+    // set the iterator's current index
+    _index = index;
 }
-
-
-
 
 
 
@@ -178,23 +159,20 @@ void ExpressionMatrix::Gene::write(int index)
  */
 bool ExpressionMatrix::Gene::writeNext()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // make sure there is another row in the expression matrix
-   if ( (_index + 1) >= _matrix->_geneSize )
-   {
-      return false;
-   }
+    // make sure there is another row in the expression matrix
+    if ( (_index + 1) >= _matrix->_geneSize )
+    {
+        return false;
+    }
 
-   // write to the next row
-   write(_index + 1);
+    // write to the next row
+    write(_index + 1);
 
-   // return success
-   return true;
+    // return success
+    return true;
 }
-
-
-
 
 
 
@@ -205,18 +183,19 @@ bool ExpressionMatrix::Gene::writeNext()
  */
 float ExpressionMatrix::Gene::at(int index) const
 {
-   EDEBUG_FUNC(this,index);
+    EDEBUG_FUNC(this,index);
 
-   // make sure the index is valid
-   if ( index < 0 || index >= _matrix->_sampleSize )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Domain Error"));
-      e.setDetails(tr("Attempting to access gene expression %1 when maximum is %2.").arg(index)
-                   .arg(_matrix->_sampleSize-1));
-      throw e;
-   }
+    // make sure the index is valid
+    if ( index < 0 || index >= _matrix->_sampleSize )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Domain Error"));
+        e.setDetails(tr("Attempting to access gene expression %1 when maximum is %2.")
+            .arg(index)
+            .arg(_matrix->_sampleSize-1));
+        throw e;
+    }
 
-   // return the specified value
-   return _expressions[index];
+    // return the specified value
+    return _expressions[index];
 }
