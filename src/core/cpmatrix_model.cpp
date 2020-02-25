@@ -7,9 +7,6 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a table model for a cluster matrix.
  *
@@ -22,9 +19,6 @@ CPMatrix::Model::Model(CPMatrix* matrix):
 
     setParent(matrix);
 }
-
-
-
 
 
 
@@ -64,9 +58,6 @@ QVariant CPMatrix::Model::headerData(int section, Qt::Orientation orientation, i
 
 
 
-
-
-
 /*!
  * Return the number of rows in the table model.
  *
@@ -81,9 +72,6 @@ int CPMatrix::Model::rowCount(const QModelIndex&) const
 
 
 
-
-
-
 /*!
  * Return the number of columns in the table model.
  *
@@ -95,9 +83,6 @@ int CPMatrix::Model::columnCount(const QModelIndex&) const
 
     return _matrix->geneSize();
 }
-
-
-
 
 
 

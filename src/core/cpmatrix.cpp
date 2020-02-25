@@ -20,9 +20,6 @@ QAbstractTableModel* CPMatrix::model()
 
 
 
-
-
-
 /*!
  * Initialize this correlation matrix with a list of gene names, the max cluster
  * size, and a correlation name.
@@ -37,9 +34,6 @@ void CPMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize)
     // initialize base class
     Matrix::initialize(geneNames, maxClusterSize, sizeof(float), SUBHEADER_SIZE);
 }
-
-
-
 
 
 

@@ -10,9 +10,6 @@ using namespace Pairwise;
 
 
 
-
-
-
 /*!
  * Return the total number of blocks this analytic must process as steps
  * or blocks of work. This implementation uses a work block for writing
@@ -24,9 +21,6 @@ int ExportParameterMatrix::size() const
 
     return _ccm->size();
 }
-
-
-
 
 
 
@@ -114,9 +108,6 @@ void ExportParameterMatrix::process(const EAbstractAnalyticBlock*)
 
 
 
-
-
-
 /*!
  * Make a new input object and return its pointer.
  */
@@ -126,9 +117,6 @@ EAbstractAnalyticInput* ExportParameterMatrix::makeInput()
 
     return new Input(this);
 }
-
-
-
 
 
 

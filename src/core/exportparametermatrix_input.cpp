@@ -17,9 +17,6 @@ ExportParameterMatrix::Input::Input(ExportParameterMatrix* parent):
 
 
 
-
-
-
 /*!
  * Return the total number of arguments this analytic type contains.
  */
@@ -29,9 +26,6 @@ int ExportParameterMatrix::Input::size() const
 
     return Total;
 }
-
-
-
 
 
 
@@ -52,9 +46,6 @@ EAbstractAnalyticInput::Type ExportParameterMatrix::Input::type(int index) const
     default: return Type::Boolean;
     }
 }
-
-
-
 
 
 
@@ -103,9 +94,6 @@ QVariant ExportParameterMatrix::Input::data(int index, Role role) const
 
 
 
-
-
-
 /*!
  * Set an argument with the given index to the given value. This analytic has
  * no basic arguments so this function does nothing.
@@ -117,9 +105,6 @@ void ExportParameterMatrix::Input::set(int, const QVariant&)
 {
     EDEBUG_FUNC(this);
 }
-
-
-
 
 
 
@@ -146,9 +131,6 @@ void ExportParameterMatrix::Input::set(int index, EAbstractData* data)
         _base->_cpm = data->cast<CPMatrix>();
     }
 }
-
-
-
 
 
 

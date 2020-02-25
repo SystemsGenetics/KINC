@@ -20,9 +20,6 @@ void CPMatrix::Pair::addCluster(int amount) const
 
 
 
-
-
-
 /*!
  * Return the string representation of this pair, which is a comma-delimited
  * string of each component in the pair.
@@ -59,9 +56,6 @@ QString CPMatrix::Pair::toString() const
 
 
 
-
-
-
 /*!
  * Write a cluster in the iterator's pairwise data to the data object file.
  *
@@ -87,9 +81,6 @@ void CPMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
         stream << component.sigma.s[3];
     }
 }
-
-
-
 
 
 
