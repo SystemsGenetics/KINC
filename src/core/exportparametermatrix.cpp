@@ -46,7 +46,7 @@ void ExportParameterMatrix::process(const EAbstractAnalyticBlock*)
     gene2.read(_ccmPair.index().getY());
 
     // initialize pairwise iterator for parameter matrix
-    CPMatrix::Pair cpmPair;
+    CPMatrix::Pair cpmPair(_cpm);
 
     cpmPair.addCluster(_ccmPair.clusterSize());
 
@@ -56,12 +56,12 @@ void ExportParameterMatrix::process(const EAbstractAnalyticBlock*)
         auto& component {cpmPair.at(k)};
 
         // compute mixture proportion
-        int N = 0;
-        int n_k = 0;
+        float N = 0;
+        float n_k = 0;
 
         for ( int i = 0; i < _ccm->sampleSize(); i++ )
         {
-            N = (_ccmPair.at(k, i) == 0 || _ccmPair.at(k, i) == 1);
+            N += (_ccmPair.at(k, i) == 0 || _ccmPair.at(k, i) == 1);
             n_k += (_ccmPair.at(k, i) == 1);
         }
 
@@ -136,6 +136,9 @@ void ExportParameterMatrix::initialize()
         e.setDetails(tr("Did not get valid input and/or output arguments."));
         throw e;
     }
+
+    // initialize parameter matrix
+    _cpm->initialize(_emx->geneNames(), _ccm->maxClusterSize());
 
     // initialize pairwise iterators
     _ccmPair = CCMatrix::Pair(_ccm);

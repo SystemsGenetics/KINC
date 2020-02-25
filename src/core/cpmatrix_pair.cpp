@@ -39,7 +39,7 @@ QString CPMatrix::Pair::toString() const
     for ( const auto& component : _components )
     {
         // add component value as string
-        ret << QString::asprintf("pi = %.3f mu = [ %.3f, %.3f ] sigma = [ %.3f, %.3f ; %.3f, %.3f ]",
+        ret << QString::asprintf("pi = %.3f, mu = [ %.3f, %.3f ], sigma = [ %.3f, %.3f ; %.3f, %.3f ]",
             component.pi,
             component.mu.s[0],
             component.mu.s[1],

@@ -32,7 +32,7 @@ void CPMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize)
     EDEBUG_FUNC(this,&geneNames,maxClusterSize);
 
     // initialize base class
-    Matrix::initialize(geneNames, maxClusterSize, sizeof(float), SUBHEADER_SIZE);
+    Matrix::initialize(geneNames, maxClusterSize, 7 * sizeof(float), SUBHEADER_SIZE);
 }
 
 
