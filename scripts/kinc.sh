@@ -22,7 +22,7 @@ DO_EXTRACT=1
 # define input/output files
 INFILE="$3"
 DIRNAME="$(dirname ${INFILE})"
-BASENAME="$(basename ${INFILE} .txt)"
+BASENAME="$(basename ${INFILE} .emx.txt)"
 EMX_FILE="${DIRNAME}/${BASENAME}.emx"
 CCM_FILE="${DIRNAME}/${BASENAME}.ccm"
 CMX_FILE="${DIRNAME}/${BASENAME}.cmx"
