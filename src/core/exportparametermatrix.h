@@ -18,30 +18,30 @@
  */
 class ExportParameterMatrix : public EAbstractAnalytic
 {
-   Q_OBJECT
+    Q_OBJECT
 public:
-   class Input;
-   virtual int size() const override final;
-   virtual void process(const EAbstractAnalyticBlock* result) override final;
-   virtual EAbstractAnalyticInput* makeInput() override final;
-   virtual void initialize();
+    class Input;
+    virtual int size() const override final;
+    virtual void process(const EAbstractAnalyticBlock* result) override final;
+    virtual EAbstractAnalyticInput* makeInput() override final;
+    virtual void initialize();
 private:
-   /**
-    * Workspace variables to write to the output file
-    */
-   CCMatrix::Pair _ccmPair;
-   /*!
-    * Pointer to the input expression matrix.
-    */
-   ExpressionMatrix* _emx {nullptr};
-   /*!
-    * Pointer to the input cluster matrix.
-    */
-   CCMatrix* _ccm {nullptr};
-   /*!
-    * Pointer to the output parameter matrix.
-    */
-   CPMatrix* _cpm {nullptr};
+    /**
+     * Workspace variables to write to the output file
+     */
+    CCMatrix::Pair _ccmPair;
+    /*!
+     * Pointer to the input expression matrix.
+     */
+    ExpressionMatrix* _emx {nullptr};
+    /*!
+     * Pointer to the input cluster matrix.
+     */
+    CCMatrix* _ccm {nullptr};
+    /*!
+     * Pointer to the output parameter matrix.
+     */
+    CPMatrix* _cpm {nullptr};
 };
 
 

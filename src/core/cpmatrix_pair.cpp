@@ -9,13 +9,13 @@
  */
 void CPMatrix::Pair::addCluster(int amount) const
 {
-   EDEBUG_FUNC(this,amount);
+    EDEBUG_FUNC(this,amount);
 
-   // keep adding a new component for given amount
-   while ( amount-- > 0 )
-   {
-      _components.append(Component());
-   }
+    // keep adding a new component for given amount
+    while ( amount-- > 0 )
+    {
+        _components.append(Component());
+    }
 }
 
 
@@ -29,32 +29,32 @@ void CPMatrix::Pair::addCluster(int amount) const
  */
 QString CPMatrix::Pair::toString() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // if there are no components simply return null
-   if ( _components.isEmpty() )
-   {
-      return tr("");
-   }
+    // if there are no components simply return null
+    if ( _components.isEmpty() )
+    {
+        return tr("");
+    }
 
-   // initialize list of strings and iterate through all clusters
-   QStringList ret;
-   for ( const auto& component : _components )
-   {
-      // add component value as string
-      ret << QString::asprintf("pi = %.3f mu = [ %.3f, %.3f ] sigma = [ %.3f, %.3f ; %.3f, %.3f ]",
-         component.pi,
-         component.mu.s[0],
-         component.mu.s[1],
-         component.sigma.s[0],
-         component.sigma.s[1],
-         component.sigma.s[2],
-         component.sigma.s[3]
-      );
-   }
+    // initialize list of strings and iterate through all clusters
+    QStringList ret;
+    for ( const auto& component : _components )
+    {
+        // add component value as string
+        ret << QString::asprintf("pi = %.3f mu = [ %.3f, %.3f ] sigma = [ %.3f, %.3f ; %.3f, %.3f ]",
+            component.pi,
+            component.mu.s[0],
+            component.mu.s[1],
+            component.sigma.s[0],
+            component.sigma.s[1],
+            component.sigma.s[2],
+            component.sigma.s[3]
+        );
+    }
 
-   // join all clusters and return as string
-   return ret.join(',');
+    // join all clusters and return as string
+    return ret.join(',');
 }
 
 
@@ -70,22 +70,22 @@ QString CPMatrix::Pair::toString() const
  */
 void CPMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
 {
-   EDEBUG_FUNC(this,&stream,cluster);
+    EDEBUG_FUNC(this,&stream,cluster);
 
-   // make sure cluster value is within range
-   if ( cluster >= 0 && cluster < _components.size() )
-   {
-      // write component to output stream
-      auto& component = _components.at(cluster);
+    // make sure cluster value is within range
+    if ( cluster >= 0 && cluster < _components.size() )
+    {
+        // write component to output stream
+        auto& component = _components.at(cluster);
 
-      stream << component.pi;
-      stream << component.mu.s[0];
-      stream << component.mu.s[1];
-      stream << component.sigma.s[0];
-      stream << component.sigma.s[1];
-      stream << component.sigma.s[2];
-      stream << component.sigma.s[3];
-   }
+        stream << component.pi;
+        stream << component.mu.s[0];
+        stream << component.mu.s[1];
+        stream << component.sigma.s[0];
+        stream << component.sigma.s[1];
+        stream << component.sigma.s[2];
+        stream << component.sigma.s[3];
+    }
 }
 
 
@@ -101,20 +101,20 @@ void CPMatrix::Pair::writeCluster(EDataStream& stream, int cluster)
  */
 void CPMatrix::Pair::readCluster(const EDataStream& stream, int cluster) const
 {
-   EDEBUG_FUNC(this,&stream,cluster);
+    EDEBUG_FUNC(this,&stream,cluster);
 
-   // make sure cluster value is within range
-   if ( cluster >= 0 && cluster < _components.size() )
-   {
-      // read component from input stream
-      auto& component = _components[cluster];
+    // make sure cluster value is within range
+    if ( cluster >= 0 && cluster < _components.size() )
+    {
+        // read component from input stream
+        auto& component = _components[cluster];
 
-      stream >> component.pi;
-      stream >> component.mu.s[0];
-      stream >> component.mu.s[1];
-      stream >> component.sigma.s[0];
-      stream >> component.sigma.s[1];
-      stream >> component.sigma.s[2];
-      stream >> component.sigma.s[3];
-   }
+        stream >> component.pi;
+        stream >> component.mu.s[0];
+        stream >> component.mu.s[1];
+        stream >> component.sigma.s[0];
+        stream >> component.sigma.s[1];
+        stream >> component.sigma.s[2];
+        stream >> component.sigma.s[3];
+    }
 }

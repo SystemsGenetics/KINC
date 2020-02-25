@@ -9,10 +9,10 @@
  * @param parent
  */
 ExportParameterMatrix::Input::Input(ExportParameterMatrix* parent):
-   EAbstractAnalyticInput(parent),
-   _base(parent)
+    EAbstractAnalyticInput(parent),
+    _base(parent)
 {
-   EDEBUG_FUNC(this,parent);
+    EDEBUG_FUNC(this,parent);
 }
 
 
@@ -25,9 +25,9 @@ ExportParameterMatrix::Input::Input(ExportParameterMatrix* parent):
  */
 int ExportParameterMatrix::Input::size() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return Total;
+    return Total;
 }
 
 
@@ -42,15 +42,15 @@ int ExportParameterMatrix::Input::size() const
  */
 EAbstractAnalyticInput::Type ExportParameterMatrix::Input::type(int index) const
 {
-   EDEBUG_FUNC(this,index);
+    EDEBUG_FUNC(this,index);
 
-   switch (index)
-   {
-   case ExpressionData: return Type::DataIn;
-   case ClusterData: return Type::DataIn;
-   case ParameterData: return Type::DataOut;
-   default: return Type::Boolean;
-   }
+    switch (index)
+    {
+    case ExpressionData: return Type::DataIn;
+    case ClusterData: return Type::DataIn;
+    case ParameterData: return Type::DataOut;
+    default: return Type::Boolean;
+    }
 }
 
 
@@ -66,39 +66,39 @@ EAbstractAnalyticInput::Type ExportParameterMatrix::Input::type(int index) const
  */
 QVariant ExportParameterMatrix::Input::data(int index, Role role) const
 {
-   EDEBUG_FUNC(this,index,role);
+    EDEBUG_FUNC(this,index,role);
 
-   switch (index)
-   {
-   case ExpressionData:
-      switch (role)
-      {
-      case Role::CommandLineName: return QString("emx");
-      case Role::Title: return tr("Expression Matrix:");
-      case Role::WhatsThis: return tr("Input expression matrix containing gene expression data.");
-      case Role::DataType: return DataFactory::ExpressionMatrixType;
-      default: return QVariant();
-      }
-   case ClusterData:
-      switch (role)
-      {
-      case Role::CommandLineName: return QString("ccm");
-      case Role::Title: return tr("Cluster Matrix:");
-      case Role::WhatsThis: return tr("Input cluster matrix containing cluster composition data.");
-      case Role::DataType: return DataFactory::CCMatrixType;
-      default: return QVariant();
-      }
-   case ParameterData:
-      switch (role)
-      {
-      case Role::CommandLineName: return QString("cpm");
-      case Role::Title: return tr("Parameter Matrix:");
-      case Role::WhatsThis: return tr("Output parameter matrix containing cluster parameter data.");
-      case Role::DataType: return DataFactory::CPMatrixType;
-      default: return QVariant();
-      }
-   default: return QVariant();
-   }
+    switch (index)
+    {
+    case ExpressionData:
+        switch (role)
+        {
+        case Role::CommandLineName: return QString("emx");
+        case Role::Title: return tr("Expression Matrix:");
+        case Role::WhatsThis: return tr("Input expression matrix containing gene expression data.");
+        case Role::DataType: return DataFactory::ExpressionMatrixType;
+        default: return QVariant();
+        }
+    case ClusterData:
+        switch (role)
+        {
+        case Role::CommandLineName: return QString("ccm");
+        case Role::Title: return tr("Cluster Matrix:");
+        case Role::WhatsThis: return tr("Input cluster matrix containing cluster composition data.");
+        case Role::DataType: return DataFactory::CCMatrixType;
+        default: return QVariant();
+        }
+    case ParameterData:
+        switch (role)
+        {
+        case Role::CommandLineName: return QString("cpm");
+        case Role::Title: return tr("Parameter Matrix:");
+        case Role::WhatsThis: return tr("Output parameter matrix containing cluster parameter data.");
+        case Role::DataType: return DataFactory::CPMatrixType;
+        default: return QVariant();
+        }
+    default: return QVariant();
+    }
 }
 
 
@@ -115,7 +115,7 @@ QVariant ExportParameterMatrix::Input::data(int index, Role role) const
  */
 void ExportParameterMatrix::Input::set(int, const QVariant&)
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 }
 
 
@@ -131,20 +131,20 @@ void ExportParameterMatrix::Input::set(int, const QVariant&)
  */
 void ExportParameterMatrix::Input::set(int index, EAbstractData* data)
 {
-   EDEBUG_FUNC(this,index,data);
+    EDEBUG_FUNC(this,index,data);
 
-   if ( index == ExpressionData )
-   {
-      _base->_emx = data->cast<ExpressionMatrix>();
-   }
-   else if ( index == ClusterData )
-   {
-      _base->_ccm = data->cast<CCMatrix>();
-   }
-   else if ( index == ParameterData )
-   {
-      _base->_cpm = data->cast<CPMatrix>();
-   }
+    if ( index == ExpressionData )
+    {
+        _base->_emx = data->cast<ExpressionMatrix>();
+    }
+    else if ( index == ClusterData )
+    {
+        _base->_ccm = data->cast<CCMatrix>();
+    }
+    else if ( index == ParameterData )
+    {
+        _base->_cpm = data->cast<CPMatrix>();
+    }
 }
 
 
@@ -160,5 +160,5 @@ void ExportParameterMatrix::Input::set(int index, EAbstractData* data)
  */
 void ExportParameterMatrix::Input::set(int, QFile*)
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 }

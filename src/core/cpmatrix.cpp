@@ -9,13 +9,13 @@
  */
 QAbstractTableModel* CPMatrix::model()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   if ( !_model )
-   {
-      _model = new Model(this);
-   }
-   return _model;
+    if ( !_model )
+    {
+        _model = new Model(this);
+    }
+    return _model;
 }
 
 
@@ -32,10 +32,10 @@ QAbstractTableModel* CPMatrix::model()
  */
 void CPMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize)
 {
-   EDEBUG_FUNC(this,&geneNames,maxClusterSize);
+    EDEBUG_FUNC(this,&geneNames,maxClusterSize);
 
-   // initialize base class
-   Matrix::initialize(geneNames, maxClusterSize, sizeof(float), SUBHEADER_SIZE);
+    // initialize base class
+    Matrix::initialize(geneNames, maxClusterSize, sizeof(float), SUBHEADER_SIZE);
 }
 
 
@@ -48,32 +48,32 @@ void CPMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize)
  */
 std::vector<CPMatrix::RawPair> CPMatrix::dumpRawData() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // create list of raw pairs
-   std::vector<RawPair> pairs;
-   pairs.reserve(size());
+    // create list of raw pairs
+    std::vector<RawPair> pairs;
+    pairs.reserve(size());
 
-   // iterate through all pairs
-   Pair pair(this);
+    // iterate through all pairs
+    Pair pair(this);
 
-   while ( pair.hasNext() )
-   {
-      // read in next pair
-      pair.readNext();
+    while ( pair.hasNext() )
+    {
+        // read in next pair
+        pair.readNext();
 
-      // copy pair to raw list
-      RawPair rawPair;
-      rawPair.index = pair.index();
-      rawPair.components.resize(pair.clusterSize());
+        // copy pair to raw list
+        RawPair rawPair;
+        rawPair.index = pair.index();
+        rawPair.components.resize(pair.clusterSize());
 
-      for ( int k = 0; k < pair.clusterSize(); ++k )
-      {
-         rawPair.components[k] = pair.at(k);
-      }
+        for ( int k = 0; k < pair.clusterSize(); ++k )
+        {
+            rawPair.components[k] = pair.at(k);
+        }
 
-      pairs.push_back(rawPair);
-   }
+        pairs.push_back(rawPair);
+    }
 
-   return pairs;
+    return pairs;
 }
