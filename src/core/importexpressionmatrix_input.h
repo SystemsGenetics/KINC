@@ -20,6 +20,7 @@ public:
         ,OutputData
         ,NANToken
         ,SampleSize
+        ,ContainsRowID
         ,Total
     };
     explicit Input(ImportExpressionMatrix* parent);

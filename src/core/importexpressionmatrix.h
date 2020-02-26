@@ -62,6 +62,11 @@ private:
      * The number of samples to read.
      */
     qint32 _sampleSize {0};
+    /*!
+     * Whether the input expression matrix has a "RowID" entry that should
+     * be ignored.
+     */
+    bool _containsRowID {false};
 };
 
 

@@ -44,6 +44,7 @@ EAbstractAnalyticInput::Type ImportExpressionMatrix::Input::type(int index) cons
     case OutputData: return Type::DataOut;
     case NANToken: return Type::String;
     case SampleSize: return Type::Integer;
+    case ContainsRowID: return Type::Boolean;
     default: return Type::Boolean;
     }
 }
@@ -100,6 +101,15 @@ QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
         case Role::Maximum: return std::numeric_limits<int>::max();
         default: return QVariant();
         }
+    case ContainsRowID:
+        switch (role)
+        {
+        case Role::CommandLineName: return QString("contains-row-id");
+        case Role::Title: return tr("Contains Row ID:");
+        case Role::WhatsThis: return tr("Indicates whether the input expression matrix has a \"RowID\" entry that should be ignored.");
+        case Role::Default: return false;
+        default: return QVariant();
+        }
     default: return QVariant();
     }
 }
@@ -118,11 +128,14 @@ void ImportExpressionMatrix::Input::set(int index, const QVariant& value)
 
     switch (index)
     {
+    case NANToken:
+        _base->_nanToken = value.toString();
+        break;
     case SampleSize:
         _base->_sampleSize = value.toInt();
         break;
-    case NANToken:
-        _base->_nanToken = value.toString();
+    case ContainsRowID:
+        _base->_containsRowID = value.toBool();
         break;
     }
 }

@@ -53,9 +53,15 @@ void ImportExpressionMatrix::process(const EAbstractAnalyticBlock* result)
             QString line = _stream.readLine();
             auto words = line.splitRef(QRegExp("\\s+"), QString::SkipEmptyParts);
 
-            // parse the sample names
+            // remove the "RowID" entry if specified
+            if ( _containsRowID ) {
+                words.removeFirst();
+            }
+
+            // determine the sample size
             _sampleSize = words.size();
 
+            // parse the sample names
             for ( auto& word : words )
             {
                 _sampleNames.append(word.toString());
