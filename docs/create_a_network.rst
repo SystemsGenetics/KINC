@@ -177,13 +177,13 @@ How ever you have chosen to threshold the network, either with RMT or Power-law,
 .. code:: bash
 
   kinc run extract \
-     --emx "rice_heat_drought.GEM.FPKM.filtered.emx" \
-     --ccm "rice_heat_drought.GEM.FPKM.filtered.traditional.ccm" \
-     --cmx "rice_heat_drought.GEM.FPKM.filtered.traditional.cmx" \
-     --format "text" \
-     --output "rice_heat_drought.GEM.FPKM.filtered.traditional.gcn.txt" \
-     --mincorr 0.892001 \
-     --maxcorr 1
+    --emx "rice_heat_drought.GEM.FPKM.filtered.emx" \
+    --ccm "rice_heat_drought.GEM.FPKM.filtered.traditional.ccm" \
+    --cmx "rice_heat_drought.GEM.FPKM.filtered.traditional.cmx" \
+    --format "text" \
+    --output "rice_heat_drought.GEM.FPKM.filtered.traditional.gcn.txt" \
+    --mincorr 0.892001 \
+    --maxcorr 1
 
 As in previous steps, the ``--emx``, ``--cmx`` and ``--ccm`` arguments provide the exrpession matrix, correlation and clustering matricies. The threshold is provided to the ``--mincorr`` argument.  Additinally, if you would like to exclude high correlations (such as perfect correlations), you can do so with the ``--maxcorr`` argument. You should only need to change the ``--maxcorr`` argument if it was determined that there is error in the data resulting in an inordinate number of high correlations.  The ``--format`` argument can be ``text``, ``minimal`` or ``graphml``. The ``text`` format currently contains the most data. It is easily imported into Cytoscape or R for other analyses and visualizations. The ``minimal`` format simply contains the list of edges with only the two genes and the correlation value. The ``graphml`` format provides the same information as the ``minimal`` format but using the `GraphML <http://graphml.graphdrawing.org/>`_ file format.
 
@@ -252,12 +252,12 @@ As discussed in the :ref:`samples-needed-reference-label` section above, the pow
 .. code:: bash
 
   kinc run corrpower \
-  --ccm-in "rice_heat_drought.GEM.FPKM.filtered.ccm" \
-  --cmx-in "rice_heat_drought.GEM.FPKM.filtered.cmx" \
-  --ccm-out "rice_heat_drought.GEM.FPKM.filtered.paf.ccm" \
-  --cmx-out "rice_heat_drought.GEM.FPKM.filtered.paf.cmx" \
-  --alpha 0.001 \
-  --power 0.8
+    --ccm-in "rice_heat_drought.GEM.FPKM.filtered.ccm" \
+    --cmx-in "rice_heat_drought.GEM.FPKM.filtered.cmx" \
+    --ccm-out "rice_heat_drought.GEM.FPKM.filtered.paf.ccm" \
+    --cmx-out "rice_heat_drought.GEM.FPKM.filtered.paf.cmx" \
+    --alpha 0.001 \
+    --power 0.8
 
 As shown above, the power and signficance criteria are set with the ``--power`` and ``--alpha`` arguments respectively.  An ``alpha`` setting of ``0.001`` indicates that we want to limit the Type I error (false positives) to a signicance level of 0.001.  The Power uses the formula 1-`Beta` where `Beta` is the probability of a Type II error (false negative) occuring.  A ``--power`` setting of 0.8 indicates that we are comfortable with a 20% false negative rate. There is no rule for how to set these.  Set them to the levels of noise you are comfortable with.
 

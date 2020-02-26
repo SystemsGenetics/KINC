@@ -2,10 +2,10 @@ About KINC
 ==========
 
 .. figure:: images/kinc.png
-   :alt: KINC Logo
+  :alt: KINC Logo
 
 .. image:: https://zenodo.org/badge/71836133.svg
-   :target: https://zenodo.org/badge/latestdoi/71836133
+  :target: https://zenodo.org/badge/latestdoi/71836133
 
 
 First, What is a Gene Co-expression Network (GCN)?
@@ -65,7 +65,7 @@ How Does KINC Address These Problems?
 KINC, is an evolving tool that attempts to address the above mentioned challenges (and others as they are identified) with the objective of making GCNs more powerful in an age of increasingly large experiments consisting of multiple experimental conditions.  One important approach KINC uses to address these challenges, is `Gaussian Mixture Modules <https://en.wikipedia.org/wiki/Mixture_model>`_ (GMMs) to identify groups, or clusters, of similarity expressed genes in the pairwise comparison.  Clusters of samples have been observed in 2D plots of pairwise gene expression, and the hypothesis for the presence of these clusters is that they are the result of condition-specific gene expression. Consider the example in the following image:
 
 .. image:: images/PRJNA301554-genotype2.png
-   :alt: rice genotypes
+  :alt: rice genotypes
 
 Here, two genes from `Oryza sativa` (rice) show two "groupings" or clusters of samples.  The cluster to the right shows two genotypes (AZ and PW) that are clearly correlated. The cluster to the left is not.  GMMs can be used to identify these two groups and then apply a traditional correlation test to each cluster individually.
 

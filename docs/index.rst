@@ -1,8 +1,8 @@
 .. figure:: images/kinc.png
-   :alt: KINC Logo
+  :alt: KINC Logo
 
 .. image:: https://zenodo.org/badge/71836133.svg
-   :target: https://zenodo.org/badge/latestdoi/71836133
+  :target: https://zenodo.org/badge/latestdoi/71836133
 
 Welcome to the KINC documentation!
 ==================================

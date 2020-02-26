@@ -34,14 +34,14 @@ Most dependencies are available as packages via Ubuntu and can be installed usin
 
 .. code:: bash
 
-   sudo apt install \
-     qt5-default \
-     libgsl-dev \
-     libopenblas-dev \
-     libopenmpi-dev \
-     ocl-icd-opencl-dev \
-     liblapacke-dev \
-     nvidia-cuda-dev
+  sudo apt install \
+    qt5-default \
+    libgsl-dev \
+    libopenblas-dev \
+    libopenmpi-dev \
+    ocl-icd-opencl-dev \
+    liblapacke-dev \
+    nvidia-cuda-dev
 
 For specific device drivers other than those provided by Ubuntu (i.e. AMD, Intel, NVIDIA, etc), please refer to the manufacturer's website for installation instructions.
 
@@ -54,16 +54,16 @@ To install StatsLib into ``/usr/local/``:
 
 .. code:: bash
 
-   git clone -b master --single-branch https://github.com/kthohr/stats ./stats
-   sudo cp -R ./stats/include/* /usr/local/include
+  git clone -b master --single-branch https://github.com/kthohr/stats ./stats
+  sudo cp -R ./stats/include/* /usr/local/include
 
 
 To install CGEM into ``/usr/local/``:
 
 .. code:: bash
 
-   git clone https://github.com/kthohr/gcem.git ./gcem
-   sudo cp -R ./gcem/include/* /usr/local/include
+  git clone https://github.com/kthohr/gcem.git ./gcem
+  sudo cp -R ./gcem/include/* /usr/local/include
 
 Install ACE
 ~~~~~~~~~~~
@@ -72,15 +72,15 @@ KINC v3.4 requires ACE v3.2. ACE requires some of the same dependencies as KINC 
 
 .. code:: bash
 
-   export ACE_VERSION=v3.2.0
+  export ACE_VERSION=v3.2.0
 
 Next, clone the ACE repository:
 
 .. code:: bash
 
-   git clone https://github.com/SystemsGenetics/ACE.git
-   cd ACE/build
-   git checkout $ACE_VERSION
+  git clone https://github.com/SystemsGenetics/ACE.git
+  cd ACE/build
+  git checkout $ACE_VERSION
 
 Default installation location
 *****************************
@@ -89,11 +89,11 @@ Next compile:
 
 .. code:: bash
 
-   qmake ../src/ACE.pro
-   make qmake_all
-   make
-   make qmake_all
-   make install
+  qmake ../src/ACE.pro
+  make qmake_all
+  make
+  make qmake_all
+  make install
 
 Alternative installation location
 *********************************
@@ -102,17 +102,17 @@ By default, ACE will try to install into ``/usr/local``. To install ACE to a dif
 
 .. code:: bash
 
-   export INSTALL_PREFIX="/local/software"
+  export INSTALL_PREFIX="/local/software"
 
 Now, within the ``ACE/build`` directory run the following to build the ACE libraries:
 
 .. code:: bash
 
-   qmake ../src/ACE.pro PREFIX=$INSTALL_PREFIX/ACE-$ACE_VERSION
-   make qmake_all
-   make
-   make qmake_all
-   make install
+  qmake ../src/ACE.pro PREFIX=$INSTALL_PREFIX/ACE-$ACE_VERSION
+  make qmake_all
+  make
+  make qmake_all
+  make install
 
 This will install ACE into the directory specified by ``INSTALL_PREFIX`` in a directory named with the ACE version.
 
@@ -124,16 +124,16 @@ Select a suitable `version of KINC <https://github.com/SystemsGenetics/KINC/rele
 
 .. code:: bash
 
-   export ACE_VERSION=v3.2.0
-   export KINC_VERSION=v3.4.0
+  export ACE_VERSION=v3.2.0
+  export KINC_VERSION=v3.4.0
 
 Next, clone the KINC repository:
 
 .. code:: bash
 
-   git clone https://github.com/SystemsGenetics/KINC.git
-   cd KINC/build
-   git checkout $KINC_VERSION
+  git clone https://github.com/SystemsGenetics/KINC.git
+  cd KINC/build
+  git checkout $KINC_VERSION
 
 Default installation location
 *****************************
@@ -142,11 +142,11 @@ Next compile:
 
 .. code:: bash
 
-   qmake ../src/KINC.pro
-   make qmake_all
-   make
-   make qmake_all
-   make install
+  qmake ../src/KINC.pro
+  make qmake_all
+  make
+  make qmake_all
+  make install
 
 Alternative installation location
 *********************************
@@ -155,17 +155,17 @@ By default, KINC will try to install itself into ``/usr/local``. To install KINC
 
 .. code:: bash
 
-   export INSTALL_PREFIX="/local/software"
+  export INSTALL_PREFIX="/local/software"
 
 Now build and install KINC:
 
-   .. code:: bash
+.. code:: bash
 
-      qmake ../src/KINC.pro PREFIX=$INSTALL_PREFIX/KINC-$KINC_VERSION
-      make qmake_all
-      make
-      make qmake_all
-      make install
+  qmake ../src/KINC.pro PREFIX=$INSTALL_PREFIX/KINC-$KINC_VERSION
+  make qmake_all
+  make
+  make qmake_all
+  make install
 
 If ACE is not in /usr/local
 ***************************
@@ -174,13 +174,13 @@ If ACE was not installed into an alternative location other than the default ``/
 
 .. code:: bash
 
-   export PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/bin:$PATH"
-   export LD_LIBRARY_PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/lib:$LD_LIBRARY_PATH"
-   export LIBRARY_PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/lib:$LIBRARY_PATH"
-   export CPATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/include:$CPATH"
-   export C_INCLUDE_PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/include:$C_INCLUDE_PATH"
-   export CPLUS_INCLUDE_PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/include:$CPLUS_INCLUDE_PATH"
-   export OBJC_INCLUDE_PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/include:$OBJC_INCLUDE_PATH"
+  export PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/bin:$PATH"
+  export LD_LIBRARY_PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/lib:$LD_LIBRARY_PATH"
+  export LIBRARY_PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/lib:$LIBRARY_PATH"
+  export CPATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/include:$CPATH"
+  export C_INCLUDE_PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/include:$C_INCLUDE_PATH"
+  export CPLUS_INCLUDE_PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/include:$CPLUS_INCLUDE_PATH"
+  export OBJC_INCLUDE_PATH="$INSTALL_PREFIX/ACE-$ACE_VERSION/include:$OBJC_INCLUDE_PATH"
 
 
 Preparing to Run KINC
@@ -190,8 +190,8 @@ If KINC was installed in the default location you can skip the :doc:`usage` page
 
 .. code:: bash
 
-   echo "export LD_LIBRARY_PATH=\"$INSTALL_PREFIX/ACE-$ACE_VERSION/lib:$INSTALL_PREFIX/KINC-$KINC_VERSION/lib:\$LD_LIBRARY_PATH\""
-   echo "export PATH=\"$INSTALL_PREFIX/ACE-$ACE_VERSION/bin:$INSTALL_PREFIX/KINC-$KINC_VERSION/bin:\$PATH\""
+  echo "export LD_LIBRARY_PATH=\"$INSTALL_PREFIX/ACE-$ACE_VERSION/lib:$INSTALL_PREFIX/KINC-$KINC_VERSION/lib:\$LD_LIBRARY_PATH\""
+  echo "export PATH=\"$INSTALL_PREFIX/ACE-$ACE_VERSION/bin:$INSTALL_PREFIX/KINC-$KINC_VERSION/bin:\$PATH\""
 
 Append the resulting text to your ``~/.bashrc`` file. You should now be able to run KINC
 
@@ -216,20 +216,20 @@ Obtain an interactive node with at least 8 cores. Run the command:
 
 .. code:: bash
 
-   qsub -I -l select=1:ncpus=8
+  qsub -I -l select=1:ncpus=8
 
 Once you have obtained an interactive node, run the following commands from your home directory:
 
 .. code:: bash
 
-   git clone https://github.com/bentsherman/pbs-toolkit.git
-   ./pbs-toolkit/modules/install-ace.sh v3.2.0
-   ./pbs-toolkit/modules/install-statslib.sh
-   ./pbs-toolkit/modules/install-kinc.sh v3.4.0 v3.2.0
+  git clone https://github.com/bentsherman/pbs-toolkit.git
+  ./pbs-toolkit/modules/install-ace.sh v3.2.0
+  ./pbs-toolkit/modules/install-statslib.sh
+  ./pbs-toolkit/modules/install-kinc.sh v3.4.0 v3.2.0
 
 These scripts will install ACE and KINC into your home directory, establishing them as modules that can be run from anywhere. It will also update your environment so that the modules can be called when necessary. It uses a module called ``use.own``, which when added will make KINC and ACE available to be used interactively. You should now be able to load KINC as a module:
 
 .. code:: bash
 
-   module add use.own
-   module add KINC
+  module add use.own
+  module add KINC

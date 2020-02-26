@@ -258,7 +258,7 @@ To change a setting, use the following command-line:
 
 .. code:: bash
 
- kinc settings set <parameter> <value>
+  kinc settings set <parameter> <value>
 
 For example, to disable the CUDA Device:
 
@@ -427,26 +427,26 @@ Executing a Function
 To execute a function, simply select it from the `Execute` menu. A dialog box will appear providing a form to enter the argumetns for the function. The form for importing a GEM is shown in the following screenshot:
 
 .. figure:: images/KINC_GUI_import_emx.png
-   :alt: KINC GUI import-exm function
+  :alt: KINC GUI import-exm function
 
 A view of the ``similarity`` function is shown in the following screenshot:
 
 .. figure:: images/KINC_GUI_similarity.png
-   :alt: KINC GUI similarity function
+  :alt: KINC GUI similarity function
 
 Viewing Help
 ````````````
 On each form, as shown in the previous two screenshots, more information about each parameter can be obtained by left clicking on the argument.  A `Whats this?` toolkit will appear.  Click the tooltip to see the help for that parameter.
 
 .. figure:: images/KINC_GUI_whats_this.png
-   :alt: KINC GUI What's this tooltip
+  :alt: KINC GUI What's this tooltip
 
 Global Settings
 ```````````````
 As previously described in the `Global Settings` section for the `Command-line Usage`, KINC provides a set of persistent global settings that remain set even when the KINC GUI is closed.  Settings changes made on the command-line or via the GUI are persistently the same for both the command-line and GUI versions.  You can view and change the global settings via the **File > Settings** menu. A view of the settings form is shown below:
 
 .. figure:: images/KINC_GUI_settings.png
-   :alt: KINC GUI Settings Dialogue
+  :alt: KINC GUI Settings Dialogue
 
 .. note::
 
@@ -458,12 +458,12 @@ Viewing files
 To save storage space and speed calculations, KINC maintains its own compressed file formats in binary.  Despite their reduced size, these files can become quite large. Therefore, the KINC GUI offers highly responsive viewers for these files.  To view any binary file created by KINC, select the appropriate option from the **Open** menu.  An example GEM is shown in the following screenshot by selecting **Open > Expression Matrix**
 
 .. figure:: images/KINC_GUI_emx.png
-   :alt: KINC GUI expression matrix viewer
+  :alt: KINC GUI expression matrix viewer
 
 The similarity (or correlation) matrix can be viewed via the menu **Open > Correlation Matrix** and an example is shown below.
 
 .. figure:: images/KINC_GUI_cmx.png
-   :alt: KINC GUI correlation matrix viewer
+  :alt: KINC GUI correlation matrix viewer
 
 Notice, the correlation matrix is sparse in that many values are missing. This is because KINC was instructed to only retain correlation values above an absolute value of 0.5.
 
@@ -476,7 +476,7 @@ Viewing System Metadata
 To view the system meta data for any KINC file, you must first open the file via the ``Open`` menu.  In the window that appears (as seen in the previous figures), a ``File`` menu is present.  Selecting  **File > System Metadata** will provide a new window with a clickable tree view of the system metadata.  The following view is of the System metadata for the same  file shown in the command-line example above.
 
 .. figure:: images/KINC_GUI_system_metadata.png
-   :alt: KINC GUI system metadata
+  :alt: KINC GUI system metadata
 
 
 The metadata provides the exact command-line and arguments that were used to produce the file, as well as a unique  UUID for the file and the versions of the ACE and KINC that were used to produce the file.
@@ -485,7 +485,7 @@ As KINC files are used in other functions, the system metadata is preserved. The
 
 
 .. figure:: images/KINC_GUI_system_metadata2.png
-   :alt: KINC GUI system metadata 2
+  :alt: KINC GUI system metadata 2
 
 
 Retrieving User Metadata
@@ -493,7 +493,7 @@ Retrieving User Metadata
 User metadata can be retrieved by selecting the **File > User Metadata** menu item in the file viewer window.  An example of the user metadata from a correlation matrix file:
 
 .. figure:: images/KINC_GUI_user_metadata.png
-   :alt: KINC GUI user metadata
+  :alt: KINC GUI user metadata
 
 Using KINC with Docker
 ----------------------
