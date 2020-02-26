@@ -1,5 +1,10 @@
 #include "similarity_cuda_kernel.h"
 
+#define MAJOR_VERSION KINC_MAJOR_VERSION
+#define MINOR_VERSION KINC_MINOR_VERSION
+#define REVISION KINC_REVISION
+#include <ace/core/ace_settings.h>
+
 
 
 using namespace std;
@@ -25,8 +30,8 @@ Similarity::CUDA::Kernel::Kernel(::CUDA::Program* program):
  * kernel execution.
  *
  * @param stream
- * @param globalWorkSize
- * @param localWorkSize
+ * @param occupancy
+ * @param blockSize
  * @param clusMethod
  * @param corrMethod
  * @param removePreOutliers
@@ -59,8 +64,8 @@ Similarity::CUDA::Kernel::Kernel(::CUDA::Program* program):
  */
 ::CUDA::Event Similarity::CUDA::Kernel::execute(
     const ::CUDA::Stream& stream,
-    int globalWorkSize,
-    int localWorkSize,
+    int occupancy,
+    int blockSize,
     int clusMethod,
     int corrMethod,
     bool removePreOutliers,
@@ -94,8 +99,8 @@ Similarity::CUDA::Kernel::Kernel(::CUDA::Program* program):
 {
     EDEBUG_FUNC(this,
         &stream,
-        globalWorkSize,
-        localWorkSize,
+        occupancy,
+        blockSize,
         clusMethod,
         corrMethod,
         removePreOutliers,
@@ -157,8 +162,15 @@ Similarity::CUDA::Kernel::Kernel(::CUDA::Program* program):
     setBuffer(OutLabels, out_labels);
     setBuffer(OutCorrelations, out_correlations);
 
+    // select a grid size to achieve a given occupancy
+    auto device {Ace::Settings::instance().cudaDevicePointer()};
+    int numSMs {device->getAttribute(CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT)};
+    int numBlocksPerSM {getMaxActiveBlocksPerMultiprocessor(blockSize)};
+
+    int gridSize = numSMs * numBlocksPerSM * occupancy / 100;
+
     // set work sizes
-    setSizes(globalWorkSize / localWorkSize, localWorkSize);
+    setSizes(gridSize, blockSize);
 
     // execute kernel
     return ::CUDA::Kernel::execute(stream);

@@ -48,8 +48,8 @@ public:
     explicit Kernel(::CUDA::Program* program);
     ::CUDA::Event execute(
         const ::CUDA::Stream& stream,
-        int globalWorkSize,
-        int localWorkSize,
+        int occupancy,
+        int blockSize,
         int clusMethod,
         int corrMethod,
         bool removePreOutliers,
