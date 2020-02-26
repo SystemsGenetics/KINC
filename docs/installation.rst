@@ -41,7 +41,17 @@ Most dependencies are available as packages via Ubuntu and can be installed usin
     libopenmpi-dev \
     ocl-icd-opencl-dev \
     liblapacke-dev \
-    nvidia-cuda-dev
+    nvidia-cuda-toolkit
+
+Additionally, since KINC uses the NVIDIA Driver API, you must install either the appropriate NVIDIA drivers for your system or the NVIDIA headless driver if you don't have a GPU:
+
+.. code:: bash
+
+  # install NVIDIA driver
+  sudo apt install nvidia-driver-435
+
+  # install NVIDIA headless driver
+  sudo apt install nvidia-headless-435
 
 For specific device drivers other than those provided by Ubuntu (i.e. AMD, Intel, NVIDIA, etc), please refer to the manufacturer's website for installation instructions.
 
