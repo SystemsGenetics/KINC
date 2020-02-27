@@ -31,11 +31,10 @@ void Extract::process(const EAbstractAnalyticBlock* result)
     EDEBUG_FUNC(this,result);
 
     // Each time this function is called we will read the next cluster pair.
-    _cmxPair.readNext();
-    _networkWriter->setPair(_cmxPair.index());
+    int clusterSize = _networkWriter->readNext();
 
     // Write clusters to the output file if they pass filters.
-    for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
+    for ( int k = 0; k < clusterSize; k++ )
     {
         // If the cluster passed all of the tests, then write it to the file.
         QVector<QString> passed = filterEdge(k);
@@ -51,18 +50,16 @@ void Extract::process(const EAbstractAnalyticBlock* result)
         _networkWriter->finish();
     }
 
-    // make sure writing output file worked
-    if ( _stream.status() != QTextStream::Ok )
-    {
-        E_MAKE_EXCEPTION(e)
-        e.setTitle(tr("File IO Error"));
-        e.setDetails(tr("Qt Text Stream encountered an unknown error."));
-        throw e;
-    }
+    _networkWriter->checkStatus();
 }
 
 
 
+/*!
+ * Performs filtering of a cluster of the current edge.
+ *
+ * @param k
+ */
 QVector<QString> Extract::filterEdge(int k)
 {
     // Stores the tests that passed and failed
@@ -219,28 +216,20 @@ void Extract::initialize()
         throw e;
     }
 
-    // initialize pairwise iterators
-    _ccmPair = CCMatrix::Pair(_ccm);
-    _cmxPair = CorrelationMatrix::Pair(_cmx);
-
-    // initialize output file stream
-    _stream.setDevice(_output);
-    _stream.setRealNumberPrecision(8);
-
     // Set the proper network output class.
     switch ( _outputFormat )
     {
     case OutputFormat::Text:
-        _networkWriter = new FullNetworkWriter(&_stream, _emx, _cmx, _ccm, _csm);
+        _networkWriter = new FullNetworkWriter(_emx, _cmx, _ccm, _csm, _output);
         break;
     case OutputFormat::Minimal:
-        _networkWriter = new MinimalNetworkWriter(&_stream, _emx, _cmx, _ccm, _csm);
+        _networkWriter = new MinimalNetworkWriter(_emx, _cmx, _ccm, _csm, _output);
         break;
     case OutputFormat::GraphML:
-        _networkWriter = new GMLNetworkWriter(&_stream, _emx, _cmx, _ccm, _csm);
+        _networkWriter = new GMLNetworkWriter(_emx, _cmx, _ccm, _csm, _output);
         break;
     case OutputFormat::Tidy:
-        _networkWriter = new TidyNetworkWriter(&_stream, _emx, _cmx, _ccm, _csm);
+        _networkWriter = new TidyNetworkWriter(_emx, _cmx, _ccm, _csm, _output);
         break;
     }
 
@@ -260,7 +249,8 @@ void Extract::initialize()
 
 
 /*!
- * \brief Extract::setFilters
+ * Sets the _filters element.
+ *
  * @param input_filters
  * @param type
  */

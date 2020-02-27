@@ -22,27 +22,31 @@ class NetworkWriter
 {
 public:
     NetworkWriter(
-        QTextStream* stream,
         ExpressionMatrix* emx,
         CorrelationMatrix* cmx,
         CCMatrix* ccm,
-        CSMatrix* csm);
+        CSMatrix* csm,
+        QFile* output);
     virtual ~NetworkWriter() {}
 public:
-    void setPair(Pairwise::Index cmx_index);
-    QString getEdgeGene1();
-    QString getEdgeGene2();
-    QString getEdgeSampleString(int cluster_index);
-    int getEdgeNumSamples(QString sample_string);
-    float getEdgeSimilarity(int cluster_index);
-    float getEdgeTestValue(int cluster_index, int test_index);
-    QVector<QString> getTestNames() { return _testNames; }
+    int readNext();
+    QString getEdgeGene1() const;
+    QString getEdgeGene2() const;
+    QString getEdgeSampleString(int cluster_index) const;
+    int getEdgeNumSamples(QString sample_string) const;
+    float getEdgeSimilarity(int cluster_index) const;
+    float getEdgeTestValue(int cluster_index, int test_index) const;
+    QVector<QString> getTestNames() const { return _testNames; }
+    void checkStatus() const;
 public:
     virtual void initialize() = 0;
     virtual void writeEdgeCluster(int cluster_index, QVector<QString> passed) = 0;
     virtual void finish() = 0;
 protected:
-    QTextStream* _stream {nullptr};
+    /**
+     * Text stream for the output text file.
+     */
+    QTextStream _stream;
     /*!
      * Pointer to the input expression matrix.
      */
@@ -64,9 +68,9 @@ protected:
     CSMatrix* _csm {nullptr};
     CSMatrix::Pair _csmPair;
     /*!
-     * Ther index of the current pair.
+     * Pointer to the output text file.
      */
-    Pairwise::Index _index;
+    QFile* _output {nullptr};
     /**
      * The variable that houses the test names for easy lookup and
      * the function that should be used to set the test names.
@@ -86,11 +90,12 @@ private:
     QHash<QString, bool> _nodes;
 public:
     GMLNetworkWriter(
-        QTextStream* stream,
         ExpressionMatrix* emx,
         CorrelationMatrix* cmx,
         CCMatrix* ccm,
-        CSMatrix* csm): NetworkWriter(stream, emx, cmx, ccm, csm) {}
+        CSMatrix* csm,
+        QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
+public:
     void initialize();
     void writeEdgeCluster(int cluster_index, QVector<QString> passed);
     void finish();
@@ -102,11 +107,12 @@ class FullNetworkWriter: public NetworkWriter
 {
 public:
     FullNetworkWriter(
-        QTextStream* stream,
         ExpressionMatrix* emx,
         CorrelationMatrix* cmx,
         CCMatrix* ccm,
-        CSMatrix* csm): NetworkWriter(stream, emx, cmx, ccm, csm) {}
+        CSMatrix* csm,
+        QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
+public:
     void initialize();
     void writeEdgeCluster(int cluster_index, QVector<QString> passed);
     void finish() {}
@@ -118,11 +124,12 @@ class TidyNetworkWriter: public NetworkWriter
 {
 public:
     TidyNetworkWriter(
-        QTextStream* stream,
         ExpressionMatrix* emx,
         CorrelationMatrix* cmx,
         CCMatrix* ccm,
-        CSMatrix* csm): NetworkWriter(stream, emx, cmx, ccm, csm) {}
+        CSMatrix* csm,
+        QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
+public:
     void initialize();
     void writeEdgeCluster(int cluster_index, QVector<QString> passed);
     void finish() {}
@@ -134,11 +141,12 @@ class MinimalNetworkWriter: public NetworkWriter
 {
 public:
     MinimalNetworkWriter(
-        QTextStream* stream,
         ExpressionMatrix* emx,
         CorrelationMatrix* cmx,
         CCMatrix* ccm,
-        CSMatrix* csm): NetworkWriter(stream, emx, cmx, ccm, csm) {}
+        CSMatrix* csm,
+        QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
+public:
     void initialize();
     void writeEdgeCluster(int cluster_index, QVector<QString> passed);
     void finish() {}

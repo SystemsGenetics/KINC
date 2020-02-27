@@ -7,28 +7,32 @@
 /*!
  * The constructor for the NetworkWriter class.
  *
- * @param stream  A stream object pointer to which the output will be writtine.
  * @param emx  The expression matrix.
  * @param cmx  The correlation matrix.
  * @param ccm  The cluster composition matrix.
  * @param csm  The condition-specific matrix.
+ * @param output  The output network file.
  */
 NetworkWriter::NetworkWriter(
-    QTextStream* stream,
     ExpressionMatrix* emx,
     CorrelationMatrix* cmx,
     CCMatrix* ccm,
-    CSMatrix* csm):
-    _stream(stream),
+    CSMatrix* csm,
+    QFile* output):
     _emx(emx),
     _cmx(cmx),
     _cmxPair(CorrelationMatrix::Pair(_cmx)),
     _ccm(ccm),
     _ccmPair(CCMatrix::Pair(ccm)),
     _csm(csm),
-    _csmPair(CSMatrix::Pair(csm))
+    _csmPair(CSMatrix::Pair(csm)),
+    _output(output)
 {
     EDEBUG_FUNC(this,stream,emx,cmx,ccm,csm);
+
+    // initialize output file stream
+    _stream.setDevice(_output);
+    _stream.setRealNumberPrecision(8);
 }
 
 
@@ -37,7 +41,7 @@ NetworkWriter::NetworkWriter(
  * Returns the name of the first gene in a gene pair. The gene pair must first
  * be set using the setPair() function.
  */
-QString NetworkWriter::getEdgeGene1()
+QString NetworkWriter::getEdgeGene1() const
 {
     EDEBUG_FUNC(this);
 
@@ -51,7 +55,7 @@ QString NetworkWriter::getEdgeGene1()
  * Returns the name of the second gene in a gene pair. The gene pair must first
  * be set using the setPair() function.
  */
-QString NetworkWriter::getEdgeGene2()
+QString NetworkWriter::getEdgeGene2() const
 {
     EDEBUG_FUNC(this);
 
@@ -68,7 +72,7 @@ QString NetworkWriter::getEdgeGene2()
  *
  * @param cluster_index  The index of the cluster in the gene pair.
  */
-float NetworkWriter::getEdgeSimilarity(int cluster_index)
+float NetworkWriter::getEdgeSimilarity(int cluster_index) const
 {
     EDEBUG_FUNC(this,cluster_index);
 
@@ -78,23 +82,23 @@ float NetworkWriter::getEdgeSimilarity(int cluster_index)
 
 
 /*!
- * Sets the current gene pair.
- *
- * @param cmx_index  The index of the pair from the correlation
- * matrix.  The correlation matrix is used to ensure all other
- * matricies (ccm, csm) are all on the same pair.
+ * Read the next gene pair and return the cluster size.
  */
-void NetworkWriter::setPair(Pairwise::Index cmx_index)
+int NetworkWriter::readNext()
 {
     EDEBUG_FUNC(this,cmx_index);
 
-    _index = cmx_index;
-    _cmxPair.read(_index);
-    _ccmPair.read(_index);
-    if (_csm)
+    _cmxPair.readNext();
+    if ( _ccm )
     {
-        _csmPair.read(_index);
+        _ccmPair.read(_cmxPair.index());
     }
+    if ( _csm )
+    {
+        _csmPair.read(_cmxPair.index());
+    }
+
+    return _cmxPair.clusterSize();
 }
 
 
@@ -109,7 +113,7 @@ void NetworkWriter::setPair(Pairwise::Index cmx_index)
  * \return  The sample string of characters indicating the role
  * of the sample in the cluster.
  */
-QString NetworkWriter::getEdgeSampleString(int cluster_index)
+QString NetworkWriter::getEdgeSampleString(int cluster_index) const
 {
     EDEBUG_FUNC(this,cluster_index);
 
@@ -171,7 +175,7 @@ QString NetworkWriter::getEdgeSampleString(int cluster_index)
  * @param sample_string  The sample string as returned by the
  * getEdgeSampleString function.
  */
-int NetworkWriter::getEdgeNumSamples(QString sample_string)
+int NetworkWriter::getEdgeNumSamples(QString sample_string) const
 {
     EDEBUG_FUNC(this,cluster_index);
 
@@ -225,7 +229,7 @@ void NetworkWriter::setTestNames()
  * @param cluster_index  The index of the cluster in the current gene pair.
  * @param test_index The index of the test to retrieve the value for.
  */
-float NetworkWriter::getEdgeTestValue(int cluster_index, int test_index)
+float NetworkWriter::getEdgeTestValue(int cluster_index, int test_index) const
 {
     EDEBUG_FUNC(this,clsuster_index,test_index);
 
@@ -252,6 +256,22 @@ float NetworkWriter::getEdgeTestValue(int cluster_index, int test_index)
 
 
 /*!
+ * Checks to make sure that the output stream is ok.
+ */
+void NetworkWriter::checkStatus() const
+{
+    if ( _stream.status() != QTextStream::Ok )
+    {
+        E_MAKE_EXCEPTION(e)
+        e.setTitle(QObject::tr("File IO Error"));
+        e.setDetails(QObject::tr("Qt Text Stream encountered an unknown error."));
+        throw e;
+    }
+}
+
+
+
+/*!
  * The initialization function for the full text output. This
  * function adds the tab-delimited header to the output file.
  */
@@ -262,7 +282,7 @@ void FullNetworkWriter::initialize()
     setTestNames();
 
     // Start by writing the tab-delimited header.
-    *(_stream)
+    _stream
         << "Source"
         << "\t" << "Target"
         << "\t" << "Similarity_Score"
@@ -274,10 +294,10 @@ void FullNetworkWriter::initialize()
     // Add each conditional test to the network file too.
     for (int i = 0; i < _testNames.size(); ++i)
     {
-        *(_stream) << "\t" << _testNames[i];
+        _stream << "\t" << _testNames[i];
     }
 
-    *(_stream)
+    _stream
         << "\n";
 }
 
@@ -303,7 +323,7 @@ void FullNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString>)
     QString sample_string = getEdgeSampleString(cluster_index);
     int num_samples = getEdgeNumSamples(sample_string);
 
-    *(_stream)
+    _stream
         << source
         << "\t" << target
         << "\t" << correlation
@@ -316,10 +336,10 @@ void FullNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString>)
     for (int i = 0; i < _testNames.size(); ++i)
     {
         float test_value = getEdgeTestValue(cluster_index, i);
-        *(_stream) << "\t" << test_value;
+        _stream << "\t" << test_value;
     }
 
-    *(_stream)
+    _stream
         << "\n";
 }
 
@@ -336,7 +356,7 @@ void TidyNetworkWriter::initialize()
     setTestNames();
 
     // Start by writing the tab-delimited header.
-    *(_stream)
+    _stream
         << "Source"
         << "\t" << "Target"
         << "\t" << "Similarity_Score"
@@ -347,13 +367,13 @@ void TidyNetworkWriter::initialize()
 
     if (_testNames.size() > 0)
     {
-        *(_stream)
+        _stream
             << "\t" << "Test_Name"
             << "\t" << "p_value"
             << "\t" << "r_squared";
     }
 
-    *(_stream)
+    _stream
         << "\n";
 }
 
@@ -383,7 +403,7 @@ void TidyNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString> pas
     // passed the correlation threshold test, so write it out.
     if (_testNames.size() == 0)
     {
-        *(_stream)
+        _stream
             << source
             << "\t" << target
             << "\t" << correlation
@@ -412,7 +432,7 @@ void TidyNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString> pas
             {
                 rSqr = getEdgeTestValue(cluster_index, rSqri);
             }
-            *(_stream)
+            _stream
                 << source
                 << "\t" << target
                 << "\t" << correlation
@@ -439,7 +459,7 @@ void MinimalNetworkWriter::initialize()
     EDEBUG_FUNC(this);
 
     // Start by writing the tab-delimited header.
-    *(_stream)
+    _stream
         << "Source"
         << "\t" << "Target"
         << "\t" << "Similarity_Score"
@@ -467,7 +487,7 @@ void MinimalNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString>)
     float correlation = getEdgeSimilarity(cluster_index);
     int cluster_num = cluster_index + 1;
 
-    *(_stream)
+    _stream
         << source
         << "\t" << target
         << "\t" << correlation
@@ -490,14 +510,14 @@ void GMLNetworkWriter::initialize()
     setTestNames();
 
     // Write the XML header to file.
-    *(_stream)
+    _stream
             << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             << "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\"\n"
             << "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
             << "         xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n";
 
     // Add the attributes definitions
-    *(_stream)
+    _stream
             << "  <key id=\"sc\" for=\"edge\" attr.name=\"Similarity_Score\" attr.type=\"string\"/>\n"
             << "  <key id=\"int\" for=\"edge\" attr.name=\"Interaction\" attr.type=\"string\"/>\n"
             << "  <key id=\"ci\" for=\"edge\" attr.name=\"Cluster_Index\" attr.type=\"int\"/>\n"
@@ -507,12 +527,12 @@ void GMLNetworkWriter::initialize()
     // Add attributes for the tests.
     for (int i = 0; i < _testNames.size(); ++i)
     {
-        *(_stream)
+        _stream
             << "  <key id=\"t" << i << "\" for=\"node\" attr.name=\"" << _testNames[i] << "\" attr.type=\"double\"/>\n";
     }
 
     // Start the graph.
-    *(_stream)
+    _stream
             << "  <graph id=\"G01\" edgedefault=\"undirected\">\n";
 }
 
@@ -544,19 +564,19 @@ void GMLNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString>)
     {
         _nodes.insert(source, true);
 
-        *(_stream)
+        _stream
             << "    <node id=\"" << source << "\"/>\n";
     }
     if (!_nodes.contains(target))
     {
         _nodes.insert(target, true);
 
-        *(_stream)
+        _stream
             << "    <node id=\"" << target << "\"/>\n";
     }
 
     // Start the edge and add in the attributes.
-    *(_stream)
+    _stream
             << "    <edge source=\"" << source << "\" target=\"" << target << "\">\n"
             << "      <data key=\"sc\">" << correlation << "</data>\n"
             << "      <data key=\"int\">co</data>\n"
@@ -569,12 +589,12 @@ void GMLNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString>)
     {
         float test_value = getEdgeTestValue(cluster_index, i);
 
-        *(_stream)
+        _stream
             << "      <data key=\"t" << i << "\">" << test_value << "</data>\n";
     }
 
     // Finish out the edge.
-    *(_stream)
+    _stream
             << "    </edge>\n";
 }
 
@@ -588,7 +608,7 @@ void GMLNetworkWriter::finish()
     EDEBUG_FUNC(this);
 
     // Write the XML header to file.
-    *(_stream)
+    _stream
             << "  </graph>\n"
             << "</graphml>\n";
 }

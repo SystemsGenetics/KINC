@@ -55,13 +55,9 @@ private:
         ,Tidy
     };
 private:
-    /**
-     * Workspace variables to write to the output file
-     */
-    QTextStream _stream;
-    CCMatrix::Pair _ccmPair;
-    CorrelationMatrix::Pair _cmxPair;
-    CSMatrix::Pair _csmPair;
+    QVector<QString> filterEdge(int cluster_index);
+    void setFilters(QString input_filters, QString type);
+private:
     /*!
      * Pointer to the input expression matrix.
      */
@@ -98,19 +94,17 @@ private:
      * The maximum (absolute) correlation threshold.
      */
     float _maxCorrelation {1.00f};
-
     /*!
      * Condition-Specific Cluster Matrix p-value and r-squared filter input.
      */
     QString _csmPValueFilter {""};
     QString _csmRSquareFilter {""};
 
-
     /*!
      * An instance of a NetworkWriter class that ensures that
      * the same edges are always written in any file format.
      */
-    NetworkWriter * _networkWriter {nullptr};
+    NetworkWriter* _networkWriter {nullptr};
 
     /*!
      * Stores the names of the condition-specific testing
@@ -125,16 +119,6 @@ private:
      * and the second element is the value for comparing.
      */
     QHash<QString, QPair<QString, float>> _filters;
-
-    /*!
-     * Sets the _filters element.
-     */
-    void setFilters(QString input_filters, QString type);
-
-    /*!
-     * Performs filtering of a cluster of the current edge.
-     */
-    QVector<QString> filterEdge(int cluster_index);
 };
 
 
