@@ -48,6 +48,7 @@ EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
     case CMXINPUT: return DataIn;
     case AMXINPUT: return FileIn;
     case Delimiter: return String;
+    case MISSING: return String;
     case CSMOUT: return DataOut;
     case OVERRIDES: return String;
     case TEST: return String;
@@ -117,6 +118,15 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
         case Default: return tr("tab");
         default: return QVariant();
         }
+    case MISSING:
+        switch(role)
+        {
+        case CommandLineName: return QString("missing");
+        case Title: return tr("Missing value:");
+        case WhatsThis: return tr("The string that specifies the missing value in the annotation matrix (e.g. NA, 0, 0.0).");
+        case Default: return tr("NA");
+        default: return QVariant();
+        }
     case CSMOUT:
         EDEBUG_FUNC(this, role);
         switch(role)
@@ -164,6 +174,9 @@ void ConditionalTest::Input::set(int index, const QVariant& value)
     {
     case Delimiter:
         _base->_delimiter = value.toString();
+        break;
+    case MISSING:
+        _base->_missing = value.toString();
         break;
     case TEST:
         _base->_Testing = value.toString();

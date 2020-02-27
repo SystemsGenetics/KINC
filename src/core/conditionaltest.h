@@ -127,6 +127,7 @@ private:
     qint32 _geneSize {0};
     qint32 _sampleSize {0};
     QString _delimiter = "tab";
+    QString _missing = "NA";
     /*!
      * Current pairwise pair index
      */

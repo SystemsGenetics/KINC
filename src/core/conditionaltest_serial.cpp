@@ -320,19 +320,20 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
 
     // If a population contains n_1 elements of “type 1” and n_2 elements of
     // “type 2” then the hypergeometric distribution gives the probability
-    // of obtaining k elements of “type 1” in t samples from the population
-    // without replacement.
+    // of obtaining k elements of “type 1” in t samples from the population.
 
     int sampleSize =  _base->_emx->sampleSize();
 
     // Population contains n1 elements of Type 1.
     int n1 = _catCount;
     // Population contains n2 elements of Type 2.
-    int n2 = sampleSize- _catCount;
+    int n2 = sampleSize - _catCount;
     // k elements of Type 1 were selected.
     int k = _catInCluster;
     // t total elements were selected.
     int t = _clusterSize;
+    // Holds the pvalue
+    double pvalue = 1;
 
     // If n1 == k we will always get a zero because we've
     // reached the end of the distribution, so the Ho that
@@ -348,21 +349,22 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
     // proportions having signficant p-values. Using Cohen's H
     // to set a large-effect size (e.g. 0.8) with a sig.level of
     // 0.001 and a power of 0.95 we need at least 31 samples.
-    // So, we'll perform a jacknife resampling of our data
+    // So, we'll perform a bootstrap resampling of our data
     // to calculate an average proportion of 31 samples
-    if ( t > 31 )
+    int bs_t = 31;
+    if ( t > bs_t )
     {
         // Initialize the uniform random number generator.
         const gsl_rng_type * T;
         gsl_rng * r;
         gsl_rng_env_setup();
         T = gsl_rng_default;
-        r = gsl_rng_alloc (T);
+        r = gsl_rng_alloc(T);
 
-        // Holds the jacknife average proportion.
+        // Holds the bootstrap average proportion.
         int jkap = 0;
 
-        // To perform the Jacknife resampling we will
+        // To perform the bootstrap resampling we will
         // perform 30 iterations (central limit thereom)
         int in = 30;
         for ( int i = 0; i < in; i++ )
@@ -374,18 +376,22 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
             // the sample string.  We will use these numbers to
             // randomly select a sample and if it is a 1 and of the
             // testing category then we consider it a success.
-            int indexes[sampleSize];
-            int chosen[31];
-
+            int indexes[t];
+            int chosen[bs_t];
+            int jx = 0;
             for ( int j = 0; j < sampleSize; j++ )
             {
-                indexes[j] = j;
+                if ( ccmPair.at(clusterIndex, j) == 1 )
+                {
+                    indexes[jx++] = j;
+                }
             }
 
-            // The gsl_ran_choose function randmly choose samples without replacement from a list.
-            gsl_ran_choose(r, chosen, 31, indexes, sampleSize, sizeof(int));
+            // The gsl_ran_sample function randomly chooses samples with replacement from a list.
+            gsl_ran_sample(r, chosen, bs_t, indexes, t, sizeof(int));
 
-            for ( int j = 0; j < 31; j++ )
+            // Now count the number of randomly selected items from the cluster.
+            for ( int j = 0; j < bs_t; j++ )
             {
                 if ( ccmPair.at(clusterIndex, chosen[j]) == 1 && _amxData.at(chosen[j]) == test_label )
                 {
@@ -402,12 +408,12 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
         gsl_rng_free(r);
 
         // Now reset the sample size and the proporiton of success.
-        k = jkap;
-        t = 31;
+        pvalue = gsl_cdf_hypergeometric_Q(jkap, n1, n2, bs_t);
+        return pvalue;
     }
 
     // The gsl_cdf_hypergeometric_Q function uses the upper-tail of the CDF.
-    double pvalue = gsl_cdf_hypergeometric_Q(k, n1, n2, t);
+    pvalue = gsl_cdf_hypergeometric_Q(k, n1, n2, t);
     return pvalue;
 }
 
@@ -463,6 +469,11 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
         // If the sample label matches with the given label.
         if ( ccmPair.at(clusterIndex, i) == 1 )
         {
+            // Skip samples with a missing value in the annotation matrix
+            if (QString::compare(amxInfo.at(i), _base->_missing) == 0) {
+                continue;
+            }
+
             // Add emx data as the predictors but only for samples in the cluster. We
             // add a 1 for the intercept, gene1, gene2 and the interaction: gene1*gene2.
             // The interaction term handles the case where the relationship is dependent
@@ -479,7 +490,7 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
             if ( testType == ORDINAL )
             {
                 // Convert the observation data into a "design vector"
-                // Each unique number being a ssigned a unique integer.
+                // Each unique number being assigned a unique integer.
                 if ( !labelInfo.contains(amxInfo.at(i).toInt()) )
                 {
                     labelInfo.append(amxInfo.at(i).toInt());

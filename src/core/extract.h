@@ -9,7 +9,7 @@
 #include "expressionmatrix.h"
 #include "conditionspecificclustersmatrix.h"
 #include "conditionspecificclustersmatrix_pair.h"
-
+#include "networkwriter.h"
 
 
 /*!
@@ -31,12 +31,6 @@ public:
     virtual void process(const EAbstractAnalyticBlock* result) override final;
     virtual EAbstractAnalyticInput* makeInput() override final;
     virtual void initialize();
-    void preparePValueFilter();
-    void prepareRSquareFilter();
-    bool PValuefilter(QString labelName, float pValue);
-    bool pValueFilterCheck();
-    bool RSquarefilter(QString labelName, float rSquared);
-    bool rSquareFilterCheck();
 private:
     /*!
      * Defines the output formats this analytic supports.
@@ -55,19 +49,15 @@ private:
          * GraphML format
          */
         ,GraphML
+        /*!
+         * GraphML format
+         */
+        ,Tidy
     };
 private:
-    void writeTextFormat(int index);
-    void writeMinimalFormat(int index);
-    void writeGraphMLFormat(int index);
+    void parseFilters(QString input_filters, QString type);
+    QVector<QString> filterEdge(int cluster_index);
 private:
-    /**
-     * Workspace variables to write to the output file
-     */
-    QTextStream _stream;
-    CCMatrix::Pair _ccmPair;
-    CorrelationMatrix::Pair _cmxPair;
-    CSMatrix::Pair _csmPair;
     /*!
      * Pointer to the input expression matrix.
      */
@@ -105,32 +95,30 @@ private:
      */
     float _maxCorrelation {1.00f};
     /*!
-     * Condition-Specific Cluster Matrix name filter input.
-     */
-    QString _csmNameFilter {""};
-    /*!
-     * Condition-Specific Cluster Matrix name filter data.
-     */
-    QVector<float> _csmNameFilterThresh;
-    QVector<QString> _csmNameFilterFeatureNames;
-    QVector<QString> _csmNameFilterLabelNames;
-    /*!
      * Condition-Specific Cluster Matrix p-value and r-squared filter input.
      */
     QString _csmPValueFilter {""};
     QString _csmRSquareFilter {""};
+
     /*!
-     * Condition-Specific Cluster Matrix p-value filter data.
+     * An instance of a NetworkWriter class that ensures that
+     * the same edges are always written in any file format.
      */
-    QVector<float> _csmPValueFilterThresh;
-    QVector<QString> _csmPValueFilterFeatureNames;
-    QVector<QString> _csmPValueFilterLabelNames;
+    NetworkWriter* _networkWriter {nullptr};
+
     /*!
-     * Condition-Specific Cluster Matrix r-squared filter data.
+     * Stores the names of the condition-specific testing
+     * that was performed.
      */
-    QVector<float> _csmRSquareFilterThresh;
-    QVector<QString> _csmRSquareFilterFeatureNames;
-    QVector<QString> _csmRSquareFilterLabelNames;
+    QVector<QString> _testNames;
+
+    /*!
+     * An associative array where the key is the test name
+     * and the value is a pair where the first element of
+     * the pair is the logical comparison value (e.g. gt, lt)
+     * and the second element is the value for comparing.
+     */
+    QHash<QString, QPair<QString, float>> _filters;
 };
 
 

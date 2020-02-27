@@ -13,6 +13,7 @@ const QStringList Extract::Input::FORMAT_NAMES
     "text"
     ,"minimal"
     ,"graphml"
+    ,"tidy"
 };
 
 
