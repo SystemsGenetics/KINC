@@ -39,13 +39,15 @@ void Extract::process(const EAbstractAnalyticBlock* result)
     {
         // If the cluster passed all of the tests, then write it to the file.
         QVector<QString> passed = filterEdge(k);
-        if (passed.size() > 0) {
+        if (passed.size() > 0)
+        {
             _networkWriter->writeEdgeCluster(k, passed);
         }
     }
 
     // If we're at the last element then finish up the file.
-    if ( result->index() == size() - 1 ) {
+    if ( result->index() == size() - 1 )
+    {
         _networkWriter->finish();
     }
 
@@ -58,6 +60,8 @@ void Extract::process(const EAbstractAnalyticBlock* result)
         throw e;
     }
 }
+
+
 
 QVector<QString> Extract::filterEdge(int k)
 {
@@ -86,42 +90,49 @@ QVector<QString> Extract::filterEdge(int k)
         // The test_name as a _pVal or _rSqr suffix, the
         // offical (or real) test name does not.
         QString test_name = _testNames[i];
-        QString real_test_name = _testNames[i];
-        real_test_name.replace("_pVal","");
-        real_test_name.replace("_RSqr","");
+        QString real_test_name = _testNames[i]
+            .replace("_pVal", "")
+            .replace("_RSqr", "");
         QPair<QString, float> filter;
 
         // First, check if this is a global pValue setting. If there
         // is a global p-value filter then we'll ignore any other
         // pvalue filter specified.
-        if (test_name.contains("_pVal") && _filters.contains("pVal")) {
+        if (test_name.contains("_pVal") && _filters.contains("pVal"))
+        {
             filter = _filters.find("pVal").value();
         }
+
         // Second, check if this is a global rSqr setting. If there
         // is a global r-squared filter then we'll ignore any other
         // r-squared filter specified.
-        else if (test_name.contains("_RSqr") && _filters.contains("rSqr")) {
+        else if (test_name.contains("_RSqr") && _filters.contains("rSqr"))
+        {
             filter = _filters.find("rSqr").value();
         }
+
         // Third, check if there is a test-specific setting.
-        else if (_filters.contains(test_name)) {
+        else if (_filters.contains(test_name))
+        {
             filter = _filters.find(test_name).value();
         }
+
         // If there are no filters then skip to the next one.
-        else {
+        else
+        {
             continue;
         }
 
         // Now perform the filter check.
         float filter_value = filter.second;
         float test_value = static_cast<float>(_networkWriter->getEdgeTestValue(k, i));
+
         if (filter.first == "lt" && test_value < filter_value)
         {
             passed.append(real_test_name);
         }
         else if (filter.first == "gt" && test_value > filter_value)
         {
-
             passed.append(real_test_name);
         }
         else
@@ -135,10 +146,12 @@ QVector<QString> Extract::filterEdge(int k)
     // to check that both tests passed (not just one).
     for (int i = 0; i < _testNames.size(); i++)
     {
-        QString real_test_name = _testNames[i];
-        real_test_name.replace("_pVal","");
-        real_test_name.replace("_RSqr","");
-        if (passed.count(real_test_name) == 1 && failed.count(real_test_name) == 1) {
+        QString real_test_name = _testNames[i]
+            .replace("_pVal", "")
+            .replace("_RSqr", "");
+
+        if (passed.count(real_test_name) == 1 && failed.count(real_test_name) == 1)
+        {
             passed.removeAll(real_test_name);
         }
     }
@@ -146,24 +159,27 @@ QVector<QString> Extract::filterEdge(int k)
     // Remove any duplicates from the passed list before returning.
     for (int i = 0; i < _testNames.size(); i++)
     {
-        QString real_test_name = _testNames[i];
-        real_test_name.replace("_pVal","");
-        real_test_name.replace("_RSqr","");
-        if (passed.count(real_test_name) > 1) {
+        QString real_test_name = _testNames[i]
+            .replace("_pVal", "")
+            .replace("_RSqr", "");
+
+        if (passed.count(real_test_name) > 1)
+        {
             passed.removeAll(real_test_name);
             passed.append(real_test_name);
         }
     }
 
     // If any of the tests passed then keep this edge.
-    if (passed.size() > 0) {
+    if (passed.size() > 0)
+    {
         return passed;
     }
-
 
     // If we're here then we did not pass any of the filters.
     return passed;
 }
+
 
 
 /*!
@@ -241,13 +257,15 @@ void Extract::initialize()
     setFilters(_csmRSquareFilter, "rSqr");
 }
 
+
+
 /*!
  * \brief Extract::setFilters
- * \param input_filters
- * \param type
+ * @param input_filters
+ * @param type
  */
-void Extract::setFilters(QString input_filters, QString type) {
-
+void Extract::setFilters(QString input_filters, QString type)
+{
     bool ok = false;
     bool failure = true;
 
@@ -257,18 +275,11 @@ void Extract::setFilters(QString input_filters, QString type) {
         return;
     }
 
-
     // If the comparision is unspecified we should set a
     // default based on the type of filter.
-    QString defaultComp {""};
-    if (type == "rSqr")
-    {
-         defaultComp = "gt";
-    }
-    else
-    {
-        defaultComp = "lt";
-    }
+    QString defaultComp = (type == "rSqr")
+        ? "gt"
+        : "lt";
 
     QStringList filters = input_filters.split("::");
     for ( int i = 0; i < filters.size(); i++ )
@@ -278,128 +289,131 @@ void Extract::setFilters(QString input_filters, QString type) {
         // Case #1: the user provided a single global threshold (e.g. 1e-3)
         if (data.size() == 1)
         {
-           data.at(0).toFloat(&ok);
-           if (ok)
-           {
-               QPair<QString, float> fpair;
-               fpair.first = defaultComp;
-               fpair.second = data.at(0).toFloat();
-               _filters.insert(type, fpair);
-               failure = false;
-           }
+            data.at(0).toFloat(&ok);
+            if (ok)
+            {
+                QPair<QString, float> fpair;
+                fpair.first = defaultComp;
+                fpair.second = data.at(0).toFloat();
+                _filters.insert(type, fpair);
+                failure = false;
+            }
         }
 
         // Case #2 the user provided two values. There are two cases.
         else if (data.size() == 2)
         {
-           data.at(1).toFloat(&ok);
-           if (ok) {
+            data.at(1).toFloat(&ok);
+            if (ok)
+            {
+                // Case 2a:  global setting. e.g.: gt,1e-3
+                if (data.at(0) == "gt" || data.at(0) == "lt")
+                {
+                    QPair<QString, float> fpair;
+                    fpair.first = data.at(0);
+                    fpair.second = data.at(1).toFloat();
+                    QString test_name = type;
+                    _filters.insert(test_name, fpair);
+                    failure = false;
+                }
 
-               // Case 2a:  global setting. e.g.: gt,1e-3
-               if (data.at(0) == "gt" || data.at(0) == "lt")
-               {
-                   QPair<QString, float> fpair;
-                   fpair.first = data.at(0);
-                   fpair.second = data.at(1).toFloat();
-                   QString test_name = type;
-                   _filters.insert(test_name, fpair);
-                   failure = false;
-               }
-               // Case 2b: e.g.:  Subspecies,1e-3
-               else
-               {
-                   QPair<QString, float> fpair;
-                   fpair.first = defaultComp;
-                   fpair.second = data.at(1).toFloat();
-                   // If this is a filter on a categorical field then it means
-                   // that the user did not specify a category and they want
-                   // to apply the filter on any category.  We need to
-                   // iterate through the tests and insert a filter for each
-                   // one that matches.
-                   QVectorIterator<QString> testNamesIter(_testNames);
-                   while (testNamesIter.hasNext())
-                   {
-                       QString test_name = testNamesIter.next();
-                       if (test_name.contains(data.at(0) + "__"))
-                       {
-                           _filters.insert(test_name, fpair);
-                       }
-                   }
-                   // If this isn't a categorical field then we can just
-                   // insert the filter as is.
-                   QString test_name = data.at(0) + "_" + type;
-                   _filters.insert(test_name, fpair);
-                   failure = false;
-               }
-           }
+                // Case 2b: e.g.:  Subspecies,1e-3
+                else
+                {
+                    QPair<QString, float> fpair;
+                    fpair.first = defaultComp;
+                    fpair.second = data.at(1).toFloat();
+                    // If this is a filter on a categorical field then it means
+                    // that the user did not specify a category and they want
+                    // to apply the filter on any category.  We need to
+                    // iterate through the tests and insert a filter for each
+                    // one that matches.
+                    QVectorIterator<QString> testNamesIter(_testNames);
+                    while (testNamesIter.hasNext())
+                    {
+                        QString test_name = testNamesIter.next();
+                        if (test_name.contains(data.at(0) + "__"))
+                        {
+                            _filters.insert(test_name, fpair);
+                        }
+                    }
+                    // If this isn't a categorical field then we can just
+                    // insert the filter as is.
+                    QString test_name = data.at(0) + "_" + type;
+                    _filters.insert(test_name, fpair);
+                    failure = false;
+                }
+            }
         }
 
         // Case #3: the user provided three values
-        else if (data.size() == 3) {
-           data.at(2).toFloat(&ok);
-           if (ok)
-           {
-               // Case 3a: Subspecies,gt,1e-3
-               if (data.at(1) == "gt" || data.at(1) == "lt")
-               {
-                   QPair<QString, float> fpair;
-                   fpair.first = data.at(1);
-                   fpair.second = data.at(2).toFloat();
-                   // If this is a filter on a categorical field then it means
-                   // that the user did not specify a category and they want
-                   // to apply the filter on any category.  We need to
-                   // iterate through the tests and insert a filter for each
-                   // one that matches.
-                   QVectorIterator<QString> testNamesIter(_testNames);
-                   while (testNamesIter.hasNext())
-                   {
-                       QString test_name = testNamesIter.next();
-                       if (test_name.contains(data.at(0) + "__"))
-                       {
-                           _filters.insert(test_name, fpair);
-                       }
-                   }
-                   // If this isn't a categorical field then we can just
-                   // insert the filter as is.
-                   QString test_name = data.at(0) + "_" + type;
-                   _filters.insert(test_name, fpair);
-                   failure = false;
-               }
-               // Case 3b: Subspecies,Janpoica,1e-3
-               else
-               {
-                   QPair<QString, float> fpair;
-                   fpair.first = defaultComp;
-                   fpair.second = data.at(2).toFloat();
-                   QString test_name = data.at(0) + "__" + data.at(1) + "_" + type;
-                   _filters.insert(test_name, fpair);
-                   failure = false;
-               }
-           }
+        else if (data.size() == 3)
+        {
+            data.at(2).toFloat(&ok);
+
+            if (ok)
+            {
+                // Case 3a: Subspecies,gt,1e-3
+                if (data.at(1) == "gt" || data.at(1) == "lt")
+                {
+                    QPair<QString, float> fpair;
+                    fpair.first = data.at(1);
+                    fpair.second = data.at(2).toFloat();
+                    // If this is a filter on a categorical field then it means
+                    // that the user did not specify a category and they want
+                    // to apply the filter on any category.  We need to
+                    // iterate through the tests and insert a filter for each
+                    // one that matches.
+                    QVectorIterator<QString> testNamesIter(_testNames);
+                    while (testNamesIter.hasNext())
+                    {
+                        QString test_name = testNamesIter.next();
+                        if (test_name.contains(data.at(0) + "__"))
+                        {
+                            _filters.insert(test_name, fpair);
+                        }
+                    }
+                    // If this isn't a categorical field then we can just
+                    // insert the filter as is.
+                    QString test_name = data.at(0) + "_" + type;
+                    _filters.insert(test_name, fpair);
+                    failure = false;
+                }
+
+                // Case 3b: Subspecies,Janpoica,1e-3
+                else
+                {
+                    QPair<QString, float> fpair;
+                    fpair.first = defaultComp;
+                    fpair.second = data.at(2).toFloat();
+                    QString test_name = data.at(0) + "__" + data.at(1) + "_" + type;
+                    _filters.insert(test_name, fpair);
+                    failure = false;
+                }
+            }
         }
 
         // Case #4: the user provided four values (e.g. Subspecies,Japonica,lt,1e-3)
         else if (data.size() == 4)
         {
-           data.at(3).toFloat(&ok);
-           if (ok && (data.at(2) == "gt" || data.at(2) == "lt"))
-           {
-               QPair<QString, float> fpair;
-               fpair.first = data.at(2);
-               fpair.second = data.at(3).toFloat();
-               QString test_name = data.at(0) + "__" + data.at(1) + "_" + type;
-               _filters.insert(test_name, fpair);
-               failure = false;
-           }
+            data.at(3).toFloat(&ok);
+            if (ok && (data.at(2) == "gt" || data.at(2) == "lt"))
+            {
+                QPair<QString, float> fpair;
+                fpair.first = data.at(2);
+                fpair.second = data.at(3).toFloat();
+                QString test_name = data.at(0) + "__" + data.at(1) + "_" + type;
+                _filters.insert(test_name, fpair);
+                failure = false;
+            }
         }
 
         if (failure)
         {
-           E_MAKE_EXCEPTION(e)
-           e.setTitle(tr("Invalid P-Value Filter Input"));
-           e.setDetails(tr("Invalid P-Value Filter arguments given."));
-           throw e;
+            E_MAKE_EXCEPTION(e)
+            e.setTitle(tr("Invalid P-Value Filter Input"));
+            e.setDetails(tr("Invalid P-Value Filter arguments given."));
+            throw e;
         }
     }
 }
-

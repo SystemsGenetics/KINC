@@ -54,7 +54,6 @@ private:
          */
         ,Tidy
     };
-
 private:
     /**
      * Workspace variables to write to the output file
