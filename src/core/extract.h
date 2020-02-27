@@ -9,7 +9,7 @@
 #include "expressionmatrix.h"
 #include "conditionspecificclustersmatrix.h"
 #include "conditionspecificclustersmatrix_pair.h"
-#include "net_writer.h"
+#include "networkwriter.h"
 
 
 /*!
@@ -108,10 +108,10 @@ private:
 
 
     /*!
-     * An instance of a NetWriter class that ensures that
+     * An instance of a NetworkWriter class that ensures that
      * the same edges are always written in any file format.
      */
-    NetWriter * _netWriter {nullptr};
+    NetworkWriter * _networkWriter {nullptr};
 
     /*!
      * Stores the names of the condition-specific testing

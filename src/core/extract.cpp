@@ -32,7 +32,7 @@ void Extract::process(const EAbstractAnalyticBlock* result)
 
     // Each time this function is called we will read the next cluster pair.
     _cmxPair.readNext();
-    _netWriter->setPair(_cmxPair.index());
+    _networkWriter->setPair(_cmxPair.index());
 
     // Write clusters to the output file if they pass filters.
     for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
@@ -40,13 +40,13 @@ void Extract::process(const EAbstractAnalyticBlock* result)
         // If the cluster passed all of the tests, then write it to the file.
         QVector<QString> passed = filterEdge(k);
         if (passed.size() > 0) {
-            _netWriter->writeEdgeCluster(k, passed);
+            _networkWriter->writeEdgeCluster(k, passed);
         }
     }
 
     // If we're at the last element then finish up the file.
     if ( result->index() == size() - 1 ) {
-        _netWriter->finish();
+        _networkWriter->finish();
     }
 
     // make sure writing output file worked
@@ -66,7 +66,7 @@ QVector<QString> Extract::filterEdge(int k)
     QVector<QString> failed;
 
     // Exclude cluster if correlation is not within thresholds.
-    float correlation = _netWriter->getEdgeSimilarity(k);
+    float correlation = _networkWriter->getEdgeSimilarity(k);
     if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
     {
         return passed;
@@ -114,7 +114,7 @@ QVector<QString> Extract::filterEdge(int k)
 
         // Now perform the filter check.
         float filter_value = filter.second;
-        float test_value = static_cast<float>(_netWriter->getEdgeTestValue(k, i));
+        float test_value = static_cast<float>(_networkWriter->getEdgeTestValue(k, i));
         if (filter.first == "lt" && test_value < filter_value)
         {
             passed.append(real_test_name);
@@ -215,25 +215,25 @@ void Extract::initialize()
     switch ( _outputFormat )
     {
     case OutputFormat::Text:
-        _netWriter = new FullNetWriter(&_stream, _emx, _cmx, _ccm, _csm);
+        _networkWriter = new FullNetworkWriter(&_stream, _emx, _cmx, _ccm, _csm);
         break;
     case OutputFormat::Minimal:
-        _netWriter = new MinimalNetWriter(&_stream, _emx, _cmx, _ccm, _csm);
+        _networkWriter = new MinimalNetworkWriter(&_stream, _emx, _cmx, _ccm, _csm);
         break;
     case OutputFormat::GraphML:
-        _netWriter = new GMLNetWriter(&_stream, _emx, _cmx, _ccm, _csm);
+        _networkWriter = new GMLNetworkWriter(&_stream, _emx, _cmx, _ccm, _csm);
         break;
     case OutputFormat::Tidy:
-        _netWriter = new TidyNetWriter(&_stream, _emx, _cmx, _ccm, _csm);
+        _networkWriter = new TidyNetworkWriter(&_stream, _emx, _cmx, _ccm, _csm);
         break;
     }
 
     // Get the network writer object started.
-    _netWriter->initialize();
+    _networkWriter->initialize();
 
     // Save the test name columns that will be used by the
     // network writer so we don't have to keep looking them up.
-    _testNames = _netWriter->getTestNames();
+    _testNames = _networkWriter->getTestNames();
 
     // Set any filters that the user requested. If the filters
     // are incorrectly set this function should throw an error.

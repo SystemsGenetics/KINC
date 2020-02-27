@@ -33,7 +33,7 @@ SOURCES += \
     importcorrelationmatrix.cpp \
     importexpressionmatrix_input.cpp \
     importexpressionmatrix.cpp \
-    net_writer.cpp \
+    networkwriter.cpp \
     pairwise_correlationmodel.cpp \
     pairwise_gmm.cpp \
     pairwise_index.cpp \
@@ -94,7 +94,7 @@ HEADERS += \
     importcorrelationmatrix.h \
     importexpressionmatrix_input.h \
     importexpressionmatrix.h \
-    net_writer.h \
+    networkwriter.h \
     pairwise_clusteringmodel.h \
     pairwise_correlationmodel.h \
     pairwise_gmm.h \
