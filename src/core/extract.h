@@ -55,8 +55,8 @@ private:
         ,Tidy
     };
 private:
+    void parseFilters(QString input_filters, QString type);
     QVector<QString> filterEdge(int cluster_index);
-    void setFilters(QString input_filters, QString type);
 private:
     /*!
      * Pointer to the input expression matrix.

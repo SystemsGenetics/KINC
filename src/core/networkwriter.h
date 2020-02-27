@@ -32,15 +32,15 @@ public:
     int readNext();
     QString getEdgeGene1() const;
     QString getEdgeGene2() const;
-    QString getEdgeSampleString(int cluster_index) const;
+    QString getEdgeSampleString(int clusterIndex) const;
     int getEdgeNumSamples(QString sample_string) const;
-    float getEdgeSimilarity(int cluster_index) const;
-    float getEdgeTestValue(int cluster_index, int test_index) const;
+    float getEdgeSimilarity(int clusterIndex) const;
+    float getEdgeTestValue(int clusterIndex, const QString& fullTestName) const;
     QVector<QString> getTestNames() const { return _testNames; }
     void checkStatus() const;
 public:
     virtual void initialize() = 0;
-    virtual void writeEdgeCluster(int cluster_index, QVector<QString> passed) = 0;
+    virtual void writeEdgeCluster(int clusterIndex, QVector<QString> passed) = 0;
     virtual void finish() = 0;
 protected:
     /**
@@ -97,7 +97,7 @@ public:
         QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
 public:
     void initialize();
-    void writeEdgeCluster(int cluster_index, QVector<QString> passed);
+    void writeEdgeCluster(int clusterIndex, QVector<QString> passed);
     void finish();
 };
 
@@ -114,7 +114,7 @@ public:
         QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
 public:
     void initialize();
-    void writeEdgeCluster(int cluster_index, QVector<QString> passed);
+    void writeEdgeCluster(int clusterIndex, QVector<QString> passed);
     void finish() {}
 };
 
@@ -131,7 +131,7 @@ public:
         QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
 public:
     void initialize();
-    void writeEdgeCluster(int cluster_index, QVector<QString> passed);
+    void writeEdgeCluster(int clusterIndex, QVector<QString> passed);
     void finish() {}
 };
 
@@ -148,7 +148,7 @@ public:
         QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
 public:
     void initialize();
-    void writeEdgeCluster(int cluster_index, QVector<QString> passed);
+    void writeEdgeCluster(int clusterIndex, QVector<QString> passed);
     void finish() {}
 };
 

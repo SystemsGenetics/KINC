@@ -38,50 +38,6 @@ NetworkWriter::NetworkWriter(
 
 
 /*!
- * Returns the name of the first gene in a gene pair. The gene pair must first
- * be set using the setPair() function.
- */
-QString NetworkWriter::getEdgeGene1() const
-{
-    EDEBUG_FUNC(this);
-
-    EMetaArray geneNames {_cmx->geneNames()};
-    return geneNames.at(_cmxPair.index().getX()).toString();
-}
-
-
-
-/*!
- * Returns the name of the second gene in a gene pair. The gene pair must first
- * be set using the setPair() function.
- */
-QString NetworkWriter::getEdgeGene2() const
-{
-    EDEBUG_FUNC(this);
-
-    EMetaArray geneNames {_cmx->geneNames()};
-    return geneNames.at(_cmxPair.index().getY()).toString();
-}
-
-
-
-/*!
- * Returns the similarity score of the cluster specified by
- * the cluster index.  The cluster must belong to the current gene pair.
- * The gene pair must first be set using the setPair() function.
- *
- * @param cluster_index  The index of the cluster in the gene pair.
- */
-float NetworkWriter::getEdgeSimilarity(int cluster_index) const
-{
-    EDEBUG_FUNC(this,cluster_index);
-
-    return _cmxPair.at(cluster_index);
-}
-
-
-
-/*!
  * Read the next gene pair and return the cluster size.
  */
 int NetworkWriter::readNext()
@@ -104,18 +60,60 @@ int NetworkWriter::readNext()
 
 
 /*!
+ * Returns the name of the first gene in a gene pair. The gene pair must first
+ * be set using the setPair() function.
+ */
+QString NetworkWriter::getEdgeGene1() const
+{
+    EDEBUG_FUNC(this);
+
+    return _cmx->geneNames().at(_cmxPair.index().getX()).toString();
+}
+
+
+
+/*!
+ * Returns the name of the second gene in a gene pair. The gene pair must first
+ * be set using the setPair() function.
+ */
+QString NetworkWriter::getEdgeGene2() const
+{
+    EDEBUG_FUNC(this);
+
+    return _cmx->geneNames().at(_cmxPair.index().getY()).toString();
+}
+
+
+
+/*!
+ * Returns the similarity score of the cluster specified by
+ * the cluster index.  The cluster must belong to the current gene pair.
+ * The gene pair must first be set using the setPair() function.
+ *
+ * @param clusterIndex  The index of the cluster in the gene pair.
+ */
+float NetworkWriter::getEdgeSimilarity(int clusterIndex) const
+{
+    EDEBUG_FUNC(this,clusterIndex);
+
+    return _cmxPair.at(clusterIndex);
+}
+
+
+
+/*!
  * Retrieves the sample string of the specified cluster
  * in the current gene pair. The gene pair must first
  * be set using the setPair() function.
  *
- * @param cluster_index The index of the cluster in the current gene pair.
+ * @param clusterIndex The index of the cluster in the current gene pair.
  *
  * \return  The sample string of characters indicating the role
  * of the sample in the cluster.
  */
-QString NetworkWriter::getEdgeSampleString(int cluster_index) const
+QString NetworkWriter::getEdgeSampleString(int clusterIndex) const
 {
-    EDEBUG_FUNC(this,cluster_index);
+    EDEBUG_FUNC(this,clusterIndex);
 
     // Initialize the sample string with zeros.
     QString sampleMask(_ccm->sampleSize(), '0');
@@ -126,7 +124,7 @@ QString NetworkWriter::getEdgeSampleString(int cluster_index) const
         // Write sample mask to string.
         for ( int i = 0; i < _ccm->sampleSize(); i++ )
         {
-            sampleMask[i] = '0' + _ccmPair.at(cluster_index, i);
+            sampleMask[i] = '0' + _ccmPair.at(clusterIndex, i);
         }
     }
 
@@ -172,14 +170,13 @@ QString NetworkWriter::getEdgeSampleString(int cluster_index) const
  * Retrieves the total number of samples in the specified cluster
  * in the current gene pair.
  *
- * @param sample_string  The sample string as returned by the
- * getEdgeSampleString function.
+ * @param sampleMask  The sample string as returned by getEdgeSampleString().
  */
-int NetworkWriter::getEdgeNumSamples(QString sample_string) const
+int NetworkWriter::getEdgeNumSamples(QString sampleMask) const
 {
-    EDEBUG_FUNC(this,cluster_index);
+    EDEBUG_FUNC(this,clusterIndex);
 
-    return sample_string.count("1");
+    return sampleMask.count("1");
 }
 
 
@@ -226,14 +223,12 @@ void NetworkWriter::setTestNames()
  * cluster of the current gene pair. The gene pair must first
  * be set using the setPair() function.
  *
- * @param cluster_index  The index of the cluster in the current gene pair.
- * @param test_index The index of the test to retrieve the value for.
+ * @param clusterIndex  The index of the cluster in the current gene pair.
+ * @param fullTestName The name of the test to retrieve the value for.
  */
-float NetworkWriter::getEdgeTestValue(int cluster_index, int test_index) const
+float NetworkWriter::getEdgeTestValue(int clusterIndex, const QString& fullTestName) const
 {
-    EDEBUG_FUNC(this,clsuster_index,test_index);
-
-    QString fullTestName = _testNames[test_index];
+    EDEBUG_FUNC(this,clusterIndex,fullTestName);
 
     for ( int i = 0; i < _csm->getTestCount(); i++ )
     {
@@ -241,12 +236,12 @@ float NetworkWriter::getEdgeTestValue(int cluster_index, int test_index) const
 
         if (fullTestName.contains("_pVal") && fullTestName.compare(testName + "_pVal") == 0)
         {
-            return static_cast<float>(_csmPair.at(cluster_index, i, "pvalue"));
+            return static_cast<float>(_csmPair.at(clusterIndex, i, "pvalue"));
         }
 
         if (fullTestName.contains("_RSqr") && fullTestName.compare(testName + "_RSqr") == 0)
         {
-            return  static_cast<float>(_csmPair.at(cluster_index, i, "r2"));
+            return static_cast<float>(_csmPair.at(clusterIndex, i, "r2"));
         }
     }
 
@@ -292,9 +287,9 @@ void FullNetworkWriter::initialize()
         << "\t" << "Samples";
 
     // Add each conditional test to the network file too.
-    for (int i = 0; i < _testNames.size(); ++i)
+    for (auto& testName : _testNames)
     {
-        _stream << "\t" << _testNames[i];
+        _stream << "\t" << testName;
     }
 
     _stream
@@ -308,20 +303,20 @@ void FullNetworkWriter::initialize()
  * gene pair to the full tab-delimited text output file. The gene pair
  * must first be set using the setPair() function.
  *
- * @param cluster_index The index of cluster in the current gene pair.
+ * @param clusterIndex The index of cluster in the current gene pair.
  * @param passed The set of tests that passed. (unused)
  */
-void FullNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString>)
+void FullNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString>)
 {
-    EDEBUG_FUNC(this,cluster_index);
+    EDEBUG_FUNC(this,clusterIndex);
 
     QString source = getEdgeGene1();
     QString target = getEdgeGene2();
-    float correlation = getEdgeSimilarity(cluster_index);
+    float correlation = getEdgeSimilarity(clusterIndex);
     QString interaction {"co"};
-    int cluster_num = cluster_index + 1;
-    QString sample_string = getEdgeSampleString(cluster_index);
-    int num_samples = getEdgeNumSamples(sample_string);
+    int cluster_num = clusterIndex + 1;
+    QString sampleMask = getEdgeSampleString(clusterIndex);
+    int numSamples = getEdgeNumSamples(sampleMask);
 
     _stream
         << source
@@ -329,14 +324,14 @@ void FullNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString>)
         << "\t" << correlation
         << "\t" << interaction
         << "\t" << cluster_num
-        << "\t" << num_samples
-        << "\t" << sample_string;
+        << "\t" << numSamples
+        << "\t" << sampleMask;
 
     // Add each conditional test to the network file too.
-    for (int i = 0; i < _testNames.size(); ++i)
+    for (auto& testName : _testNames)
     {
-        float test_value = getEdgeTestValue(cluster_index, i);
-        _stream << "\t" << test_value;
+        float testValue = getEdgeTestValue(clusterIndex, testName);
+        _stream << "\t" << testValue;
     }
 
     _stream
@@ -384,20 +379,20 @@ void TidyNetworkWriter::initialize()
  * gene pair to the full tab-delimited text output file. The gene pair
  * must first be set using the setPair() function.
  *
- * @param cluster_index The index of cluster in the current gene pair.
+ * @param clusterIndex The index of cluster in the current gene pair.
  * @param passed the set of tests that passed.
  */
-void TidyNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString> passed)
+void TidyNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString> passed)
 {
-    EDEBUG_FUNC(this,cluster_index,passed);
+    EDEBUG_FUNC(this,clusterIndex,passed);
 
     QString source = getEdgeGene1();
     QString target = getEdgeGene2();
-    float correlation = getEdgeSimilarity(cluster_index);
+    float correlation = getEdgeSimilarity(clusterIndex);
     QString interaction {"co"};
-    int cluster_num = cluster_index + 1;
-    QString sample_string = getEdgeSampleString(cluster_index);
-    int num_samples = getEdgeNumSamples(sample_string);
+    int cluster_num = clusterIndex + 1;
+    QString sampleMask = getEdgeSampleString(clusterIndex);
+    int numSamples = getEdgeNumSamples(sampleMask);
 
     // If there are no tests then we are here becaues the cluster
     // passed the correlation threshold test, so write it out.
@@ -409,38 +404,36 @@ void TidyNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString> pas
             << "\t" << correlation
             << "\t" << interaction
             << "\t" << cluster_num
-            << "\t" << num_samples
-            << "\t" << sample_string
+            << "\t" << numSamples
+            << "\t" << sampleMask
             << "\n";
     }
 
     // Otherwise, write out an edge for each passed test.
     else
     {
-        for (int i = 0; i < passed.size(); ++i)
+        for (auto& testName : passed)
         {
-            QString test_name = passed[i];
-            int pVali = _testNames.lastIndexOf(test_name + "_pVal");
-            int rSqri = _testNames.lastIndexOf(test_name + "_RSqr");
-            float pVal = qQNaN();
-            float rSqr = qQNaN();
-            if (pVali > -1)
-            {
-                pVal = getEdgeTestValue(cluster_index, pVali);
-            }
-            if (rSqri > -1)
-            {
-                rSqr = getEdgeTestValue(cluster_index, rSqri);
-            }
+            int pVali = _testNames.lastIndexOf(testName + "_pVal");
+            int rSqri = _testNames.lastIndexOf(testName + "_RSqr");
+
+            float pVal = (pVali != -1)
+                ? getEdgeTestValue(clusterIndex, _testNames[pVali])
+                : qQNaN();
+
+            float rSqr = (rSqri != -1)
+                ? getEdgeTestValue(clusterIndex, _testNames[rSqri])
+                : qQNaN();
+
             _stream
                 << source
                 << "\t" << target
                 << "\t" << correlation
                 << "\t" << interaction
                 << "\t" << cluster_num
-                << "\t" << num_samples
-                << "\t" << sample_string
-                << "\t" << test_name
+                << "\t" << numSamples
+                << "\t" << sampleMask
+                << "\t" << testName
                 << "\t" << pVal
                 << "\t" << rSqr
                 << "\n";
@@ -475,17 +468,17 @@ void MinimalNetworkWriter::initialize()
  * gene pair to the minimal tab-delimited text output file. The gene pair
  * must first be set using the setPair() function.
  *
- * @param cluster_index The index of cluster in the current gene pair.
+ * @param clusterIndex The index of cluster in the current gene pair.
  * @param passed The set of tests that passed. (unused)
  */
-void MinimalNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString>)
+void MinimalNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString>)
 {
-    EDEBUG_FUNC(this,cluster_index);
+    EDEBUG_FUNC(this,clusterIndex);
 
     QString source = getEdgeGene1();
     QString target = getEdgeGene2();
-    float correlation = getEdgeSimilarity(cluster_index);
-    int cluster_num = cluster_index + 1;
+    float correlation = getEdgeSimilarity(clusterIndex);
+    int cluster_num = clusterIndex + 1;
 
     _stream
         << source
@@ -543,20 +536,20 @@ void GMLNetworkWriter::initialize()
  * gene pair to the GraphML output file. The gene pair
  * must first be set using the setPair() function.
  *
- * @param cluster_index The index of cluster in the current gene pair.
+ * @param clusterIndex The index of cluster in the current gene pair.
  * @param passed The set of tests that passed. (unused)
  */
-void GMLNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString>)
+void GMLNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString>)
 {
-    EDEBUG_FUNC(this,cluster_index);
+    EDEBUG_FUNC(this,clusterIndex);
 
     QString source = getEdgeGene1();
     QString target = getEdgeGene2();
-    float correlation = getEdgeSimilarity(cluster_index);
+    float correlation = getEdgeSimilarity(clusterIndex);
     QString interaction {"co"};
-    int cluster_num = cluster_index + 1;
-    QString sample_string = getEdgeSampleString(cluster_index);
-    int num_samples = getEdgeNumSamples(sample_string);
+    int cluster_num = clusterIndex + 1;
+    QString sampleMask = getEdgeSampleString(clusterIndex);
+    int numSamples = getEdgeNumSamples(sampleMask);
 
     // If we've never seen this node before then add it to
     // our list and to the output file.
@@ -581,16 +574,16 @@ void GMLNetworkWriter::writeEdgeCluster(int cluster_index, QVector<QString>)
             << "      <data key=\"sc\">" << correlation << "</data>\n"
             << "      <data key=\"int\">co</data>\n"
             << "      <data key=\"ci\">" << cluster_num << "</data>\n"
-            << "      <data key=\"cs\">" << num_samples << "</data>\n"
-            << "      <data key=\"s\">" << sample_string << "</data>\n";
+            << "      <data key=\"cs\">" << numSamples << "</data>\n"
+            << "      <data key=\"s\">" << sampleMask << "</data>\n";
 
     // Add each conditional test to the network file too.
     for (int i = 0; i < _testNames.size(); ++i)
     {
-        float test_value = getEdgeTestValue(cluster_index, i);
+        float testValue = getEdgeTestValue(clusterIndex, _testNames[i]);
 
         _stream
-            << "      <data key=\"t" << i << "\">" << test_value << "</data>\n";
+            << "      <data key=\"t" << i << "\">" << testValue << "</data>\n";
     }
 
     // Finish out the edge.
