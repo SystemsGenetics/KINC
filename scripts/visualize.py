@@ -22,7 +22,7 @@ def plot_clusdist(netlist, output_dir):
 
 
 def plot_corrdist(netlist, output_dir):
-	sns.distplot(netlist["sc"], bins=np.arange(-1, 1.01, 0.01), kde=False)
+	sns.distplot(netlist["Similarity_Score"], bins=np.arange(-1, 1.01, 0.01), kde=False)
 	plt.title("Correlation Distribution")
 	plt.xlabel("Correlation")
 	plt.ylabel("Frequency")
@@ -36,7 +36,7 @@ def plot_coverage(netlist, output_dir):
 	coverage = np.zeros(len(thresholds))
 
 	for i, threshold in enumerate(thresholds):
-		edges = netlist[abs(netlist["sc"]) >= threshold]
+		edges = netlist[abs(netlist["Similarity_Score"]) >= threshold]
 		genes = set(edges["Source"]).union(set(edges["Target"]))
 		coverage[i] = len(genes)
 
@@ -63,7 +63,7 @@ def plot_pairwise(emx, netlist, output_dir, limits=None, range_args=None):
 		edge = netlist.iloc[idx]
 		x = edge["Source"]
 		y = edge["Target"]
-		k = edge["Cluster"]
+		k = edge["Cluster_Index"]
 
 		print("%-20s %-20s %d" % (x, y, k))
 
