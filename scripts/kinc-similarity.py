@@ -169,7 +169,7 @@ if __name__ == "__main__":
 	pprint.pprint(vars(args))
 
 	# load data
-	emx = pd.read_csv(args.input, sep="\t")
+	emx = pd.read_csv(args.input, sep="\t", index_col=0)
 	cmx = open(args.output, "w");
 
 	# iterate through each pair
