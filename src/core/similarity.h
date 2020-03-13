@@ -131,6 +131,10 @@ private:
      */
     float _minExpression {-std::numeric_limits<float>::infinity()};
     /*!
+     * The maximum expression value required to include a sample.
+     */
+    float _maxExpression {+std::numeric_limits<float>::infinity()};
+    /*!
      * The minimum number of clusters to use in the clustering model.
      */
     qint8 _minClusters {1};

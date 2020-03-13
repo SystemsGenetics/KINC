@@ -86,6 +86,7 @@ EAbstractAnalyticInput::Type Similarity::Input::type(int index) const
     case ClusteringType: return Type::Selection;
     case CorrelationType: return Type::Selection;
     case MinExpression: return Type::Double;
+    case MaxExpression: return Type::Double;
     case MinSamples: return Type::Integer;
     case MinClusters: return Type::Integer;
     case MaxClusters: return Type::Integer;
@@ -169,6 +170,17 @@ QVariant Similarity::Input::data(int index, Role role) const
         case Role::Title: return tr("Minimum Expression:");
         case Role::WhatsThis: return tr("Minimum threshold for a sample to be included in a gene pair.");
         case Role::Default: return -std::numeric_limits<float>::infinity();
+        case Role::Minimum: return -std::numeric_limits<float>::infinity();
+        case Role::Maximum: return +std::numeric_limits<float>::infinity();
+        default: return QVariant();
+        }
+    case MaxExpression:
+        switch (role)
+        {
+        case Role::CommandLineName: return QString("maxexpr");
+        case Role::Title: return tr("Maximum Expression:");
+        case Role::WhatsThis: return tr("Maximum threshold for a sample to be included in a gene pair.");
+        case Role::Default: return +std::numeric_limits<float>::infinity();
         case Role::Minimum: return -std::numeric_limits<float>::infinity();
         case Role::Maximum: return +std::numeric_limits<float>::infinity();
         default: return QVariant();
@@ -316,6 +328,9 @@ void Similarity::Input::set(int index, const QVariant& value)
         break;
     case MinExpression:
         _base->_minExpression = value.toFloat();
+        break;
+    case MaxExpression:
+        _base->_maxExpression = value.toFloat();
         break;
     case MinSamples:
         _base->_minSamples = value.toInt();

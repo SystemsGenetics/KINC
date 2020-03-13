@@ -22,6 +22,7 @@ public:
         ,ClusteringType
         ,CorrelationType
         ,MinExpression
+        ,MaxExpression
         ,MinSamples
         ,MinClusters
         ,MaxClusters

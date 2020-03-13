@@ -36,6 +36,7 @@ Similarity::CUDA::Kernel::Kernel(::CUDA::Program* program):
  * @param sampleSize
  * @param in_index
  * @param minExpression
+ * @param maxExpression
  * @param minSamples
  * @param minClusters
  * @param maxClusters
@@ -69,7 +70,8 @@ Similarity::CUDA::Kernel::Kernel(::CUDA::Program* program):
     ::CUDA::Buffer<float>* expressions,
     int sampleSize,
     ::CUDA::Buffer<int2>* in_index,
-    int minExpression,
+    float minExpression,
+    float maxExpression,
     int minSamples,
     char minClusters,
     char maxClusters,
@@ -105,6 +107,7 @@ Similarity::CUDA::Kernel::Kernel(::CUDA::Program* program):
         sampleSize,
         in_index,
         minExpression,
+        maxExpression,
         minSamples,
         minClusters,
         maxClusters,
@@ -136,6 +139,7 @@ Similarity::CUDA::Kernel::Kernel(::CUDA::Program* program):
     setArgument(SampleSize, sampleSize);
     setBuffer(InIndex, in_index);
     setArgument(MinExpression, minExpression);
+    setArgument(MaxExpression, maxExpression);
     setArgument(MinSamples, minSamples);
     setArgument(MinClusters, minClusters);
     setArgument(MaxClusters, maxClusters);

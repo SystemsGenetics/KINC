@@ -173,8 +173,14 @@ int Similarity::Serial::fetchPair(const Pairwise::Index& index, QVector<qint8>& 
             labels[i] = -9;
         }
 
-        // label samples which fall below the expression threshold
+        // label samples which are below the minimum expression threshold
         else if ( x[i] < _base->_minExpression || y[i] < _base->_minExpression )
+        {
+            labels[i] = -6;
+        }
+
+        // label samples which are above the maximum expression threshold
+        else if ( x[i] > _base->_maxExpression || y[i] > _base->_maxExpression )
         {
             labels[i] = -6;
         }

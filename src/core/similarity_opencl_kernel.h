@@ -24,6 +24,7 @@ public:
         ,SampleSize
         ,InIndex
         ,MinExpression
+        ,MaxExpression
         ,MinSamples
         ,MinClusters
         ,MaxClusters
@@ -58,7 +59,8 @@ public:
         ::OpenCL::Buffer<cl_float>* expressions,
         cl_int sampleSize,
         ::OpenCL::Buffer<cl_int2>* in_index,
-        cl_int minExpression,
+        cl_float minExpression,
+        cl_float maxExpression,
         cl_int minSamples,
         cl_char minClusters,
         cl_char maxClusters,

@@ -37,6 +37,7 @@ Similarity::OpenCL::Kernel::Kernel(::OpenCL::Program* program, QObject* parent):
  * @param sampleSize
  * @param in_index
  * @param minExpression
+ * @param maxExpression
  * @param minSamples
  * @param minClusters
  * @param maxClusters
@@ -70,7 +71,8 @@ Similarity::OpenCL::Kernel::Kernel(::OpenCL::Program* program, QObject* parent):
     ::OpenCL::Buffer<cl_float>* expressions,
     cl_int sampleSize,
     ::OpenCL::Buffer<cl_int2>* in_index,
-    cl_int minExpression,
+    cl_float minExpression,
+    cl_float maxExpression,
     cl_int minSamples,
     cl_char minClusters,
     cl_char maxClusters,
@@ -106,6 +108,7 @@ Similarity::OpenCL::Kernel::Kernel(::OpenCL::Program* program, QObject* parent):
         sampleSize,
         in_index,
         minExpression,
+        maxExpression,
         minSamples,
         minClusters,
         maxClusters,
@@ -140,6 +143,7 @@ Similarity::OpenCL::Kernel::Kernel(::OpenCL::Program* program, QObject* parent):
     setArgument(SampleSize, sampleSize);
     setBuffer(InIndex, in_index);
     setArgument(MinExpression, minExpression);
+    setArgument(MaxExpression, maxExpression);
     setArgument(MinSamples, minSamples);
     setArgument(MinClusters, minClusters);
     setArgument(MaxClusters, maxClusters);

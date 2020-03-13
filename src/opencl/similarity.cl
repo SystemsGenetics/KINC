@@ -35,6 +35,7 @@ typedef enum
  * @param sampleSize
  * @param in_index
  * @param minExpression
+ * @param maxExpression
  * @param minSamples
  * @param minClusters
  * @param maxClusters
@@ -66,7 +67,8 @@ void Similarity_compute(
     __global const float * expressions,
     int                    sampleSize,
     __global const int2 *  in_index,
-    int                    minExpression,
+    float                  minExpression,
+    float                  maxExpression,
     int                    minSamples,
     char                   minClusters,
     char                   maxClusters,
@@ -129,6 +131,7 @@ void Similarity_compute(
         x, y,
         sampleSize,
         minExpression,
+        maxExpression,
         labels
     );
 

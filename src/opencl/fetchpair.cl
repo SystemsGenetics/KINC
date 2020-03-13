@@ -5,7 +5,7 @@
 
 /*!
  * Compute the initial labels for a gene pair in an expression matrix. Samples
- * with missing values and samples that fall below the expression threshold are
+ * with missing values and samples that are outside the expression thresholds are
  * labeled as such, all other samples are labeled as cluster 0. The number of
  * clean samples is returned.
  *
@@ -13,13 +13,15 @@
  * @param y
  * @param sampleSize
  * @param minExpression
+ * @param maxExpression
  * @param labels
  */
 int fetchPair(
     __global const float *x,
     __global const float *y,
     int sampleSize,
-    int minExpression,
+    float minExpression,
+    float maxExpression,
     __global char *labels)
 {
     // label the pairwise samples
@@ -33,8 +35,14 @@ int fetchPair(
             labels[i] = -9;
         }
 
-        // label samples which fall below the expression threshold
+        // label samples which are below the minimum expression threshold
         else if ( x[i] < minExpression || y[i] < minExpression )
+        {
+            labels[i] = -6;
+        }
+
+        // label samples which are above the maximum expression threshold
+        else if ( x[i] > maxExpression || y[i] > maxExpression )
         {
             labels[i] = -6;
         }

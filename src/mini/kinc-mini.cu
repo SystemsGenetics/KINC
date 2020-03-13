@@ -222,6 +222,7 @@ int main(int argc, char **argv)
 	int localWorkSize {32};
 	int minSamples {30};
 	float minExpression {-INFINITY};
+	float maxExpression {+INFINITY};
 	ClusteringMethod clusMethod {ClusteringMethod_GMM};
 	CorrelationMethod corrMethod {CorrelationMethod_Spearman};
 	int minClusters {1};
@@ -288,6 +289,7 @@ int main(int argc, char **argv)
 			sampleSize,
 			in_index,
 			minExpression,
+			maxExpression,
 			minSamples,
 			minClusters,
 			maxClusters,

@@ -23,6 +23,7 @@ if [[ ${DO_SIMILARITY} = 1 ]]; then
 	CLUSMETHOD="gmm"
 	CORRMETHOD="spearman"
 	MINEXPR="-inf"
+	MAXEXPR="+inf"
 	MINCLUS=1
 	MAXCLUS=5
 	CRITERION="bic"
@@ -37,6 +38,7 @@ if [[ ${DO_SIMILARITY} = 1 ]]; then
 		--clusmethod ${CLUSMETHOD} \
 		--corrmethod ${CORRMETHOD} \
 		--minexpr=${MINEXPR} \
+		--maxexpr=${MAXEXPR} \
 		--minclus ${MINCLUS} \
 		--maxclus ${MAXCLUS} \
 		--criterion ${CRITERION} \

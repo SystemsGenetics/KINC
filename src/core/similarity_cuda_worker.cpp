@@ -103,6 +103,7 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::CUDA::Worker::execute(const 
             _base->_input->sampleSize(),
             &_buffers.in_index,
             _base->_minExpression,
+            _base->_maxExpression,
             _base->_minSamples,
             _base->_minClusters,
             _base->_maxClusters,
