@@ -21,6 +21,28 @@ void CCMatrix::Pair::addCluster(int amount) const
 
 
 /*!
+ * Returns the sample string for the given cluster.
+ */
+QString CCMatrix::Pair::sampleString(int cluster) const
+{
+    EDEBUG_FUNC(this, cluster);
+
+    // Initialize the sample string with zeros.
+    QString sampleMask(_cMatrix->sampleSize(), '0');
+
+    // If cluster data exists then use it.
+    if ( clusterSize() > 0 )
+    {
+        // Write sample mask to string.
+        for ( int i = 0; i < _cMatrix->sampleSize(); i++ )
+        {
+            sampleMask[i] = '0' + at(cluster, i);
+        }
+    }
+    return sampleMask;
+}
+
+/*!
  * Return the string representation of this pair, which is a comma-delimited
  * string of each sample mask in the pair.
  */

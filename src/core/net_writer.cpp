@@ -128,11 +128,7 @@ QString NetWriter::getEdgeSampleString(int cluster_index)
     // If cluster data exists then use it.
     if ( _ccmPair.clusterSize() > 0 )
     {
-        // Write sample mask to string.
-        for ( int i = 0; i < _ccm->sampleSize(); i++ )
-        {
-            sampleMask[i] = '0' + _ccmPair.at(cluster_index, i);
-        }
+        sampleMask = _ccmPair.sampleString(cluster_index);
     }
 
     // Otherwise use expression data if provided.

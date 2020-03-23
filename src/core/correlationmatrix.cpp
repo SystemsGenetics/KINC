@@ -64,7 +64,18 @@ std::vector<CorrelationMatrix::RawPair> CorrelationMatrix::dumpRawData() const
 
     // create list of raw pairs
     std::vector<RawPair> pairs;
-    pairs.reserve(size());
+    try
+    {
+      pairs.reserve(size());
+    }
+    catch (std::bad_alloc &e)
+    {
+        E_MAKE_EXCEPTION(e2);
+        e2.setTitle(tr("Allocation of Correlation Matrix"));
+        e2.setDetails(tr("Could not allocate memory for the correlation matrix."));
+        throw e2;
+    }
+
 
     // iterate through all pairs
     Pair pair(this);

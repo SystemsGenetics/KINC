@@ -306,7 +306,7 @@ int ConditionalTest::Serial::test(
 
 
 /*!
- * Run the first binomial test for given data.
+ * Run the hypergeometric test for given data.
  *
  * @return Pvalue corrosponding to the test.
  */
@@ -323,6 +323,11 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
     // of obtaining k elements of “type 1” in t samples from the population.
 
     int sampleSize =  _base->_emx->sampleSize();
+
+    // These lines are here for debugging. They can be commented out for production.
+    // QString gene1 = _base->_ccm->geneNames().at(ccmPair.index().getX()).toString();
+    // QString gene2 = _base->_ccm->geneNames().at(ccmPair.index().getY()).toString();
+    // QString sampleStr = ccmPair.sampleString(clusterIndex);
 
     // Population contains n1 elements of Type 1.
     int n1 = _catCount;

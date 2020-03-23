@@ -31,6 +31,7 @@ public:
     QString toString() const;
     const qint8& at(int cluster, int sample) const { return _sampleMasks.at(cluster).at(sample); }
     qint8& at(int cluster, int sample) { return _sampleMasks[cluster][sample]; }
+    QString sampleString(int cluster) const;
 private:
     virtual void writeCluster(EDataStream& stream, int cluster);
     virtual void readCluster(const EDataStream& stream, int cluster) const;
