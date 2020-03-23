@@ -12,9 +12,9 @@ void Customizer::setupDataMenu(QMenu &menu, QObject *parent, const std::function
     EAbstractDataFactory& factory {DataFactory::instance()};
     for (quint16 i = 0; i < factory.size() ;++i)
     {
-       QAction* action {new QAction(factory.name(i),parent)};
-       QObject::connect(action,&QAction::triggered,[callback,i]{ callback(i); });
-       menu.addAction(action);
+        QAction* action {new QAction(factory.name(i),parent)};
+        QObject::connect(action,&QAction::triggered,[callback,i]{ callback(i); });
+        menu.addAction(action);
     }
 }
 
@@ -25,9 +25,9 @@ void Customizer::setupAnalyticMenu(QMenu &menu, QObject *parent, const std::func
     EAbstractAnalyticFactory& factory {AnalyticFactory::instance()};
     for (quint16 i = 0; i < factory.size() ;++i)
     {
-       QAction* action {new QAction(factory.name(i),parent)};
-       QObject::connect(action,&QAction::triggered,[callback,i]{ callback(i); });
-       menu.addAction(action);
+        QAction* action {new QAction(factory.name(i),parent)};
+        QObject::connect(action,&QAction::triggered,[callback,i]{ callback(i); });
+        menu.addAction(action);
     }
 }
 

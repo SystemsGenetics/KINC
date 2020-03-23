@@ -30,12 +30,12 @@ lexers["php-annotations"] = PhpLexer(startinline=True, linenos=1)
 # -- Project information -----------------------------------------------------
 
 project = u'KINC'
-author = u''
+author = u'Ben Shealy, Josh Burns, Stephen Ficklin et al'
 
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'v3.3.0'
+release = u'v3.4.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -100,8 +100,8 @@ html_static_path = ['_static']
 # We add the stylesheet this way so that it's loaded after the default.css
 # See https://docs.readthedocs.io/en/latest/guides/adding-custom-css.html
 def setup(app):
-    app.add_stylesheet('theme_overrides.css');  
-    
+    app.add_stylesheet('theme_overrides.css');
+
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 #
@@ -142,20 +142,26 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (master_doc, 'KINC.tex', u'KINC Documentation',
-     u'Ben Sherman, Josh Burns, Stephen Ficklin et al', 'manual'),
-]
+latex_documents = [(
+    master_doc,
+    'KINC.tex',
+    u'KINC Documentation',
+    author,
+    'manual'
+)]
 
 
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'kinc', u'KINC Documentation',
-     [author], 1)
-]
+man_pages = [(
+    master_doc,
+    'kinc',
+    u'KINC Documentation',
+    [author],
+    1
+)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -163,8 +169,12 @@ man_pages = [
 # Grouping the document tree into Texinfo files. List of tuples
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
-texinfo_documents = [
-    (master_doc, 'KINC', u'KINC Documentation',
-     author, 'KINC', 'One line description of project.',
-     'Miscellaneous'),
-]
+texinfo_documents = [(
+    master_doc,
+    'KINC',
+    u'KINC Documentation',
+    author,
+    'KINC',
+    'One line description of project.',
+    'Miscellaneous'
+)]

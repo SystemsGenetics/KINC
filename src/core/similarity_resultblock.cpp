@@ -2,9 +2,6 @@
 
 
 
-
-
-
 /*!
  * Construct a new block with the given index and starting pairwise index.
  *
@@ -12,14 +9,11 @@
  * @param start
  */
 Similarity::ResultBlock::ResultBlock(int index, qint64 start):
-   EAbstractAnalyticBlock(index),
-   _start(start)
+    EAbstractAnalyticBlock(index),
+    _start(start)
 {
-   EDEBUG_FUNC(this,index,start);
+    EDEBUG_FUNC(this,index,start);
 }
-
-
-
 
 
 
@@ -30,13 +24,10 @@ Similarity::ResultBlock::ResultBlock(int index, qint64 start):
  */
 void Similarity::ResultBlock::append(const Pair& pair)
 {
-   EDEBUG_FUNC(this,&pair);
+    EDEBUG_FUNC(this,&pair);
 
-   _pairs.append(pair);
+    _pairs.append(pair);
 }
-
-
-
 
 
 
@@ -47,21 +38,18 @@ void Similarity::ResultBlock::append(const Pair& pair)
  */
 void Similarity::ResultBlock::write(QDataStream& stream) const
 {
-   EDEBUG_FUNC(this,&stream);
+    EDEBUG_FUNC(this,&stream);
 
-   stream << _start;
-   stream << _pairs.size();
+    stream << _start;
+    stream << _pairs.size();
 
-   for ( auto& pair : _pairs )
-   {
-      stream << pair.K;
-      stream << pair.labels;
-      stream << pair.correlations;
-   }
+    for ( auto& pair : _pairs )
+    {
+        stream << pair.K;
+        stream << pair.labels;
+        stream << pair.correlations;
+    }
 }
-
-
-
 
 
 
@@ -72,19 +60,19 @@ void Similarity::ResultBlock::write(QDataStream& stream) const
  */
 void Similarity::ResultBlock::read(QDataStream& stream)
 {
-   EDEBUG_FUNC(this,&stream);
+    EDEBUG_FUNC(this,&stream);
 
-   stream >> _start;
+    stream >> _start;
 
-   int size;
-   stream >> size;
+    int size;
+    stream >> size;
 
-   _pairs.resize(size);
+    _pairs.resize(size);
 
-   for ( auto& pair : _pairs )
-   {
-      stream >> pair.K;
-      stream >> pair.labels;
-      stream >> pair.correlations;
-   }
+    for ( auto& pair : _pairs )
+    {
+        stream >> pair.K;
+        stream >> pair.labels;
+        stream >> pair.correlations;
+    }
 }

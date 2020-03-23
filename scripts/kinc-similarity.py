@@ -20,7 +20,7 @@ def create_kmeans(n_clusters):
 
 
 
-def fetch_pair(emx, i, j, min_expression):
+def fetch_pair(emx, i, j, min_expression, max_expression):
 	# extract pairwise data
 	X = emx.iloc[[i, j]].values.T
 
@@ -29,6 +29,7 @@ def fetch_pair(emx, i, j, min_expression):
 
 	# mark thresholded samples
 	y[(X[:, 0] < min_expression) | (X[:, 1] < min_expression)] = -6
+	y[(X[:, 0] > max_expression) | (X[:, 1] > max_expression)] = -6
 
 	# mark nan samples
 	y[np.isnan(X[:, 0]) | np.isnan(X[:, 1])] = -9
@@ -152,6 +153,7 @@ if __name__ == "__main__":
 	parser.add_argument("--clusmethod", help="clustering method", default="none", choices=["none", "gmm", "kmeans"])
 	parser.add_argument("--corrmethod", help="correlation method", default="pearson", choices=["kendall", "pearson", "spearman"])
 	parser.add_argument("--minexpr", help="minimum expression threshold", type=float, default=-float("inf"))
+	parser.add_argument("--maxexpr", help="maximum expression threshold", type=float, default=+float("inf"))
 	parser.add_argument("--minsamp", help="minimum sample size", type=int, default=30)
 	parser.add_argument("--minclus", help="minimum clusters", type=int, default=1)
 	parser.add_argument("--maxclus", help="maximum clusters", type=int, default=5)
@@ -169,14 +171,14 @@ if __name__ == "__main__":
 	pprint.pprint(vars(args))
 
 	# load data
-	emx = pd.read_csv(args.input, sep="\t")
+	emx = pd.read_csv(args.input, sep="\t", index_col=0)
 	cmx = open(args.output, "w");
 
 	# iterate through each pair
 	for i in range(len(emx.index)):
 		for j in range(i):
 			# fetch pairwise input data
-			X, y = fetch_pair(emx, i, j, args.minexpr)
+			X, y = fetch_pair(emx, i, j, args.minexpr, args.maxexpr)
 
 			# remove pre-clustering outliers
 			if args.preout:

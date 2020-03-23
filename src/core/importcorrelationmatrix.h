@@ -22,51 +22,51 @@
  */
 class ImportCorrelationMatrix : public EAbstractAnalytic
 {
-   Q_OBJECT
+    Q_OBJECT
 public:
-   class Input;
-   virtual int size() const override final;
-   virtual void process(const EAbstractAnalyticBlock* result) override final;
-   virtual EAbstractAnalyticInput* makeInput() override final;
-   virtual void initialize();
+    class Input;
+    virtual int size() const override final;
+    virtual void process(const EAbstractAnalyticBlock* result) override final;
+    virtual EAbstractAnalyticInput* makeInput() override final;
+    virtual void initialize();
 private:
-   /**
-    * Workspace variables to read from the input file.
-    */
-   QTextStream _stream;
-   int _numLines {0};
-   Pairwise::Index _index {0};
-   CCMatrix::Pair _ccmPair;
-   CorrelationMatrix::Pair _cmxPair;
-   /*!
-    * Pointer to the input text file.
-    */
-   QFile* _input {nullptr};
-   /*!
-    * Pointer to the output cluster matrix.
-    */
-   CCMatrix* _ccm {nullptr};
-   /*!
-    * Pointer to the output correlation matrix.
-    */
-   CorrelationMatrix* _cmx {nullptr};
-   /*!
-    * The number of genes in the correlation matrix.
-    */
-   qint32 _geneSize {0};
-   /*!
-    * The maximum number of clusters allowed in a single pair of the
-    * correlation matrix.
-    */
-   qint32 _maxClusterSize {1};
-   /*!
-    * The number of samples in the sample masks of the cluster matrix.
-    */
-   qint32 _sampleSize {0};
-   /*!
-    * The name of the correlation used in the correlation matrix.
-    */
-   QString _correlationName;
+    /**
+     * Workspace variables to read from the input file.
+     */
+    QTextStream _stream;
+    int _numLines {0};
+    Pairwise::Index _index {0};
+    CCMatrix::Pair _ccmPair;
+    CorrelationMatrix::Pair _cmxPair;
+    /*!
+     * Pointer to the input text file.
+     */
+    QFile* _input {nullptr};
+    /*!
+     * Pointer to the output cluster matrix.
+     */
+    CCMatrix* _ccm {nullptr};
+    /*!
+     * Pointer to the output correlation matrix.
+     */
+    CorrelationMatrix* _cmx {nullptr};
+    /*!
+     * The number of genes in the correlation matrix.
+     */
+    qint32 _geneSize {0};
+    /*!
+     * The maximum number of clusters allowed in a single pair of the
+     * correlation matrix.
+     */
+    qint32 _maxClusterSize {1};
+    /*!
+     * The number of samples in the sample masks of the cluster matrix.
+     */
+    qint32 _sampleSize {0};
+    /*!
+     * The name of the correlation used in the correlation matrix.
+     */
+    QString _correlationName;
 };
 
 

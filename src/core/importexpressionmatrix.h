@@ -17,51 +17,56 @@
  */
 class ImportExpressionMatrix : public EAbstractAnalytic
 {
-   Q_OBJECT
+    Q_OBJECT
 public:
-   class Input;
-   virtual int size() const override final;
-   virtual void process(const EAbstractAnalyticBlock* result) override final;
-   virtual EAbstractAnalyticInput* makeInput() override final;
-   virtual void initialize();
+    class Input;
+    virtual int size() const override final;
+    virtual void process(const EAbstractAnalyticBlock* result) override final;
+    virtual EAbstractAnalyticInput* makeInput() override final;
+    virtual void initialize();
 private:
-   /**
-    * Structure used to load gene expression data
-    */
-   struct Gene
-   {
-      Gene() = default;
-      Gene(int size)
-      {
-         expressions.resize(size);
-      }
+    /**
+     * Structure used to load gene expression data
+     */
+    struct Gene
+    {
+        Gene() = default;
+        Gene(int size)
+        {
+            expressions.resize(size);
+        }
 
-      QVector<float> expressions;
-   };
-   /**
-    * Workspace variables to read from the input file.
-    */
-   QTextStream _stream;
-   int _numLines {0};
-   QVector<Gene> _genes;
-   QStringList _geneNames;
-   QStringList _sampleNames;
-   /*!
-    * Pointer to the input text file.
-    */
-   QFile* _input {nullptr};
-   /*!
-    * Pointer to the output expression matrix.
-    */
-   ExpressionMatrix* _output {nullptr};
-   /*!
-    * The string token used to represent NAN values.
-    */
-   QString _nanToken {"NA"};
-   /*!
-    * The number of samples to read.
-    */
-   qint32 _sampleSize {0};
+        QVector<float> expressions;
+    };
+    /**
+     * Workspace variables to read from the input file.
+     */
+    QTextStream _stream;
+    int _numLines {0};
+    QVector<Gene> _genes;
+    QStringList _geneNames;
+    QStringList _sampleNames;
+    /*!
+     * Pointer to the input text file.
+     */
+    QFile* _input {nullptr};
+    /*!
+     * Pointer to the output expression matrix.
+     */
+    ExpressionMatrix* _output {nullptr};
+    /*!
+     * The string token used to represent NAN values.
+     */
+    QString _nanToken {"NA"};
+    /*!
+     * The number of samples to read.
+     */
+    qint32 _sampleSize {0};
+    /*!
+     * Whether the input expression matrix has a "RowID" entry that should
+     * be ignored.
+     */
+    bool _containsRowID {false};
 };
 
 

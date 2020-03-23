@@ -13,6 +13,7 @@
         <file>opencl/linalg.cl</file>
         <file>opencl/outlier.cl</file>
         <file>opencl/pearson.cl</file>
+        <file>opencl/similarity.cl</file>
         <file>opencl/sort.cl</file>
         <file>opencl/spearman.cl</file>
     </qresource>

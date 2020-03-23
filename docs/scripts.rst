@@ -10,7 +10,7 @@ The ``kinc.sh`` script can run each KINC analytic in a customizable sequence on 
 
 .. code:: bash
 
-   scripts/kinc.sh serial 1 GEM.txt
+  scripts/kinc.sh serial 1 GEM.txt
 
 kinc-py.sh
 ----------
@@ -19,7 +19,7 @@ The ``kinc-py.sh`` script does the same thing as ``kinc.sh`` but with Python scr
 
 .. code:: bash
 
-   scripts/kinc-py.sh GEM.txt
+  scripts/kinc-py.sh GEM.txt
 
 make-input-data.py
 ------------------
@@ -28,7 +28,7 @@ The ``make-input-data.py`` script creates a "fake" GEM given the number of genes
 
 .. code:: bash
 
-   python scripts/make-input-data.py
+  python scripts/make-input-data.py
 
 validate.py
 -----------
@@ -37,7 +37,7 @@ The ``validate.py`` script attempts to measure the difference between two simila
 
 .. code:: bash
 
-   python scripts/validate.py GEM1.cmx.txt GEM2.cmx.txt
+  python scripts/validate.py GEM1.cmx.txt GEM2.cmx.txt
 
 visualize.py
 ------------
@@ -46,4 +46,4 @@ The ``visualize.py`` script can create several useful visualizations of a networ
 
 .. code:: bash
 
-   python scripts/visualize.py --emx GEM.txt --netlist GEM.coexpnet.txt --corrdist
+  python scripts/visualize.py --emx GEM.txt --netlist GEM.coexpnet.txt --corrdist

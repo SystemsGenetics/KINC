@@ -11,17 +11,17 @@
 class CCMatrix::Model : public QAbstractTableModel
 {
 public:
-   Model(CCMatrix* matrix);
+    Model(CCMatrix* matrix);
 public:
-   virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const override final;
-   virtual int rowCount(const QModelIndex&) const override final;
-   virtual int columnCount(const QModelIndex&) const override final;
-   virtual QVariant data(const QModelIndex& index, int role) const override final;
+    virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const override final;
+    virtual int rowCount(const QModelIndex&) const override final;
+    virtual int columnCount(const QModelIndex&) const override final;
+    virtual QVariant data(const QModelIndex& index, int role) const override final;
 private:
-   /*!
-    * Pointer to the data object for this table model.
-    */
-   CCMatrix* _matrix;
+    /*!
+     * Pointer to the data object for this table model.
+     */
+    CCMatrix* _matrix;
 };
 
 

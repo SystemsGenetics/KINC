@@ -1,23 +1,24 @@
 .. figure:: images/kinc.png
-   :alt: KINC Logo
+  :alt: KINC Logo
 
 .. image:: https://zenodo.org/badge/71836133.svg
-   :target: https://zenodo.org/badge/latestdoi/71836133
+  :target: https://zenodo.org/badge/latestdoi/71836133
 
 Welcome to the KINC documentation!
 ==================================
 
-The Knowledge Independent Network Construction (KINC) software is a C++ application for constructing a `gene co-expression network (GCN) <https://en.wikipedia.org/wiki/Gene_co-expression_network>`_ from gene expression data organized in a text file called a Gene Expression Matrix (GEM).
+The Knowledge Independent Network Construction (KINC) software is a C++ application for constructing `Gene Co-expression Networks (GCN) <https://en.wikipedia.org/wiki/Gene_co-expression_network>`_ from gene expression data.
 
 .. toctree::
   :maxdepth: 3
   :caption: Contents:
 
-  overview
+  about
+  functional_overview
+  data_overview
+  prepare_data
   installation
   usage
-  settings
-  data-types
-  analytics
+  create_a_network
   scripts
   troubleshooting

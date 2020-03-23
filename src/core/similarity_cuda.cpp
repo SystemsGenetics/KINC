@@ -7,23 +7,17 @@ using namespace std;
 
 
 
-
-
-
 /*!
  * Construct a new CUDA object with the given analytic as its parent.
  *
  * @param parent
  */
 Similarity::CUDA::CUDA(Similarity* parent):
-   EAbstractAnalyticCUDA(parent),
-   _base(parent)
+    EAbstractAnalyticCUDA(parent),
+    _base(parent)
 {
-   EDEBUG_FUNC(this,parent);
+    EDEBUG_FUNC(this,parent);
 }
-
-
-
 
 
 
@@ -32,13 +26,10 @@ Similarity::CUDA::CUDA(Similarity* parent):
  */
 std::unique_ptr<EAbstractAnalyticCUDAWorker> Similarity::CUDA::makeWorker()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return unique_ptr<EAbstractAnalyticCUDAWorker>(new Worker(_base, this, _program));
+    return unique_ptr<EAbstractAnalyticCUDAWorker>(new Worker(_base, this, _program));
 }
-
-
-
 
 
 
@@ -47,29 +38,29 @@ std::unique_ptr<EAbstractAnalyticCUDAWorker> Similarity::CUDA::makeWorker()
  */
 void Similarity::CUDA::initialize()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // create list of cuda source files
-   QStringList paths {
-      ":/cuda/linalg.cu",
-      ":/cuda/fetchpair.cu",
-      ":/cuda/sort.cu",
-      ":/cuda/outlier.cu",
-      ":/cuda/gmm.cu",
-      ":/cuda/pearson.cu",
-      ":/cuda/spearman.cu",
-      ":/cuda/similarity.cu"
-   };
+    // create list of cuda source files
+    QStringList paths {
+        ":/cuda/linalg.cu",
+        ":/cuda/fetchpair.cu",
+        ":/cuda/sort.cu",
+        ":/cuda/outlier.cu",
+        ":/cuda/gmm.cu",
+        ":/cuda/pearson.cu",
+        ":/cuda/spearman.cu",
+        ":/cuda/similarity.cu"
+    };
 
-   // create program
-   _program = new ::CUDA::Program(paths, this);
+    // create program
+    _program = new ::CUDA::Program(paths, this);
 
-   // create buffer for expression data
-   std::vector<float> rawData = _base->_input->dumpRawData();
-   _expressions = ::CUDA::Buffer<float>(rawData.size());
+    // create buffer for expression data
+    std::vector<float> rawData = _base->_input->dumpRawData();
+    _expressions = ::CUDA::Buffer<float>(rawData.size());
 
-   // copy expression data to device
-   memcpy(_expressions.hostData(), rawData.data(), rawData.size() * sizeof(float));
+    // copy expression data to device
+    memcpy(_expressions.hostData(), rawData.data(), rawData.size() * sizeof(float));
 
-   _expressions.write().wait();
+    _expressions.write().wait();
 }

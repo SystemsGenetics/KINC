@@ -20,33 +20,33 @@
 class CorrPowerFilter : public EAbstractAnalytic
 {
     Q_OBJECT
- public:
+public:
     /*!
      * Defines the pair structure used to send results in result blocks.
      */
     struct CPPair
     {
-       /*!
-        * The number of clusters in a pair.
-        */
-       qint8 K;
-       /*!
-        * The cluster labels for a pair.
-        */
-       QVector<qint8> labels;
-       /*!
-        * The correlation for each cluster in a pair.
-        */
-       QVector<float> correlations;
-       /*!
-        * The x/y coordinates in the CCM/CMX matrices that this pair belongs to.
-        */
-       qint32 x_index;
-       qint32 y_index;
-       /*!
-        * The cluster indexes to keep.
-        */
-       QVector<int> keep;
+        /*!
+         * The number of clusters in a pair.
+         */
+        qint8 K;
+        /*!
+         * The cluster labels for a pair.
+         */
+        QVector<qint8> labels;
+        /*!
+         * The correlation for each cluster in a pair.
+         */
+        QVector<float> correlations;
+        /*!
+         * The x/y coordinates in the CCM/CMX matrices that this pair belongs to.
+         */
+        qint32 x_index;
+        qint32 y_index;
+        /*!
+         * The cluster indexes to keep.
+         */
+        QVector<int> keep;
     };
     class Input;
     class WorkBlock;
@@ -64,7 +64,7 @@ public:
     virtual EAbstractAnalyticSerial* makeSerial() override final;
     virtual void initialize() override final;
     virtual void initializeOutputs() override final;
- private:
+private:
     /*!
      * Pointer to the input cluster matrix.
      */

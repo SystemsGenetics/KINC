@@ -15,19 +15,19 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 	# load data
-	emx = pd.read_csv(args.emx, sep="\t")
+	emx = pd.read_csv(args.emx, sep="\t", index_col=0)
 	cmx = pd.read_csv(args.cmx, sep="\t", header=None, names=[
 		"x",
 		"y",
-		"Cluster",
+		"Cluster_Index",
 		"Num_Clusters",
 		"Cluster_Size",
-		"sc",
+		"Similarity_Score",
 		"Samples"
 	])
 
 	# extract correlations within thresholds
-	cmx = cmx[(args.mincorr <= abs(cmx["sc"])) & (abs(cmx["sc"]) <= args.maxcorr)]
+	cmx = cmx[(args.mincorr <= abs(cmx["Similarity_Score"])) & (abs(cmx["Similarity_Score"]) <= args.maxcorr)]
 
 	# insert additional columns used in netlist format
 	cmx.insert(len(cmx.columns), "Source", [emx.index[x] for x in cmx["x"]])
@@ -38,9 +38,9 @@ if __name__ == "__main__":
 	cmx = cmx[[
 		"Source",
 		"Target",
-		"sc",
+		"Similarity_Score",
 		"Interaction",
-		"Cluster",
+		"Cluster_Index",
 		"Num_Clusters",
 		"Cluster_Size",
 		"Samples"

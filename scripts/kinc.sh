@@ -15,17 +15,19 @@ DO_IMPORT_EMX=1
 DO_SIMILARITY=1
 DO_CORRPOWER=0
 DO_EXPORT_CMX=0
+DO_EXPORT_CPM=1
 DO_THRESHOLD=1
 DO_EXTRACT=1
 
 # define input/output files
 INFILE="$3"
 DIRNAME="$(dirname ${INFILE})"
-BASENAME="$(basename ${INFILE} .txt)"
+BASENAME="$(basename ${INFILE} .emx.txt)"
 EMX_FILE="${DIRNAME}/${BASENAME}.emx"
 CCM_FILE="${DIRNAME}/${BASENAME}.ccm"
 CMX_FILE="${DIRNAME}/${BASENAME}.cmx"
 CMX_TXT_FILE="${DIRNAME}/${BASENAME}.cmx.txt"
+CPM_FILE="${DIRNAME}/${BASENAME}.cpm"
 RMT_FILE="${DIRNAME}/${BASENAME}.rmt.txt"
 
 # apply settings
@@ -60,6 +62,7 @@ if [[ ${DO_SIMILARITY} = 1 ]]; then
 	CLUSMETHOD="gmm"
 	CORRMETHOD="spearman"
 	MINEXPR="-inf"
+	MAXEXPR="+inf"
 	MINCLUS=1
 	MAXCLUS=5
 	CRITERION="ICL"
@@ -78,6 +81,7 @@ if [[ ${DO_SIMILARITY} = 1 ]]; then
 		--clusmethod ${CLUSMETHOD} \
 		--corrmethod ${CORRMETHOD} \
 		--minexpr ${MINEXPR} \
+		--maxexpr ${MAXEXPR} \
 		--minclus ${MINCLUS} \
 		--maxclus ${MAXCLUS} \
 		--crit ${CRITERION} \
@@ -114,6 +118,15 @@ if [[ ${DO_EXPORT_CMX} = 1 ]]; then
 		--ccm ${CCM_FILE} \
 		--cmx ${CMX_FILE} \
 		--output ${CMX_TXT_FILE}
+fi
+
+# export cpm
+if [[ ${DO_EXPORT_CPM} = 1 ]]; then
+	env time -f "%e" \
+	kinc run export-cpm \
+		--emx ${EMX_FILE} \
+		--ccm ${CCM_FILE} \
+		--cpm ${CPM_FILE}
 fi
 
 # threshold

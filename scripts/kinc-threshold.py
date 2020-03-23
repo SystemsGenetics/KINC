@@ -14,14 +14,22 @@ import sys
 
 
 def load_cmx(filename, n_genes, n_clusters):
-	netlist = pd.read_csv(filename, sep="\t", header=None)
+	netlist = pd.read_csv(filename, sep="\t", names=[
+		"x",
+		"y",
+		"Cluster_Index",
+		"Num_Clusters",
+		"Cluster_Size",
+		"Similarity_Score",
+		"Samples"
+	])
 	cmx = np.zeros((n_genes * n_clusters, n_genes * n_clusters), dtype=np.float32)
 
-	for idx in range(len(netlist.index)):
-		i = netlist.iloc[idx, 0]
-		j = netlist.iloc[idx, 1]
-		k = netlist.iloc[idx, 2]
-		r = netlist.iloc[idx, 9]
+	for idx in netlist.index:
+		i = netlist.loc[idx, "x"]
+		j = netlist.loc[idx, "y"]
+		k = netlist.loc[idx, "Cluster_Index"]
+		r = netlist.loc[idx, "Similarity_Score"]
 
 		cmx[i * n_clusters + k, j * n_clusters + k] = r
 		cmx[j * n_clusters + k, i * n_clusters + k] = r
@@ -293,9 +301,6 @@ if __name__ == "__main__":
 
 	# print arguments
 	pprint.pprint(vars(args))
-
-	# load data
-	cmx = pd.read_csv(args.input, sep="\t")
 
 	# initialize method
 	compute_threshold = METHODS[args.method]

@@ -2,13 +2,12 @@
 #include "expressionmatrix.h"
 #include "ccmatrix.h"
 #include "correlationmatrix.h"
+#include "cpmatrix.h"
+#include "conditionspecificclustersmatrix.h"
 
 
 
 using namespace std;
-
-
-
 
 
 
@@ -17,13 +16,10 @@ using namespace std;
  */
 quint16 DataFactory::size() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return Total;
+    return Total;
 }
-
-
-
 
 
 
@@ -34,19 +30,18 @@ quint16 DataFactory::size() const
  */
 QString DataFactory::name(quint16 type) const
 {
-   EDEBUG_FUNC(this,type);
+    EDEBUG_FUNC(this,type);
 
-   switch (type)
-   {
-   case ExpressionMatrixType: return "Expression Matrix";
-   case CCMatrixType: return "Cluster Matrix";
-   case CorrelationMatrixType: return "Correlation Matrix";
-   default: return QString();
-   }
+    switch (type)
+    {
+    case ExpressionMatrixType: return "Expression Matrix";
+    case CCMatrixType: return "Cluster Matrix";
+    case CorrelationMatrixType: return "Correlation Matrix";
+    case CPMatrixType: return "Cluster Parameter Matrix";
+    case CSMatrixType: return "Condition-Specific Clusters Matrix";
+    default: return QString();
+    }
 }
-
-
-
 
 
 
@@ -57,19 +52,18 @@ QString DataFactory::name(quint16 type) const
  */
 QString DataFactory::fileExtension(quint16 type) const
 {
-   EDEBUG_FUNC(this,type);
+    EDEBUG_FUNC(this,type);
 
-   switch (type)
-   {
-   case ExpressionMatrixType: return "emx";
-   case CCMatrixType: return "ccm";
-   case CorrelationMatrixType: return "cmx";
-   default: return QString();
-   }
+    switch (type)
+    {
+    case ExpressionMatrixType: return "emx";
+    case CCMatrixType: return "ccm";
+    case CorrelationMatrixType: return "cmx";
+    case CPMatrixType: return "cpm";
+    case CSMatrixType: return "csm";
+    default: return QString();
+    }
 }
-
-
-
 
 
 
@@ -80,13 +74,15 @@ QString DataFactory::fileExtension(quint16 type) const
  */
 unique_ptr<EAbstractData> DataFactory::make(quint16 type) const
 {
-   EDEBUG_FUNC(this,type);
+    EDEBUG_FUNC(this,type);
 
-   switch (type)
-   {
-   case ExpressionMatrixType: return unique_ptr<EAbstractData>(new ExpressionMatrix);
-   case CCMatrixType: return unique_ptr<EAbstractData>(new CCMatrix);
-   case CorrelationMatrixType: return unique_ptr<EAbstractData>(new CorrelationMatrix);
-   default: return nullptr;
-   }
+    switch (type)
+    {
+    case ExpressionMatrixType: return unique_ptr<EAbstractData>(new ExpressionMatrix);
+    case CCMatrixType: return unique_ptr<EAbstractData>(new CCMatrix);
+    case CorrelationMatrixType: return unique_ptr<EAbstractData>(new CorrelationMatrix);
+    case CPMatrixType: return unique_ptr<EAbstractData>(new CPMatrix);
+    case CSMatrixType: return unique_ptr<CSMatrix>(new CSMatrix);
+    default: return nullptr;
+    }
 }

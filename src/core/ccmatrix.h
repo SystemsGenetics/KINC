@@ -12,42 +12,42 @@
  */
 class CCMatrix : public Pairwise::Matrix
 {
-   Q_OBJECT
+    Q_OBJECT
 public:
-   class Pair;
+    class Pair;
 public:
-   virtual QAbstractTableModel* model() override final;
+    virtual QAbstractTableModel* model() override final;
 public:
-   void initialize(const EMetaArray& geneNames, int maxClusterSize, const EMetaArray& sampleNames);
-   EMetaArray sampleNames() const;
-   /*!
-    * Return the number of samples in the cluster matrix.
-    */
-   int sampleSize() const { return _sampleSize; }
+    void initialize(const EMetaArray& geneNames, int maxClusterSize, const EMetaArray& sampleNames);
+    EMetaArray sampleNames() const;
+    /*!
+     * Return the number of samples in the cluster matrix.
+     */
+    int sampleSize() const { return _sampleSize; }
 private:
-   class Model;
+    class Model;
 private:
-   /*!
-    * Write the sub-header to the data object file.
-    */
-   virtual void writeHeader() override final { stream() << _sampleSize; }
-   /*!
-    * Read the sub-header from the data object file.
-    */
-   virtual void readHeader() override final { stream() >> _sampleSize; }
-   /*!
-    * The size (in bytes) of the sub-header. The sub-header consists of the
-    * sample size.
-    */
-   constexpr static qint16 SUBHEADER_SIZE {4};
-   /*!
-    * The number of samples in each sample mask.
-    */
-   qint32 _sampleSize {0};
-   /*!
-    * Pointer to a qt table model for this class.
-    */
-   Model* _model {nullptr};
+    /*!
+     * Write the sub-header to the data object file.
+     */
+    virtual void writeHeader() override final { stream() << _sampleSize; }
+    /*!
+     * Read the sub-header from the data object file.
+     */
+    virtual void readHeader() override final { stream() >> _sampleSize; }
+    /*!
+     * The size (in bytes) of the sub-header. The sub-header consists of the
+     * sample size.
+     */
+    constexpr static qint16 SUBHEADER_SIZE {4};
+    /*!
+     * The number of samples in each sample mask.
+     */
+    qint32 _sampleSize {0};
+    /*!
+     * Pointer to a qt table model for this class.
+     */
+    Model* _model {nullptr};
 };
 
 

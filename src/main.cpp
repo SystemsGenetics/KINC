@@ -13,23 +13,21 @@ using namespace std;
 
 
 
-
-
-
 int main(int argc, char *argv[])
 {
 #if(GUI == 1)
-   EAbstractCustomizer::setInstance(new Customizer);
+    EAbstractCustomizer::setInstance(new Customizer);
 #endif
 
-   EApplication application("SystemsGenetics"
-                            ,"kinc"
-                            ,KINC_MAJOR_VERSION
-                            ,KINC_MINOR_VERSION
-                            ,KINC_REVISION
-                            ,unique_ptr<DataFactory>(new DataFactory)
-                            ,unique_ptr<AnalyticFactory>(new AnalyticFactory)
-                            ,argc
-                            ,argv);
+    EApplication application(
+        "SystemsGenetics"
+        ,"kinc"
+        ,KINC_MAJOR_VERSION
+        ,KINC_MINOR_VERSION
+        ,KINC_REVISION
+        ,unique_ptr<DataFactory>(new DataFactory)
+        ,unique_ptr<AnalyticFactory>(new AnalyticFactory)
+        ,argc
+        ,argv);
    return application.exec();
 }

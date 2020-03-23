@@ -1,14 +1,7 @@
 #include "extract.h"
 #include "extract_input.h"
-#include "datafactory.h"
-#include "expressionmatrix_gene.h"
-
-
 
 using namespace std;
-
-
-
 
 
 
@@ -19,13 +12,10 @@ using namespace std;
  */
 int Extract::size() const
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return _cmx->size();
+    return static_cast<int>(_cmx->size());
 }
-
-
-
 
 
 
@@ -38,350 +28,30 @@ int Extract::size() const
  */
 void Extract::process(const EAbstractAnalyticBlock* result)
 {
-   EDEBUG_FUNC(this,result);
+    EDEBUG_FUNC(this,result);
 
-   // write pair according to the output format
-   switch ( _outputFormat )
-   {
-   case OutputFormat::Text:
-      writeTextFormat(result->index());
-      break;
-   case OutputFormat::Minimal:
-      writeMinimalFormat(result->index());
-      break;
-   case OutputFormat::GraphML:
-      writeGraphMLFormat(result->index());
-      break;
-   }
+    // Each time this function is called we will read the next cluster pair.
+    int clusterSize = _networkWriter->readNext();
+
+    // Write clusters to the output file if they pass filters.
+    for ( int k = 0; k < clusterSize; k++ )
+    {
+        // If the cluster passed all of the tests, then write it to the file.
+        QVector<QString> passed = filterEdge(k);
+        if (passed.size() > 0)
+        {
+            _networkWriter->writeEdgeCluster(k, passed);
+        }
+    }
+
+    // If we're at the last element then finish up the file.
+    if ( result->index() == size() - 1 )
+    {
+        _networkWriter->finish();
+    }
+
+    _networkWriter->checkStatus();
 }
-
-
-
-
-
-
-/*!
- * Write the next pair using the text format.
- *
- * @param index
- */
-void Extract::writeTextFormat(int index)
-{
-   EDEBUG_FUNC(this);
-
-   // get gene names
-   EMetaArray geneNames {_cmx->geneNames()};
-
-   // initialize workspace
-   QString sampleMask(_ccm->sampleSize(), '0');
-
-   // write header to file
-   if ( index == 0 )
-   {
-      _stream
-         << "Source"
-         << "\t" << "Target"
-         << "\t" << "sc"
-         << "\t" << "Interaction"
-         << "\t" << "Cluster"
-         << "\t" << "Num_Clusters"
-         << "\t" << "Cluster_Size"
-         << "\t" << "Samples"
-         << "\n";
-   }
-
-   // read next pair
-   _cmxPair.readNext();
-   _ccmPair.read(_cmxPair.index());
-
-   // write pairwise data to output file
-   for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
-   {
-      QString source {geneNames.at(_cmxPair.index().getX()).toString()};
-      QString target {geneNames.at(_cmxPair.index().getY()).toString()};
-      float correlation {_cmxPair.at(k)};
-      QString interaction {"co"};
-      int numSamples {0};
-
-      // exclude cluster if correlation is not within thresholds
-      if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
-      {
-         continue;
-      }
-
-      // if cluster data exists then use it
-      if ( _ccmPair.clusterSize() > 0 )
-      {
-         // compute cluster size
-         for ( int i = 0; i < _ccm->sampleSize(); i++ )
-         {
-            if ( _ccmPair.at(k, i) == 1 )
-            {
-               numSamples++;
-            }
-         }
-
-         // write sample mask to string
-         for ( int i = 0; i < _ccm->sampleSize(); i++ )
-         {
-            sampleMask[i] = '0' + _ccmPair.at(k, i);
-         }
-      }
-
-      // otherwise use expression data if provided
-      else if ( _emx )
-      {
-         // read in gene expressions
-         ExpressionMatrix::Gene gene1(_emx);
-         ExpressionMatrix::Gene gene2(_emx);
-
-         gene1.read(_cmxPair.index().getX());
-         gene2.read(_cmxPair.index().getY());
-
-         // determine sample mask, summary statistics from expression data
-         for ( int i = 0; i < _emx->sampleSize(); ++i )
-         {
-            if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
-            {
-               sampleMask[i] = '9';
-            }
-            else
-            {
-               sampleMask[i] = '1';
-               numSamples++;
-            }
-         }
-      }
-
-      // otherwise throw an error
-      else
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("Invalid Input"));
-         e.setDetails(tr("Expression Matrix was not provided but Cluster Matrix is missing sample data."));
-         throw e;
-      }
-
-      // write cluster to output file
-      _stream
-         << source
-         << "\t" << target
-         << "\t" << correlation
-         << "\t" << interaction
-         << "\t" << k + 1
-         << "\t" << _cmxPair.clusterSize()
-         << "\t" << numSamples
-         << "\t" << sampleMask
-         << "\n";
-   }
-
-   // make sure writing output file worked
-   if ( _stream.status() != QTextStream::Ok )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Qt Text Stream encountered an unknown error."));
-      throw e;
-   }
-}
-
-
-
-
-
-
-/*!
- * Write the next pair using the minimal format.
- *
- * @param index
- */
-void Extract::writeMinimalFormat(int index)
-{
-   EDEBUG_FUNC(this);
-
-   // get gene names
-   EMetaArray geneNames {_cmx->geneNames()};
-
-   // write header to file
-   if ( index == 0 )
-   {
-      _stream
-         << "Source"
-         << "\t" << "Target"
-         << "\t" << "sc"
-         << "\t" << "Cluster"
-         << "\t" << "Num_Clusters"
-         << "\n";
-   }
-
-   // read next pair
-   _cmxPair.readNext();
-
-   // write pairwise data to output file
-   for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
-   {
-      QString source {geneNames.at(_cmxPair.index().getX()).toString()};
-      QString target {geneNames.at(_cmxPair.index().getY()).toString()};
-      float correlation {_cmxPair.at(k)};
-
-      // exclude cluster if correlation is not within thresholds
-      if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
-      {
-         continue;
-      }
-
-      // write cluster to output file
-      _stream
-         << source
-         << "\t" << target
-         << "\t" << correlation
-         << "\t" << k + 1
-         << "\t" << _cmxPair.clusterSize()
-         << "\n";
-   }
-
-   // make sure writing output file worked
-   if ( _stream.status() != QTextStream::Ok )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Qt Text Stream encountered an unknown error."));
-      throw e;
-   }
-}
-
-
-
-
-
-
-/*!
- * Write the next pair using the GraphML format.
- *
- * @param index
- */
-void Extract::writeGraphMLFormat(int index)
-{
-   EDEBUG_FUNC(this);
-
-   // get gene names
-   EMetaArray geneNames {_cmx->geneNames()};
-
-   // initialize workspace
-   QString sampleMask(_ccm->sampleSize(), '0');
-
-   if ( index == 0 )
-   {
-      // write header to file
-      _stream
-         << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-         << "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\"\n"
-         << "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-         << "    xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n"
-         << "  <graph id=\"G\" edgedefault=\"undirected\">\n";
-
-      // write node list to file
-      for ( int i = 0; i < _cmx->geneSize(); i++ )
-      {
-         QString id {geneNames.at(i).toString()};
-
-         _stream << "    <node id=\"" << id << "\"/>\n";
-      }
-   }
-
-   // read next pair
-   _cmxPair.readNext();
-
-   if ( _cmxPair.clusterSize() > 1 )
-   {
-      _ccmPair.read(_cmxPair.index());
-   }
-
-   // write pairwise data to net file
-   for ( int k = 0; k < _cmxPair.clusterSize(); k++ )
-   {
-      QString source {geneNames.at(_cmxPair.index().getX()).toString()};
-      QString target {geneNames.at(_cmxPair.index().getY()).toString()};
-      float correlation {_cmxPair.at(k)};
-
-      // exclude edge if correlation is not within thresholds
-      if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
-      {
-         continue;
-      }
-
-      // if there are multiple clusters then use cluster data
-      if ( _cmxPair.clusterSize() > 1 )
-      {
-         // write sample mask to string
-         for ( int i = 0; i < _ccm->sampleSize(); i++ )
-         {
-            sampleMask[i] = '0' + _ccmPair.at(k, i);
-         }
-      }
-
-      // otherwise use expression data if provided
-      else if ( _emx )
-      {
-         // read in gene expressions
-         ExpressionMatrix::Gene gene1(_emx);
-         ExpressionMatrix::Gene gene2(_emx);
-
-         gene1.read(_cmxPair.index().getX());
-         gene2.read(_cmxPair.index().getY());
-
-         // determine sample mask from expression data
-         for ( int i = 0; i < _emx->sampleSize(); ++i )
-         {
-            if ( isnan(gene1.at(i)) || isnan(gene2.at(i)) )
-            {
-               sampleMask[i] = '9';
-            }
-            else
-            {
-               sampleMask[i] = '1';
-            }
-         }
-      }
-
-      // otherwise throw an error
-      else
-      {
-         E_MAKE_EXCEPTION(e);
-         e.setTitle(tr("Invalid Input"));
-         e.setDetails(tr("Expression Matrix was not provided but Cluster Matrix is missing sample data."));
-         throw e;
-      }
-
-      // write edge to file
-      _stream
-         << "    <edge"
-         << " source=\"" << source << "\""
-         << " target=\"" << target << "\""
-         << " samples=\"" << sampleMask << "\""
-         << "/>\n";
-   }
-
-   // write footer to file
-   if ( index == size() - 1 )
-   {
-      _stream
-         << "  </graph>\n"
-         << "</graphml>\n";
-   }
-
-   // make sure writing output file worked
-   if ( _stream.status() != QTextStream::Ok )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("File IO Error"));
-      e.setDetails(tr("Qt Text Stream encountered an unknown error."));
-      throw e;
-   }
-}
-
-
-
 
 
 
@@ -390,13 +60,10 @@ void Extract::writeGraphMLFormat(int index)
  */
 EAbstractAnalyticInput* Extract::makeInput()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   return new Input(this);
+    return new Input(this);
 }
-
-
-
 
 
 
@@ -406,30 +73,339 @@ EAbstractAnalyticInput* Extract::makeInput()
  */
 void Extract::initialize()
 {
-   EDEBUG_FUNC(this);
+    EDEBUG_FUNC(this);
 
-   // make sure input/output arguments are valid
-   if ( !_cmx || !_output )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("Did not get valid input and/or output arguments."));
-      throw e;
-   }
+    // make sure input/output arguments are valid
+    if ( !_cmx || !_output )
+    {
+        E_MAKE_EXCEPTION(e)
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get valid input and/or output arguments."));
+        throw e;
+    }
 
-   if ( _outputFormat != OutputFormat::Minimal && !_ccm )
-   {
-      E_MAKE_EXCEPTION(e);
-      e.setTitle(tr("Invalid Argument"));
-      e.setDetails(tr("--ccm is required for all output formats except minimal."));
-      throw e;
-   }
+    if ( _outputFormat != OutputFormat::Minimal && !_ccm )
+    {
+        E_MAKE_EXCEPTION(e)
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("--ccm is required for all output formats except minimal."));
+        throw e;
+    }
 
-   // initialize pairwise iterators
-   _ccmPair = CCMatrix::Pair(_ccm);
-   _cmxPair = CorrelationMatrix::Pair(_cmx);
+    // Set the proper network output class.
+    switch ( _outputFormat )
+    {
+    case OutputFormat::Text:
+        _networkWriter = new FullNetworkWriter(_emx, _cmx, _ccm, _csm, _output);
+        break;
+    case OutputFormat::Minimal:
+        _networkWriter = new MinimalNetworkWriter(_emx, _cmx, _ccm, _csm, _output);
+        break;
+    case OutputFormat::GraphML:
+        _networkWriter = new GMLNetworkWriter(_emx, _cmx, _ccm, _csm, _output);
+        break;
+    case OutputFormat::Tidy:
+        _networkWriter = new TidyNetworkWriter(_emx, _cmx, _ccm, _csm, _output);
+        break;
+    }
 
-   // initialize output file stream
-   _stream.setDevice(_output);
-   _stream.setRealNumberPrecision(8);
+    // Get the network writer object started.
+    _networkWriter->initialize();
+
+    // Save the test name columns that will be used by the
+    // network writer so we don't have to keep looking them up.
+    _testNames = _networkWriter->getTestNames();
+
+    // Set any filters that the user requested. If the filters
+    // are incorrectly set this function should throw an error.
+    parseFilters(_csmPValueFilter, "pVal");
+    parseFilters(_csmRSquareFilter, "rSqr");
+}
+
+
+
+/*!
+ * Parse the filters from a filter string.
+ *
+ * @param filterString
+ * @param type
+ */
+void Extract::parseFilters(QString filterString, QString type)
+{
+    // If the user provided no filters then just return;
+    if (filterString == "")
+    {
+        return;
+    }
+
+    bool ok = false;
+    bool failure = true;
+
+    // If the comparision is unspecified we should set a
+    // default based on the type of filter.
+    QString defaultComp = (type == "rSqr")
+        ? "gt"
+        : "lt";
+
+    QStringList filters = filterString.split("::");
+    for ( auto& filter : filters )
+    {
+        QStringList tokens = filter.split(",");
+
+        // Case #1: the user provided a single global threshold (e.g. 1e-3)
+        if (tokens.size() == 1)
+        {
+            tokens.at(0).toFloat(&ok);
+
+            if (ok)
+            {
+                QPair<QString, float> fpair;
+                fpair.first = defaultComp;
+                fpair.second = tokens.at(0).toFloat();
+                _filters.insert(type, fpair);
+                failure = false;
+            }
+        }
+
+        // Case #2 the user provided two values. There are two cases.
+        else if (tokens.size() == 2)
+        {
+            tokens.at(1).toFloat(&ok);
+
+            if (ok)
+            {
+                // Case 2a:  global setting. e.g.: gt,1e-3
+                if (tokens.at(0) == "gt" || tokens.at(0) == "lt")
+                {
+                    QPair<QString, float> fpair;
+                    fpair.first = tokens.at(0);
+                    fpair.second = tokens.at(1).toFloat();
+                    QString testName = type;
+                    _filters.insert(testName, fpair);
+                    failure = false;
+                }
+
+                // Case 2b: e.g.:  Subspecies,1e-3
+                else
+                {
+                    QPair<QString, float> fpair;
+                    fpair.first = defaultComp;
+                    fpair.second = tokens.at(1).toFloat();
+                    // If this is a filter on a categorical field then it means
+                    // that the user did not specify a category and they want
+                    // to apply the filter on any category.  We need to
+                    // iterate through the tests and insert a filter for each
+                    // one that matches.
+                    QVectorIterator<QString> testNamesIter(_testNames);
+                    while (testNamesIter.hasNext())
+                    {
+                        QString testName = testNamesIter.next();
+                        if (testName.contains(tokens.at(0) + "__"))
+                        {
+                            _filters.insert(testName, fpair);
+                        }
+                    }
+                    // If this isn't a categorical field then we can just
+                    // insert the filter as is.
+                    QString testName = tokens.at(0) + "_" + type;
+                    _filters.insert(testName, fpair);
+                    failure = false;
+                }
+            }
+        }
+
+        // Case #3: the user provided three values
+        else if (tokens.size() == 3)
+        {
+            tokens.at(2).toFloat(&ok);
+
+            if (ok)
+            {
+                // Case 3a: Subspecies,gt,1e-3
+                if (tokens.at(1) == "gt" || tokens.at(1) == "lt")
+                {
+                    QPair<QString, float> fpair;
+                    fpair.first = tokens.at(1);
+                    fpair.second = tokens.at(2).toFloat();
+                    // If this is a filter on a categorical field then it means
+                    // that the user did not specify a category and they want
+                    // to apply the filter on any category.  We need to
+                    // iterate through the tests and insert a filter for each
+                    // one that matches.
+                    QVectorIterator<QString> testNamesIter(_testNames);
+                    while (testNamesIter.hasNext())
+                    {
+                        QString testName = testNamesIter.next();
+                        if (testName.contains(tokens.at(0) + "__"))
+                        {
+                            _filters.insert(testName, fpair);
+                        }
+                    }
+                    // If this isn't a categorical field then we can just
+                    // insert the filter as is.
+                    QString testName = tokens.at(0) + "_" + type;
+                    _filters.insert(testName, fpair);
+                    failure = false;
+                }
+
+                // Case 3b: Subspecies,Janpoica,1e-3
+                else
+                {
+                    QPair<QString, float> fpair;
+                    fpair.first = defaultComp;
+                    fpair.second = tokens.at(2).toFloat();
+                    QString testName = tokens.at(0) + "__" + tokens.at(1) + "_" + type;
+                    _filters.insert(testName, fpair);
+                    failure = false;
+                }
+            }
+        }
+
+        // Case #4: the user provided four values (e.g. Subspecies,Japonica,lt,1e-3)
+        else if (tokens.size() == 4)
+        {
+            tokens.at(3).toFloat(&ok);
+
+            if (ok && (tokens.at(2) == "gt" || tokens.at(2) == "lt"))
+            {
+                QPair<QString, float> fpair;
+                fpair.first = tokens.at(2);
+                fpair.second = tokens.at(3).toFloat();
+                QString testName = tokens.at(0) + "__" + tokens.at(1) + "_" + type;
+                _filters.insert(testName, fpair);
+                failure = false;
+            }
+        }
+
+        if (failure)
+        {
+            E_MAKE_EXCEPTION(e)
+            e.setTitle(tr("Invalid P-Value Filter Input"));
+            e.setDetails(tr("Invalid P-Value Filter arguments given."));
+            throw e;
+        }
+    }
+}
+
+
+
+/*!
+ * Performs filtering of a cluster of the current edge.
+ *
+ * @param k
+ */
+QVector<QString> Extract::filterEdge(int k)
+{
+    // Stores the tests that passed and failed
+    QVector<QString> passed;
+    QVector<QString> failed;
+
+    // Exclude cluster if correlation is not within thresholds.
+    float correlation = _networkWriter->getEdgeSimilarity(k);
+    if ( fabs(correlation) < _minCorrelation || _maxCorrelation < fabs(correlation) )
+    {
+        return passed;
+    }
+
+    // If no filters are present then just return as we've passed
+    // the correlation threshold test.
+    if (_testNames.size() == 0)
+    {
+        passed.append("th");
+        return passed;
+    }
+
+    // Iterate through any filters and check those. If any pass we keep the edge.
+    for (auto& testName : _testNames)
+    {
+        // testName has a _pVal or _rSqr suffix, whereas the
+        // official (or real) test name does not.
+        QString realTestName = testName
+            .replace("_pVal", "")
+            .replace("_RSqr", "");
+        QPair<QString, float> filter;
+
+        // First, check if this is a global pValue setting. If there
+        // is a global p-value filter then we'll ignore any other
+        // pvalue filter specified.
+        if (testName.contains("_pVal") && _filters.contains("pVal"))
+        {
+            filter = _filters.find("pVal").value();
+        }
+
+        // Second, check if this is a global rSqr setting. If there
+        // is a global r-squared filter then we'll ignore any other
+        // r-squared filter specified.
+        else if (testName.contains("_RSqr") && _filters.contains("rSqr"))
+        {
+            filter = _filters.find("rSqr").value();
+        }
+
+        // Third, check if there is a test-specific setting.
+        else if (_filters.contains(testName))
+        {
+            filter = _filters.find(testName).value();
+        }
+
+        // If there are no filters then skip to the next one.
+        else
+        {
+            continue;
+        }
+
+        // Now perform the filter check.
+        float filter_value = filter.second;
+        float test_value = static_cast<float>(_networkWriter->getEdgeTestValue(k, testName));
+
+        if (filter.first == "lt" && test_value < filter_value)
+        {
+            passed.append(realTestName);
+        }
+        else if (filter.first == "gt" && test_value > filter_value)
+        {
+            passed.append(realTestName);
+        }
+        else
+        {
+            failed.append(realTestName);
+        }
+    }
+
+    // If the user requested a filter on both the pVal and the RSqr
+    // then we need to enforce a logical "and" and we need
+    // to check that both tests passed (not just one).
+    for (auto& testName : _testNames)
+    {
+        QString realTestName = testName
+            .replace("_pVal", "")
+            .replace("_RSqr", "");
+
+        if (passed.count(realTestName) == 1 && failed.count(realTestName) == 1)
+        {
+            passed.removeAll(realTestName);
+        }
+    }
+
+    // Remove any duplicates from the passed list before returning.
+    for (auto& testName : _testNames)
+    {
+        QString realTestName = testName
+            .replace("_pVal", "")
+            .replace("_RSqr", "");
+
+        if (passed.count(realTestName) > 1)
+        {
+            passed.removeAll(realTestName);
+            passed.append(realTestName);
+        }
+    }
+
+    // If any of the tests passed then keep this edge.
+    if (passed.size() > 0)
+    {
+        return passed;
+    }
+
+    // If we're here then we did not pass any of the filters.
+    return passed;
 }
