@@ -334,7 +334,7 @@ def create_network_plot(net, vlayers, elayers):
         steps.append(step)
 
     fig1.update_layout(
-        height=800,
+        height=600,
         title=dict(text = "3D Network View", font = dict(color='#FFFFFF')),
         showlegend=False,
         margin=dict(l=10, r=10, t=30, b=10),
@@ -440,7 +440,7 @@ def create_expression_scatterplot(gem, amx, elayers, color_col, edge_index=0):
                     hoverinfo='text')])
 
     fig2.update_layout(
-        height=800,
+        height=600,
         title="3D Edge Co-Expression Scatterplot",
         showlegend=False,
         margin=dict(l=10, r=10, t=30, b=10),
@@ -502,6 +502,25 @@ def launch_application(net, gem, amx, vlayers, elayers, color_col):
 
     app = dash.Dash()
     app.layout = html.Div([
+        html.Div(className='row', id = "header", children=[
+            html.Img(
+               src="https://raw.githubusercontent.com/SystemsGenetics/KINC/master/docs/images/kinc.png",
+               style={
+                  "height" : "55px",
+                  "display" : "inline-block",
+                  "padding" : "0px",
+                  "margin" : "0px 10px 0px 10px"
+               }),
+            html.H1(
+               children="3D Network Explorer",
+               style={
+                  "display" : "inline-block",
+                  "padding" : "10px 0px 0px 0px",
+                  "margin" : "0px",
+                  "vertical-align" : "top"
+               }),
+            ]
+        ),
         html.Div(className='row', children=[
             dcc.Graph(
               id = 'network-3dview',
