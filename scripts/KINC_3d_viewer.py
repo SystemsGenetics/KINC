@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Creates a Dash application that provides 3D visualization of a KINC network.
 
@@ -5,15 +6,19 @@ This script accepts the following arguments:
 
     --net : (required) The path to the KINC-derived network file
 
-    --gem : (retuired) The path to the log2 transformed Gene Expression Matrix.
+    --emx : (retuired) The path to the log2 transformed Gene Expression Matrix
+            or Metabolite abundance matrix.
 
     --amx : (required) The path to the tab-delimited annotation matrix.
             The matrix must have at least one column that contains a unique
-            list of sample names.  The column must be named 'Sample'.
+            list of sample names.
 
     --color_col : (required) The name of the column in the annotation matrix
-                  The contains the categories that should be colored in the
+                  that contains the categories that should be colored in the
                   display.
+
+    --sample_col: (optional) The name of the column in the annotation matrix
+                  that contains the unique sample names.  Defaults to "Sample"
 
 """
 
@@ -54,9 +59,10 @@ def load_network(file_path):
 
 def load_gem(file_path):
     """
-    Imports the tab-delimited Gene Expression Matrix (GEM).
+    Imports the tab-delimited Gene Expression Matrix (GEM) or Metabolite
 
-    GEM files can be generated from RNA-seq data using GEMmaker.
+    GEM files can be generated from RNA-seq data using GEMmaker. Alternatively,
+    this can be a metabolite abundance matrix.
 
     file_path : The path to the GEM file.  The file should be log2 transformed.
 
@@ -122,16 +128,21 @@ def get_iGraph(net):
 
 
 
-def calculate_2d_layout(net):
+def calculate_2d_layout(net, net_prefix):
     """
     Calculates a typical 2D layout for the network.
 
     The first time this function is called on a network it may take some time
-    depending on the size of the network.  The layout is saved in a file named
-    'glayout.txt' in the current working directory. On subsequent runs of
-    this program that file is imported if it exists.
+    depending on the size of the network.  The layout is saved in a file with
+    the same name as the network but with a '.glayout.txt' extension in
+    the working directory. On subsequent runs of this program that file is
+    imported if it exists.
 
     net :  The network dataframe created by the load_network function.
+
+    net_prefix:  The filename of the file that will house the layout
+                 after it is calculated. The file will be saved with this name
+                 and the extension ".2Dlayout.txt"
 
     return : a Pandas dataframe containing the layout coordinates for
              the nodes in the network. The dataframe contains X, and Y
@@ -139,19 +150,20 @@ def calculate_2d_layout(net):
     """
 
     g = get_iGraph(net)
-    t = pd.DataFrame(g.transitivity_local_undirected())[0].values
+    t = pd.Series(g.transitivity_local_undirected(), index=g.vs['name'])
     d = pd.DataFrame(g.degree(), index=g.vs['name'], columns=['Degree'])
 
     G = nx.Graph()
     net['Weight'] = np.abs(net['Similarity_Score'])
     G.add_weighted_edges_from(net[['Source','Target','Weight']].values)
-    if (not os.path.exists('glayout.txt')):
+    if (not os.path.exists(net_prefix + '.2Dlayout.txt')):
         glayout = pd.DataFrame(nx.drawing.layout.kamada_kawai_layout(G)).transpose()
         glayout.columns = ['X', 'Y']
         glayout = pd.concat([glayout, d, t], axis=1, sort=False)
-        glayout.to_csv('glayout.txt')
+        glayout.columns = ['X', 'Y', 'Degree', 'CC']
+        glayout.to_csv(net_prefix + '.2Dlayout.txt')
     else:
-        glayout = pd.read_csv('glayout.txt', index_col=0)
+        glayout = pd.read_csv(net_prefix + '.2Dlayout.txt', index_col=0)
 
     return glayout
 
@@ -311,10 +323,7 @@ def create_network_plot(net, vlayers, elayers):
                        text="Edge: " + elayers["name"],
                        hoverinfo='text'))
 
-    # ---------------------------------------------------------------
     #  Add a slider for the network viewer
-    # ---------------------------------------------------------------
-
     steps = []
     num_layers = len(fig1.data)
     for i in range(num_layers):
@@ -397,12 +406,12 @@ def create_expression_scatterplot(gem, amx, elayers, color_col, edge_index=0):
 
     return : a Plotly figure object.
     """
-    gene1 = elayers.iloc[edge_index]['Source']
-    gene2 = elayers.iloc[edge_index]['Target']
+    node1 = elayers.iloc[edge_index]['Source']
+    node2 = elayers.iloc[edge_index]['Target']
     samples = elayers.iloc[edge_index]['Samples']
 
     # Generate the dataframe for the expression scatterplot
-    sdata = pd.DataFrame(dict(x=gem.loc[gene1].values,y=gem.loc[gene2].values))
+    sdata = pd.DataFrame(dict(x=gem.loc[node1].values,y=gem.loc[node2].values))
     sdata.index = gem.columns
     sdata = sdata.join(amx, how='left')
 
@@ -447,10 +456,10 @@ def create_expression_scatterplot(gem, amx, elayers, color_col, edge_index=0):
         scene=dict(
           aspectmode="cube",
           xaxis=dict(showbackground=False, showline=True, zeroline=True, showgrid=True,
-                     showticklabels=True, title=gene1,
+                     showticklabels=True, title=node1,
                      showspikes=False),
           yaxis=dict(showbackground=False, showline=True, zeroline=True, showgrid=True,
-                     showticklabels=True, title=gene2,
+                     showticklabels=True, title=node2,
                      showspikes=False),
           zaxis=dict(showbackground=True, showline=True, zeroline=True, showgrid=True,
                      showticklabels=True, title='',
@@ -591,29 +600,46 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--net', dest='net_path', type=str, required=True)
-    parser.add_argument('--gem', dest='gem_path', type=str, required=True)
+    parser.add_argument('--emx', dest='gem_path', type=str, required=True)
     parser.add_argument('--amx', dest='amx_path', type=str, required=True)
     parser.add_argument('--color_col', dest='color_col', type=str, required=True)
+    parser.add_argument('--sample_col', dest='sample_col', type=str, required=False, default='Sample')
     args = parser.parse_args()
 
+    # Make sure the paths exist
+    if (not os.path.exists(args.net_path)):
+        print ("ERROR: The network file cannot be found: {}".format(args.net_path))
+        exit(1)
+    if (not os.path.exists(args.gem_path)):
+        print ("ERROR: The expression matrix file cannot be found: {}".format(args.gem_path))
+        exit(1)
+    if (not os.path.exists(args.amx_path)):
+        print ("ERROR: The annotation matrix file cannot be found: {}".format(args.amx_path))
+        exit(1)
+
     # Load the input data.
+    print("Reading input files...")
     net = load_network(args.net_path)
     gem = load_gem(args.gem_path)
-    amx = load_amx(args.amx_path)
+    amx = load_amx(args.amx_path, args.sample_col)
 
-    # Set the color column to use:
-    color_col = args.color_col
+
+    # Get the filename of the network file minus the extension.
+    (net_prefix, net_ext) = os.path.splitext(os.path.basename(args.net_path))
 
 
     # Calculate a 2D layout for the network
-    glayout = calculate_2d_layout(net)
+    print("Calculating 2D layout file:\n  {} \n  This may take awhile if it isn't already present...".format(net_prefix + '.2Dlayout.txt'))
+    glayout = calculate_2d_layout(net, net_prefix)
 
     # Calculate the Z-coorinate positions for the verticies and edges.
+    print("Calculating 3D layout...")
     vlayers = get_vertex_zlayers(net, glayout)
     elayers = get_edge_zlayers(net, glayout)
 
     # Launch the dash application
-    launch_application(net, gem, amx, vlayers, elayers, color_col)
+    print("Launching application...")
+    launch_application(net, gem, amx, vlayers, elayers, args.color_col)
 
     exit(0)
 
