@@ -335,17 +335,18 @@ def create_network_plot(net, vlayers, elayers):
 
     fig1.update_layout(
         height=800,
-        title="Network View",
+        title=dict(text = "3D Network View", font = dict(color='#FFFFFF')),
         showlegend=False,
         margin=dict(l=10, r=10, t=30, b=10),
+        paper_bgcolor = "#000000",
         scene=dict(
           aspectmode="cube",
           xaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
                      showticklabels=False, title='', showspikes=False),
           yaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
                      showticklabels=False, title='', showspikes=False),
-          zaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=True,
-                     showticklabels=True, title='', showspikes=False)
+          zaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
+                     showticklabels=True, title='', showspikes=False, color="#FFFFFF")
         ),
         hovermode='closest',
         annotations=[dict(showarrow=False,
@@ -353,7 +354,14 @@ def create_network_plot(net, vlayers, elayers):
                         xref='paper', yref='paper',
                         x=0, y=0.1, xanchor='left', yanchor='bottom', font=dict(size=14))
                     ],
-        sliders=[dict(active=0, currentvalue={"prefix": "Similarity: "},pad={"t": 50},steps=steps, len=1)],
+        sliders=[dict(
+            active=0,
+            currentvalue={"prefix": "Similarity: "},
+            pad={"t": 50},
+            steps=steps,
+            font=dict(color = '#FFFFFF'),
+            tickcolor='#FFFFFF',
+            len=1)],
     )
 
     # We want an orthographic layout so that when looking above the edges line up
@@ -433,7 +441,7 @@ def create_expression_scatterplot(gem, amx, elayers, color_col, edge_index=0):
 
     fig2.update_layout(
         height=800,
-        title="Edge Co-Expression",
+        title="3D Edge Co-Expression Scatterplot",
         showlegend=False,
         margin=dict(l=10, r=10, t=30, b=10),
         scene=dict(
@@ -499,14 +507,23 @@ def launch_application(net, gem, amx, vlayers, elayers, color_col):
               id = 'network-3dview',
               figure = create_network_plot(net, vlayers, elayers),
             )],
-            style = dict(width = "48%", display = "inline-block"),
+            style = {"width" : "45%",
+                     "display" : "inline-block",
+                     "border" : "1px solid black",
+                     "padding" : "10px",
+                     "background-color" : "black",
+                     "margin" : "10px"},
         ),
         html.Div(className='row', children=[
             dcc.Graph(
               id = 'edge-expression-3dview',
               figure = create_expression_scatterplot(gem, amx, elayers, color_col),
             )],
-            style = dict(width = "48%", display = "inline-block"),
+            style = {"width" : "45%",
+                     "display" : "inline-block",
+                     "border" : "1px solid black",
+                     "padding" : "10px",
+                     "margin" : "10px"},
         ),
         # html.Div(className='row', children=[
         #   html.Div([
