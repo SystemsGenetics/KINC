@@ -13,10 +13,6 @@ This script accepts the following arguments:
             The matrix must have at least one column that contains a unique
             list of sample names.
 
-    --color_col : (required) The name of the column in the annotation matrix
-                  that contains the categories that should be colored in the
-                  display.
-
     --sample_col: (optional) The name of the column in the annotation matrix
                   that contains the unique sample names.  Defaults to "Sample"
 
@@ -426,46 +422,62 @@ def create_expression_scatterplot(gem, amx, elayers, color_col, edge_index=0):
                          value=color_rep['Color'].values)
 
     # Generate the Z-coordinates for the samples.
+    ticks = np.arange(0, num_categories) / (num_categories - 1) - 0.5
     color_rep = pd.DataFrame({
         'Categories' : categories,
-        'Z' : np.arange(0, num_categories) / (num_categories - 1) - 0.5})
+        'Z' : ticks})
     sdata['z'] = sdata[color_col].replace(
                          to_replace=color_rep['Categories'].values,
                          value=color_rep['Z'].values)
 
-    # Make samples in the cluster larger size
+    # Calculate the sizes of the points.
     sizes = pd.Series(list(samples))
-    sizes = sizes.replace(to_replace=r'[^1]', value='5', regex=True)
-    sizes = sizes.replace({'1': '10'})
+    sizes = sizes.replace(to_replace=r'[^1]', value='8', regex=True)
+    sizes = sizes.replace({'1': '16'})
     sizes = sizes.astype('int')
+    sizes.index = sdata.index
+
+    # Add the first category as trace #1.
+    first_category = (sdata[color_col] == categories[0])
     fig2 = go.Figure(data=[go.Scatter3d(
-                    x=sdata['x'],
-                    y=sdata['y'],
-                    z=sdata['z'],
+                    x=sdata[first_category]['x'],
+                    z=sdata[first_category]['y'],
+                    y=sdata[first_category]['z'],
                     mode='markers',
-                    marker=dict(symbol='circle',size=sizes,
-                                color=sdata['color'], colorscale='Jet'),
-                    text= sdata['Sample'],
-                    hoverinfo='text')])
+                    marker=dict(symbol='circle',size=sizes[first_category]),
+                    text= sdata[first_category]['Sample'],
+                    hoverinfo='text',
+                    name=categories[0])])
+    for i in range(1, len(categories)):
+        next_category = (sdata[color_col] == categories[i])
+        fig2.add_trace(go.Scatter3d(
+                        x=sdata[next_category]['x'],
+                        z=sdata[next_category]['y'],
+                        y=sdata[next_category]['z'],
+                        mode='markers',
+                        marker=dict(symbol='circle',size=sizes[next_category]),
+                        text= sdata[next_category]['Sample'],
+                        hoverinfo='text',
+                        name=categories[i]))
 
     fig2.update_layout(
         height=600,
         title="3D Edge Co-Expression Scatterplot",
-        showlegend=False,
+        showlegend=True,
+        legend={'itemsizing': 'constant'},
         margin=dict(l=10, r=10, t=30, b=10),
         scene=dict(
           aspectmode="cube",
-          xaxis=dict(showbackground=False, showline=True, zeroline=True, showgrid=True,
+          xaxis=dict(showbackground=True, showline=True, zeroline=True, showgrid=True,
                      showticklabels=True, title=node1,
-                     showspikes=False),
-          yaxis=dict(showbackground=False, showline=True, zeroline=True, showgrid=True,
-                     showticklabels=True, title=node2,
-                     showspikes=False),
+                     showspikes=True),
           zaxis=dict(showbackground=True, showline=True, zeroline=True, showgrid=True,
-                     showticklabels=True, title='',
-                     range=[-1.5, 1.5],
-                     tickvals=[-1,1],
-                     ticktext=['Sun', 'Shade'], showspikes=False),
+                     showticklabels=True, title=node2,
+                     showspikes=True),
+          yaxis=dict(showbackground=True, showline=True, zeroline=True, showgrid=True,
+                     showticklabels=True, title='Condition',
+                     tickvals=ticks,
+                     ticktext=categories, showspikes=True),
         ),
         hovermode='closest',
         annotations=[dict(showarrow=False,
@@ -476,15 +488,63 @@ def create_expression_scatterplot(gem, amx, elayers, color_col, edge_index=0):
     )
 
     fig2.layout.scene.camera.projection.type = "orthographic"
-    fig2.layout.scene.camera.eye = dict(x=0., y=0., z=-2)
+    fig2.layout.scene.camera.eye = dict(x=0, y=1, z=0)
 
     return fig2
 
 
 
 
+def create_dash_edge_table(net, edge_index = 0):
+    """
+    Constructs the HTML table that holds edge information for the Dash appself.
 
-def launch_application(net, gem, amx, vlayers, elayers, color_col):
+    elayers : The dataframe containing the 3D coordinates for the edges.
+
+    edge_index : The numerical index of the edge in the elayers dataframe
+                 that is to be plotted.
+
+    returns : a Dash html.Table object.
+    """
+
+    net_fixed = net.drop('Samples', axis=1)
+    if ('p_value' in net_fixed.columns):
+        net_fixed['p_value'] = net_fixed['p_value'].apply(np.format_float_scientific, precision=4)
+    columns = net_fixed.columns
+    row = net_fixed.iloc[edge_index]
+
+    htr_style = {'background-color' : '#f2f2f2'}
+    hth_style = {'text-align' : 'left',
+                 'padding' : '5px',
+                 'border-bottom' : '1px solid #ddd'};
+    th_style = {'text-align' : 'left',
+                'padding' : '5px',
+                'border-bottom' : '1px solid #ddd'};
+    table = html.Table(
+        children=[
+            html.Tr([html.Th(col, style=hth_style) for col in columns], style=htr_style),
+            html.Tr([html.Th(row[col], style=th_style) for col in columns]),
+        ],
+    )
+    return table
+
+
+
+
+def create_condition_select(amx, sample_col):
+    columns = np.sort(amx.columns.values)
+    columns = np.delete(columns, columns != sample_col)
+    select = dcc.Dropdown(
+        id = 'condition-select',
+        options = [
+          {'label' : col, 'value' : col} for col in columns
+        ],
+        value = columns[0])
+    return select
+
+
+
+def launch_application(net, gem, amx, vlayers, elayers, sample_col, net_name):
     """
     Creates the Dash application.
 
@@ -502,89 +562,109 @@ def launch_application(net, gem, amx, vlayers, elayers, color_col):
     elayers : The dataframe containing the 3D coordinates for the edges.
 
     """
-    styles = {
-        'pre': {
-            'border': 'thin lightgrey solid',
-            'overflowX': 'scroll'
-        }
-    }
-
     app = dash.Dash()
     app.layout = html.Div([
+        # Header Row
         html.Div(className='row', id = "header", children=[
             html.Img(
-               src="https://raw.githubusercontent.com/SystemsGenetics/KINC/master/docs/images/kinc.png",
-               style={
-                  "height" : "55px",
-                  "display" : "inline-block",
-                  "padding" : "0px",
-                  "margin" : "0px 10px 0px 10px"
-               }),
-            html.H1(
-               children="3D Network Explorer",
-               style={
-                  "display" : "inline-block",
-                  "padding" : "10px 0px 0px 0px",
-                  "margin" : "0px",
-                  "vertical-align" : "top"
-               }),
-            ]
-        ),
+                src="https://raw.githubusercontent.com/SystemsGenetics/KINC/master/docs/images/kinc.png",
+                style={"height" : "55px","display" : "inline-block",
+                  "padding" : "0px", "margin" : "0px 10px 0px 10px"
+                }),
+            html.H1(children="3D Network Explorer",
+                style={
+                  "display" : "inline-block", "padding" : "10px 0px 0px 0px",
+                  "margin" : "0px", "vertical-align" : "top"
+                }),
+            html.Div(children="Network name: " + net_name,
+                style={
+                  "padding" : "0px 0px 0px 10px"
+                }),
+        ]),
+        # Graph Row
+        html.Div(children=[
+            # 3D network plot
+            html.Div(children=[
+                dcc.Graph(id = 'network-3dview',
+                  figure = create_network_plot(net, vlayers, elayers),
+                )],
+                style = {"width" : "45%", "display" : "inline-block",
+                         "border" : "1px solid black", "padding" : "10px",
+                         "background-color" : "black", "margin" : "10px"},
+            ),
+            # 3D Co-Expression scatterplot.
+            html.Div(children=[
+                html.Div(id='condition-select-box', children=[
+                    create_condition_select(amx, sample_col)],
+                    style={'padding-bottom' : '10px'}),
+                dcc.Graph(id = 'edge-expression-3dview',
+                    figure = {},
+                ),
+                dcc.Input(
+                    id='current-edge', type="number",
+                    value=0, style= {'display' : 'none'})],
+                style = {"width" : "45%", "display" : "inline-block",
+                         "border" : "1px solid black", "padding" : "10px",
+                         "margin" : "10px", "vertical-align" : "top"},
+            ),
+        ]),
+        # Table Row
         html.Div(className='row', children=[
-            dcc.Graph(
-              id = 'network-3dview',
-              figure = create_network_plot(net, vlayers, elayers),
-            )],
-            style = {"width" : "45%",
-                     "display" : "inline-block",
-                     "border" : "1px solid black",
-                     "padding" : "10px",
-                     "background-color" : "black",
-                     "margin" : "10px"},
-        ),
-        html.Div(className='row', children=[
-            dcc.Graph(
-              id = 'edge-expression-3dview',
-              figure = create_expression_scatterplot(gem, amx, elayers, color_col),
-            )],
-            style = {"width" : "45%",
-                     "display" : "inline-block",
-                     "border" : "1px solid black",
-                     "padding" : "10px",
-                     "margin" : "10px"},
-        ),
-        # html.Div(className='row', children=[
-        #   html.Div([
-        #       dcc.Markdown("""
-        #           **Click Data**
-        #
-        #           Click on points in the graph.
-        #       """),
-        #       html.Pre(id='click-data', style=styles['pre']),
-        #   ], className='three columns'),
-        # ])
+            html.Div(id = "edge-table", children=[
+                create_dash_edge_table(net),
+            ]),
+            # html.Div(children = [
+            #       html.Pre(id='click-data',
+            #           style= {'border': 'thin lightgrey solid',
+            #                   'overflowX': 'scroll'})],
+            # ),
+        ]),
     ])
 
+    # Callback when an object in the network plot is clicked.
     @app.callback(
-        dash.dependencies.Output('edge-expression-3dview', 'figure'),
+        dash.dependencies.Output('current-edge', 'value'),
         [dash.dependencies.Input('network-3dview', 'clickData')])
-    def update_expression_plot(clickData):
+    def set_current_edge(clickData):
         if (clickData):
             points = clickData['points']
             found = re.match('^Edge: (.*?) \(co\) (.*?)$', points[0]['text'])
             if (found):
                 edge_index = points[0]['pointNumber']
-                figure = create_expression_scatterplot(gem, amx, elayers, color_col, edge_index)
-                return(figure)
+                return edge_index
+        raise dash.exceptions.PreventUpdate
 
-        figure = create_expression_scatterplot(gem, amx, elayers, color_col)
-        return(figure)
+    # Callback to update the co-expression plot when the edge changes.
+    @app.callback(
+        dash.dependencies.Output('edge-expression-3dview', 'figure'),
+        [dash.dependencies.Input('current-edge', 'value'),
+         dash.dependencies.Input('condition-select', 'value')])
+    def update_expression_plot(current_edge, color_col):
+        return create_expression_scatterplot(gem, amx, elayers, color_col, current_edge)
+
+    # Callback for displaying the click data.
+    # @app.callback(
+    #      dash.dependencies.Output('click-data', 'children'),
+    #      [dash.dependencies.Input('network-3dview', 'clickData')])
+    # def update_click_data(clickData):
+    #     return json.dumps(clickData, indent=2)
+
+    # Callback for replacing the edge table.
+    @app.callback(
+         dash.dependencies.Output('edge-table', 'children'),
+         [dash.dependencies.Input('current-edge', 'value')])
+    def update_edge_table(current_edge):
+        return create_dash_edge_table(net, current_edge)
+
 
     # @app.callback(
-    #     dash.dependencies.Output('click-data', 'children'),
-    #     [dash.dependencies.Input('network-3dview', 'clickData')])
-    # def update_expression_plot(clickData):
-    #     return json.dumps(clickData, indent=2)
+    #      dash.dependencies.Output('edge-expression-3dview', 'figure'),
+    #      [dash.dependencies.Input('condition-select', 'value'),
+    #       dash.dependencies.Input('edge-expression-3dview', 'figure')])
+    # def update_condition_select(input, figure):
+    #     print(figure)
+    #     figure = create_expression_scatterplot(gem, amx, elayers, color_col)
+
 
     app.run_server(debug=True)
 
@@ -602,7 +682,6 @@ def main():
     parser.add_argument('--net', dest='net_path', type=str, required=True)
     parser.add_argument('--emx', dest='gem_path', type=str, required=True)
     parser.add_argument('--amx', dest='amx_path', type=str, required=True)
-    parser.add_argument('--color_col', dest='color_col', type=str, required=True)
     parser.add_argument('--sample_col', dest='sample_col', type=str, required=False, default='Sample')
     args = parser.parse_args()
 
@@ -639,7 +718,7 @@ def main():
 
     # Launch the dash application
     print("Launching application...")
-    launch_application(net, gem, amx, vlayers, elayers, args.color_col)
+    launch_application(net, gem, amx, vlayers, elayers, args.sample_col, net_prefix)
 
     exit(0)
 
