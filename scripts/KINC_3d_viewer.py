@@ -16,6 +16,9 @@ This script accepts the following arguments:
     --sample_col: (optional) The name of the column in the annotation matrix
                   that contains the unique sample names.  Defaults to "Sample"
 
+    --debug:  (optional).  Add this argument to enable Dash application
+              debugging mode.
+
 """
 
 import argparse
@@ -167,7 +170,7 @@ def calculate_2d_layout(net, net_prefix):
 
 
 
-def get_zlayer_bins(net):
+def bin_edges(net):
     """
     Calculates a set of bins using the Similarity score.
 
@@ -196,7 +199,7 @@ def get_vertex_zlayers(net, glayout):
              nodes as well as the Degree and CC (clustering coefficient) for
              each node.
     """
-    net['Bin'] = get_zlayer_bins(net)
+    net['Bin'] = bin_edges(net)
     net['Weight'] = np.abs(net['Similarity_Score'])
 
     def find_vlayers(row, vtype='Source'):
@@ -242,11 +245,15 @@ def get_edge_zlayers(net, glayout):
         target = glayout.loc[row["Target"]]
         return([[source['X'], target['X'], None],
                 [source['Y'], target['Y'], None],
-                [sbin, sbin, None],row["Source"],row["Target"],row["Samples"]])
+                [sbin, sbin, None],
+                row["Source"],
+                row["Target"],
+                row["Samples"],
+                sbin])
 
     ledge = net.apply(place_elayers, axis=1)
 
-    elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Z', 'Source', 'Target', 'Samples'])
+    elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Z', 'Source', 'Target', 'Samples', 'Bin'])
     elayers.dropna(inplace=True)
     elayers['name'] = elayers['Source'] + " (co) " + elayers['Target']
 
@@ -274,50 +281,31 @@ def create_network_plot(net, vlayers, elayers):
     return : a Plotly figure object.
     """
 
-    fig1 = go.Figure(data=[go.Scatter3d(
-                   x=vlayers['X'],
-                   y=vlayers['Y'],
-                   z=vlayers['Z'],
-                   mode='markers',
-                   marker=dict(symbol='circle', size=np.log10(vlayers['Degree'])*4,
-                               color=vlayers['Z'], colorscale='Viridis'),
+    fig1 = go.Figure(data=[go.Scatter3d(x=vlayers['X'], y=vlayers['Y'],
+                   z=vlayers['Z'], mode='markers',
+                   marker=dict(symbol='circle', size=np.log10(vlayers['Degree'])*4),
                    text="Node: " + vlayers['Vertex'],
-                   hoverinfo='text')])
+                   hoverinfo='text', name='Nodes')])
 
     # Calculate a color per layer
-    net['Bin'] = get_zlayer_bins(net)
-    bins = np.flip(np.sort(net['Bin'].unique()))
-    layer_colors = pd.DataFrame({
-        'bin': bins,
-        'color' : np.flip(sns.color_palette('viridis', bins.size).as_hex())
-    })
+    bins = np.flip(np.sort(elayers['Bin'].unique()))
 
     # Add edge traces to the figure, one each per bin.
-    for bin_val in bins:
-        layer_indexes = (net['Bin'] == bin_val)
-        layer_color = layer_colors[layer_colors['bin'] == bin_val]['color'].values[0]
+    for bin in bins:
+        bin_edges = elayers[elayers['Bin'] == bin]
 
         # Reformat the elayers for use by the Scatter3d function.
-        eX = np.hstack(elayers['X'][layer_indexes])
-        eY = np.hstack(elayers['Y'][layer_indexes])
-        eZ = np.hstack(elayers['Z'][layer_indexes])
-
-        # Calculate the array to represent colors.
-        eZdf = pd.DataFrame.from_records(
-                  elayers['Z'],
-                  columns=['Source', 'Target', 'NULL'])[layer_indexes]
-        eZdf['NULL'] = eZdf['Source']
-        eC = np.hstack(eZdf.values)
+        eX = np.hstack(bin_edges['X'])
+        eY = np.hstack(bin_edges['Y'])
+        eZ = np.hstack(bin_edges['Z'])
+        names = bin_edges['name'][bin_edges.index.repeat(3)]
 
         # Create the scatterplot containing the lines for edges.
-        fig1.add_trace(go.Scatter3d(
-                       x=eX,
-                       y=eY,
-                       z=eZ,
-                       mode='lines',
-                       line=dict(color=layer_color, width=1),
-                       text="Edge: " + elayers["name"],
-                       hoverinfo='text'))
+        fig1.add_trace(go.Scatter3d(x=eX, y=eY, z=eZ,
+                       mode='lines', line=dict(width=1),
+                       text="Edge: " + names,
+                       hoverinfo='text', name=bin,
+                       customdata=bin_edges.index.repeat(3)))
 
     #  Add a slider for the network viewer
     steps = []
@@ -341,9 +329,11 @@ def create_network_plot(net, vlayers, elayers):
     fig1.update_layout(
         height=600,
         title=dict(text = "3D Network View", font = dict(color='#FFFFFF')),
-        showlegend=False,
+        showlegend=True,
+        legend=dict(font = dict(color="#FFFFFF")),
         margin=dict(l=10, r=10, t=30, b=10),
-        paper_bgcolor = "#000000",
+        paper_bgcolor="#000000",
+        colorway=["#FFFFFF"] + sns.color_palette('viridis_r', bins.size).as_hex(),
         scene=dict(
           aspectmode="cube",
           xaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
@@ -351,7 +341,7 @@ def create_network_plot(net, vlayers, elayers):
           yaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
                      showticklabels=False, title='', showspikes=False),
           zaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
-                     showticklabels=True, title='', showspikes=False, color="#FFFFFF")
+                     showticklabels=False, title='', showspikes=False, color="#FFFFFF")
         ),
         hovermode='closest',
         annotations=[dict(showarrow=False,
@@ -380,7 +370,7 @@ def create_network_plot(net, vlayers, elayers):
 
 
 
-def create_expression_scatterplot(gem, amx, elayers, color_col, edge_index=0):
+def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index=0):
     """
     Uses Plotly to create the interactive 3D scatterplot of co-expression
 
@@ -410,6 +400,9 @@ def create_expression_scatterplot(gem, amx, elayers, color_col, edge_index=0):
     sdata = pd.DataFrame(dict(x=gem.loc[node1].values,y=gem.loc[node2].values))
     sdata.index = gem.columns
     sdata = sdata.join(amx, how='left')
+
+    if (color_col == None):
+        color_col = amx.columns[1]
 
     # Generate the colors for the samples.
     categories = sdata[color_col].unique()
@@ -447,7 +440,8 @@ def create_expression_scatterplot(gem, amx, elayers, color_col, edge_index=0):
                     marker=dict(symbol='circle',size=sizes[first_category]),
                     text= sdata[first_category]['Sample'],
                     hoverinfo='text',
-                    name=categories[0])])
+                    name=str(categories[0]))])
+
     for i in range(1, len(categories)):
         next_category = (sdata[color_col] == categories[i])
         fig2.add_trace(go.Scatter3d(
@@ -458,7 +452,7 @@ def create_expression_scatterplot(gem, amx, elayers, color_col, edge_index=0):
                         marker=dict(symbol='circle',size=sizes[next_category]),
                         text= sdata[next_category]['Sample'],
                         hoverinfo='text',
-                        name=categories[i]))
+                        name=str(categories[i])))
 
     fig2.update_layout(
         height=600,
@@ -544,7 +538,9 @@ def create_condition_select(amx, sample_col):
 
 
 
-def launch_application(net, gem, amx, vlayers, elayers, sample_col, net_name):
+def launch_application(net, gem, amx, vlayers, elayers, sample_col,
+    net_name, debug=False):
+
     """
     Creates the Dash application.
 
@@ -560,6 +556,13 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col, net_name):
     vlayers : The dataframe containing the 3D coordinates for the nodes.
 
     elayers : The dataframe containing the 3D coordinates for the edges.
+
+    sample_col : The name of the column in the amx that contains the sample
+                 name.
+
+    net_name : The name of the network to display.
+
+    debug:  Set to True to enable Dash debugging support.
 
     """
     app = dash.Dash()
@@ -598,7 +601,7 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col, net_name):
                     create_condition_select(amx, sample_col)],
                     style={'padding-bottom' : '10px'}),
                 dcc.Graph(id = 'edge-expression-3dview',
-                    figure = {},
+                    figure = create_expression_scatterplot(gem, amx, elayers),
                 ),
                 dcc.Input(
                     id='current-edge', type="number",
@@ -614,9 +617,9 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col, net_name):
                 create_dash_edge_table(net),
             ]),
             # html.Div(children = [
-            #       html.Pre(id='click-data',
-            #           style= {'border': 'thin lightgrey solid',
-            #                   'overflowX': 'scroll'})],
+            #    html.Pre(id='click-data',
+            #        style= {'border': 'thin lightgrey solid',
+            #                'overflowX': 'scroll'})],
             # ),
         ]),
     ])
@@ -630,7 +633,7 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col, net_name):
             points = clickData['points']
             found = re.match('^Edge: (.*?) \(co\) (.*?)$', points[0]['text'])
             if (found):
-                edge_index = points[0]['pointNumber']
+                edge_index = points[0]['customdata']
                 return edge_index
         raise dash.exceptions.PreventUpdate
 
@@ -642,19 +645,19 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col, net_name):
     def update_expression_plot(current_edge, color_col):
         return create_expression_scatterplot(gem, amx, elayers, color_col, current_edge)
 
-    # Callback for displaying the click data.
-    # @app.callback(
-    #      dash.dependencies.Output('click-data', 'children'),
-    #      [dash.dependencies.Input('network-3dview', 'clickData')])
-    # def update_click_data(clickData):
-    #     return json.dumps(clickData, indent=2)
-
     # Callback for replacing the edge table.
     @app.callback(
          dash.dependencies.Output('edge-table', 'children'),
          [dash.dependencies.Input('current-edge', 'value')])
     def update_edge_table(current_edge):
         return create_dash_edge_table(net, current_edge)
+
+    # Callback for displaying the click data.
+    # @app.callback(
+    #     dash.dependencies.Output('click-data', 'children'),
+    #     [dash.dependencies.Input('network-3dview', 'clickData')])
+    # def update_click_data(clickData):
+    #     return json.dumps(clickData, indent=2)
 
 
     # @app.callback(
@@ -665,8 +668,7 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col, net_name):
     #     print(figure)
     #     figure = create_expression_scatterplot(gem, amx, elayers, color_col)
 
-
-    app.run_server(debug=True)
+    app.run_server(debug=debug)
 
 
 
@@ -683,6 +685,7 @@ def main():
     parser.add_argument('--emx', dest='gem_path', type=str, required=True)
     parser.add_argument('--amx', dest='amx_path', type=str, required=True)
     parser.add_argument('--sample_col', dest='sample_col', type=str, required=False, default='Sample')
+    parser.add_argument('--debug', dest='debug', action='store_true', default=False)
     args = parser.parse_args()
 
     # Make sure the paths exist
@@ -713,12 +716,13 @@ def main():
 
     # Calculate the Z-coorinate positions for the verticies and edges.
     print("Calculating 3D layout...")
+    net['Bin'] = bin_edges(net)
     vlayers = get_vertex_zlayers(net, glayout)
     elayers = get_edge_zlayers(net, glayout)
 
     # Launch the dash application
     print("Launching application...")
-    launch_application(net, gem, amx, vlayers, elayers, args.sample_col, net_prefix)
+    launch_application(net, gem, amx, vlayers, elayers, args.sample_col, net_prefix, args.debug)
 
     exit(0)
 
