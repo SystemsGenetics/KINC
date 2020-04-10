@@ -302,25 +302,37 @@ def create_network_plot(net, vlayers, elayers):
 
         # Create the scatterplot containing the lines for edges.
         fig1.add_trace(go.Scatter3d(x=eX, y=eY, z=eZ,
-                       mode='lines', line=dict(width=1),
+                       mode='lines',
+                       line=dict(width=1),
                        text="Edge: " + names,
                        hoverinfo='text', name=bin,
                        customdata=bin_edges.index.repeat(3)))
 
     #  Add a slider for the network viewer
     steps = []
-    num_layers = len(fig1.data)
-    for i in range(num_layers):
+    steps.append(dict(
+        method="restyle",
+        # Disable all layers.
+        args=["visible", [True] * (len(bins) + 2)],
+        label='all'
+    ))
+    steps.append(dict(
+        method="restyle",
+        # Disable all layers.
+        args=["visible", [False] * (len(bins) + 2)],
+        label='nodes'
+    ))
+    steps[1]["args"][1][0] = True
+    for i in range(len(bins)):
         step = dict(
             method="restyle",
             # Disable all layers.
-            args=["visible", [False] * num_layers if (i > 0) else [True] * num_layers],
-            label='all' if (i == 0) else bins[i-1]
+            args=["visible", [False] * (len(bins) + 2)],
+            label=bins[i]
         )
-        # Turn on the layers for this step. It should always be the first
-        # layer and i'th layer.
+        # Turn on the layers for this step and leave on the nodes layer.
         step["args"][1][0] = True
-        for j in range(i):
+        for j in range(1,i+2):
             step["args"][1][j] = True
 
         # Set the label.
