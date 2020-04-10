@@ -409,31 +409,9 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index=
     samples = elayers.iloc[edge_index]['Samples']
 
     # Generate the dataframe for the expression scatterplot
-    sdata = pd.DataFrame(dict(x=gem.loc[node1].values,y=gem.loc[node2].values))
+    sdata = pd.DataFrame(dict(X=gem.loc[node1].values,Y=gem.loc[node2].values))
     sdata.index = gem.columns
     sdata = sdata.join(amx, how='left')
-
-    if (color_col == None):
-        color_col = amx.columns[1]
-
-    # Generate the colors for the samples.
-    categories = sdata[color_col].unique()
-    num_categories = categories.shape[0]
-    color_rep = pd.DataFrame({
-        'Categories' : categories,
-        'Color' : np.arange(0, num_categories)})
-    sdata['color'] = sdata[color_col].replace(
-                         to_replace=color_rep['Categories'].values,
-                         value=color_rep['Color'].values)
-
-    # Generate the Z-coordinates for the samples.
-    ticks = np.arange(0, num_categories) / (num_categories - 1) - 0.5
-    color_rep = pd.DataFrame({
-        'Categories' : categories,
-        'Z' : ticks})
-    sdata['z'] = sdata[color_col].replace(
-                         to_replace=color_rep['Categories'].values,
-                         value=color_rep['Z'].values)
 
     # Calculate the sizes of the points.
     sizes = pd.Series(list(samples))
@@ -442,34 +420,56 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index=
     sizes = sizes.astype('int')
     sizes.index = sdata.index
 
-    # Add the first category as trace #1.
-    first_category = (sdata[color_col] == categories[0])
-    fig2 = go.Figure(data=[go.Scatter3d(
-                    x=sdata[first_category]['x'],
-                    z=sdata[first_category]['y'],
-                    y=sdata[first_category]['z'],
-                    mode='markers',
-                    marker=dict(symbol='circle',size=sizes[first_category]),
-                    text= sdata[first_category]['Sample'],
-                    hoverinfo='text',
-                    name=str(categories[0]))])
+    # Generate the colors for the samples.
+    if (color_col == None):
+        color_col = amx.columns[1]
 
-    for i in range(1, len(categories)):
-        next_category = (sdata[color_col] == categories[i])
-        fig2.add_trace(go.Scatter3d(
-                        x=sdata[next_category]['x'],
-                        z=sdata[next_category]['y'],
-                        y=sdata[next_category]['z'],
+    # Generate the Z-coordinates for the samples.
+    categories = sdata[color_col].unique()
+    if (categories.dtype == object):
+        num_categories = categories.shape[0]
+        tickvals = np.arange(0, num_categories) / (num_categories - 1) - 0.5
+        replace_df = pd.DataFrame({
+            'Categories' : categories,
+            'Z' : tickvals})
+        sdata['Z'] = sdata[color_col].replace(
+                             to_replace=replace_df['Categories'].values,
+                             value=replace_df['Z'].values)
+    else:
+        num_categories = None
+        sdata['Z'] = sdata[color_col]
+        tickvals = []
+
+    if num_categories:
+        showlegend = True
+        first_category = (sdata[color_col] == categories[0])
+        fig2 = go.Figure(data=[go.Scatter3d(x=sdata[first_category]['X'],
+                        z=sdata[first_category]['Y'],y=sdata[first_category]['Z'],
                         mode='markers',
-                        marker=dict(symbol='circle',size=sizes[next_category]),
-                        text= sdata[next_category]['Sample'],
-                        hoverinfo='text',
-                        name=str(categories[i])))
+                        marker=dict(symbol='circle', size=sizes[first_category]),
+                        text= sdata[first_category].index, hoverinfo='text',
+                        name=str(categories[0]))])
+
+        for i in range(1, len(categories)):
+            next_category = (sdata[color_col] == categories[i])
+            fig2.add_trace(go.Scatter3d(x=sdata[next_category]['X'],
+                            z=sdata[next_category]['Y'], y=sdata[next_category]['Z'],
+                            mode='markers',
+                            marker=dict(symbol='circle',size=sizes[next_category]),
+                            text= sdata[next_category].index,
+                            hoverinfo='text', name=str(categories[i])))
+    else:
+        showlegend = False
+        fig2 = go.Figure(data=[go.Scatter3d(x=sdata['X'], z=sdata['Y'], y=sdata['Z'],
+                        mode='markers',
+                        marker=dict(symbol='circle', size=sizes,
+                                    color=sdata['Z'], colorscale='Viridis'),
+                        text= sdata.index, hoverinfo='text')])
 
     fig2.update_layout(
         height=600,
         title="3D Edge Co-Expression Scatterplot",
-        showlegend=True,
+        showlegend=showlegend,
         legend={'itemsizing': 'constant'},
         margin=dict(l=10, r=10, t=30, b=10),
         scene=dict(
@@ -482,7 +482,8 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index=
                      showspikes=True),
           yaxis=dict(showbackground=True, showline=True, zeroline=True, showgrid=True,
                      showticklabels=True, title='Condition',
-                     tickvals=ticks,
+                     tickmode='auto',
+                     tickvals=tickvals,
                      ticktext=categories, showspikes=True),
         ),
         hovermode='closest',
@@ -494,7 +495,7 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index=
     )
 
     fig2.layout.scene.camera.projection.type = "orthographic"
-    fig2.layout.scene.camera.eye = dict(x=0, y=1, z=0)
+    fig2.layout.scene.camera.eye = dict(x=0, y=-1, z=0)
 
     return fig2
 
@@ -539,11 +540,24 @@ def create_dash_edge_table(net, edge_index = 0):
 
 def create_condition_select(amx, sample_col):
     columns = np.sort(amx.columns.values)
-    columns = np.delete(columns, columns != sample_col)
+
+    # Holds the list of columns to keep.
+    keep = []
+
+    # Exclude any columns with just a single value or any columns with as
+    # many unique values as there are elements
+    for col in columns:
+        if len(amx[col].dropna().unique()) <= 1:
+            continue
+        if len(amx[col].dropna().unique()) == amx[col].size:
+            continue
+        keep.append(col)
+
+    # Build the select element.
     select = dcc.Dropdown(
         id = 'condition-select',
         options = [
-          {'label' : col, 'value' : col} for col in columns
+          {'label' : col, 'value' : col} for col in keep
         ],
         value = columns[0])
     return select
