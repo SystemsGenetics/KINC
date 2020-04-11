@@ -19,6 +19,19 @@ This script accepts the following arguments:
     --debug:  (optional).  Add this argument to enable Dash application
               debugging mode.
 
+    --iterations: (optional). The number of iterations to perform when
+                  calculating the Force Atlas2 layout.  This argument is only
+                  used the first time a network is viewed or if the
+                  --redo_layout argument is provided.
+
+    --redo_layout :  (optional). If the 2D and 3D network layout has already
+                     been constructed it will be loaded from a file. Add this
+                     arugment to force the layouts to be rebuilt and not loaded
+                     from the files. To prevent Dash from rerunning the layout
+                     on callbacks, this option results in the program
+                     terminating. To view the application, restart without
+                     this option.
+
 """
 
 import argparse
@@ -28,7 +41,8 @@ import igraph as ig
 import plotly as py
 import seaborn as sns
 import plotly.graph_objects as go
-import networkx as nx
+from fa2 import ForceAtlas2
+import random
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -36,6 +50,7 @@ import os
 import json
 import re
 import ast
+from progress.bar import IncrementalBar
 
 
 
@@ -127,7 +142,7 @@ def get_iGraph(net):
     g.add_edges(net[['Source', 'Target']].values)
 
     # Add the edge w
-    g.es['weight'] = net['Similarity_Score']
+    #g.es['weight'] = net['Similarity_Score']
 
     return g
 
@@ -135,7 +150,7 @@ def get_iGraph(net):
 
 
 
-def calculate_2d_layout(net, net_prefix):
+def calculate_2d_layout(net, net_prefix, redo_layout, iterations):
     """
     Calculates a typical 2D layout for the network.
 
@@ -147,9 +162,12 @@ def calculate_2d_layout(net, net_prefix):
 
     net :  The network dataframe created by the load_network function.
 
-    net_prefix:  The filename of the file that will house the layout
-                 after it is calculated. The file will be saved with this name
-                 and the extension ".2Dlayout.txt"
+    net_prefix :  The filename of the file that will house the layout
+                  after it is calculated. The file will be saved with this name
+                  and the extension ".2Dlayout.txt"
+
+    redo_layout :  A boolean indicting if the layout should be rebuilt rather
+                   than loading from file if one exists already.
 
     return : a Pandas dataframe containing the layout coordinates for
              the nodes in the network. The dataframe contains X, and Y
@@ -160,12 +178,31 @@ def calculate_2d_layout(net, net_prefix):
     t = pd.Series(g.transitivity_local_undirected(), index=g.vs['name'])
     d = pd.DataFrame(g.degree(), index=g.vs['name'], columns=['Degree'])
 
-    G = nx.Graph()
-    net['Weight'] = np.abs(net['Similarity_Score'])
-    G.add_weighted_edges_from(net[['Source','Target','Weight']].values)
-    if (not os.path.exists(net_prefix + '.2Dlayout.txt')):
-        glayout = pd.DataFrame(nx.drawing.layout.kamada_kawai_layout(G)).transpose()
+    forceatlas2 = ForceAtlas2(
+        # Behavior alternatives
+        outboundAttractionDistribution=True,  # Dissuade hubs
+        linLogMode=False,  # NOT IMPLEMENTED
+        adjustSizes=False,  # Prevent overlap (NOT IMPLEMENTED)
+        edgeWeightInfluence=1.0,
+
+        # Performance
+        jitterTolerance=1.0,  # Tolerance
+        barnesHutOptimize=True,
+        barnesHutTheta=1.2,
+        multiThreaded=False,  # NOT IMPLEMENTED
+
+        # Tuning
+        scalingRatio=2.0,
+        strongGravityMode=False,
+        gravity=1,
+
+        # Log
+        verbose=True)
+
+    if (redo_layout | (not os.path.exists(net_prefix + '.2Dlayout.txt'))):
+        glayout = pd.DataFrame(forceatlas2.forceatlas2_igraph_layout(g, iterations=iterations).coords)
         glayout.columns = ['X', 'Y']
+        glayout.index = g.vs['name']
         glayout = pd.concat([glayout, d, t], axis=1, sort=False)
         glayout.columns = ['X', 'Y', 'Degree', 'CC']
         glayout.to_csv(net_prefix + '.2Dlayout.txt')
@@ -194,7 +231,7 @@ def bin_edges(net):
 
 
 
-def get_vertex_zlayers(net, glayout, net_prefix):
+def get_vertex_zlayers(net, glayout, net_prefix, redo_layout):
     """
     Uses the 2D layout and calculates the Z-coordinate for the nodes.
 
@@ -206,25 +243,32 @@ def get_vertex_zlayers(net, glayout, net_prefix):
                  after it is calculated. The file will be saved with this name
                  and the extension ".3Dvlayers.txt"
 
+    redo_layout :  A boolean indicting if the layout should be rebuilt rather
+                   than loading from file if one exists already.
+
     return : A Pandas dataframe containing the X, Y and Z coordinates for the
              nodes as well as the Degree and CC (clustering coefficient) for
              each node.
     """
 
-    def find_vlayers(row, vtype='Source'):
+    def find_vlayers(row, vtype='Source', bar=None):
+        if bar:
+            bar.next()
         node = glayout.loc[row[vtype]]
         sbin = row['Edge_Bin']
         return(row[vtype], node['X'], node['Y'], sbin, node['Degree'], node['CC'])
 
 
-    if (not os.path.exists(net_prefix + '.3Dvlayers.txt')):
+    if (redo_layout | (not os.path.exists(net_prefix + '.3Dvlayers.txt'))):
 
-        lsource = net.apply(find_vlayers, vtype='Source', axis=1)
-        ltarget = net.apply(find_vlayers, vtype='Target', axis=1)
+        bar = IncrementalBar('', max=net.shape[0]*2, suffix='%(percent)d%%')
+        lsource = net.apply(find_vlayers, vtype='Source', bar=bar, axis=1)
+        ltarget = net.apply(find_vlayers, vtype='Target', bar=bar, axis=1)
+        print("")
 
         vlayers = pd.DataFrame.from_records(lsource.append(ltarget).values, columns=['Vertex', 'X', 'Y', 'Z', 'Degree', 'CC'])
-        vlayers.dropna(inplace=True)
         vlayers = vlayers[vlayers.duplicated() == False]
+        # We want to place the node in the layer where it first appears.
         vlayers = vlayers.groupby(by=['Vertex']).apply(lambda g: g[g['Z'] == g['Z'].max()])
         vlayers.reset_index(inplace=True, drop=True)
         vlayers.to_csv(net_prefix + '.3Dvlayers.txt')
@@ -238,7 +282,7 @@ def get_vertex_zlayers(net, glayout, net_prefix):
 
 
 
-def get_edge_zlayers(net, glayout, net_prefix):
+def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
     """
     Uses the 2D layout and calculates the Z-coordinate for the edges.
 
@@ -254,12 +298,17 @@ def get_edge_zlayers(net, glayout, net_prefix):
                  after it is calculated. The file will be saved with this name
                  and the extension ".3Delayers.txt"
 
+    redo_layout :  A boolean indicting if the layout should be rebuilt rather
+                   than loading from file if one exists already.
+
     return : A Pandas dataframe containing the X, Y and Z coordinates arrays
              for the edges as well as Source, Target and Samples values from
              the original network.  The X, Y and Z coordiantes are tuples.
     """
 
-    def place_elayers(row):
+    def place_elayers(row, bar = None):
+        if bar:
+            bar.next()
         ebin = row['Edge_Bin']
         pbin = row['Pval_Bin']
         test = row['Test_Name']
@@ -273,14 +322,14 @@ def get_edge_zlayers(net, glayout, net_prefix):
                 row["Samples"],
                 ebin, pbin, test])
 
-    if (not os.path.exists(net_prefix + '.3Delayers.txt')):
-        ledge = net.apply(place_elayers, axis=1)
+    if (redo_layout | (not os.path.exists(net_prefix + '.3Delayers.txt'))):
+        bar = IncrementalBar('', max=net.shape[0], suffix='%(percent)d%%')
+        ledge = net.apply(place_elayers, bar=bar, axis=1)
+        print("")
 
         elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Z', 'Source', 'Target', 'Samples', 'Edge_Bin', 'Pval_Bin', 'Test_Name'])
-        elayers.dropna(inplace=True)
         elayers['name'] = elayers['Source'] + " (co) " + elayers['Target']
         elayers.to_csv(net_prefix + '.3Delayers.txt')
-
     else:
         elayers = pd.read_csv(net_prefix + '.3Delayers.txt', index_col=0)
         elayers['X'] = elayers['X'].apply(ast.literal_eval)
@@ -333,7 +382,7 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', camera = None
         (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Pval_Bin', 'R-squared')
 
     if color_by == 'Test Name':
-        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Test_Name', 'Test Name')
+        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Test_Name', 'Test Name', False)
 
 
     fig1.update_layout(
@@ -378,7 +427,9 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', camera = None
 
 
 
-def create_binned_network_figure(figure, elayers, bin_col, slider_title):
+def create_binned_network_figure(figure, elayers, bin_col, slider_title,
+        include_slider = True):
+
     """
     Adds the traces for the network figure based on the bin column.
 
@@ -404,42 +455,46 @@ def create_binned_network_figure(figure, elayers, bin_col, slider_title):
                        customdata=bin_edges.index.repeat(3)))
 
     #  Add a slider for the network viewer
-    steps = []
-    steps.append(dict(
-        method="restyle",
-        args=["visible", [True] * (len(bins) + 2)],
-        label='all'
-    ))
-    steps.append(dict(
-        method="restyle",
-        args=["visible", [False] * (len(bins) + 2)],
-        label='nodes'
-    ))
-    steps[1]["args"][1][0] = True
-    for i in range(len(bins)):
-        step = dict(
+    if include_slider:
+        steps = []
+        steps.append(dict(
+            method="restyle",
+            args=["visible", [True] * (len(bins) + 2)],
+            label='all'
+        ))
+        steps.append(dict(
             method="restyle",
             args=["visible", [False] * (len(bins) + 2)],
-            label=bins[i]
-        )
-        # Turn on the layers for this step and leave on the nodes layer.
-        step["args"][1][0] = True
-        for j in range(1,i+2):
-            step["args"][1][j] = True
+            label='nodes'
+        ))
+        steps[1]["args"][1][0] = True
+        for i in range(len(bins)):
+            step = dict(
+                method="restyle",
+                args=["visible", [False] * (len(bins) + 2)],
+                label=bins[i]
+            )
+            # Turn on the layers for this step and leave on the nodes layer.
+            step["args"][1][0] = True
+            for j in range(1,i+2):
+                step["args"][1][j] = True
 
-        # Set the label.
-        steps.append(step)
+            # Set the label.
+            steps.append(step)
 
-    colorway = ["#FFFFFF"] + sns.color_palette('viridis_r', bins.size).as_hex()
+        colorway = ["#FFFFFF"] + sns.color_palette('viridis_r', bins.size).as_hex()
 
-    sliders = [dict(
-        active=0,
-        currentvalue={"prefix": slider_title + ": "},
-        pad={"t": 50},
-        steps=steps,
-        font=dict(color = '#FFFFFF'),
-        tickcolor='#FFFFFF',
-        len=1)]
+        sliders = [dict(
+            active=0,
+            currentvalue={"prefix": slider_title + ": "},
+            pad={"t": 50},
+            steps=steps,
+            font=dict(color = '#FFFFFF'),
+            tickcolor='#FFFFFF',
+            len=1)]
+    else:
+        colorway = ["#FFFFFF"] + sns.color_palette('muted', bins.size).as_hex()
+        sliders = []
 
     return(colorway, sliders)
 
@@ -592,11 +647,17 @@ def create_dash_edge_table(net, edge_index = 0):
                 'border-bottom' : '1px solid #ddd'};
 
     row_vals = net_fixed.iloc[edge_index]
+    source = row_vals['Source']
+    target = row_vals['Target']
+    row_vals = net_fixed[(net_fixed['Source'] == source) & (net_fixed['Target'] == target)]
+
+    table_rows = []
+    table_rows.append(html.Tr([html.Th(col, style=hth_style) for col in columns], style=htr_style))
+    for index, row in row_vals.iterrows():
+        table_rows.append(html.Tr([html.Th(row[col], style=th_style) for col in columns]))
+
     table = html.Table(
-        children=[
-            html.Tr([html.Th(col, style=hth_style) for col in columns], style=htr_style),
-            html.Tr([html.Th(row_vals[col], style=th_style) for col in columns]),
-        ],
+        children=table_rows,
     )
     return table
 
@@ -921,6 +982,8 @@ def main():
     parser.add_argument('--amx', dest='amx_path', type=str, required=True)
     parser.add_argument('--sample_col', dest='sample_col', type=str, required=False, default='Sample')
     parser.add_argument('--debug', dest='debug', action='store_true', default=False)
+    parser.add_argument('--redo_layout', dest='redo_layout', action='store_true', default=False)
+    parser.add_argument('--iterations', dest='iterations', type=int, default=100)
     args = parser.parse_args()
 
     # Make sure the paths exist
@@ -944,16 +1007,23 @@ def main():
     # Get the filename of the network file minus the extension.
     (net_prefix, net_ext) = os.path.splitext(os.path.basename(args.net_path))
 
-
     # Calculate a 2D layout for the network
     print("Calculating 2D layout. This may take awhile if it is not precalculated.")
-    glayout = calculate_2d_layout(net, net_prefix)
+    glayout = calculate_2d_layout(net, net_prefix, args.redo_layout, args.iterations)
 
     # Calculate the Z-coorinate positions for the verticies and edges.
-    print("Calculating 3D layout. This may take awhile if it is not precalculated.")
     bin_edges(net)
-    vlayers = get_vertex_zlayers(net, glayout, net_prefix)
-    elayers = get_edge_zlayers(net, glayout, net_prefix)
+    print("Calculating 3D node layout. This may take awhile if it is not precalculated.")
+    vlayers = get_vertex_zlayers(net, glayout, net_prefix, args.redo_layout)
+    print("Calculating 3D edge layout. This may take awhile if it is not precalculated.")
+    elayers = get_edge_zlayers(net, glayout, net_prefix, args.redo_layout)
+
+
+    # If the user requested we rebuild the layout then terminate so Dash
+    # doesn't try to rebuild the layout on each callback.
+    if args.redo_layout:
+        print ("Layouts have been built. Please relaunch without the --redo-layouts option to view the app.")
+        exit(0)
 
     # Launch the dash application
     print("Launching application...")
