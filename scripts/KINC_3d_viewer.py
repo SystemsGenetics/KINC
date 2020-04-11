@@ -51,6 +51,13 @@ def load_network(file_path):
     """
 
     net = pd.read_csv(file_path, sep="\t")
+
+    # Make sure the file has the required columns
+    columns = net.columns
+    if ('Source' not in columns) | ('Target' not in columns) | ('Samples' not in columns) | ('p_value' not in columns) | ('r_squared' not in columns) |('Test_Name' not in columns):
+        print("ERROR:  The network file does not seem to be  KINC tidy file. It is missing one or more of the following column headers: Source, Target, Samples, p_value, r_squared or Test_Name. Please check the file.")
+        exit(1)
+
     return net
 
 
