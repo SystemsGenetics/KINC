@@ -35,6 +35,7 @@ import dash_html_components as html
 import os
 import json
 import re
+import ast
 
 
 
@@ -172,22 +173,21 @@ def calculate_2d_layout(net, net_prefix):
 
 def bin_edges(net):
     """
-    Calculates a set of bins using the Similarity score.
+    Calculates a set of bins using the Similarity score and P-value.
 
     It is from these bins that the edges and nodes of the network will be
-    stacked in the z-axis of the 3D plot.
+    stacked in the z-axis of the 3D plot and or colored.  Two new
+    columns are added to the provided network: 'Edge_Bin' and 'PVal_Bin'.
 
     net :  The network dataframe created by the load_network function.
 
-    return : a numpy array containing the list of bin values.
     """
-    return np.around(np.abs(net['Similarity_Score']), decimals=2)
+    net['Edge_Bin'] = np.around(np.abs(net['Similarity_Score']), decimals=2)
+    net['Pval_Bin'] = np.round(-np.log10(net['p_value']))
 
 
 
-
-
-def get_vertex_zlayers(net, glayout):
+def get_vertex_zlayers(net, glayout, net_prefix):
     """
     Uses the 2D layout and calculates the Z-coordinate for the nodes.
 
@@ -195,34 +195,43 @@ def get_vertex_zlayers(net, glayout):
 
     glayout : The dataframe containing the 2D layout of the nodes.
 
+    net_prefix:  The filename of the file that will house the vertex layout
+                 after it is calculated. The file will be saved with this name
+                 and the extension ".3Dvlayers.txt"
+
     return : A Pandas dataframe containing the X, Y and Z coordinates for the
              nodes as well as the Degree and CC (clustering coefficient) for
              each node.
     """
-    net['Bin'] = bin_edges(net)
-    net['Weight'] = np.abs(net['Similarity_Score'])
 
     def find_vlayers(row, vtype='Source'):
         node = glayout.loc[row[vtype]]
-        sbin = row['Bin']
+        sbin = row['Edge_Bin']
         return(row[vtype], node['X'], node['Y'], sbin, node['Degree'], node['CC'])
 
-    lsource = net.apply(find_vlayers, vtype='Source', axis=1)
-    ltarget = net.apply(find_vlayers, vtype='Target', axis=1)
 
-    vlayers = pd.DataFrame.from_records(lsource.append(ltarget).values, columns=['Vertex', 'X', 'Y', 'Z', 'Degree', 'CC'])
-    vlayers.dropna(inplace=True)
-    vlayers = vlayers[vlayers.duplicated() == False]
-    vlayers.head()
+    if (not os.path.exists(net_prefix + '.3Dvlayers.txt')):
 
-    vlayers = vlayers.groupby(by=['Vertex']).apply(lambda g: g[g['Z'] == g['Z'].max()])
+        lsource = net.apply(find_vlayers, vtype='Source', axis=1)
+        ltarget = net.apply(find_vlayers, vtype='Target', axis=1)
+
+        vlayers = pd.DataFrame.from_records(lsource.append(ltarget).values, columns=['Vertex', 'X', 'Y', 'Z', 'Degree', 'CC'])
+        vlayers.dropna(inplace=True)
+        vlayers = vlayers[vlayers.duplicated() == False]
+        vlayers = vlayers.groupby(by=['Vertex']).apply(lambda g: g[g['Z'] == g['Z'].max()])
+        vlayers.reset_index(inplace=True, drop=True)
+        vlayers.to_csv(net_prefix + '.3Dvlayers.txt')
+
+    else:
+        vlayers = pd.read_csv(net_prefix + '.3Dvlayers.txt', index_col=0)
+
     return vlayers
 
 
 
 
 
-def get_edge_zlayers(net, glayout):
+def get_edge_zlayers(net, glayout, net_prefix):
     """
     Uses the 2D layout and calculates the Z-coordinate for the edges.
 
@@ -234,28 +243,42 @@ def get_edge_zlayers(net, glayout):
 
     glayout : The dataframe containing the 2D layout of the nodes.
 
+    net_prefix:  The filename of the file that will house the vertex layout
+                 after it is calculated. The file will be saved with this name
+                 and the extension ".3Delayers.txt"
+
     return : A Pandas dataframe containing the X, Y and Z coordinates arrays
              for the edges as well as Source, Target and Samples values from
              the original network.  The X, Y and Z coordiantes are tuples.
     """
 
     def place_elayers(row):
-        sbin = row['Bin']
+        ebin = row['Edge_Bin']
+        pbin = row['Pval_Bin']
+        test = row['Test_Name']
         source = glayout.loc[row["Source"]]
         target = glayout.loc[row["Target"]]
         return([[source['X'], target['X'], None],
                 [source['Y'], target['Y'], None],
-                [sbin, sbin, None],
+                [ebin, ebin, None],
                 row["Source"],
                 row["Target"],
                 row["Samples"],
-                sbin])
+                ebin, pbin, test])
 
-    ledge = net.apply(place_elayers, axis=1)
+    if (not os.path.exists(net_prefix + '.3Delayers.txt')):
+        ledge = net.apply(place_elayers, axis=1)
 
-    elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Z', 'Source', 'Target', 'Samples', 'Bin'])
-    elayers.dropna(inplace=True)
-    elayers['name'] = elayers['Source'] + " (co) " + elayers['Target']
+        elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Z', 'Source', 'Target', 'Samples', 'Edge_Bin', 'Pval_Bin', 'Test_Name'])
+        elayers.dropna(inplace=True)
+        elayers['name'] = elayers['Source'] + " (co) " + elayers['Target']
+        elayers.to_csv(net_prefix + '.3Delayers.txt')
+
+    else:
+        elayers = pd.read_csv(net_prefix + '.3Delayers.txt', index_col=0)
+        elayers['X'] = elayers['X'].apply(ast.literal_eval)
+        elayers['Y'] = elayers['Y'].apply(ast.literal_eval)
+        elayers['Z'] = elayers['Z'].apply(ast.literal_eval)
 
     return elayers
 
@@ -263,7 +286,7 @@ def get_edge_zlayers(net, glayout):
 
 
 
-def create_network_plot(net, vlayers, elayers):
+def create_network_plot(net, vlayers, elayers, color_by = 'Score', camera = None, aspect = None):
     """
     Uses Plotly to create the interactive 3D visualization of the network.
 
@@ -278,21 +301,86 @@ def create_network_plot(net, vlayers, elayers):
 
     elayers : The dataframe containing the 3D coordinates for the edges.
 
+    camera : A dictionary containing the figure camera coordinates.
+
     return : a Plotly figure object.
     """
 
+    # Add the network nodes as the first trace.
     fig1 = go.Figure(data=[go.Scatter3d(x=vlayers['X'], y=vlayers['Y'],
                    z=vlayers['Z'], mode='markers',
-                   marker=dict(symbol='circle', size=np.log10(vlayers['Degree'])*4),
+                   opacity = 0.5,
+                   marker=dict(symbol='circle', size=np.log10(vlayers['Degree'])*4,
+                               line=dict(width=1, color="#888888")),
                    text="Node: " + vlayers['Vertex'],
                    hoverinfo='text', name='Nodes')])
 
-    # Calculate a color per layer
-    bins = np.flip(np.sort(elayers['Bin'].unique()))
+    # Add the edges and bin them
+    if color_by == 'Score':
+        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Edge_Bin', 'Similarity Score')
+
+    if color_by == 'P-value':
+        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Pval_Bin', 'P-value')
+
+    if color_by == 'R^2':
+        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Pval_Bin', 'R-squared')
+
+    if color_by == 'Test Name':
+        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Test_Name', 'Test Name')
+
+
+    fig1.update_layout(
+        height=600,
+        title=dict(text = "3D Network View", font = dict(color='#FFFFFF')),
+        showlegend=True,
+        legend=dict(font = dict(color="#FFFFFF")),
+        margin=dict(l=10, r=10, t=30, b=10),
+        paper_bgcolor="#000000",
+        colorway=colorway,
+        scene=dict(
+          aspectmode="cube",
+          xaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
+                     showticklabels=False, title='', showspikes=False),
+          yaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
+                     showticklabels=False, title='', showspikes=False),
+          zaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
+                     showticklabels=False, title='', showspikes=False, color="#FFFFFF")
+        ),
+        hovermode='closest',
+        annotations=[dict(showarrow=False, text="", xref='paper', yref='paper',
+                        x=0, y=0.1, xanchor='left', yanchor='bottom', font=dict(size=14))
+                    ],
+        sliders=sliders,
+        autosize=True,
+    )
+
+    # We want an orthographic layout so that when looking above the edges line up
+    # with the nodes.
+    fig1.layout.scene.camera.projection.type = "orthographic"
+    fig1.layout.scene.camera.eye = dict(x=0, y=0, z=2)
+    if camera:
+        fig1.layout.scene.camera.eye = camera['eye']
+
+    fig1.layout.scene.aspectmode = 'manual'
+    if aspect:
+        fig1.layout.scene.aspectratio = aspect
+
+    return fig1
+
+
+
+
+
+def create_binned_network_figure(figure, elayers, bin_col, slider_title):
+    """
+    Adds the traces for the network figure based on the bin column.
+
+    """
 
     # Add edge traces to the figure, one each per bin.
+    bins = np.flip(np.sort(elayers[bin_col].unique()))
     for bin in bins:
-        bin_edges = elayers[elayers['Bin'] == bin]
+        bin_edges = elayers[elayers[bin_col] == bin]
 
         # Reformat the elayers for use by the Scatter3d function.
         eX = np.hstack(bin_edges['X'])
@@ -301,7 +389,7 @@ def create_network_plot(net, vlayers, elayers):
         names = bin_edges['name'][bin_edges.index.repeat(3)]
 
         # Create the scatterplot containing the lines for edges.
-        fig1.add_trace(go.Scatter3d(x=eX, y=eY, z=eZ,
+        figure.add_trace(go.Scatter3d(x=eX, y=eY, z=eZ,
                        mode='lines',
                        line=dict(width=1),
                        text="Edge: " + names,
@@ -312,13 +400,11 @@ def create_network_plot(net, vlayers, elayers):
     steps = []
     steps.append(dict(
         method="restyle",
-        # Disable all layers.
         args=["visible", [True] * (len(bins) + 2)],
         label='all'
     ))
     steps.append(dict(
         method="restyle",
-        # Disable all layers.
         args=["visible", [False] * (len(bins) + 2)],
         label='nodes'
     ))
@@ -326,7 +412,6 @@ def create_network_plot(net, vlayers, elayers):
     for i in range(len(bins)):
         step = dict(
             method="restyle",
-            # Disable all layers.
             args=["visible", [False] * (len(bins) + 2)],
             label=bins[i]
         )
@@ -338,46 +423,18 @@ def create_network_plot(net, vlayers, elayers):
         # Set the label.
         steps.append(step)
 
-    fig1.update_layout(
-        height=600,
-        title=dict(text = "3D Network View", font = dict(color='#FFFFFF')),
-        showlegend=True,
-        legend=dict(font = dict(color="#FFFFFF")),
-        margin=dict(l=10, r=10, t=30, b=10),
-        paper_bgcolor="#000000",
-        colorway=["#FFFFFF"] + sns.color_palette('viridis_r', bins.size).as_hex(),
-        scene=dict(
-          aspectmode="cube",
-          xaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
-                     showticklabels=False, title='', showspikes=False),
-          yaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
-                     showticklabels=False, title='', showspikes=False),
-          zaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
-                     showticklabels=False, title='', showspikes=False, color="#FFFFFF")
-        ),
-        hovermode='closest',
-        annotations=[dict(showarrow=False,
-                        text="",
-                        xref='paper', yref='paper',
-                        x=0, y=0.1, xanchor='left', yanchor='bottom', font=dict(size=14))
-                    ],
-        sliders=[dict(
-            active=0,
-            currentvalue={"prefix": "Similarity: "},
-            pad={"t": 50},
-            steps=steps,
-            font=dict(color = '#FFFFFF'),
-            tickcolor='#FFFFFF',
-            len=1)],
-    )
+    colorway = ["#FFFFFF"] + sns.color_palette('viridis_r', bins.size).as_hex()
 
-    # We want an orthographic layout so that when looking above the edges line up
-    # with the nodes.
-    fig1.layout.scene.camera.projection.type = "orthographic"
-    fig1.layout.scene.camera.eye = dict(x=0., y=0., z=2)
+    sliders = [dict(
+        active=0,
+        currentvalue={"prefix": slider_title + ": "},
+        pad={"t": 50},
+        steps=steps,
+        font=dict(color = '#FFFFFF'),
+        tickcolor='#FFFFFF',
+        len=1)]
 
-    return fig1
-
+    return(colorway, sliders)
 
 
 
@@ -518,7 +575,6 @@ def create_dash_edge_table(net, edge_index = 0):
     if ('p_value' in net_fixed.columns):
         net_fixed['p_value'] = net_fixed['p_value'].apply(np.format_float_scientific, precision=4)
     columns = net_fixed.columns
-    row = net_fixed.iloc[edge_index]
 
     htr_style = {'background-color' : '#f2f2f2'}
     hth_style = {'text-align' : 'left',
@@ -527,18 +583,66 @@ def create_dash_edge_table(net, edge_index = 0):
     th_style = {'text-align' : 'left',
                 'padding' : '5px',
                 'border-bottom' : '1px solid #ddd'};
+
+    row_vals = net_fixed.iloc[edge_index]
     table = html.Table(
         children=[
             html.Tr([html.Th(col, style=hth_style) for col in columns], style=htr_style),
-            html.Tr([html.Th(row[col], style=th_style) for col in columns]),
+            html.Tr([html.Th(row_vals[col], style=th_style) for col in columns]),
+        ],
+    )
+    return table
+
+def create_dash_sample_table(net, amx, sample = None):
+    """
+    Constructs the HTML table that holds sample information for the Dash appself.
+
+    amx : The annotation matrix dataframe created by the load_amx function.
+
+    sample : The name of the sample to display
+
+    returns : a Dash html.Table object.
+    """
+
+    columns = amx.columns
+
+    htr_style = {'background-color' : '#f2f2f2'}
+    hth_style = {'text-align' : 'left',
+                 'padding' : '5px',
+                 'border-bottom' : '1px solid #ddd'};
+    th_style = {'text-align' : 'left',
+                'padding' : '5px',
+                'border-bottom' : '1px solid #ddd'};
+
+    row = ''
+    if sample:
+        row_vals = amx.loc[sample]
+        row = html.Tr([html.Th(row_vals[col], style=th_style) for col in columns])
+
+    table = html.Table(
+        children=[
+            html.Tr([html.Th(col, style=hth_style) for col in columns], style=htr_style),
+            row,
         ],
     )
     return table
 
 
 
-
 def create_condition_select(amx, sample_col):
+    """
+    Creates a Dash select dropdown for selecting the condition to view.
+
+    This dropbox is intended to change the 3D co-expression scatterplot.
+
+    amx : The annotation matrix dataframe created by the load_amx function.
+
+    color_col : The name of the column in the amx that contains the category
+                that should be used for coloring the points in the plot.
+
+    return : A Dash dcc.Dropdown object.
+
+    """
     columns = np.sort(amx.columns.values)
 
     # Holds the list of columns to keep.
@@ -564,8 +668,44 @@ def create_condition_select(amx, sample_col):
 
 
 
-def launch_application(net, gem, amx, vlayers, elayers, sample_col,
-    net_name, debug=False):
+
+
+def create_edge_type_select(net):
+    """
+    Creates a Dash select dropdown for selecting the network attribute to view.
+
+    This dropbox is intended to change the 3D network layout view.
+
+    net :  The network dataframe created by the load_network function.
+
+    return : A Dash dcc.Dropdown object.
+
+    """
+
+    options = ['Score']
+    if 'p_value' in net.columns:
+        options.append('P-value')
+    if 'Test_Name' in net.columns:
+        options.append('Test Name')
+    if 'r_squared' in net.columns:
+        if net['r_squared'].unique().sum() > 0:
+            options.append('R^2')
+
+    select = dcc.Dropdown(
+        id = 'edge-type-select',
+        options = [
+            {'label' : col, 'value' : col} for col in options
+        ],
+        value = 'Score'
+    )
+    return select
+
+
+
+
+
+def build_application(net, gem, amx, vlayers, elayers, sample_col,
+    net_name):
 
     """
     Creates the Dash application.
@@ -588,8 +728,8 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col,
 
     net_name : The name of the network to display.
 
-    debug:  Set to True to enable Dash debugging support.
 
+    return : The Dash application object.
     """
     app = dash.Dash()
     app.layout = html.Div([
@@ -598,25 +738,29 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col,
             html.Img(
                 src="https://raw.githubusercontent.com/SystemsGenetics/KINC/master/docs/images/kinc.png",
                 style={"height" : "55px","display" : "inline-block",
-                  "padding" : "0px", "margin" : "0px 10px 0px 10px"
-                }),
+                  "padding" : "0px", "margin" : "0px 10px 0px 10px"}),
             html.H1(children="3D Network Explorer",
                 style={
                   "display" : "inline-block", "padding" : "10px 0px 0px 0px",
-                  "margin" : "0px", "vertical-align" : "top"
-                }),
+                  "margin" : "0px", "vertical-align" : "top"}),
             html.Div(children="Network name: " + net_name,
-                style={
-                  "padding" : "0px 0px 0px 10px"
-                }),
+                style={"padding" : "0px 0px 0px 10px"}),
         ]),
         # Graph Row
         html.Div(children=[
             # 3D network plot
             html.Div(children=[
+                html.Div(id='edge-type-select-box', children=[
+                    create_edge_type_select(net)],
+                    style={'padding-bottom' : '10px'}),
                 dcc.Graph(id = 'network-3dview',
-                  figure = create_network_plot(net, vlayers, elayers),
-                )],
+                  figure = create_network_plot(net, vlayers, elayers)),
+                dcc.Input(
+                    id='current-network-3dview-camera', type="number",
+                    value=0, style= {'display' : 'none'}),
+                dcc.Input(
+                    id='current-network-3dview-aspect', type="number",
+                    value=0, style= {'display' : 'none'})],
                 style = {"width" : "45%", "display" : "inline-block",
                          "border" : "1px solid black", "padding" : "10px",
                          "background-color" : "black", "margin" : "10px"},
@@ -631,6 +775,9 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col,
                 ),
                 dcc.Input(
                     id='current-edge', type="number",
+                    value=0, style= {'display' : 'none'}),
+                dcc.Input(
+                    id='current-expr-camera-coords', type="number",
                     value=0, style= {'display' : 'none'})],
                 style = {"width" : "45%", "display" : "inline-block",
                          "border" : "1px solid black", "padding" : "10px",
@@ -639,9 +786,16 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col,
         ]),
         # Table Row
         html.Div(className='row', children=[
+            html.H3(children="Edge Details", style={
+                  "display" : "inline-block", "padding" : "10px 0px 0px 0px",
+                  "margin" : "0px", "vertical-align" : "top"}),
             html.Div(id = "edge-table", children=[
-                create_dash_edge_table(net),
-            ]),
+                create_dash_edge_table(net)]),
+            html.H3(children="Sample Detail", style={
+                  "display" : "inline-block", "padding" : "10px 0px 0px 0px",
+                  "margin" : "0px", "vertical-align" : "top"}),
+            html.Div(id = "sample-table", children=[
+                create_dash_sample_table(net, amx)]),
             # html.Div(children = [
             #    html.Pre(id='click-data',
             #        style= {'border': 'thin lightgrey solid',
@@ -649,6 +803,13 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col,
             # ),
         ]),
     ])
+
+    # Callback properties of figures:
+    # ['id', 'responsive', 'clickData', 'clickAnnotationData', 'hoverData',
+    # 'clear_on_unhover', 'selectedData', 'relayoutData', 'extendData',
+    # 'restyleData', 'figure', 'style', 'className', 'animate',
+    # 'animation_options', 'config', 'loading_state']
+
 
     # Callback when an object in the network plot is clicked.
     @app.callback(
@@ -663,13 +824,63 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col,
                 return edge_index
         raise dash.exceptions.PreventUpdate
 
+    @app.callback(
+        dash.dependencies.Output('sample-table', 'children'),
+        [dash.dependencies.Input('edge-expression-3dview', 'clickData')])
+    def set_current_sample(clickData):
+        if (clickData):
+            sample = clickData['points'][0]['text']
+            return create_dash_sample_table(net, amx, sample)
+        raise dash.exceptions.PreventUpdate
+
+    @app.callback(
+        dash.dependencies.Output('current-network-3dview-camera', 'value'),
+        [dash.dependencies.Input('network-3dview', 'relayoutData')])
+    def update_network_camera(relayoutData):
+        if (relayoutData):
+            if 'scene.camera' in relayoutData.keys():
+                camera = json.dumps(relayoutData["scene.camera"])
+                return camera
+        raise dash.exceptions.PreventUpdate
+
+    @app.callback(
+        dash.dependencies.Output('current-network-3dview-aspect', 'value'),
+        [dash.dependencies.Input('network-3dview', 'relayoutData')])
+    def update_network_aspect(relayoutData):
+        if (relayoutData):
+            if 'scene.aspectratio' in relayoutData.keys():
+                aspect = json.dumps(relayoutData["scene.aspectratio"])
+                return aspect
+        raise dash.exceptions.PreventUpdate
+
     # Callback to update the co-expression plot when the edge changes.
     @app.callback(
         dash.dependencies.Output('edge-expression-3dview', 'figure'),
         [dash.dependencies.Input('current-edge', 'value'),
+         dash.dependencies.Input('network-3dview', 'figure'),
          dash.dependencies.Input('condition-select', 'value')])
-    def update_expression_plot(current_edge, color_col):
-        return create_expression_scatterplot(gem, amx, elayers, color_col, current_edge)
+    def update_expression_plot(current_edge, figure, color_col):
+        figure = create_expression_scatterplot(gem, amx, elayers, color_col, current_edge)
+        return figure
+
+
+    @app.callback(
+        dash.dependencies.Output('network-3dview', 'figure'),
+        [dash.dependencies.Input('edge-type-select', 'value')],
+        [dash.dependencies.State('current-network-3dview-camera', 'value'),
+         dash.dependencies.State('current-network-3dview-aspect', 'value')])
+    def update_network_view(color_by,  camera_vals, aspect_vals):
+        camera = None
+        aspect = None
+        if (type(camera_vals) == str):
+            camera = json.loads(camera_vals)
+        if (type(aspect_vals) == str):
+            aspect = json.loads(aspect_vals)
+
+        if not camera and not aspect:
+            raise dash.exceptions.PreventUpdate
+
+        return create_network_plot(net, vlayers, elayers, color_by, camera, aspect)
 
     # Callback for replacing the edge table.
     @app.callback(
@@ -677,6 +888,7 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col,
          [dash.dependencies.Input('current-edge', 'value')])
     def update_edge_table(current_edge):
         return create_dash_edge_table(net, current_edge)
+
 
     # Callback for displaying the click data.
     # @app.callback(
@@ -686,17 +898,7 @@ def launch_application(net, gem, amx, vlayers, elayers, sample_col,
     #     return json.dumps(clickData, indent=2)
 
 
-    # @app.callback(
-    #      dash.dependencies.Output('edge-expression-3dview', 'figure'),
-    #      [dash.dependencies.Input('condition-select', 'value'),
-    #       dash.dependencies.Input('edge-expression-3dview', 'figure')])
-    # def update_condition_select(input, figure):
-    #     print(figure)
-    #     figure = create_expression_scatterplot(gem, amx, elayers, color_col)
-
-    app.run_server(debug=debug)
-
-
+    return app
 
 
 
@@ -737,18 +939,19 @@ def main():
 
 
     # Calculate a 2D layout for the network
-    print("Calculating 2D layout file:\n  {} \n  This may take awhile if it isn't already present...".format(net_prefix + '.2Dlayout.txt'))
+    print("Calculating 2D layout. This may take awhile if it is not precalculated.")
     glayout = calculate_2d_layout(net, net_prefix)
 
     # Calculate the Z-coorinate positions for the verticies and edges.
-    print("Calculating 3D layout...")
-    net['Bin'] = bin_edges(net)
-    vlayers = get_vertex_zlayers(net, glayout)
-    elayers = get_edge_zlayers(net, glayout)
+    print("Calculating 3D layout. This may take awhile if it is not precalculated.")
+    bin_edges(net)
+    vlayers = get_vertex_zlayers(net, glayout, net_prefix)
+    elayers = get_edge_zlayers(net, glayout, net_prefix)
 
     # Launch the dash application
     print("Launching application...")
-    launch_application(net, gem, amx, vlayers, elayers, args.sample_col, net_prefix, args.debug)
+    app = build_application(net, gem, amx, vlayers, elayers, args.sample_col, net_prefix)
+    app.run_server(debug=args.debug)
 
     exit(0)
 
