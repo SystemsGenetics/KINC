@@ -24,7 +24,7 @@ This script accepts the following arguments:
                   used the first time a network is viewed or if the
                   --redo_layout argument is provided.
 
-    --redo_layout :  (optional). If the 2D and 3D network layout has already
+    --redo-layout :  (optional). If the 2D and 3D network layout has already
                      been constructed it will be loaded from a file. Add this
                      arugment to force the layouts to be rebuilt and not loaded
                      from the files. To prevent Dash from rerunning the layout
@@ -220,14 +220,19 @@ def bin_edges(net):
     Calculates a set of bins using the Similarity score and P-value.
 
     It is from these bins that the edges and nodes of the network will be
-    stacked in the z-axis of the 3D plot and or colored.  Two new
-    columns are added to the provided network: 'Edge_Bin' and 'PVal_Bin'.
+    stacked in the z-axis of the 3D plot and or colored.  Four new
+    columns are added to the provided network: 'Edge_Bin', 'Pval_Bin',
+    'Rsqr_Bin' and 'Relationship'.
 
     net :  The network dataframe created by the load_network function.
 
     """
     net['Edge_Bin'] = np.around(np.abs(net['Similarity_Score']), decimals=2)
     net['Pval_Bin'] = np.round(-np.log10(net['p_value']))
+    net['Rsqr_Bin'] = np.around(np.abs(net['r_squared']), decimals=1)
+    net['Relationship'] = np.ceil(net['Similarity_Score']).astype('str')
+    net['Relationship'] = net['Relationship'].replace(0, 'Negative')
+    net['Relationship'] = net['Relationship'].replace(0, 'Positive')
 
 
 
@@ -311,6 +316,8 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
             bar.next()
         ebin = row['Edge_Bin']
         pbin = row['Pval_Bin']
+        rbin = row['Rsqr_Bin']
+        rel = row['Relationship']
         test = row['Test_Name']
         source = glayout.loc[row["Source"]]
         target = glayout.loc[row["Target"]]
@@ -320,14 +327,14 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
                 row["Source"],
                 row["Target"],
                 row["Samples"],
-                ebin, pbin, test])
+                ebin, pbin, rbin, rel, test])
 
     if (redo_layout | (not os.path.exists(net_prefix + '.3Delayers.txt'))):
         bar = IncrementalBar('', max=net.shape[0], suffix='%(percent)d%%')
         ledge = net.apply(place_elayers, bar=bar, axis=1)
         print("")
 
-        elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Z', 'Source', 'Target', 'Samples', 'Edge_Bin', 'Pval_Bin', 'Test_Name'])
+        elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Z', 'Source', 'Target', 'Samples', 'Edge_Bin', 'Pval_Bin', 'Rsqr_Bin', 'Relationship', 'Test_Name'])
         elayers['name'] = elayers['Source'] + " (co) " + elayers['Target']
         elayers.to_csv(net_prefix + '.3Delayers.txt')
     else:
@@ -379,10 +386,13 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', camera = None
         (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Pval_Bin', 'P-value')
 
     if color_by == 'R^2':
-        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Pval_Bin', 'R-squared')
+        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Rsqr_Bin', 'R-squared')
 
     if color_by == 'Test Name':
         (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Test_Name', 'Test Name', False)
+
+    if color_by == 'Relationship':
+        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Relationship', 'Relationship Type', False)
 
 
     fig1.update_layout(
@@ -633,7 +643,7 @@ def create_dash_edge_table(net, edge_index = 0):
     returns : a Dash html.Table object.
     """
 
-    net_fixed = net.drop('Samples', axis=1)
+    net_fixed = net.drop(['Samples', 'Edge_Bin', 'Pval_Bin', 'Rsqr_Bin', 'Relationship'], axis=1)
     if ('p_value' in net_fixed.columns):
         net_fixed['p_value'] = net_fixed['p_value'].apply(np.format_float_scientific, precision=4)
     columns = net_fixed.columns
@@ -758,6 +768,7 @@ def create_edge_type_select(net):
     if 'r_squared' in net.columns:
         if net['r_squared'].unique().sum() > 0:
             options.append('R^2')
+    options.append('Relationship')
 
     select = dcc.Dropdown(
         id = 'edge-type-select',
@@ -982,7 +993,7 @@ def main():
     parser.add_argument('--amx', dest='amx_path', type=str, required=True)
     parser.add_argument('--sample_col', dest='sample_col', type=str, required=False, default='Sample')
     parser.add_argument('--debug', dest='debug', action='store_true', default=False)
-    parser.add_argument('--redo_layout', dest='redo_layout', action='store_true', default=False)
+    parser.add_argument('--redo-layout', dest='redo_layout', action='store_true', default=False)
     parser.add_argument('--iterations', dest='iterations', type=int, default=100)
     args = parser.parse_args()
 
