@@ -13,6 +13,11 @@ This script accepts the following arguments:
             The matrix must have at least one column that contains a unique
             list of sample names.
 
+    --nmeta : (optional) The path to a tab-delimited node meta data file. The
+              format of the file must have 4 columns, with the first
+              containing the node name, the second a controlled vocabulary
+              term ID, the second the term definition and the fourth the vocubulary name.
+
     --sample_col: (optional) The name of the column in the annotation matrix
                   that contains the unique sample names.  Defaults to "Sample"
 
@@ -50,6 +55,7 @@ import os
 import json
 import re
 import ast
+import time
 from progress.bar import IncrementalBar
 
 
@@ -115,6 +121,23 @@ def load_amx(file_path, sample_col = 'Sample'):
     amx = pd.read_csv(file_path, sep="\t")
     amx.index = amx[sample_col]
     return amx
+
+
+
+
+
+def load_node_meta(file_path):
+    """
+    Imports the tab-delimited node metadata file.
+
+    The format of the file must have 4 columns, with the first containing the
+    node name, the second a controlled vocabulary term ID, the second the
+    term definition and the fourth the vocubulary name.
+    """
+    nmeta = pd.read_csv(file_path, sep="\t")
+    nmeta.columns = ['Node', 'Term', 'Definition', 'Vocabulary']
+    nmeta.index = nmeta['Node']
+    return nmeta
 
 
 
@@ -200,6 +223,7 @@ def calculate_2d_layout(net, net_prefix, redo_layout, iterations):
         verbose=True)
 
     if (redo_layout | (not os.path.exists(net_prefix + '.2Dlayout.txt'))):
+        print("Calculating 2D layout.")
         glayout = pd.DataFrame(forceatlas2.forceatlas2_igraph_layout(g, iterations=iterations).coords)
         glayout.columns = ['X', 'Y']
         glayout.index = g.vs['name']
@@ -265,7 +289,7 @@ def get_vertex_zlayers(net, glayout, net_prefix, redo_layout):
 
 
     if (redo_layout | (not os.path.exists(net_prefix + '.3Dvlayers.txt'))):
-
+        print("Calculating 3D vertex layout.")
         bar = IncrementalBar('', max=net.shape[0]*2, suffix='%(percent)d%%')
         lsource = net.apply(find_vlayers, vtype='Source', bar=bar, axis=1)
         ltarget = net.apply(find_vlayers, vtype='Target', bar=bar, axis=1)
@@ -330,6 +354,7 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
                 ebin, pbin, rbin, rel, test])
 
     if (redo_layout | (not os.path.exists(net_prefix + '.3Delayers.txt'))):
+        print("Calculating 3D vertex layout.")
         bar = IncrementalBar('', max=net.shape[0], suffix='%(percent)d%%')
         ledge = net.apply(place_elayers, bar=bar, axis=1)
         print("")
@@ -448,6 +473,8 @@ def create_binned_network_figure(figure, elayers, bin_col, slider_title,
     # Add edge traces to the figure, one each per bin.
     bins = np.flip(np.sort(elayers[bin_col].unique()))
     for bin in bins:
+        #if np.isnan(bin):
+        #   continue
         bin_edges = elayers[elayers[bin_col] == bin]
 
         # Reformat the elayers for use by the Scatter3d function.
@@ -511,7 +538,7 @@ def create_binned_network_figure(figure, elayers, bin_col, slider_title,
 
 
 
-def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index=0):
+def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index = None):
     """
     Uses Plotly to create the interactive 3D scatterplot of co-expression
 
@@ -533,6 +560,9 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index=
 
     return : a Plotly figure object.
     """
+    if edge_index is None:
+        return go.Figure(go.Scatter3d())
+
     node1 = elayers.iloc[edge_index]['Source']
     node2 = elayers.iloc[edge_index]['Target']
     samples = elayers.iloc[edge_index]['Samples']
@@ -610,7 +640,7 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index=
                      showticklabels=True, title=node2,
                      showspikes=True),
           yaxis=dict(showbackground=True, showline=True, zeroline=True, showgrid=True,
-                     showticklabels=True, title='Condition',
+                     showticklabels=True, title=color_col,
                      tickmode='auto',
                      tickvals=tickvals,
                      ticktext=categories, showspikes=True),
@@ -621,6 +651,7 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index=
                         xref='paper', yref='paper',
                         x=0, y=0.1, xanchor='left', yanchor='bottom', font=dict(size=14))
                     ],
+        datarevision = time.time()
     )
 
     fig2.layout.scene.camera.projection.type = "orthographic"
@@ -631,7 +662,7 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index=
 
 
 
-def create_dash_edge_table(net, edge_index = 0):
+def create_dash_edge_table(net, edge_index = None):
     """
     Constructs the HTML table that holds edge information for the Dash appself.
 
@@ -643,11 +674,6 @@ def create_dash_edge_table(net, edge_index = 0):
     returns : a Dash html.Table object.
     """
 
-    net_fixed = net.drop(['Samples', 'Edge_Bin', 'Pval_Bin', 'Rsqr_Bin', 'Relationship'], axis=1)
-    if ('p_value' in net_fixed.columns):
-        net_fixed['p_value'] = net_fixed['p_value'].apply(np.format_float_scientific, precision=4)
-    columns = net_fixed.columns
-
     htr_style = {'background-color' : '#f2f2f2'}
     hth_style = {'text-align' : 'left',
                  'padding' : '5px',
@@ -656,20 +682,26 @@ def create_dash_edge_table(net, edge_index = 0):
                 'padding' : '5px',
                 'border-bottom' : '1px solid #ddd'};
 
-    row_vals = net_fixed.iloc[edge_index]
-    source = row_vals['Source']
-    target = row_vals['Target']
-    row_vals = net_fixed[(net_fixed['Source'] == source) & (net_fixed['Target'] == target)]
+    net_fixed = net.drop(['Samples', 'Edge_Bin', 'Pval_Bin', 'Rsqr_Bin', 'Relationship'], axis=1)
+    if ('p_value' in net_fixed.columns):
+        net_fixed['p_value'] = net_fixed['p_value'].apply(np.format_float_scientific, precision=4)
 
+    columns = net_fixed.columns
     table_rows = []
     table_rows.append(html.Tr([html.Th(col, style=hth_style) for col in columns], style=htr_style))
-    for index, row in row_vals.iterrows():
-        table_rows.append(html.Tr([html.Th(row[col], style=th_style) for col in columns]))
+    if not edge_index == None:
+        row_vals = net_fixed.iloc[edge_index]
+        source = row_vals['Source']
+        target = row_vals['Target']
+        row_vals = net_fixed[(net_fixed['Source'] == source) & (net_fixed['Target'] == target)]
+        for index, row in row_vals.iterrows():
+            table_rows.append(html.Tr([html.Th(row[col], style=th_style) for col in columns]))
 
-    table = html.Table(
-        children=table_rows,
-    )
-    return table
+    return html.Table(children=table_rows)
+
+
+
+
 
 def create_dash_sample_table(net, amx, sample = None):
     """
@@ -682,7 +714,39 @@ def create_dash_sample_table(net, amx, sample = None):
     returns : a Dash html.Table object.
     """
 
+    htr_style = {'background-color' : '#f2f2f2'}
+    hth_style = {'text-align' : 'left',
+                 'padding' : '5px',
+                 'border-bottom' : '1px solid #ddd'};
+    th_style = {'text-align' : 'left',
+                'padding' : '5px',
+                'border-bottom' : '1px solid #ddd'};
+
     columns = amx.columns
+    table_rows = []
+    table_rows.append(html.Tr([html.Th(col, style=hth_style) for col in columns], style=htr_style))
+    if sample:
+        row_vals = amx.loc[sample]
+        table_rows.append(html.Tr([html.Th(row_vals[col], style=th_style) for col in columns]))
+
+    return html.Table(children=table_rows)
+
+
+
+
+
+def create_dash_node_table(net, nmeta, nodes = None):
+    """
+    Constructs the HTML table that holds node information for the Dash app.
+
+    net :  The network dataframe created by the load_network function.
+
+    nmeta : The dataframe containing the node metadata.
+
+    node : The name of the node to display
+
+    returns : a Dash html.Table object.
+    """
 
     htr_style = {'background-color' : '#f2f2f2'}
     hth_style = {'text-align' : 'left',
@@ -692,18 +756,21 @@ def create_dash_sample_table(net, amx, sample = None):
                 'padding' : '5px',
                 'border-bottom' : '1px solid #ddd'};
 
-    row = ''
-    if sample:
-        row_vals = amx.loc[sample]
-        row = html.Tr([html.Th(row_vals[col], style=th_style) for col in columns])
 
-    table = html.Table(
-        children=[
-            html.Tr([html.Th(col, style=hth_style) for col in columns], style=htr_style),
-            row,
-        ],
-    )
-    return table
+    if nmeta:
+        columns = nmeta.columns
+        table_rows = []
+        table_rows.append(html.Tr([html.Th(col, style=hth_style) for col in columns], style=htr_style))
+        if (not nmeta is None) & (not nodes is None):
+            row_vals = nmeta.loc[nodes]
+            for index, row in row_vals.iterrows():
+                table_rows.append(html.Tr([html.Th(row[col], style=th_style) for col in columns]))
+
+        return html.Table(children=table_rows)
+    return ''
+
+
+
 
 
 
@@ -766,8 +833,7 @@ def create_edge_type_select(net):
     if 'Test_Name' in net.columns:
         options.append('Test Name')
     if 'r_squared' in net.columns:
-        if net['r_squared'].unique().sum() > 0:
-            options.append('R^2')
+        options.append('R^2')
     options.append('Relationship')
 
     select = dcc.Dropdown(
@@ -783,7 +849,7 @@ def create_edge_type_select(net):
 
 
 
-def build_application(net, gem, amx, vlayers, elayers, sample_col,
+def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
     net_name):
 
     """
@@ -797,6 +863,8 @@ def build_application(net, gem, amx, vlayers, elayers, sample_col,
     gem :  The GEM dataframe created by the load_gem function.
 
     amx : The annotation matrix dataframe created by the load_amx function.
+
+    nmeta : The dataframe containing the node metadata.
 
     vlayers : The dataframe containing the 3D coordinates for the nodes.
 
@@ -853,8 +921,8 @@ def build_application(net, gem, amx, vlayers, elayers, sample_col,
                     figure = create_expression_scatterplot(gem, amx, elayers),
                 ),
                 dcc.Input(
-                    id='current-edge', type="number",
-                    value=0, style= {'display' : 'none'}),
+                    id='selected-edge', type="number",
+                    value=-1, style= {'display' : 'none'}),
                 dcc.Input(
                     id='current-expr-camera-coords', type="number",
                     value=0, style= {'display' : 'none'})],
@@ -870,52 +938,77 @@ def build_application(net, gem, amx, vlayers, elayers, sample_col,
                   "margin" : "0px", "vertical-align" : "top"}),
             html.Div(id = "edge-table", children=[
                 create_dash_edge_table(net)]),
+            html.H3(children="Node Detail", style={
+                  "display" : "inline-block", "padding" : "10px 0px 0px 0px",
+                  "margin" : "0px", "vertical-align" : "top"}),
+            html.Div(id = "node-table", children=[
+                create_dash_node_table(net, nmeta)]),
             html.H3(children="Sample Detail", style={
                   "display" : "inline-block", "padding" : "10px 0px 0px 0px",
                   "margin" : "0px", "vertical-align" : "top"}),
             html.Div(id = "sample-table", children=[
                 create_dash_sample_table(net, amx)]),
-            # html.Div(children = [
-            #    html.Pre(id='click-data',
-            #        style= {'border': 'thin lightgrey solid',
-            #                'overflowX': 'scroll'})],
-            # ),
+            # Holds the values of the clicked node or cliced edge nodes.
+            dcc.Input(
+                id='selected-nodes', type="text",
+                value=0, style= {'display' : 'none'}),
         ]),
     ])
-
-    # Callback properties of figures:
-    # ['id', 'responsive', 'clickData', 'clickAnnotationData', 'hoverData',
-    # 'clear_on_unhover', 'selectedData', 'relayoutData', 'extendData',
-    # 'restyleData', 'figure', 'style', 'className', 'animate',
-    # 'animation_options', 'config', 'loading_state']
 
 
     # Callback when an object in the network plot is clicked.
     @app.callback(
-        dash.dependencies.Output('current-edge', 'value'),
+        dash.dependencies.Output('selected-edge', 'value'),
         [dash.dependencies.Input('network-3dview', 'clickData')])
     def set_current_edge(clickData):
+        edge_index = None
+        edge_nodes = None
+        nodes = None
         if (clickData):
             points = clickData['points']
-            found = re.match('^Edge: (.*?) \(co\) (.*?)$', points[0]['text'])
-            if (found):
+            efound = re.match('^Edge: (.*?) \(co\) (.*?)$', points[0]['text'])
+            nfound = re.match('^Node: (.*?)$', points[0]['text'])
+            if (efound):
                 edge_index = points[0]['customdata']
-                return edge_index
+                row_vals = elayers.iloc[edge_index]
+                source = row_vals['Source']
+                target = row_vals['Target']
+                edge_nodes = [source, target]
+                return edge_index #, json.dumps(edge_nodes))
+            # elif (nfound):
+            #     return (-1, json.dumps([nfound.group(1)]))
         raise dash.exceptions.PreventUpdate
+
+
+    @app.callback(
+         dash.dependencies.Output('node-table', 'children'),
+         [dash.dependencies.Input('selected-nodes', 'value')])
+    def update_node_table(nodes):
+        if nodes == 0:
+             raise dash.exceptions.PreventUpdate
+        return create_dash_node_table(net, nmeta, json.loads(nodes))
 
     @app.callback(
         dash.dependencies.Output('sample-table', 'children'),
         [dash.dependencies.Input('edge-expression-3dview', 'clickData')])
-    def set_current_sample(clickData):
+    def update_sample_table(clickData):
         if (clickData):
             sample = clickData['points'][0]['text']
             return create_dash_sample_table(net, amx, sample)
         raise dash.exceptions.PreventUpdate
 
     @app.callback(
+         dash.dependencies.Output('edge-table', 'children'),
+         [dash.dependencies.Input('selected-edge', 'value')])
+    def update_edge_table(current_edge):
+        if (current_edge == -1):
+          current_edge = None
+        return create_dash_edge_table(net, current_edge)
+
+    @app.callback(
         dash.dependencies.Output('current-network-3dview-camera', 'value'),
         [dash.dependencies.Input('network-3dview', 'relayoutData')])
-    def update_network_camera(relayoutData):
+    def set_current_camera(relayoutData):
         if (relayoutData):
             if 'scene.camera' in relayoutData.keys():
                 camera = json.dumps(relayoutData["scene.camera"])
@@ -925,7 +1018,7 @@ def build_application(net, gem, amx, vlayers, elayers, sample_col,
     @app.callback(
         dash.dependencies.Output('current-network-3dview-aspect', 'value'),
         [dash.dependencies.Input('network-3dview', 'relayoutData')])
-    def update_network_aspect(relayoutData):
+    def set_network_aspect(relayoutData):
         if (relayoutData):
             if 'scene.aspectratio' in relayoutData.keys():
                 aspect = json.dumps(relayoutData["scene.aspectratio"])
@@ -935,12 +1028,12 @@ def build_application(net, gem, amx, vlayers, elayers, sample_col,
     # Callback to update the co-expression plot when the edge changes.
     @app.callback(
         dash.dependencies.Output('edge-expression-3dview', 'figure'),
-        [dash.dependencies.Input('current-edge', 'value'),
-         dash.dependencies.Input('network-3dview', 'figure'),
+        [dash.dependencies.Input('selected-edge', 'value'),
          dash.dependencies.Input('condition-select', 'value')])
-    def update_expression_plot(current_edge, figure, color_col):
-        figure = create_expression_scatterplot(gem, amx, elayers, color_col, current_edge)
-        return figure
+    def update_expression_plot(current_edge, color_col):
+        if (current_edge == -1):
+          current_edge = None
+        return create_expression_scatterplot(gem, amx, elayers, color_col, current_edge)
 
 
     @app.callback(
@@ -948,7 +1041,7 @@ def build_application(net, gem, amx, vlayers, elayers, sample_col,
         [dash.dependencies.Input('edge-type-select', 'value')],
         [dash.dependencies.State('current-network-3dview-camera', 'value'),
          dash.dependencies.State('current-network-3dview-aspect', 'value')])
-    def update_network_view(color_by,  camera_vals, aspect_vals):
+    def update_network_plot(color_by,  camera_vals, aspect_vals):
         camera = None
         aspect = None
         if (type(camera_vals) == str):
@@ -961,20 +1054,6 @@ def build_application(net, gem, amx, vlayers, elayers, sample_col,
 
         return create_network_plot(net, vlayers, elayers, color_by, camera, aspect)
 
-    # Callback for replacing the edge table.
-    @app.callback(
-         dash.dependencies.Output('edge-table', 'children'),
-         [dash.dependencies.Input('current-edge', 'value')])
-    def update_edge_table(current_edge):
-        return create_dash_edge_table(net, current_edge)
-
-
-    # Callback for displaying the click data.
-    # @app.callback(
-    #     dash.dependencies.Output('click-data', 'children'),
-    #     [dash.dependencies.Input('network-3dview', 'clickData')])
-    # def update_click_data(clickData):
-    #     return json.dumps(clickData, indent=2)
 
 
     return app
@@ -992,41 +1071,50 @@ def main():
     parser.add_argument('--emx', dest='gem_path', type=str, required=True)
     parser.add_argument('--amx', dest='amx_path', type=str, required=True)
     parser.add_argument('--sample_col', dest='sample_col', type=str, required=False, default='Sample')
+    parser.add_argument('--nmeta', dest='nmeta', type=str, required=False)
     parser.add_argument('--debug', dest='debug', action='store_true', default=False)
     parser.add_argument('--redo-layout', dest='redo_layout', action='store_true', default=False)
     parser.add_argument('--iterations', dest='iterations', type=int, default=100)
     args = parser.parse_args()
 
     # Make sure the paths exist
-    if (not os.path.exists(args.net_path)):
+    if not os.path.exists(args.net_path):
         print ("ERROR: The network file cannot be found: {}".format(args.net_path))
         exit(1)
-    if (not os.path.exists(args.gem_path)):
+    if not os.path.exists(args.gem_path):
         print ("ERROR: The expression matrix file cannot be found: {}".format(args.gem_path))
         exit(1)
-    if (not os.path.exists(args.amx_path)):
+    if not os.path.exists(args.amx_path):
         print ("ERROR: The annotation matrix file cannot be found: {}".format(args.amx_path))
         exit(1)
+    if not args.nmeta is None:
+        if not os.path.exists(args.nmeta):
+            print ("ERROR: The node metadata file cannot be found: {}".format(args.nmeta))
+            exit(1)
 
     # Load the input data.
-    print("Reading input files...")
+    print("Reading network file...")
     net = load_network(args.net_path)
+    print("Reading GEM file...")
     gem = load_gem(args.gem_path)
+    print("Reading experioment annotation file...")
     amx = load_amx(args.amx_path, args.sample_col)
+
+    nmeta = None
+    if not args.nmeta is None:
+        print("Reading the node metadata file...")
+        nmeta = load_node_meta(args.nmeta)
 
 
     # Get the filename of the network file minus the extension.
     (net_prefix, net_ext) = os.path.splitext(os.path.basename(args.net_path))
 
     # Calculate a 2D layout for the network
-    print("Calculating 2D layout. This may take awhile if it is not precalculated.")
     glayout = calculate_2d_layout(net, net_prefix, args.redo_layout, args.iterations)
 
     # Calculate the Z-coorinate positions for the verticies and edges.
     bin_edges(net)
-    print("Calculating 3D node layout. This may take awhile if it is not precalculated.")
     vlayers = get_vertex_zlayers(net, glayout, net_prefix, args.redo_layout)
-    print("Calculating 3D edge layout. This may take awhile if it is not precalculated.")
     elayers = get_edge_zlayers(net, glayout, net_prefix, args.redo_layout)
 
 
@@ -1038,7 +1126,7 @@ def main():
 
     # Launch the dash application
     print("Launching application...")
-    app = build_application(net, gem, amx, vlayers, elayers, args.sample_col, net_prefix)
+    app = build_application(net, gem, amx, nmeta, vlayers, elayers, args.sample_col, net_prefix)
     app.run_server(debug=args.debug)
 
     exit(0)
