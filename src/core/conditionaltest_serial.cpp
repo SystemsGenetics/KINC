@@ -505,29 +505,7 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
             gsl_matrix_set(X, j, 1, g1);
             gsl_matrix_set(X, j, 2, g2);
             gsl_matrix_set(X, j, 3, g1*g2);
-
-            // Next add the annotation observation for this sample to the Y vector.
-            if ( testType == ORDINAL )
-            {
-                // Convert the observation data into a "design vector"
-                // Each unique number being assigned a unique integer.
-                if ( !labelInfo.contains(amxInfo.at(i).toInt()) )
-                {
-                    labelInfo.append(amxInfo.at(i).toInt());
-                }
-
-                for ( int k = 0; k < labelInfo.size(); k++ )
-                {
-                    if ( labelInfo.at(k) == amxInfo.at(i).toInt() )
-                    {
-                        gsl_vector_set(Y, j, k + 1);
-                    }
-                }
-            }
-            else
-            {
-                gsl_vector_set(Y, j, amxInfo.at(i).toFloat());
-            }
+            gsl_vector_set(Y, j, amxInfo.at(i).toFloat());
 
             j++;
         }
