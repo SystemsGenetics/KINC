@@ -284,8 +284,12 @@ def get_vertex_zlayers(net, glayout, net_prefix, redo_layout):
         if bar:
             bar.next()
         node = glayout.loc[row[vtype]]
-        sbin = row['Edge_Bin']
-        return(row[vtype], node['X'], node['Y'], sbin, node['Degree'], node['CC'])
+        ebin = row['Edge_Bin']
+        pbin = row['Pval_Bin']
+        rbin = row['Rsqr_Bin']
+        rel = row['Relationship']
+        test = row['Test_Name']
+        return(row[vtype], node['X'], node['Y'], ebin, pbin, rbin, rel, test, node['Degree'], node['CC'])
 
 
     if (redo_layout | (not os.path.exists(net_prefix + '.3Dvlayers.txt'))):
@@ -295,10 +299,11 @@ def get_vertex_zlayers(net, glayout, net_prefix, redo_layout):
         ltarget = net.apply(find_vlayers, vtype='Target', bar=bar, axis=1)
         print("")
 
-        vlayers = pd.DataFrame.from_records(lsource.append(ltarget).values, columns=['Vertex', 'X', 'Y', 'Z', 'Degree', 'CC'])
+        columns = ['Vertex', 'X', 'Y', 'EBin', 'PBin', 'RBin', 'Rel', 'Test_Name', 'Degree', 'CC']
+        vlayers = pd.DataFrame.from_records(lsource.append(ltarget).values, columns=columns)
         vlayers = vlayers[vlayers.duplicated() == False]
         # We want to place the node in the layer where it first appears.
-        vlayers = vlayers.groupby(by=['Vertex']).apply(lambda g: g[g['Z'] == g['Z'].max()])
+        vlayers = vlayers.groupby(by=['Vertex']).apply(lambda g: g[g['EBin'] == g['EBin'].max()])
         vlayers.reset_index(inplace=True, drop=True)
         vlayers.to_csv(net_prefix + '.3Dvlayers.txt')
 
@@ -347,26 +352,24 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
         target = glayout.loc[row["Target"]]
         return([[source['X'], target['X'], None],
                 [source['Y'], target['Y'], None],
-                [ebin, ebin, None],
                 row["Source"],
                 row["Target"],
                 row["Samples"],
                 ebin, pbin, rbin, rel, test])
 
     if (redo_layout | (not os.path.exists(net_prefix + '.3Delayers.txt'))):
-        print("Calculating 3D vertex layout.")
+        print("Calculating 3D edge layout.")
         bar = IncrementalBar('', max=net.shape[0], suffix='%(percent)d%%')
         ledge = net.apply(place_elayers, bar=bar, axis=1)
         print("")
 
-        elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Z', 'Source', 'Target', 'Samples', 'Edge_Bin', 'Pval_Bin', 'Rsqr_Bin', 'Relationship', 'Test_Name'])
+        elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Source', 'Target', 'Samples', 'EBin', 'PBin', 'RBin', 'Rel', 'Test_Name'])
         elayers['name'] = elayers['Source'] + " (co) " + elayers['Target']
         elayers.to_csv(net_prefix + '.3Delayers.txt')
     else:
         elayers = pd.read_csv(net_prefix + '.3Delayers.txt', index_col=0)
         elayers['X'] = elayers['X'].apply(ast.literal_eval)
         elayers['Y'] = elayers['Y'].apply(ast.literal_eval)
-        elayers['Z'] = elayers['Z'].apply(ast.literal_eval)
 
     return elayers
 
@@ -374,7 +377,8 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
 
 
 
-def create_network_plot(net, vlayers, elayers, color_by = 'Score', camera = None, aspect = None):
+def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'Score',
+       camera = None, aspect = None):
     """
     Uses Plotly to create the interactive 3D visualization of the network.
 
@@ -394,9 +398,21 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', camera = None
     return : a Plotly figure object.
     """
 
+    # Default Z-indexs for lines/points to the Score value.
+    Z = vlayers['EBin']
+    if layer_by == 'Score':
+        Z = vlayers['EBin']
+    if layer_by == 'P-value':
+        Z = vlayers['PBin']
+    if layer_by == 'R^2':
+        Z = vlayers['RBin']
+    if layer_by == 'Test Name':
+        Z = vlayers['Test_Name']
+    if layer_by == 'Relationship':
+        Z = vlayers['Rel']
     # Add the network nodes as the first trace.
     fig1 = go.Figure(data=[go.Scatter3d(x=vlayers['X'], y=vlayers['Y'],
-                   z=vlayers['Z'], mode='markers',
+                   z=Z, mode='markers',
                    opacity = 0.5,
                    marker=dict(symbol='circle', size=np.log10(vlayers['Degree'])*4,
                                line=dict(width=1, color="#888888")),
@@ -404,21 +420,26 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', camera = None
                    hoverinfo='text', name='Nodes')])
 
     # Add the edges and bin them
+    include_slider = True
     if color_by == 'Score':
-        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Edge_Bin', 'Similarity Score')
-
+        slider_title = 'Similarity Score'
     if color_by == 'P-value':
-        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Pval_Bin', 'P-value')
-
+        slider_title = 'P-value'
     if color_by == 'R^2':
-        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Rsqr_Bin', 'R-squared')
-
+        slider_title = 'R-squared'
     if color_by == 'Test Name':
-        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Test_Name', 'Test Name', False)
-
+        slider_title = 'Test Name'
+        include_slider = False
     if color_by == 'Relationship':
-        (colorway, sliders) = create_binned_network_figure(fig1, elayers, 'Relationship', 'Relationship Type', False)
+        slider_title = 'Relationship Type'
+        include_slider = False
 
+    layer_title = layer_by
+    if layer_by == 'P-value':
+        layer_title = '-log10(p)'
+
+    (colorway, sliders, nticks) = create_binned_network_figure(fig1, elayers, color_by,
+                            layer_by, slider_title, include_slider)
 
     fig1.update_layout(
         height=600,
@@ -435,7 +456,7 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', camera = None
           yaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
                      showticklabels=False, title='', showspikes=False),
           zaxis=dict(showbackground=False, showline=False, zeroline=False, showgrid=False,
-                     showticklabels=False, title='', showspikes=False, color="#FFFFFF")
+                     showticklabels=True, tickmode="auto", nticks=nticks, title=layer_title, showspikes=False, color="#FFFFFF")
         ),
         hovermode='closest',
         annotations=[dict(showarrow=False, text="", xref='paper', yref='paper',
@@ -462,25 +483,52 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', camera = None
 
 
 
-def create_binned_network_figure(figure, elayers, bin_col, slider_title,
-        include_slider = True):
+def create_binned_network_figure(figure, elayers, color_by = 'Score',
+    layer_by = 'Score', slider_title = 'Similarity Score', include_slider = True):
 
     """
     Adds the traces for the network figure based on the bin column.
 
     """
 
+    color_col = 'EBin'
+    if color_col == 'Score':
+        color_col = 'EBin'
+    if color_by == 'P-value':
+        color_col = 'PBin'
+    if color_by == 'R^2':
+        color_col = 'RBin'
+    if color_by == 'Test Name':
+        color_col = 'Test_Name'
+    if color_by == 'Relationship':
+        color_col = 'Rel'
+
+    layer_col = 'Edge_Bin'
+    if layer_by == 'Score':
+        layer_col = 'EBin'
+    if layer_by == 'P-value':
+        layer_col = 'PBin'
+    if layer_by == 'R^2':
+        layer_col = 'RBin'
+    if layer_by == 'Test Name':
+        layer_col = 'Test_Name'
+    if layer_by == 'Relationship':
+        layer_col = 'Rel'
+
     # Add edge traces to the figure, one each per bin.
-    bins = np.flip(np.sort(elayers[bin_col].unique()))
-    for bin in bins:
-        #if np.isnan(bin):
-        #   continue
-        bin_edges = elayers[elayers[bin_col] == bin]
+    layer_bins = np.flip(np.sort(elayers[layer_col].unique()))
+    color_bins = np.flip(np.sort(elayers[color_col].unique()))
+    for bin in color_bins:
+        if (not type(bin) == str):
+            if (bin.dtype == "float64") & (np.isnan(bin)):
+                continue
+
+        bin_edges = elayers[elayers[color_col] == bin]
 
         # Reformat the elayers for use by the Scatter3d function.
         eX = np.hstack(bin_edges['X'])
         eY = np.hstack(bin_edges['Y'])
-        eZ = np.hstack(bin_edges['Z'])
+        eZ = np.hstack(bin_edges[layer_col].repeat(3))
         names = bin_edges['name'][bin_edges.index.repeat(3)]
 
         # Create the scatterplot containing the lines for edges.
@@ -496,20 +544,20 @@ def create_binned_network_figure(figure, elayers, bin_col, slider_title,
         steps = []
         steps.append(dict(
             method="restyle",
-            args=["visible", [True] * (len(bins) + 2)],
+            args=["visible", [True] * (len(color_bins) + 2)],
             label='all'
         ))
         steps.append(dict(
             method="restyle",
-            args=["visible", [False] * (len(bins) + 2)],
+            args=["visible", [False] * (len(color_bins) + 2)],
             label='nodes'
         ))
         steps[1]["args"][1][0] = True
-        for i in range(len(bins)):
+        for i in range(len(color_bins)):
             step = dict(
                 method="restyle",
-                args=["visible", [False] * (len(bins) + 2)],
-                label=bins[i]
+                args=["visible", [False] * (len(color_bins) + 2)],
+                label=color_bins[i]
             )
             # Turn on the layers for this step and leave on the nodes layer.
             step["args"][1][0] = True
@@ -519,7 +567,8 @@ def create_binned_network_figure(figure, elayers, bin_col, slider_title,
             # Set the label.
             steps.append(step)
 
-        colorway = ["#FFFFFF"] + sns.color_palette('viridis_r', bins.size).as_hex()
+
+        colorway = ["#FFFFFF"] + sns.color_palette('viridis_r', color_bins.size).as_hex()
 
         sliders = [dict(
             active=0,
@@ -530,10 +579,13 @@ def create_binned_network_figure(figure, elayers, bin_col, slider_title,
             tickcolor='#FFFFFF',
             len=1)]
     else:
-        colorway = ["#FFFFFF"] + sns.color_palette('muted', bins.size).as_hex()
+        colorway = ["#FFFFFF"] + sns.color_palette('muted', color_bins.size).as_hex()
         sliders = []
 
-    return(colorway, sliders)
+    nticks = layer_bins.size
+    if layer_by == 'Score':
+        nticks = int(nticks / 2)
+    return (colorway, sliders, nticks)
 
 
 
@@ -567,8 +619,9 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
     node2 = elayers.iloc[edge_index]['Target']
     samples = elayers.iloc[edge_index]['Samples']
 
+
     # Generate the dataframe for the expression scatterplot
-    sdata = pd.DataFrame(dict(X=gem.loc[node1].values,Y=gem.loc[node2].values))
+    sdata = pd.DataFrame(dict(X=gem.loc[node1].values, Y=gem.loc[node2].values))
     sdata.index = gem.columns
     sdata = sdata.join(amx, how='left')
 
@@ -581,25 +634,39 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
 
     # Generate the colors for the samples.
     if (color_col == None):
-        color_col = amx.columns[1]
+        color_col = 'Cluster'
 
-    # Generate the Z-coordinates for the samples.
+    # If the column is 'Cluster' we need to add it to the dataframe. The
+    # Cluster column simply lists if the sample is in the cluster or not.
+    if (color_col == 'Cluster'):
+        inout = pd.Series(list(samples))
+        inout = inout.replace(to_replace=r'[^1]', value='Out', regex=True)
+        inout = inout.replace({'1': 'In'})
+        inout.index = gem.columns
+        sdata = pd.concat([sdata, inout.rename('Cluster')], 1)
+
+    # Is this a categorical column?
+    is_categorical = False
     categories = sdata[color_col].unique()
     if (categories.dtype == object):
+        is_categorical = True
+
+    # Now draw the plot    
+    nticks = None
+    tickmode = 'auto'
+    ticktext = None
+    tickvals = None
+    if is_categorical:
         num_categories = categories.shape[0]
+        tickmode = 'array'
+        ticktext = categories
         tickvals = np.arange(0, num_categories) / (num_categories - 1) - 0.5
-        replace_df = pd.DataFrame({
-            'Categories' : categories,
-            'Z' : tickvals})
+        replace_df = pd.DataFrame({'Categories' : categories,'Z' : tickvals})
         sdata['Z'] = sdata[color_col].replace(
                              to_replace=replace_df['Categories'].values,
                              value=replace_df['Z'].values)
-    else:
-        num_categories = None
-        sdata['Z'] = sdata[color_col]
-        tickvals = []
 
-    if num_categories:
+        nticks = num_categories
         showlegend = True
         first_category = (sdata[color_col] == categories[0])
         fig2 = go.Figure(data=[go.Scatter3d(x=sdata[first_category]['X'],
@@ -618,6 +685,9 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
                             text= sdata[next_category].index,
                             hoverinfo='text', name=str(categories[i])))
     else:
+        num_categories = None
+        sdata['Z'] = sdata[color_col]
+        tickvals = []
         showlegend = False
         fig2 = go.Figure(data=[go.Scatter3d(x=sdata['X'], z=sdata['Y'], y=sdata['Z'],
                         mode='markers',
@@ -641,9 +711,7 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
                      showspikes=True),
           yaxis=dict(showbackground=True, showline=True, zeroline=True, showgrid=True,
                      showticklabels=True, title=color_col,
-                     tickmode='auto',
-                     tickvals=tickvals,
-                     ticktext=categories, showspikes=True),
+                     tickmode=tickmode, ticktext=ticktext, tickvals=tickvals, nticks=nticks, showspikes=True),
         ),
         hovermode='closest',
         annotations=[dict(showarrow=False,
@@ -774,7 +842,7 @@ def create_dash_node_table(net, nmeta, nodes = None):
 
 
 
-def create_condition_select(amx, sample_col):
+def create_condition_select(amx, sample_col = 'Cluster'):
     """
     Creates a Dash select dropdown for selecting the condition to view.
 
@@ -792,6 +860,7 @@ def create_condition_select(amx, sample_col):
 
     # Holds the list of columns to keep.
     keep = []
+    keep.append('Cluster')
 
     # Exclude any columns with just a single value or any columns with as
     # many unique values as there are elements
@@ -804,18 +873,18 @@ def create_condition_select(amx, sample_col):
 
     # Build the select element.
     select = dcc.Dropdown(
-        id = 'condition-select',
+        id = 'coexp-condition-select',
         options = [
           {'label' : col, 'value' : col} for col in keep
         ],
-        value = columns[0])
+        value = 'Cluster')
     return select
 
 
 
 
 
-def create_edge_type_select(net):
+def create_edge_color_select(net):
     """
     Creates a Dash select dropdown for selecting the network attribute to view.
 
@@ -837,7 +906,7 @@ def create_edge_type_select(net):
     options.append('Relationship')
 
     select = dcc.Dropdown(
-        id = 'edge-type-select',
+        id = 'edge-color-select',
         options = [
             {'label' : col, 'value' : col} for col in options
         ],
@@ -846,6 +915,39 @@ def create_edge_type_select(net):
     return select
 
 
+
+
+
+
+def create_edge_layer_select(net):
+    """
+    Creates a Dash select dropdown for selecting the network attribute to view.
+
+    This dropbox is intended to change the 3D network layout view.
+
+    net :  The network dataframe created by the load_network function.
+
+    return : A Dash dcc.Dropdown object.
+
+    """
+
+    options = ['Score']
+    if 'p_value' in net.columns:
+        options.append('P-value')
+    if 'Test_Name' in net.columns:
+        options.append('Test Name')
+    if 'r_squared' in net.columns:
+        options.append('R^2')
+    options.append('Relationship')
+
+    select = dcc.Dropdown(
+        id = 'edge-layer-select',
+        options = [
+            {'label' : col, 'value' : col} for col in options
+        ],
+        value = 'Score'
+    )
+    return select
 
 
 
@@ -897,8 +999,11 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
         html.Div(children=[
             # 3D network plot
             html.Div(children=[
-                html.Div(id='edge-type-select-box', children=[
-                    create_edge_type_select(net)],
+                html.Div(id='edge-select-box', children=[
+                    html.Label('Color', style={'color': '#FFFFFF'}),
+                    create_edge_color_select(net),
+                    html.Label('Layer', style={'color': '#FFFFFF'}),
+                    create_edge_layer_select(net)],
                     style={'padding-bottom' : '10px'}),
                 dcc.Graph(id = 'network-3dview',
                   figure = create_network_plot(net, vlayers, elayers)),
@@ -908,13 +1013,13 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                 dcc.Input(
                     id='current-network-3dview-aspect', type="number",
                     value=0, style= {'display' : 'none'})],
-                style = {"width" : "45%", "display" : "inline-block",
+                style = {"width" : "55%", "display" : "inline-block",
                          "border" : "1px solid black", "padding" : "10px",
                          "background-color" : "black", "margin" : "10px"},
             ),
             # 3D Co-Expression scatterplot.
             html.Div(children=[
-                html.Div(id='condition-select-box', children=[
+                html.Div(id='coexp-condition-select-box', children=[
                     create_condition_select(amx, sample_col)],
                     style={'padding-bottom' : '10px'}),
                 dcc.Graph(id = 'edge-expression-3dview',
@@ -926,7 +1031,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                 dcc.Input(
                     id='current-expr-camera-coords', type="number",
                     value=0, style= {'display' : 'none'})],
-                style = {"width" : "45%", "display" : "inline-block",
+                style = {"width" : "35%", "display" : "inline-block",
                          "border" : "1px solid black", "padding" : "10px",
                          "margin" : "10px", "vertical-align" : "top"},
             ),
@@ -1029,7 +1134,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
     @app.callback(
         dash.dependencies.Output('edge-expression-3dview', 'figure'),
         [dash.dependencies.Input('selected-edge', 'value'),
-         dash.dependencies.Input('condition-select', 'value')])
+         dash.dependencies.Input('coexp-condition-select', 'value')])
     def update_expression_plot(current_edge, color_col):
         if (current_edge == -1):
           current_edge = None
@@ -1038,10 +1143,11 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
 
     @app.callback(
         dash.dependencies.Output('network-3dview', 'figure'),
-        [dash.dependencies.Input('edge-type-select', 'value')],
+        [dash.dependencies.Input('edge-color-select', 'value'),
+         dash.dependencies.Input('edge-layer-select', 'value')],
         [dash.dependencies.State('current-network-3dview-camera', 'value'),
          dash.dependencies.State('current-network-3dview-aspect', 'value')])
-    def update_network_plot(color_by,  camera_vals, aspect_vals):
+    def update_network_plot(color_by,  layer_by, camera_vals, aspect_vals):
         camera = None
         aspect = None
         if (type(camera_vals) == str):
@@ -1052,7 +1158,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
         if not camera and not aspect:
             raise dash.exceptions.PreventUpdate
 
-        return create_network_plot(net, vlayers, elayers, color_by, camera, aspect)
+        return create_network_plot(net, vlayers, elayers, color_by, layer_by, camera, aspect)
 
 
 
