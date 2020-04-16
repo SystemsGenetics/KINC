@@ -320,8 +320,8 @@ QVector<QString> Extract::filterEdge(int k)
     {
         // testName has a _pVal or _rSqr suffix, whereas the
         // official (or real) test name does not.
-        QString realTestName = testName
-            .replace("_pVal", "")
+        QString realTestName = testName;
+        realTestName.replace("_pVal", "")
             .replace("_RSqr", "");
         QPair<QString, float> filter;
 
@@ -376,8 +376,8 @@ QVector<QString> Extract::filterEdge(int k)
     // to check that both tests passed (not just one).
     for (auto& testName : _testNames)
     {
-        QString realTestName = testName
-            .replace("_pVal", "")
+        QString realTestName = testName;
+        realTestName.replace("_pVal", "")
             .replace("_RSqr", "");
 
         if (passed.count(realTestName) == 1 && failed.count(realTestName) == 1)
@@ -389,8 +389,8 @@ QVector<QString> Extract::filterEdge(int k)
     // Remove any duplicates from the passed list before returning.
     for (auto& testName : _testNames)
     {
-        QString realTestName = testName
-            .replace("_pVal", "")
+        QString realTestName = testName;
+        realTestName.replace("_pVal", "")
             .replace("_RSqr", "");
 
         if (passed.count(realTestName) > 1)

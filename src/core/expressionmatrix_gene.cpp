@@ -199,3 +199,14 @@ float ExpressionMatrix::Gene::at(int index) const
     // return the specified value
     return _expressions[index];
 }
+
+/*!
+ * Retrieves the name of this gene.
+ */
+QString ExpressionMatrix::Gene::toString() const
+{
+    EDEBUG_FUNC(this);
+    EMetaArray geneNames = _matrix->geneNames();
+    QString geneName = geneNames.at(_index).toString();
+    return geneName;
+}
