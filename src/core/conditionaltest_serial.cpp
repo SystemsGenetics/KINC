@@ -443,15 +443,32 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
     gsl_matrix *X, *cov;
     gsl_vector *Y, *C;
     double pValue = 0.0;
-    double r2 = 0.0;
+    double R2 = 0.0;
+    double R2adj = 0.0;
+
+    // Before allocating memory for the linear regression let's remove any
+    // values in the expression matrix that have missing values. This will
+    // tell us the full size we need to reserve.
+    int test_cluster_size = 0;
+    for ( int i = 0, j = 0; i < _base->_emx->sampleSize(); i++ )
+    {
+        // If the sample label matches with the given label.
+        if ( ccmPair.at(clusterIndex, i) == 1 )
+        {
+            if (QString::compare(amxInfo.at(i), _base->_missing) == 0) {
+                continue;
+            }
+            test_cluster_size++;
+        }
+    }
 
     // Allocate a matrix to hold the predictior variables, in this case the gene
     // Expression data.
-    X = gsl_matrix_alloc(_clusterSize, 4);
+    X = gsl_matrix_alloc(test_cluster_size, 4);
 
     // Allocate a vector to hold observation data, in this case the data
     // corrosponding to the features.
-    Y = gsl_vector_alloc(_clusterSize);
+    Y = gsl_vector_alloc(test_cluster_size);
 
     // Allocate a vector and matrix for the slope info.
     C = gsl_vector_alloc(4);
@@ -462,6 +479,9 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
     ExpressionMatrix::Gene geneY(_base->_emx);
     geneX.read(ccmPair.index().getX());
     geneY.read(ccmPair.index().getY());
+
+    // QString g1Name = geneX.toString();
+    // QString g2Name = geneY.toString();
 
     // Look through all the samples in the mask.
     for ( int i = 0, j = 0; i < _base->_emx->sampleSize(); i++ )
@@ -485,29 +505,7 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
             gsl_matrix_set(X, j, 1, g1);
             gsl_matrix_set(X, j, 2, g2);
             gsl_matrix_set(X, j, 3, g1*g2);
-
-            // Next add the annotation observation for this sample to the Y vector.
-            if ( testType == ORDINAL )
-            {
-                // Convert the observation data into a "design vector"
-                // Each unique number being assigned a unique integer.
-                if ( !labelInfo.contains(amxInfo.at(i).toInt()) )
-                {
-                    labelInfo.append(amxInfo.at(i).toInt());
-                }
-
-                for ( int k = 0; k < labelInfo.size(); k++ )
-                {
-                    if ( labelInfo.at(k) == amxInfo.at(i).toInt() )
-                    {
-                        gsl_vector_set(Y, j, k + 1);
-                    }
-                }
-            }
-            else
-            {
-                gsl_vector_set(Y, j, amxInfo.at(i).toFloat());
-            }
+            gsl_vector_set(Y, j, amxInfo.at(i).toFloat());
 
             j++;
         }
@@ -516,16 +514,39 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
     // Create the workspace for the gnu scientific library to work in.
     gsl_multifit_linear_workspace * work = gsl_multifit_linear_alloc (X->size1, X->size2);
 
-    // Regrassion calculation.
+    // Regression calculation.
     gsl_multifit_linear(X, Y, C, cov, &chisq, work);
 
-    // Calculate R^2 and p-value
-    r2 = 1 - chisq / gsl_stats_tss(Y->data, Y->stride, Y->size);
+    // Calculate some quantities we'll need for R^2 and p-value
+    // calculations.
+    // Sum of Squares Total
+    double SST = gsl_stats_tss(Y->data, Y->stride, Y->size);
+    // Sum of Squares of the Error (residuals)
+    double SSE = chisq;
 
-    double dl = _clusterSize - 2;
-    double F = r2 * dl / (1 - r2);
+    // Sum of Squares for the model.
+    double SSM = SST - SSE;
 
-    pValue = 1 - gsl_cdf_fdist_P (F, 1, dl);
+    // Degrees of Freedom for the Model. This is p-1 where
+    // p is the number of parameters in the model.
+    double DFM = 3;
+    // Degrees of Freedom for the Error. This is n-p where
+    // n is the number of samples.
+    double DFE = test_cluster_size - 4;
+
+    // Mean of Squares for the Model.
+    double MSM = SSM/DFM;
+    // Mean of Squares for Error.
+    double MSE = SSE/DFE;
+
+    // Calculate R^2 and R^2-adjusted
+    R2 = 1 - (SSE / SST);
+    R2adj = 1.0 - ((double) test_cluster_size - 1) / DFE * (1 - R2);
+
+    // Calculate the p-value. We will do this using the F-test.
+    double Fstat = MSM/MSE;
+    pValue = 1 - gsl_cdf_fdist_P(Fstat, DFM, DFE);
+
 
     // TODO: we should check the assumptions of the linear regression and
     // not return if the assumptions are not met.
@@ -561,6 +582,6 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
     }
     else {
         results[0] = pValue;
-        results[1] = r2;
+        results[1] = R2;
     }
 }

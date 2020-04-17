@@ -23,6 +23,7 @@ public:
     void write(int index);
     bool writeNext();
     float at(int index) const;
+    QString toString() const;
 private:
     /*!
      * Pointer to the parent expression matrix.
