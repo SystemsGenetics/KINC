@@ -407,9 +407,25 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
         jkap = jkap/in;
         gsl_rng_free(r);
 
+        // Since we want to test P(X >= jkap) not P(X > jkap) we should
+        // subtract 1 from jkap but we shouldn't go below zero.
+        jkap = jkap - 1;
+        if (jkap < 0)
+        {
+            jkap = 0;
+        }
+
         // Now reset the sample size and the proporiton of success.
         pvalue = gsl_cdf_hypergeometric_Q(jkap, n1, n2, bs_t);
         return pvalue;
+    }
+
+    // Since we want to test P(X >= k) not P(X > k) we should
+    // subtract 1 from k but we shouldn't go below zero.
+    k = k - 1;
+    if (k < 0)
+    {
+        k = 0;
     }
 
     // The gsl_cdf_hypergeometric_Q function uses the upper-tail of the CDF.
