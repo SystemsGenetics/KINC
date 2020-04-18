@@ -426,7 +426,7 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
     if color_by == 'Score':
         slider_title = 'Similarity Score'
     if color_by == 'P-value':
-        slider_title = 'P-value'
+        slider_title = '-log10(p)'
     if color_by == 'R^2':
         slider_title = 'R-squared'
     if color_by == 'Test Name':
