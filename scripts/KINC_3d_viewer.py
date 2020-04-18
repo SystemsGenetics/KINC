@@ -255,8 +255,10 @@ def bin_edges(net):
     net['Pval_Bin'] = np.round(-np.log10(net['p_value']))
     net['Rsqr_Bin'] = np.around(np.abs(net['r_squared']), decimals=1)
     net['Relationship'] = np.ceil(net['Similarity_Score']).astype('str')
-    net['Relationship'] = net['Relationship'].replace(0, 'Negative')
-    net['Relationship'] = net['Relationship'].replace(0, 'Positive')
+    net['Relationship'] = net['Relationship'].replace("-0.0", 'Negative')
+    net['Relationship'] = net['Relationship'].replace("1.0", 'Positive')
+
+
 
 
 
@@ -651,7 +653,7 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
     if (categories.dtype == object):
         is_categorical = True
 
-    # Now draw the plot    
+    # Now draw the plot
     nticks = None
     tickmode = 'auto'
     ticktext = None
@@ -1006,7 +1008,16 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                     create_edge_layer_select(net)],
                     style={'padding-bottom' : '10px'}),
                 dcc.Graph(id = 'network-3dview',
-                  figure = create_network_plot(net, vlayers, elayers)),
+                  figure = create_network_plot(net, vlayers, elayers),
+                  config =  {
+                        'toImageButtonOptions' : {
+                          'filename': 'kinc_3d_network_view',
+                          'width': 800,
+                          'height': 600,
+                          'format': 'svg',
+                          'scale' : 2
+                         }
+                       }),
                 dcc.Input(
                     id='current-network-3dview-camera', type="number",
                     value=0, style= {'display' : 'none'}),
@@ -1024,7 +1035,15 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                     style={'padding-bottom' : '10px'}),
                 dcc.Graph(id = 'edge-expression-3dview',
                     figure = create_expression_scatterplot(gem, amx, elayers),
-                ),
+                    config =  {
+                          'toImageButtonOptions' : {
+                            'filename': 'kinc_3d_expression_scatterplot',
+                            'width': 800,
+                            'height': 600,
+                            'format': 'svg',
+                            'scale' : 1
+                           }
+                         }),
                 dcc.Input(
                     id='selected-edge', type="number",
                     value=-1, style= {'display' : 'none'}),
