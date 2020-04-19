@@ -18,11 +18,20 @@ if (is.null(opt$net)){
   stop("Please provide a network file (--net).", call.=FALSE)
 }
 
-library("KINC.R")
+suppressMessages(library("KINC.R"))
 
 message("")
-message("KINC")
-message("----")
+message(' __  __   ______   __  __  ____       ____        ')
+message('/\\ \\/\\ \\ /\\__  _\\ /\\ \\/\\ \\/\\  _`\\    /\\  _`\\      ')
+message('\\ \\ \\/\'/\'\\/_/\\ \\/ \\ \\ `\\\\ \\ \\ \\/\\_\\  \\ \\ \\L\\ \\    ')
+message(' \\ \\ , <    \\ \\ \\  \\ \\ , ` \\ \\ \\/_/_  \\ \\ ,  /    ')
+message('  \\ \\ \\\\`\\   \\_\\ \\__\\ \\ \\`\\ \\ \\ \\L\\ \\__\\ \\ \\\\ \\   ')
+message('   \\ \\_\\ \\_\\ /\\_____\\\\ \\_\\ \\_\\ \\____/\\_\\\\ \\_\\ \\_\\ ')
+message('    \\/_/\\/_/ \\/_____/ \\/_/\\/_/\\/___/\\/_/ \\/_/\\/ / ')
+message("")
+message("This script uses KINC.R, a companion R library for KINC")
+message("https://github.com/SystemsGenetics/KINC.R")
+message("-------------------------------------------------------")
 
 # Make sure the csGCN directory exists.
 if (!dir.exists(file.path('figures'))) {

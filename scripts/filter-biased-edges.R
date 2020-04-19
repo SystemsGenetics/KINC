@@ -20,7 +20,7 @@ option_list = list(
               help="(optional). The file name prefix used for the ouput files. If this arugment is not provided then the original network file name is used as a prefix.", metavar="character"),
    make_option(c("--suffix"), type="character", default=NULL,
               help="(optional). The file ending to add to the final output files. By default this is GCN.txt"),
-  make_option(c("--chunk_size"), type="numeric", default=1000000,
+   make_option(c("--chunk_size"), type="numeric", default=1000000,
               help="(optional). When processing large networks, the file is divided into chunks to  prevent  overunning of local memory.  Raise or lower the size of the chunk to use or reduce memory usage.")
 );
 
@@ -45,11 +45,20 @@ if (length(opt$suffix) > 0) {
    suffix = opt$suffix
 }
 
-library("KINC.R")
+suppressMessages(library("KINC.R"))
 
 message("")
-message("KINC")
-message("----")
+message(' __  __   ______   __  __  ____       ____        ')
+message('/\\ \\/\\ \\ /\\__  _\\ /\\ \\/\\ \\/\\  _`\\    /\\  _`\\      ')
+message('\\ \\ \\/\'/\'\\/_/\\ \\/ \\ \\ `\\\\ \\ \\ \\/\\_\\  \\ \\ \\L\\ \\    ')
+message(' \\ \\ , <    \\ \\ \\  \\ \\ , ` \\ \\ \\/_/_  \\ \\ ,  /    ')
+message('  \\ \\ \\\\`\\   \\_\\ \\__\\ \\ \\`\\ \\ \\ \\L\\ \\__\\ \\ \\\\ \\   ')
+message('   \\ \\_\\ \\_\\ /\\_____\\\\ \\_\\ \\_\\ \\____/\\_\\\\ \\_\\ \\_\\ ')
+message('    \\/_/\\/_/ \\/_____/ \\/_/\\/_/\\/___/\\/_/ \\/_/\\/ / ')
+message("")
+message("This script uses KINC.R, a companion R library for KINC")
+message("https://github.com/SystemsGenetics/KINC.R")
+message("-------------------------------------------------------")
 
 # Load the expression matrix, annotation matrix and the network.
 message("Loading the expression matrix file...")
