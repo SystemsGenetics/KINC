@@ -253,7 +253,10 @@ def bin_edges(net):
     """
     net['Edge_Bin'] = np.around(np.abs(net['Similarity_Score']), decimals=2)
     net['Pval_Bin'] = np.round(-np.log10(net['p_value']))
-    net['Rsqr_Bin'] = np.around(np.abs(net['r_squared']), decimals=1)
+    if (net['r_squared'].dtype == 'object'):
+        net['Rsqr_Bin'] = 0
+    else:
+        net['Rsqr_Bin'] = np.around(net['r_squared'], decimals=1)
     net['Relationship'] = np.ceil(net['Similarity_Score']).astype('str')
     net['Relationship'] = net['Relationship'].replace("-0.0", 'Negative')
     net['Relationship'] = net['Relationship'].replace("1.0", 'Positive')

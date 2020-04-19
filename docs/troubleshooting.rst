@@ -1,7 +1,11 @@
 Troubleshooting
 ===============
 
-There are many issues that can occur when using KINC, ranging from data management to software and hardware configuration. The following sections will attempt to address the most common issues.
+There are issues that can occur when using KINC, ranging from data management to software and hardware configuration. The following sections will attempt to address the most common issues.
+
+General Help and Guidance
+~~~~~~~~~~~~~~~~~~~~~~~~~
+If this online manual does not provide sufficient help or guidance, or if you encounter bugs or challenges please let us know.  Please submit an issue on our `KINC issue tracking<https://github.com/SystemsGenetics/KINC/issues>`_ queue.  
 
 Thresholding Large GEMs
 ~~~~~~~~~~~~~~~~~~~~~~~

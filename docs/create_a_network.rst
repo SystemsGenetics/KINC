@@ -19,7 +19,7 @@ Advantages
   - Biological signal can be found at higher correlation values and when sample bias is skewed towards the question of interest
 
 Disadvantages
-  - Includes false edges but also misses edges due to improper application of correlation tests.
+  - Includes false edges due to improper application of correlation tests, and misses lower-correlated true edges due to excess noise.
 
 GMM Approach
 ::::::::::::
@@ -40,7 +40,7 @@ Disadvantages
 How Many Samples are Needed?
 ````````````````````````````
 
-Networks can be created with very few samples if need be, but the power of the network will diminish greatly.  For Traditional networks, you can manually perform a power analysis before network construction to identify what correlation value (i.e. effect size) you must not go below in thresholding in order to limit false edges (assuming correlation assumptions are met, which they are not in the traditional approach). The ``pwr.r.test`` function of the statistical programming language R can do this, and there are `online calculators <http://www.sample-size.net/correlation-sample-size/>`_ as well.
+Networks can be created with very few samples if need be, but the power of the network will diminish greatly.  For traditional networks, you can manually perform a power analysis before network construction to identify what correlation value (i.e. effect size) you must not go below in thresholding in order to limit false edges (assuming correlation assumptions are met, which they are not in the traditional approach). The ``pwr.r.test`` function of the statistical programming language R can do this, and there are `online calculators <http://www.sample-size.net/correlation-sample-size/>`_ as well.
 
 For example, the minimum number of samples required to meet the criteria of for a significance value of 0.001, a power value of 0.8 and a minimum correlation threshold of 0.5 is 60 samples. If we raise the minimum threshold to 0.7 we need at least 21 samples.  Only 11 samples are needed for a threshold limit of 0.9.  If we only had 11 samples we should not allow a correlation threshold below 0.9.
 
@@ -97,7 +97,7 @@ Here the EMX file created in the first step is provided using the ``--emx`` argu
 
 Step 3: Thresholding
 ````````````````````
-There are four ways KINC can determine a threhsold for a network: power-law, Random Matrix Theory (RMT), condition-specific and `ad hoc`.
+There are four ways KINC can determine a threshold for a network: power-law, Random Matrix Theory (RMT), condition-specific and `ad hoc`.  RMT is the recommended approach for traditional networks.
 
 .. _rmt-reference-label:
 
@@ -139,7 +139,7 @@ If the input GEM is especially noisy, the RMT method will fail to find a thresho
 
 Method 2: Using the Power-law Threshold
 :::::::::::::::::::::::::::::::::::::::
-The Power-law function tests to see if the network, at successively decreasing correlation values follows a power-law which is a properly of scale-free network.  The power-law threshold can be used as an alternative to RMT when it fails to find a solution. The following example uses the power-law threshold for the example 475-rice sample data:
+The Power-law function tests to see if the network, at successively decreasing correlation values follows a power-law which is a property of scale-free network.  The power-law threshold can be used as an alternative to RMT when it fails to find a solution. The following example uses the power-law threshold for the example 475-rice sample data:
 
 .. code:: bash
 
@@ -265,21 +265,9 @@ As shown above, the power and signficance criteria are set with the ``--power`` 
 
   Remember, to find edges in the nework associated with categorical features, you must have enough samples with the given category in order to find a cluster an then to have sufficent power. The ``--minsamp `` argument in the ``similarity`` step sets the smallest allowable cluster size.
 
-Step 4: Thresholding
-````````````````````
-For the GMM aproach there are several options for thresholding: Random Matrix Theory (RMT) or condition-specific.
-
-Method 1: Using RMT to Threshold
-::::::::::::::::::::::::::::::::
-
-You can use RMT for identifying a threshold for the GMM approach.  For this you should adjust the ``--reduction`` argument to specify one of: ``first``, ``mincorr``, ``maxcorr`` or ``random``.  This will select the cluster that  appears first, has the minimum correlation value, maximum correlation value or a random cluster, respectively.  However, RMT cannot be used for identifying condition-specific subgraphs and results in a traditional style network even if the GMM approach was used. To use RMT please see the :ref:`rmt-reference-label` section.
-
-
-.. _csfilter-reference-label:
-
-Method 2: Applying a Condition-Specific Filter
-::::::::::::::::::::::::::::::::::::::::::::::
-Condition-specific filtering is performed using the ``cond-test`` function of KINC. It requires an annotation matrix containing metadata about the RNA-seq samples. It performs a hypergeometric test for categorical features and regression analysis for quantitative features and assignes `p`-values and `r`-squared values, as appropriate, to each edge in the network. The following shows an example:
+Step 4: Condition-Specific Filtering
+````````````````````````````````````
+Condition-specific filtering is performed using the ``cond-test`` function of KINC. It requires an annotation matrix containing metadata about the RNA-seq samples. It performs a hypergeometric test for categorical features and linear regression analysis for quantitative features that assigns *p*-values and R:sup:`2` values, as appropriate, to each edge in the network. The following shows an example:
 
 .. code:: bash
 
@@ -296,7 +284,6 @@ Here, the ``--emx``, ``--ccm``, and ``--cmx`` arguments provide the usual expres
 
 Finally, it may not be desired to test all of the metadata features (i.e. columns) from the annotation matrix.  Using the ``feat-tests`` argument you can specify a comma-separated list (without spaces) of the names of the columns in the annotation matrix file that should be tested.  These can be either categorical, quantitative or ordinal.  KINC will do its best to determine the top of data in each column, but you can override the type using the ``--feat-types`` argument and specifying the type by separating with a colon.
 
-Unlike with other thresholding methods, you do not get a minimal correlation value. Instead you can set limits on the `p`-values and `r`-squared values in the network extraction step.
 
 Step 5: Extract Condition-Specific Subgraphs
 ````````````````````````````````````````````
@@ -309,18 +296,18 @@ When using the GMM approach, the goal is to identiy condition-specific subgraphs
     --ccm "rice_heat_drought.GEM.FPKM.filtered.paf.ccm" \
     --cmx "rice_heat_drought.GEM.FPKM.filtered.paf.cmx" \
     --csm "rice_heat_drought.GEM.FPKM.filtered.paf.csm" \
-    --format "text" \
+    --format "tidy" \
     --output "rice_heat_drought.GEM.FPKM.filtered.th0.5.cs1e-3.gcn.txt" \
-    --mincorr 0.80 \
+    --mincorr 0.50 \
     --maxcorr 1 \
     --filter-pvalue "1e-3"
     --filter-rsquare "0.3"
 
+As in previous steps, the ``--emx``, ``--cmx``, ``--ccm`` and ``--csm`` arguments provide the expression matrix, correlation, clustering matrix and the new condition-specific matrix. A threshold is provided to the ``--mincorr`` argument typically as a lower-bound. No edges with absolute correlation values below this value will be extracted.   Additinally, if you would like to exclude high correlations (such as perfect correlations), you can do so with the ``--maxcorr`` argument. You should only need to change the ``--maxcorr`` argument if it was determined that there is error in the data resulting from an inordinate number of high correlations.  In the example above the ``--mincorr`` is set at 0.5. This is quite low by traditional standards but the following filtering and thresholding steps support exploration of edges at such a low correlation.
 
+To limit the size of the condition-specific subgraphs you should then set the ``--filter-pvalue`` and ``--filter-rsquare`` values to lower-bounds for signficant p-values and meaningful r-square values from test.  The r-square values are only present for quantitative features where the regression test was performed.  The p-value in this case indicates how well the data follows a trend and the r-square indicates how much of the variation the trend line accounts for.  Ideally, low p-values and high r-squre are desired. However, there are no rules for the best setting, but choose settings that provide a signficance level you are comfortable with.
 
-As in previous steps, the ``--emx``, ``--cmx``, ``--ccm`` and ``--csm`` arguments provide the exrpession matrix, correlation,  clustering matrix and the new condition-specific matrix. A threshold is provided to the ``--mincorr`` argument typically as a lower-bound. No edges with absolute correlation values below this value will be extracted.   Additinally, if you would like to exclude high correlations (such as perfect correlations), you can do so with the ``--maxcorr`` argument. You should only need to change the ``--maxcorr`` argument if it was determined that there is error in the data resulting in an inordinate number of high correlations.  To limit the size of the condition-specific subgraphs you should then set the ``--filter-pvalue`` and ``--filter-rsquare`` values to lower-bounds for signficant p-values and meaningful r-square values from test.  The r-square values are only present for quantitative features where the regression test was performed.  The p-value in this case indicates how well the data follows a trend and the r-square indicates how much of the variation the trend line accounts for.  Ideally, low p-values and high r-squre are desired. However, there are no rules for the best setting, but choose settings that provide a signficance level you are comfortable with.
-
-Finally, the ``--format`` argument can be ``text``, ``minimal`` or ``graphml``. The ``text`` and ``graphml`` format contain the most data although, the `GraphML <http://graphml.graphdrawing.org/>`_ version is larger in size. Both are easily imported into Cytoscape and the text version is easily imported into R for other analyses and visualizations. The ``minimal`` format contains the list of edges with only the two genes and the correlation value. See the :ref:`plain-text-reference-label`  section for specific details about these files.
+Finally, the ``--format`` argument can be ``tidy``, ``text``, ``minimal`` or ``graphml``. The ``tidy`` format is recommended for use by later steps. The the `GraphML <http://graphml.graphdrawing.org/>`_ version is larger in size and in an XML format compatible with other graph tools. The ``tidy``, ``test`` and ``graphml`` formats are easily imported into Cytoscape. The ``minimal`` format contains the list of edges with only the two genes and the correlation value. See the :ref:`plain-text-reference-label`  section for specific details about these files.
 
 Complex Filtering
 :::::::::::::::::
@@ -328,72 +315,157 @@ Complex Filtering
 For either the ``--filter-pvalue`` or ``--filter-rsquare`` you can specify more complex filters in any of the following forms:
 
 1.  ``[value]``
-2.  ``[label],[value]``
-3.  ``[label],["gt","lt"],[value]``
-4.  ``[label],[category],[value]``
-5.  ``[label],[category],["gt","lt"],[value]``
+2.  ``[class],[value]``
+3.  ``[class],["gt","lt"],[value]``
+4.  ``[class],[label],[value]``
+5.  ``[class],[label],["gt","lt"],[value]``
 
 Where:
 
 - ``[value]`` is a p-value or r-squared value on which edges should be filtered.
-- ``[label]`` is the name of the column label in the annotation matrix where any tests performed by the ``cond-test`` function should be applied.
+- ``[class]`` is the name of a condition (i.e. the column header label in the annotation matrix) where any tests performed by the ``cond-test`` function should be applied.
 - ``["gt","lt"]`` is either the abbreviation "gt" or "lt" indicating if values "greater than" or "less than" that specified by ``[value]`` should be extracted.
-- ``[category]`` is set to a category to further refine filtering of categorical test results.
+- ``[label]`` is set to a category label within the condition class (for categorical data only) to further refine filtering of categorical test results.
 
 If a ``[value]`` filter is provided (i.e. only a single numeric value), as in the example code above, then the filter applies to all tests that were performed. For example, a filter of ``1e-3`` indicates that any test performed in the ``cond-test`` step that has a value less than 1e-3 should be  extracted.
 
-If a ``[label],[value]`` filter is provided then the filter applies to only tests for the given label, and all other tests are ignored.  For example. To find edges that are specific to any Subspecies with a p-value < 1-e3, the following filter could be supplied:  ``Subspecies,1e-3``. If "gt" or "lt" is missing it is implied as "lt" for p-value filters and "gt" for r-squared filters.
+If a ``[class],[value]`` filter is provided then the filter applies to only tests for the given label, and all other tests are ignored.  For example. To find edges that are specific to any Subspecies with a p-value < 1-e3, the following filter could be supplied:  ``Subspecies,1e-3``. If "gt" or "lt" is missing it is implied as "lt" for p-value filters and "gt" for r-squared filters.
 
-If a ``[label],["gt","lt"],[value]`` filter is provided then the filter is the same as the ``[label],[value]`` except that the selection of greater than or less than is excplicitly stated.
+If a ``[class],["gt","lt"],[value]`` filter is provided then the filter is the same as the ``[class],[value]`` except that the selection of greater than or less than is excplicitly stated.
 
-Finally, the filters, ``[label],[category],[value]`` and ``[label],[category],["gt","lt"],[value]``, are only applicable to tests were categorical data was used. The latter explicitly provides the "greater than" or "less than" specification. Here the filter specifically expects a given category.  For example. To find edges that are specific to only the Indica subspecies with a p-value < 1-e3, the following filter could be supplied:  ``Subspecies,Indica,lt,1e-3``. If "gt" or "lt" is missing it is implied as "lt" for p-value filters and "gt" for r-squared filters.
+Finally, the filters, ``[class],[label],[value]`` and ``[class],[label],["gt","lt"],[value]``, are only applicable to tests were categorical data was used. The latter explicitly provides the "greater than" or "less than" specification. Here the filter specifically expects a given category.  For example. To find edges that are specific to only the Indica subspecies with a p-value < 1-e3, the following filter could be supplied:  ``Subspecies,Indica,lt,1e-3``. If "gt" or "lt" is missing it is implied as "lt" for p-value filters and "gt" for r-squared filters.
 
 Filters can be combined by separating them with two colons: ``::``.  For example, to find edges that are specific to heat but not heat recovery the following would require a signficant p-value for Heat and a non-signficant p-value for heat recoery:  ``Treatment,Heat,1e-3::Treatment,Heat Recovery,gt,1-e3``
 
 .. note::
 
-  Filters limit the extracted edge list by finding matches that meet the criteria but do not exclude edges that may be signficant for other tests. For example, If the filter ``Treatment,Heat,1e-3`` is supplied it will find edges that meet that filter but does imply the other tests such as a signficant Supspecies is not also present.
+  Filters limit the extracted edge list by finding edges that meet the criteria but do not exclude edges that may be signficant for other tests. For example, If the filter ``Treatment,Heat,1e-3`` is supplied it will find edges that meet that filter but does imply the other tests such as a signficant Supspecies is not also present.
 
-Step 6: Remove Edges Due to Collinearity
-````````````````````````````````````````
-This last step must be performed in R using the KINC.R package.  KINC is an actively developed software project and functions are often implemented in R before beinc moved to the faster C++ based KINC software.  Currently, the function for removing edges due to collinearity is in the KINC.R supplemental package.  To use this package, you must first have all dependencies installed these include the following CRAN and Bioconductor packages:
+Step 6: Remove Biased Edges
+```````````````````````````
+This step must be performed using the ``filter-condition-edges.R`` R script. It uses `KINC.R<https://github.com/SystemsGenetics/KINC.R>`_ package, an R companion library for KINC.  KINC is an actively developed software project and functions are often implemented in R before being moved to the faster C++ based KINC software.  *You must install KINC.R prior to using this script.*.  A false edge can be present under two known conditions:
 
-CRAN
+1. **Lack of differentical cluster expressin (DCE)**. Lack of DCE occurs when GMMs detected a unique cluster in the co-expression between two genes, but the mean expression level of each cluster is not different between the two genes.  For the condition-specific edge to be true, it must have different expression within the cluster than without.  The script uses a Welch's Anova test to compare the mean expression of the in- and out-cluster samples for each gene.  This test allows for unequal variance.
+2. **Unbalanced missing data**.  When one gene has more missing expression values than another it biases the co-expression relationship towards a condition if that gene's expression is condition-specific.  The missingness patterns of both genes must be similar.  A T-test is used to compare the difference in missingness between the two genes of an edge.
 
-- ggplot2
-- igraph
-- linkcomm
-- Rmixmod
-- pwr
-- dplyr
-- reshape2
-- grid
+The following examle demonstrates how to remove biased edges:
 
-Bioconductor
+.. code:: bash
 
-- qvalue
+  /local/projects/KINC/scripts/filter-condition-edges.R \
+    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30.csGCN-tidy.txt" \
+    --emx '../../../../01-input_data/03-rice_heat_drought/rice_heat_drought.GEM.FPKM.filtered.txt' \
+    --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30"
 
-To install KINC.R, follow the instructions on the `KINC.R Github repository <https://github.com/SystemsGenetics/KINC.R>`_.
 
-Once KINC.R and all dependencies you can execute the following:
+Here the ``--net`` argument specifies the name of the network created using the ``extract`` function of KINC. It must be in tidy format. The ``--emx`` argument specifies the original GEM provided to the ``import-emx`` function, and the ``--out_prefix`` provides a name for the filtered output file.
 
-Frist, import the exrpession and annotation matricies (the same used for KINC):
+By default the script will use a *p*-value threshold of 1e-3 for the Welch's Anova test and 0.1 for the t-test. Edges with a *p*-value less than 1e-3 will be kept for the Welch's test and a *p*-value greater than 0.1 (indicating a difference in missigness can't be detected) for the t-test. You can adjust these thresholds using the ``--wa_th`` and ``--mtt_th`` arguments respectively.  See the help text (by running the script with no arguments) for other options.
 
-.. code:: r
+.. warning::
 
-  ematrix = read.table('rice_heat_drought.GEM.FPKM.filtered.txt', header=TRUE, sep="\t")
-  osa = loadSampleAnnotations('PRJNA301554.hydroponic.sample_annotations.filtered.txt')
-  net = loadKINCNetwork('rice_heat_drought.GEM.FPKM.filtered-th0.85-p1e-10.r0.3-gcn.txt')
+  If the condition-specific network, extracted from KINC is very large (i.e several Gigabytes in size) it may be slow to run this script. The script is multi-threaded and by default will use all but 2 of the available CPU cores to speed up processing.
 
-Next we should filter edges that may be biased due to collinearity:
+Step 7: Generate Summary Plots
+``````````````````````````````
+After filtering of the network, it is useful to explore how the distribution of *p*-values and R:sup:`2` values differ between conditions and similarity scores.  This helps understand the level of condition-specific response in the network.  This can be performed using the ``make-summary-plots.R`` R script, which also uses KINC.R.  The following is an example of a plot generated by this script:
 
-.. code:: r
+.. image:: ./images/KINC_summary_plot1.png
 
-  net2 = filterBiasedEdges(net, ematrix, th=1e-3)
+The following is an example to generate the summary plots:
 
-Now that the filter has been applied we can save the final network file:
-saveKINCNetwork(net2, 'rice_heat_drought.GEM.FPKM.filtered-th0.85-p1e-10.r0.3-b1e-3.gcn.txt')
+.. code:: bash
 
-..warning::
+  /local/projects/KINC/scripts/make-summary-plots.R \
+    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
+    --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy"
 
-  It is possible that condition-specific networks that are brought into KINC.R can be extremely large. Such is the case when time series are present in the data resulting in many collinear relationships due to circadian changes.  To avoid overrunning memory in R, you may want to filter your next during the ``extract`` phase using a higher p-value threshold or minimum correlation value to limit the size of the network.
+Here the ``--net`` argument specifies the name of the network. This should be the network created after Step 6:  filtering biased conditional edges.  The ``--out_prefix`` provides the file name prefix for the output images.
+
+Step 8: Threshold the Network by Ranks
+``````````````````````````````````````
+In many cases the condition-specific networks can be very large. This is especially true if time-series data is present and if during the ``extract`` function of KINC a very low minimum similarity score threshold was used (e.g. 0.5).  It is not yet clear how many false or true edges remain in the network.  Therefore, it is beneficial to perform one last threshold to reduce the size of the network.   Here, the similarity score, *p*-value and R:sup:`2` values for each edge are ordered and ranked independently. Then a valuation of each edge, based on the weighted sum of all of the ranks is calculated. Finally the edges are given a final rank in order (smallest to largest) by their valuation.  You can then perform an *ad hoc* filtering by retaining only the top *n* edges.
+
+To peform this ranking the Rscript ``rank-condition-threshold.R`` is used. It too uses KINC.R.  The following provides an example for filtering the entire network.
+
+.. code:: bash
+
+  /local/projects/KINC/scripts/rank-condition-threshold.R \
+    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
+    --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered"
+
+Here, we provide the network filtered by Step 6 for the ``--net`` argument and the ``-out_prefix`` is used to name the resulting output file.
+
+To create individual files for each condition add the ``--save_condition_networks`` argument. The resulting file will include the top *n* edges per condition not just the top *n* for the entire network:
+
+.. code:: bash
+
+  /local/projects/KINC/scripts/rank-condition-threshold.R \
+    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
+    --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered" \
+    --save_condition_networks
+
+If you are interested in exploring edges that are unique to a given category (e.g. heat or drought within a Treatment class) then you can provide the ``--unqique_filter`` argument with the value "label":
+
+.. code:: bash
+
+  /local/projects/KINC/scripts/rank-condition-threshold.R \
+    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
+    --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered" \
+    --save_condition_networks --unique_filter "label"
+
+
+The result from the command-above is a set of files, one per condition class/label that contain only edges that are unique to the condition label (i.e. category) and is not signficant for any other condition.
+
+Finally, you can export the top *n* for a given condition class (e.g. Treatment) by providing the value "class" to the ``--unique_filter`` argument.
+
+.. code:: bash
+
+  /local/projects/KINC/scripts/rank-condition-threshold.R \
+    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
+    --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered" \
+    --save_condition_networks --unique_filter "class"
+
+The result from the command-above is a set of files, one per condition class where the top *n* edges per class are kept. An edge may be signficant for multiple labels within the class but not for any other class.
+
+Step 9: Visualization
+`````````````````````
+You can visualize the network using 2D layout tools such as `Cytocape<https://cytoscape.org/>`_, which is a feature rich 2D viauliation software packge.  However, KINC includes a Python v3 Dash-based application that can be used for 3D visualization of the network.  You must have the following Python v3 libraries installed prior to using this viewer:
+
+ - argparse
+ - numpy
+ - pandas
+ - igraph
+ - plotly
+ - seaborn
+ - fa2 (ForceAtlas2)
+ - dash
+ - progress.bar
+
+The following is an example for launching the viewer:
+
+.. code:: bash
+
+  python /local/projects/KINC/scripts/view3D-KINC-tidy.py \
+    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered-th_ranked.Treatment-unique_class.csGCN.txt" \
+    --emx 'rice_heat_drought.GEM.FPKM.filtered.txt' \
+    --amx "PRJNA301554.hydroponic.sample_annotations.filtered.txt"
+
+The first time the viewer is launched it will take a few moments to generate 2D and 3D layouts for the network.  This will result in a set of new layout files created in the same folder as the network. These will only generated once and will be re-used if the script is re-run.  After creation of the layouts, a URL will be provided on the screen which should then be opened in a web browser.  Output similar to the following should be seen in the terminal:
+
+.. code::
+
+    Reading network file...
+    Reading GEM file...
+    Reading experioment annotation file...
+    Launching application...
+     * Serving Flask app "view3D-KINC-tidy" (lazy loading)
+     * Environment: production
+       WARNING: This is a development server. Do not use it in a production deployment.
+       Use a production WSGI server instead.
+     * Debug mode: off
+     * Running on http://127.0.0.1:8050/ (Press CTRL+C to quit)
+
+Finally, open the web browser to the specified URL to view the network.
+
+.. image:: ./images/KINC_3D_viewer.png

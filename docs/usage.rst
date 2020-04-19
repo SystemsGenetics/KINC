@@ -3,29 +3,39 @@ Usage
 
 What KINC program to use?
 -------------------------
-KINC is meant to be used either on a stand-alone workstation or on a heterogenous cluster of computers.  The graphical program, ``qkinc`` and the command-line tool ``kinc`` are meant to be used in different circumstances. The following table indicates when one should be used over the other.
+KINC is meant to be used either on a stand-alone workstation or on a heterogenous cluster of computers.  The graphical program, ``qkinc``, the command-line tool ``kinc`` and scripts are meant to be used in different circumstances. The following table indicates when one should be used over the other.
 
-+-------------------------------------------+-----------------------+---------------------+
-| Task                                      | Program               | Resource            |
-+===========================================+=======================+=====================+
-| Viewing binary files created              | ``qkinc``             | Stand-alone machine |
-| by KINC (emx, cmx, ccm or csm files)      |                       |                     |
-+-------------------------------------------+-----------------------+---------------------+
-| Importing GEM                             | ``qkinc`` or ``kinc`` | Stand-alone or HPC  |
-+-------------------------------------------+-----------------------+---------------------+
-| Traditional network construction          | ``qkinc`` or ``kinc`` | Stand-alone or HPC  |
-+-------------------------------------------+-----------------------+---------------------+
-| GMM-based network construction for a      | ``qkinc`` or ``kinc`` | Stand-alone or HPC. |
-| small GEM (<60 samples, <20K genes)       |                       | GPU recommended     |
-+-------------------------------------------+-----------------------+---------------------+
-| GMM-based network construction for a      | ``kinc``              | HPC only.           |
-| large GEM                                 |                       | GPU required.       |
-+-------------------------------------------+-----------------------+---------------------+
-| RMT, Power-law or Condition p-value       | ``qkinc`` or ``kinc`` | Stand-alone or HPC  |
-| Thresholding                              |                       |                     |
-+-------------------------------------------+-----------------------+---------------------+
-| Network extraction                        | ``qkinc`` or ``kinc`` | Stand-alone or HPC  |
-+-------------------------------------------+-----------------------+---------------------+
++-------------------------------------------+------------------------------+---------------------+
+| Task                                      | Program or Script            | Resource            |
++===========================================+==============================+=====================+
+| Viewing binary files created              | ``qkinc``                    | Stand-alone machine |
+| by KINC (emx, cmx, ccm or csm files)      |                              |                     |
++-------------------------------------------+------------------------------+---------------------+
+| Importing GEM                             | ``qkinc`` or ``kinc``        | Stand-alone or HPC  |
++-------------------------------------------+------------------------------+---------------------+
+| Traditional network construction          | ``qkinc`` or ``kinc``        | Stand-alone or HPC  |
++-------------------------------------------+------------------------------+---------------------+
+| GMM-based network construction for a      | ``qkinc`` or ``kinc``        | Stand-alone or HPC. |
+| small GEM (<60 samples, <20K genes)       |                              | GPU recommended     |
++-------------------------------------------+------------------------------+---------------------+
+| GMM-based network construction for a      | ``kinc``                     | HPC only.           |
+| large GEM                                 |                              | GPU required.       |
++-------------------------------------------+------------------------------+---------------------+
+| RMT, Power-law or condition p-value       | ``qkinc`` or ``kinc``        | Stand-alone or HPC  |
+| thresholding                              |                              |                     |
++-------------------------------------------+------------------------------+---------------------+
+| Network extraction                        | ``qkinc`` or ``kinc``        | Stand-alone or HPC  |
++-------------------------------------------+------------------------------+---------------------+
+| Filter biased condition-specific          | ``filter-condition-edges.R`` | Stand-alone or HPC  |
+| networks                                  |                              |                     |
++-------------------------------------------+------------------------------+---------------------+
+| Rank-based thresholding of                | ``filter-condition-edges.R`` | Stand-alone or HPC  |
+| condition-specific networks               |                              |                     |
++-------------------------------------------+------------------------------+---------------------+
+| Generate summary plots                    | ``make-summary-plots.R``     | Stand-alone or HPC  |
++-------------------------------------------+------------------------------+---------------------+
+| 3D Visualization                          | ``view3D-KINC-tidy.py``      | Stand-alone         |
++-------------------------------------------+------------------------------+---------------------+
 
 Using the Command-Line
 ----------------------
@@ -83,9 +93,10 @@ The following will be shown for KINC v3.4.0:
   export-emx: Export Expression Matrix
   import-cmx: Import Correlation Matrix
   export-cmx: Export Correlation Matrix
-  cond-test: Conditional Test
+  export-cpm: Export Parameter Matrix
   similarity: Similarity
   corrpower: Filter: Correlation Power
+  cond-test: Threshold: Condition-Specific
   powerlaw: Threshold: Power-law
   rmt: Threshold: RMT
   extract: Extract Network
