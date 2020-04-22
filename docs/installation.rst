@@ -226,7 +226,7 @@ Obtain an interactive node with at least 8 cores. Run the command:
 
 .. code:: bash
 
-  qsub -I -l select=1:ncpus=8
+  qsub -I -l select=1:ncpus=8:ngpus=2:gpu_model=p100
 
 Once you have obtained an interactive node, run the following commands from your home directory:
 
