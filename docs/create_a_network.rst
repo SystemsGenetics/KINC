@@ -352,7 +352,7 @@ The following examle demonstrates how to remove biased edges:
 
 .. code:: bash
 
-  /local/projects/KINC/scripts/filter-condition-edges.R \
+  scripts/filter-condition-edges.R \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30.csGCN-tidy.txt" \
     --emx '../../../../01-input_data/03-rice_heat_drought/rice_heat_drought.GEM.FPKM.filtered.txt' \
     --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30"
@@ -376,7 +376,7 @@ The following is an example to generate the summary plots:
 
 .. code:: bash
 
-  /local/projects/KINC/scripts/make-summary-plots.R \
+  make-summary-plots.R \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
     --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy"
 
@@ -390,7 +390,7 @@ To peform this ranking the Rscript ``rank-condition-threshold.R`` is used. It to
 
 .. code:: bash
 
-  /local/projects/KINC/scripts/rank-condition-threshold.R \
+  rank-condition-threshold.R \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
     --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered"
 
@@ -400,7 +400,7 @@ To create individual files for each condition add the ``--save_condition_network
 
 .. code:: bash
 
-  /local/projects/KINC/scripts/rank-condition-threshold.R \
+  rank-condition-threshold.R \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
     --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered" \
     --save_condition_networks
@@ -409,7 +409,7 @@ If you are interested in exploring edges that are unique to a given category (e.
 
 .. code:: bash
 
-  /local/projects/KINC/scripts/rank-condition-threshold.R \
+  rank-condition-threshold.R \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
     --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered" \
     --save_condition_networks --unique_filter "label"
@@ -421,7 +421,7 @@ Finally, you can export the top *n* for a given condition class (e.g. Treatment)
 
 .. code:: bash
 
-  /local/projects/KINC/scripts/rank-condition-threshold.R \
+  rank-condition-threshold.R \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
     --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered" \
     --save_condition_networks --unique_filter "class"
@@ -446,7 +446,7 @@ The following is an example for launching the viewer:
 
 .. code:: bash
 
-  python /local/projects/KINC/scripts/view3D-KINC-tidy.py \
+  view3D-KINC-tidy.py \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered-th_ranked.Treatment-unique_class.csGCN.txt" \
     --emx 'rice_heat_drought.GEM.FPKM.filtered.txt' \
     --amx "PRJNA301554.hydroponic.sample_annotations.filtered.txt"
