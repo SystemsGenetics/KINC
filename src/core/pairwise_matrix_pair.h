@@ -32,11 +32,13 @@ namespace Pairwise
         virtual int clusterSize() const = 0;
         virtual bool isEmpty() const = 0;
         void write(const Index& index);
+        void seek(qint64 count, Index& start) const;
         void read(const Index& index) const;
         void reset() const { _rawIndex = 0; }
         void readNext() const;
         bool hasNext() const { return _rawIndex != _cMatrix->_clusterSize; }
-        const Index& index() const { return _index; }
+        const Index& index() const { return _index; }        
+        qint64 rawindex() const { return _rawIndex; }
         Pair& operator=(const Pair&) = default;
         Pair& operator=(Pair&&) = default;
     protected:

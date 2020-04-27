@@ -36,7 +36,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
 {
     EDEBUG_FUNC(this, block);
 
-    // crate the work and result blocks
+    // Create the work and result blocks
     const WorkBlock* workBlock {block->cast<WorkBlock>()};
     ResultBlock* resultBlock {new ResultBlock(workBlock->index(), _base->_numTests, workBlock->startpair())};
 
@@ -49,7 +49,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
     qint64 size = workBlock->size();
     Pairwise::Index index(workBlock->start());
 
-    // iterate through each pair in the matrix
+    // Iterate through each pair in the matrix.
     for ( qint64 ccmIndex = start; ccmIndex < start + size; ccmIndex++ )
     {
         // reads the first value in the ccm

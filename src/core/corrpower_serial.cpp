@@ -40,27 +40,26 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
         ELog() << tr("Executing(serial) work index %1.\n").arg(block->index());
     }
 
-    // Cast block to work block.
+    // Create the work and result blocks
     const WorkBlock* workBlock {block->cast<WorkBlock>()};
+    int wbindex = workBlock->index();
+    Pairwise::Index startIndex = workBlock->startIndex();
+    qint64 start = workBlock->start();
+    qint64 size = workBlock->size();
 
-    // Initialize result block.
-    ResultBlock* resultBlock {new ResultBlock(workBlock->index(), workBlock->start())};
+    // Create the result block
+    ResultBlock* resultBlock {new ResultBlock(wbindex, start)};
 
     // Create iterators for the CCM and CMX data objects.
     CCMatrix::Pair ccmPair = CCMatrix::Pair(_base->_ccm);
     CorrelationMatrix::Pair cmxPair = CorrelationMatrix::Pair(_base->_cmx);
 
-    // Iterate through the elements in the workblock.
-    qint64 start = workBlock->start();
-    qint64 size = workBlock->size();
+    // Get the first pair
+    ccmPair.read(startIndex);
+    cmxPair.read(startIndex);
 
-    for ( qint64 i = start; i < start + size; i++ )
+    for (int i = 0; i < size; i++)
     {
-        // Get the CMX and CCM pair data.
-        Pairwise::Index index(i);
-        cmxPair.read(index);
-        ccmPair.read(index);
-
         // Get the number of samples and clusters.
         int num_clusters = ccmPair.clusterSize();
         int num_samples = _base->_ccm->sampleSize();
@@ -135,10 +134,13 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
             pair.labels = new_labels;
             pair.keep = k_keep;
         }
-        pair.x_index = index.getX();
-        pair.y_index = index.getY();
-
+        pair.x_index = ccmPair.index().getX();
+        pair.y_index = ccmPair.index().getY();
         resultBlock->append(pair);
+
+        // Get the next pair.        
+        ccmPair.readNext();
+        cmxPair.read(ccmPair.index());
     }
 
     // We're done! Return the result block.

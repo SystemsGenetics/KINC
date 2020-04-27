@@ -1,4 +1,4 @@
-#include "pairwise_matrix_pair.h"
+﻿#include "pairwise_matrix_pair.h"
 
 
 
@@ -63,8 +63,38 @@ void Matrix::Pair::read(const Index& index) const
     }
 }
 
+void Matrix::Pair::seek(qint64 count, Pairwise::Index &start) const
+{
+    EDEBUG_FUNC(this, count, start);
 
+    qint8 cluster;
+    qint64 raw_index {0};
+    qint64 pair_index {0};
+    qint64 clusterIndex {_cMatrix->findPair(start.indent(0), 0, _cMatrix->_clusterSize - 1)};
+    if ( _cMatrix->_clusterSize > 0 && clusterIndex != -1 )
+    {
+        raw_index = clusterIndex;
+    }
+    for (qint64 i = 0; i <= count;)
+    {
+        if ( _rawIndex >= _cMatrix->_clusterSize )
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("File IO Error"));
+            e.setDetails(tr("Cannot seek beyond the size of the matrix"));
+            throw e;
+        }
 
+        _cMatrix->getPair(raw_index, &cluster);
+        if (cluster == 0) {
+            i++;
+            pair_index = raw_index;
+        }
+        raw_index++;
+    }
+    _rawIndex = pair_index;
+    readNext();
+}
 /*!
  * Read the next pair in the data object file.
  */
@@ -87,7 +117,8 @@ void Matrix::Pair::readNext() const
         {
             E_MAKE_EXCEPTION(e);
             e.setTitle(tr("File IO Error"));
-            e.setDetails(tr("Reading pair failed because first cluster is not 0."));
+            e.setDetails(tr("Reading pair failed because first cluster is not 0. Raw index at %1.")
+                         .arg(_rawIndex));
             throw e;
         }
 

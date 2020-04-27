@@ -10,14 +10,14 @@
  * @param start
  * @param size
  */
-CorrPowerFilter::WorkBlock::WorkBlock(int index, qint64 start, qint64 size):
+CorrPowerFilter::WorkBlock::WorkBlock(int index, qint64 start, qint64 size, Pairwise::Index startIndex) :
     EAbstractAnalyticBlock(index),
     _start(start),
-    _size(size)
+    _size(size),
+    _startIndex(startIndex)
 {
-    EDEBUG_FUNC(this,index,start,size);
+    EDEBUG_FUNC(this,index,startpair,size);
 }
-
 
 
 /*!

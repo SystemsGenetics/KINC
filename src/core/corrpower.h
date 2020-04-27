@@ -93,6 +93,15 @@ private:
      * The number of pairs to process in each work block.
      */
     int _workBlockSize {0};
+    /*!
+     * The total number of working blocks.
+     */
+    int _numBlocks {0};
+    /*!
+     * Holds the indexes for the first pair of each block.
+     */
+    QVector<Pairwise::Index> _blockStarts;
+
 };
 
 

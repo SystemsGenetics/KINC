@@ -17,19 +17,6 @@ using namespace std;
 
 
 /*!
- * Return the total number of pairs that must be processed for a given
- * expression matrix.
- *
- * @param cmx
- */
-qint64 CorrPowerFilter::totalPairs(const CorrelationMatrix* cmx)
-{
-    return static_cast<qint64>(cmx->geneSize()) * (cmx->geneSize() - 1) / 2;
-}
-
-
-
-/*!
  * Return the total number of blocks this analytic must process as steps
  * or blocks of work.
  */
@@ -37,18 +24,13 @@ int CorrPowerFilter::size() const
 {
     EDEBUG_FUNC(this);
 
-    qint64 total_pairs = totalPairs(_cmx);
-
-    int num_workblocks = (total_pairs + _workBlockSize - 1) / _workBlockSize;
-    return num_workblocks;
+    return _numBlocks;
 }
 
 
 
 /*!
- * Create and return a work block for this analytic with the given index. This
- * implementation creates a work block with a start index and size denoting the
- * number of pairs to process.
+ * Create and return a work block for this analytic with the given index.
  *
  * @param index
  */
@@ -62,12 +44,10 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork(int index) con
     }
 
     qint64 start {index * static_cast<qint64>(_workBlockSize)};
-    qint64 size {min(totalPairs(_cmx) - start, static_cast<qint64>(_workBlockSize))};
+    qint64 size {std::min(_ccm->size() - start, static_cast<qint64>(_workBlockSize))};
 
-    return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
+    return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size, _blockStarts[index]));
 }
-
-
 
 /*!
  * Create an empty and uninitialized result block.
@@ -112,13 +92,14 @@ void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
     // Iterate through the result block pairs.
     const ResultBlock* resultBlock {result->cast<ResultBlock>()};
 
-    for ( auto& pair : resultBlock->pairs() )
+    for ( qint32 i = 0; i < resultBlock->pairs().size(); i++ )
     {
-        if ( pair.K > 0 )
+        if ( resultBlock->pairs().at(i).K > 0 )
         {
             // Create pair objects for both output data files.
             CCMatrix::Pair ccmPair(_ccmOut);
             CorrelationMatrix::Pair cmxPair(_cmxOut);
+            CPPair pair = resultBlock->pairs().at(i);
             Pairwise::Index index(pair.x_index, pair.y_index);
 
             // Iterate through the clusters in the pair.
@@ -216,20 +197,45 @@ void CorrPowerFilter::initialize()
     }
 
     // make sure input data is valid
-    if ( !_ccm || !_cmx )
+    if ( !_ccm )
     {
         E_MAKE_EXCEPTION(e);
         e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid input data objects."));
+        e.setDetails(tr("Did not get valid CCM data argument."));
         throw e;
     }
+
+    if ( !_cmx )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get valid CMX data argument."));
+        throw e;
+    }
+
 
     // initialize work block size
     if ( _workBlockSize == 0 )
     {
         int numWorkers = max(1, mpi.size() - 1);
-
+        qint64 size = _ccm->size();
         _workBlockSize = min(32768LL, _ccm->size() / numWorkers);
+
+        int num_pairs = static_cast<qint64>(_ccm->size());
+        _numBlocks = (num_pairs + _workBlockSize - 1) / _workBlockSize;
+
+        // We need to get the pairs in the CCM/CMX that start each working block.
+        CCMatrix::Pair ccmPair = CCMatrix::Pair(_ccm);
+        Pairwise::Index index(0);
+        ccmPair.seek(0, index);
+        index = ccmPair.index();
+        _blockStarts.append(index);
+        for ( int i = 0; i < _numBlocks - 1; i++ )
+        {
+            ccmPair.seek(_workBlockSize, index);
+            index = ccmPair.index();
+            _blockStarts.append(index);
+        }
     }
 }
 
@@ -242,12 +248,19 @@ void CorrPowerFilter::initializeOutputs()
 {
     EDEBUG_FUNC(this);
 
-    // make sure output data is valid
-    if ( !_ccmOut || !_cmxOut )
+    if ( !_ccmOut )
     {
         E_MAKE_EXCEPTION(e);
         e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid output data objects."));
+        e.setDetails(tr("Did not get valid CCM output file argument."));
+        throw e;
+    }
+
+    if ( !_cmxOut )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get valid CMX output file argument."));
         throw e;
     }
 
