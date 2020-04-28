@@ -28,8 +28,7 @@ CorrPowerFilter::WorkBlock::WorkBlock(int index, qint64 start, qint64 size, Pair
 void CorrPowerFilter::WorkBlock::write(QDataStream& stream) const
 {
     EDEBUG_FUNC(this,&stream);
-
-    stream << _start << _size;
+    stream << _start << _size << _startIndex.getX() << _startIndex.getY();
 }
 
 
@@ -42,6 +41,7 @@ void CorrPowerFilter::WorkBlock::write(QDataStream& stream) const
 void CorrPowerFilter::WorkBlock::read(QDataStream& stream)
 {
     EDEBUG_FUNC(this,&stream);
-
-    stream >> _start >> _size;
+    qint32 x,y;
+    stream >> _start >> _size >> x >> y;
+    _startIndex = Pairwise::Index(x,y);
 }
