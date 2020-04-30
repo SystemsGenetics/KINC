@@ -73,13 +73,16 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
     const WorkBlock* workBlock {block->cast<const WorkBlock>()};
 
     // initialize result block
-    ResultBlock* resultBlock {new ResultBlock(workBlock->index(), workBlock->start())};
+    ResultBlock* resultBlock {new ResultBlock(workBlock->index())};
 
     // iterate through all pairs
-    Pairwise::Index index {workBlock->start()};
+    Pairwise::Index baseIndex {workBlock->start()};
 
     for ( int i = 0; i < workBlock->size(); i += _base->_globalWorkSize )
     {
+        // initialize local index
+        Pairwise::Index index {baseIndex};
+
         // write input buffers to device
         int numPairs {static_cast<int>(min(static_cast<qint64>(_base->_globalWorkSize), workBlock->size() - i))};
 
@@ -139,30 +142,50 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::OpenCL::Worker::execute(cons
         _queue->wait();
 
         // save results
+        index = baseIndex;
+
         for ( int j = 0; j < numPairs; ++j )
         {
-            // get pointers to the cluster labels and correlations for this pair
+            // extract output data for this pair
+            qint8 K = _buffers.out_K.at(j);
             const qint8 *labels = &_buffers.out_labels.at(j * _base->_input->sampleSize());
             const float *correlations = &_buffers.out_correlations.at(j * _base->_maxClusters);
 
-            Pair pair;
+            // determine whether the pair contains any valid correlations
+            bool valid = false;
 
-            // save the number of clusters
-            pair.K = _buffers.out_K.at(j);
-
-            // save the cluster labels and correlations (if the pair was able to be processed)
-            if ( pair.K > 0 )
+            for ( qint8 k = 0; k < K; ++k )
             {
-                pair.labels = ResultBlock::makeVector(labels, _base->_input->sampleSize());
-                pair.correlations = ResultBlock::makeVector(correlations, _base->_maxClusters);
+                // determine whether correlation is within thresholds
+                float r = correlations[k];
+
+                if ( !isnan(r) && _base->_minCorrelation <= abs(r) && abs(r) <= _base->_maxCorrelation )
+                {
+                    valid = true;
+                    break;
+                }
             }
 
-            resultBlock->append(pair);
+            // save pair if it has any valid correlations
+            if ( valid )
+            {
+                resultBlock->append(Pair {
+                    index,
+                    ResultBlock::makeVector(labels, _base->_input->sampleSize()),
+                    ResultBlock::makeVector(correlations, K)
+                });
+            }
+
+            // increment to next pair
+            ++index;
         }
 
         _buffers.out_K.unmap(_queue);
         _buffers.out_labels.unmap(_queue);
         _buffers.out_correlations.unmap(_queue);
+
+        // update base index
+        baseIndex = index;
     }
 
     // return result block

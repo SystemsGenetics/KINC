@@ -35,9 +35,9 @@ public:
     struct Pair
     {
         /*!
-         * The number of clusters in a pair.
+         * The pairwise index of the pair.
          */
-        qint8 K;
+        Pairwise::Index index;
         /*!
          * The cluster labels for a pair.
          */

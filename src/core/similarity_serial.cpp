@@ -72,7 +72,7 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::Serial::execute(const EAbstr
     const WorkBlock* workBlock {block->cast<WorkBlock>()};
 
     // initialize result block
-    ResultBlock* resultBlock {new ResultBlock(workBlock->index(), workBlock->start())};
+    ResultBlock* resultBlock {new ResultBlock(workBlock->index())};
 
     // initialize workspace
     QVector<qint8> labels(_base->_input->sampleSize());
@@ -123,17 +123,30 @@ std::unique_ptr<EAbstractAnalyticBlock> Similarity::Serial::execute(const EAbstr
             _base->_minSamples
         );
 
-        // save pairwise output data
-        Pair pair;
-        pair.K = K;
+        // determine whether the pair contains any valid correlations
+        bool valid = false;
 
-        if ( K > 0 )
+        for ( qint8 k = 0; k < K; ++k )
         {
-            pair.labels = labels;
-            pair.correlations = correlations;
+            // determine whether correlation is within thresholds
+            float r = correlations[k];
+
+            if ( !isnan(r) && _base->_minCorrelation <= abs(r) && abs(r) <= _base->_maxCorrelation )
+            {
+                valid = true;
+                break;
+            }
         }
 
-        resultBlock->append(pair);
+        // save pair if it has any valid correlations
+        if ( valid )
+        {
+            resultBlock->append(Pair {
+                index,
+                labels,
+                correlations
+            });
+        }
 
         // increment to next pair
         ++index;

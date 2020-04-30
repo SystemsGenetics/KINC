@@ -142,23 +142,22 @@ void Similarity::process(const EAbstractAnalyticBlock* result)
         ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
     }
 
+    // initialize result block
     const ResultBlock* resultBlock {result->cast<ResultBlock>()};
 
     // iterate through all pairs in result block
-    Pairwise::Index index {resultBlock->start()};
-
     for ( auto& pair : resultBlock->pairs() )
     {
         // save correlations that are within thresholds
         CCMatrix::Pair ccmPair(_ccm);
         CorrelationMatrix::Pair cmxPair(_cmx);
 
-        for ( qint8 k = 0; k < pair.K; ++k )
+        for ( qint8 k = 0; k < pair.correlations.size(); ++k )
         {
             // determine whether correlation is within thresholds
-            float corr = pair.correlations[k];
+            float r = pair.correlations[k];
 
-            if ( !isnan(corr) && _minCorrelation <= abs(corr) && abs(corr) <= _maxCorrelation )
+            if ( !isnan(r) && _minCorrelation <= abs(r) && abs(r) <= _maxCorrelation )
             {
                 // save sample string
                 ccmPair.addCluster();
@@ -173,21 +172,15 @@ void Similarity::process(const EAbstractAnalyticBlock* result)
 
                 // save correlation
                 cmxPair.addCluster();
-                cmxPair.at(cmxPair.clusterSize() - 1) = corr;
+                cmxPair.at(cmxPair.clusterSize() - 1) = r;
             }
         }
 
         if ( ccmPair.clusterSize() > 0 )
         {
-            ccmPair.write(index);
+            ccmPair.write(pair.index);
+            cmxPair.write(pair.index);
         }
-
-        if ( cmxPair.clusterSize() > 0 )
-        {
-            cmxPair.write(index);
-        }
-
-        ++index;
     }
 }
 

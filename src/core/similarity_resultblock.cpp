@@ -3,16 +3,14 @@
 
 
 /*!
- * Construct a new block with the given index and starting pairwise index.
+ * Construct a new block with the given index.
  *
  * @param index
- * @param start
  */
-Similarity::ResultBlock::ResultBlock(int index, qint64 start):
-    EAbstractAnalyticBlock(index),
-    _start(start)
+Similarity::ResultBlock::ResultBlock(int index):
+    EAbstractAnalyticBlock(index)
 {
-    EDEBUG_FUNC(this,index,start);
+    EDEBUG_FUNC(this,index);
 }
 
 
@@ -40,12 +38,12 @@ void Similarity::ResultBlock::write(QDataStream& stream) const
 {
     EDEBUG_FUNC(this,&stream);
 
-    stream << _start;
     stream << _pairs.size();
 
     for ( auto& pair : _pairs )
     {
-        stream << pair.K;
+        stream << pair.index.getX();
+        stream << pair.index.getY();
         stream << pair.labels;
         stream << pair.correlations;
     }
@@ -62,8 +60,6 @@ void Similarity::ResultBlock::read(QDataStream& stream)
 {
     EDEBUG_FUNC(this,&stream);
 
-    stream >> _start;
-
     int size;
     stream >> size;
 
@@ -71,7 +67,12 @@ void Similarity::ResultBlock::read(QDataStream& stream)
 
     for ( auto& pair : _pairs )
     {
-        stream >> pair.K;
+        qint32 x, y;
+        stream >> x;
+        stream >> y;
+
+        pair.index = Pairwise::Index(x, y);
+
         stream >> pair.labels;
         stream >> pair.correlations;
     }
