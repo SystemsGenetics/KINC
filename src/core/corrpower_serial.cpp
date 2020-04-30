@@ -44,38 +44,44 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
     const WorkBlock* workBlock {block->cast<WorkBlock>()};
 
     // Initialize result block.
-    ResultBlock* resultBlock {new ResultBlock(workBlock->index(), workBlock->start())};
+    ResultBlock* resultBlock {new ResultBlock(workBlock->index())};
 
     // Create iterators for the CCM and CMX data objects.
     CCMatrix::Pair ccmPair = CCMatrix::Pair(_base->_ccm);
     CorrelationMatrix::Pair cmxPair = CorrelationMatrix::Pair(_base->_cmx);
 
     // Iterate through the elements in the workblock.
-    qint64 start = workBlock->start();
-    qint64 size = workBlock->size();
+    Pairwise::Index index(workBlock->start());
 
-    for ( qint64 i = start; i < start + size; i++ )
+    for ( qint64 rawIndex = 0; rawIndex < workBlock->size(); ++rawIndex, ++index )
     {
         // Get the CMX and CCM pair data.
-        Pairwise::Index index(i);
-        cmxPair.read(index);
-        ccmPair.read(index);
+        if ( rawIndex == 0 )
+        {
+            ccmPair.read(index);
+            cmxPair.read(index);
+        }
+        else
+        {
+            ccmPair.readNext();
+            cmxPair.readNext();
+        }
+
+        // Print warning if pairwise indices do not match
+        if ( ccmPair.index() != cmxPair.index() )
+        {
+            qInfo() << "warning: ccm and cmx files are out of sync";
+        }
 
         // Get the number of samples and clusters.
         int num_clusters = ccmPair.clusterSize();
         int num_samples = _base->_ccm->sampleSize();
-
-        // This will store how many clusters will remain.
-        qint8 num_final_K = 0;
 
         // Initialize new correlation and labels lists
         QVector<float> new_correlations;
         QVector<qint8> new_labels;
         QVector<int> k_num_samples(num_clusters, 0);
         QVector<int> k_keep;
-
-        // Get the list of correlations
-        QVector<float> correlations = cmxPair.correlations();
 
         // Rebuild the pair labels from the pair sample mask. These
         // pair labels are the same as when the similarity analytic makes them.
@@ -106,9 +112,11 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
         // Iterate through the clusters and perform a correlation power analysis.
         for ( qint8 k = 0; k < num_clusters; k++ )
         {
+            float r = cmxPair.correlations().at(k);
+
             // Perform the power analysis test.
             double power = pwr_r_test(
-                abs(static_cast<double>(correlations[k])),
+                abs(r),
                 k_num_samples[k],
                 _base->_powerThresholdAlpha);
 
@@ -118,27 +126,22 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
             // for the correlation and labels.
             if ( power >= _base->_powerThresholdPower )
             {
-                new_correlations.append(correlations[k]);
+                new_correlations.append(r);
                 k_keep.append(k);
                 new_labels = labels;
-                num_final_K++;
             }
         }
 
-        // Prepare the workblock results by adding a new pair. A pair
-        // gets added regardless if there are any clusters in it.
-        CPPair pair;
-        pair.K = num_final_K;
-        if ( num_final_K > 0 )
+        // append pair to result block
+        if ( new_correlations.size() > 0 )
         {
-            pair.correlations = new_correlations;
-            pair.labels = new_labels;
-            pair.keep = k_keep;
+            resultBlock->append(Pair {
+                index,
+                new_labels,
+                new_correlations,
+                k_keep
+            });
         }
-        pair.x_index = index.getX();
-        pair.y_index = index.getY();
-
-        resultBlock->append(pair);
     }
 
     // We're done! Return the result block.

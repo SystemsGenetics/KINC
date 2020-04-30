@@ -63,7 +63,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
         }
 
         // print warning if pairwise indices do not match
-        if ( !(ccmPair.index() == cmxPair.index()) )
+        if ( ccmPair.index() != cmxPair.index() )
         {
             qInfo() << "warning: ccm and cmx files are out of sync";
         }
@@ -458,15 +458,12 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
     double chisq;
     gsl_matrix *X, *cov;
     gsl_vector *Y, *C;
-    double pValue = 0.0;
-    double R2 = 0.0;
-    double R2adj = 0.0;
 
     // Before allocating memory for the linear regression let's remove any
     // values in the expression matrix that have missing values. This will
     // tell us the full size we need to reserve.
     int test_cluster_size = 0;
-    for ( int i = 0, j = 0; i < _base->_emx->sampleSize(); i++ )
+    for ( int i = 0; i < _base->_emx->sampleSize(); i++ )
     {
         // If the sample label matches with the given label.
         if ( ccmPair.at(clusterIndex, i) == 1 )
@@ -556,12 +553,12 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
     double MSE = SSE/DFE;
 
     // Calculate R^2 and R^2-adjusted
-    R2 = 1 - (SSE / SST);
-    R2adj = 1.0 - ((double) test_cluster_size - 1) / DFE * (1 - R2);
+    double R2 = 1 - (SSE / SST);
+    double R2adj = 1.0 - ((double) test_cluster_size - 1) / DFE * (1 - R2);
 
     // Calculate the p-value. We will do this using the F-test.
     double Fstat = MSM/MSE;
-    pValue = 1 - gsl_cdf_fdist_P(Fstat, DFM, DFE);
+    double pValue = 1 - gsl_cdf_fdist_P(Fstat, DFM, DFE);
 
 
     // TODO: we should check the assumptions of the linear regression and

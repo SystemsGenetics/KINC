@@ -3,16 +3,14 @@
 
 
 /*!
- * Construct a new block with the given index and starting pairwise index.
+ * Construct a new block with the given index.
  *
  * @param index
- * @param start
  */
-CorrPowerFilter::ResultBlock::ResultBlock(int index, qint64 start):
-    EAbstractAnalyticBlock(index),
-    _start(start)
+CorrPowerFilter::ResultBlock::ResultBlock(int index):
+    EAbstractAnalyticBlock(index)
 {
-    EDEBUG_FUNC(this,index,start);
+    EDEBUG_FUNC(this,index);
 }
 
 
@@ -22,7 +20,7 @@ CorrPowerFilter::ResultBlock::ResultBlock(int index, qint64 start):
  *
  * @param pair
  */
-void CorrPowerFilter::ResultBlock::append(const CPPair& pair)
+void CorrPowerFilter::ResultBlock::append(const Pair& pair)
 {
     EDEBUG_FUNC(this,&pair);
 
@@ -40,16 +38,14 @@ void CorrPowerFilter::ResultBlock::write(QDataStream& stream) const
 {
     EDEBUG_FUNC(this,&stream);
 
-    stream << _start;
     stream << _pairs.size();
 
     for ( auto& pair : _pairs )
     {
-        stream << pair.K;
+        stream << pair.index.getX();
+        stream << pair.index.getY();
         stream << pair.labels;
         stream << pair.correlations;
-        stream << pair.x_index;
-        stream << pair.y_index;
         stream << pair.keep;
     }
 }
@@ -65,8 +61,6 @@ void CorrPowerFilter::ResultBlock::read(QDataStream& stream)
 {
     EDEBUG_FUNC(this,&stream);
 
-    stream >> _start;
-
     int size;
     stream >> size;
 
@@ -74,11 +68,14 @@ void CorrPowerFilter::ResultBlock::read(QDataStream& stream)
 
     for ( auto& pair : _pairs )
     {
-        stream >> pair.K;
+        qint32 x, y;
+        stream >> x;
+        stream >> y;
+
+        pair.index = Pairwise::Index(x, y);
+
         stream >> pair.labels;
         stream >> pair.correlations;
-        stream >> pair.x_index;
-        stream >> pair.y_index;
         stream >> pair.keep;
     }
 }

@@ -17,19 +17,6 @@ using namespace std;
 
 
 /*!
- * Return the total number of pairs that must be processed for a given
- * expression matrix.
- *
- * @param cmx
- */
-qint64 CorrPowerFilter::totalPairs(const CorrelationMatrix* cmx)
-{
-    return static_cast<qint64>(cmx->geneSize()) * (cmx->geneSize() - 1) / 2;
-}
-
-
-
-/*!
  * Return the total number of blocks this analytic must process as steps
  * or blocks of work.
  */
@@ -37,10 +24,7 @@ int CorrPowerFilter::size() const
 {
     EDEBUG_FUNC(this);
 
-    qint64 total_pairs = totalPairs(_cmx);
-
-    int num_workblocks = (total_pairs + _workBlockSize - 1) / _workBlockSize;
-    return num_workblocks;
+    return (static_cast<qint64>(_ccm->size()) + _workBlockSize - 1) / _workBlockSize;
 }
 
 
@@ -62,7 +46,7 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork(int index) con
     }
 
     qint64 start {index * static_cast<qint64>(_workBlockSize)};
-    qint64 size {min(totalPairs(_cmx) - start, static_cast<qint64>(_workBlockSize))};
+    qint64 size {min(_cmx->size() - start, static_cast<qint64>(_workBlockSize))};
 
     return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
 }
@@ -114,60 +98,64 @@ void CorrPowerFilter::process(const EAbstractAnalyticBlock* result)
 
     for ( auto& pair : resultBlock->pairs() )
     {
-        if ( pair.K > 0 )
+        // Create pair objects for both output data files.
+        CCMatrix::Pair ccmPair(_ccmOut);
+        CorrelationMatrix::Pair cmxPair(_cmxOut);
+
+        // Iterate through the clusters in the pair.
+        for ( qint8 k = 0; k < pair.correlations.size(); ++k )
         {
-            // Create pair objects for both output data files.
-            CCMatrix::Pair ccmPair(_ccmOut);
-            CorrelationMatrix::Pair cmxPair(_cmxOut);
-            Pairwise::Index index(pair.x_index, pair.y_index);
+            // The pair.K indicates how many clusters remain in the pair
+            // but the pair.labels are still the same as alwasy, and
+            // we only want to create the sample string for kept clusters.
+            // the pair.keep array lists the clusters that are kept.
+            int ki = pair.keep[k];
 
-            // Iterate through the clusters in the pair.
-            for ( qint8 k = 0; k < pair.K; ++k )
+            // determine whether correlation is within thresholds
+            float corr = pair.correlations[k];
+
+            // save sample string
+            ccmPair.addCluster();
+
+            // add each cluster sample string to the pair.
+            for ( int i = 0; i < _ccm->sampleSize(); ++i )
             {
-                // The pair.K indicates how many clusters remain in the pair
-                // but the pair.labels are still the same as alwasy, and
-                // we only want to create the sample string for kept clusters.
-                // the pair.keep array lists the clusters that are kept.
-                int ki = pair.keep[k];
+                qint8 val = pair.labels[i];
 
-                // determine whether correlation is within thresholds
-                float corr = pair.correlations[k];
-
-                // save sample string
-                ccmPair.addCluster();
-
-                // add each cluster sample string to the pair.
-                for ( int i = 0; i < _ccm->sampleSize(); ++i )
+                if ( ki == val )
                 {
-                    qint8 val = pair.labels[i];
-                    if ( ki == val )
-                    {
-                        val = 1;
-                    }
-                    // A value of -128 exists if the sample belong to
-                    // another cluster but that cluster is not present
-                    // in the input files.
-                    else if ( val == -128 )
-                    {
-                        val = 0;
-                    }
-                    else if ( val > 0 )
-                    {
-                        val = 0;
-                    }
-                    else
-                    {
-                        val = -val;
-                    }
-                    ccmPair.at(k, i) = val;
+                    val = 1;
                 }
 
-                // save correlation
-                cmxPair.addCluster();
-                cmxPair.at(k) = corr;
+                // A value of -128 exists if the sample belong to
+                // another cluster but that cluster is not present
+                // in the input files.
+                else if ( val == -128 )
+                {
+                    val = 0;
+                }
+                else if ( val > 0 )
+                {
+                    val = 0;
+                }
+                else
+                {
+                    val = -val;
+                }
+
+                ccmPair.at(k, i) = val;
             }
-            ccmPair.write(index);
-            cmxPair.write(index);
+
+            // save correlation
+            cmxPair.addCluster();
+            cmxPair.at(k) = corr;
+        }
+
+        // write pairwise data to output files
+        if ( ccmPair.clusterSize() > 0 )
+        {
+            ccmPair.write(pair.index);
+            cmxPair.write(pair.index);
         }
     }
 }

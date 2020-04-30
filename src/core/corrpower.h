@@ -24,12 +24,12 @@ public:
     /*!
      * Defines the pair structure used to send results in result blocks.
      */
-    struct CPPair
+    struct Pair
     {
         /*!
-         * The number of clusters in a pair.
+         * The pairwise index of the pair.
          */
-        qint8 K;
+        Pairwise::Index index;
         /*!
          * The cluster labels for a pair.
          */
@@ -39,11 +39,6 @@ public:
          */
         QVector<float> correlations;
         /*!
-         * The x/y coordinates in the CCM/CMX matrices that this pair belongs to.
-         */
-        qint32 x_index;
-        qint32 y_index;
-        /*!
          * The cluster indexes to keep.
          */
         QVector<int> keep;
@@ -52,8 +47,6 @@ public:
     class WorkBlock;
     class ResultBlock;
     class Serial;
-public:
-    static qint64 totalPairs(const CorrelationMatrix* cmx);
 public:
     virtual int size() const override final;
     virtual std::unique_ptr<EAbstractAnalyticBlock> makeWork(int index) const override final;

@@ -32,15 +32,15 @@ namespace Pairwise
         void operator++();
         bool operator==(const Index& object) const
             { return _x == object._x && _y == object._y; }
-        bool operator!=(const Index& object)
+        bool operator!=(const Index& object) const
             { return !(*this == object); }
-        bool operator<(const Index& object)
+        bool operator<(const Index& object) const
             { return _x < object._x || (_x == object._x && _y < object._y); }
-        bool operator<=(const Index& object)
+        bool operator<=(const Index& object) const
             { return *this < object || *this == object; }
-        bool operator>(const Index& object)
+        bool operator>(const Index& object) const
             { return !(*this <= object); }
-        bool operator>=(const Index& object)
+        bool operator>=(const Index& object) const
             { return !(*this < object); }
         /*!
          * The maximum number of clusters used to compute the indent value
