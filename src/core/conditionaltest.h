@@ -26,21 +26,21 @@ public:
         NONE
     };
 
-    struct CSMPair
+    struct Pair
     {
+        /*!
+         * The pairwise index of the pair.
+         */
+        Pairwise::Index index;
         /*!
          * The p values for each cluster in a pair.
          */
         QVector<QVector<double>> pValues;
-        QVector<QVector<double>> r2;
         /*!
-         * The x/y coordinates in the CCM/CMX matrices that this pair belongs to.
+         * The r^2 values for each cluster in a pair.
          */
-        qint32 x_index;
-        qint32 y_index;
+        QVector<QVector<double>> r2;
     };
-
-    static qint64 totalPairs(const CorrelationMatrix* cmx);
 
     virtual int size() const override final;
     virtual void process(const EAbstractAnalyticBlock* result) override final;
@@ -128,10 +128,6 @@ private:
     qint32 _sampleSize {0};
     QString _delimiter = "tab";
     QString _missing = "NA";
-    /*!
-     * Current pairwise pair index
-     */
-    Pairwise::Index _index {0};
     /*!
      * Cluster information
      */

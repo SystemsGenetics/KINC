@@ -13,24 +13,11 @@ ConditionalTest::ResultBlock::ResultBlock(int index) : EAbstractAnalyticBlock(in
 
 
 /*!
- * Create a result block object.
- */
-ConditionalTest::ResultBlock::ResultBlock(int index, int numTests, qint64 start) :
-    EAbstractAnalyticBlock(index),
-    _numTests(numTests),
-    _start(start)
-{
-    EDEBUG_FUNC(this,index,numTests,start);
-}
-
-
-
-/*!
  * Append a pair to the result block's list of pairs.
  *
  * @param pair
  */
-void ConditionalTest::ResultBlock::append(const CSMPair& pair)
+void ConditionalTest::ResultBlock::append(const Pair& pair)
 {
     EDEBUG_FUNC(this,&pair);
 
@@ -46,14 +33,26 @@ void ConditionalTest::ResultBlock::write(QDataStream& stream) const
 {
     EDEBUG_FUNC(this,&stream);
 
-    for ( auto cell : _pairs )
-    {
-        stream << cell.pValues.size();
+    stream << _pairs.size();
 
-        for ( int i = 0; i < cell.pValues.size(); i++ )
+    for ( auto& pair : _pairs )
+    {
+        // write pairwise index
+        stream << pair.index.getX();
+        stream << pair.index.getY();
+
+        // write p values and r^2 values
+        stream << pair.pValues.size();
+
+        for ( int k = 0; k < pair.pValues.size(); k++ )
         {
-            stream << cell.pValues.at(i);
-            stream << cell.r2.at(i);
+            stream << pair.pValues.at(k).size();
+
+            for ( int i = 0; i < pair.pValues.at(k).size(); i++ )
+            {
+                stream << pair.pValues.at(k).at(i);
+                stream << pair.r2.at(k).at(i);
+            }
         }
     }
 }
@@ -67,16 +66,38 @@ void ConditionalTest::ResultBlock::read(QDataStream& stream)
 {
     EDEBUG_FUNC(this,&stream);
 
-    int size = 0;
+    int size;
+    stream >> size;
 
-    for ( int i = 0; i < _pairs.size(); i++ )
+    _pairs.resize(size);
+
+    for ( auto& pair : _pairs )
     {
+        // read pairwise index
+        qint32 x, y;
+        stream >> x;
+        stream >> y;
+
+        pair.index = Pairwise::Index(x, y);
+
+        // read p values and r^2 values
         stream >> size;
 
-        for ( int j = 0; j < size; j++ )
+        pair.pValues.resize(size);
+        pair.r2.resize(size);
+
+        for ( int k = 0; k < pair.pValues.size(); k++ )
         {
-            stream << _pairs[i].pValues[j];
-            stream << _pairs[i].r2[j];
+            stream >> size;
+
+            pair.pValues[k].resize(size);
+            pair.r2[k].resize(size);
+
+            for ( int i = 0; i < pair.pValues.at(k).size(); i++ )
+            {
+                stream >> pair.pValues[k][i];
+                stream >> pair.r2[k][i];
+            }
         }
     }
 }

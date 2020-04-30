@@ -26,21 +26,6 @@ int ConditionalTest::size() const
 
 
 /*!
- * Return the total number of pairs that must be processed for a given
- * expression matrix.
- *
- * @param cmx The cluster matrix for the data.
- *
- * @return The total number of pair to process.
- */
-qint64 ConditionalTest::totalPairs(const CorrelationMatrix* cmx)
-{
-    return static_cast<qint64>(cmx->geneSize()) * (cmx->geneSize() - 1) / 2;
-}
-
-
-
-/*!
  * An interface that processes result blocks once the serial is done working on
  * them.
  *
@@ -55,37 +40,32 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
         ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
     }
 
-    if ( result->index() == 0 )
-    {
-        _out->setTestCount(_numTests);
-    }
-
     // Iterate through the result block pairs.
     const ResultBlock* resultBlock {result->cast<ResultBlock>()};
 
-    for ( qint32 i = 0; i < resultBlock->pairs().size(); i++ )
+    for ( auto& pair : resultBlock->pairs() )
     {
         // copy the values form the pairs to the CSM
-        if ( resultBlock->pairs().at(i).pValues.size() > 0 )
+        if ( pair.pValues.size() > 0 )
         {
             // Create pair objects for the output data file.
-            CSMatrix::Pair CSMPair(_out);
-            Pairwise::Index index(resultBlock->pairs().at(i).x_index, resultBlock->pairs().at(i).y_index);
-            _index = index;
+            CSMatrix::Pair csmPair(_out);
 
             // Iterate through the clusters in the pair.
-            for (int j = 0; j < resultBlock->pairs().at(i).pValues.size(); ++j )
+            for ( int k = 0; k < pair.pValues.size(); ++k )
             {
                 // add each cluster into the CSM
-                CSMPair.addCluster(1, _numTests);
-                for ( int k = 0; k < resultBlock->pairs().at(i).pValues.at(j).size(); k++ )
+                csmPair.addCluster(1, _numTests);
+
+                for ( int i = 0; i < pair.pValues.at(k).size(); ++i )
                 {
-                    CSMPair.at(j, k, "pvalue") = resultBlock->pairs().at(i).pValues.at(j).at(k);
-                    CSMPair.at(j, k, "r2") = resultBlock->pairs().at(i).r2.at(j).at(k);
+                    csmPair.at(k, i, "pvalue") = pair.pValues.at(k).at(i);
+                    csmPair.at(k, i, "r2") = pair.r2.at(k).at(i);
                 }
             }
+
             // write the info into the CSM
-            CSMPair.write(index); // have an error here
+            csmPair.write(pair.index);
         }
     }
 }
@@ -125,7 +105,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork(int index) con
     qint64 start {index * static_cast<qint64>(_workBlockSize)};
     qint64 size {std::min(_ccm->size() - start, static_cast<qint64>(_workBlockSize))};
 
-    return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, _index, start, size));
+    return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
 }
 
 
@@ -221,14 +201,6 @@ void ConditionalTest::initialize()
         throw e;
     }
 
-    if (  !_out)
-    {
-        E_MAKE_EXCEPTION(e);
-        e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid output file argument."));
-        throw e;
-    }
-
     // open the stream to the coprrect file.
     _stream.setDevice(_amx);
 
@@ -287,6 +259,8 @@ void ConditionalTest::initializeOutputs()
         e.setDetails(tr("The required output data object was not set."));
         throw e;
     }
+
+    _out->setTestCount(_numTests);
 }
 
 

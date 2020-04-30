@@ -7,13 +7,12 @@
  *
  * @param index The given index to create the block at
  */
-ConditionalTest::WorkBlock::WorkBlock(int index, Pairwise::Index start, qint64 startpair, qint64 size) :
+ConditionalTest::WorkBlock::WorkBlock(int index, qint64 start, qint64 size) :
     EAbstractAnalyticBlock(index),
     _start(start),
-    _startpair(startpair),
     _size(size)
 {
-    EDEBUG_FUNC(this,index,startpair,size);
+    EDEBUG_FUNC(this,index,size);
 }
 
 
@@ -27,7 +26,7 @@ void ConditionalTest::WorkBlock::write(QDataStream& stream) const
 {
     EDEBUG_FUNC(this,&stream);
 
-    stream << _startpair << _size;
+    stream << _start << _size;
 }
 
 
@@ -41,5 +40,5 @@ void ConditionalTest::WorkBlock::read(QDataStream& stream)
 {
     EDEBUG_FUNC(this,&stream);
 
-    stream >> _startpair >> _size;
+    stream >> _start >> _size;
 }
