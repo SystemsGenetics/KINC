@@ -242,4 +242,4 @@ These scripts will install ACE and KINC into your home directory, establishing t
 .. code:: bash
 
   module add use.own
-  module add KINC
+  module add KINC/v3.4.0
