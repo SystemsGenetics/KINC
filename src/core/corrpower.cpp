@@ -204,11 +204,19 @@ void CorrPowerFilter::initialize()
     }
 
     // make sure input data is valid
-    if ( !_ccm || !_cmx )
+    if ( !_ccm )
     {
         E_MAKE_EXCEPTION(e);
         e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid input data objects."));
+        e.setDetails(tr("Did not get a valid input CCM data object."));
+        throw e;
+    }
+
+    if ( !_cmx )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get a valid input CMX data object."));
         throw e;
     }
 
@@ -231,11 +239,19 @@ void CorrPowerFilter::initializeOutputs()
     EDEBUG_FUNC(this);
 
     // make sure output data is valid
-    if ( !_ccmOut || !_cmxOut )
+    if ( !_ccmOut )
     {
         E_MAKE_EXCEPTION(e);
         e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid output data objects."));
+        e.setDetails(tr("Did not get a valid CCM output data object."));
+        throw e;
+    }
+
+    if ( !_cmxOut )
+    {
+        E_MAKE_EXCEPTION(e);
+        e.setTitle(tr("Invalid Argument"));
+        e.setDetails(tr("Did not get a valid CMX output data object."));
         throw e;
     }
 
