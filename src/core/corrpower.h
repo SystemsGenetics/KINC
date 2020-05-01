@@ -86,6 +86,10 @@ private:
      * The number of pairs to process in each work block.
      */
     int _workBlockSize {0};
+    /*!
+     * Current start index used to create work blocks.
+     */
+    mutable qint64 _workBlockStart {0};
 };
 
 

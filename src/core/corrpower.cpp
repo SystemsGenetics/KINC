@@ -12,10 +12,6 @@
 
 
 
-using namespace std;
-
-
-
 /*!
  * Return the total number of blocks this analytic must process as steps
  * or blocks of work.
@@ -45,10 +41,28 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork(int index) con
         ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
     }
 
-    qint64 start {index * static_cast<qint64>(_workBlockSize)};
-    qint64 size {min(_cmx->size() - start, static_cast<qint64>(_workBlockSize))};
+    // compute parameters for work block
+    qint64 start {_workBlockStart};
+    qint64 size {std::min(_ccm->size() - start, static_cast<qint64>(_workBlockSize))};
 
-    return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
+    // initialize pairwise iterator for ccm file
+    CCMatrix::Pair ccmPair(_ccm);
+
+    // iterate to the start index of the next work block
+    ccmPair.read(Pairwise::Index(start));
+
+    for ( qint64 i = 0; i < size; i++ )
+    {
+        ccmPair.readNext();
+    }
+
+    // save start index of next work block
+    qint64 x {ccmPair.index().getX()};
+    qint64 y {ccmPair.index().getY()};
+
+    _workBlockStart = x * (x - 1) / 2 + y;
+
+    return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
 }
 
 
@@ -60,7 +74,7 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeResult() const
 {
     EDEBUG_FUNC(this);
 
-    return unique_ptr<EAbstractAnalyticBlock>(new ResultBlock);
+    return std::unique_ptr<EAbstractAnalyticBlock>(new ResultBlock);
 }
 
 
@@ -72,7 +86,7 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork() const
 {
     EDEBUG_FUNC(this);
 
-    return unique_ptr<EAbstractAnalyticBlock>(new WorkBlock);
+    return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock);
 }
 
 
@@ -223,9 +237,9 @@ void CorrPowerFilter::initialize()
     // initialize work block size
     if ( _workBlockSize == 0 )
     {
-        int numWorkers = max(1, mpi.size() - 1);
+        int numWorkers = std::max(1, mpi.size() - 1);
 
-        _workBlockSize = min(32768LL, _ccm->size() / numWorkers);
+        _workBlockSize = std::min(32768LL, _ccm->size() / numWorkers);
     }
 }
 

@@ -40,47 +40,30 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
     const WorkBlock* workBlock {block->cast<WorkBlock>()};
     ResultBlock* resultBlock {new ResultBlock(workBlock->index())};
 
-    // Create iterators for the CCM data object.
-    CCMatrix::Pair ccmPair = CCMatrix::Pair(_base->_ccm);
-    CorrelationMatrix::Pair cmxPair = CorrelationMatrix::Pair(_base->_cmx);
+    // create iterators for the CCM and CMX data objects
+    CCMatrix::Pair ccmPair(_base->_ccm);
+    CorrelationMatrix::Pair cmxPair(_base->_cmx);
 
-    // Iterate through the pairs the workblock is assigned to.
+    // read the first pair of the work block
     Pairwise::Index index(workBlock->start());
 
-    // iterate through each pair in the matrix
-    for ( qint64 rawIndex = 0; rawIndex < workBlock->size(); ++rawIndex, ++index )
-    {
-        // reads the first value in the ccm
-        if ( rawIndex == 0 )
-        {
-            ccmPair.read(index);
-            cmxPair.read(ccmPair.index());
-        }
-        else
-        {
-            ccmPair.readNext();
-            cmxPair.readNext();
-        }
+    ccmPair.read(index);
+    cmxPair.read(index);
 
-        // print warning if pairwise indices do not match
+    // iterate through each pair in the work block
+    for ( qint64 wbIndex = 0; wbIndex < workBlock->size(); ++wbIndex )
+    {
+        // print warning if iterator indices do not match
         if ( ccmPair.index() != cmxPair.index() )
         {
             qInfo() << "warning: ccm and cmx files are out of sync";
         }
 
-        // if the first one isnt in the cluster we should not count it.
-        if ( ccmPair.clusterSize() == 0 )
-        {
-            continue;
-        }
-
-        // Initialize new pvalues, one set of pvalues for each cluster.
+        // initialize set of p values and r2 values for each cluster
         QVector<QVector<double>> pValues(ccmPair.clusterSize());
-
-        // Initialize new r2, one set of pvalues for each cluster.
         QVector<QVector<double>> r2(ccmPair.clusterSize());
 
-        // for each cluster in the pair, run the binomial and linear regression tests.
+        // for each cluster in the pair, run the binomial and linear regression tests
         for ( qint32 clusterIndex = 0; clusterIndex < ccmPair.clusterSize(); clusterIndex++ )
         {
             // resize for room for each test.
@@ -125,14 +108,19 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
             }
         }
 
+        // append pair to result block
         if ( !isEmpty(pValues) )
         {
             resultBlock->append(Pair {
-                index,
+                ccmPair.index(),
                 pValues,
                 r2
             });
         }
+
+        // read the next pair
+        ccmPair.readNext();
+        cmxPair.readNext();
     }
 
     return std::unique_ptr<EAbstractAnalyticBlock>(resultBlock);

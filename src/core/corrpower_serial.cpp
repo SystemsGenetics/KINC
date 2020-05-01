@@ -47,27 +47,19 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
     ResultBlock* resultBlock {new ResultBlock(workBlock->index())};
 
     // Create iterators for the CCM and CMX data objects.
-    CCMatrix::Pair ccmPair = CCMatrix::Pair(_base->_ccm);
-    CorrelationMatrix::Pair cmxPair = CorrelationMatrix::Pair(_base->_cmx);
+    CCMatrix::Pair ccmPair(_base->_ccm);
+    CorrelationMatrix::Pair cmxPair(_base->_cmx);
 
-    // Iterate through the elements in the workblock.
+    // Read the first pair of the work block.
     Pairwise::Index index(workBlock->start());
 
-    for ( qint64 rawIndex = 0; rawIndex < workBlock->size(); ++rawIndex, ++index )
-    {
-        // Get the CMX and CCM pair data.
-        if ( rawIndex == 0 )
-        {
-            ccmPair.read(index);
-            cmxPair.read(index);
-        }
-        else
-        {
-            ccmPair.readNext();
-            cmxPair.readNext();
-        }
+    ccmPair.read(index);
+    cmxPair.read(index);
 
-        // Print warning if pairwise indices do not match
+    // Iterate through each pair in the work block.
+    for ( qint64 wbIndex = 0; wbIndex < workBlock->size(); ++wbIndex )
+    {
+        // Print warning if iterator indices do not match
         if ( ccmPair.index() != cmxPair.index() )
         {
             qInfo() << "warning: ccm and cmx files are out of sync";
@@ -136,12 +128,16 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
         if ( new_correlations.size() > 0 )
         {
             resultBlock->append(Pair {
-                index,
+                ccmPair.index(),
                 new_labels,
                 new_correlations,
                 k_keep
             });
         }
+
+        // read the next pair
+        ccmPair.readNext();
+        cmxPair.readNext();
     }
 
     // We're done! Return the result block.

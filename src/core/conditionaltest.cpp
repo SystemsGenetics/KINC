@@ -102,9 +102,28 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork(int index) con
         ELog() << tr("Making work index %1 of %2.\n").arg(index).arg(size());
     }
 
-    qint64 start {index * static_cast<qint64>(_workBlockSize)};
+    // compute parameters for work block
+    qint64 start {_workBlockStart};
     qint64 size {std::min(_ccm->size() - start, static_cast<qint64>(_workBlockSize))};
 
+    // initialize pairwise iterator for ccm file
+    CCMatrix::Pair ccmPair(_ccm);
+
+    // iterate to the start index of the next work block
+    ccmPair.read(Pairwise::Index(start));
+
+    for ( qint64 i = 0; i < size; i++ )
+    {
+        ccmPair.readNext();
+    }
+
+    // save start index of next work block
+    qint64 x {ccmPair.index().getX()};
+    qint64 y {ccmPair.index().getY()};
+
+    _workBlockStart = x * (x - 1) / 2 + y;
+
+    // construct work block
     return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
 }
 

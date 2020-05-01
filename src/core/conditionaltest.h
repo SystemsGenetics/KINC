@@ -118,6 +118,10 @@ private:
      */
     int _workBlockSize {0};
     /*!
+     * Current start index used to create work blocks.
+     */
+    mutable qint64 _workBlockStart {0};
+    /*!
      * Annotation matrix data.
      */
     QVector<QVector<QString>> _features;
