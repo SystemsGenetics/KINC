@@ -352,11 +352,10 @@ The following examle demonstrates how to remove biased edges:
 
 .. code:: bash
 
-  scripts/filter-condition-edges.R \
+  kinc-filter-bias.R \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30.csGCN-tidy.txt" \
     --emx '../../../../01-input_data/03-rice_heat_drought/rice_heat_drought.GEM.FPKM.filtered.txt' \
     --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30"
-
 
 Here the ``--net`` argument specifies the name of the network created using the ``extract`` function of KINC. It must be in tidy format. The ``--emx`` argument specifies the original GEM provided to the ``import-emx`` function, and the ``--out_prefix`` provides a name for the filtered output file.
 
@@ -376,7 +375,7 @@ The following is an example to generate the summary plots:
 
 .. code:: bash
 
-  make-summary-plots.R \
+  kinc-make-plots.R \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
     --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy"
 
@@ -390,7 +389,7 @@ To peform this ranking the Rscript ``rank-condition-threshold.R`` is used. It to
 
 .. code:: bash
 
-  rank-condition-threshold.R \
+  kinc-filter-rank.R \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
     --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered"
 
@@ -400,7 +399,7 @@ To create individual files for each condition add the ``--save_condition_network
 
 .. code:: bash
 
-  rank-condition-threshold.R \
+  kinc-filter-rank.R \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
     --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered" \
     --save_condition_networks
@@ -409,7 +408,7 @@ If you are interested in exploring edges that are unique to a given category (e.
 
 .. code:: bash
 
-  rank-condition-threshold.R \
+  kinc-filter-rank.R \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
     --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered" \
     --save_condition_networks --unique_filter "label"
@@ -421,7 +420,7 @@ Finally, you can export the top *n* for a given condition class (e.g. Treatment)
 
 .. code:: bash
 
-  rank-condition-threshold.R \
+  kinc-filter-rank.R \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
     --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered" \
     --save_condition_networks --unique_filter "class"
@@ -446,7 +445,7 @@ The following is an example for launching the viewer:
 
 .. code:: bash
 
-  view3D-KINC-tidy.py \
+  kinc-3d-viewer.py \
     --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered-th_ranked.Treatment-unique_class.csGCN.txt" \
     --emx 'rice_heat_drought.GEM.FPKM.filtered.txt' \
     --amx "PRJNA301554.hydroponic.sample_annotations.filtered.txt"
