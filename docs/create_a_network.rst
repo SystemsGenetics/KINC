@@ -2,7 +2,13 @@ How to Create a Network
 =======================
 This section describes the two approaches for network construction as well as some general considerations.  For the examples shown below we will use an input GEM that is derived from the SRA Project with ID `PRJNA301554 <https://www.ncbi.nlm.nih.gov/bioproject/PRJNA301554/>`_. This dataset consists of 475 RNA-seq Illumina samples of rice grown under control, heat, drought, heat recovery and drought recover conditions.  It measures expression across four different genotypes of rice (from two subspecies) over a series of time points.  This dataset was selected because of its large size and multiple variables.
 
-For the purposes of this tutorial, a sample GEM file, containing 60 samples from the PRJNA301554 experiment is used. This file can be found with the KINC source code in this location: ``example/PRJNA301554.slim.GEM.log2.txt``. The instructions provided below use this GEM. The file has been limited to 60 samples rather than 475 to ensure that KINC  executes quickly on a single workstation for the purposes of this tutorial.  These 60 samples consist of 30 randomly selected heat treatment samples and 30 randomly selected control samples. The tool `GSForge<https://systemsgenetics.github.io/GSForge/>`_ was used to find the genes that are most predictive of the experimental conditions. This resulted in a small set of 1,167 genes, and these are present in the example GEM file.  The gene expression levels (in FPKMs) for these 60 samples were quantified using `GEMmaker <https://gemmaker.readthedocs.io/en/latest/>`_.
+For the purposes of this tutorial, a sample GEM file, containing 60 samples from the PRJNA301554 experiment is used. This file is named ``PRJNA301554.slim.GEM.log2.txt`` and is found in the ``example`` directory of the KINC source code.
+
+.. note::
+
+    If you cannot find the ``example`` directory for KINC on your local machine you can download the files from the `KINC Github repository<https://github.com/SystemsGenetics/KINC/tree/example_data/example>`_.
+
+The example file has been limited to 60 samples rather than 475 to ensure that KINC  executes quickly on a single workstation for the purposes of this tutorial.  These 60 samples consist of 30 randomly selected heat treatment samples and 30 randomly selected control samples. The tool `GSForge<https://systemsgenetics.github.io/GSForge/>`_ was used to find the genes that are most predictive of the experimental conditions. This resulted in a small set of 1,167 genes, and these are present in the example GEM file.  The gene expression levels (in FPKMs) for these 60 samples were quantified using `GEMmaker <https://gemmaker.readthedocs.io/en/latest/>`_.
 
 
 Before Getting Started
@@ -61,7 +67,8 @@ KINC currently provides two correlation methods:  Pearson and Spearman.  Pearson
 
 Traditional Approach
 --------------------
-You can construct a traditional network on a stand-alone workstation using either ``kinc`` or ``qkinc``.  Using the 475-sample rice dataset described above, the following steps show how to create a traditional network using the command-line. The arguments shown in the command-line examples below correspond directly to fields in the KINC GUI.
+You can construct a traditional network on a stand-alone workstation using either ``kinc`` or ``qkinc``.  Using the 60-sample example rice dataset described above, the following steps show how to create a traditional network using the command-line. The arguments shown in the command-line examples below correspond directly to fields in the KINC GUI.
+
 
 Step 1: Import the GEM
 ``````````````````````
