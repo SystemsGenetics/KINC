@@ -6,9 +6,9 @@ For the purposes of this tutorial, a sample GEM file, containing 60 samples from
 
 .. note::
 
-    If you cannot find the ``example`` directory for KINC on your local machine you can download the files from the `KINC Github repository<https://github.com/SystemsGenetics/KINC/tree/example_data/example>`_.
+    If you cannot find the ``example`` directory for KINC on your local machine you can download the files from the `KINC Github repository <https://github.com/SystemsGenetics/KINC/tree/master/example>`_.
 
-The example file has been limited to 60 samples rather than 475 to ensure that KINC  executes quickly on a single workstation for the purposes of this tutorial.  These 60 samples consist of 30 randomly selected heat treatment samples and 30 randomly selected control samples. The tool `GSForge<https://systemsgenetics.github.io/GSForge/>`_ was used to find the genes that are most predictive of the experimental conditions. This resulted in a small set of 1,167 genes, and these are present in the example GEM file.  The gene expression levels (in FPKMs) for these 60 samples were quantified using `GEMmaker <https://gemmaker.readthedocs.io/en/latest/>`_.
+The example file has been limited to 60 samples rather than 475 to ensure that KINC  executes quickly on a single workstation for the purposes of this tutorial.  These 60 samples consist of 30 randomly selected heat treatment samples and 30 randomly selected control samples. The tool `GSForge <https://systemsgenetics.github.io/GSForge/>`_ was used to find the genes that are most predictive of the experimental conditions. This resulted in a small set of 1,167 genes, and these are present in the example GEM file.  The gene expression levels (in FPKMs) for these 60 samples were quantified using `GEMmaker <https://gemmaker.readthedocs.io/en/latest/>`_.
 
 
 Before Getting Started
@@ -49,13 +49,13 @@ How Many Samples are Needed?
 
 Networks can be created with very few samples if need be, but the power of the network will diminish greatly.  For traditional networks, you can manually perform a power analysis before network construction to identify what correlation value (i.e. effect size) you must not go below in thresholding in order to limit false edges (assuming correlation assumptions are met, which they are not in the traditional approach). The ``pwr.r.test`` function of the statistical programming language R can do this, and there are `online calculators <http://www.sample-size.net/correlation-sample-size/>`_ as well.
 
-For example, the minimum number of samples required to meet the criteria of for a significance value of 0.001, a power value of 0.8 and a minimum correlation threshold of 0.5 is 60 samples. If we raise the minimum threshold to 0.7 we need at least 21 samples.  Only 11 samples are needed for a threshold limit of 0.9.  If we only had 11 samples we should not allow a correlation threshold below 0.9.
+For example, the minimum number of samples required to meet the criteria of for a significance value of 0.001, a power value of 0.8 and a minimum correlation threshold of 0.5 is 60 samples. If we raise the minimum threshold to 0.7 we need at least 21 samples.  Only 11 samples are needed for a threshold limit of 0.9.  Thus, if we only had 11 samples we should not allow a correlation threshold below 0.9.
 
 If you are using the GMM approach and you wish to find condition-specific subgraphs for a qualitative condition, such as for genes underlying response to a treatment (e.g.heat, drought, control, etc.) you must ensure that you have sufficient samples for each category.  Suppose you only had 10 samples per treatment, you would expect to find clusters of approximately size 10 for each treatment, and this would require a minimum correlation threshold of 0.9. You can remove edges whose correlation dips below the limit using the ``corrpower`` function. You can set the minimum cluster size when executing the ``similarity`` function.
 
 .. note::
 
-  The number of samples will dictate the quantity and size of the final network.  With few samples sizes there is little chance of finding weakly correlated, but perhaps meaningful edges.
+  The number of samples will dictate the quantity and size of the final network.  With few samples there is little chance of finding weakly correlated, but perhaps meaningful edges.
 
 Do Replicates Matter?
 `````````````````````
@@ -492,12 +492,13 @@ The first time the viewer is launched it will take a few moments to generate 2D 
     Reading GEM file...
     Reading experioment annotation file...
     Launching application...
-     * Serving Flask app "view3D-KINC-tidy" (lazy loading)
+     * Serving Flask app "kinc-3d-viewer" (lazy loading)
      * Environment: production
        WARNING: This is a development server. Do not use it in a production deployment.
        Use a production WSGI server instead.
      * Debug mode: off
      * Running on http://127.0.0.1:8050/ (Press CTRL+C to quit)
+
 
 Finally, open the web browser to the specified URL to view the network.
 
