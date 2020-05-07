@@ -22,10 +22,7 @@ kinc run similarity \
    --preout TRUE \
    --postout TRUE \
    --mincorr 0 \
-   --maxcorr 1 \
-   --bsize 0 \
-   --gsize 4096 \
-   --lsize 32
+   --maxcorr 1 
 
 # Step 3: Filter for clusters with low power.
 echo "Filtering edges with insufficient statistical power."
@@ -75,48 +72,30 @@ kinc-filter-bias.R \
 # Step 7: Generate summary plots
 echo "Generating summary plots using KINC.R."
 kinc-make-plots.R \
-    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30.txt" \
-    --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30"
+    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered.GCN.txt" \
+    --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered"
 
 # Step 8: Threshold the network by ranks and generate condition-specific networks
 echo "Generating condition-specific network files by class and label."
 kinc-filter-rank.R \
-    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30.txt" \
-    --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30"
+    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered.GCN.txt" \
+    --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered" \
+    --top_n 26035
 
 kinc-filter-rank.R \
-    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30.txt" \
-    --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30" \
-    --save_condition_networks
+    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered.GCN.txt" \
+    --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered" \
+    --save_condition_networks \
+    --top_n 26035
 
 kinc-filter-rank.R \
-    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30.txt" \
-    --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30" \
-    --save_condition_networks --unique_filter "label"
+    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered.GCN.txt" \
+    --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered" \
+    --save_condition_networks --unique_filter "label" \
+    --top_n 26035
 
 kinc-filter-rank.R \
-    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30.txt" \
-    --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30" \
-    --save_condition_networks --unique_filter "class"
-
-
-Step 9: Visualize the network
-```bash
-# View the entire network
-kinc-3d-viewer.py \
-    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30.txt" \
-    --emx "PRJNA301554.slim.GEM.log2.txt" \
-    --amx "PRJNA301554.slim.annotations.txt"
-
-# View unique Treatment edges (i.e. nnot covariant with Duration/Genotype/Subspecies)
-kinc-3d-viewer.py \
-    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-th_ranked.Treatment-unique_class.csGCN.txt" \
-    --emx "PRJNA301554.slim.GEM.log2.txt" \
-    --amx "PRJNA301554.slim.annotations.txt"
-
-# View unique Duration edges (i.e. not covariant with Treatment/Genotype/Subspecies)
-kinc-3d-viewer.py \
-    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-th_ranked.Duration-unique_class.csGCN.txt" \
-    --emx "PRJNA301554.slim.GEM.log2.txt" \
-    --amx "PRJNA301554.slim.annotations.txt"
-```
+    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered.GCN.txt" \
+    --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered" \
+    --save_condition_networks --unique_filter "class" \
+    --top_n 26035
