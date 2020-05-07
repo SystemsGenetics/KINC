@@ -84,25 +84,10 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                 }
                 else if ( _base->_testType.at(featureIndex) == CATEGORICAL )
                 {
-                    for ( qint32 labelIndex = 0; labelIndex < _base->_features.at(featureIndex).size(); labelIndex++ )
+                    for ( qint32 labelIndex = 1; labelIndex < _base->_features.at(featureIndex).size(); labelIndex++ )
                     {
                         prepAnxData(_base->_features.at(featureIndex).at(labelIndex), featureIndex, _base->_testType.at(featureIndex));
-
-                        // if there are sub labels to test for the feature
-                        if ( _base->_features.at(featureIndex).size() > 1 )
-                        {
-                            if ( labelIndex == 0 )
-                            {
-                                labelIndex = 1;
-                            }
-                            test(ccmPair, clusterIndex, testIndex, featureIndex, labelIndex, pValues, r2);
-                        }
-
-                        // if only the feature needs testing (no sub labels)
-                        else
-                        {
-                            test(ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues, r2);
-                        }
+                        test(ccmPair, clusterIndex, testIndex, featureIndex, labelIndex, pValues, r2);
                     }
                 }
             }
@@ -322,15 +307,6 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
     int t = _clusterSize;
     // Holds the pvalue
     double pvalue = 1;
-
-    // If n1 == k we will always get a zero because we've
-    // reached the end of the distribution, so the Ho that
-    // X > k is always 0.  This happens if the cluster is 100%
-    // comprised of the category we're looking for.
-    if ( k == n1 )
-    {
-        return 1;
-    }
 
     // If our dataset is large, the power to detect the effect
     // size increases, resulting in potentially insignificant
