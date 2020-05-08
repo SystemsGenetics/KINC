@@ -1,8 +1,15 @@
 How to Create a Network
 =======================
-This section describes the two approaches for network construction as well as some general considerations.  For the examples shown below we will assume the input GEM is derived from the SRA Project with ID `PRJNA301554 <https://www.ncbi.nlm.nih.gov/bioproject/PRJNA301554/>`_. This dataset consists of 475 RNA-seq Illumina samples of rice grown under control, heat, drought, heat recovery and drought recover conditions.  It measures expression across four different genotypes of rice (from two subspecies) over a series of time points.  This dataset was selected because of its large size and multiple variables.
+This section describes the two approaches for network construction as well as some general considerations.  For the examples shown below we will use an input GEM that is derived from the SRA Project with ID `PRJNA301554 <https://www.ncbi.nlm.nih.gov/bioproject/PRJNA301554/>`_. This dataset consists of 475 RNA-seq Illumina samples of rice grown under control, heat, drought, heat recovery and drought recover conditions.  It measures expression across four different genotypes of rice (from two subspecies) over a series of time points.  This dataset was selected because of its large size and multiple variables.
 
-We will assume that these 475 samples have been processed using `GEMmaker <https://gemmaker.readthedocs.io/en/latest/>`_ and the resulting GEM has been `log2` transformed.
+For the purposes of this tutorial, a sample GEM file, containing 60 samples from the PRJNA301554 experiment is used. This file is named ``PRJNA301554.slim.GEM.log2.txt`` and is found in the ``example`` directory of the KINC source code.
+
+.. note::
+
+    If you cannot find the ``example`` directory for KINC on your local machine you can download the files from the `KINC Github repository <https://github.com/SystemsGenetics/KINC/tree/master/example>`_.
+
+The example file has been limited to 60 samples rather than 475 to ensure that KINC  executes quickly on a single workstation for the purposes of this tutorial.  These 60 samples consist of 30 randomly selected heat treatment samples and 30 randomly selected control samples. The tool `GSForge <https://systemsgenetics.github.io/GSForge/>`_ was used to find the genes that are most predictive of the experimental conditions. This resulted in a small set of 1,167 genes, and these are present in the example GEM file.  The gene expression levels (in FPKMs) for these 60 samples were quantified using `GEMmaker <https://gemmaker.readthedocs.io/en/latest/>`_.
+
 
 Before Getting Started
 ----------------------
@@ -42,13 +49,13 @@ How Many Samples are Needed?
 
 Networks can be created with very few samples if need be, but the power of the network will diminish greatly.  For traditional networks, you can manually perform a power analysis before network construction to identify what correlation value (i.e. effect size) you must not go below in thresholding in order to limit false edges (assuming correlation assumptions are met, which they are not in the traditional approach). The ``pwr.r.test`` function of the statistical programming language R can do this, and there are `online calculators <http://www.sample-size.net/correlation-sample-size/>`_ as well.
 
-For example, the minimum number of samples required to meet the criteria of for a significance value of 0.001, a power value of 0.8 and a minimum correlation threshold of 0.5 is 60 samples. If we raise the minimum threshold to 0.7 we need at least 21 samples.  Only 11 samples are needed for a threshold limit of 0.9.  If we only had 11 samples we should not allow a correlation threshold below 0.9.
+For example, the minimum number of samples required to meet the criteria of for a significance value of 0.001, a power value of 0.8 and a minimum correlation threshold of 0.5 is 60 samples. If we raise the minimum threshold to 0.7 we need at least 21 samples.  Only 11 samples are needed for a threshold limit of 0.9.  Thus, if we only had 11 samples we should not allow a correlation threshold below 0.9.
 
 If you are using the GMM approach and you wish to find condition-specific subgraphs for a qualitative condition, such as for genes underlying response to a treatment (e.g.heat, drought, control, etc.) you must ensure that you have sufficient samples for each category.  Suppose you only had 10 samples per treatment, you would expect to find clusters of approximately size 10 for each treatment, and this would require a minimum correlation threshold of 0.9. You can remove edges whose correlation dips below the limit using the ``corrpower`` function. You can set the minimum cluster size when executing the ``similarity`` function.
 
 .. note::
 
-  The number of samples will dictate the quantity and size of the final network.  With few samples sizes there is little chance of finding weakly correlated, but perhaps meaningful edges.
+  The number of samples will dictate the quantity and size of the final network.  With few samples there is little chance of finding weakly correlated, but perhaps meaningful edges.
 
 Do Replicates Matter?
 `````````````````````
@@ -60,7 +67,8 @@ KINC currently provides two correlation methods:  Pearson and Spearman.  Pearson
 
 Traditional Approach
 --------------------
-You can construct a traditional network on a stand-alone workstation using either ``kinc`` or ``qkinc``.  Using the 475-sample rice dataset described above, the following steps show how to create a traditional network using the command-line. The arguments shown in the command-line examples below correspond directly to fields in the KINC GUI.
+You can construct a traditional network on a stand-alone workstation using either ``kinc`` or ``qkinc``.  Using the 60-sample example rice dataset described above, the following steps show how to create a traditional network using the command-line. The arguments shown in the command-line examples below correspond directly to fields in the KINC GUI.
+
 
 Step 1: Import the GEM
 ``````````````````````
@@ -68,11 +76,11 @@ The first step is to import the GEM into a binary format suitable for KINC. The 
 
 .. code:: bash
 
-  kinc run import-emx \
-    --input "rice_heat_drought.GEM.FPKM.filtered.txt" \
-    --output "rice_heat_drought.GEM.FPKM.filtered.emx" \
-    --nan "NA" \
-    --samples 0
+    kinc run import-emx \
+       --input "PRJNA301554.slim.GEM.log2.txt" \
+       --output "PRJNA301554.slim.GEM.log2.emx" \
+       --nan "NA" \
+       --samples 0
 
 In the example code above the GEM file is provided to the ``--input`` argument and the name of an output EMX file is provided using the ``--output`` argument.  In the example above, the ``--nan`` argument indicates that the file uses ``"NA"`` to represent missing values. This value should be set to whatever indicates missing values. This could be ``"0.0"``, ``"-Inf"``, etc. and the GEM file has a header describing each column so the number of samples provided to the ``--samples`` argument is set to 0. If the file did not have a header the number of samples would need to be provided.
 
@@ -82,16 +90,16 @@ Construction of a similarity matrix (or correlation matrix) is the second step. 
 
 .. code:: bash
 
-  kinc run similarity \
-    --input "rice_heat_drought.GEM.FPKM.filtered.emx" \
-    --ccm "rice_heat_drought.GEM.FPKM.filtered.traditional.ccm" \
-    --cmx "rice_heat_drought.GEM.FPKM.filtered.traditional.cmx" \
-    --clusmethod "none" \
-    --corrmethod "spearman" \
-    --minsamp 30 \
-    --minexpr -inf \
-    --mincorr 0.5 \
-    --maxcorr 1
+    kinc run similarity \
+      --input "PRJNA301554.slim.GEM.log2.emx" \
+      --ccm "PRJNA301554.slim.GEM.log2.traditional.ccm" \
+      --cmx "PRJNA301554.slim.GEM.log2.traditional.cmx" \
+      --clusmethod "none" \
+      --corrmethod "spearman" \
+      --minsamp 30 \
+      --minexpr -inf \
+      --mincorr 0.5 \
+      --maxcorr 1
 
 Here the EMX file created in the first step is provided using the ``--emx`` argument and the names of two output files are provided using the ``--cmx`` and ``--ccm`` arguments. These are the correlation matrix and clustering matrix  respectively.  Because we are using the traditional approach, the ``--clusmethod`` argument is set to ``"none"``.  The correlation method is set to use Spearman, and the minimum number of samples required to perform correlation is set to 30 using the ``--minsamp`` argument. Any gene pairs where one gene has fewer that ``--minsamp`` samples will be excluded.  This will exclude genes that have missing values in samples that causes the number of samples to dip below this level.  The ``--minsamp`` argument should be set equal to or lower than the number of samples present in the origin GEM input file and higher than an expected level of missigness (e.g. 10% missing values allowed).  The ``--minexp`` argument isset to negative infinity (``-inf``) to indicate there is no limit on the minimum expression value.  If we wanted to exclude samples whose log2 expression values dipped below 0.2, for instance, we could do so with this argument.  To keep the output files relatively small, we will exclude all correlation values below 0.5 using the ``--mincorr`` argument.  Sometimes errors occur in data collection or quantification yielding high numbers of perfectly correlated genes!  We can limit that by excluding perfectly correlated genes by lowering the ``--maxcorr`` argument. In practice we leave this as 1 for the first time we create the network, if we fail to find a proper threshold in a later step then one cause may be large numbers of perfectly correlated genes.
 
@@ -112,19 +120,19 @@ The following command-line provides an example for RMT thresholding of the examp
 
 .. code:: bash
 
-  kinc run rmt \
-    --input "rice_heat_drought.GEM.FPKM.filtered.traditional.cmx" \
-    --log "rice_heat_drought.GEM.FPKM.filtered.traditional.rmt.log" \
-    --tstart 0.99 \
-    --tstep 0.001 \
-    --tstop 0.5 \
-    --threads 1 \
-    --epsilon 1e-6 \
-    --mineigens 50 \
-    --spline TRUE \
-    --minpace 10 \
-    --maxpace 40 \
-    --bins 60
+    kinc run rmt \
+      --input "PRJNA301554.slim.GEM.log2.traditional.cmx" \
+      --log "PRJNA301554.slim.GEM.log2.traditional.rmt.log" \
+      --tstart "0.95" \
+      --tstep "0.001" \
+      --tstop "0.5" \
+      --threads 1 \
+      --epsilon 1e-6 \
+      --mineigens 50 \
+      --spline true \
+      --minpace 10 \
+      --maxpace 40 \
+      --bins 60
 
 The above command provides the correlation matrix (CMX) using the ``--input`` arugment, and the name of a log file, using the ``--log`` argument  where the results of chi-square testing is stored.  The RMT method will successively walk through all correlation values, in decreasing order from ``--tstart`` to ``--tstop``, using a step of ``--tstep``, and builds a new similarity matrix to test if the Nearest Neighbor Spacing Distribution (NNSD) of the Eigenvalues of that matrix appears Poisson.  A spline curve is fit to the NNSD if the ``--spline`` argument is ``TRUE`` (recommended) and random points along the line are selected to determine if the distribution appears Poisson.  This random selection will occur repeatedly by selecting a random set of ``--minpace`` numbers and increasing that on successive iterations to ``--maxpace``.  A Chi-square test is performed for each of these random selections and the result is averaged for each correlation value.  The ``--bins`` is the number of bins in the NNSD histogram and `1 - bins` indicates how many degrees of freedom the Chi-square test will have. In practice, a Chi-square value of 100 indicates that the correlation value begins to not look Poisson. The RMT approach will continue after seeing a Chi-square value of 100 until it sees one at the 200 at which point it stops.  It seeks past 100 to ensure it does not get trapped in a local minimum.
 
@@ -144,8 +152,8 @@ The Power-law function tests to see if the network, at successively decreasing c
 .. code:: bash
 
   kinc run powerlaw \
-    --input "rice_heat_drought.GEM.FPKM.filtered.traditional.cmx" \
-    --log "rice_heat_drought.GEM.FPKM.filtered.traditional.powerlaw.log" \
+    --input "PRJNA301554.slim.GEM.log2.traditional.cmx" \
+    --log "PRJNA301554.slim.GEM.log2.traditional.powerlaw.log" \
     --tstart 0.99 \
     --tstep 0.01 \
     --tstop 0.5
@@ -176,14 +184,14 @@ How ever you have chosen to threshold the network, either with RMT or Power-law,
 
 .. code:: bash
 
-  kinc run extract \
-    --emx "rice_heat_drought.GEM.FPKM.filtered.emx" \
-    --ccm "rice_heat_drought.GEM.FPKM.filtered.traditional.ccm" \
-    --cmx "rice_heat_drought.GEM.FPKM.filtered.traditional.cmx" \
-    --format "text" \
-    --output "rice_heat_drought.GEM.FPKM.filtered.traditional.gcn.txt" \
-    --mincorr 0.892001 \
-    --maxcorr 1
+    kinc run extract \
+      --emx "PRJNA301554.slim.GEM.log2.emx" \
+      --ccm "PRJNA301554.slim.GEM.log2.traditional.ccm" \
+      --cmx "PRJNA301554.slim.GEM.log2.traditional.cmx" \
+      --format "tidy" \
+      --output "PRJNA301554.slim.GEM.log2.traditional.paf-th0.826002-gcn.txt" \
+      --mincorr  0.826002 \
+      --maxcorr 1
 
 As in previous steps, the ``--emx``, ``--cmx`` and ``--ccm`` arguments provide the exrpession matrix, correlation and clustering matricies. The threshold is provided to the ``--mincorr`` argument.  Additinally, if you would like to exclude high correlations (such as perfect correlations), you can do so with the ``--maxcorr`` argument. You should only need to change the ``--maxcorr`` argument if it was determined that there is error in the data resulting in an inordinate number of high correlations.  The ``--format`` argument can be ``text``, ``minimal`` or ``graphml``. The ``text`` format currently contains the most data. It is easily imported into Cytoscape or R for other analyses and visualizations. The ``minimal`` format simply contains the list of edges with only the two genes and the correlation value. The ``graphml`` format provides the same information as the ``minimal`` format but using the `GraphML <http://graphml.graphdrawing.org/>`_ file format.
 
@@ -201,11 +209,11 @@ Step 1: Import the GEM
 ``````````````````````
 .. code:: bash
 
-  kinc run import-emx \
-    --input "rice_heat_drought.GEM.FPKM.filtered.txt" \
-    --output "rice_heat_drought.GEM.FPKM.filtered.emx" \
-    --nan "NA" \
-    --samples 0
+    kinc run import-emx \
+       --input "PRJNA301554.slim.GEM.log2.txt" \
+       --output "PRJNA301554.slim.GEM.log2.emx" \
+       --nan "NA" \
+       --samples 0
 
 In the code above the GEM file is provided to the ``import-emx`` function and the name of an output EMX file is provided.  The file uses "NA" to indicate missing values and  it has a header so the number of samples is set to .
 
@@ -215,21 +223,21 @@ The second step is to use GMM to identify clusters and then perform correlation 
 
 .. code:: bash
 
-  kinc run similarity \
-    --input "rice_heat_drought.GEM.FPKM.filtered.emx" \
-    --ccm "rice_heat_drought.GEM.FPKM.filtered.ccm" \
-    --cmx "rice_heat_drought.GEM.FPKM.filtered.cmx" \
-    --clusmethod "gmm" \
-    --corrmethod "spearman" \
-    --minexpr -inf \
-    --minsamp 25 \
-    --minclus 1 \
-    --maxclus 5 \
-    --crit "ICL" \
-    --preout TRUE \
-    --postout TRUE \
-    --mincorr 0.5 \
-    --maxcorr 1
+    kinc run similarity \
+       --input "PRJNA301554.slim.GEM.log2.emx" \
+       --ccm "PRJNA301554.slim.GEM.log2.ccm" \
+       --cmx "PRJNA301554.slim.GEM.log2.cmx" \
+       --clusmethod "gmm" \
+       --corrmethod "spearman" \
+       --minexpr -inf \
+       --minsamp 25 \
+       --minclus 1 \
+       --maxclus 5 \
+       --crit "ICL" \
+       --preout TRUE \
+       --postout TRUE \
+       --mincorr 0 \
+       --maxcorr 1
 
 Here the EMX file created in the first step is provided, and the names of the two output (CCM and CMX) files are provided.  Because we are using the GMM approach, the ``--clusmethod`` argument is set to ``"gmm"``.  The correlation method is set to use Spearman.  Other argument specific to the GMM appraoch include ``--crit``, ``--maxclus``, ``-minclus``, ``--preout``, and ``--postout``. These have the following meaning:
 
@@ -251,13 +259,13 @@ As discussed in the :ref:`samples-needed-reference-label` section above, the pow
 
 .. code:: bash
 
-  kinc run corrpower \
-    --ccm-in "rice_heat_drought.GEM.FPKM.filtered.ccm" \
-    --cmx-in "rice_heat_drought.GEM.FPKM.filtered.cmx" \
-    --ccm-out "rice_heat_drought.GEM.FPKM.filtered.paf.ccm" \
-    --cmx-out "rice_heat_drought.GEM.FPKM.filtered.paf.cmx" \
-    --alpha 0.001 \
-    --power 0.8
+    kinc run corrpower \
+       --ccm-in "PRJNA301554.slim.GEM.log2.ccm" \
+       --cmx-in "PRJNA301554.slim.GEM.log2.cmx" \
+       --ccm-out "PRJNA301554.slim.GEM.log2.paf.ccm" \
+       --cmx-out "PRJNA301554.slim.GEM.log2.paf.cmx" \
+       --alpha 0.001 \
+       --power 0.8
 
 As shown above, the power and signficance criteria are set with the ``--power`` and ``--alpha`` arguments respectively.  An ``alpha`` setting of ``0.001`` indicates that we want to limit the Type I error (false positives) to a signicance level of 0.001.  The Power uses the formula 1-`Beta` where `Beta` is the probability of a Type II error (false negative) occuring.  A ``--power`` setting of 0.8 indicates that we are comfortable with a 20% false negative rate. There is no rule for how to set these.  Set them to the levels of noise you are comfortable with.
 
@@ -271,14 +279,14 @@ Condition-specific filtering is performed using the ``cond-test`` function of KI
 
 .. code:: bash
 
-  kinc run cond-test \
-    --emx "rice_heat_drought.GEM.FPKM.filtered.emx" \
-    --ccm "rice_heat_drought.GEM.FPKM.filtered.paf.ccm" \
-    --cmx "rice_heat_drought.GEM.FPKM.filtered.paf.cmx" \
-    --amx "../../01-input_data/rice_heat_drought/PRJNA301554.hydroponic.sample_annotations.filtered.txt"   \
-    --output "rice_heat_drought.GEM.FPKM.filtered.paf.csm" \
-    --feat-tests "Subspecies,Treatment,GTAbbr" \
-    --feat-types "Subspecies:categorical,Treatment:categorical:GTAbbr:categorical"
+    kinc run cond-test \
+       --emx "PRJNA301554.slim.GEM.log2.emx" \
+       --ccm "PRJNA301554.slim.GEM.log2.paf.ccm" \
+       --cmx "PRJNA301554.slim.GEM.log2.paf.cmx" \
+       --amx "PRJNA301554.slim.annotations.txt" \
+       --output "PRJNA301554.slim.GEM.log2.paf.csm" \
+       --feat-tests "Subspecies,Treatment,GTAbbr,Duration" \
+       --feat-types "Duration:quantitative"
 
 Here, the ``--emx``, ``--ccm``, and ``--cmx`` arguments provide the usual expression matrix, cluster matrix and correlation matrix respectively.  The ``--amx`` argument specifies the :ref:`amx-reference-label`.  The name of new condition-specific matrix, that will contain the results of the tests is set using the  ``--output`` argument.
 
@@ -291,17 +299,20 @@ When using the GMM approach, the goal is to identiy condition-specific subgraphs
 
 .. code:: bash
 
-  kinc run extract \
-    --emx "rice_heat_drought.GEM.FPKM.filtered.emx" \
-    --ccm "rice_heat_drought.GEM.FPKM.filtered.paf.ccm" \
-    --cmx "rice_heat_drought.GEM.FPKM.filtered.paf.cmx" \
-    --csm "rice_heat_drought.GEM.FPKM.filtered.paf.csm" \
-    --format "tidy" \
-    --output "rice_heat_drought.GEM.FPKM.filtered.th0.5.cs1e-3.gcn.txt" \
-    --mincorr 0.50 \
-    --maxcorr 1 \
-    --filter-pvalue "1e-3"
-    --filter-rsquare "0.3"
+    p="1e-3"
+    r2="0.30"
+    th="0.00"
+    kinc run extract \
+        --emx "PRJNA301554.slim.GEM.log2.emx" \
+        --ccm "PRJNA301554.slim.GEM.log2.paf.ccm" \
+        --cmx "PRJNA301554.slim.GEM.log2.paf.cmx" \
+        --csm "PRJNA301554.slim.GEM.log2.paf.csm" \
+        --format "tidy" \
+        --output "PRJNA301554.slim.GEM.log2.paf-th${th}-p${p}-rsqr${r2}.txt" \
+        --mincorr $th \
+        --maxcorr 1 \
+        --filter-pvalue $p \
+        --filter-rsquare $r2
 
 As in previous steps, the ``--emx``, ``--cmx``, ``--ccm`` and ``--csm`` arguments provide the expression matrix, correlation, clustering matrix and the new condition-specific matrix. A threshold is provided to the ``--mincorr`` argument typically as a lower-bound. No edges with absolute correlation values below this value will be extracted.   Additinally, if you would like to exclude high correlations (such as perfect correlations), you can do so with the ``--maxcorr`` argument. You should only need to change the ``--maxcorr`` argument if it was determined that there is error in the data resulting from an inordinate number of high correlations.  In the example above the ``--mincorr`` is set at 0.5. This is quite low by traditional standards but the following filtering and thresholding steps support exploration of edges at such a low correlation.
 
@@ -352,10 +363,10 @@ The following examle demonstrates how to remove biased edges:
 
 .. code:: bash
 
-  kinc-filter-bias.R \
-    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30.csGCN-tidy.txt" \
-    --emx '../../../../01-input_data/03-rice_heat_drought/rice_heat_drought.GEM.FPKM.filtered.txt' \
-    --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30"
+    kinc-filter-bias.R \
+        --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30.txt" \
+        --emx "PRJNA301554.slim.GEM.log2.txt" \
+        --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30"
 
 Here the ``--net`` argument specifies the name of the network created using the ``extract`` function of KINC. It must be in tidy format. The ``--emx`` argument specifies the original GEM provided to the ``import-emx`` function, and the ``--out_prefix`` provides a name for the filtered output file.
 
@@ -375,9 +386,9 @@ The following is an example to generate the summary plots:
 
 .. code:: bash
 
-  kinc-make-plots.R \
-    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
-    --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy"
+    kinc-make-plots.R \
+        --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered.GCN.txt" \
+        --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered"
 
 Here the ``--net`` argument specifies the name of the network. This should be the network created after Step 6:  filtering biased conditional edges.  The ``--out_prefix`` provides the file name prefix for the output images.
 
@@ -389,30 +400,32 @@ To peform this ranking the Rscript ``rank-condition-threshold.R`` is used. It to
 
 .. code:: bash
 
-  kinc-filter-rank.R \
-    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
-    --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered"
+    kinc-filter-rank.R \
+        --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered.GCN.txt" \
+        --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered" \
+        --top_n 26035
 
-Here, we provide the network filtered by Step 6 for the ``--net`` argument and the ``-out_prefix`` is used to name the resulting output file.
+Here, we provide the network filtered by Step 6 for the ``--net`` argument and the ``-out_prefix`` is used to name the resulting output file.  The ``--top_n`` arguments allows us to use an `ad hoc` threshold to keep only the best ranked edges. This example network is small, so the ``--top_n`` argument is set to the total number of edges. By default, the ``--top_n`` argument is set to 10,000.  You can use this to filter the best edges when networks become extremely large.
 
 To create individual files for each condition add the ``--save_condition_networks`` argument. The resulting file will include the top *n* edges per condition not just the top *n* for the entire network:
 
 .. code:: bash
 
-  kinc-filter-rank.R \
-    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
-    --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered" \
-    --save_condition_networks
+    kinc-filter-rank.R \
+        --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered.GCN.txt" \
+        --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered" \
+        --save_condition_networks \
+        --top_n 26035
 
 If you are interested in exploring edges that are unique to a given category (e.g. heat or drought within a Treatment class) then you can provide the ``--unqique_filter`` argument with the value "label":
 
 .. code:: bash
 
-  kinc-filter-rank.R \
-    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
-    --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered" \
-    --save_condition_networks --unique_filter "label"
-
+    kinc-filter-rank.R \
+        --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered.GCN.txt" \
+        --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered" \
+        --save_condition_networks --unique_filter "label" \
+        --top_n 26035
 
 The result from the command-above is a set of files, one per condition class/label that contain only edges that are unique to the condition label (i.e. category) and is not signficant for any other condition.
 
@@ -420,10 +433,11 @@ Finally, you can export the top *n* for a given condition class (e.g. Treatment)
 
 .. code:: bash
 
-  kinc-filter-rank.R \
-    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered.GCN-tidy.txt" \
-    --out_prefix "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered" \
-    --save_condition_networks --unique_filter "class"
+    kinc-filter-rank.R \
+        --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered.GCN.txt" \
+        --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered" \
+        --save_condition_networks --unique_filter "class" \
+        --top_n 26035
 
 The result from the command-above is a set of files, one per condition class where the top *n* edges per class are kept. An edge may be signficant for multiple labels within the class but not for any other class.
 
@@ -441,14 +455,32 @@ You can visualize the network using 2D layout tools such as `Cytocape<https://cy
  - dash
  - progress.bar
 
-The following is an example for launching the viewer:
+The following is an example for launching the viewer for the network containing all condition-specific subgraphs:
 
 .. code:: bash
 
-  kinc-3d-viewer.py \
-    --net "rice_heat_drought.GEM.FPKM.filtered.paf-th0.50-p1e-3-rsqr0.30-filtered-th_ranked.Treatment-unique_class.csGCN.txt" \
-    --emx 'rice_heat_drought.GEM.FPKM.filtered.txt' \
-    --amx "PRJNA301554.hydroponic.sample_annotations.filtered.txt"
+    kinc-3d-viewer.py \
+        --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered-th_ranked.csGCN.txt" \
+        --emx "PRJNA301554.slim.GEM.log2.txt" \
+        --amx "PRJNA301554.slim.annotations.txt"
+
+Alternatively, you can view the condition-specific networks for the duration-specific subgraph:
+
+.. code:: bash
+
+    kinc-3d-viewer.py \
+        --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered-th_ranked.Duration-unique_class.csGCN.txt" \
+        --emx "PRJNA301554.slim.GEM.log2.txt" \
+        --amx "PRJNA301554.slim.annotations.txt"
+
+and for the treatment-specific subgraph:
+
+.. code:: bash
+
+    kinc-3d-viewer.py \
+        --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered-th_ranked.Treatment-unique_class.csGCN.txt" \
+        --emx "PRJNA301554.slim.GEM.log2.txt" \
+        --amx "PRJNA301554.slim.annotations.txt"
 
 The first time the viewer is launched it will take a few moments to generate 2D and 3D layouts for the network.  This will result in a set of new layout files created in the same folder as the network. These will only generated once and will be re-used if the script is re-run.  After creation of the layouts, a URL will be provided on the screen which should then be opened in a web browser.  Output similar to the following should be seen in the terminal:
 
@@ -458,12 +490,13 @@ The first time the viewer is launched it will take a few moments to generate 2D 
     Reading GEM file...
     Reading experioment annotation file...
     Launching application...
-     * Serving Flask app "view3D-KINC-tidy" (lazy loading)
+     * Serving Flask app "kinc-3d-viewer" (lazy loading)
      * Environment: production
        WARNING: This is a development server. Do not use it in a production deployment.
        Use a production WSGI server instead.
      * Debug mode: off
      * Running on http://127.0.0.1:8050/ (Press CTRL+C to quit)
+
 
 Finally, open the web browser to the specified URL to view the network.
 

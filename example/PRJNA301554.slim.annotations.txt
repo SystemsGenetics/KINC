@@ -1,0 +1,61 @@
+Sample	Subspecies	Genotype	IRGC_ID	GTAbbr	Duration	Treatment	Tissue
+SRX1423999	Japonica	Azuenca	328	AZ	240	Heat	leaf
+SRX1423983	Japonica	Azuenca	328	AZ	120	Heat	leaf
+SRX1424106	Indica	Kinandang puti	44513	KP	135	Heat	leaf
+SRX1423989	Japonica	Azuenca	328	AZ	165	Heat	leaf
+SRX1424093	Indica	Kinandang puti	44513	KP	45	Heat	leaf
+SRX1424222	Japonica	Pandan wangi	35834	PW	120	Heat	leaf
+SRX1424217	Japonica	Pandan wangi	35834	PW	90	Heat	leaf
+SRX1424218	Japonica	Pandan wangi	35834	PW	90	Heat	leaf
+SRX1423995	Japonica	Azuenca	328	AZ	210	Heat	leaf
+SRX1424224	Japonica	Pandan wangi	35834	PW	135	Heat	leaf
+SRX1424344	Indica	Tadukan	9804	TD	150	Heat	leaf
+SRX1424355	Indica	Tadukan	9804	TD	240	Heat	leaf
+SRX1424115	Indica	Kinandang puti	44513	KP	210	Heat	leaf
+SRX1424227	Japonica	Pandan wangi	35834	PW	165	Heat	leaf
+SRX1424330	Indica	Tadukan	9804	TD	45	Heat	leaf
+SRX1424114	Indica	Kinandang puti	44513	KP	195	Heat	leaf
+SRX1424336	Indica	Tadukan	9804	TD	90	Heat	leaf
+SRX1424111	Indica	Kinandang puti	44513	KP	180	Heat	leaf
+SRX1424220	Japonica	Pandan wangi	35834	PW	105	Heat	leaf
+SRX1424211	Japonica	Pandan wangi	35834	PW	45	Heat	leaf
+SRX1423972	Japonica	Azuenca	328	AZ	30	Heat	leaf
+SRX1424215	Japonica	Pandan wangi	35834	PW	75	Heat	leaf
+SRX1424327	Indica	Tadukan	9804	TD	30	Heat	leaf
+SRX1424226	Japonica	Pandan wangi	35834	PW	150	Heat	leaf
+SRX1424105	Indica	Kinandang puti	44513	KP	135	Heat	leaf
+SRX1424103	Indica	Kinandang puti	44513	KP	120	Heat	leaf
+SRX1424101	Indica	Kinandang puti	44513	KP	105	Heat	leaf
+SRX1424108	Indica	Kinandang puti	44513	KP	150	Heat	leaf
+SRX1423985	Japonica	Azuenca	328	AZ	135	Heat	leaf
+SRX1424352	Indica	Tadukan	9804	TD	210	Heat	leaf
+SRX1424177	Japonica	Pandan wangi	35834	PW	60	Control	leaf
+SRX1424311	Indica	Tadukan	9804	TD	180	Control	leaf
+SRX1424087	Indica	Kinandang puti	44513	KP	300	Control	leaf
+SRX1424292	Indica	Tadukan	9804	TD	30	Control	leaf
+SRX1423946	Japonica	Azuenca	328	AZ	105	Control	leaf
+SRX1424193	Japonica	Pandan wangi	35834	PW	180	Control	leaf
+SRX1423939	Japonica	Azuenca	328	AZ	45	Control	leaf
+SRX1423936	Japonica	Azuenca	328	AZ	30	Control	leaf
+SRX1424197	Japonica	Pandan wangi	35834	PW	210	Control	leaf
+SRX1424203	Japonica	Pandan wangi	35834	PW	270	Control	leaf
+SRX1424176	Japonica	Pandan wangi	35834	PW	45	Control	leaf
+SRX1424318	Indica	Tadukan	9804	TD	225	Control	leaf
+SRX1424304	Indica	Tadukan	9804	TD	120	Control	leaf
+SRX1424174	Japonica	Pandan wangi	35834	PW	30	Control	leaf
+SRX1424301	Indica	Tadukan	9804	TD	105	Control	leaf
+SRX1424191	Japonica	Pandan wangi	35834	PW	165	Control	leaf
+SRX1423960	Japonica	Azuenca	328	AZ	210	Control	leaf
+SRX1424291	Indica	Tadukan	9804	TD	30	Control	leaf
+SRX1423935	Japonica	Azuenca	328	AZ	15	Control	leaf
+SRX1424306	Indica	Tadukan	9804	TD	135	Control	leaf
+SRX1424088	Indica	Kinandang puti	44513	KP	300	Control	leaf
+SRX1424171	Japonica	Pandan wangi	35834	PW	15	Control	leaf
+SRX1424314	Indica	Tadukan	9804	TD	195	Control	leaf
+SRX1424308	Indica	Tadukan	9804	TD	150	Control	leaf
+SRX1424199	Japonica	Pandan wangi	35834	PW	225	Control	leaf
+SRX1424058	Indica	Kinandang puti	44513	KP	45	Control	leaf
+SRX1424055	Indica	Kinandang puti	44513	KP	30	Control	leaf
+SRX1424186	Japonica	Pandan wangi	35834	PW	120	Control	leaf
+SRX1423968	Japonica	Azuenca	328	AZ	300	Control	leaf
+SRX1424067	Indica	Kinandang puti	44513	KP	120	Control	leaf
