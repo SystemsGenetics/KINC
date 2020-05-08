@@ -152,10 +152,7 @@ Next compile:
 
 .. code:: bash
 
-  qmake ../src/KINC.pro
-  make qmake_all
   make
-  make qmake_all
   make install
 
 Alternative installation location
@@ -171,10 +168,7 @@ Now build and install KINC:
 
 .. code:: bash
 
-  qmake ../src/KINC.pro PREFIX=$INSTALL_PREFIX/KINC-$KINC_VERSION
-  make qmake_all
   make
-  make qmake_all
   make install
 
 If ACE is not in /usr/local

@@ -368,7 +368,6 @@ The following examle demonstrates how to remove biased edges:
         --emx "PRJNA301554.slim.GEM.log2.txt" \
         --out_prefix "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30"
 
-
 Here the ``--net`` argument specifies the name of the network created using the ``extract`` function of KINC. It must be in tidy format. The ``--emx`` argument specifies the original GEM provided to the ``import-emx`` function, and the ``--out_prefix`` provides a name for the filtered output file.
 
 By default the script will use a *p*-value threshold of 1e-3 for the Welch's Anova test and 0.1 for the t-test. Edges with a *p*-value less than 1e-3 will be kept for the Welch's test and a *p*-value greater than 0.1 (indicating a difference in missigness can't be detected) for the t-test. You can adjust these thresholds using the ``--wa_th`` and ``--mtt_th`` arguments respectively.  See the help text (by running the script with no arguments) for other options.
@@ -428,7 +427,6 @@ If you are interested in exploring edges that are unique to a given category (e.
         --save_condition_networks --unique_filter "label" \
         --top_n 26035
 
-
 The result from the command-above is a set of files, one per condition class/label that contain only edges that are unique to the condition label (i.e. category) and is not signficant for any other condition.
 
 Finally, you can export the top *n* for a given condition class (e.g. Treatment) by providing the value "class" to the ``--unique_filter`` argument.
@@ -471,9 +469,9 @@ Alternatively, you can view the condition-specific networks for the duration-spe
 .. code:: bash
 
     kinc-3d-viewer.py \
-    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered-th_ranked.Duration-unique_class.csGCN.txt" \
-    --emx "PRJNA301554.slim.GEM.log2.txt" \
-    --amx "PRJNA301554.slim.annotations.txt"
+        --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered-th_ranked.Duration-unique_class.csGCN.txt" \
+        --emx "PRJNA301554.slim.GEM.log2.txt" \
+        --amx "PRJNA301554.slim.annotations.txt"
 
 and for the treatment-specific subgraph:
 
