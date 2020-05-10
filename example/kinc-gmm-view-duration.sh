@@ -1,3 +1,4 @@
+#!/bin/bash
 # View unique Duration edges (i.e. not covariant with Treatment/Genotype/Subspecies)
 
 kinc-3d-viewer.py \
