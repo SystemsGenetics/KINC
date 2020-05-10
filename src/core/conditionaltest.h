@@ -17,7 +17,7 @@ public:
     class WorkBlock;
     class ResultBlock;
 
-    enum TESTTYPE
+    enum TestType
     {
         CATEGORICAL = 0,
         ORDINAL,
@@ -42,6 +42,7 @@ public:
         QVector<QVector<double>> r2;
     };
 
+public:
     virtual int size() const override final;
     virtual void process(const EAbstractAnalyticBlock* result) override final;
     virtual std::unique_ptr<EAbstractAnalyticBlock> makeWork(int index) const override final;
@@ -52,13 +53,14 @@ public:
     virtual void initialize() override final;
     virtual void initializeOutputs() override final;
 
+public:
     /*!
      * Reads in the annotation matrix populating the metadata when its done.
      */
     void readInAMX(QVector<QVector<QString>>& amxdata,
                    QVector<QVector<QVariant>>& data,
-                   QVector<TESTTYPE>& dataTestType);
-    void configureTests(QVector<TESTTYPE>& dataTestType);
+                   QVector<TestType>& dataTestType);
+    void configureTests(QVector<TestType>& dataTestType);
     int max(QVector<qint32> &counts) const;
     /*!
      * Test overrides.
@@ -66,11 +68,11 @@ public:
     void Test();
     void override();
     /*!
-     * Crates a dtring of test names, delimited by a colon.
+     * Crates a string of test names, delimited by a colon.
      */
     QString testNames();
 
-    void initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &amxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data);
+    void initialize(qint32 &maxClusterSize, qint32 &subHeaderSize, QVector<QVector<QString>> &amxData, QVector<TestType> &testType, QVector<QVector<QVariant>> &data);
 
     void rearrangeSamples();
 
@@ -126,7 +128,7 @@ private:
      */
     QVector<QVector<QString>> _features;
     QVector<QVector<QVariant>> _data;
-    QVector<TESTTYPE> _testType;
+    QVector<TestType> _testType;
     int _numTests {0};
     qint32 _geneSize {0};
     qint32 _sampleSize {0};

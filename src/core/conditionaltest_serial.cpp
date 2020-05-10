@@ -122,7 +122,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
  *
  * @return The number of samples in total of the test label.
  */
-int ConditionalTest::Serial::prepAnxData(QString testLabel, int dataIndex, TESTTYPE testType)
+int ConditionalTest::Serial::prepAnxData(QString testLabel, int dataIndex, TestType testType)
 {
     EDEBUG_FUNC(this, testLabel, dataIndex);
 
@@ -182,7 +182,7 @@ bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
  *
  * @return The number of labels in the given cluster.
  */
-int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label, TESTTYPE testType)
+int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label, TestType testType)
 {
     _catCount = _clusterSize = _catInCluster = 0;
 
@@ -411,7 +411,7 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
  *
  * @return Pvalue corrosponding to the test.
  */
-void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType, QVector<double>& results)
+void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TestType testType, QVector<double>& results)
 {
     EDEBUG_FUNC(this, &amxInfo, &ccmPair, clusterIndex);
 

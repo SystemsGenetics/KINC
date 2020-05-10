@@ -20,7 +20,7 @@ int CorrPowerFilter::size() const
 {
     EDEBUG_FUNC(this);
 
-    return (static_cast<qint64>(_ccm->size()) + _workBlockSize - 1) / _workBlockSize;
+    return (static_cast<qint64>(_cmx->size()) + _workBlockSize - 1) / _workBlockSize;
 }
 
 
@@ -43,24 +43,21 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork(int index) con
 
     // compute parameters for work block
     qint64 start {_workBlockStart};
-    qint64 size {std::min(_ccm->size() - start, static_cast<qint64>(_workBlockSize))};
+    qint64 size {std::min(_cmx->size() - start, static_cast<qint64>(_workBlockSize))};
 
-    // initialize pairwise iterator for ccm file
-    CCMatrix::Pair ccmPair(_ccm);
+    // initialize pairwise iterator for cmx file
+    CorrelationMatrix::Pair cmxPair(_cmx);
 
     // iterate to the start index of the next work block
-    ccmPair.read(Pairwise::Index(start));
+    cmxPair.read(Pairwise::Index(start));
 
     for ( qint64 i = 0; i < size; i++ )
     {
-        ccmPair.readNext();
+        cmxPair.readNext();
     }
 
     // save start index of next work block
-    qint64 x {ccmPair.index().getX()};
-    qint64 y {ccmPair.index().getY()};
-
-    _workBlockStart = x * (x - 1) / 2 + y;
+    _workBlockStart = cmxPair.index().toRawIndex();
 
     return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
 }
@@ -239,7 +236,7 @@ void CorrPowerFilter::initialize()
     {
         int numWorkers = std::max(1, mpi.size() - 1);
 
-        _workBlockSize = std::min(32768LL, _ccm->size() / numWorkers);
+        _workBlockSize = std::min(32768LL, _cmx->size() / numWorkers);
     }
 }
 

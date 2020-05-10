@@ -24,9 +24,12 @@ namespace Pairwise
         Index(qint64 index);
         Index(const Index&) = default;
         Index(Index&&) = default;
+    public:
         qint64 indent(qint8 cluster) const;
+        qint64 toRawIndex() const;
         qint32 getX() const { return _x; }
         qint32 getY() const { return _y; }
+    public:
         Index& operator=(const Index&) = default;
         Index& operator=(Index&&) = default;
         void operator++();
@@ -42,6 +45,7 @@ namespace Pairwise
             { return !(*this <= object); }
         bool operator>=(const Index& object) const
             { return !(*this < object); }
+    public:
         /*!
          * The maximum number of clusters used to compute the indent value
          * of a pairwise index. Data objects which use the pairwise index should

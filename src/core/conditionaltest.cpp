@@ -5,7 +5,7 @@
 #include "conditionaltest_serial.h"
 #include "conditionspecificclustersmatrix.h"
 #include "conditionspecificclustersmatrix_pair.h"
-#include "ccmatrix_pair.h"
+#include "correlationmatrix_pair.h"
 #include <ace/core/elog.h>
 #include <ace/core/ace_qmpi.h>
 
@@ -20,7 +20,7 @@ int ConditionalTest::size() const
 {
     EDEBUG_FUNC(this);
 
-    return (static_cast<qint64>(_ccm->size()) + _workBlockSize - 1) / _workBlockSize;
+    return (static_cast<qint64>(_cmx->size()) + _workBlockSize - 1) / _workBlockSize;
 }
 
 
@@ -104,24 +104,21 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork(int index) con
 
     // compute parameters for work block
     qint64 start {_workBlockStart};
-    qint64 size {std::min(_ccm->size() - start, static_cast<qint64>(_workBlockSize))};
+    qint64 size {std::min(_cmx->size() - start, static_cast<qint64>(_workBlockSize))};
 
-    // initialize pairwise iterator for ccm file
-    CCMatrix::Pair ccmPair(_ccm);
+    // initialize pairwise iterator for cmx file
+    CorrelationMatrix::Pair cmxPair(_cmx);
 
     // iterate to the start index of the next work block
-    ccmPair.read(Pairwise::Index(start));
+    cmxPair.read(Pairwise::Index(start));
 
     for ( qint64 i = 0; i < size; i++ )
     {
-        ccmPair.readNext();
+        cmxPair.readNext();
     }
 
     // save start index of next work block
-    qint64 x {ccmPair.index().getX()};
-    qint64 y {ccmPair.index().getY()};
-
-    _workBlockStart = x * (x - 1) / 2 + y;
+    _workBlockStart = cmxPair.index().toRawIndex();
 
     // construct work block
     return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
@@ -254,7 +251,7 @@ void ConditionalTest::initialize()
     {
         int numWorkers = std::max(1, mpi.size() - 1);
 
-        _workBlockSize = std::min(32768LL, _ccm->size() / numWorkers);
+        _workBlockSize = std::min(32768LL, _cmx->size() / numWorkers);
     }
 
     // CSM specific
@@ -300,7 +297,7 @@ void ConditionalTest::initializeOutputs()
 void ConditionalTest::readInAMX(
     QVector<QVector<QString>>& amxdata,
     QVector<QVector<QVariant>>& data,
-    QVector<TESTTYPE>& dataTestType)
+    QVector<TestType>& dataTestType)
 {
     EDEBUG_FUNC(this,&amxdata,&data,&dataTestType);
 
@@ -414,7 +411,7 @@ void ConditionalTest::readInAMX(
  *
  * @param dataTestType An array storing the test information for each feature.
  */
-void ConditionalTest::configureTests(QVector<TESTTYPE>& dataTestType)
+void ConditionalTest::configureTests(QVector<TestType>& dataTestType)
 {
     EDEBUG_FUNC(this,&dataTestType);
 
@@ -631,7 +628,7 @@ QString ConditionalTest::testNames()
  * @param data All of the data corrosponding to the features from the annotation
  *       array.
  */
-void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &amxData, QVector<TESTTYPE> &testType, QVector<QVector<QVariant>> &data)
+void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &amxData, QVector<TestType> &testType, QVector<QVector<QVariant>> &data)
 {
     EDEBUG_FUNC(this,&maxClusterSize,&subHeaderSize,&amxData,&testType,&data);
 

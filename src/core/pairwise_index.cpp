@@ -86,8 +86,21 @@ qint64 Index::indent(qint8 cluster) const
     }
 
     // compute indent with given cluster and return it
-    qint64 index {static_cast<qint64>(_x) * (_x - 1) / 2 + _y};
+    qint64 index {toRawIndex()};
     return index * MAX_CLUSTER_SIZE + cluster;
+}
+
+
+
+/**
+ * Return a one-dimensional representation of this pairwise index.
+ */
+qint64 Index::toRawIndex() const
+{
+    EDEBUG_FUNC(this);
+
+    // compute raw index
+    return static_cast<qint64>(_x) * (_x - 1) / 2 + _y;
 }
 
 

@@ -18,9 +18,9 @@ public:
 
     // helper functions
     int test(CCMatrix::Pair& ccmPair, qint32 clusterIndex, qint32& testIndex, qint32 featureIndex, qint32 labelIndex, QVector<QVector<double>>& pValues, QVector<QVector<double>>& r2);
-    int prepAnxData(QString testLabel, int dataIndex, TESTTYPE testType);
+    int prepAnxData(QString testLabel, int dataIndex, TestType testType);
     bool isEmpty(QVector<QVector<double>>& matrix);
-    int clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label, TESTTYPE testType);
+    int clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label, TestType testType);
 
     // Binomial Tests
     double binomial();
@@ -31,7 +31,7 @@ public:
     double hypergeom(CCMatrix::Pair& ccmPair, int clusterIndex, QString test_label);
 
     // Regression Test
-    void regression(QVector<QString> &amxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TESTTYPE testType, QVector<double>& results);
+    void regression(QVector<QString> &amxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TestType testType, QVector<double>& results);
     double fTest(double chisq, gsl_matrix* X, gsl_vector* Y, gsl_matrix* cov, gsl_vector* C);
 
 private:
