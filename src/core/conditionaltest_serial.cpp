@@ -94,14 +94,11 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
         }
 
         // append pair to result block
-        if ( !isEmpty(pValues) )
-        {
-            resultBlock->append(Pair {
-                ccmPair.index(),
-                pValues,
-                r2
-            });
-        }
+        resultBlock->append(Pair {
+            ccmPair.index(),
+            pValues,
+            r2
+        });
 
         // read the next pair
         ccmPair.readNext();

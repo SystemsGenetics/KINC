@@ -26,67 +26,6 @@ int ConditionalTest::size() const
 
 
 /*!
- * An interface that processes result blocks once the serial is done working on
- * them.
- *
- * @param result The processed work block from the serial.
- */
-void ConditionalTest::process(const EAbstractAnalyticBlock* result)
-{
-    EDEBUG_FUNC(this,result);
-
-    if ( ELog::isActive() )
-    {
-        ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
-    }
-
-    // Iterate through the result block pairs.
-    const ResultBlock* resultBlock {result->cast<ResultBlock>()};
-
-    for ( auto& pair : resultBlock->pairs() )
-    {
-        // copy the values form the pairs to the CSM
-        if ( pair.pValues.size() > 0 )
-        {
-            // Create pair objects for the output data file.
-            CSMatrix::Pair csmPair(_out);
-
-            // Iterate through the clusters in the pair.
-            for ( int k = 0; k < pair.pValues.size(); ++k )
-            {
-                // add each cluster into the CSM
-                csmPair.addCluster(1, _numTests);
-
-                for ( int i = 0; i < pair.pValues.at(k).size(); ++i )
-                {
-                    csmPair.at(k, i, "pvalue") = pair.pValues.at(k).at(i);
-                    csmPair.at(k, i, "r2") = pair.r2.at(k).at(i);
-                }
-            }
-
-            // write the info into the CSM
-            csmPair.write(pair.index);
-        }
-    }
-}
-
-
-
-/*!
- * An interface to create a new input data object.
- *
- * @return Pointer to the new input data object.
- */
-EAbstractAnalyticInput* ConditionalTest::makeInput()
-{
-    EDEBUG_FUNC(this);
-
-    return new Input(this);
-}
-
-
-
-/*!
  * Creates a block of work at the given index.
  *
  * @param index The index at which the work block should be made.
@@ -150,6 +89,67 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeResult() const
     EDEBUG_FUNC(this);
 
     return std::unique_ptr<EAbstractAnalyticBlock>(new ResultBlock);
+}
+
+
+
+/*!
+ * An interface that processes result blocks once the serial is done working on
+ * them.
+ *
+ * @param result The processed work block from the serial.
+ */
+void ConditionalTest::process(const EAbstractAnalyticBlock* result)
+{
+    EDEBUG_FUNC(this,result);
+
+    if ( ELog::isActive() )
+    {
+        ELog() << tr("Processing result %1 of %2.\n").arg(result->index()).arg(size());
+    }
+
+    // Iterate through the result block pairs.
+    const ResultBlock* resultBlock {result->cast<ResultBlock>()};
+
+    for ( auto& pair : resultBlock->pairs() )
+    {
+        // copy the values form the pairs to the CSM
+        if ( pair.pValues.size() > 0 )
+        {
+            // Create pair objects for the output data file.
+            CSMatrix::Pair csmPair(_out);
+
+            // Iterate through the clusters in the pair.
+            for ( int k = 0; k < pair.pValues.size(); ++k )
+            {
+                // add each cluster into the CSM
+                csmPair.addCluster(1, _numTests);
+
+                for ( int i = 0; i < pair.pValues.at(k).size(); ++i )
+                {
+                    csmPair.at(k, i, "pvalue") = pair.pValues.at(k).at(i);
+                    csmPair.at(k, i, "r2") = pair.r2.at(k).at(i);
+                }
+            }
+
+            // write the info into the CSM
+            csmPair.write(pair.index);
+        }
+    }
+}
+
+
+
+/*!
+ * An interface to create a new input data object.
+ *
+ * @return Pointer to the new input data object.
+ */
+EAbstractAnalyticInput* ConditionalTest::makeInput()
+{
+    EDEBUG_FUNC(this);
+
+    return new Input(this);
 }
 
 

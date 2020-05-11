@@ -46,13 +46,8 @@ void ConditionalTest::ResultBlock::write(QDataStream& stream) const
 
         for ( int k = 0; k < pair.pValues.size(); k++ )
         {
-            stream << pair.pValues.at(k).size();
-
-            for ( int i = 0; i < pair.pValues.at(k).size(); i++ )
-            {
-                stream << pair.pValues.at(k).at(i);
-                stream << pair.r2.at(k).at(i);
-            }
+            stream << pair.pValues.at(k);
+            stream << pair.r2.at(k);
         }
     }
 }
@@ -88,16 +83,8 @@ void ConditionalTest::ResultBlock::read(QDataStream& stream)
 
         for ( int k = 0; k < pair.pValues.size(); k++ )
         {
-            stream >> size;
-
-            pair.pValues[k].resize(size);
-            pair.r2[k].resize(size);
-
-            for ( int i = 0; i < pair.pValues.at(k).size(); i++ )
-            {
-                stream >> pair.pValues[k][i];
-                stream >> pair.r2[k][i];
-            }
+            stream >> pair.pValues[k];
+            stream >> pair.r2[k];
         }
     }
 }

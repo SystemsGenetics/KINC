@@ -59,19 +59,8 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork(int index) con
     // save start index of next work block
     _workBlockStart = cmxPair.index().toRawIndex();
 
+    // construct work block
     return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));
-}
-
-
-
-/*!
- * Create an empty and uninitialized result block.
- */
-std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeResult() const
-{
-    EDEBUG_FUNC(this);
-
-    return std::unique_ptr<EAbstractAnalyticBlock>(new ResultBlock);
 }
 
 
@@ -84,6 +73,18 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork() const
     EDEBUG_FUNC(this);
 
     return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock);
+}
+
+
+
+/*!
+ * Create an empty and uninitialized result block.
+ */
+std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeResult() const
+{
+    EDEBUG_FUNC(this);
+
+    return std::unique_ptr<EAbstractAnalyticBlock>(new ResultBlock);
 }
 
 
