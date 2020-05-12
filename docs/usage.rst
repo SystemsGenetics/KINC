@@ -26,15 +26,15 @@ KINC is meant to be used either on a stand-alone workstation or on a heterogenou
 +-------------------------------------------+------------------------------+---------------------+
 | Network extraction                        | ``qkinc`` or ``kinc``        | Stand-alone or HPC  |
 +-------------------------------------------+------------------------------+---------------------+
-| Filter biased condition-specific          | ``filter-condition-edges.R`` | Stand-alone or HPC  |
+| Filter biased condition-specific          | ``kinc-filter-bias.R``       | Stand-alone or HPC  |
 | networks                                  |                              |                     |
 +-------------------------------------------+------------------------------+---------------------+
-| Rank-based thresholding of                | ``filter-condition-edges.R`` | Stand-alone or HPC  |
+| Rank-based thresholding of                | ``kinc-filter-rank.R``       | Stand-alone or HPC  |
 | condition-specific networks               |                              |                     |
 +-------------------------------------------+------------------------------+---------------------+
-| Generate summary plots                    | ``make-summary-plots.R``     | Stand-alone or HPC  |
+| Generate summary plots                    | ``kinc-make-plots.R``        | Stand-alone or HPC  |
 +-------------------------------------------+------------------------------+---------------------+
-| 3D Visualization                          | ``view3D-KINC-tidy.py``      | Stand-alone         |
+| 3D Visualization                          | ``kinc-3d-viewer.py``        | Stand-alone         |
 +-------------------------------------------+------------------------------+---------------------+
 
 Using the Command-Line
@@ -184,7 +184,7 @@ KINC executes a function by dividing the entire task into sub units that can be 
 
   kinc chunkrun <index> <size> <function> [<arguments>]
 
-Here the ``<size>`` argument is the total number of chunks to use.  This should be set to the number of ``kinc`` processes you wish to run.  Then, launch each ``kinc`` instance with an ``index`` value from 1 to ``<size>``.  Each instance of KINC will automatically know which set of work units to process.
+Here the ``<size>`` argument is the total number of chunks to use.  This should be set to the number of ``kinc`` processes you wish to run.  Then, launch each ``kinc`` instance with an ``index`` value starting at 0.  Therefore, to split the jobs into four chunks you would run KINC four times each with a different ``index``: 0, 1, 2 and 3. and the ``size`` for each run is 4. Each instance of KINC will automatically know which set of work units to process.
 
 Once all of the KINC instances have completed their chunks, the results must be merged together into a single file.  This is  accomplished using the ``merge`` command.  You must provide the exact same arguments to the ``merge`` command as was provided to the ``chunkrun`` command, with the exception of the ``<index>`` argument:
 

@@ -22,9 +22,28 @@ KINC requires the following software packages.
 - `LAPACK <http://www.netlib.org/lapack/>`_
 - `GCEM <https://www.kthohr.com/gcem.html>`_
 - `StatsLib <https://www.kthohr.com/statslib.html>`_
+- `KINC.R v1.0 <https://github.com/SystemsGenetics/KINC.R>`_ (for post filtering of networks)
+- Python v3 and A variety of Python modules for the 3D visualization.
 
 
-Installing on Ubuntu 18.04
+Some functionality of KINC (i.e. condition-specific network construction) require two additional set of dependences:  `KINC.R v1.0 <https://github.com/SystemsGenetics/KINC.R>`_ , Python3 and a variety of Python modules for the 3D visualization.
+
+To install KINC.R please follow the installation instructions on the `KINC.R repository <https://github.com/SystemsGenetics/KINC.R>`_. KINC.R requires a variety of other R modules.
+
+If you desire to use the Python v3 `Plotly Dash <https://plotly.com/dash/>`_ 3D visualization script you must also install the following packages:  
+
+- `Numpy <https://numpy.org/>`_
+- `Pandas <https://pandas.pydata.org/>`_
+- `IGraph for Python <https://igraph.org/python/>`_
+- `Plotly <https://plotly.com/>`_
+- `Seaborn <https://seaborn.pydata.org/>`_
+- `Dash <https://plotly.com/dash/>`_
+- `progress <https://github.com/verigak/progress/>`_
+- `fa2 <https://github.com/bhargavchippada/forceatlas2>`_
+
+Install these Python v3 packages using your favorite package manager (i.e. pip, Anaconda, etc.)
+
+Installing KINC on Ubuntu 18.04
 --------------------------
 
 Install Dependencies
@@ -198,6 +217,7 @@ If KINC was installed in the default location you can skip the :doc:`usage` page
   echo "export PATH=\"$INSTALL_PREFIX/ACE-$ACE_VERSION/bin:$INSTALL_PREFIX/KINC-$KINC_VERSION/bin:\$PATH\""
 
 Append the resulting text to your ``~/.bashrc`` file. You should now be able to run KINC
+
 
 Installing on Windows
 ---------------------
