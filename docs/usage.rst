@@ -26,15 +26,15 @@ KINC is meant to be used either on a stand-alone workstation or on a heterogenou
 +-------------------------------------------+------------------------------+---------------------+
 | Network extraction                        | ``qkinc`` or ``kinc``        | Stand-alone or HPC  |
 +-------------------------------------------+------------------------------+---------------------+
-| Filter biased condition-specific          | ``filter-condition-edges.R`` | Stand-alone or HPC  |
+| Filter biased condition-specific          | ``kinc-filter-bias.R``       | Stand-alone or HPC  |
 | networks                                  |                              |                     |
 +-------------------------------------------+------------------------------+---------------------+
-| Rank-based thresholding of                | ``filter-condition-edges.R`` | Stand-alone or HPC  |
+| Rank-based thresholding of                | ``kinc-filter-rank.R``       | Stand-alone or HPC  |
 | condition-specific networks               |                              |                     |
 +-------------------------------------------+------------------------------+---------------------+
-| Generate summary plots                    | ``make-summary-plots.R``     | Stand-alone or HPC  |
+| Generate summary plots                    | ``kinc-make-plots.R``        | Stand-alone or HPC  |
 +-------------------------------------------+------------------------------+---------------------+
-| 3D Visualization                          | ``view3D-KINC-tidy.py``      | Stand-alone         |
+| 3D Visualization                          | ``kinc-3d-viewer.py``        | Stand-alone         |
 +-------------------------------------------+------------------------------+---------------------+
 
 Using the Command-Line
