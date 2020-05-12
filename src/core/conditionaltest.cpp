@@ -43,7 +43,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork(int index) con
 
     // compute parameters for work block
     qint64 start {_workBlockStart};
-    qint64 size {std::min(_cmx->size() - start, static_cast<qint64>(_workBlockSize))};
+    qint64 size {std::min(_cmx->size() - index * _workBlockSize, static_cast<qint64>(_workBlockSize))};
 
     // initialize pairwise iterator for cmx file
     CorrelationMatrix::Pair cmxPair(_cmx);
