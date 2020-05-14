@@ -1,6 +1,15 @@
 #!/bin/bash
 # Perform a GMM run of KINC
 
+# Initialize number of MPI ranks
+NP=4
+
+# Initialize KINC settings
+kinc settings set cuda 0
+kinc settings set opencl none
+kinc settings set threads 2
+kinc settings set logging off
+
 # Step 1: Import the expression matrix
 echo "Importing the gene expression matrix (GEM) for the slimmed experiment PRJNA301554"
 
@@ -13,7 +22,7 @@ kinc run import-emx \
 # Step 2: Create the similarity matrix.
 echo "Performing similarity calculations using GMMs (GPUs make this go fastest)"
 
-mpiexec -np 4 kinc run similarity \
+mpiexec -np ${NP} kinc run similarity \
    --input "PRJNA301554.slim.GEM.log2.emx" \
    --ccm "PRJNA301554.slim.GEM.log2.ccm" \
    --cmx "PRJNA301554.slim.GEM.log2.cmx" \
@@ -32,7 +41,7 @@ mpiexec -np 4 kinc run similarity \
 # Step 3: Filter for clusters with low power.
 echo "Filtering edges with insufficient statistical power."
 
-mpiexec -np 4 kinc run corrpower \
+mpiexec -np ${NP} kinc run corrpower \
    --ccm-in "PRJNA301554.slim.GEM.log2.ccm" \
    --cmx-in "PRJNA301554.slim.GEM.log2.cmx" \
    --ccm-out "PRJNA301554.slim.GEM.log2.paf.ccm" \
@@ -43,7 +52,7 @@ mpiexec -np 4 kinc run corrpower \
 # Step 4: Condition-specific analysis.
 echo "Performing condition-specific testing."
 
-mpiexec -np 4 kinc run cond-test \
+mpiexec -np ${NP} kinc run cond-test \
    --emx "PRJNA301554.slim.GEM.log2.emx" \
    --ccm "PRJNA301554.slim.GEM.log2.paf.ccm" \
    --cmx "PRJNA301554.slim.GEM.log2.paf.cmx" \

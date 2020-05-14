@@ -1,6 +1,15 @@
 #!/bin/bash
 # Perform a GMM run of KINC
 
+# Initialize number of chunks
+NP=4
+
+# Initialize KINC settings
+kinc settings set cuda 0
+kinc settings set opencl none
+kinc settings set threads 2
+kinc settings set logging off
+
 # Step 1: Import the expression matrix
 echo "Importing the gene expression matrix (GEM) for the slimmed experiment PRJNA301554"
 
@@ -12,76 +21,29 @@ kinc run import-emx \
 
 # Step 2: Create the similarity matrix.
 echo "Performing similarity calculations using GMMs (GPUs make this go fastest)"
-echo "Running chunk #1"
-kinc chunkrun 0 4 similarity \
-   --input "PRJNA301554.slim.GEM.log2.emx" \
-   --ccm "PRJNA301554.slim.GEM.log2.ccm" \
-   --cmx "PRJNA301554.slim.GEM.log2.cmx" \
-   --clusmethod "gmm" \
-   --corrmethod "spearman" \
-   --minexpr -inf \
-   --minsamp 25 \
-   --minclus 1 \
-   --maxclus 5 \
-   --crit "ICL" \
-   --preout TRUE \
-   --postout TRUE \
-   --mincorr 0 \
-   --maxcorr 1
 
-echo "Running chunk #2"
-kinc chunkrun 1 4 similarity \
-    --input "PRJNA301554.slim.GEM.log2.emx" \
-    --ccm "PRJNA301554.slim.GEM.log2.ccm" \
-    --cmx "PRJNA301554.slim.GEM.log2.cmx" \
-    --clusmethod "gmm" \
-    --corrmethod "spearman" \
-    --minexpr -inf \
-    --minsamp 25 \
-    --minclus 1 \
-    --maxclus 5 \
-    --crit "ICL" \
-    --preout TRUE \
-    --postout TRUE \
-    --mincorr 0 \
-    --maxcorr 1
+for i in $(seq 0 $(expr ${NP} - 1)); do
+    echo "Running chunk ${i}"
 
-echo "Running chunk #3"
-kinc chunkrun 2 4 similarity \
-    --input "PRJNA301554.slim.GEM.log2.emx" \
-    --ccm "PRJNA301554.slim.GEM.log2.ccm" \
-    --cmx "PRJNA301554.slim.GEM.log2.cmx" \
-    --clusmethod "gmm" \
-    --corrmethod "spearman" \
-    --minexpr -inf \
-    --minsamp 25 \
-    --minclus 1 \
-    --maxclus 5 \
-    --crit "ICL" \
-    --preout TRUE \
-    --postout TRUE \
-    --mincorr 0 \
-    --maxcorr 1
-
-echo "Running chunk #4"
-kinc chunkrun 3 4 similarity \
-    --input "PRJNA301554.slim.GEM.log2.emx" \
-    --ccm "PRJNA301554.slim.GEM.log2.ccm" \
-    --cmx "PRJNA301554.slim.GEM.log2.cmx" \
-    --clusmethod "gmm" \
-    --corrmethod "spearman" \
-    --minexpr -inf \
-    --minsamp 25 \
-    --minclus 1 \
-    --maxclus 5 \
-    --crit "ICL" \
-    --preout TRUE \
-    --postout TRUE \
-    --mincorr 0 \
-    --maxcorr 1
+    kinc chunkrun ${i} ${NP} similarity \
+       --input "PRJNA301554.slim.GEM.log2.emx" \
+       --ccm "PRJNA301554.slim.GEM.log2.ccm" \
+       --cmx "PRJNA301554.slim.GEM.log2.cmx" \
+       --clusmethod "gmm" \
+       --corrmethod "spearman" \
+       --minexpr -inf \
+       --minsamp 25 \
+       --minclus 1 \
+       --maxclus 5 \
+       --crit "ICL" \
+       --preout TRUE \
+       --postout TRUE \
+       --mincorr 0 \
+       --maxcorr 1
+done
 
 echo "Merging chunks"
-kinc merge 4 similarity \
+kinc merge ${NP} similarity \
     --input "PRJNA301554.slim.GEM.log2.emx" \
     --ccm "PRJNA301554.slim.GEM.log2.ccm" \
     --cmx "PRJNA301554.slim.GEM.log2.cmx" \

@@ -1,6 +1,12 @@
 #!/bin/bash
 # Perform a GMM run of KINC
 
+# Initialize KINC settings
+kinc settings set cuda 0
+kinc settings set opencl none
+kinc settings set threads 2
+kinc settings set logging off
+
 # Step 1: Import the expression matrix
 echo "Importing the gene expression matrix (GEM) for the slimmed experiment PRJNA301554"
 
