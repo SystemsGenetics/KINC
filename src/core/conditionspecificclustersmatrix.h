@@ -18,12 +18,16 @@ public:
 public:
     virtual QAbstractTableModel* model() override final;
 public:
-    void initialize(const EMetaArray& geneNames, int maxClusterSize, int subheader);
-    void initialize(const EMetaArray& features, const QVector<EMetaArray>& featureInfo, const QVector<EMetaArray>& data, int& numTests, QString fileName);
+    void initialize(const EMetaArray& features,
+                    const QVector<EMetaArray>& featureInfo,
+                    const QVector<EMetaArray>& data,
+                    int numTests,
+                    QString testNames,
+                    const EMetaArray& geneNames,
+                    int maxClusterSize,
+                    int subheader);
 
     int sampleSize() const;
-    void setTestCount(qint32 newData);
-
     QString getTestName(int index) const;
 
     /*!

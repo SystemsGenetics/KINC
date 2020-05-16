@@ -249,8 +249,7 @@ int ConditionalTest::Serial::test(
     switch(_base->_testType.at(featureIndex))
     {
         case CATEGORICAL:
-            pValues[clusterIndex][testIndex] = hypergeom(ccmPair, clusterIndex,
-                                                         _base->_features.at(featureIndex).at(labelIndex));
+            pValues[clusterIndex][testIndex] = hypergeom(ccmPair, clusterIndex, _base->_features.at(featureIndex).at(labelIndex));
             r2[clusterIndex][testIndex] = qQNaN();
             testIndex++;
             break;

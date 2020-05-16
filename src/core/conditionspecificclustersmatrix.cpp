@@ -13,7 +13,14 @@
  *
  * @param data All the data in the annotation matrix.
  */
-void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>& featureInfo, const QVector<EMetaArray>& data, int& numTests, QString testNames)
+void CSMatrix::initialize(const EMetaArray& features,
+                          const QVector<EMetaArray>& featureInfo,
+                          const QVector<EMetaArray>& data,
+                          int numTests,
+                          QString testNames,
+                          const EMetaArray& geneNames,
+                          int maxClusterSize,
+                          int subheader)
 {
     EDEBUG_FUNC(this,&features,&featureInfo,&data);
 
@@ -42,35 +49,22 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
     EMetaArray labels;
     EMetaObject info;
     EMetaObject feature;
-    int num_tests = 0;
 
-    // set the feature information in the meta data
+    // Set the feature information in the meta data
     for ( int i = 0; i < features.size(); i++ )
     {
-        // set the test type
+        // Set the test type
         type.insert("Type", featureInfo.at(i).at(0));
 
-        // set the labels
-        // Catagorical
+        // Set the labels
+        // Categorical
         if ( featureInfo.at(i).size() > 2 && featureInfo.at(i).at(0).toString() == "Categorical" )
         {
             for ( int j = 2; j < featureInfo.at(i).size(); j++ )
             {
                 labels.append(featureInfo.at(i).at(j));
-                if ( featureInfo.at(i).at(0).toString() != "None" && featureInfo.at(i).at(0).toString() != "Unknown" )
-                {
-                    ++num_tests;
-                }
             }
             info.insert("Labels", labels);
-        }
-        // Ordinal and Quantitative
-        else
-        {
-            if ( featureInfo.at(i).at(0).toString() != "None" && featureInfo.at(i).at(0).toString() != "Unknown" )
-            {
-                ++num_tests;
-            }
         }
         // create the labels and test drop bar aka label information
         info.insert("Test", type);
@@ -101,7 +95,6 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
     metaObject.insert("Data", Data);
 
     // add num_tests
-    numTests += num_tests;
     _testcount = numTests;
     metaObject.insert("Number of Tests", numTests);
 
@@ -116,23 +109,6 @@ void CSMatrix::initialize(const EMetaArray& features, const QVector<EMetaArray>&
     // set the root of the meta data to the changed metaobject
     setMeta(metaObject);
     _sampleSize = sampleNames.size();
-}
-
-
-
-/*!
- * Writes the pairwise specific metadata.
- *
- * @param geneNames Names of all the genes in the gene expresion matrix.
- *
- * @param maxClusterSize Maximum amount of pairs a cell can have in the pairwise matrix,
- *                       system max is 64.
- *
- * @param subheader The size of the subheader, only contains the sample size.
- */
-void CSMatrix::initialize(const EMetaArray& geneNames, int maxClusterSize, int subheader)
-{
-    EDEBUG_FUNC(this,&geneNames,maxClusterSize,subheader);
 
     Matrix::initialize(geneNames, maxClusterSize, sizeof(double) * 2 * _testcount, subheader);
 }
@@ -191,20 +167,6 @@ void CSMatrix::readHeader()
     EDEBUG_FUNC(this);
 
     stream() >> _sampleSize >> _testcount;
-}
-
-
-
-/*!
- * Set the number of tests that are going to be ran.
- *
- * @param newData The number of tests you want to set the variable to.
- */
-void CSMatrix::setTestCount(qint32 newData)
-{
-    EDEBUG_FUNC(this, newData);
-
-    _testcount = newData;
 }
 
 

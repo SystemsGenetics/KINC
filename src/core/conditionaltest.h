@@ -54,29 +54,33 @@ public:
     virtual void initializeOutputs() override final;
 
 public:
-    /*!
-     * Reads in the annotation matrix populating the metadata when its done.
-     */
-    void readInAMX(QVector<QVector<QString>>& amxdata,
-                   QVector<QVector<QVariant>>& data,
-                   QVector<TestType>& dataTestType);
-    void configureTests(QVector<TestType>& dataTestType);
     int max(QVector<qint32> &counts) const;
-    /*!
-     * Test overrides.
-     */
-    void Test();
-    void override();
     /*!
      * Crates a string of test names, delimited by a colon.
      */
     QString testNames();
 
-    void initialize(qint32 &maxClusterSize, qint32 &subHeaderSize, QVector<QVector<QString>> &amxData, QVector<TestType> &testType, QVector<QVector<QVariant>> &data);
+    void initialize(qint32 &maxClusterSize, qint32 &subHeaderSize);
 
-    void rearrangeSamples();
 
 private:
+
+    /*!
+     * Test overrides.
+     */
+    void setUserTests();
+    void setUserTestTypes();
+
+    /*!
+     * Reads in the annotation matrix populating the metadata when its done.
+     */
+    void setFeatures();
+    void setTestTypes();
+    void setTestCount();
+    void setData();
+    void orderLabelsBySample();
+    void setNumTests();
+
     /*!
      * Pointer to the input expression matrix.
      */
@@ -100,13 +104,13 @@ private:
     /*!
      * User provided features not to test.
      */
-    QString _Testing{""};
-    QVector<QString> _Test;
+    QString _userTestsStr{""};
+    QVector<QString> _userTests;
     /*!
      * User provided test type overrides.
      */
-    QString _testOverride{""};
-    QVector<QVector<QString>> _override;
+    QString _userTestTypesStr{""};
+    QVector<QVector<QString>> _userTestTypes;
     /*!
      * Assosiated stream for the annotation matrix input file.
      */

@@ -179,10 +179,10 @@ void ConditionalTest::Input::set(int index, const QVariant& value)
         _base->_missing = value.toString();
         break;
     case TEST:
-        _base->_Testing = value.toString();
+        _base->_userTestsStr = value.toString();
         break;
     case OVERRIDES:
-        _base->_testOverride = value.toString();
+        _base->_userTestTypesStr = value.toString();
         break;
     }
 }
