@@ -207,8 +207,6 @@ void ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterInde
     int k = labels_in_cluster;
     // t total elements were selected.
     int t = cluster_size;
-    // Holds the pvalue
-    double pvalue = 1;
 
     // If our dataset is large, the power to detect the effect
     // size increases, resulting in potentially insignificant
@@ -419,7 +417,7 @@ void ConditionalTest::Serial::regression(CCMatrix::Pair& ccmPair, int clusterInd
 
     // Calculate R^2 and R^2-adjusted
     double R2 = 1 - (SSE / SST);
-    double R2adj = 1.0 - ((double) test_cluster_size - 1) / DFE * (1 - R2);
+    //double R2adj = 1.0 - ((double) test_cluster_size - 1) / DFE * (1 - R2);
 
     // Calculate the p-value. We will do this using the F-test.
     double Fstat = MSM/MSE;
