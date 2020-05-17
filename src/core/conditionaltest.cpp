@@ -178,46 +178,51 @@ void ConditionalTest::initialize()
 
     // only the master process needs to validate arguments
     auto& mpi {Ace::QMPI::instance()};
-
-    if ( !mpi.isMaster() )
+    if ( mpi.isMaster() )
     {
-        return;
+
+        // make sure input data is valid
+        if ( !_ccm )
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("Invalid Argument"));
+            e.setDetails(tr("Did not get valid CCM data argument."));
+            throw e;
+        }
+
+        if ( !_cmx )
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("Invalid Argument"));
+            e.setDetails(tr("Did not get valid CMX data argument."));
+            throw e;
+        }
+
+        if ( !_amx )
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("Invalid Argument"));
+            e.setDetails(tr("Did not get valid AMX data argument."));
+            throw e;
+        }
+
+        if (  !_emx )
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("Invalid Argument"));
+            e.setDetails(tr("Did not get valid EMX data argument."));
+            throw e;
+        }
+
+        // Initialize work block size.
+        if ( _workBlockSize == 0 )
+        {
+            int numWorkers = std::max(1, mpi.size() - 1);
+            _workBlockSize = std::min(32768LL, _cmx->size() / numWorkers);
+        }
     }
 
-    // make sure input data is valid
-    if ( !_ccm )
-    {
-        E_MAKE_EXCEPTION(e);
-        e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid CCM data argument."));
-        throw e;
-    }
-
-    if ( !_cmx )
-    {
-        E_MAKE_EXCEPTION(e);
-        e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid CMX data argument."));
-        throw e;
-    }
-
-    if ( !_amx )
-    {
-        E_MAKE_EXCEPTION(e);
-        e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid AMX data argument."));
-        throw e;
-    }
-
-    if (  !_emx )
-    {
-        E_MAKE_EXCEPTION(e);
-        e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid EMX data argument."));
-        throw e;
-    }
-
-    // open the stream to the coprrect file.
+    // open the stream to the correct file.
     _stream.setDevice(_amx);
 
     // atain number of lines in the file.
@@ -256,14 +261,6 @@ void ConditionalTest::initialize()
     // Order the data read in from the AMX file by the
     // sample order in the EMX file.
     orderLabelsBySample();
-
-    // Initialize work block size.
-    if ( _workBlockSize == 0 )
-    {
-        int numWorkers = std::max(1, mpi.size() - 1);
-
-        _workBlockSize = std::min(32768LL, _cmx->size() / numWorkers);
-    }
 }
 
 

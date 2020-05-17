@@ -60,9 +60,6 @@ public:
      */
     QString testNames();
 
-    void initialize(qint32 &maxClusterSize, qint32 &subHeaderSize);
-
-
 private:
 
     /*!
