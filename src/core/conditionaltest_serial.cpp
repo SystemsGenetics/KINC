@@ -69,10 +69,14 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
         int cluster_size = ccmPair.clusterSize();
         if ( cluster_size == 0 )
         {
+           ccmPair.readNext();
+           cmxPair.readNext();
            continue;
         }
+
         for ( qint32 clusterIndex = 0; clusterIndex < cluster_size; clusterIndex++ )
         {
+
             // resize for room for each test.
             pValues[clusterIndex].resize(_base->_numTests);
             r2[clusterIndex].resize(_base->_numTests);
@@ -82,13 +86,21 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
             int test_index = 0;
             for ( qint32 featureIndex = 0; featureIndex < _base->_features.size(); featureIndex++ )
             {
+                // Get the column data from the annotation matrix for this feature.
+                int num_samples = _base->_data.at(featureIndex).size();
+                QVector<QString> amx_column(num_samples);
+                for ( int j = 0; j < num_samples; j++ )
+                {
+                    amx_column[j] = _base->_data.at(featureIndex).at(j).toString();
+                }
+
                 if ( _base->_testType.at(featureIndex) == QUANTITATIVE ||
                      _base->_testType.at(featureIndex) == ORDINAL )
                 {
                     // For linear regresssion we need a variable that will hold the
                     // pvalue and the r2 value.
                     QVector<double> results(2);
-                    regression(ccmPair, clusterIndex, featureIndex, results);
+                    regression(amx_column, ccmPair, clusterIndex, featureIndex, results);
                     pValues[clusterIndex][test_index] = results.at(0);
                     r2[clusterIndex][test_index] = results.at(1);
                     test_index++;
@@ -99,7 +111,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                     for ( qint32 labelIndex = 1; labelIndex < _base->_features.at(featureIndex).size(); labelIndex++ )
                     {
                         double results;
-                        hypergeom(ccmPair, clusterIndex, featureIndex, labelIndex, results);
+                        hypergeom(amx_column, ccmPair, clusterIndex, featureIndex, labelIndex, results);
                         pValues[clusterIndex][test_index] = results;
                         r2[clusterIndex][test_index] = qQNaN();
                         test_index++;
@@ -152,7 +164,7 @@ bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
  * Run the first hypergeometric
  *
  */
-void ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIndex,
+void ConditionalTest::Serial::hypergeom(QVector<QString> amx_column, CCMatrix::Pair& ccmPair, int clusterIndex,
                                         int featureIndex, int labelIndex, double &result)
 {
     EDEBUG_FUNC(this);
@@ -168,10 +180,8 @@ void ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterInde
     int cluster_size = 0;
     int label_count = 0;
     int labels_in_cluster = 0;
-    QVector<QString> amx_column(num_samples);
     for ( int j = 0; j < num_samples; j++ )
     {
-        amx_column[j] = _base->_data.at(featureIndex).at(j).toString();
 
         // if data is the same as the test label add one to the catagory counter
         if ( test_type == _base->CATEGORICAL && amx_column[j] == test_label )
@@ -302,17 +312,9 @@ void ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterInde
 /*!
  * Performs the regression test for quantitative data.
  */
-void ConditionalTest::Serial::regression(CCMatrix::Pair& ccmPair, int clusterIndex, int featureIndex, QVector<double>& results)
+void ConditionalTest::Serial::regression(QVector<QString> amx_column, CCMatrix::Pair& ccmPair, int clusterIndex, int featureIndex, QVector<double>& results)
 {
     EDEBUG_FUNC(this, &amxInfo, &ccmPair, clusterIndex);
-
-    // Get the column data from the annotation matrix.
-    int num_samples = _base->_data.at(featureIndex).size();
-    QVector<QString> amx_column(num_samples);
-    for ( int j = 0; j < num_samples; j++ )
-    {
-        amx_column[j] = _base->_data.at(featureIndex).at(j).toString();
-    }
 
     // Temp containers.
     QVector<double> labelInfo;
