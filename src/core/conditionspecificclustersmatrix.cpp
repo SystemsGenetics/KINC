@@ -13,14 +13,15 @@
  *
  * @param data All the data in the annotation matrix.
  */
-void CSMatrix::initialize(const EMetaArray& features,
-                          const QVector<EMetaArray>& featureInfo,
-                          const QVector<EMetaArray>& data,
-                          int numTests,
-                          QString testNames,
-                          const EMetaArray& geneNames,
-                          int maxClusterSize,
-                          int subheader)
+void CSMatrix::initialize(
+    const EMetaArray& features,
+    const QVector<EMetaArray>& featureInfo,
+    const QVector<EMetaArray>& data,
+    int numTests,
+    QString testNames,
+    const EMetaArray& geneNames,
+    int maxClusterSize,
+    int subheader)
 {
     EDEBUG_FUNC(this,&features,&featureInfo,&data);
 
@@ -180,7 +181,10 @@ void CSMatrix::readHeader()
  */
 QString CSMatrix::getTestName(int index) const
 {
-    return meta().toObject().at("Test Names").toArray().at(index).toString();
+    return meta()
+        .toObject().at("Test Names")
+        .toArray().at(index)
+        .toString();
 }
 
 
@@ -189,10 +193,12 @@ QString CSMatrix::getTestType(int index) const
 {
     auto names = getTestName(index).split("__");
 
-    return meta().toObject().at("Features")
-                 .toObject().at(names.at(0))
-                 .toObject().at("Test")
-                 .toObject().at("Type").toString();
+    return meta()
+        .toObject().at("Features")
+        .toObject().at(names.at(0))
+        .toObject().at("Test")
+        .toObject().at("Type")
+        .toString();
 }
 
 

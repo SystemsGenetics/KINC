@@ -66,15 +66,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
         QVector<QVector<double>> r2(ccmPair.clusterSize());
 
         // for each cluster in the pair, run the binomial or linear regression tests
-        int cluster_size = ccmPair.clusterSize();
-        if ( cluster_size == 0 )
-        {
-           ccmPair.readNext();
-           cmxPair.readNext();
-           continue;
-        }
-
-        for ( qint32 clusterIndex = 0; clusterIndex < cluster_size; clusterIndex++ )
+        for ( qint32 clusterIndex = 0; clusterIndex < ccmPair.clusterSize(); clusterIndex++ )
         {
 
             // resize for room for each test.
@@ -136,6 +128,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
 }
 
 
+
 /*!
  * Check to see if a matrix is empty.
  *
@@ -160,12 +153,19 @@ bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
     return true;
 }
 
+
+
 /*!
  * Run the first hypergeometric
  *
  */
-void ConditionalTest::Serial::hypergeom(QVector<QString> amx_column, CCMatrix::Pair& ccmPair, int clusterIndex,
-                                        int featureIndex, int labelIndex, double &result)
+void ConditionalTest::Serial::hypergeom(
+    const QVector<QString>& amx_column,
+    const CCMatrix::Pair& ccmPair,
+    int clusterIndex,
+    int featureIndex,
+    int labelIndex,
+    double &result)
 {
     EDEBUG_FUNC(this);
 
@@ -312,7 +312,12 @@ void ConditionalTest::Serial::hypergeom(QVector<QString> amx_column, CCMatrix::P
 /*!
  * Performs the regression test for quantitative data.
  */
-void ConditionalTest::Serial::regression(QVector<QString> amx_column, CCMatrix::Pair& ccmPair, int clusterIndex, int featureIndex, QVector<double>& results)
+void ConditionalTest::Serial::regression(
+    const QVector<QString>& amx_column,
+    const CCMatrix::Pair& ccmPair,
+    int clusterIndex,
+    int featureIndex,
+    QVector<double>& results)
 {
     EDEBUG_FUNC(this, &amxInfo, &ccmPair, clusterIndex);
 

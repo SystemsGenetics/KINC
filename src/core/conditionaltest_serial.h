@@ -20,10 +20,20 @@ public:
     bool isEmpty(QVector<QVector<double>>& matrix);
 
     // Statistical Tests
-    void hypergeom(QVector<QString> amx_column, CCMatrix::Pair& ccmPair, int clusterIndex,
-                   int featureIndex, int labelIndex,  double& results);
-    void regression(QVector<QString> amx_column, CCMatrix::Pair& ccmPair, int clusterIndex,
-                    int featureIndex, QVector<double>& results);
+    void hypergeom(
+        const QVector<QString>& amx_column,
+        const CCMatrix::Pair& ccmPair,
+        int clusterIndex,
+        int featureIndex,
+        int labelIndex,
+        double& results);
+    
+    void regression(
+        const QVector<QString>& amx_column,
+        const CCMatrix::Pair& ccmPair,
+        int clusterIndex,
+        int featureIndex,
+        QVector<double>& results);
 
 private:
     /*!

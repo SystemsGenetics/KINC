@@ -113,26 +113,25 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
 
     for ( auto& pair : resultBlock->pairs() )
     {
-        // copy the values form the pairs to the CSM
-        if ( pair.pValues.size() > 0 )
+        // Create pair objects for the output data file.
+        CSMatrix::Pair csmPair(_out);
+
+        // Iterate through the clusters in the pair.
+        for ( int k = 0; k < pair.pValues.size(); ++k )
         {
-            // Create pair objects for the output data file.
-            CSMatrix::Pair csmPair(_out);
+            // add each cluster into the CSM
+            csmPair.addCluster(1, _numTests);
 
-            // Iterate through the clusters in the pair.
-            for ( int k = 0; k < pair.pValues.size(); ++k )
+            for ( int i = 0; i < pair.pValues.at(k).size(); ++i )
             {
-                // add each cluster into the CSM
-                csmPair.addCluster(1, _numTests);
-
-                for ( int i = 0; i < pair.pValues.at(k).size(); ++i )
-                {
-                    csmPair.at(k, i, "pvalue") = pair.pValues.at(k).at(i);
-                    csmPair.at(k, i, "r2") = pair.r2.at(k).at(i);
-                }
+                csmPair.at(k, i, "pvalue") = pair.pValues.at(k).at(i);
+                csmPair.at(k, i, "r2") = pair.r2.at(k).at(i);
             }
+        }
 
-            // write the info into the CSM
+        // write the info into the CSM
+        if ( csmPair.clusterSize() > 0 )
+        {
             csmPair.write(pair.index);
         }
     }
@@ -367,6 +366,8 @@ void ConditionalTest::setData()
     }
 }
 
+
+
 void ConditionalTest::setFeatures()
 {
     EDEBUG_FUNC(this);
@@ -415,6 +416,8 @@ void ConditionalTest::setNumTests()
         }
     }
 }
+
+
 
 /*!
  * An interface to decide what the test types are going to be for each feature.
@@ -666,6 +669,7 @@ QString ConditionalTest::testNames()
 
     return string;
 }
+
 
 
 /*!
