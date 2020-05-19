@@ -18,7 +18,9 @@
 /*!
  * Create a serial object.
  */
-ConditionalTest::Serial::Serial(ConditionalTest* parent) : EAbstractAnalyticSerial(parent), _base(parent)
+ConditionalTest::Serial::Serial(ConditionalTest* parent) :
+    EAbstractAnalyticSerial(parent),
+    _base(parent)
 {
     EDEBUG_FUNC(this,parent);
 }
@@ -63,31 +65,48 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
         QVector<QVector<double>> pValues(ccmPair.clusterSize());
         QVector<QVector<double>> r2(ccmPair.clusterSize());
 
-        // for each cluster in the pair, run the binomial and linear regression tests
+        // for each cluster in the pair, run the binomial or linear regression tests
         for ( qint32 clusterIndex = 0; clusterIndex < ccmPair.clusterSize(); clusterIndex++ )
         {
+
             // resize for room for each test.
             pValues[clusterIndex].resize(_base->_numTests);
             r2[clusterIndex].resize(_base->_numTests);
 
-            for ( qint32 featureIndex = 0, testIndex = 0; featureIndex < _base->_features.size(); featureIndex++ )
+
+            // Iterate through all of the tests.
+            int test_index = 0;
+            for ( qint32 featureIndex = 0; featureIndex < _base->_features.size(); featureIndex++ )
             {
-                if ( _base->_testType.at(featureIndex) == NONE || _base->_testType.at(featureIndex) == UNKNOWN )
+                // Get the column data from the annotation matrix for this feature.
+                int num_samples = _base->_data.at(featureIndex).size();
+                QVector<QString> amx_column(num_samples);
+                for ( int j = 0; j < num_samples; j++ )
                 {
-                    continue;
+                    amx_column[j] = _base->_data.at(featureIndex).at(j).toString();
                 }
 
-                if ( _base->_testType.at(featureIndex) == QUANTITATIVE || _base->_testType.at(featureIndex) == ORDINAL )
+                if ( _base->_testType.at(featureIndex) == QUANTITATIVE ||
+                     _base->_testType.at(featureIndex) == ORDINAL )
                 {
-                    prepAnxData(_base->_features.at(featureIndex).at(0), featureIndex, _base->_testType.at(featureIndex));
-                    test(ccmPair, clusterIndex, testIndex, featureIndex, 0, pValues, r2);
+                    // For linear regresssion we need a variable that will hold the
+                    // pvalue and the r2 value.
+                    QVector<double> results(2);
+                    regression(amx_column, ccmPair, clusterIndex, featureIndex, results);
+                    pValues[clusterIndex][test_index] = results.at(0);
+                    r2[clusterIndex][test_index] = results.at(1);
+                    test_index++;
                 }
                 else if ( _base->_testType.at(featureIndex) == CATEGORICAL )
                 {
+                    // Loop through each label (category) of the feature.
                     for ( qint32 labelIndex = 1; labelIndex < _base->_features.at(featureIndex).size(); labelIndex++ )
                     {
-                        prepAnxData(_base->_features.at(featureIndex).at(labelIndex), featureIndex, _base->_testType.at(featureIndex));
-                        test(ccmPair, clusterIndex, testIndex, featureIndex, labelIndex, pValues, r2);
+                        double results;
+                        hypergeom(amx_column, ccmPair, clusterIndex, featureIndex, labelIndex, results);
+                        pValues[clusterIndex][test_index] = results;
+                        r2[clusterIndex][test_index] = qQNaN();
+                        test_index++;
                     }
                 }
             }
@@ -106,40 +125,6 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
     }
 
     return std::unique_ptr<EAbstractAnalyticBlock>(resultBlock);
-}
-
-
-
-/*!
- * Prepare the annotation matrix data for testing.
- *
- * @param testLabel The label you are testing on.
- *
- * @param dataIndex The feature the label is part of.
- *
- * @return The number of samples in total of the test label.
- */
-int ConditionalTest::Serial::prepAnxData(QString testLabel, int dataIndex, TestType testType)
-{
-    EDEBUG_FUNC(this, testLabel, dataIndex);
-
-    // get the needed data fro the comparison
-    _catCount = 0;
-    _amxData.resize(_base->_data.at(dataIndex).size());
-
-    // populate array with annotation data
-    for ( int j = 0; j < _base->_data.at(dataIndex).size(); j++ )
-    {
-        _amxData[j] = _base->_data.at(dataIndex).at(j).toString();
-
-        // if data is the same as the test label add one to the catagory counter
-        if ( testType == _base->CATEGORICAL && _amxData[j] == testLabel )
-        {
-            _catCount++;
-        }
-    }
-
-    return _catCount;
 }
 
 
@@ -171,118 +156,48 @@ bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
 
 
 /*!
- * Prepare the cluster category count information.
+ * Run the first hypergeometric
  *
- * @param ccmPair The gene pair that we are counting the labels for.
- *
- * @param clusterIndex The number cluster we are in in the pair
- *
- * @return The number of labels in the given cluster.
  */
-int ConditionalTest::Serial::clusterInfo(CCMatrix::Pair& ccmPair, int clusterIndex, QString label, TestType testType)
+void ConditionalTest::Serial::hypergeom(
+    const QVector<QString>& amx_column,
+    const CCMatrix::Pair& ccmPair,
+    int clusterIndex,
+    int featureIndex,
+    int labelIndex,
+    double &result)
 {
-    _catCount = _clusterSize = _catInCluster = 0;
+    EDEBUG_FUNC(this);
 
-    // Look through all the samples in the mask.
-    for ( qint32 i = 0; i < _base->_emx->sampleSize(); i++ )
+    // Get the test name and the test type.
+    QString test_label = _base->_features.at(featureIndex).at(labelIndex);
+    TestType test_type = _base->_testType.at(featureIndex);
+
+    // We need to get the data for the feature being tested and
+    // count how many entries there are for the label in the
+    // annotation data.
+    int num_samples = _base->_data.at(featureIndex).size();
+    int cluster_size = 0;
+    int label_count = 0;
+    int labels_in_cluster = 0;
+    for ( int j = 0; j < num_samples; j++ )
     {
-        // If the sample label matches with the given label.
-        if ( testType == _base->CATEGORICAL && _amxData.at(i) == label )
+
+        // if data is the same as the test label add one to the catagory counter
+        if ( test_type == _base->CATEGORICAL && amx_column[j] == test_label )
         {
-            _catCount++;
+            label_count++;
         }
-
-        if ( ccmPair.at(clusterIndex, i) == 1 )
+        if ( ccmPair.at(clusterIndex, j) == 1 )
         {
-            _clusterSize++;
-
-            if ( testType == _base->CATEGORICAL && _amxData.at(i) == label )
+            cluster_size++;
+            if ( test_type == _base->CATEGORICAL && amx_column.at(j) == test_label )
             {
-                _catInCluster++;
+                labels_in_cluster++;
             }
         }
     }
 
-    return _catInCluster;
-}
-
-
-
-/*!
- * An interface to choose and run the correct tests on the pair.
- *
- * @param ccmPair The pair thats going to be tested.
- *
- * @param clusterIndex The cluster to test inside the pair, each cluster is
- *       tested.
- *
- * @param testIndex Which test we are currently performing.
- *
- * @param featureIndex The current feature we are testing.
- *
- * @param labelIndex The label in the feature we are running a test on.
- *
- * @param pValues The two dimensional array holding all of the results from the
- *       tests.
- *
- * @return The test that was just conducted.
- */
-int ConditionalTest::Serial::test(
-    CCMatrix::Pair& ccmPair,
-    qint32 clusterIndex,
-    qint32& testIndex,
-    qint32 featureIndex,
-    qint32 labelIndex,
-    QVector<QVector<double>>& pValues,
-    QVector<QVector<double>>& r2)
-{
-    EDEBUG_FUNC(this,&ccmPair, clusterIndex, &testIndex, featureIndex, labelIndex, &pValues);
-
-    // get informatiopn on the mask
-    clusterInfo(ccmPair, clusterIndex, _base->_features.at(featureIndex).at(labelIndex), _base->_testType.at(featureIndex));
-
-    // For linear regresssion we need a variable that will hold the
-    // pvalue and the r2 value.
-    QVector<double> results(2);
-
-    // conduct the correct test based on the type of data
-    switch(_base->_testType.at(featureIndex))
-    {
-        case CATEGORICAL:
-            pValues[clusterIndex][testIndex] = hypergeom(ccmPair, clusterIndex,
-                                                         _base->_features.at(featureIndex).at(labelIndex));
-            r2[clusterIndex][testIndex] = qQNaN();
-            testIndex++;
-            break;
-        case ORDINAL:
-            regression(_amxData, ccmPair, clusterIndex, ORDINAL, results);
-            pValues[clusterIndex][testIndex] = results.at(0);
-            r2[clusterIndex][testIndex] = results.at(1);
-            testIndex++;
-            break;
-        case QUANTITATIVE:
-            regression(_amxData, ccmPair, clusterIndex, QUANTITATIVE, results);
-            pValues[clusterIndex][testIndex] = results.at(0);
-            r2[clusterIndex][testIndex] = results.at(1);
-            testIndex++;
-            break;
-        default:
-            break;
-    }
-
-    return _base->_testType.at(featureIndex);
-}
-
-
-
-/*!
- * Run the first binomial test for given data.
- *
- * @return Pvalue corrosponding to the test.
- */
-double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIndex, QString test_label)
-{
-    EDEBUG_FUNC(this);
 
     // We use the hypergeometric distribution because the samples are
     // selected from the population for membership in the cluster without
@@ -295,15 +210,13 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
     int sampleSize =  _base->_emx->sampleSize();
 
     // Population contains n1 elements of Type 1.
-    int n1 = _catCount;
+    int n1 = label_count;
     // Population contains n2 elements of Type 2.
-    int n2 = sampleSize - _catCount;
+    int n2 = sampleSize - label_count;
     // k elements of Type 1 were selected.
-    int k = _catInCluster;
+    int k = labels_in_cluster;
     // t total elements were selected.
-    int t = _clusterSize;
-    // Holds the pvalue
-    double pvalue = 1;
+    int t = cluster_size;
 
     // If our dataset is large, the power to detect the effect
     // size increases, resulting in potentially insignificant
@@ -354,7 +267,7 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
             // Now count the number of randomly selected items from the cluster.
             for ( int j = 0; j < bs_t; j++ )
             {
-                if ( ccmPair.at(clusterIndex, chosen[j]) == 1 && _amxData.at(chosen[j]) == test_label )
+                if ( ccmPair.at(clusterIndex, chosen[j]) == 1 && amx_column.at(chosen[j]) == test_label )
                 {
                     ns = ns + 1;
                 }
@@ -377,8 +290,8 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
         }
 
         // Now reset the sample size and the proporiton of success.
-        pvalue = gsl_cdf_hypergeometric_Q(jkap, n1, n2, bs_t);
-        return pvalue;
+        result = gsl_cdf_hypergeometric_Q(jkap, n1, n2, bs_t);
+        return;
     }
 
     // Since we want to test P(X >= k) not P(X > k) we should
@@ -390,25 +303,21 @@ double ConditionalTest::Serial::hypergeom(CCMatrix::Pair& ccmPair, int clusterIn
     }
 
     // The gsl_cdf_hypergeometric_Q function uses the upper-tail of the CDF.
-    pvalue = gsl_cdf_hypergeometric_Q(k, n1, n2, t);
-    return pvalue;
+    result = gsl_cdf_hypergeometric_Q(k, n1, n2, t);
+    return;
 }
 
 
 
 /*!
- * Run the regression test for given data, the regression line is genex vs geney vs label data.
- *
- * @param amxInfo Annotation matrix information.
- *
- * @param ccmPair Cluster matrix pair.
- *
- * @param clusterIndex The index of the cluster, used to get the right info
- *       from the cluster pair
- *
- * @return Pvalue corrosponding to the test.
+ * Performs the regression test for quantitative data.
  */
-void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pair& ccmPair, int clusterIndex, TestType testType, QVector<double>& results)
+void ConditionalTest::Serial::regression(
+    const QVector<QString>& amx_column,
+    const CCMatrix::Pair& ccmPair,
+    int clusterIndex,
+    int featureIndex,
+    QVector<double>& results)
 {
     EDEBUG_FUNC(this, &amxInfo, &ccmPair, clusterIndex);
 
@@ -429,7 +338,7 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
         // If the sample label matches with the given label.
         if ( ccmPair.at(clusterIndex, i) == 1 )
         {
-            if (QString::compare(amxInfo.at(i), _base->_missing) == 0) {
+            if (QString::compare(amx_column.at(i), _base->_missing) == 0) {
                 continue;
             }
             test_cluster_size++;
@@ -464,7 +373,7 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
         if ( ccmPair.at(clusterIndex, i) == 1 )
         {
             // Skip samples with a missing value in the annotation matrix
-            if (QString::compare(amxInfo.at(i), _base->_missing) == 0) {
+            if (QString::compare(amx_column.at(i), _base->_missing) == 0) {
                 continue;
             }
 
@@ -479,7 +388,7 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
             gsl_matrix_set(X, j, 1, g1);
             gsl_matrix_set(X, j, 2, g2);
             gsl_matrix_set(X, j, 3, g1*g2);
-            gsl_vector_set(Y, j, amxInfo.at(i).toFloat());
+            gsl_vector_set(Y, j, amx_column.at(i).toFloat());
 
             j++;
         }
@@ -515,7 +424,7 @@ void ConditionalTest::Serial::regression(QVector<QString> &amxInfo, CCMatrix::Pa
 
     // Calculate R^2 and R^2-adjusted
     double R2 = 1 - (SSE / SST);
-    double R2adj = 1.0 - ((double) test_cluster_size - 1) / DFE * (1 - R2);
+    //double R2adj = 1.0 - ((double) test_cluster_size - 1) / DFE * (1 - R2);
 
     // Calculate the p-value. We will do this using the F-test.
     double Fstat = MSM/MSE;

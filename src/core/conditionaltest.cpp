@@ -113,26 +113,25 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
 
     for ( auto& pair : resultBlock->pairs() )
     {
-        // copy the values form the pairs to the CSM
-        if ( pair.pValues.size() > 0 )
+        // Create pair objects for the output data file.
+        CSMatrix::Pair csmPair(_out);
+
+        // Iterate through the clusters in the pair.
+        for ( int k = 0; k < pair.pValues.size(); ++k )
         {
-            // Create pair objects for the output data file.
-            CSMatrix::Pair csmPair(_out);
+            // add each cluster into the CSM
+            csmPair.addCluster(1, _numTests);
 
-            // Iterate through the clusters in the pair.
-            for ( int k = 0; k < pair.pValues.size(); ++k )
+            for ( int i = 0; i < pair.pValues.at(k).size(); ++i )
             {
-                // add each cluster into the CSM
-                csmPair.addCluster(1, _numTests);
-
-                for ( int i = 0; i < pair.pValues.at(k).size(); ++i )
-                {
-                    csmPair.at(k, i, "pvalue") = pair.pValues.at(k).at(i);
-                    csmPair.at(k, i, "r2") = pair.r2.at(k).at(i);
-                }
+                csmPair.at(k, i, "pvalue") = pair.pValues.at(k).at(i);
+                csmPair.at(k, i, "r2") = pair.r2.at(k).at(i);
             }
+        }
 
-            // write the info into the CSM
+        // write the info into the CSM
+        if ( csmPair.clusterSize() > 0 )
+        {
             csmPair.write(pair.index);
         }
     }
@@ -178,46 +177,51 @@ void ConditionalTest::initialize()
 
     // only the master process needs to validate arguments
     auto& mpi {Ace::QMPI::instance()};
-
-    if ( !mpi.isMaster() )
+    if ( mpi.isMaster() )
     {
-        return;
+
+        // make sure input data is valid
+        if ( !_ccm )
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("Invalid Argument"));
+            e.setDetails(tr("Did not get valid CCM data argument."));
+            throw e;
+        }
+
+        if ( !_cmx )
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("Invalid Argument"));
+            e.setDetails(tr("Did not get valid CMX data argument."));
+            throw e;
+        }
+
+        if ( !_amx )
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("Invalid Argument"));
+            e.setDetails(tr("Did not get valid AMX data argument."));
+            throw e;
+        }
+
+        if (  !_emx )
+        {
+            E_MAKE_EXCEPTION(e);
+            e.setTitle(tr("Invalid Argument"));
+            e.setDetails(tr("Did not get valid EMX data argument."));
+            throw e;
+        }
+
+        // Initialize work block size.
+        if ( _workBlockSize == 0 )
+        {
+            int numWorkers = std::max(1, mpi.size() - 1);
+            _workBlockSize = std::min(32768LL, _cmx->size() / numWorkers);
+        }
     }
 
-    // make sure input data is valid
-    if ( !_ccm )
-    {
-        E_MAKE_EXCEPTION(e);
-        e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid CCM data argument."));
-        throw e;
-    }
-
-    if ( !_cmx )
-    {
-        E_MAKE_EXCEPTION(e);
-        e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid CMX data argument."));
-        throw e;
-    }
-
-    if ( !_amx )
-    {
-        E_MAKE_EXCEPTION(e);
-        e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid AMX data argument."));
-        throw e;
-    }
-
-    if (  !_emx )
-    {
-        E_MAKE_EXCEPTION(e);
-        e.setTitle(tr("Invalid Argument"));
-        e.setDetails(tr("Did not get valid EMX data argument."));
-        throw e;
-    }
-
-    // open the stream to the coprrect file.
+    // open the stream to the correct file.
     _stream.setDevice(_amx);
 
     // atain number of lines in the file.
@@ -239,24 +243,23 @@ void ConditionalTest::initialize()
         throw e;
     }
 
-    // read in the annotation matrix, as it holds the details on what we need to do for our tests
-    Test();
-    override();
-    readInAMX(_features, _data, _testType);
+    // Parse the user specified tests and test types. The test types provided by
+    // the user will override the defaults.
+    setUserTests();
+    setUserTestTypes();
 
-    rearrangeSamples();
+    // Read in the annotation matrix.
+    // Set the stream to the right file.
+    _stream.setDevice(_amx);
+    _stream.seek(0);
+    setFeatures();
+    setTestTypes();
+    setData();
+    setNumTests();
 
-    // initialize work block size
-    if ( _workBlockSize == 0 )
-    {
-        int numWorkers = std::max(1, mpi.size() - 1);
-
-        _workBlockSize = std::min(32768LL, _cmx->size() / numWorkers);
-    }
-
-    // CSM specific
-    qint32 maxCluster = 64, subHeadersize = 12;
-    initialize(maxCluster,subHeadersize,_features,_testType,_data);
+    // Order the data read in from the AMX file by the
+    // sample order in the EMX file.
+    orderLabelsBySample();
 }
 
 
@@ -274,95 +277,72 @@ void ConditionalTest::initializeOutputs()
         e.setTitle(tr("Invalid Argument"));
         e.setDetails(tr("The required output data object was not set."));
         throw e;
+    }    
+
+    // Needed by the CSM specific initializer
+    EMetaArray features;
+    QVector<EMetaArray> featureInfo;
+    QVector<EMetaArray> Data;
+    Data.resize(_data.size());
+    featureInfo.resize(_features.size());
+
+    // Meta Data for Features.
+    for ( int i = 0; i < _features.size(); i++ )
+    {
+        features.append(_features.at(i).at(0));
     }
 
-    _out->setTestCount(_numTests);
+    // Meta Data for the test types of the catagories.
+    for ( int i = 0; i < featureInfo.size(); i++ )
+    {
+        switch(_testType.at(i))
+        {
+            case CATEGORICAL : featureInfo[i].append(tr("Categorical"));
+                break;
+            case ORDINAL : featureInfo[i].append(tr("Ordinal"));
+                break;
+            case QUANTITATIVE : featureInfo[i].append(tr("Quantitative"));
+                break;
+            case NONE : featureInfo[i].append(tr("None"));
+                break;
+            default : featureInfo[i].append(tr("Unknown"));
+                break;
+        }
+    }
+
+    // Meta Data for the sub categories.
+    for ( int i = 0; i < _features.size(); i++ )
+    {
+        for ( int j = 0; j < _features.at(i).size(); j++ )
+        {
+            featureInfo[i].append(_features.at(i).at(j));
+        }
+    }
+
+    // Meta Data for all the data in the annotation matrix.
+    for ( int i = 0; i < _data.size(); i++ )
+    {
+        for ( int j = 0; j < _data.at(i).size(); j++ )
+        {
+            Data[i].append(_data.at(i).at(j).toString());
+        }
+    }
+
+    // inserts the Meta Data into the CSM Object stored on the disk.
+    qint32 maxCluster = 64, subHeaders = 12;
+    _out->initialize(features, featureInfo, Data, _numTests, testNames(),
+                     _emx->geneNames(), maxCluster, subHeaders);
 }
 
 
 
-/*!
- * An interface to read in the contents of an annotation matrix and produces
- * useful information from it.
- *
- * @param amxdata An initially empty array, stores the features and labels of
- *       the annotation matrix.
- *
- * @param data An initially empty array, stores all of the data corrosponding
- *       to the features in the annotation matrix.
- *
- * @param dataTestType The type of test we will run on the data under a
- *       particular feature.
- */
-void ConditionalTest::readInAMX(
-    QVector<QVector<QString>>& amxdata,
-    QVector<QVector<QVariant>>& data,
-    QVector<TestType>& dataTestType)
+void ConditionalTest::setData()
 {
-    EDEBUG_FUNC(this,&amxdata,&data,&dataTestType);
+    EDEBUG_FUNC(this);
 
-    // set the stream to the right file
-    _stream.setDevice(_amx);
-    _stream.seek(0);
+    QString line;
 
-    // read a line form the input file
-    QString line = _stream.readLine();
-
-    // the file can be a csv or a tab delimited AMX
-    // default is tab diliniated
-    if ( _delimiter == "tab" )
-    {
-        _delimiter = "\t";
-    }
-
-    // splits the file along the commas or tabs depending on what it has inside
-    auto words = line.split(_delimiter, QString::SkipEmptyParts, Qt::CaseInsensitive);
-
-    // If a field never changes, we don't have to store copies of that data.
-    QVector<int> changed;
-
-    // put the column names into the amxdata array, that will be later put into the meta data
-    for ( int i = 0; i < words.size(); i++ )
-    {
-        amxdata.append(QVector<QString>());
-        amxdata[i].append(words[i]);
-        dataTestType.append(UNKNOWN);
-        data.append(QVector<QVariant>());
-        changed.append(1);
-    }
-
-    configureTests(dataTestType);
-
-    // we need to change the test types here if the user has overridden them
-    for ( int i = 0; i < _override.size(); i++ )
-    {
-        for ( int j = 0; j < dataTestType.size(); j++ )
-        {
-            if ( amxdata.at(j).at(0) == _override.at(i).at(0) )
-            {
-                if ( QString::compare(_override.at(i).at(1), "CATEGORICAL", Qt::CaseInsensitive) == 0 )
-                {
-                    dataTestType[j] = CATEGORICAL;
-                }
-                else if ( QString::compare(_override.at(i).at(1), "ORDINAL", Qt::CaseInsensitive) == 0 )
-                {
-                    dataTestType[j] = ORDINAL;
-                }
-                else if ( QString::compare(_override.at(i).at(1), "QUANTITATIVE", Qt::CaseInsensitive) == 0 )
-                {
-                    dataTestType[j] = QUANTITATIVE;
-                }
-                else {
-                    E_MAKE_EXCEPTION(e);
-                    e.setTitle(tr("Unknown override type in the --feat_type argument."));
-                    e.setDetails(tr("Unknown override type: %1.  Valid choices are: %2")
-                        .arg(_override.at(i).at(1))
-                        .arg("categorical, quantitative, ordinal"));
-                    throw e;
-                }
-            }
-        }
-    }
+    _data.resize(_features.size());
 
     for ( int i = 1; i < _amxNumLines; i++ )
     {
@@ -373,33 +353,66 @@ void ConditionalTest::readInAMX(
         // add the data to our arrays
         for ( int j = 0; j < words2.size(); j++ )
         {
-            data[j].append(words2[j]);
-            if ( dataTestType.at(j) == CATEGORICAL )
+            _data[j].append(words2[j]);
+            if ( _testType.at(j) == CATEGORICAL )
             {
                 // this will add treatments types, leaf types, and any other types into the meta data
-                if ( !amxdata.at(j).contains(words2[j]) )
+                if ( !_features.at(j).contains(words2[j]) )
                 {
-                    amxdata[j].append(words2[j]);
-                    changed[j] = 0;
+                    _features[j].append(words2[j]);
                 }
             }
         }
     }
+}
 
-    // Add in labels the user has chosen to test.
-    for ( int j = 0; j < amxdata.size(); j++ )
+
+
+void ConditionalTest::setFeatures()
+{
+    EDEBUG_FUNC(this);
+
+    // Read the header line from the input file.
+    QString line = _stream.readLine();
+
+    // The file can be a csv or a tab delimited AMX. The default is tab delimited.
+    if ( _delimiter == "tab" )
     {
-        int check = 0;
-        for ( int k = 0; k < _Test.size(); k++ )
+        _delimiter = "\t";
+    }
+
+    // Splits the line using the delimiter.
+    auto headers = line.split(_delimiter, QString::SkipEmptyParts, Qt::CaseInsensitive);
+
+
+    // Put the column names from the header into the amxdata array.
+    for ( int i = 0; i < headers.size(); i++ )
+    {
+        _features.append(QVector<QString>());
+        _features[i].append(headers[i]);
+    }
+}
+
+
+
+void ConditionalTest::setNumTests()
+{
+    EDEBUG_FUNC(this);
+    _numTests = 0;
+    // Set the feature information in the meta data
+    for ( int i = 0; i < _features.size(); i++ )
+    {
+        if ( _testType[i] == CATEGORICAL )
         {
-            if ( amxdata.at(j).at(0) == _Test.at(k) )
-            {
-                check = 1;
-            }
+            _numTests += _features[i].size() - 1;
         }
-        if ( check == 0 )
+        // Ordinal and Quantitative
+        else
         {
-            dataTestType[j] = NONE;
+            if ( _testType[i] != NONE && _testType[i] != UNKNOWN )
+            {
+                ++_numTests;
+            }
         }
     }
 }
@@ -411,21 +424,21 @@ void ConditionalTest::readInAMX(
  *
  * @param dataTestType An array storing the test information for each feature.
  */
-void ConditionalTest::configureTests(QVector<TestType>& dataTestType)
+void ConditionalTest::setTestTypes()
 {
-    EDEBUG_FUNC(this,&dataTestType);
-
-    // Counts here for an aproximation for what test type it should be.
-    QVector<QVector<qint32>> counts;
-    counts.resize(dataTestType.size());
-
-    for ( int i = 0 ; i < counts.size(); i++ )
-    {
-        counts[i].resize(4);
-    }
+    EDEBUG_FUNC(this);
 
     QString line;
     int num_lines = 0;
+
+    // Counts here for an aproximation for what test type it should be.
+    QVector<QVector<qint32>> counts(_features.size());
+
+    _testType.resize(_features.size());
+    for (int i = 0; i < _features.size(); i++) {
+        _testType[i] = UNKNOWN;
+        counts[i].resize(4);
+    }
 
     while(!_stream.atEnd())
     {
@@ -474,26 +487,76 @@ void ConditionalTest::configureTests(QVector<TestType>& dataTestType)
         // column ordinal.
         if ( counts.at(i).at(ORDINAL) + counts[i][UNKNOWN] == num_lines )
         {
-            dataTestType[i] = ORDINAL;
+            _testType[i] = ORDINAL;
         }
         // If all of the values are quantitative or ordinal (integer) or missing
         // then we'll consider this column quantitative.
         else if ( counts.at(i).at(QUANTITATIVE) + counts.at(i).at(ORDINAL) + counts[i][UNKNOWN] == num_lines )
         {
-            dataTestType[i] = QUANTITATIVE;
+            _testType[i] = QUANTITATIVE;
         }
         // If all of the values are strings then it's categorical
         else if ( counts.at(i).at(CATEGORICAL) + counts[i][UNKNOWN]== num_lines )
         {
-            dataTestType[i] = CATEGORICAL;
+            _testType[i] = CATEGORICAL;
         }
         // If we're here then it means we have some combination of strings and
         // numbers. This column cannot be considered.
         else {
-            dataTestType[i] = NONE;
+            _testType[i] = NONE;
         }
     }
 
+    // We need to change the test types here if the user has overridden them.
+    for ( int i = 0; i < _userTestTypes.size(); i++ )
+    {
+        for ( int j = 0; j < _testType.size(); j++ )
+        {
+            if ( _features.at(j).at(0) == _userTestTypes.at(i).at(0) )
+            {
+                if ( QString::compare(_userTestTypes.at(i).at(1), "CATEGORICAL", Qt::CaseInsensitive) == 0 )
+                {
+                    _testType[j] = CATEGORICAL;
+                }
+                else if ( QString::compare(_userTestTypes.at(i).at(1), "ORDINAL", Qt::CaseInsensitive) == 0 )
+                {
+                    _testType[j] = ORDINAL;
+                }
+                else if ( QString::compare(_userTestTypes.at(i).at(1), "QUANTITATIVE", Qt::CaseInsensitive) == 0 )
+                {
+                    _testType[j] = QUANTITATIVE;
+                }
+                else {
+                    E_MAKE_EXCEPTION(e);
+                    e.setTitle(tr("Unknown override type in the --feat_type argument."));
+                    e.setDetails(tr("Unknown override type: %1.  Valid choices are: %2")
+                        .arg(_userTestTypes.at(i).at(1))
+                        .arg("categorical, quantitative, ordinal"));
+                    throw e;
+                }
+            }
+        }
+    }
+
+    // If the user has specified tests that need to be
+    // run then set all others to NONE.
+    for ( int j = 0; j < _features.size(); j++ )
+    {
+        int check = 0;
+        for ( int k = 0; k < _userTests.size(); k++ )
+        {
+            if ( _features.at(j).at(0) == _userTests.at(k) )
+            {
+                check = 1;
+            }
+        }
+        if ( check == 0 )
+        {
+            _testType[j] = NONE;
+        }
+    }
+
+    // Reset the file back to the beginning for reparsing.
     _stream.seek(0);
     _stream.readLine();
 }
@@ -535,14 +598,14 @@ int ConditionalTest::max(QVector<qint32> &counts) const
 /*!
  * An interface to sperate the test out.
  */
-void ConditionalTest::Test()
+void ConditionalTest::setUserTests()
 {
     EDEBUG_FUNC(this);
 
     // make sure input data is valid
-    _Test = _Testing.split(",", QString::SkipEmptyParts, Qt::CaseInsensitive).toVector();
+    _userTests = _userTestsStr.split(",", QString::SkipEmptyParts, Qt::CaseInsensitive).toVector();
 
-    if ( _Test.isEmpty() )
+    if ( _userTests.isEmpty() )
     {
         E_MAKE_EXCEPTION(e);
         e.setTitle(tr("Invalid Argument"));
@@ -556,21 +619,21 @@ void ConditionalTest::Test()
 /*!
  * An interface to override testing types.
  */
-void ConditionalTest::override()
+void ConditionalTest::setUserTestTypes()
 {
     EDEBUG_FUNC(this);
 
-    auto words = _testOverride.split(",", QString::SkipEmptyParts, Qt::CaseInsensitive).toVector();
+    auto words = _userTestTypesStr.split(",", QString::SkipEmptyParts, Qt::CaseInsensitive).toVector();
 
     for ( int i = 0; i < words.size(); i++ )
     {
-        _override.append(QVector<QString>());
+        _userTestTypes.append(QVector<QString>());
 
         auto word = words.at(i).split(":");
 
         for ( auto item : word )
         {
-            _override[i].append(item);
+            _userTestTypes[i].append(item);
         }
     }
 }
@@ -610,89 +673,10 @@ QString ConditionalTest::testNames()
 
 
 /*!
- * An interface to initialize the metadata corrosponding to the data retrived
- * from the annotation matrix.
- *
- * @param maxClusterSize The maximum number of clusters that can be stored in
- *       a pair.
- *
- * @param subHeaderSize The size of the subheader of the matrix, in this case
- *       it only stores sample size.
- *
- * @param amxData Stores feature names from the annotation array.
- *
- * @param testtype The type of test that was ran on the features.
- *
- * @param genenames Names of all the genes from the gene expression matrix.
- *
- * @param data All of the data corrosponding to the features from the annotation
- *       array.
- */
-void ConditionalTest::initialize(qint32 &maxClusterSize, qint32 &subHeaderSize,QVector<QVector<QString>> &amxData, QVector<TestType> &testType, QVector<QVector<QVariant>> &data)
-{
-    EDEBUG_FUNC(this,&maxClusterSize,&subHeaderSize,&amxData,&testType,&data);
-
-    // needed by the CSM specific initializer
-    EMetaArray Features;
-    QVector<EMetaArray> featureInfo;
-    QVector<EMetaArray> Data;
-    Data.resize(data.size());
-    featureInfo.resize(amxData.size());
-
-    // Meta Data for Features.
-    for ( int i = 0; i < amxData.size(); i++ )
-    {
-        Features.append(amxData.at(i).at(0));
-    }
-
-    // Meta Data for the test types of the catagories.
-    for ( int i = 0; i < featureInfo.size(); i++ )
-    {
-        switch(testType.at(i))
-        {
-        case CATEGORICAL : featureInfo[i].append(tr("Categorical"));
-            break;
-        case ORDINAL : featureInfo[i].append(tr("Ordinal"));
-            break;
-        case QUANTITATIVE : featureInfo[i].append(tr("Quantitative"));
-            break;
-        case NONE : featureInfo[i].append(tr("None"));
-            break;
-        default : featureInfo[i].append(tr("Unknown"));
-            break;
-        }
-    }
-
-    // Meta Data for the sub catagories.
-    for ( int i = 0; i < amxData.size(); i++ )
-    {
-        for ( int j = 0; j < amxData.at(i).size(); j++ )
-        {
-            featureInfo[i].append(amxData.at(i).at(j));
-        }
-    }
-
-    // Meta Data for all the data in the annotation matrix.
-    for ( int i = 0; i < data.size(); i++ )
-    {
-        for ( int j = 0; j < data.at(i).size(); j++ )
-        {
-            Data[i].append(data.at(i).at(j).toString());
-        }
-    }
-
-    // inserts the Meta Data into the CSM Object stored on the disk.
-    _out->initialize(Features, featureInfo, Data, _numTests, testNames());
-    _out->initialize(_emx->geneNames(), maxClusterSize, subHeaderSize);
-}
-
-
-
-/*!
  * An interface to move the amx data around so that the emx samples and the
  * annotation matrix samples are in the same order
  */
-void ConditionalTest::rearrangeSamples()
+void ConditionalTest::orderLabelsBySample()
 {
     int sampleIndex = 0;
     int startIndex = 0;
