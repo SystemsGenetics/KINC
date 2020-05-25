@@ -1,5 +1,8 @@
 #include "extract.h"
 #include "extract_input.h"
+#include "extract_networkwriter.h"
+
+
 
 using namespace std;
 

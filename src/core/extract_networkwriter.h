@@ -1,14 +1,15 @@
-#ifndef NETWORKWRITER_H
-#define NETWORKWRITER_H
+#ifndef EXTRACT_NETWORKWRITER_H
+#define EXTRACT_NETWORKWRITER_H
 #include <QObject>
 #include <QTextStream>
 #include "ccmatrix_pair.h"
 #include "ccmatrix.h"
+#include "conditionspecificclustersmatrix.h"
+#include "conditionspecificclustersmatrix_pair.h"
 #include "correlationmatrix_pair.h"
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
-#include "conditionspecificclustersmatrix.h"
-#include "conditionspecificclustersmatrix_pair.h"
+#include "extract.h"
 
 
 
@@ -18,7 +19,7 @@
  * Child classes need only implement the initialize(), writeEdge() and
  * finish() functions.
  */
-class NetworkWriter
+class Extract::NetworkWriter
 {
 public:
     NetworkWriter(
@@ -81,7 +82,76 @@ protected:
 
 
 
-class GMLNetworkWriter: public NetworkWriter
+/**
+ * The full text network writer includes data from the CCM and CMX, and it
+ * writes each conditional test from the CSM in separate columns.
+ */
+class Extract::FullNetworkWriter : public Extract::NetworkWriter
+{
+public:
+    FullNetworkWriter(
+        ExpressionMatrix* emx,
+        CorrelationMatrix* cmx,
+        CCMatrix* ccm,
+        CSMatrix* csm,
+        QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
+public:
+    void initialize();
+    void writeEdgeCluster(int clusterIndex, QVector<QString> passed);
+    void finish() {}
+};
+
+
+
+/**
+ * The tidy text network writer includes data from the CCM and CMX, and it
+ * writes a single column for the conditional tests from the CSM. Edges that
+ * are significant for multiple tests are duplicated for each test.
+ */
+class Extract::TidyNetworkWriter : public Extract::NetworkWriter
+{
+public:
+    TidyNetworkWriter(
+        ExpressionMatrix* emx,
+        CorrelationMatrix* cmx,
+        CCMatrix* ccm,
+        CSMatrix* csm,
+        QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
+public:
+    void initialize();
+    void writeEdgeCluster(int clusterIndex, QVector<QString> passed);
+    void finish() {}
+};
+
+
+
+/**
+ * The minimal text network writer includes data from the CMX only, it does
+ * not include sample strings from the CCM or conditional tests from the CSM.
+ */
+class Extract::MinimalNetworkWriter : public Extract::NetworkWriter
+{
+public:
+    MinimalNetworkWriter(
+        ExpressionMatrix* emx,
+        CorrelationMatrix* cmx,
+        CCMatrix* ccm,
+        CSMatrix* csm,
+        QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
+public:
+    void initialize();
+    void writeEdgeCluster(int clusterIndex, QVector<QString> passed);
+    void finish() {}
+};
+
+
+
+/**
+ * The GraphML network writer includes all information from the CMX, CCM, and
+ * CSM in GraphML format. The conditional tests are written in the same manner
+ * as the full text network writer.
+ */
+class Extract::GMLNetworkWriter : public Extract::NetworkWriter
 {
 private:
     /*!
@@ -103,55 +173,4 @@ public:
 
 
 
-class FullNetworkWriter: public NetworkWriter
-{
-public:
-    FullNetworkWriter(
-        ExpressionMatrix* emx,
-        CorrelationMatrix* cmx,
-        CCMatrix* ccm,
-        CSMatrix* csm,
-        QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
-public:
-    void initialize();
-    void writeEdgeCluster(int clusterIndex, QVector<QString> passed);
-    void finish() {}
-};
-
-
-
-class TidyNetworkWriter: public NetworkWriter
-{
-public:
-    TidyNetworkWriter(
-        ExpressionMatrix* emx,
-        CorrelationMatrix* cmx,
-        CCMatrix* ccm,
-        CSMatrix* csm,
-        QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
-public:
-    void initialize();
-    void writeEdgeCluster(int clusterIndex, QVector<QString> passed);
-    void finish() {}
-};
-
-
-
-class MinimalNetworkWriter: public NetworkWriter
-{
-public:
-    MinimalNetworkWriter(
-        ExpressionMatrix* emx,
-        CorrelationMatrix* cmx,
-        CCMatrix* ccm,
-        CSMatrix* csm,
-        QFile* output): NetworkWriter(emx, cmx, ccm, csm, output) {}
-public:
-    void initialize();
-    void writeEdgeCluster(int clusterIndex, QVector<QString> passed);
-    void finish() {}
-};
-
-
-
-#endif // NETWORKWRITER_H
+#endif // EXTRACT_NETWORKWRITER_H

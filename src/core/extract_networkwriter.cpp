@@ -1,6 +1,6 @@
-#include "networkwriter.h"
-#include "expressionmatrix_gene.h"
 #include <math.h>
+#include "extract_networkwriter.h"
+#include "expressionmatrix_gene.h"
 
 
 
@@ -13,7 +13,7 @@
  * @param csm  The condition-specific matrix.
  * @param output  The output network file.
  */
-NetworkWriter::NetworkWriter(
+Extract::NetworkWriter::NetworkWriter(
     ExpressionMatrix* emx,
     CorrelationMatrix* cmx,
     CCMatrix* ccm,
@@ -40,7 +40,7 @@ NetworkWriter::NetworkWriter(
 /*!
  * Read the next gene pair and return the cluster size.
  */
-int NetworkWriter::readNext()
+int Extract::NetworkWriter::readNext()
 {
     EDEBUG_FUNC(this,cmx_index);
 
@@ -63,7 +63,7 @@ int NetworkWriter::readNext()
  * Returns the name of the first gene in a gene pair. The gene pair must first
  * be set using the setPair() function.
  */
-QString NetworkWriter::getEdgeGene1() const
+QString Extract::NetworkWriter::getEdgeGene1() const
 {
     EDEBUG_FUNC(this);
 
@@ -76,7 +76,7 @@ QString NetworkWriter::getEdgeGene1() const
  * Returns the name of the second gene in a gene pair. The gene pair must first
  * be set using the setPair() function.
  */
-QString NetworkWriter::getEdgeGene2() const
+QString Extract::NetworkWriter::getEdgeGene2() const
 {
     EDEBUG_FUNC(this);
 
@@ -92,7 +92,7 @@ QString NetworkWriter::getEdgeGene2() const
  *
  * @param clusterIndex  The index of the cluster in the gene pair.
  */
-float NetworkWriter::getEdgeSimilarity(int clusterIndex) const
+float Extract::NetworkWriter::getEdgeSimilarity(int clusterIndex) const
 {
     EDEBUG_FUNC(this,clusterIndex);
 
@@ -111,7 +111,7 @@ float NetworkWriter::getEdgeSimilarity(int clusterIndex) const
  * \return  The sample string of characters indicating the role
  * of the sample in the cluster.
  */
-QString NetworkWriter::getEdgeSampleString(int clusterIndex) const
+QString Extract::NetworkWriter::getEdgeSampleString(int clusterIndex) const
 {
     EDEBUG_FUNC(this,clusterIndex);
 
@@ -172,7 +172,7 @@ QString NetworkWriter::getEdgeSampleString(int clusterIndex) const
  *
  * @param sampleMask  The sample string as returned by getEdgeSampleString().
  */
-int NetworkWriter::getEdgeNumSamples(QString sampleMask) const
+int Extract::NetworkWriter::getEdgeNumSamples(QString sampleMask) const
 {
     EDEBUG_FUNC(this,clusterIndex);
 
@@ -189,7 +189,7 @@ int NetworkWriter::getEdgeNumSamples(QString sampleMask) const
  * a child NetworkWriter implementation if the test data will be written
  * in the output file.
  */
-void NetworkWriter::setTestNames()
+void Extract::NetworkWriter::setTestNames()
 {
     EDEBUG_FUNC(this);
 
@@ -226,7 +226,7 @@ void NetworkWriter::setTestNames()
  * @param clusterIndex  The index of the cluster in the current gene pair.
  * @param fullTestName The name of the test to retrieve the value for.
  */
-float NetworkWriter::getEdgeTestValue(int clusterIndex, const QString& fullTestName) const
+float Extract::NetworkWriter::getEdgeTestValue(int clusterIndex, const QString& fullTestName) const
 {
     EDEBUG_FUNC(this,clusterIndex,fullTestName);
 
@@ -253,7 +253,7 @@ float NetworkWriter::getEdgeTestValue(int clusterIndex, const QString& fullTestN
 /*!
  * Checks to make sure that the output stream is ok.
  */
-void NetworkWriter::checkStatus() const
+void Extract::NetworkWriter::checkStatus() const
 {
     if ( _stream.status() != QTextStream::Ok )
     {
@@ -270,7 +270,7 @@ void NetworkWriter::checkStatus() const
  * The initialization function for the full text output. This
  * function adds the tab-delimited header to the output file.
  */
-void FullNetworkWriter::initialize()
+void Extract::FullNetworkWriter::initialize()
 {
     EDEBUG_FUNC(this);
 
@@ -306,7 +306,7 @@ void FullNetworkWriter::initialize()
  * @param clusterIndex The index of cluster in the current gene pair.
  * @param passed The set of tests that passed. (unused)
  */
-void FullNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString>)
+void Extract::FullNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString>)
 {
     EDEBUG_FUNC(this,clusterIndex);
 
@@ -344,7 +344,7 @@ void FullNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString>)
  * The initialization function for the full text output. This
  * function adds the tab-delimited header to the output file.
  */
-void TidyNetworkWriter::initialize()
+void Extract::TidyNetworkWriter::initialize()
 {
     EDEBUG_FUNC(this);
 
@@ -382,7 +382,7 @@ void TidyNetworkWriter::initialize()
  * @param clusterIndex The index of cluster in the current gene pair.
  * @param passed the set of tests that passed.
  */
-void TidyNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString> passed)
+void Extract::TidyNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString> passed)
 {
     EDEBUG_FUNC(this,clusterIndex,passed);
 
@@ -447,7 +447,7 @@ void TidyNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString> pass
  * The initialization function for the minimial text output. This
  * function adds the tab-delimited header to the output file.
  */
-void MinimalNetworkWriter::initialize()
+void Extract::MinimalNetworkWriter::initialize()
 {
     EDEBUG_FUNC(this);
 
@@ -471,7 +471,7 @@ void MinimalNetworkWriter::initialize()
  * @param clusterIndex The index of cluster in the current gene pair.
  * @param passed The set of tests that passed. (unused)
  */
-void MinimalNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString>)
+void Extract::MinimalNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString>)
 {
     EDEBUG_FUNC(this,clusterIndex);
 
@@ -496,7 +496,7 @@ void MinimalNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString>)
  * function adds XML headers, and attribute keys to the
  * output file.
  */
-void GMLNetworkWriter::initialize()
+void Extract::GMLNetworkWriter::initialize()
 {
     EDEBUG_FUNC(this);
 
@@ -539,7 +539,7 @@ void GMLNetworkWriter::initialize()
  * @param clusterIndex The index of cluster in the current gene pair.
  * @param passed The set of tests that passed. (unused)
  */
-void GMLNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString>)
+void Extract::GMLNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString>)
 {
     EDEBUG_FUNC(this,clusterIndex);
 
@@ -596,7 +596,7 @@ void GMLNetworkWriter::writeEdgeCluster(int clusterIndex, QVector<QString>)
 /*!
  * Terminates the GraphML output file.
  */
-void GMLNetworkWriter::finish()
+void Extract::GMLNetworkWriter::finish()
 {
     EDEBUG_FUNC(this);
 

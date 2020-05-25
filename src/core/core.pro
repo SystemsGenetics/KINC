@@ -28,12 +28,12 @@ SOURCES += \
     expressionmatrix_model.cpp \
     expressionmatrix.cpp \
     extract_input.cpp \
+    extract_networkwriter.cpp \
     extract.cpp \
     importcorrelationmatrix_input.cpp \
     importcorrelationmatrix.cpp \
     importexpressionmatrix_input.cpp \
     importexpressionmatrix.cpp \
-    networkwriter.cpp \
     pairwise_correlationmodel.cpp \
     pairwise_gmm.cpp \
     pairwise_index.cpp \
@@ -94,12 +94,12 @@ HEADERS += \
     expressionmatrix_model.h \
     expressionmatrix.h \
     extract_input.h \
+    extract_networkwriter.h \
     extract.h \
     importcorrelationmatrix_input.h \
     importcorrelationmatrix.h \
     importexpressionmatrix_input.h \
     importexpressionmatrix.h \
-    networkwriter.h \
     pairwise_clusteringmodel.h \
     pairwise_correlationmodel.h \
     pairwise_gmm.h \

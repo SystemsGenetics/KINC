@@ -4,12 +4,11 @@
 
 #include "ccmatrix_pair.h"
 #include "ccmatrix.h"
+#include "conditionspecificclustersmatrix.h"
+#include "conditionspecificclustersmatrix_pair.h"
 #include "correlationmatrix_pair.h"
 #include "correlationmatrix.h"
 #include "expressionmatrix.h"
-#include "conditionspecificclustersmatrix.h"
-#include "conditionspecificclustersmatrix_pair.h"
-#include "networkwriter.h"
 
 
 /*!
@@ -38,22 +37,27 @@ private:
     enum class OutputFormat
     {
         /*!
-         * Text format
+         * Full text format
          */
         Text
         /*!
-         * Minimal format (does not use CCM)
+         * Tidy text format
+         */
+        ,Tidy
+        /*!
+         * Minimal text format
          */
         ,Minimal
         /*!
          * GraphML format
          */
         ,GraphML
-        /*!
-         * GraphML format
-         */
-        ,Tidy
     };
+    class NetworkWriter;
+    class FullNetworkWriter;
+    class TidyNetworkWriter;
+    class MinimalNetworkWriter;
+    class GMLNetworkWriter;
 private:
     void parseFilters(QString input_filters, QString type);
     QVector<QString> filterEdge(int cluster_index);
