@@ -21,11 +21,11 @@ Extract::NetworkWriter::NetworkWriter(
     QFile* output):
     _emx(emx),
     _cmx(cmx),
-    _cmxPair(CorrelationMatrix::Pair(_cmx)),
+    _cmxPair(cmx),
     _ccm(ccm),
-    _ccmPair(CCMatrix::Pair(ccm)),
+    _ccmPair(ccm),
     _csm(csm),
-    _csmPair(CSMatrix::Pair(csm)),
+    _csmPair(csm),
     _output(output)
 {
     EDEBUG_FUNC(this,stream,emx,cmx,ccm,csm);
@@ -44,14 +44,29 @@ int Extract::NetworkWriter::readNext()
 {
     EDEBUG_FUNC(this,cmx_index);
 
+    // read the next pair in the cmx
     _cmxPair.readNext();
+
+    // read the next pair in the ccm (should always match cmx)
     if ( _ccm )
     {
-        _ccmPair.read(_cmxPair.index());
+        _ccmPair.readNext();
+
+        if ( _cmxPair.index() != _ccmPair.index() )
+        {
+            qInfo() << "warning: cmx and ccm are out of sync";
+        }
     }
+
+    // read the next pair in the csm (should always match cmx)
     if ( _csm )
     {
-        _csmPair.read(_cmxPair.index());
+        _csmPair.readNext();
+
+        if ( _cmxPair.index() != _csmPair.index() )
+        {
+            qInfo() << "warning: cmx and ccm are out of sync";
+        }
     }
 
     return _cmxPair.clusterSize();
