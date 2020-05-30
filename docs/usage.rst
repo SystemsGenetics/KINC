@@ -78,7 +78,7 @@ You can retrieve a list of all of the functions that KINC provides by executing
 
   kinc help run
 
-The following will be shown for KINC v3.4.0:
+The following will be shown for KINC v3.4.1:
 
 .. code::
 
@@ -518,7 +518,7 @@ To use KINC in an interactive Docker container execute the following:
 
 .. code:: bash
 
-  nvidia-docker run --rm -it systemsgenetics/kinc:3.4.0 bash
+  nvidia-docker run --rm -it systemsgenetics/kinc:3.4.1 bash
 
 The command above will provide access to the terminal inside of the image where commands such as the following can be executed:
 
@@ -531,7 +531,7 @@ You will need to share the input and output data between the Docker container an
 
 .. code:: bash
 
-  nvidia-docker run --rm -it -v $PWD:/root systemsgenetics/kinc:3.4.0 bash
+  nvidia-docker run --rm -it -v $PWD:/root systemsgenetics/kinc:3.4.1 bash
   > ls
 
 Automating KINC with Nextflow
