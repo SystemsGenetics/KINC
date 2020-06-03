@@ -45,6 +45,10 @@ if (length(opt$suffix) > 0) {
    suffix = opt$suffix
 }
 
+# Make sure KINC.R is at the correct vresion.
+if(packageVersion("KINC.R") > "1.1") {
+    stop("This script requires KINC.R > 1.1")
+}
 suppressMessages(library("KINC.R"))
 
 message("")

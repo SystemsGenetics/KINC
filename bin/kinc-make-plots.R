@@ -18,6 +18,10 @@ if (is.null(opt$net)){
   stop("Please provide a network file (--net).", call.=FALSE)
 }
 
+# Make sure KINC.R is at the correct vresion.
+if(packageVersion("KINC.R") > "1.1") {
+    stop("This script requires KINC.R > 1.1")
+}
 suppressMessages(library("KINC.R"))
 
 message("")

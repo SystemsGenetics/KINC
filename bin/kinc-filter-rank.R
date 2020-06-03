@@ -52,7 +52,10 @@ if (is.null(opt$save_condition_networks)){
   opt$save_condition_networks = FALSE
 }
 
-
+# Make sure KINC.R is at the correct vresion.
+if(packageVersion("KINC.R") > "1.1") {
+    stop("This script requires KINC.R > 1.1")
+}
 suppressMessages(library("KINC.R"))
 
 message("")
@@ -85,6 +88,9 @@ net$rank = ranks
 # Filter the network to include the top n ranked edges.
 netF = net[(which(ranks < opt$top_n)),]
 netF = netF[order(netF$rank),]
+if (opt$strict) {
+    netF = netF[1:min(dim(netF)[1], opt$top_n),]
+}
 
 if (opt$save_condition_networks) {
     message("Saving filtered condition-specific networks...")
