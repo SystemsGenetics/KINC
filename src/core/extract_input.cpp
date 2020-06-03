@@ -11,9 +11,10 @@
 const QStringList Extract::Input::FORMAT_NAMES
 {
     "text"
+    ,"tidy"
     ,"minimal"
     ,"graphml"
-    ,"tidy"
+
 };
 
 

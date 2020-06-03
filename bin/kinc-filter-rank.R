@@ -88,9 +88,6 @@ net$rank = ranks
 # Filter the network to include the top n ranked edges.
 netF = net[(which(ranks < opt$top_n)),]
 netF = netF[order(netF$rank),]
-if (opt$strict) {
-    netF = netF[1:min(dim(netF)[1], opt$top_n),]
-}
 
 if (opt$save_condition_networks) {
     message("Saving filtered condition-specific networks...")
