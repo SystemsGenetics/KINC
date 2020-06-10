@@ -7,6 +7,8 @@ Even if you install KINC on an HPC system, you may want to install KINC on a loc
 
 Additionally, KINC can also be run in a Docker container. Consult the :doc:`usage` section for more information.
 
+.. _installation_reference_label:
+
 Dependencies
 ------------
 
@@ -22,15 +24,12 @@ KINC requires the following software packages.
 - `LAPACK <http://www.netlib.org/lapack/>`_
 - `GCEM <https://www.kthohr.com/gcem.html>`_
 - `StatsLib <https://www.kthohr.com/statslib.html>`_
-- `KINC.R v1.0 <https://github.com/SystemsGenetics/KINC.R>`_ (for post filtering of networks)
-- Python v3 and A variety of Python modules for the 3D visualization.
-
-
-Some functionality of KINC (i.e. condition-specific network construction) require two additional set of dependences:  `KINC.R v1.0 <https://github.com/SystemsGenetics/KINC.R>`_ , Python3 and a variety of Python modules for the 3D visualization.
+- `Boost C++ libraries <https://www.boost.org/>`_
+Some functionality of KINC (i.e. condition-specific network construction) require two additional set of dependences:  `KINC.R v1.1 <https://github.com/SystemsGenetics/KINC.R>`_ , Python3 and a variety of Python modules for the 3D visualization.
 
 To install KINC.R please follow the installation instructions on the `KINC.R repository <https://github.com/SystemsGenetics/KINC.R>`_. KINC.R requires a variety of other R modules.
 
-If you desire to use the Python v3 `Plotly Dash <https://plotly.com/dash/>`_ 3D visualization script you must also install the following packages:  
+If you desire to use the Python v3 `Plotly Dash <https://plotly.com/dash/>`_ 3D visualization script you must also install the following packages:
 
 - `Numpy <https://numpy.org/>`_
 - `Pandas <https://pandas.pydata.org/>`_
@@ -44,7 +43,7 @@ If you desire to use the Python v3 `Plotly Dash <https://plotly.com/dash/>`_ 3D 
 Install these Python v3 packages using your favorite package manager (i.e. pip, Anaconda, etc.)
 
 Installing KINC on Ubuntu 18.04
---------------------------
+-------------------------------
 
 Install Dependencies
 ~~~~~~~~~~~~~~~~~~~~
@@ -60,7 +59,8 @@ Most dependencies are available as packages via Ubuntu and can be installed usin
     libopenmpi-dev \
     ocl-icd-opencl-dev \
     liblapacke-dev \
-    nvidia-cuda-toolkit
+    nvidia-cuda-toolkit \
+    libboost-dev
 
 Additionally, since KINC uses the NVIDIA Driver API, you must install either the appropriate NVIDIA drivers for your system or the NVIDIA headless driver if you don't have a GPU:
 
@@ -97,7 +97,7 @@ To install CGEM into ``/usr/local/``:
 Install ACE
 ~~~~~~~~~~~
 
-KINC v3.4 requires ACE v3.2. ACE requires some of the same dependencies as KINC (such as QT, CUDA, OpenMPI, OpenCL, etc).  Therefore, if all dependencies above are installed, ACE should compile. To start, set the following environment variable:
+KINC v3.4.x requires ACE v3.2. ACE requires some of the same dependencies as KINC (such as QT, CUDA, OpenMPI, OpenCL, etc).  Therefore, if all dependencies above are installed, ACE should compile. To start, set the following environment variable:
 
 .. code:: bash
 
@@ -154,7 +154,7 @@ Select a suitable `version of KINC <https://github.com/SystemsGenetics/KINC/rele
 .. code:: bash
 
   export ACE_VERSION=v3.2.0
-  export KINC_VERSION=v3.4.1
+  export KINC_VERSION=v3.4.2
 
 Next, clone the KINC repository:
 
