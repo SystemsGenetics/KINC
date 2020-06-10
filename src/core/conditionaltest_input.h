@@ -23,6 +23,8 @@ public:
         ,CSMOUT
         ,TEST
         ,OVERRIDES
+        ,PowerThresholdAlpha
+        ,PowerThresholdPower
         ,Total
     };
 public:

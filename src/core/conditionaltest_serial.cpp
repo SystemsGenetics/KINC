@@ -12,7 +12,7 @@
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_math.h>
-
+#include <boost/math/distributions/non_central_f.hpp>
 
 
 /*!
@@ -94,7 +94,7 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                     QVector<double> results(2);
                     regression(amx_column, ccmPair, clusterIndex, featureIndex, results);
                     pValues[clusterIndex][test_index] = results.at(0);
-                    r2[clusterIndex][test_index] = results.at(1);
+                    r2[clusterIndex][test_index] = results.at(1);                    
                     test_index++;
                 }
                 else if ( _base->_testType.at(featureIndex) == CATEGORICAL )
@@ -308,7 +308,6 @@ void ConditionalTest::Serial::hypergeom(
 }
 
 
-
 /*!
  * Performs the regression test for quantitative data.
  */
@@ -460,11 +459,37 @@ void ConditionalTest::Serial::regression(
     // Set the results array
     if ( qIsNaN(pValue) )
     {
-        results[0] = 1;
-        results[1] = 0;
+        results[0] = std::numeric_limits<double>::quiet_NaN();
+        results[1] = std::numeric_limits<double>::quiet_NaN();
     }
-    else {
-        results[0] = pValue;
-        results[1] = R2;
+    else {               
+        double power = pwr_f2_test(3, test_cluster_size - 4, R2, _base->_powerThresholdAlpha);
+        if ( power >= _base->_powerThresholdPower ) {
+            results[0] = pValue;
+            results[1] = R2;
+        }
+        else {
+            results[0] = std::numeric_limits<double>::quiet_NaN();
+            results[1] = std::numeric_limits<double>::quiet_NaN();
+        }
     }
+}
+
+/**
+ * @brief ConditionalTest::Serial::pwr_f2_test
+ * @param df1 degrees of freedom of the numerator: the number of coefficients in
+ *        the model minus the intercept.
+ * @param df2 degrees of freedom of the denominator: the number of error degrees
+ *        of freedom which is n - df1 - 1
+ * @param f2 effect size
+ * @param sig_level signficance level
+ * @return
+ */
+double ConditionalTest::Serial::pwr_f2_test(int df1, int df2, double f2, double sig_level)
+{
+    double lambda = f2 * (df1 + df2 + 1);
+    double p = gsl_cdf_fdist_Qinv(sig_level, df1, df2);
+    boost::math::non_central_f_distribution<> ncfd(df1, df2, lambda);
+    double power = 1 - boost::math::cdf(ncfd, p);
+    return power;
 }

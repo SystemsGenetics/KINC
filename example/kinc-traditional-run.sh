@@ -1,11 +1,13 @@
 #!/bin/bash
 # Perform a traditional run of KINC
+mkdir -p results-kinc-traditional
+cd results-kinc-traditional
 
 # Step 1: Import the similarity matrix
 echo "Importing the gene expression matrix (GEM) for the slimmed experiment PRJNA301554"
 
 kinc run import-emx \
-   --input "PRJNA301554.slim.GEM.log2.txt" \
+   --input "../data/PRJNA301554.slim.GEM.log2.txt" \
    --output "PRJNA301554.slim.GEM.log2.emx" \
    --nan "NA" \
    --samples 0
