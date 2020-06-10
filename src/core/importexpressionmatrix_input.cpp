@@ -86,7 +86,7 @@ QVariant ImportExpressionMatrix::Input::data(int index, Role role) const
         {
         case Role::CommandLineName: return QString("nan");
         case Role::Title: return tr("NAN Token:");
-        case Role::WhatsThis: return tr("Expected token for expressions that have no value.");
+        case Role::WhatsThis: return tr("The string that specifies the missing value in the annotation matrix (e.g. NA, 0, 0.0).");
         case Role::Default: return "NA";
         default: return QVariant();
         }
