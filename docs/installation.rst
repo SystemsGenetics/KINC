@@ -161,7 +161,7 @@ Next, clone the KINC repository:
 .. code:: bash
 
   git clone https://github.com/SystemsGenetics/KINC.git
-  cd KINC/build
+  cd KINC
   git checkout $KINC_VERSION
 
 Default installation location
