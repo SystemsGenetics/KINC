@@ -198,6 +198,14 @@ void ConditionalTest::Serial::hypergeom(
         }
     }
 
+    // If there are no matching labels in this cluster then return. This
+    // could happen if the annotation matrix has all NAs for the cluster.
+    if ( labels_in_cluster == 0 )
+    {
+        result = qQNaN();
+        return;
+    }
+
 
     // We use the hypergeometric distribution because the samples are
     // selected from the population for membership in the cluster without
