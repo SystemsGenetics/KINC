@@ -316,9 +316,10 @@ When using the GMM approach, the goal is to identiy condition-specific subgraphs
 
 As in previous steps, the ``--emx``, ``--cmx``, ``--ccm`` and ``--csm`` arguments provide the expression matrix, correlation, clustering matrix and the new condition-specific matrix. A threshold is provided to the ``--mincorr`` argument typically as a lower-bound. No edges with absolute correlation values below this value will be extracted.   Additinally, if you would like to exclude high correlations (such as perfect correlations), you can do so with the ``--maxcorr`` argument. You should only need to change the ``--maxcorr`` argument if it was determined that there is error in the data resulting from an inordinate number of high correlations.  In the example above the ``--mincorr`` is set at 0.5. This is quite low by traditional standards but the following filtering and thresholding steps support exploration of edges at such a low correlation.
 
-To limit the size of the condition-specific subgraphs you should then set the ``--filter-pvalue`` and ``--filter-rsquare`` values to lower-bounds for signficant p-values and meaningful r-square values from test.  The r-square values are only present for quantitative features where the regression test was performed.  The p-value in this case indicates how well the data follows a trend and the r-square indicates how much of the variation the trend line accounts for.  Ideally, low p-values and high r-squre are desired. However, there are no rules for the best setting, but choose settings that provide a signficance level you are comfortable with.
+To limit the size of the condition-specific subgraphs you should then set the ``--filter-pvalue`` and ``--filter-rsquare`` values to lower-bounds for signficant p-values and meaningful R-square values from test.  The R-square values are only present for quantitative features where the regression test was performed.  The p-value in this case indicates how well the data follows a trend and the r-square indicates how much of the variation the trend line accounts for.  Ideally, low p-values and high r-squre are desired. However, there are no rules for the best setting, but choose settings that provide a signficance level you are comfortable with.
 
 Finally, the ``--format`` argument can be ``tidy``, ``text``, ``minimal`` or ``graphml``. The ``tidy`` format is recommended for use by later steps. The the `GraphML <http://graphml.graphdrawing.org/>`_ version is larger in size and in an XML format compatible with other graph tools. The ``tidy``, ``test`` and ``graphml`` formats are easily imported into Cytoscape. The ``minimal`` format contains the list of edges with only the two genes and the correlation value. See the :ref:`plain-text-reference-label`  section for specific details about these files.
+
 
 Complex Filtering
 :::::::::::::::::
@@ -443,17 +444,7 @@ The result from the command-above is a set of files, one per condition class whe
 
 Step 9: Visualization
 `````````````````````
-You can visualize the network using 2D layout tools such as `Cytocape<https://cytoscape.org/>`_, which is a feature rich 2D viauliation software packge.  However, KINC includes a Python v3 Dash-based application that can be used for 3D visualization of the network.  You must have the following Python v3 libraries installed prior to using this viewer:
-
- - argparse
- - numpy
- - pandas
- - igraph
- - plotly
- - seaborn
- - fa2 (ForceAtlas2)
- - dash
- - progress.bar
+You can visualize the network using 2D layout tools such as `Cytocape<https://cytoscape.org/>`_, which is a feature rich 2D viauliation software packge.  However, KINC includes a Python v3 Dash-based application that can be used for 3D visualization of the network.  Please see the :ref:`_installation_reference_label` for the list of Python libraries that are required.
 
 The following is an example for launching the viewer for the network containing all condition-specific subgraphs:
 

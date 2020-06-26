@@ -139,6 +139,15 @@ private:
      * Cluster information
      */
     QVector<QVector<Pairwise::Index>> _clusters;
+
+    /*!
+     * The significance level (i.e. Type I error rate, alpha) for the regression power test.
+     */
+    double _powerThresholdAlpha {0.001};
+    /*!
+     * The power value (i.e. 1 minus Type II error rate, 1 minus beta) for the regression power test.
+     */
+    double _powerThresholdPower {0.8};
 };
 
 

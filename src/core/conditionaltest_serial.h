@@ -40,6 +40,9 @@ private:
      * Pointer to the base analytic for this object.
      */
     ConditionalTest* _base;
+
+    // Performs power analysis for multiple-linear regression.
+    double pwr_f2_test(int u, int v, double f2, double sig_level);
 };
 
 
