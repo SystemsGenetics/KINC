@@ -198,6 +198,14 @@ void ConditionalTest::Serial::hypergeom(
         }
     }
 
+    // If there are no matching labels in this cluster then return. This
+    // could happen if the annotation matrix has all NAs for the cluster.
+    if ( labels_in_cluster == 0 )
+    {
+        result = qQNaN();
+        return;
+    }
+
 
     // We use the hypergeometric distribution because the samples are
     // selected from the population for membership in the cluster without
@@ -345,6 +353,18 @@ void ConditionalTest::Serial::regression(
         }
     }
 
+    // Don't do regression analysis if there are fewer than 5 samples.
+    // This can occur if the annotation matrix has missing values
+    // for samples in the cluster. The Degrees of Freedom for the error
+    // is test_cluster_size - 4 so we need at least 5 samples. Odds
+    // are these tests will get filterd out anyway for low power.
+    if ( test_cluster_size < 5 )
+    {
+        results[0] = qQNaN();
+        results[1] = qQNaN();
+        return;
+    }
+
     // Allocate a matrix to hold the predictior variables, in this case the gene
     // Expression data.
     X = gsl_matrix_alloc(test_cluster_size, 4);
@@ -363,6 +383,7 @@ void ConditionalTest::Serial::regression(
     geneX.read(ccmPair.index().getX());
     geneY.read(ccmPair.index().getY());
 
+    // Useful for debugging purposes.
     // QString g1Name = geneX.toString();
     // QString g2Name = geneY.toString();
 
@@ -460,8 +481,8 @@ void ConditionalTest::Serial::regression(
     // Set the results array
     if ( qIsNaN(pValue) )
     {
-        results[0] = 1;
-        results[1] = 0;
+        results[0] = qQNaN();
+        results[1] = qQNaN();
     }
     else {
         results[0] = pValue;

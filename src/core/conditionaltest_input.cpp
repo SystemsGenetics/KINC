@@ -49,6 +49,7 @@ EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
     case AMXINPUT: return FileIn;
     case Delimiter: return String;
     case MISSING: return String;
+    case NANToken: return String;
     case CSMOUT: return DataOut;
     case OVERRIDES: return String;
     case TEST: return String;
@@ -123,8 +124,17 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
         {
         case CommandLineName: return QString("missing");
         case Title: return tr("Missing value:");
-        case WhatsThis: return tr("The string that specifies the missing value in the annotation matrix (e.g. NA, 0, 0.0).");
+        case WhatsThis: return tr("Deprecated. This option will work but may be removed in future versions. Please use --nan instead.");
         case Default: return tr("NA");
+        default: return QVariant();
+        }
+    case NANToken:
+        switch (role)
+        {
+        case Role::CommandLineName: return QString("nan");
+        case Role::Title: return tr("NAN Token:");
+        case Role::WhatsThis: return tr("The string that specifies the missing value in the annotation matrix (e.g. NA, 0, 0.0).");
+        case Role::Default: return "NA";
         default: return QVariant();
         }
     case CSMOUT:
@@ -174,6 +184,9 @@ void ConditionalTest::Input::set(int index, const QVariant& value)
     {
     case Delimiter:
         _base->_delimiter = value.toString();
+        break;
+    case NANToken:
+        _base->_missing = value.toString();
         break;
     case MISSING:
         _base->_missing = value.toString();
