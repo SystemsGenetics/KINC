@@ -2,40 +2,7 @@
 """
 Creates a Dash application that provides 3D visualization of a KINC network.
 
-This script accepts the following arguments:
-
-    --net : (required) The path to the KINC-derived network file
-
-    --emx : (retuired) The path to the log2 transformed Gene Expression Matrix
-            or Metabolite abundance matrix.
-
-    --amx : (required) The path to the tab-delimited annotation matrix.
-            The matrix must have at least one column that contains a unique
-            list of sample names.
-
-    --nmeta : (optional) The path to a tab-delimited node meta data file. The
-              format of the file must have 4 columns, with the first
-              containing the node name, the second a controlled vocabulary
-              term ID, the second the term definition and the fourth the vocubulary name.
-
-    --sample_col: (optional) The name of the column in the annotation matrix
-                  that contains the unique sample names.  Defaults to "Sample"
-
-    --debug:  (optional).  Add this argument to enable Dash application
-              debugging mode.
-
-    --iterations: (optional). The number of iterations to perform when
-                  calculating the Force Atlas2 layout.  This argument is only
-                  used the first time a network is viewed or if the
-                  --redo_layout argument is provided.
-
-    --redo-layout :  (optional). If the 2D and 3D network layout has already
-                     been constructed it will be loaded from a file. Add this
-                     arugment to force the layouts to be rebuilt and not loaded
-                     from the files. To prevent Dash from rerunning the layout
-                     on callbacks, this option results in the program
-                     terminating. To view the application, restart without
-                     this option.
+For usage instructions run this script with the --help flag.
 
 """
 
@@ -131,7 +98,7 @@ def load_node_meta(file_path):
     Imports the tab-delimited node metadata file.
 
     The format of the file must have 4 columns, with the first containing the
-    node name, the second a controlled vocabulary term ID, the second the
+    node name, the second a controlled vocabulary term ID, the third the
     term definition and the fourth the vocubulary name.
     """
     nmeta = pd.read_csv(file_path, sep="\t")
@@ -1195,14 +1162,14 @@ def main():
     """
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--net', dest='net_path', type=str, required=True)
-    parser.add_argument('--emx', dest='gem_path', type=str, required=True)
-    parser.add_argument('--amx', dest='amx_path', type=str, required=True)
-    parser.add_argument('--sample_col', dest='sample_col', type=str, required=False, default='Sample')
-    parser.add_argument('--nmeta', dest='nmeta', type=str, required=False)
-    parser.add_argument('--debug', dest='debug', action='store_true', default=False)
-    parser.add_argument('--redo-layout', dest='redo_layout', action='store_true', default=False)
-    parser.add_argument('--iterations', dest='iterations', type=int, default=100)
+    parser.add_argument('--net', dest='net_path', type=str, required=True, help="(required) The path to the KINC-derived network file")
+    parser.add_argument('--emx', dest='gem_path', type=str, required=True, help="(retuired) The path to the log2 transformed Gene Expression Matrix or Metabolite abundance matrix.")
+    parser.add_argument('--amx', dest='amx_path', type=str, required=True, help="(required) The path to the tab-delimited annotation matrix. The matrix must have at least one column that contains a unique list of sample names.")
+    parser.add_argument('--sample_col', dest='sample_col', type=str, required=False, default='Sample', help="(optional) The name of the column in the annotation matrix that contains the unique sample names.  Defaults to 'Sample'")
+    parser.add_argument('--nmeta', dest='nmeta', type=str, required=False, help="(optional) The path to a tab-delimited node meta data file. The format of the file must have 4 columns, with the first containing the node name, the second a controlled vocabulary term ID, the thrid the term definition and the fourth the vocubulary name.")
+    parser.add_argument('--debug', dest='debug', action='store_true', default=False, help="(optional).  Add this argument to enable Dash application debugging mode.")
+    parser.add_argument('--redo-layout', dest='redo_layout', action='store_true', default=False, help=" (optional). If the 2D and 3D network layout has already been constructed it will be loaded from a file. Add this arugment to force the layouts to be rebuilt and not loaded from the files. To prevent Dash from rerunning the layout on callbacks, this option results in the program terminating. To view the application, restart without this option.")
+    parser.add_argument('--iterations', dest='iterations', type=int, default=100, help="(optional). The number of iterations to perform when calculating the Force Atlas2 layout.  This argument is only used the first time a network is viewed or if the --redo_layout argument is provided.")
     args = parser.parse_args()
 
     # Make sure the paths exist
