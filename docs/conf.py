@@ -35,7 +35,7 @@ author = u'Ben Shealy, Josh Burns, Stephen Ficklin et al'
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'v3.4.1'
+release = u'v3.4.2'
 
 
 # -- General configuration ---------------------------------------------------

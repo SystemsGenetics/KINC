@@ -97,7 +97,7 @@ To install CGEM into ``/usr/local/``:
 Install ACE
 ~~~~~~~~~~~
 
-KINC v3.4.x requires ACE v3.2. ACE requires some of the same dependencies as KINC (such as QT, CUDA, OpenMPI, OpenCL, etc).  Therefore, if all dependencies above are installed, ACE should compile. To start, set the following environment variable:
+KINC v3.4 requires ACE v3.2. ACE requires some of the same dependencies as KINC (such as QT, CUDA, OpenMPI, OpenCL, etc).  Therefore, if all dependencies above are installed, ACE should compile. To start, set the following environment variable:
 
 .. code:: bash
 
@@ -249,11 +249,11 @@ Once you have obtained an interactive node, run the following commands from your
   git clone https://github.com/bentsherman/pbs-toolkit.git
   ./pbs-toolkit/modules/install-ace.sh v3.2.0
   ./pbs-toolkit/modules/install-statslib.sh
-  ./pbs-toolkit/modules/install-kinc.sh v3.4.1 v3.2.0
+  ./pbs-toolkit/modules/install-kinc.sh v3.4.2 v3.2.0
 
 These scripts will install ACE and KINC into your home directory, establishing them as modules that can be run from anywhere. It will also update your environment so that the modules can be called when necessary. It uses a module called ``use.own``, which when added will make KINC and ACE available to be used interactively. You should now be able to load KINC as a module:
 
 .. code:: bash
 
   module add use.own
-  module add KINC/v3.4.1
+  module add KINC/v3.4.2
