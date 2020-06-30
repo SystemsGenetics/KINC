@@ -27,12 +27,19 @@ public:
         int featureIndex,
         int labelIndex,
         double& results);
-    
-    void regression(
+
+    void test_proportions(
         const QVector<QString>& amx_column,
         const CCMatrix::Pair& ccmPair,
         int clusterIndex,
         int featureIndex,
+        int labelIndex,
+        double& results);
+
+    void regression(
+        const QVector<QString>& amx_column,
+        const CCMatrix::Pair& ccmPair,
+        int clusterIndex,
         QVector<double>& results);
 
 private:

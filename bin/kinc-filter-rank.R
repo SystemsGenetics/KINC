@@ -10,7 +10,7 @@ option_list = list(
               help="(optional). The file name prefix used for the ouput files. If this arugment is not provided then the original network file name is used as a prefix.",
               metavar="character"),
    make_option(c("--top_n"), type="numeric", default=10000,
-              help="(optional). The number of edges to extract from the network file. This is the top n ranked edges per condition. If --no_conditions is provided then this is the top n ranked edges in the full network.",
+              help="(optional). Extract the top n ranked edges from the network file. This is the top n ranked edges per condition. If --no_conditions is provided then this is the top n ranked edges in the full network. Note: some edges may have the same rank and you will recieve all edges whose rank meets the given criteria.",
               metavar="numeric"),
    make_option(c("--no_condition_rankings"), type="logical", action="store_true",
               help="(optional). By deafult the rankings are calculated independently per each condition in the network. To calculate rankings for the entire network regardless of condition set this to TRUE.",
@@ -53,7 +53,7 @@ if (is.null(opt$save_condition_networks)){
 }
 
 # Make sure KINC.R is at the correct vresion.
-if(packageVersion("KINC.R") > "1.1") {
+if(packageVersion("KINC.R") < "1.1") {
     stop("This script requires KINC.R > 1.1")
 }
 suppressMessages(library("KINC.R"))
@@ -83,6 +83,7 @@ if (opt$no_condition_rankings) {
     message("Calculating condition-specific ranks...")
     ranks = getEdgeRanks(net, by_condition=TRUE, opt$score_weight, opt$pval_weight, opt$rsqr_weight)
 }
+ranks = as.numeric(ranks)
 net$rank = ranks
 
 # Filter the network to include the top n ranked edges.

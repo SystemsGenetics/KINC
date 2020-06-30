@@ -220,6 +220,8 @@ def bin_edges(net):
     """
     net['Edge_Bin'] = np.around(np.abs(net['Similarity_Score']), decimals=2)
     net['Pval_Bin'] = np.round(-np.log10(net['p_value']))
+    if 'hotelling_p_value' in net.columns:
+        net['HPval_Bin'] = np.round(-np.log10(net['hotelling_p_value']))
     if (net['r_squared'].dtype == 'object'):
         net['Rsqr_Bin'] = 0
     else:
@@ -258,10 +260,13 @@ def get_vertex_zlayers(net, glayout, net_prefix, redo_layout):
         node = glayout.loc[row[vtype]]
         ebin = row['Edge_Bin']
         pbin = row['Pval_Bin']
+        hpbin = np.nan
+        if ('HPval_Bin' in row.index):
+            hpbin = row['HPval_Bin']
         rbin = row['Rsqr_Bin']
         rel = row['Relationship']
         test = row['Test_Name']
-        return(row[vtype], node['X'], node['Y'], ebin, pbin, rbin, rel, test, node['Degree'], node['CC'])
+        return(row[vtype], node['X'], node['Y'], ebin, pbin, hpbin, rbin, rel, test, node['Degree'], node['CC'])
 
 
     if (redo_layout | (not os.path.exists(net_prefix + '.3Dvlayers.txt'))):
@@ -271,7 +276,7 @@ def get_vertex_zlayers(net, glayout, net_prefix, redo_layout):
         ltarget = net.apply(find_vlayers, vtype='Target', bar=bar, axis=1)
         print("")
 
-        columns = ['Vertex', 'X', 'Y', 'EBin', 'PBin', 'RBin', 'Rel', 'Test_Name', 'Degree', 'CC']
+        columns = ['Vertex', 'X', 'Y', 'EBin', 'PBin', 'HPBin', 'RBin', 'Rel', 'Test_Name', 'Degree', 'CC']
         vlayers = pd.DataFrame.from_records(lsource.append(ltarget).values, columns=columns)
         vlayers = vlayers[vlayers.duplicated() == False]
         # We want to place the node in the layer where it first appears.
@@ -317,6 +322,9 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
             bar.next()
         ebin = row['Edge_Bin']
         pbin = row['Pval_Bin']
+        hpbin = np.nan
+        if ('HPval_Bin' in row.index):
+            hpbin = row['HPval_Bin']
         rbin = row['Rsqr_Bin']
         rel = row['Relationship']
         test = row['Test_Name']
@@ -327,7 +335,7 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
                 row["Source"],
                 row["Target"],
                 row["Samples"],
-                ebin, pbin, rbin, rel, test])
+                ebin, pbin, hpbin, rbin, rel, test])
 
     if (redo_layout | (not os.path.exists(net_prefix + '.3Delayers.txt'))):
         print("Calculating 3D edge layout.")
@@ -335,7 +343,7 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
         ledge = net.apply(place_elayers, bar=bar, axis=1)
         print("")
 
-        elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Source', 'Target', 'Samples', 'EBin', 'PBin', 'RBin', 'Rel', 'Test_Name'])
+        elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Source', 'Target', 'Samples', 'EBin', 'PBin', 'HPBin', 'RBin', 'Rel', 'Test_Name'])
         elayers['name'] = elayers['Source'] + " (co) " + elayers['Target']
         elayers.to_csv(net_prefix + '.3Delayers.txt')
     else:
@@ -376,6 +384,8 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
         Z = vlayers['EBin']
     if layer_by == 'P-value':
         Z = vlayers['PBin']
+    if layer_by == 'Hotelling P-value (phased)':
+        Z = vlayers['HPBin']
     if layer_by == 'R^2':
         Z = vlayers['RBin']
     if layer_by == 'Test Name':
@@ -397,6 +407,8 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
         slider_title = 'Similarity Score'
     if color_by == 'P-value':
         slider_title = '-log10(p)'
+    if color_by == 'Hotelling P-value (phased)':
+        slider_title = '-log10(p)'
     if color_by == 'R^2':
         slider_title = 'R-squared'
     if color_by == 'Test Name':
@@ -408,6 +420,8 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
 
     layer_title = layer_by
     if layer_by == 'P-value':
+        layer_title = '-log10(p)'
+    if layer_by == 'Hotelling P-value (phased)':
         layer_title = '-log10(p)'
 
     (colorway, sliders, nticks) = create_binned_network_figure(fig1, elayers, color_by,
@@ -468,6 +482,8 @@ def create_binned_network_figure(figure, elayers, color_by = 'Score',
         color_col = 'EBin'
     if color_by == 'P-value':
         color_col = 'PBin'
+    if color_by == 'Hotelling P-value (phased)':
+        color_col = 'HPBin'
     if color_by == 'R^2':
         color_col = 'RBin'
     if color_by == 'Test Name':
@@ -475,11 +491,13 @@ def create_binned_network_figure(figure, elayers, color_by = 'Score',
     if color_by == 'Relationship':
         color_col = 'Rel'
 
-    layer_col = 'Edge_Bin'
+    layer_col = 'EBin'
     if layer_by == 'Score':
         layer_col = 'EBin'
     if layer_by == 'P-value':
         layer_col = 'PBin'
+    if layer_by == 'Hotelling P-value (phased)':
+        layer_col = 'HPBin'
     if layer_by == 'R^2':
         layer_col = 'RBin'
     if layer_by == 'Test Name':
@@ -723,8 +741,11 @@ def create_dash_edge_table(net, edge_index = None):
                 'border-bottom' : '1px solid #ddd'};
 
     net_fixed = net.drop(['Samples', 'Edge_Bin', 'Pval_Bin', 'Rsqr_Bin', 'Relationship'], axis=1)
-    if ('p_value' in net_fixed.columns):
-        net_fixed['p_value'] = net_fixed['p_value'].apply(np.format_float_scientific, precision=4)
+    if ('HPval_Bin' in net_fixed.columns):
+        net_fixed = net_fixed.drop(['HPval_Bin'], axis=1)
+    for colname in net_fixed.columns:
+        if ('p_value' in colname):
+            net_fixed[colname] = net_fixed[colname].apply(np.format_float_scientific, precision=4)
 
     columns = net_fixed.columns
     table_rows = []
@@ -871,6 +892,8 @@ def create_edge_color_select(net):
     options = ['Score']
     if 'p_value' in net.columns:
         options.append('P-value')
+    if 'hotelling_p_value' in net.columns:
+        options.append('Hotelling P-value (phased)')
     if 'Test_Name' in net.columns:
         options.append('Test Name')
     if 'r_squared' in net.columns:
@@ -906,6 +929,8 @@ def create_edge_layer_select(net):
     options = ['Score']
     if 'p_value' in net.columns:
         options.append('P-value')
+    if 'hotelling_p_value' in net.columns:
+        options.append('Hotelling P-value (phased)')
     if 'Test_Name' in net.columns:
         options.append('Test Name')
     if 'r_squared' in net.columns:

@@ -12,10 +12,10 @@ option_list = list(
               help="(optional). The number of computational threads to use for parallel processing. By default, all but 2 cores available on the local machine will be used.",
               metavar="numeric"),
    make_option(c("--wa_th"), type="numeric", default=1e-3,
-              help="(optional). The signficance threshold for performing the Welch Anova test. This test checks for differential expression of the GMM cluster vs non-cluster for each gene, thus, two tests are performed: one for each gene in the edge.  Edges with both tests having P-values below this value are kept. The default is 1e-3.",
+              help="(optional). The p-value threshold for performing the Welch Anova test. This test checks for differential expression of the GMM cluster vs non-cluster for each gene, thus, two tests are performed: one for each gene in the edge.  Edges with both tests having P-values below this value are kept. The default is 1e-3.",
               metavar="numeric"),
    make_option(c("--mtt_th"), type="numeric", default=0.1,
-              help="(optional). The signficance threshold for performing the paired T-test for missingness. This test checks for signicant difference in missingness between the two genes of an edge. This is important because one gene with a high level of missginess will bias the relationship if that missigness is condition-specific. Only edges whose genes have the same pattern of missingness should be considered.  Those with p-values greater than the threshold are considered non-different. The default is 0.1.", metavar="numeric"),
+              help="(optional). The p-value threshold for performing the paired T-test for missingness. This test checks for signicant difference in missingness between the two genes of an edge. This is important because one gene with a high level of missginess will bias the relationship if that missigness is condition-specific. Only edges whose genes have the same pattern of missingness should be considered.  Those with p-values greater than the threshold are considered non-different. The default is 0.1.", metavar="numeric"),
    make_option(c("--out_prefix"), type="character", default=NULL,
               help="(optional). The file name prefix used for the ouput files. If this arugment is not provided then the original network file name is used as a prefix.", metavar="character"),
    make_option(c("--suffix"), type="character", default=NULL,
@@ -46,7 +46,7 @@ if (length(opt$suffix) > 0) {
 }
 
 # Make sure KINC.R is at the correct vresion.
-if(packageVersion("KINC.R") > "1.1") {
+if (packageVersion("KINC.R") < "1.1") {
     stop("This script requires KINC.R > 1.1")
 }
 suppressMessages(library("KINC.R"))

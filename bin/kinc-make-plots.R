@@ -6,7 +6,7 @@ option_list = list(
    make_option(c("--net"), type="character", default=NULL,
               help="The path to the KINC-derived network file. It must be in tidy format.",
               metavar="character"),
-      make_option(c("--out_prefix"), type="character", default=NULL,
+   make_option(c("--out_prefix"), type="character", default=NULL,
               help="(optional). The file name prefix used for the ouput files. If this arugment is not provided then the original network file name is used as a prefix.", metavar="character")
 );
 
@@ -19,7 +19,7 @@ if (is.null(opt$net)){
 }
 
 # Make sure KINC.R is at the correct vresion.
-if(packageVersion("KINC.R") > "1.1") {
+if(packageVersion("KINC.R") < "1.1") {
     stop("This script requires KINC.R > 1.1")
 }
 suppressMessages(library("KINC.R"))
