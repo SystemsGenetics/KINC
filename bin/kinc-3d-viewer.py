@@ -23,6 +23,7 @@ import json
 import re
 import ast
 import time
+import base64
 from progress.bar import IncrementalBar
 
 
@@ -428,11 +429,11 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
                             layer_by, slider_title, include_slider)
 
     fig1.update_layout(
-        height=600,
-        title=dict(text = "3D Network View", font = dict(color='#FFFFFF')),
+        autosize=True,
+        #title=dict(text = "3D Network View", font = dict(color='#FFFFFF')),
         showlegend=True,
         legend=dict(font = dict(color="#FFFFFF")),
-        margin=dict(l=10, r=10, t=30, b=10),
+        margin=dict(l=10, r=10, t=10, b=10),
         paper_bgcolor="#000000",
         colorway=colorway,
         scene=dict(
@@ -449,7 +450,6 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
                         x=0, y=0.1, xanchor='left', yanchor='bottom', font=dict(size=14))
                     ],
         sliders=sliders,
-        autosize=True,
     )
 
     # We want an orthographic layout so that when looking above the edges line up
@@ -563,7 +563,7 @@ def create_binned_network_figure(figure, elayers, color_by = 'Score',
         sliders = [dict(
             active=0,
             currentvalue={"prefix": slider_title + ": "},
-            pad={"t": 50},
+            pad={"b": 50},
             steps=steps,
             font=dict(color = '#FFFFFF'),
             tickcolor='#FFFFFF',
@@ -686,11 +686,11 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
                         text= sdata.index, hoverinfo='text')])
 
     fig2.update_layout(
-        height=600,
-        title="3D Edge Co-Expression Scatterplot",
+        height=400,
+        title="",
         showlegend=showlegend,
         legend={'itemsizing': 'constant'},
-        margin=dict(l=10, r=10, t=30, b=10),
+        margin=dict(l=10, r=10, t=0, b=10),
         scene=dict(
           aspectmode="cube",
           xaxis=dict(showbackground=True, showline=True, zeroline=True, showgrid=True,
@@ -732,13 +732,15 @@ def create_dash_edge_table(net, edge_index = None):
     returns : a Dash html.Table object.
     """
 
-    htr_style = {'background-color' : '#f2f2f2'}
-    hth_style = {'text-align' : 'left',
-                 'padding' : '5px',
-                 'border-bottom' : '1px solid #ddd'};
-    th_style = {'text-align' : 'left',
-                'padding' : '5px',
-                'border-bottom' : '1px solid #ddd'};
+    htr_style = {}
+    htd_style = {
+        'text-align' : 'left', 'padding' : '5px',
+        'margin': '0px', 'padding' : '0 0 0 20',
+        'width' : '30%'}
+    td_style = {
+        'text-align' : 'left', 'padding' : '5px',
+        'margin': '0px', 'padding' : '0 0 0 20'
+    }
 
     net_fixed = net.drop(['Samples', 'Edge_Bin', 'Pval_Bin', 'Rsqr_Bin', 'Relationship'], axis=1)
     if ('HPval_Bin' in net_fixed.columns):
@@ -748,17 +750,50 @@ def create_dash_edge_table(net, edge_index = None):
             net_fixed[colname] = net_fixed[colname].apply(np.format_float_scientific, precision=4)
 
     columns = net_fixed.columns
-    table_rows = []
-    table_rows.append(html.Tr([html.Th(col, style=hth_style) for col in columns], style=htr_style))
+    div_children = []
     if not edge_index == None:
         row_vals = net_fixed.iloc[edge_index]
         source = row_vals['Source']
         target = row_vals['Target']
+        div_children.append(html.H4(
+            children = ['{source} (co) {target}'.format(source = source, target=target)],
+            style = {'padding' : '0px', 'margin' : '0px'}
+        ))
+        div_children.append(html.Br())
         row_vals = net_fixed[(net_fixed['Source'] == source) & (net_fixed['Target'] == target)]
         for index, row in row_vals.iterrows():
-            table_rows.append(html.Tr([html.Th(row[col], style=th_style) for col in columns]))
+            table_rows = []
+            for col in columns:
+                if col == "Source" or col == "Target":
+                    continue
 
-    return html.Table(children=table_rows)
+                table_rows.append(
+                    html.Tr([
+                        html.Th(col, style=htd_style),
+                        html.Td(row[col], style=td_style)
+                    ])
+                )
+            div_children.append(
+                html.Label('Edge #{index}'.format(index = index)))
+            div_children.append(
+                html.Table(
+                    style = {
+                       "background-color" : 'white', 'color' : 'black',
+                       'width' : '90%', 'margin-top' : '10px',
+                       'margin-bottom' : '10px'
+                    },
+                    children=table_rows
+                )
+            )
+
+    return html.Div(
+        id='edge-table',
+        children = div_children,
+        style = {
+            'overflow-y': 'scroll', 'clear' : 'both',
+            'max-height' : '350px',
+        }
+    )
 
 
 
@@ -867,10 +902,12 @@ def create_condition_select(amx, sample_col = 'Cluster'):
     # Build the select element.
     select = dcc.Dropdown(
         id = 'coexp-condition-select',
+        style = {'color' : 'black'},
         options = [
           {'label' : col, 'value' : col} for col in keep
         ],
-        value = 'Cluster')
+        value = 'Cluster'
+    )
     return select
 
 
@@ -902,6 +939,9 @@ def create_edge_color_select(net):
 
     select = dcc.Dropdown(
         id = 'edge-color-select',
+        style = {
+           'color' : 'black'
+        },
         options = [
             {'label' : col, 'value' : col} for col in options
         ],
@@ -939,12 +979,67 @@ def create_edge_layer_select(net):
 
     select = dcc.Dropdown(
         id = 'edge-layer-select',
+        style = {
+           'color' : 'black'
+        },
         options = [
             {'label' : col, 'value' : col} for col in options
         ],
         value = 'Score'
     )
     return select
+
+
+
+
+
+def build_sidebar_box_header(title, id_prefix):
+
+    return html.Div(
+        style = {
+            'background-color' : '#333333', 'color' : 'white',
+            'margin': '0px', 'padding':'10px',
+            "border-radius": "5px"},
+        children = [
+            html.H3(
+                children = [title],
+                style = {
+                    'float' : 'left',
+                    'padding' : '0px', 'margin' : '0px 0px 0px 0'
+                }
+            ),
+            html.Button(
+                ' [-] ',
+                id="{prefix}-toggle".format(prefix=id_prefix),
+                n_clicks=0,
+                # src="https://img.icons8.com/officexs/32/000000/open-view.png",
+                style={
+                     "height" : "20px", "float" : "right",
+                     'padding' : '0px', 'margin' : '0px 0px 0px 0'
+                }
+            ),
+            html.Div(style ={'clear' : 'both'})
+        ]
+    )
+
+
+
+
+
+def write_to_data_uri(s):
+    """
+    Writes to a uri.
+    Use this function to embed javascript into the dash app.
+    Adapted from the suggestion by user 'mccalluc' found here:
+    https://community.plotly.com/t/problem-of-linking-local-javascript-file/6955/2
+    """
+    uri = (
+        ('data:;base64,').encode('utf8') +
+        base64.urlsafe_b64encode(s.encode('utf8'))
+    ).decode("utf-8", "strict")
+    return uri
+
+
 
 
 
@@ -977,102 +1072,225 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
 
     return : The Dash application object.
     """
-    app = dash.Dash()
-    app.layout = html.Div([
-        # Header Row
-        html.Div(className='row', id = "header", children=[
-            html.Img(
-                src="https://raw.githubusercontent.com/SystemsGenetics/KINC/master/docs/images/kinc.png",
-                style={"height" : "55px","display" : "inline-block",
-                  "padding" : "0px", "margin" : "0px 10px 0px 10px"}),
-            html.H1(children="3D Network Explorer",
+
+    sidebar_box_style = {
+        "float" : "left", "width" : "100%", "color" : "white",
+        "padding" : "0px", "margin-bottom" : "10px",
+        "background-color" : "#555555",
+        "border-radius": "5px"
+    }
+
+    internal_js = write_to_data_uri("""
+     """)
+
+    external_scripts = [
+        'https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js',
+        internal_js,
+    ]
+    external_stylesheets = [
+    ]
+    app = dash.Dash(__name__,
+        external_scripts=external_scripts,
+        external_stylesheets=external_stylesheets
+    )
+    app.scripts.config.serve_locally = False
+    app.layout = html.Div(
+        style = {
+            "padding" : "0px", "background-color" :
+            "black", "margin" : "0px", "color" : "white",
+            "width" : "100%", "height" : "100vh"
+        },
+        children = [
+            # Graph Row
+            html.Div(
+                style = {
+                    "border" : "0px solid white", "padding" : "15px",
+                    "background-color" : "black", "margin" : "0px",
+                },
+                children=[
+                    dcc.Graph(
+                        id = 'network-3dview',
+                        style = {
+                            "height" : "100vh"
+                        },
+                        figure = create_network_plot(net, vlayers, elayers),
+                        config =  {
+                            'toImageButtonOptions' : {
+                                'filename': 'kinc_3d_network_view',
+                                'width': 800,
+                                'height': 600,
+                                'format': 'svg',
+                                'scale' : 2
+                            }
+                        }
+                    ),
+                    dcc.Input(
+                        id='current-network-3dview-camera',
+                        type="number",
+                        value=0,
+                        style= {'display' : 'none'}
+                    ),
+                    dcc.Input(
+                        id='current-network-3dview-aspect',
+                        type="number",
+                        value=0,
+                        style= {'display' : 'none'}
+                    )
+                ]
+            ),
+            # Header Row
+            html.Div(
+                id = "header",
                 style={
-                  "display" : "inline-block", "padding" : "10px 0px 0px 0px",
-                  "margin" : "0px", "vertical-align" : "top"}),
-            html.Div(children="Network name: " + net_name,
-                style={"padding" : "0px 0px 0px 10px"}),
-        ]),
-        # Graph Row
-        html.Div(children=[
-            # 3D network plot
-            html.Div(children=[
-                html.Div(id='edge-select-box', children=[
-                    html.Label('Color', style={'color': '#FFFFFF'}),
-                    create_edge_color_select(net),
-                    html.Label('Layer', style={'color': '#FFFFFF'}),
-                    create_edge_layer_select(net)],
-                    style={'padding-bottom' : '10px'}),
-                dcc.Graph(id = 'network-3dview',
-                  figure = create_network_plot(net, vlayers, elayers),
-                  config =  {
-                        'toImageButtonOptions' : {
-                          'filename': 'kinc_3d_network_view',
-                          'width': 800,
-                          'height': 600,
-                          'format': 'svg',
-                          'scale' : 2
-                         }
-                       }),
-                dcc.Input(
-                    id='current-network-3dview-camera', type="number",
-                    value=0, style= {'display' : 'none'}),
-                dcc.Input(
-                    id='current-network-3dview-aspect', type="number",
-                    value=0, style= {'display' : 'none'})],
-                style = {"width" : "55%", "display" : "inline-block",
-                         "border" : "1px solid black", "padding" : "10px",
-                         "background-color" : "black", "margin" : "10px"},
+                    "position" : "fixed", "left" : "30px", "top" : "20px",
+                    'padding' : '0px',  "margin" : "0px",
+                },
+                children=[
+                    html.Img(
+                        src="https://raw.githubusercontent.com/SystemsGenetics/KINC/master/docs/images/kinc.png",
+                        style={
+                            "height" : "55px","display" : "inline-block",
+                            "padding" : "0px", "margin" : "0px 10px 0px 10px"}),
+                    html.H1(children="3D Network Explorer",
+                        style={
+                            "display" : "inline-block", "padding" : "10px 0px 0px 0px",
+                            "margin" : "0px", "vertical-align" : "top"}),
+                    html.Div(children="Network name: " + net_name,
+                        style={"padding" : "0px 0px 0px 10px"}),
+                ]
             ),
-            # 3D Co-Expression scatterplot.
-            html.Div(children=[
-                html.Div(id='coexp-condition-select-box', children=[
-                    create_condition_select(amx, sample_col)],
-                    style={'padding-bottom' : '10px'}),
-                dcc.Graph(id = 'edge-expression-3dview',
-                    figure = create_expression_scatterplot(gem, amx, elayers),
-                    config =  {
-                          'toImageButtonOptions' : {
-                            'filename': 'kinc_3d_expression_scatterplot',
-                            'width': 800,
-                            'height': 600,
-                            'format': 'svg',
-                            'scale' : 1
-                           }
-                         }),
-                dcc.Input(
-                    id='selected-edge', type="number",
-                    value=-1, style= {'display' : 'none'}),
-                dcc.Input(
-                    id='current-expr-camera-coords', type="number",
-                    value=0, style= {'display' : 'none'})],
-                style = {"width" : "35%", "display" : "inline-block",
-                         "border" : "1px solid black", "padding" : "10px",
-                         "margin" : "10px", "vertical-align" : "top"},
+            # Left Sidebar
+            html.Div(
+                style={
+                    "position" : "fixed", "left" : "30px", "top" : "120px",
+                    'padding' : '0px',  "margin" : "0px",
+                    "width" : "400px",
+                },
+                children = [
+                    # Edge Color and Layer selection boxes.
+                    html.Div(
+                        id='edge-select-box',
+                        style=sidebar_box_style,
+                        children=[
+                            build_sidebar_box_header("Layout and Colors", 'edge-select-box'),
+                            html.Div(
+                                id='edge-select-box-contents',
+                                style={'margin' : '0px', 'display' : 'none', 'padding' : '10px'},
+                                children = [
+                                    html.Label('Color Edges By'),
+                                    create_edge_color_select(net),
+                                    html.Label('Layer Edges By'),
+                                    create_edge_layer_select(net)
+                                ]
+                            )
+                        ]
+                    ),
+                    # 3D Co-Expression scatterplot row
+                    html.Div(
+                        style=sidebar_box_style,
+                        children=[
+                            build_sidebar_box_header("Edge Scatterplot", 'scatterplot-box'),
+                            html.Div(
+                                id='scatterplot-box-contents',
+                                style={'margin' : '0px', 'display' : 'none'},
+                                children = [
+                                    html.Div(
+                                        style={'padding-bottom' : '10px'},
+                                        children=[
+                                            html.Label('Color Samples By'),
+                                            create_condition_select(amx, sample_col)
+                                        ],
+                                    ),
+                                    dcc.Graph(id = 'edge-expression-3dview',
+                                        figure = create_expression_scatterplot(gem, amx, elayers),
+                                        config =  {
+                                            'toImageButtonOptions' : {
+                                                'filename': 'kinc_3d_expression_scatterplot',
+                                                'width': 800,
+                                                'height': 600,
+                                                'format': 'svg',
+                                                'scale' : 1
+                                            }
+                                        },
+                                    ),
+                                    dcc.Input(
+                                        id='selected-edge',
+                                        type="number",
+                                        value=-1,
+                                        style= {'display' : 'none'}
+                                    ),
+                                    dcc.Input(
+                                        id='current-expr-camera-coords',
+                                        type="number",
+                                        value=0,
+                                        style= {'display' : 'none'}
+                                    )
+                                ]
+                            )
+                        ]
+                    ),
+                    html.Div(
+                        style=sidebar_box_style,
+                        children=[
+                            build_sidebar_box_header("Edge Details", 'edge-table-box'),
+                            html.Div(
+                                id="edge-table-box-contents",
+                                style={'margin' : '0px', 'visibility' : 'hidden'},
+                                children=[create_dash_edge_table(net)]
+                            ),
+                        ]
+                    ),
+                ],
             ),
-        ]),
-        # Table Row
-        html.Div(className='row', children=[
-            html.H3(children="Edge Details", style={
-                  "display" : "inline-block", "padding" : "10px 0px 0px 0px",
-                  "margin" : "0px", "vertical-align" : "top"}),
-            html.Div(id = "edge-table", children=[
-                create_dash_edge_table(net)]),
-            html.H3(children="Node Detail", style={
-                  "display" : "inline-block", "padding" : "10px 0px 0px 0px",
-                  "margin" : "0px", "vertical-align" : "top"}),
-            html.Div(id = "node-table", children=[
-                create_dash_node_table(net, nmeta)]),
-            html.H3(children="Sample Detail", style={
-                  "display" : "inline-block", "padding" : "10px 0px 0px 0px",
-                  "margin" : "0px", "vertical-align" : "top"}),
-            html.Div(id = "sample-table", children=[
-                create_dash_sample_table(net, amx)]),
-            # Holds the values of the clicked node or cliced edge nodes.
-            dcc.Input(
-                id='selected-nodes', type="text",
-                value=0, style= {'display' : 'none'}),
-        ]),
-    ])
+
+            # Table Row
+            html.Div(
+                style={
+                    "position" : "fixed", "left" : "15px", "top" : "100px",
+                    "display" : 'none',
+                },
+                children=[
+                    html.H3(
+                        children="Edge Details",
+                        style={
+                            "display" : "inline-block", "padding" : "10px 0px 0px 0px",
+                            "margin" : "0px", "vertical-align" : "top"
+                        }
+                    ),
+
+                    html.H3(
+                        children="Node Detail",
+                        style={
+                            "display" : "inline-block", "padding" : "10px 0px 0px 0px",
+                            "margin" : "0px", "vertical-align" : "top"
+                        }
+                    ),
+                    html.Div(
+                        id = "node-table",
+                        children=[create_dash_node_table(net, nmeta)]
+                    ),
+                    html.H3(
+                        children="Sample Detail",
+                        style={
+                            "display" : "inline-block", "padding" : "10px 0px 0px 0px",
+                            "margin" : "0px", "vertical-align" : "top"
+                        }
+                    ),
+                    html.Div(
+                        id = "sample-table",
+                        children=[create_dash_sample_table(net, amx)]
+                    ),
+                    # Holds the values of the clicked node or cliced edge nodes.
+                    dcc.Input(
+                        id='selected-nodes',
+                        type="text",
+                        value=0,
+                        style= {'display' : 'none'}
+                    ),
+                ],
+            ),
+        ] # End app layout children
+    ) # End app layout
 
 
     # Callback when an object in the network plot is clicked.
@@ -1118,11 +1336,13 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
 
     @app.callback(
          dash.dependencies.Output('edge-table', 'children'),
-         [dash.dependencies.Input('selected-edge', 'value')])
-    def update_edge_table(current_edge):
-        if (current_edge == -1):
-          current_edge = None
-        return create_dash_edge_table(net, current_edge)
+         [dash.dependencies.Input('selected-edge', 'value')],
+         [dash.dependencies.State('edge-table-box-toggle', 'n_clicks')])
+    def update_edge_table(current_edge, toggle):
+        if (toggle % 2 == 1):
+            if (current_edge == -1):
+              current_edge = None
+            return create_dash_edge_table(net, current_edge)
 
     @app.callback(
         dash.dependencies.Output('current-network-3dview-camera', 'value'),
@@ -1160,7 +1380,8 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
         [dash.dependencies.Input('edge-color-select', 'value'),
          dash.dependencies.Input('edge-layer-select', 'value')],
         [dash.dependencies.State('current-network-3dview-camera', 'value'),
-         dash.dependencies.State('current-network-3dview-aspect', 'value')])
+         dash.dependencies.State('current-network-3dview-aspect', 'value')]
+    )
     def update_network_plot(color_by,  layer_by, camera_vals, aspect_vals):
         camera = None
         aspect = None
@@ -1175,6 +1396,41 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
         return create_network_plot(net, vlayers, elayers, color_by, layer_by, camera, aspect)
 
 
+    @app.callback(
+        dash.dependencies.Output('edge-select-box-contents', 'style'),
+        [dash.dependencies.Input('edge-select-box-toggle', 'n_clicks')]
+    )
+    def open_edge_select_box_toggle(toggle):
+        if (toggle % 2 == 1):
+            return {'margin' : '0px', 'visibility' : 'visible', 'padding' : '10px'}
+        else:
+            return {'margin' : '0px', 'visibility' : 'hidden', 'height' : '0px', 'padding' : '0px'}
+
+
+    @app.callback(
+        dash.dependencies.Output('scatterplot-box-contents', 'style'),
+        [dash.dependencies.Input('scatterplot-box-toggle', 'n_clicks')]
+    )
+    def open_scatterplot_box_toggle(toggle):
+        if (toggle % 2 == 1):
+            return {'margin' : '0px', 'visibility' : 'visible', 'height' : '500px', 'padding' : '10px'}
+        else:
+            return {'margin' : '0px', 'visibility' : 'hidden', 'height' : '0px', 'padding' : '0px'}
+
+    return app
+
+
+    @app.callback(
+        dash.dependencies.Output('edge-table-box-contents', 'style'),
+        [dash.dependencies.Input('edge-table-box-toggle', 'n_clicks')]
+    )
+    def open_edge_table_box_toggle(toggle):
+        if (toggle % 2 == 1):
+            print('open')
+            return {'margin' : '0px', 'visibility' : 'visible', 'height' : '500px', 'padding' : '10px'}
+        else:
+            print('close')
+            return {'margin' : '0px', 'visibility' : 'hidden', 'height' : '0px', 'padding' : '0px'}
 
     return app
 
