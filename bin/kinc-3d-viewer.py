@@ -166,6 +166,7 @@ def calculate_2d_layout(net, net_prefix, redo_layout, iterations):
     """
 
     g = get_iGraph(net)
+    g.simplify()
     t = pd.Series(g.transitivity_local_undirected(), index=g.vs['name'])
     d = pd.DataFrame(g.degree(), index=g.vs['name'], columns=['Degree'])
 
@@ -721,6 +722,66 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
 
 
 
+
+def create_network_stats_table(net):
+    """
+    Construts the HTML table that holds information about the network.
+
+    net : the network data frame.
+    """
+    htr_style = {}
+    htd_style = {
+        'text-align' : 'left', 'padding' : '5px',
+        'margin': '0px', 'padding' : '0 0 0 20',
+        'width' : '60%'}
+    td_style = {
+        'text-align' : 'left', 'padding' : '5px',
+        'margin': '0px', 'padding' : '0 0 0 20'
+    }
+
+    div_children = []
+    table_rows = []
+
+    num_edges = net.shape[0]
+    unique_edges = net.loc[:,('Source', 'Target')].drop_duplicates().shape[0]
+    num_nodes = len(pd.concat([net['Source'], net['Target']]).unique())
+
+
+    table_rows.append(
+        html.Tr([
+            html.Th('Total Edges', style=htd_style),
+            html.Td(num_edges, style=td_style)
+        ])
+    )
+    table_rows.append(
+        html.Tr([
+            html.Th('Unique Edges', style=htd_style),
+            html.Td(unique_edges, style=td_style)
+        ])
+    )
+    table_rows.append(
+        html.Tr([
+            html.Th('Number of Nodes', style=htd_style),
+            html.Td(num_nodes, style=td_style)
+        ])
+    )
+    div_children.append(
+        html.Table(
+            style = {
+               "background-color" : 'white', 'color' : 'black',
+               'width' : '90%', 'margin-top' : '10px',
+               'margin-bottom' : '10px'
+            },
+            children=table_rows
+        )
+    )
+
+    return html.Div(
+        id='network-stats-table',
+        children = div_children,
+    )
+
+
 def create_dash_edge_table(net, edge_index = None):
     """
     Constructs the HTML table that holds edge information for the Dash appself.
@@ -1265,6 +1326,20 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                     html.Div(
                         style=sidebar_box_style,
                         children=[
+                            build_sidebar_box_header("Network Stats", 'network-stats-box'),
+                            html.Div(
+                                id='network-stats-box-contents',
+                                style={'margin' : '0px', 'display' : 'none', 'padding' : '10px'},
+                                children = [
+                                    create_network_stats_table(net)
+                                ]
+                            )
+                        ]
+                    ),
+                    # Edge Table
+                    html.Div(
+                        style=sidebar_box_style,
+                        children=[
                             build_sidebar_box_header("Edge Details", 'edge-table-box'),
                             html.Div(
                                 id="edge-table-box-contents",
@@ -1273,6 +1348,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                             ),
                         ]
                     ),
+                    # Sample Details
                     html.Div(
                         style=sidebar_box_style,
                         children=[
@@ -1284,6 +1360,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                             ),
                         ]
                     ),
+                    # Node Details
                     html.Div(
                         style=sidebar_box_style,
                         children=[
@@ -1465,6 +1542,18 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
         else:
             return {'margin' : '0px', 'visibility' : 'hidden', 'height' : '0px', 'padding' : '0px'}
 
+    @app.callback(
+        dash.dependencies.Output('network-stats-box-contents', 'style'),
+        [dash.dependencies.Input('network-stats-box-toggle', 'n_clicks')]
+    )
+    def toggle_network_stats_box(toggle):
+        if (toggle % 2 == 1):
+            return {
+                'margin' : '0px', 'visibility' : 'visible',
+                'padding' : '10px',
+            }
+        else:
+            return {'margin' : '0px', 'visibility' : 'hidden', 'height' : '0px', 'padding' : '0px'}
 
     @app.callback(
         dash.dependencies.Output('node-table-box-contents', 'style'),
@@ -1560,7 +1649,7 @@ def main():
     # If the user requested we rebuild the layout then terminate so Dash
     # doesn't try to rebuild the layout on each callback.
     if args.redo_layout:
-        print ("Layouts have been built. Please relaunch without the --redo-layouts option to view the app.")
+        print ("Layouts have been built. Please relaunch without the --redo-layout option to view the app.")
         exit(0)
 
     # Launch the dash application
