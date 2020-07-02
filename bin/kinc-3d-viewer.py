@@ -746,33 +746,27 @@ def create_network_stats_table(net):
     unique_edges = net.loc[:,('Source', 'Target')].drop_duplicates().shape[0]
     num_nodes = len(pd.concat([net['Source'], net['Target']]).unique())
 
-
-    table_rows.append(
-        html.Tr([
-            html.Th('Total Edges', style=htd_style),
-            html.Td(num_edges, style=td_style)
-        ])
-    )
-    table_rows.append(
-        html.Tr([
-            html.Th('Unique Edges', style=htd_style),
-            html.Td(unique_edges, style=td_style)
-        ])
-    )
-    table_rows.append(
-        html.Tr([
-            html.Th('Number of Nodes', style=htd_style),
-            html.Td(num_nodes, style=td_style)
-        ])
-    )
     div_children.append(
         html.Table(
             style = {
                "background-color" : 'white', 'color' : 'black',
-               'margin-top' : '10px', 'width' : '100%',
-               'margin-bottom' : '10px'
+               'margin-top' : '0px', 'width' : '100%',
+               'margin-bottom' : '0px'
             },
-            children=table_rows
+            children=[
+                html.Tr([
+                    html.Th('Total Edges', style=htd_style),
+                    html.Td(num_edges, style=td_style)
+                ]),
+                html.Tr([
+                    html.Th('Unique Edges', style=htd_style),
+                    html.Td(unique_edges, style=td_style)
+                ]),
+                html.Tr([
+                    html.Th('Number of Nodes', style=htd_style),
+                    html.Td(num_nodes, style=td_style)
+                ])
+            ]
         )
     )
 
@@ -841,7 +835,7 @@ def create_dash_edge_table(net, edge_index = None):
                 html.Table(
                     style = {
                        "background-color" : 'white', 'color' : 'black',
-                       'margin-top' : '10px', 'margin-bottom' : '10px',
+                       'margin-top' : '10px', 'margin-bottom' : '0px',
                        'width' : '100%',
                     },
                     children=table_rows
@@ -980,7 +974,7 @@ def create_dash_node_table(net, nmeta, node = None):
                         style = {
                            "background-color" : 'white', 'color' : 'black',
                            'margin-top' : '10px',
-                           'margin-bottom' : '10px', 'width' : '100%',
+                           'margin-bottom' : '0px', 'width' : '100%',
                         },
                         children=table_rows
                     )
@@ -1400,9 +1394,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                             html.Div(
                                 id='network-stats-box-contents',
                                 style={'margin' : '0px', 'display' : 'none', 'padding' : '10px'},
-                                children = [
-                                    create_network_stats_table(net)
-                                ]
+                                children = [create_network_stats_table(net)]
                             )
                         ]
                     ),
