@@ -436,7 +436,7 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
         #title=dict(text = "3D Network View", font = dict(color='#FFFFFF')),
         showlegend=True,
         legend=dict(font = dict(color="#FFFFFF")),
-        margin=dict(l=10, r=10, t=10, b=10),
+        margin=dict(l=450, r=10, t=10, b=10),
         paper_bgcolor="#000000",
         colorway=colorway,
         scene=dict(
@@ -579,6 +579,60 @@ def create_binned_network_figure(figure, elayers, color_by = 'Score',
     if layer_by == 'Score':
         nticks = int(nticks / 2)
     return (colorway, sliders, nticks)
+
+
+
+
+
+def create_degree_distribution_plot(vlayers):
+    """
+    Creates a 2D scatterplot containing the degree distribution
+    """
+    vdata = vlayers.loc[:,('Vertex', 'Degree')].drop_duplicates()
+    vdata = vdata.groupby('Degree').agg(['count']).reset_index()
+
+    fig = go.Figure(data=[go.Scatter(
+                x=vdata['Degree'],
+                y=vdata['Vertex']['count'],
+                mode='markers',
+                marker=dict(symbol='circle', size=5, color='#000088'))])
+    fig.update_layout(
+        height=350,
+        title="Node Degree Distribution",
+        margin=dict(l=10, r=10, t=80, b=20),
+        xaxis_type="log",
+        yaxis_type="log",
+        xaxis_title="Degree",
+        yaxis_title="Number of Nodes",
+    )
+    return fig
+
+
+
+
+
+def create_avg_cc_distribution_plot(vlayers):
+    """
+    Creates a 2D scatterplot containing the average clustering coefficient distribution
+    """
+    vdata = vlayers.loc[:,('CC', 'Degree')].drop_duplicates()
+    vdata = vdata.groupby('Degree').agg(['mean']).reset_index()
+
+    fig = go.Figure(data=[go.Scatter(
+                x=vdata['Degree'],
+                y=vdata['CC']['mean'],
+                mode='markers',
+                marker=dict(symbol='circle', size=5, color='#000088'))])
+    fig.update_layout(
+        height=350,
+        title="Avg. Clusering Coefficient Distribution",
+        margin=dict(l=10, r=10, t=80, b=10),
+        xaxis_type="log",
+        yaxis_type="log",
+        xaxis_title="Degree",
+        yaxis_title="Number of Nodes",
+    )
+    return fig
 
 
 
@@ -1307,7 +1361,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                 style={
                     "position" : "fixed", "left" : "30px", "top" : "120px",
                     'padding' : '0px 10px 0px 0px',  "margin" : "0px",
-                    "width" : "400px", "height" : "70vh", 'overflow-y': 'auto',
+                    "width" : "400px", "height" : "80vh", 'overflow-y': 'auto',
                     "scrollbar-color" : "dark"
                 },
                 children = [
@@ -1405,7 +1459,33 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                             html.Div(
                                 id='network-stats-box-contents',
                                 style={'margin' : '0px', 'display' : 'none', 'padding' : '10px'},
-                                children = [create_network_stats_table(net)]
+                                children = [
+                                    create_network_stats_table(net),
+                                    dcc.Graph(id = 'degree-distribution-plot',
+                                        figure = create_degree_distribution_plot(vlayers),
+                                        config =  {
+                                            'toImageButtonOptions' : {
+                                                'filename': 'kinc_3d_degree_distribution',
+                                                'width': 800,
+                                                'height': 600,
+                                                'format': 'svg',
+                                                'scale' : 1
+                                            }
+                                        },
+                                    ),
+                                    dcc.Graph(id = 'avg-cc-distribution-plot',
+                                        figure = create_avg_cc_distribution_plot(vlayers),
+                                        config =  {
+                                            'toImageButtonOptions' : {
+                                                'filename': 'kinc_3d_average_cc_distribution',
+                                                'width': 800,
+                                                'height': 600,
+                                                'format': 'svg',
+                                                'scale' : 1
+                                            }
+                                        },
+                                    ),
+                                ]
                             )
                         ]
                     ),
@@ -1552,7 +1632,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
         [dash.dependencies.Input('network-stats-box-toggle', 'n_clicks')]
     )
     def toggle_network_stats_box(toggle):
-        if (toggle % 2 == 1):
+        if (toggle % 2 == 0):
             return {'margin' : '0px', 'visibility' : 'visible', 'padding' : '10px'}
         else:
             return {'margin' : '0px', 'visibility' : 'hidden', 'height' : '0px', 'padding' : '0px'}
