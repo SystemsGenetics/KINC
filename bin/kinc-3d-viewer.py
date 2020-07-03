@@ -1194,7 +1194,7 @@ def build_sidebar_box_header(title, id_prefix):
 
     return html.Div(
         style = {
-            'background-color' : '#333333', 'color' : 'white',
+            'background-color' : '#555555', 'color' : 'white',
             'margin': '0px', 'padding':'10px',
             "border-radius": "5px"},
         children = [
@@ -1271,9 +1271,9 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
     """
 
     sidebar_box_style = {
-        "float" : "left", "width" : "100%", "color" : "white",
+        "float" : "left", "width" : "100%", "color" : "black",
         "padding" : "0px", "margin-bottom" : "10px",
-        "background-color" : "#555555",
+        "background-color" : "#CCCCCC",
         "border-radius": "5px"
     }
 
