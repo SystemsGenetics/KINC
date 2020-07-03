@@ -917,13 +917,15 @@ def create_dash_sample_table(net, amx, sample = None):
 
 
 
-def create_dash_node_table(net, nmeta, node = None):
+def create_dash_node_table(net, nmeta, vlayers, node = None):
     """
     Constructs the HTML table that holds node information for the Dash app.
 
     net :  The network dataframe created by the load_network function.
 
     nmeta : The dataframe containing the node metadata.
+
+    vlayers : The dataframe containing the 3D coordinates for the nodes.
 
     node : The name of the node to display
 
@@ -941,15 +943,22 @@ def create_dash_node_table(net, nmeta, node = None):
     }
 
     div_children = []
-    if not nmeta is None:
-        if not node is None:
+    table_rows = []
+    if not node is None:
+        table_rows.append(
+            html.Tr([
+                html.Th('Name', style=htd_style),
+                html.Td(node, style=td_style)
+            ])
+        )
+        table_rows.append(
+            html.Tr([
+                html.Th('Degree', style=htd_style),
+                html.Td(vlayers.loc[vlayers['Vertex'] == node, 'Degree'].unique(), style=td_style)
+            ])
+        )
+        if not nmeta is None:
             columns = nmeta.columns
-            table_rows = []
-            div_children.append(html.H4(
-                children = ['Node: {node}'.format(node = node)],
-                style = {'padding' : '0px', 'margin' : '0px'}
-            ))
-            table_rows = []
             if not nmeta is None:
                 rows = nmeta.loc[node]
                 for index, row in rows.iterrows():
@@ -969,27 +978,27 @@ def create_dash_node_table(net, nmeta, node = None):
                             )
                         ])
                     )
-                div_children.append(
-                    html.Table(
-                        style = {
-                           "background-color" : 'white', 'color' : 'black',
-                           'margin-top' : '10px',
-                           'margin-bottom' : '0px', 'width' : '100%',
-                        },
-                        children=table_rows
-                    )
-                )
             else:
                 div_children.append(
-                    html.Div('There is no information about this node.')
+                    html.Div('There is no additional information about this node.')
                 )
         else:
             div_children.append(
-                html.Div('To view node details, click a node in the network.')
+                html.Div('There are no node meta data provided. Use the --nmeta option to load node data when running this application.')
             )
+        div_children.append(
+            html.Table(
+                style = {
+                   "background-color" : 'white', 'color' : 'black',
+                   'margin-top' : '10px',
+                   'margin-bottom' : '0px', 'width' : '100%',
+                },
+                children=table_rows
+            )
+        )
     else:
         div_children.append(
-            html.Div('There is no node meta data provided. Use the --nmeta option to load node data when running this application.')
+            html.Div('To view node details, click a node in the network.')
         )
 
     return html.Div(
@@ -1318,6 +1327,18 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                             )
                         ]
                     ),
+                    # Node Details
+                    html.Div(
+                        style=sidebar_box_style,
+                        children=[
+                            build_sidebar_box_header("Node Details", 'node-table-box'),
+                            html.Div(
+                                id="node-table-box-contents",
+                                style={'margin' : '0px', 'visibility' : 'hidden'},
+                                children=[create_dash_node_table(net, nmeta, vlayers)]
+                            ),
+                        ]
+                    ),
                     # Edge Table
                     html.Div(
                         style=sidebar_box_style,
@@ -1327,18 +1348,6 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                                 id="edge-table-box-contents",
                                 style={'margin' : '0px', 'visibility' : 'hidden'},
                                 children=[create_dash_edge_table(net)]
-                            ),
-                        ]
-                    ),
-                    # Node Details
-                    html.Div(
-                        style=sidebar_box_style,
-                        children=[
-                            build_sidebar_box_header("Node Details", 'node-table-box'),
-                            html.Div(
-                                id="node-table-box-contents",
-                                style={'margin' : '0px', 'visibility' : 'hidden'},
-                                children=[create_dash_node_table(net, nmeta)]
                             ),
                         ]
                     ),
@@ -1436,10 +1445,10 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                 edge_nodes = [source, target]
                 scatterplot = create_expression_scatterplot(gem, amx, elayers, color_col, edge_index)
                 edge_table = create_dash_edge_table(net, edge_index)
-                node_table = create_dash_node_table(net, nmeta, None)
+                node_table = create_dash_node_table(net, nmeta, vlayers, None)
             if (nfound):
                 node = edge_index = points[0]['customdata']
-                node_table = create_dash_node_table(net, nmeta, node)
+                node_table = create_dash_node_table(net, nmeta, vlayers, node)
                 edge_table = create_dash_edge_table(net, None)
 
             return [scatterplot, edge_table, node_table]
