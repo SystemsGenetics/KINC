@@ -674,8 +674,8 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
 
     # Calculate the sizes of the points.
     sizes = pd.Series(list(samples))
-    sizes = sizes.replace(to_replace=r'[^1]', value='8', regex=True)
-    sizes = sizes.replace({'1': '16'})
+    sizes = sizes.replace(to_replace=r'[^1]', value='5', regex=True)
+    sizes = sizes.replace({'1': '10'})
     sizes = sizes.astype('int')
     sizes.index = sdata.index
 
