@@ -25,6 +25,7 @@ import ast
 import time
 import base64
 from progress.bar import IncrementalBar
+import socket
 
 
 
@@ -1588,6 +1589,15 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
     return app
 
 
+def is_port_in_use(port):
+    """
+    A quick little function to check if a port is already in use.
+
+    port:  the desired port to use
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+
 
 def main():
     """
@@ -1656,7 +1666,12 @@ def main():
     # Launch the dash application
     print("Launching application...")
     app = build_application(net, gem, amx, nmeta, vlayers, elayers, args.sample_col, net_prefix)
-    app.run_server(debug=args.debug)
+
+
+    port = 8050
+    while(is_port_in_use(port)):
+        port = port + 1
+    app.run_server(debug=args.debug, port=port)
 
     exit(0)
 
