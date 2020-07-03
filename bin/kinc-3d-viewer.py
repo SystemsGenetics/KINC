@@ -965,14 +965,15 @@ def create_dash_node_table(net, nmeta, vlayers, node = None):
                     table_rows.append(
                         html.Tr([
                             html.Th(
+                                colSpan = 2,
                                 children=[
                                     html.Label(
-                                        "{term} ({vocab})".format(term = row['Term'], vocab=row['Vocabulary']),
+                                        "{term}".format(term = row['Term']),
                                         style= {'font-weight' : 'bold'}
                                     ),
                                     html.Div(
                                         row['Definition'],
-                                        style= {'font-weight' : 'normal', 'margin-bottom': '10px'})
+                                        style= {'font-weight' : 'normal'})
                                 ],
                                 style=htd_style,
                             )
@@ -990,7 +991,7 @@ def create_dash_node_table(net, nmeta, vlayers, node = None):
             html.Table(
                 style = {
                    "background-color" : 'white', 'color' : 'black',
-                   'margin-top' : '10px',
+                   'margin-top' : '0px',
                    'margin-bottom' : '0px', 'width' : '100%',
                 },
                 children=table_rows
