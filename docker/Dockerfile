@@ -3,7 +3,7 @@ MAINTAINER Ben Shealy <btsheal@clemson.edu>
 
 ARG NVIDIA_HEADLESS=0
 ARG ACE_REVISION="develop"
-ARG KINC_REVISION="master"
+ARG KINC_REVISION="develop"
 
 ENV CUDADIR="/usr/local/cuda"
 ENV CPLUS_INCLUDE_PATH="${CUDADIR}/include:${CPLUS_INCLUDE_PATH}"
@@ -14,7 +14,14 @@ ENV LD_LIBRARY_PATH="${CUDADIR}/lib64:${LD_LIBRARY_PATH}"
 RUN apt-get update -qq \
 	&& apt-get install -qq -y \
 		qt5-default \
-		clinfo git libgsl-dev liblapacke-dev libopenblas-dev libopenmpi-dev ocl-icd-opencl-dev \
+		clinfo \
+		git \
+		libboost-dev \
+		libgsl-dev \
+		liblapacke-dev \
+		libopenblas-dev \
+		libopenmpi-dev \
+		ocl-icd-opencl-dev \
 		python3-pip
 
 # install headless driver for cpu image
@@ -55,6 +62,7 @@ WORKDIR /opt
 
 ADD https://api.github.com/repos/SystemsGenetics/KINC/git/refs/heads/${KINC_REVISION} kinc-version.json
 RUN git clone -q https://github.com/SystemsGenetics/KINC.git \
+	&& mkdir -p KINC/build \
 	&& cd KINC/build \
 	&& git checkout -q ${KINC_REVISION} \
 	&& qmake ../src/KINC.pro GUI=no \

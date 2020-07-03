@@ -5,13 +5,13 @@ latest:
 		-t systemsgenetics/kinc:latest-cpu \
 		--build-arg NVIDIA_HEADLESS=1 \
 		--build-arg ACE_REVISION=develop \
-		--build-arg KINC_REVISION=master \
+		--build-arg KINC_REVISION=develop \
 		.
 	docker build \
 		-t systemsgenetics/kinc:latest-gpu \
 		--build-arg NVIDIA_HEADLESS=0 \
 		--build-arg ACE_REVISION=develop \
-		--build-arg KINC_REVISION=master \
+		--build-arg KINC_REVISION=develop \
 		.
 
 v3.4.x:
