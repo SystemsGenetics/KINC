@@ -31,9 +31,6 @@ RUN if [ ${NVIDIA_HEADLESS} = 1 ]; then apt-get install -qq -y nvidia-headless-4
 RUN mkdir -p /etc/OpenCL/vendors \
 	&& echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
 
-# install python dependencies
-RUN pip3 install -q -r requirements.txt
-
 # install StatsLib
 WORKDIR /opt
 
@@ -69,6 +66,11 @@ RUN git clone -q https://github.com/SystemsGenetics/KINC.git \
 	&& make -s -j $(nproc) \
 	&& make -s qmake_all \
 	&& make -s install
+
+# install python dependencies
+WORKDIR /opt/KINC
+
+RUN pip3 install -q -r requirements.txt
 
 # initialize default work directory
 WORKDIR /workspace
