@@ -32,7 +32,7 @@ RUN mkdir -p /etc/OpenCL/vendors \
 	&& echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
 
 # install python dependencies
-RUN pip3 install -q argparse matplotlib numpy pandas scipy seaborn
+RUN pip3 install -q -r requirements.txt
 
 # install StatsLib
 WORKDIR /opt
