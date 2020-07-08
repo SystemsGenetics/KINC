@@ -436,7 +436,7 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
         #title=dict(text = "3D Network View", font = dict(color='#FFFFFF')),
         showlegend=True,
         legend=dict(font = dict(color="#FFFFFF")),
-        margin=dict(l=10, r=10, t=10, b=10),
+        margin=dict(l=450, r=10, t=10, b=10),
         paper_bgcolor="#000000",
         colorway=colorway,
         scene=dict(
@@ -583,6 +583,60 @@ def create_binned_network_figure(figure, elayers, color_by = 'Score',
 
 
 
+
+def create_degree_distribution_plot(vlayers):
+    """
+    Creates a 2D scatterplot containing the degree distribution
+    """
+    vdata = vlayers.loc[:,('Vertex', 'Degree')].drop_duplicates()
+    vdata = vdata.groupby('Degree').agg(['count']).reset_index()
+
+    fig = go.Figure(data=[go.Scatter(
+                x=vdata['Degree'],
+                y=vdata['Vertex']['count'],
+                mode='markers',
+                marker=dict(symbol='circle', size=5, color='#000088'))])
+    fig.update_layout(
+        height=350,
+        title="Node Degree Distribution",
+        margin=dict(l=10, r=10, t=80, b=20),
+        xaxis_type="log",
+        yaxis_type="log",
+        xaxis_title="Degree",
+        yaxis_title="Number of Nodes",
+    )
+    return fig
+
+
+
+
+
+def create_avg_cc_distribution_plot(vlayers):
+    """
+    Creates a 2D scatterplot containing the average clustering coefficient distribution
+    """
+    vdata = vlayers.loc[:,('CC', 'Degree')].drop_duplicates()
+    vdata = vdata.groupby('Degree').agg(['mean']).reset_index()
+
+    fig = go.Figure(data=[go.Scatter(
+                x=vdata['Degree'],
+                y=vdata['CC']['mean'],
+                mode='markers',
+                marker=dict(symbol='circle', size=5, color='#000088'))])
+    fig.update_layout(
+        height=350,
+        title="Avg. Clusering Coefficient Distribution",
+        margin=dict(l=10, r=10, t=80, b=10),
+        xaxis_type="log",
+        yaxis_type="log",
+        xaxis_title="Degree",
+        yaxis_title="Number of Nodes",
+    )
+    return fig
+
+
+
+
 def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index = None):
     """
     Uses Plotly to create the interactive 3D scatterplot of co-expression
@@ -620,8 +674,8 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
 
     # Calculate the sizes of the points.
     sizes = pd.Series(list(samples))
-    sizes = sizes.replace(to_replace=r'[^1]', value='8', regex=True)
-    sizes = sizes.replace({'1': '16'})
+    sizes = sizes.replace(to_replace=r'[^1]', value='5', regex=True)
+    sizes = sizes.replace({'1': '10'})
     sizes = sizes.astype('int')
     sizes.index = sdata.index
 
@@ -1140,7 +1194,7 @@ def build_sidebar_box_header(title, id_prefix):
 
     return html.Div(
         style = {
-            'background-color' : '#333333', 'color' : 'white',
+            'background-color' : '#555555', 'color' : 'white',
             'margin': '0px', 'padding':'10px',
             "border-radius": "5px"},
         children = [
@@ -1217,9 +1271,9 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
     """
 
     sidebar_box_style = {
-        "float" : "left", "width" : "100%", "color" : "white",
+        "float" : "left", "width" : "100%", "color" : "black",
         "padding" : "0px", "margin-bottom" : "10px",
-        "background-color" : "#555555",
+        "background-color" : "#CCCCCC",
         "border-radius": "5px"
     }
 
@@ -1307,7 +1361,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                 style={
                     "position" : "fixed", "left" : "30px", "top" : "120px",
                     'padding' : '0px 10px 0px 0px',  "margin" : "0px",
-                    "width" : "400px", "height" : "70vh", 'overflow-y': 'auto',
+                    "width" : "400px", "height" : "80vh", 'overflow-y': 'auto',
                     "scrollbar-color" : "dark"
                 },
                 children = [
@@ -1369,7 +1423,8 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                                             create_condition_select(amx, sample_col)
                                         ],
                                     ),
-                                    dcc.Graph(id = 'edge-expression-3dview',
+                                    dcc.Graph(
+                                        id = 'edge-expression-3dview',
                                         figure = create_expression_scatterplot(gem, amx, elayers),
                                         config =  {
                                             'toImageButtonOptions' : {
@@ -1404,8 +1459,36 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                             build_sidebar_box_header("Network Stats", 'network-stats-box'),
                             html.Div(
                                 id='network-stats-box-contents',
-                                style={'margin' : '0px', 'display' : 'none', 'padding' : '10px'},
-                                children = [create_network_stats_table(net)]
+                                style={'margin' : '0px', 'padding' : '10px'},
+                                children = [
+                                    create_network_stats_table(net),
+                                    dcc.Graph(
+                                        id = 'degree-distribution-plot',
+                                        figure = create_degree_distribution_plot(vlayers),
+                                        config =  {
+                                            'toImageButtonOptions' : {
+                                                'filename': 'kinc_3d_degree_distribution',
+                                                'width': 800,
+                                                'height': 800,
+                                                'format': 'svg',
+                                                'scale' : 1
+                                            }
+                                        },
+                                    ),
+                                    dcc.Graph(
+                                        id = 'avg-cc-distribution-plot',
+                                        figure = create_avg_cc_distribution_plot(vlayers),
+                                        config =  {
+                                            'toImageButtonOptions' : {
+                                                'filename': 'kinc_3d_average_cc_distribution',
+                                                'width': 800,
+                                                'height': 600,
+                                                'format': 'svg',
+                                                'scale' : 1
+                                            }
+                                        },
+                                    ),
+                                ]
                             )
                         ]
                     ),
@@ -1552,7 +1635,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
         [dash.dependencies.Input('network-stats-box-toggle', 'n_clicks')]
     )
     def toggle_network_stats_box(toggle):
-        if (toggle % 2 == 1):
+        if (toggle % 2 == 0):
             return {'margin' : '0px', 'visibility' : 'visible', 'padding' : '10px'}
         else:
             return {'margin' : '0px', 'visibility' : 'hidden', 'height' : '0px', 'padding' : '0px'}
@@ -1591,7 +1674,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
 
 def is_port_in_use(port):
     """
-    A quick little function to check if a port is already in use.
+    Checks if a port is already in use.
 
     port:  the desired port to use
     """
