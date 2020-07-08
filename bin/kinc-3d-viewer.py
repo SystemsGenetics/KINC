@@ -1423,7 +1423,8 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                                             create_condition_select(amx, sample_col)
                                         ],
                                     ),
-                                    dcc.Graph(id = 'edge-expression-3dview',
+                                    dcc.Graph(
+                                        id = 'edge-expression-3dview',
                                         figure = create_expression_scatterplot(gem, amx, elayers),
                                         config =  {
                                             'toImageButtonOptions' : {
@@ -1458,22 +1459,24 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                             build_sidebar_box_header("Network Stats", 'network-stats-box'),
                             html.Div(
                                 id='network-stats-box-contents',
-                                style={'margin' : '0px', 'display' : 'none', 'padding' : '10px'},
+                                style={'margin' : '0px', 'padding' : '10px'},
                                 children = [
                                     create_network_stats_table(net),
-                                    dcc.Graph(id = 'degree-distribution-plot',
+                                    dcc.Graph(
+                                        id = 'degree-distribution-plot',
                                         figure = create_degree_distribution_plot(vlayers),
                                         config =  {
                                             'toImageButtonOptions' : {
                                                 'filename': 'kinc_3d_degree_distribution',
                                                 'width': 800,
-                                                'height': 600,
+                                                'height': 800,
                                                 'format': 'svg',
                                                 'scale' : 1
                                             }
                                         },
                                     ),
-                                    dcc.Graph(id = 'avg-cc-distribution-plot',
+                                    dcc.Graph(
+                                        id = 'avg-cc-distribution-plot',
                                         figure = create_avg_cc_distribution_plot(vlayers),
                                         config =  {
                                             'toImageButtonOptions' : {
@@ -1671,7 +1674,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
 
 def is_port_in_use(port):
     """
-    A quick little function to check if a port is already in use.
+    Checks if a port is already in use.
 
     port:  the desired port to use
     """
