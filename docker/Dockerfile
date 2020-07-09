@@ -43,11 +43,10 @@ RUN git clone -q https://github.com/kthohr/stats \
 # install ACE
 WORKDIR /opt
 
-ADD https://api.github.com/repos/SystemsGenetics/ACE/git/refs/heads/${ACE_REVISION} ace-version.json
 RUN git clone -q https://github.com/SystemsGenetics/ACE.git \
 	&& cd ACE/build \
 	&& git checkout -q ${ACE_REVISION} \
-	&& qmake ../src/ACE.pro GUI=no \
+	&& qmake ../src/ACE.pro \
 	&& make -s -j $(nproc) \
 	&& make -s qmake_all \
 	&& make -s install
@@ -57,15 +56,23 @@ ENV LD_LIBRARY_PATH "/usr/local/lib:$LD_LIBRARY_PATH"
 # install KINC
 WORKDIR /opt
 
-ADD https://api.github.com/repos/SystemsGenetics/KINC/git/refs/heads/${KINC_REVISION} kinc-version.json
-RUN git clone -q https://github.com/SystemsGenetics/KINC.git \
-	&& mkdir -p KINC/build \
-	&& cd KINC/build \
-	&& git checkout -q ${KINC_REVISION} \
-	&& qmake ../src/KINC.pro GUI=no \
-	&& make -s -j $(nproc) \
-	&& make -s qmake_all \
-	&& make -s install
+# For older version of KINC we need to use qmake. For newer versions after 3.3.x we
+# can use the make file in the root directory of KINC.
+RUN if [ "${KINC_REVISION}" = "v3.3.x" ] || [ "${KINC_REVISION}" = "v3.2.x" ] ; then \
+        git clone -q https://github.com/SystemsGenetics/KINC.git \
+        && cd KINC/build \
+    	&& git checkout -q ${KINC_REVISION} \
+    	&& qmake ../src/KINC.pro \
+    	&& make -s -j $(nproc) \
+    	&& make -s qmake_all \
+    	&& make -s install; \
+    else \
+        git clone -q https://github.com/SystemsGenetics/KINC.git \
+        && cd KINC \
+    	&& git checkout -q ${KINC_REVISION} \
+    	&& make -s -j $(nproc) \
+    	&& make -s install; \
+    fi
 
 # install python dependencies
 WORKDIR /opt/KINC

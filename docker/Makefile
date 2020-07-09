@@ -4,13 +4,13 @@ latest:
 	docker build \
 		-t systemsgenetics/kinc:latest-cpu \
 		--build-arg NVIDIA_HEADLESS=1 \
-		--build-arg ACE_REVISION=develop \
+		--build-arg ACE_REVISION=v3.2.0 \
 		--build-arg KINC_REVISION=develop \
 		.
 	docker build \
 		-t systemsgenetics/kinc:latest-gpu \
 		--build-arg NVIDIA_HEADLESS=0 \
-		--build-arg ACE_REVISION=develop \
+		--build-arg ACE_REVISION=v3.2.0 \
 		--build-arg KINC_REVISION=develop \
 		.
 
@@ -19,13 +19,13 @@ v3.4.x:
 		-t systemsgenetics/kinc:3.4.2-cpu \
 		--build-arg NVIDIA_HEADLESS=1 \
 		--build-arg ACE_REVISION=v3.2.0 \
-		--build-arg KINC_REVISION=v3.4.2 \
+		--build-arg KINC_REVISION=develop \
 		.
 	docker build \
 		-t systemsgenetics/kinc:3.4.2-gpu \
 		--build-arg NVIDIA_HEADLESS=0 \
 		--build-arg ACE_REVISION=v3.2.0 \
-		--build-arg KINC_REVISION=v3.4.2 \
+		--build-arg KINC_REVISION=develop \
 		.
 
 v3.3.x:
