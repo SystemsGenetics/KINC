@@ -11,7 +11,7 @@ latest:
 		-t systemsgenetics/kinc:latest-gpu \
 		--build-arg NVIDIA_HEADLESS=0 \
 		--build-arg ACE_REVISION=v3.2.0 \
-		--build-arg KINC_REVISION=develop \
+		--build-arg KINC_REVISION=docker-update \
 		.
 
 v3.4.x:

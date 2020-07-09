@@ -4,10 +4,8 @@ numpy
 pandas
 scipy
 seaborn
-igraph
+python-igraph
 plotly
 fa2
 dash
-dash_core_components
-dash_html_components
-progress.bar
+progress
