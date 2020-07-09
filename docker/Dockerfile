@@ -77,7 +77,7 @@ RUN if [ "${KINC_REVISION}" = "v3.3.x" ] || [ "${KINC_REVISION}" = "v3.2.x" ] ; 
     fi
 
 
-# Add in a few additional requirements for the 3.4 version of KINC. These are needed
+# Add in a few additional requirements for the >=3.4 version of KINC. These are needed
 # for the R and Python scripts in the bin folder.
 RUN if [ ! "${KINC_REVISION}" = "v3.3.x" ] && [ ! "${KINC_REVISION}" = "v3.2.x" ] ; then \
     apt-get install -qq -y \
@@ -87,15 +87,26 @@ RUN if [ ! "${KINC_REVISION}" = "v3.3.x" ] && [ ! "${KINC_REVISION}" = "v3.2.x" 
         libxml2-dev \
         bison \
         flex \
-        r-base; \
+        build-essential \
+        libcurl4-gnutls-dev \
+        libssl-dev \
+        software-properties-common; \
     fi
 
 # Install KINC.R
+ENV DEBIAN_FRONTEND=noninteractive
 RUN if [ ! "${KINC_REVISION}" = "v3.3.x" ] && [ ! "${KINC_REVISION}" = "v3.2.x" ] ; then \
-      R -e "install.packages('devtools',dependencies=TRUE, repos='http://cran.rstudio.com/')" \
-      && R -e "install_github('SystemsGenetics/KINC.R', ref="${KINC_R_REVISION}")"; \
+        apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 \
+        && add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran40/' \
+        && apt update \
+        && apt-get -qq install -y r-base \
+        && R -q -e "install.packages('devtools', dependencies=TRUE, repos='http://cran.us.r-project.org')"; \
+
     fi
 
+RUN if [ ! "${KINC_REVISION}" = "v3.3.x" ] && [ ! "${KINC_REVISION}" = "v3.2.x" ] ; then \
+        R -e "library('devtools'); install_github('SystemsGenetics/KINC.R', ref='${KINC_R_REVISION}')"; \
+    fi
 
 # install python dependencies
 WORKDIR /opt/KINC
