@@ -4,6 +4,7 @@ MAINTAINER Ben Shealy <btsheal@clemson.edu>
 ARG NVIDIA_HEADLESS=0
 ARG ACE_REVISION="develop"
 ARG KINC_REVISION="develop"
+ARG KINC_R_REVISION="master"
 
 ENV CUDADIR="/usr/local/cuda"
 ENV CPLUS_INCLUDE_PATH="${CUDADIR}/include:${CPLUS_INCLUDE_PATH}"
@@ -24,7 +25,8 @@ RUN apt-get update -qq \
 		ocl-icd-opencl-dev \
 		python3-pip
 
-# install headless driver for cpu image
+
+# Install headless driver for cpu image
 RUN if [ ${NVIDIA_HEADLESS} = 1 ]; then apt-get install -qq -y nvidia-headless-418 ; fi
 
 # add NVIDIA platform to OpenCL
@@ -61,7 +63,7 @@ WORKDIR /opt
 RUN if [ "${KINC_REVISION}" = "v3.3.x" ] || [ "${KINC_REVISION}" = "v3.2.x" ] ; then \
         git clone -q https://github.com/SystemsGenetics/KINC.git \
         && cd KINC/build \
-    	&& git checkout -q ${KINC_REVISION} \
+    	&& git checkout-q ${KINC_REVISION} \
     	&& qmake ../src/KINC.pro \
     	&& make -s -j $(nproc) \
     	&& make -s qmake_all \
@@ -74,10 +76,43 @@ RUN if [ "${KINC_REVISION}" = "v3.3.x" ] || [ "${KINC_REVISION}" = "v3.2.x" ] ; 
     	&& make -s install; \
     fi
 
+
+# Add in a few additional requirements for the 3.4 version of KINC. These are needed
+# for the R and Python scripts in the bin folder.
+RUN if [ ! "${KINC_REVISION}" = "v3.3.x" ] && [ ! "${KINC_REVISION}" = "v3.2.x" ] ; then \
+    apt-get install -qq -y \
+        m4 \
+        autoconf \
+        automake \
+        libxml2-dev \
+        bison \
+        flex \
+        r-base; \
+    fi
+
+# Install KINC.R
+RUN if [ ! "${KINC_REVISION}" = "v3.3.x" ] && [ ! "${KINC_REVISION}" = "v3.2.x" ] ; then \
+      R -e "install.packages('devtools',dependencies=TRUE, repos='http://cran.rstudio.com/')" \
+      && R -e "install_github('SystemsGenetics/KINC.R', ref="${KINC_R_REVISION}")"; \
+    fi
+
+
 # install python dependencies
 WORKDIR /opt/KINC
 
-RUN pip3 install -q -r requirements.txt
+RUN pip3 install  -r requirements.txt
+
+
 
 # initialize default work directory
 WORKDIR /workspace
+
+# Tini for signal processing and zombie killing.
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+
+# Define the command and parameters that will be executed when this
+# container is first run.
+ENTRYPOINT ["/tini", "--"]
