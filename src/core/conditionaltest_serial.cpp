@@ -57,10 +57,12 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
     // iterate through each pair in the work block
     for ( qint64 wbIndex = 0; wbIndex < workBlock->size(); ++wbIndex )
     {
+
         // print warning if iterator indices do not match
         if ( ccmPair.index() != cmxPair.index() )
         {
-            qInfo() << "warning: ccm and cmx files are out of sync";
+            qInfo() << "warning: ccm and cmx files are out of sync at cmx coordinate ("
+                    << cmxPair.index().getX() << "," << cmxPair.index().getY() <<").";
         }
 
         // initialize set of p values and r2 values for each cluster
@@ -117,14 +119,14 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
 
         // append pair to result block
         resultBlock->append(Pair {
-            ccmPair.index(),
+            cmxPair.index(),
             pValues,
             r2
         });
 
         // read the next pair
-        ccmPair.readNext();
         cmxPair.readNext();
+        ccmPair.read(cmxPair.index());
     }
 
     return std::unique_ptr<EAbstractAnalyticBlock>(resultBlock);
@@ -422,7 +424,6 @@ void ConditionalTest::Serial::test_proportions (
     {
         // Keeps track of the number of successes for each iteration.
         int ns = 0;
-        int fs = 0;
 
         // The gsl_ran_sample function randomly chooses samples with replacement from a list.
         int chosen[bs_t];
@@ -431,7 +432,6 @@ void ConditionalTest::Serial::test_proportions (
         // Now count the number of randomly selected items from the cluster.
         for ( int j = 0; j < bs_t; j++ )
         {
-            int etype = ccmPair.at(clusterIndex, chosen[j]);
             QString slabel = amx_column.at(chosen[j]);
             if ( ccmPair.at(clusterIndex, chosen[j]) == 1 && amx_column.at(chosen[j]) == test_label )
             {

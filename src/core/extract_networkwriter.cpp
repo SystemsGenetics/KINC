@@ -54,7 +54,8 @@ int Extract::NetworkWriter::readNext()
 
         if ( _cmxPair.index() != _ccmPair.index() )
         {
-            qInfo() << "warning: cmx and ccm are out of sync";
+            qInfo() << "warning: cmx and ccm are out of sync at cmx coordinate ("
+                    << _cmxPair.index().getX() << "," << _cmxPair.index().getY() <<").";
         }
     }
 
@@ -65,7 +66,8 @@ int Extract::NetworkWriter::readNext()
 
         if ( _cmxPair.index() != _csmPair.index() )
         {
-            qInfo() << "warning: cmx and ccm are out of sync";
+            qInfo() << "warning: cmx and ccm are out of sync at cmx coordinate ("
+                    << _cmxPair.index().getX() << "," << _cmxPair.index().getY() <<").";
         }
     }
 

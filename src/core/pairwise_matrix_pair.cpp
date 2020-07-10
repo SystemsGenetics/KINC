@@ -44,8 +44,10 @@ void Matrix::Pair::write(const Index& index)
  * Read the pair with the given pairwise index from the data object file.
  *
  * @param index
+ *
+ * @return the index of the pair. If no pair is found at this index then -1 is returned.
  */
-void Matrix::Pair::read(const Index& index) const
+qint64 Matrix::Pair::read(const Index& index) const
 {
     EDEBUG_FUNC(this,&index);
 
@@ -61,8 +63,25 @@ void Matrix::Pair::read(const Index& index) const
         _rawIndex = clusterIndex;
         readNext();
     }
-}
+    return clusterIndex;
 
+}
+/*!
+ * For sparse matricies the index of the first pair may not be know.
+ *
+ * This function is used to find that first pair and read it.
+ */
+void Matrix::Pair::readFirst() const
+{
+    EDEBUG_FUNC(this);
+
+    for (qint64 i = 0; i < _cMatrix->size(); i++)
+    {
+        if (this->read(Pairwise::Index(i)) != -1) {
+            return;
+        }
+    }
+}
 
 
 /*!

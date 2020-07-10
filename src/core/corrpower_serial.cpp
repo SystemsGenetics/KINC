@@ -59,10 +59,12 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
     // Iterate through each pair in the work block.
     for ( qint64 wbIndex = 0; wbIndex < workBlock->size(); ++wbIndex )
     {
+
         // Print warning if iterator indices do not match
         if ( ccmPair.index() != cmxPair.index() )
         {
-            qInfo() << "warning: ccm and cmx files are out of sync";
+            qInfo() << "warning: ccm and cmx files are out of sync at cmx coordinate ("
+                    << cmxPair.index().getX() << "," << cmxPair.index().getY() <<").";
         }
 
         // Get the number of samples and clusters.
@@ -128,7 +130,7 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
         if ( new_correlations.size() > 0 )
         {
             resultBlock->append(Pair {
-                ccmPair.index(),
+                cmxPair.index(),
                 new_labels,
                 new_correlations,
                 k_keep
@@ -136,8 +138,9 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
         }
 
         // read the next pair
-        ccmPair.readNext();
         cmxPair.readNext();
+        ccmPair.read(cmxPair.index());
+
     }
 
     // We're done! Return the result block.
