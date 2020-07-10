@@ -520,23 +520,40 @@ The KINC docker image comes pre-installed with all dependencies. The Dockerfile 
 
 To use KINC in an interactive Docker container execute the following:
 
+
 .. code:: bash
 
-  nvidia-docker run --rm -it systemsgenetics/kinc:3.4.2 bash
+  docker run --gpus all --rm -it --net=host -v ${PWD}:/workspace -u $(id -u ${USER})  systemsgenetics/kinc:3.4.2-cpu /bin/bash
 
-The command above will provide access to the terminal inside of the image where commands such as the following can be executed:
+The command above will provide access to the terminal inside of the image. The following describes the meaning of each argument:
+
+- `--gpus all`:  ensures that the NVidia CUDA libraries are present in the image.
+- `--rm`:  will cause the container to be cleaned up after you exit.
+- `--it`:  tells Docker to run in interactive mode with a terminal
+- `--net=host`:  exposes network ports in the image to your local machine. This is needed to use the Docker image for the 3D KINC viewer.
+- `-v ${PWD}:/workspace`: adds the current directory on the local machine as a filesystem in the image accessible via `/workspace`.  This allows you to work with files on your local machine inside of the image.
+- `-u $(id -u ${USER})`:  logs you in as your local user account so that any files created within directories mounted by the image are saved with your user account.
+
+Once inside the KINC Docker image you can execute commands such as the following:
 
 .. code:: bash
 
   > nvidia-smi
   > kinc settings
 
-You will need to share the input and output data between the Docker container and the host machine, which can be done by mounting a directory with the ``-v`` argument.  The example below mounts the current directory specified by the `$PWD` environment variable onto the `/root` directory of the image:
+To test the docker image using the example data that comes with KINC. Run the following inside of the KINC source directory on your local machine:
 
 .. code:: bash
 
-  nvidia-docker run --rm -it -v $PWD:/root systemsgenetics/kinc:3.4.2 bash
-  > ls
+  docker run --gpus all --rm -it --net=host -v ${PWD}:/workspace -u $(id -u ${USER})  systemsgenetics/kinc:3.4.2-cpu /bin/bash
+
+Next run the following commands inside of the container:
+
+.. code:: bash
+
+  cd /worspace/examples
+  ./kinc-gmm-run.sh
+
 
 Automating KINC with Nextflow
 -----------------------------
