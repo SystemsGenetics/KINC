@@ -66,6 +66,9 @@ qint64 Matrix::Pair::read(const Index& index) const
     return clusterIndex;
 
 }
+
+
+
 /*!
  * For sparse matricies the index of the first pair may not be know.
  *
