@@ -47,10 +47,16 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::makeWork(int index) con
 
     // initialize pairwise iterator for cmx file
     CorrelationMatrix::Pair cmxPair(_cmx);
+    if (index == 0)
+    {
+        cmxPair.readFirst();
+    }
+    else
+    {
+        cmxPair.read(Pairwise::Index(start));
+    }
 
-    // iterate to the start index of the next work block
-    cmxPair.read(Pairwise::Index(start));
-
+    // Iterate to the start index of the next work block
     for ( qint64 i = 0; i < size; i++ )
     {
         cmxPair.readNext();
@@ -134,6 +140,7 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
         {
             csmPair.write(pair.index);
         }
+
     }
 }
 

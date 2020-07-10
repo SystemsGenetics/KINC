@@ -32,8 +32,9 @@ namespace Pairwise
         virtual int clusterSize() const = 0;
         virtual bool isEmpty() const = 0;
         void write(const Index& index);
-        void read(const Index& index) const;
+        qint64 read(const Index& index) const;
         void reset() const { _rawIndex = 0; }
+        void readFirst() const;
         void readNext() const;
         bool hasNext() const { return _rawIndex != _cMatrix->_clusterSize; }
         const Index& index() const { return _index; }
