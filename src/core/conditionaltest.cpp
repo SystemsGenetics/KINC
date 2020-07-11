@@ -136,10 +136,7 @@ void ConditionalTest::process(const EAbstractAnalyticBlock* result)
         }
 
         // write the info into the CSM
-        if ( csmPair.clusterSize() > 0 )
-        {
-            csmPair.write(pair.index);
-        }
+        csmPair.write(pair.index);
 
     }
 }

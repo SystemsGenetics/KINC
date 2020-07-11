@@ -45,13 +45,7 @@ int Extract::NetworkWriter::readNext()
     EDEBUG_FUNC(this,cmx_index);
 
     // Read the next pair in the cmx.
-    if(_cmxPair.index().toRawIndex() == 0)
-    {
-        _cmxPair.readFirst();
-    }
-    else {
-        _cmxPair.readNext();
-    }
+    _cmxPair.readNext();
 
     // read the next pair in the ccm (should always match cmx)
     if ( _ccm )
@@ -60,8 +54,10 @@ int Extract::NetworkWriter::readNext()
 
         if ( _cmxPair.index() != _ccmPair.index() )
         {
-            qInfo() << "warning: cmx and ccm are out of sync at cmx coordinate ("
+            qInfo() << "warning: cmx and ccm are out of sync at cmx coordinate:"
+                    << getEdgeGene1() << "," << getEdgeGene2() << " ("
                     << _cmxPair.index().getX() << "," << _cmxPair.index().getY() <<").";
+            readNext();
         }
     }
 
@@ -72,8 +68,10 @@ int Extract::NetworkWriter::readNext()
 
         if ( _cmxPair.index() != _csmPair.index() )
         {
-            qInfo() << "warning: cmx and ccm are out of sync at cmx coordinate ("
-                    << _cmxPair.index().getX() << "," << _cmxPair.index().getY() <<").";
+            qInfo() << "warning: cmx and csm are out of sync at cmx coordinate:"
+                    << getEdgeGene1() << "," << getEdgeGene2() << " ("
+                    << _cmxPair.index().getX() << "," << _cmxPair.index().getY() <<") ";
+            readNext();
         }
     }
 

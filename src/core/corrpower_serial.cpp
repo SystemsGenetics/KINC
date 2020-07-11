@@ -63,7 +63,10 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::Serial::execute(const E
         // Print warning if iterator indices do not match
         if ( ccmPair.index() != cmxPair.index() )
         {
-            qInfo() << "warning: ccm and cmx files are out of sync at cmx coordinate ("
+            QString source = _base->_cmx->geneNames().at(cmxPair.index().getX()).toString();
+            QString target = _base->_cmx->geneNames().at(cmxPair.index().getY()).toString();
+            qInfo() << "warning: ccm and cmx files are out of sync at cmx coordinate:"
+                    << source << "," << target << " ("
                     << cmxPair.index().getX() << "," << cmxPair.index().getY() <<").";
         }
 
