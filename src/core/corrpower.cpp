@@ -47,10 +47,16 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork(int index) con
 
     // initialize pairwise iterator for cmx file
     CorrelationMatrix::Pair cmxPair(_cmx);
+    if (index == 0)
+    {
+        cmxPair.readFirst();
+    }
+    else
+    {
+        cmxPair.read(Pairwise::Index(start));
+    }
 
-    // iterate to the start index of the next work block
-    cmxPair.read(Pairwise::Index(start));
-
+    // Iterate to the start index of the next work block
     for ( qint64 i = 0; i < size; i++ )
     {
         cmxPair.readNext();
@@ -58,6 +64,7 @@ std::unique_ptr<EAbstractAnalyticBlock> CorrPowerFilter::makeWork(int index) con
 
     // save start index of next work block
     _workBlockStart = cmxPair.index().toRawIndex();
+
 
     // construct work block
     return std::unique_ptr<EAbstractAnalyticBlock>(new WorkBlock(index, start, size));

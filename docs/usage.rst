@@ -78,7 +78,7 @@ You can retrieve a list of all of the functions that KINC provides by executing
 
   kinc help run
 
-The following will be shown for KINC v3.4.1:
+The following will be shown for KINC v3.4.2:
 
 .. code::
 
@@ -201,17 +201,21 @@ Once all of the KINC instances have completed their chunks, the results must be 
   Use of MPI with KINC is much more efficient than the chunking approach. This is because KINC can provide more work units to faster nodes. So, it is best to use MPI when the facility is available.
 
 
-Performance Considerations
-``````````````````````````
-Since KINC can be run with a variety of hardware configurations, including single-CPU, multi-CPU, single-GPU, and multi-GPU, there are several settings that control how KINC uses this hardware. In particular, the multi-GPU configuration for ``similarity`` is the most complex and uses all of the execution parameters. Here we describe each execution parameter and provide recommendations based on performance benchmarking and experience.
+GPU Performance Considerations
+``````````````````````````````
+KINC can run with a variety of hardware configurations. It can use multiple CPU cores and multiple GPUs. It can be run on a stand-alone workstation or for larger datasets it can use multiple nodes of a High-Performance Compute (HPC) cluster.  The ``qkinc`` program can only use one CPU or GPU, but the command-line ``kinc`` can use multiple.  If you have a GPU available on your system you can control performance of GPU-enabled functions (e.g. the similarity function) by tweaking the following parameters for GPU performance:
+
+.. note ::
+
+  Reasonable defaults have been set within KINC for the parameters below. Only change these if you fully understand them.
 
 - **CUDA/OpenCL Thread Size**: Determines the number of worker threads per GPU. Increasing this value can increase performance by utilizing the GPU more fully, but setting this value too high can also decrease performance due to the overhead of switching between many threads. A safe value for this parameter is 2 threads, however on newer hardware it may be possible to use more threads and achieve better performance. This parameter is set using the ``threads`` option in the KINC settings.
-
-- **MPI Work Block Size**: Determines the number of work items per MPI work block. It is effectively the maximum number of work items that a worker thread can process in parallel. In practice, the work block size does not affect performance so long as it is greater than or equal to the global work size, so the default value of 32,768 should work well. This parameter is set using the ``--bsize`` option in the ``similarity`` analytic.
 
 - **Global Work Size**: Determines the number of work items that a worker thread processes in parallel on the GPU. It should be large enough to fully utilize the GPU, but setting it too large can also decrease performance due to global memory congestion and work imbalance on the GPU. In practice, the default value of 4096 seems to work the best. This parameter is set using the ``--gisze`` option in the ``similarity`` analytic.
 
 - **Local Work Size**: Determines the OpenCL local work size (CUDA block size) of each GPU kernel. In general, the optimal value for this parameter depends heavily on the particular GPU kernel, but since all of the GPU kernels in KINC are memory-intensive, the local work size should be small to prevent global memory congestion. In practice, a value of 16 or 32 (the default) works the best. This parameter is set using the ``--lsize`` option in the ``similarity`` analytic.
+
+- **Block Size**: Determines the number of work items per MPI work block. It is effectively the maximum number of work items that a worker thread can process in parallel. In practice, the work block size does not affect performance so long as it is greater than or equal to the global work size, so the default value of 32,768 should work well. This parameter is set using the ``--bsize`` option in the ``similarity`` analytic.
 
 
 Global Settings
@@ -514,25 +518,82 @@ This solution does require installation of `Docker <https://www.docker.com/>`_ w
 
 The KINC docker image comes pre-installed with all dependencies. The Dockerfile for KINC is available in the KINC Github repository, and Docker images are maintained on DockerHub under ``systemsgenetics/kinc``. This method currently does not support the GUI version of KINC.
 
-To use KINC in an interactive Docker container execute the following:
+Interactive Mode
+````````````````
+To use KINC in an interactive Docker container **with GPUs** execute the following:
+
 
 .. code:: bash
 
-  nvidia-docker run --rm -it systemsgenetics/kinc:3.4.1 bash
+  docker run --gpus all --rm -it --net=host -v ${PWD}:/workspace -u $(id -u ${USER})  systemsgenetics/kinc:3.4.2-gpu /bin/bash
 
-The command above will provide access to the terminal inside of the image where commands such as the following can be executed:
+The command above will provide access to the terminal inside of the `systemsgenetics/kinc:3.4.2-gpu` image.
+
+To use KINC in an interactive Docker container **without GPUs** execute the following:
+
+.. code:: bash
+
+  docker run --gpus all --rm -it --net=host -v ${PWD}:/workspace -u $(id -u ${USER})  systemsgenetics/kinc:3.4.2-cpu /bin/bash
+
+The above command uses the image `systemsgenetics/kinc:3.4.2-cpu` (note the "-cpu" suffix).
+
+The following describes the meaning of each argument in the commands above:
+
+- `--gpus all`:  ensures that the NVidia CUDA libraries are present in the image. This is needed even if using only CPUs.
+- `--rm`:  will cause the container to be cleaned up after you exit.
+- `--it`:  tells Docker to run in interactive mode with a terminal
+- `--net=host`:  exposes network ports in the image to your local machine. This is needed to use the Docker image for the 3D KINC viewer.
+- `-v ${PWD}:/workspace`: adds the current directory on the local machine as a filesystem in the image accessible via `/workspace`.  This allows you to work with files on your local machine inside of the image.
+- `-u $(id -u ${USER})`:  logs you in as your local user account so that any files created within directories mounted by the image are saved with your user account.
+
+Once inside the KINC Docker image you can execute commands such as the following:
 
 .. code:: bash
 
   > nvidia-smi
   > kinc settings
 
-You will need to share the input and output data between the Docker container and the host machine, which can be done by mounting a directory with the ``-v`` argument.  The example below mounts the current directory specified by the `$PWD` environment variable onto the `/root` directory of the image:
+Test The Example Data
+`````````````````````
+
+To test the docker image using the example data that comes with KINC. Run the following inside of the KINC source directory on your local machine:
 
 .. code:: bash
 
-  nvidia-docker run --rm -it -v $PWD:/root systemsgenetics/kinc:3.4.1 bash
-  > ls
+  docker run --gpus all --rm -it --net=host -v ${PWD}:/workspace -u $(id -u ${USER})  systemsgenetics/kinc:3.4.2-cpu /bin/bash
+
+Next run the following commands inside of the container:
+
+.. code:: bash
+
+  cd /workspace/example
+  ./kinc-gmm-run.sh
+
+Using the 3D Visualization Tool
+```````````````````````````````
+To use the 3D visaulization tool to explore a KINC created network first start an interactive session in the directory where the network file(s) are stored:
+
+.. code:: bash
+
+  docker run --gpus all --rm -it --net=host -v ${PWD}:/workspace -u $(id -u ${USER})  systemsgenetics/kinc:3.4.2-cpu /bin/bash
+
+Then  run the `kinc-3d-viewer.py`.  For example, if the example data is already fully processed using the steps in the previous section you can view the results with the viewer with the following commands.
+
+.. code:: bash
+
+  cd /workspace/example/results-kinc-gmm-run
+  kinc-3d-viewer.py \
+    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered-th_ranked.csGCN.txt" \
+    --emx "../data/PRJNA301554.slim.GEM.log2.txt" \
+    --amx "../data/PRJNA301554.slim.annotations.txt"
+
+The first time the viewer is run you will see output about creating 2D and 3D layouts. Once completed you will see a line of text similar to the following:
+
+.. code::
+
+    * Running on http://127.0.0.1:8050/ (Press CTRL+C to quit)
+
+Copy the URL into a web browser and view the network.
 
 Automating KINC with Nextflow
 -----------------------------

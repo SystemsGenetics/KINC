@@ -27,12 +27,19 @@ public:
         int featureIndex,
         int labelIndex,
         double& results);
-    
-    void regression(
+
+    void test_proportions(
         const QVector<QString>& amx_column,
         const CCMatrix::Pair& ccmPair,
         int clusterIndex,
         int featureIndex,
+        int labelIndex,
+        double& results);
+
+    void regression(
+        const QVector<QString>& amx_column,
+        const CCMatrix::Pair& ccmPair,
+        int clusterIndex,
         QVector<double>& results);
 
 private:
@@ -40,6 +47,9 @@ private:
      * Pointer to the base analytic for this object.
      */
     ConditionalTest* _base;
+
+    // Performs power analysis for multiple-linear regression.
+    double pwr_f2_test(int u, int v, double f2, double sig_level);
 };
 
 

@@ -49,9 +49,12 @@ EAbstractAnalyticInput::Type ConditionalTest::Input::type(int index) const
     case AMXINPUT: return FileIn;
     case Delimiter: return String;
     case MISSING: return String;
+    case NANToken: return String;
     case CSMOUT: return DataOut;
     case OVERRIDES: return String;
     case TEST: return String;
+    case PowerThresholdAlpha: return Type::Double;
+    case PowerThresholdPower: return Type::Double;
     default: return Boolean;
     }
 }
@@ -123,8 +126,17 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
         {
         case CommandLineName: return QString("missing");
         case Title: return tr("Missing value:");
-        case WhatsThis: return tr("The string that specifies the missing value in the annotation matrix (e.g. NA, 0, 0.0).");
+        case WhatsThis: return tr("Deprecated. This option will work but may be removed in future versions. Please use --nan instead.");
         case Default: return tr("NA");
+        default: return QVariant();
+        }
+    case NANToken:
+        switch (role)
+        {
+        case Role::CommandLineName: return QString("nan");
+        case Role::Title: return tr("NAN Token:");
+        case Role::WhatsThis: return tr("The string that specifies the missing value in the annotation matrix (e.g. NA, 0, 0.0).");
+        case Role::Default: return "NA";
         default: return QVariant();
         }
     case CSMOUT:
@@ -153,6 +165,28 @@ QVariant ConditionalTest::Input::data(int index, Role role) const
         case WhatsThis: return tr("A comma-separated list of features, with no spaces around commas, from column names of the annotation matrix that should be tested. For example, if the annotation matrix has columns 'Treatment' and 'Subspecies' you can enter: \"Treatment,Subspecies\" Note: column names are case-sensitive.");
         default: return QVariant();
         }
+    case PowerThresholdAlpha:
+        switch (role)
+        {
+        case Role::CommandLineName: return QString("alpha");
+        case Role::Title: return tr("Regression Signficance Level");
+        case Role::WhatsThis: return tr("The significance level (i.e. Type I error rate, alpha) for the regression power test. This argument only applies to quantitative variables.");
+        case Role::Default: return 0.001;
+        case Role::Minimum: return -std::numeric_limits<float>::infinity();
+        case Role::Maximum: return +std::numeric_limits<float>::infinity();
+        default: return QVariant();
+        }
+    case PowerThresholdPower:
+        switch (role)
+        {
+        case Role::CommandLineName: return QString("power");
+        case Role::Title: return tr("Regression Power of test");
+        case Role::WhatsThis: return tr("The power value (i.e. 1 minus Type II error rate, 1 minus beta) for the regression power test. For example, if the desired Type II error rate is 0.2, then this value should be 0.8. . This argument only applies to quantitative variables.");
+        case Role::Default: return 0.8;
+        case Role::Minimum: return -std::numeric_limits<float>::infinity();
+        case Role::Maximum: return +std::numeric_limits<float>::infinity();
+        default: return QVariant();
+        }
     default: return QVariant();
     }
 }
@@ -175,6 +209,9 @@ void ConditionalTest::Input::set(int index, const QVariant& value)
     case Delimiter:
         _base->_delimiter = value.toString();
         break;
+    case NANToken:
+        _base->_missing = value.toString();
+        break;
     case MISSING:
         _base->_missing = value.toString();
         break;
@@ -183,6 +220,12 @@ void ConditionalTest::Input::set(int index, const QVariant& value)
         break;
     case OVERRIDES:
         _base->_userTestTypesStr = value.toString();
+        break;
+    case PowerThresholdAlpha:
+        _base->_powerThresholdAlpha = value.toDouble();
+        break;
+    case PowerThresholdPower:
+        _base->_powerThresholdPower = value.toDouble();
         break;
     }
 }

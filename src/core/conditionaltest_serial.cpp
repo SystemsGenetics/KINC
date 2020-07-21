@@ -12,7 +12,9 @@
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_multifit.h>
 #include <gsl/gsl_math.h>
-
+#include <boost/math/distributions/non_central_f.hpp>
+#include <math.h>
+#include <iostream>
 
 
 /*!
@@ -55,10 +57,15 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
     // iterate through each pair in the work block
     for ( qint64 wbIndex = 0; wbIndex < workBlock->size(); ++wbIndex )
     {
+
         // print warning if iterator indices do not match
         if ( ccmPair.index() != cmxPair.index() )
         {
-            qInfo() << "warning: ccm and cmx files are out of sync";
+            QString source = _base->_cmx->geneNames().at(cmxPair.index().getX()).toString();
+            QString target = _base->_cmx->geneNames().at(cmxPair.index().getY()).toString();
+            qInfo() << "warning: ccm and cmx files are out of sync at cmx coordinate:"
+                    << source << "," << target << " ("
+                    << cmxPair.index().getX() << "," << cmxPair.index().getY() <<").";
         }
 
         // initialize set of p values and r2 values for each cluster
@@ -92,9 +99,9 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                     // For linear regresssion we need a variable that will hold the
                     // pvalue and the r2 value.
                     QVector<double> results(2);
-                    regression(amx_column, ccmPair, clusterIndex, featureIndex, results);
+                    regression(amx_column, ccmPair, clusterIndex, results);
                     pValues[clusterIndex][test_index] = results.at(0);
-                    r2[clusterIndex][test_index] = results.at(1);
+                    r2[clusterIndex][test_index] = results.at(1);                    
                     test_index++;
                 }
                 else if ( _base->_testType.at(featureIndex) == CATEGORICAL )
@@ -102,9 +109,10 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
                     // Loop through each label (category) of the feature.
                     for ( qint32 labelIndex = 1; labelIndex < _base->_features.at(featureIndex).size(); labelIndex++ )
                     {
-                        double results;
-                        hypergeom(amx_column, ccmPair, clusterIndex, featureIndex, labelIndex, results);
-                        pValues[clusterIndex][test_index] = results;
+                        double pval;
+                        //hypergeom(amx_column, ccmPair, clusterIndex, featureIndex, labelIndex, pval);
+                        test_proportions(amx_column, ccmPair, clusterIndex, featureIndex, labelIndex, pval);
+                        pValues[clusterIndex][test_index] = pval;
                         r2[clusterIndex][test_index] = qQNaN();
                         test_index++;
                     }
@@ -114,14 +122,14 @@ std::unique_ptr<EAbstractAnalyticBlock> ConditionalTest::Serial::execute(const E
 
         // append pair to result block
         resultBlock->append(Pair {
-            ccmPair.index(),
+            cmxPair.index(),
             pValues,
             r2
         });
 
         // read the next pair
-        ccmPair.readNext();
         cmxPair.readNext();
+        ccmPair.read(cmxPair.index());
     }
 
     return std::unique_ptr<EAbstractAnalyticBlock>(resultBlock);
@@ -156,7 +164,7 @@ bool ConditionalTest::Serial::isEmpty(QVector<QVector<double>>& matrix)
 
 
 /*!
- * Run the first hypergeometric
+ * The hypergeometric test
  *
  */
 void ConditionalTest::Serial::hypergeom(
@@ -178,7 +186,7 @@ void ConditionalTest::Serial::hypergeom(
     // annotation data.
     int num_samples = _base->_data.at(featureIndex).size();
     int cluster_size = 0;
-    int label_count = 0;
+    int total_label_count = 0;
     int labels_in_cluster = 0;
     for ( int j = 0; j < num_samples; j++ )
     {
@@ -186,7 +194,7 @@ void ConditionalTest::Serial::hypergeom(
         // if data is the same as the test label add one to the catagory counter
         if ( test_type == _base->CATEGORICAL && amx_column[j] == test_label )
         {
-            label_count++;
+            total_label_count++;
         }
         if ( ccmPair.at(clusterIndex, j) == 1 )
         {
@@ -196,6 +204,14 @@ void ConditionalTest::Serial::hypergeom(
                 labels_in_cluster++;
             }
         }
+    }
+
+    // If there are no matching labels in this cluster then return. This
+    // could happen if the annotation matrix has all NAs for the cluster.
+    if ( labels_in_cluster == 0 )
+    {
+        result = qQNaN();
+        return;
     }
 
 
@@ -210,9 +226,9 @@ void ConditionalTest::Serial::hypergeom(
     int sampleSize =  _base->_emx->sampleSize();
 
     // Population contains n1 elements of Type 1.
-    int n1 = label_count;
+    int n1 = total_label_count;
     // Population contains n2 elements of Type 2.
-    int n2 = sampleSize - label_count;
+    int n2 = sampleSize - total_label_count;
     // k elements of Type 1 were selected.
     int k = labels_in_cluster;
     // t total elements were selected.
@@ -289,7 +305,7 @@ void ConditionalTest::Serial::hypergeom(
             jkap = 0;
         }
 
-        // Now reset the sample size and the proporiton of success.
+        // The gsl_cdf_hypergeometric_Q function uses the upper-tail of the CDF.
         result = gsl_cdf_hypergeometric_Q(jkap, n1, n2, bs_t);
         return;
     }
@@ -307,7 +323,159 @@ void ConditionalTest::Serial::hypergeom(
     return;
 }
 
+/*!
+ * The z test of proprotions
+ *
+ */
+void ConditionalTest::Serial::test_proportions (
+    const QVector<QString>& amx_column,
+    const CCMatrix::Pair& ccmPair,
+    int clusterIndex,
+    int featureIndex,
+    int labelIndex,
+    double &result)
+{
+    EDEBUG_FUNC(this);
 
+    // Get the test name and the test type.
+    QString test_label = _base->_features.at(featureIndex).at(labelIndex);
+    TestType test_type = _base->_testType.at(featureIndex);
+
+    /* For debugging purposes
+    QString source_name = _base->_cmx->geneNames().at(ccmPair.index().getX()).toString();
+    QString target_name = _base->_cmx->geneNames().at(ccmPair.index().getY()).toString();
+
+    if (source_name == "pycom14g13710" && target_name == "pycom02g20220") {
+      std::cout << "Found it";
+    }*/
+
+    // We need to get the data for the feature being tested and
+    // count how many entries there are for the label in the
+    // annotation data.
+    int num_samples = _base->_data.at(featureIndex).size();
+    int cluster_size = 0;
+    int total_label_count = 0;
+    int total_non_missing = 0;
+    int labels_in_cluster = 0;
+    int labels_out_cluster = 0;
+    int jx = 0;
+    for ( int j = 0; j < num_samples; j++ )
+    {
+
+        // if data is the same as the test label add one to the catagory counter
+        if ( test_type == _base->CATEGORICAL && amx_column[j] == test_label )
+        {
+            total_label_count++;
+        }
+        if ( ccmPair.at(clusterIndex, j) == 1 )
+        {
+            cluster_size++;
+            if ( test_type == _base->CATEGORICAL && amx_column.at(j) == test_label )
+            {
+                labels_in_cluster++;
+            }
+        }
+        if ( ccmPair.at(clusterIndex, j) != 1 && ccmPair.at(clusterIndex, j) != 9)
+        {
+            if ( test_type == _base->CATEGORICAL && amx_column.at(j) == test_label )
+            {
+                labels_out_cluster++;
+            }
+        }
+        if ( ccmPair.at(clusterIndex, j) != 9 )
+        {
+          total_non_missing++;
+        }
+    }
+
+    // If there are no matching labels in this cluster then return. This
+    // could happen if the annotation matrix has all NAs for the cluster.
+    if ( labels_in_cluster == 0 )
+    {
+        result = qQNaN();
+        return;
+    }
+
+    int sampleSize =  _base->_emx->sampleSize();
+
+
+    // Before bootstraping get the list of indexes that belong to this cluster.
+    // We will randomly select from these indexes.
+    int cluster_indexes[cluster_size];
+    for ( int j = 0; j < sampleSize; j++ )
+    {
+        if ( ccmPair.at(clusterIndex, j) == 1 )
+        {
+            cluster_indexes[jx++] = j;
+        }
+    }
+
+    // Initialize the uniform random number generator.
+    const gsl_rng_type * T;
+    gsl_rng * r;
+    gsl_rng_env_setup();
+    T = gsl_rng_default;
+    r = gsl_rng_alloc(T);
+
+    // Perform 30 iterations of the boostrap sampling.
+    int num_i = 30;
+    // Select 30 items for each iteration
+    int bs_t = 30;
+    // Holds the bootstrap average proportion.
+    double avg_prop = 0.0;
+    for ( int i = 0; i < num_i; i++ )
+    {
+        // Keeps track of the number of successes for each iteration.
+        int ns = 0;
+
+        // The gsl_ran_sample function randomly chooses samples with replacement from a list.
+        int chosen[bs_t];
+        gsl_ran_sample(r, chosen, bs_t, cluster_indexes, cluster_size, sizeof(int));
+
+        // Now count the number of randomly selected items from the cluster.
+        for ( int j = 0; j < bs_t; j++ )
+        {
+            QString slabel = amx_column.at(chosen[j]);
+            if ( ccmPair.at(clusterIndex, chosen[j]) == 1 && amx_column.at(chosen[j]) == test_label )
+            {
+                ns = ns + 1;
+            }
+        }
+
+        avg_prop += static_cast<double>(ns) / static_cast<double>(bs_t);
+    }
+
+    // Calculate the average proportion from all iterations
+    // and free the random number struct.
+    avg_prop = avg_prop / num_i;
+    gsl_rng_free(r);
+
+    // First test.
+    // The null hypothesis for this test is that the cluster is
+    // comprised of equal or less of the desired label. This would
+    // happen if all labels have equal chance, or there is a bias
+    // against the label.
+    // Ho: avg_prop <= 0.5. The value 0.5 is chosen with the asumption
+    //     that there is equal or less proportions of the desired label.
+    // Ha: avg_prop > 0.5
+    double exp_prop = 0.5;
+    double z = (avg_prop - exp_prop) / sqrt((exp_prop * (1 - exp_prop)) / bs_t);
+    double pval1 = 1 - gsl_cdf_gaussian_P(z, 1);
+
+    // Second, test.
+    // The null hypothesis is that the proportion of labels in the cluster
+    // is equal or less than the proportion out of the cluster.  This would
+    // happen if all the labels have equal chance of being in the cluster or
+    // if there is bias against the label.
+    double obs_prop = (avg_prop * cluster_size) / static_cast<double>(total_label_count);
+    obs_prop = std::min(1.0, obs_prop);
+    exp_prop = static_cast<double>(total_label_count) / static_cast<double>(num_samples);
+    z = (obs_prop - exp_prop) / sqrt((exp_prop * (1 - exp_prop)) / bs_t);
+    double pval2 = 1 - gsl_cdf_gaussian_P(z, 1);
+
+    // Return the maximum p-value
+    result = std::max(pval1, pval2);
+}
 
 /*!
  * Performs the regression test for quantitative data.
@@ -316,7 +484,6 @@ void ConditionalTest::Serial::regression(
     const QVector<QString>& amx_column,
     const CCMatrix::Pair& ccmPair,
     int clusterIndex,
-    int featureIndex,
     QVector<double>& results)
 {
     EDEBUG_FUNC(this, &amxInfo, &ccmPair, clusterIndex);
@@ -345,6 +512,18 @@ void ConditionalTest::Serial::regression(
         }
     }
 
+    // Don't do regression analysis if there are fewer than 5 samples.
+    // This can occur if the annotation matrix has missing values
+    // for samples in the cluster. The Degrees of Freedom for the error
+    // is test_cluster_size - 4 so we need at least 5 samples. Odds
+    // are these tests will get filterd out anyway for low power.
+    if ( test_cluster_size < 5 )
+    {
+        results[0] = qQNaN();
+        results[1] = qQNaN();
+        return;
+    }
+
     // Allocate a matrix to hold the predictior variables, in this case the gene
     // Expression data.
     X = gsl_matrix_alloc(test_cluster_size, 4);
@@ -363,6 +542,7 @@ void ConditionalTest::Serial::regression(
     geneX.read(ccmPair.index().getX());
     geneY.read(ccmPair.index().getY());
 
+    // Useful for debugging purposes.
     // QString g1Name = geneX.toString();
     // QString g2Name = geneY.toString();
 
@@ -460,11 +640,37 @@ void ConditionalTest::Serial::regression(
     // Set the results array
     if ( qIsNaN(pValue) )
     {
-        results[0] = 1;
-        results[1] = 0;
+        results[0] = qQNaN();
+        results[1] = qQNaN();
     }
-    else {
-        results[0] = pValue;
-        results[1] = R2;
+    else {               
+        double power = pwr_f2_test(3, test_cluster_size - 4, R2, _base->_powerThresholdAlpha);
+        if ( power >= _base->_powerThresholdPower ) {
+            results[0] = pValue;
+            results[1] = R2;
+        }
+        else {
+            results[0] = std::numeric_limits<double>::quiet_NaN();
+            results[1] = std::numeric_limits<double>::quiet_NaN();
+        }
     }
+}
+
+/**
+ * @brief ConditionalTest::Serial::pwr_f2_test
+ * @param df1 degrees of freedom of the numerator: the number of coefficients in
+ *        the model minus the intercept.
+ * @param df2 degrees of freedom of the denominator: the number of error degrees
+ *        of freedom which is n - df1 - 1
+ * @param f2 effect size
+ * @param sig_level signficance level
+ * @return
+ */
+double ConditionalTest::Serial::pwr_f2_test(int df1, int df2, double f2, double sig_level)
+{
+    double lambda = f2 * (df1 + df2 + 1);
+    double p = gsl_cdf_fdist_Qinv(sig_level, df1, df2);
+    boost::math::non_central_f_distribution<> ncfd(df1, df2, lambda);
+    double power = 1 - boost::math::cdf(ncfd, p);
+    return power;
 }

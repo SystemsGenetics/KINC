@@ -19,10 +19,13 @@ public:
         ,CMXINPUT
         ,AMXINPUT
         ,Delimiter
-        ,MISSING
+        ,MISSING /** deprecated in favor of NANToken**/
+        ,NANToken
         ,CSMOUT
         ,TEST
         ,OVERRIDES
+        ,PowerThresholdAlpha
+        ,PowerThresholdPower
         ,Total
     };
 public:

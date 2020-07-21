@@ -10,7 +10,7 @@ option_list = list(
               help="(optional). The file name prefix used for the ouput files. If this arugment is not provided then the original network file name is used as a prefix.",
               metavar="character"),
    make_option(c("--top_n"), type="numeric", default=10000,
-              help="(optional). The number of edges to extract from the network file. This is the top n ranked edges per condition. If --no_conditions is provided then this is the top n ranked edges in the full network.",
+              help="(optional). Extract the top n ranked edges from the network file. This is the top n ranked edges per condition. If --no_conditions is provided then this is the top n ranked edges in the full network. Note: some edges may have the same rank, but only the first top_n will be returned.",
               metavar="numeric"),
    make_option(c("--no_condition_rankings"), type="logical", action="store_true",
               help="(optional). By deafult the rankings are calculated independently per each condition in the network. To calculate rankings for the entire network regardless of condition set this to TRUE.",
@@ -52,8 +52,12 @@ if (is.null(opt$save_condition_networks)){
   opt$save_condition_networks = FALSE
 }
 
-
+# Make sure KINC.R is at the correct vresion.
+if(packageVersion("KINC.R") < "1.1") {
+    stop("This script requires KINC.R > 1.1")
+}
 suppressMessages(library("KINC.R"))
+suppressMessages(library("dplyr"))
 
 message("")
 message(' __  __   ______   __  __  ____       ____        ')
@@ -67,31 +71,49 @@ message("")
 message("This script uses KINC.R, a companion R library for KINC")
 message("https://github.com/SystemsGenetics/KINC.R")
 message("-------------------------------------------------------")
-message("Loading the KINC network file...")
 
-net = loadKINCNetwork(opt$net)
 
 # Get the edge ranks.
-ranks = c()
-if (opt$no_condition_rankings) {
-    message("Calculating network-wide ranks...")
-    ranks = getEdgeRanks(net, by_condition=FALSE, opt$score_weight, opt$pval_weight, opt$rsqr_weight)
+rdata = paste0(opt$out_prefix, '-th_ranked.RData')
+if (file.exists(rdata)) {
+    message("Reloading previously calculated ranks...")
+    load(rdata)
 } else {
-    message("Calculating condition-specific ranks...")
-    ranks = getEdgeRanks(net, by_condition=TRUE, opt$score_weight, opt$pval_weight, opt$rsqr_weight)
+    message("Loading the KINC network file...")
+
+    net = loadKINCNetwork(opt$net)
+    ranks = c()
+    if (opt$no_condition_rankings) {
+        message("Calculating network-wide ranks...")
+        ranks = getEdgeRanks(net, by_condition=FALSE, opt$score_weight, opt$pval_weight, opt$rsqr_weight)
+    } else {
+        message("Calculating condition-specific ranks...")
+        ranks = getEdgeRanks(net, by_condition=TRUE, opt$score_weight, opt$pval_weight, opt$rsqr_weight)
+    }
+    ranks = as.numeric(ranks)
+    net$rank = ranks
+    save(net, file=rdata)
 }
-net$rank = ranks
+
 
 # Filter the network to include the top n ranked edges.
-netF = net[(which(ranks < opt$top_n)),]
-netF = netF[order(netF$rank),]
+if (opt$no_condition_rankings) {
+    message(paste("Filtering by top,", opt$top_n, ", network edges..."))
+    net = net[order(net$rank),]
+    netF = net[1:opt$top_n,]
+} else {
+    message(paste("Filtering by top,", opt$top_n, ", conditional edges..."))
+    net = net[order(net$Test_Name, net$rank),]
+    netF = net %>% group_by(Test_Name) %>% slice_head(n=opt$top_n) %>% as.data.frame()
+}
+
 
 if (opt$save_condition_networks) {
-    message("Saving filtered condition-specific networks...")
+    message("Writing filtered condition-specific network files...")
     net_name = paste0(opt$out_prefix, '-th_ranked.%condition%-%filter%.csGCN.txt')
     saveConditionKINCNetwork(netF, net_name, filter=opt$unique_filter)
 } else {
-    message("Saving filtered network...")
+    message("Writing filtered network file...")
     net_name = paste0(opt$out_prefix, '-th_ranked.csGCN.txt')
     saveKINCNetwork(netF, net_name)
 }
