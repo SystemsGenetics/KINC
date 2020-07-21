@@ -518,25 +518,82 @@ This solution does require installation of `Docker <https://www.docker.com/>`_ w
 
 The KINC docker image comes pre-installed with all dependencies. The Dockerfile for KINC is available in the KINC Github repository, and Docker images are maintained on DockerHub under ``systemsgenetics/kinc``. This method currently does not support the GUI version of KINC.
 
-To use KINC in an interactive Docker container execute the following:
+Interactive Mode
+````````````````
+To use KINC in an interactive Docker container **with GPUs** execute the following:
+
 
 .. code:: bash
 
-  nvidia-docker run --rm -it systemsgenetics/kinc:3.4.2 bash
+  docker run --gpus all --rm -it --net=host -v ${PWD}:/workspace -u $(id -u ${USER})  systemsgenetics/kinc:3.4.2-gpu /bin/bash
 
-The command above will provide access to the terminal inside of the image where commands such as the following can be executed:
+The command above will provide access to the terminal inside of the `systemsgenetics/kinc:3.4.2-gpu` image.
+
+To use KINC in an interactive Docker container **without GPUs** execute the following:
+
+.. code:: bash
+
+  docker run --gpus all --rm -it --net=host -v ${PWD}:/workspace -u $(id -u ${USER})  systemsgenetics/kinc:3.4.2-cpu /bin/bash
+
+The above command uses the image `systemsgenetics/kinc:3.4.2-cpu` (note the "-cpu" suffix).
+
+The following describes the meaning of each argument in the commands above:
+
+- `--gpus all`:  ensures that the NVidia CUDA libraries are present in the image. This is needed even if using only CPUs.
+- `--rm`:  will cause the container to be cleaned up after you exit.
+- `--it`:  tells Docker to run in interactive mode with a terminal
+- `--net=host`:  exposes network ports in the image to your local machine. This is needed to use the Docker image for the 3D KINC viewer.
+- `-v ${PWD}:/workspace`: adds the current directory on the local machine as a filesystem in the image accessible via `/workspace`.  This allows you to work with files on your local machine inside of the image.
+- `-u $(id -u ${USER})`:  logs you in as your local user account so that any files created within directories mounted by the image are saved with your user account.
+
+Once inside the KINC Docker image you can execute commands such as the following:
 
 .. code:: bash
 
   > nvidia-smi
   > kinc settings
 
-You will need to share the input and output data between the Docker container and the host machine, which can be done by mounting a directory with the ``-v`` argument.  The example below mounts the current directory specified by the `$PWD` environment variable onto the `/root` directory of the image:
+Test The Example Data
+`````````````````````
+
+To test the docker image using the example data that comes with KINC. Run the following inside of the KINC source directory on your local machine:
 
 .. code:: bash
 
-  nvidia-docker run --rm -it -v $PWD:/root systemsgenetics/kinc:3.4.2 bash
-  > ls
+  docker run --gpus all --rm -it --net=host -v ${PWD}:/workspace -u $(id -u ${USER})  systemsgenetics/kinc:3.4.2-cpu /bin/bash
+
+Next run the following commands inside of the container:
+
+.. code:: bash
+
+  cd /workspace/example
+  ./kinc-gmm-run.sh
+
+Using the 3D Visualization Tool
+```````````````````````````````
+To use the 3D visaulization tool to explore a KINC created network first start an interactive session in the directory where the network file(s) are stored:
+
+.. code:: bash
+
+  docker run --gpus all --rm -it --net=host -v ${PWD}:/workspace -u $(id -u ${USER})  systemsgenetics/kinc:3.4.2-cpu /bin/bash
+
+Then  run the `kinc-3d-viewer.py`.  For example, if the example data is already fully processed using the steps in the previous section you can view the results with the viewer with the following commands.
+
+.. code:: bash
+
+  cd /workspace/example/results-kinc-gmm-run
+  kinc-3d-viewer.py \
+    --net "PRJNA301554.slim.GEM.log2.paf-th0.00-p1e-3-rsqr0.30-filtered-th_ranked.csGCN.txt" \
+    --emx "../data/PRJNA301554.slim.GEM.log2.txt" \
+    --amx "../data/PRJNA301554.slim.annotations.txt"
+
+The first time the viewer is run you will see output about creating 2D and 3D layouts. Once completed you will see a line of text similar to the following:
+
+.. code::
+
+    * Running on http://127.0.0.1:8050/ (Press CTRL+C to quit)
+
+Copy the URL into a web browser and view the network.
 
 Automating KINC with Nextflow
 -----------------------------
