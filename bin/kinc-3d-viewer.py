@@ -13,6 +13,7 @@ import igraph as ig
 import plotly as py
 import seaborn as sns
 import plotly.graph_objects as go
+import plotly.figure_factory as ff
 from fa2 import ForceAtlas2
 import random
 import dash
@@ -103,9 +104,11 @@ def load_node_meta(file_path):
     node name, the second a controlled vocabulary term ID, the third the
     term definition and the fourth the vocubulary name.
     """
-    nmeta = pd.read_csv(file_path, sep="\t")
-    nmeta.columns = ['Node', 'Term', 'Definition', 'Vocabulary']
-    nmeta.index = nmeta['Node']
+    nmeta = pd.read_csv(file_path, sep="\t", dtype='str')
+    headers = nmeta.columns.values
+    headers[0] = 'Node'
+    nmeta.columns = headers
+    nmeta.set_index('Node', inplace=True)
     return nmeta
 
 
@@ -396,10 +399,12 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
     if layer_by == 'Relationship':
         Z = vlayers['Rel']
     # Add the network nodes as the first trace.
+    nsize = np.log10(vlayers['Degree'])*10
+    nsize[nsize < 4] = 4
     fig1 = go.Figure(data=[go.Scatter3d(x=vlayers['X'], y=vlayers['Y'],
                    z=Z, mode='markers',
                    opacity = 0.5,
-                   marker=dict(symbol='circle', size=np.log10(vlayers['Degree'])*4,
+                   marker=dict(symbol='circle', size=nsize,
                                line=dict(width=1, color="#888888")),
                    text="Node: " + vlayers['Vertex'],
                    customdata=vlayers['Vertex'],
@@ -637,6 +642,55 @@ def create_avg_cc_distribution_plot(vlayers):
 
 
 
+
+def create_node_densityplot(gem, amx, node = None, density_col = 'All'):
+    """
+    Uses Plotly to create an interactive density plot of expression
+
+    gem :  The GEM dataframe created by the load_gem function.
+
+    amx : The annotation matrix dataframe created by the load_amx function.
+
+    node : The name of the node to display
+
+    density_col : The name of the column in the annotation matrix by which
+       the samples should be divided.
+    """
+    fig_height = 500
+    if node is None:
+        fig = go.Figure(go.Scatter3d())
+        fig.update_layout(height=fig_height)
+        return fig
+
+    expr = []
+    labels = []
+    showlegend = False
+    if density_col == 'All':
+        expr.append(gem.loc[node].dropna())
+        labels.append(node)
+    else:
+        showlegend = True
+        categories = amx[density_col].unique()
+        for category in categories:
+            samples = amx.index[amx[density_col] == category].values
+            expr.append(gem.loc[node][samples].dropna())
+            labels.append(category)
+
+    fig = ff.create_distplot(expr, labels, show_hist=False, bin_size=.2)
+    fig.update_layout(
+        height=fig_height,
+        title=dict(text = node, xanchor = 'left', yanchor = 'top', y=0.93, x=0.08),
+        showlegend=showlegend,
+        legend=dict(itemsizing = 'constant', yanchor = 'top', xanchor = 'left',
+            y=0.95, x=0.01, bgcolor="rgba(0,0,0,0.05)"),
+        margin=dict(l=10, r=10, t=60, b=10),
+    )
+    return fig
+
+
+
+
+
 def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index = None):
     """
     Uses Plotly to create the interactive 3D scatterplot of co-expression
@@ -659,8 +713,11 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
 
     return : a Plotly figure object.
     """
+    fig_height = 500
     if edge_index is None:
-        return go.Figure(go.Scatter3d())
+        fig = go.Figure(go.Scatter3d())
+        fig.update_layout(height=fig_height)
+        return fig
 
     node1 = elayers.iloc[edge_index]['Source']
     node2 = elayers.iloc[edge_index]['Target']
@@ -743,10 +800,11 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
                         text= sdata.index, hoverinfo='text')])
 
     fig2.update_layout(
-        height=400,
+        height=fig_height,
         title="",
         showlegend=showlegend,
-        legend={'itemsizing': 'constant'},
+        legend=dict(itemsizing = 'constant', yanchor = 'top', xanchor = 'left',
+            y=0.95, x=0.01, bgcolor="rgba(0,0,0,0.05)"),
         margin=dict(l=10, r=10, t=0, b=10),
         scene=dict(
           aspectmode="cube",
@@ -1014,8 +1072,8 @@ def create_dash_node_table(net, nmeta, vlayers, node = None):
         )
         if not nmeta is None:
             columns = nmeta.columns
-            if not nmeta is None:
-                rows = nmeta.loc[node]
+            if node in nmeta.index:
+                rows = nmeta.loc[[node]]
                 for index, row in rows.iterrows():
                     table_rows.append(
                         html.Tr([
@@ -1023,7 +1081,7 @@ def create_dash_node_table(net, nmeta, vlayers, node = None):
                                 colSpan = 2,
                                 children=[
                                     html.Label(
-                                        "{term}".format(term = row['Term']),
+                                        "{cv}: {term}".format(cv = row['CV'], term = row['Term']),
                                         style= {'font-weight' : 'bold'}
                                     ),
                                     html.Div(
@@ -1034,14 +1092,7 @@ def create_dash_node_table(net, nmeta, vlayers, node = None):
                             )
                         ])
                     )
-            else:
-                div_children.append(
-                    html.Div('There is no additional information about this node.')
-                )
-        else:
-            div_children.append(
-                html.Div('There are no node meta data provided. Use the --nmeta option to load node data when running this application.')
-            )
+
         div_children.append(
             html.Table(
                 style = {
@@ -1063,11 +1114,47 @@ def create_dash_node_table(net, nmeta, vlayers, node = None):
     )
 
 
+def create_density_condition_select(amx):
+    """
+    Creates a Dash select dropdown for selecting the condition to view.
+
+    This dropbox is intended to change the 3D co-expression scatterplot.
+
+    amx : The annotation matrix dataframe created by the load_amx function.
+
+    return : A Dash dcc.Dropdown object.
+
+    """
+    columns = np.sort(amx.columns.values)
+
+    # Holds the list of columns to keep.
+    keep = []
+    keep.append('All')
+
+    # Exclude any columns that are not categorical, that only have only one
+    # category or that have as many values as there are rows.
+    for col in columns:
+        if pd.api.types.is_object_dtype(amx[col]):
+            if len(amx[col].dropna().unique()) <= 1:
+                continue
+            if len(amx[col].dropna().unique()) == amx[col].size:
+                continue
+            keep.append(col)
+
+    # Build the select element.
+    select = dcc.Dropdown(
+        id = 'density-condition-select',
+        style = {'color' : 'black'},
+        options = [
+          {'label' : col, 'value' : col} for col in keep
+        ],
+        value = 'All'
+    )
+    return select
 
 
 
-
-def create_condition_select(amx, sample_col = 'Cluster'):
+def create_scatterplot_condition_select(amx, sample_col = 'Cluster'):
     """
     Creates a Dash select dropdown for selecting the condition to view.
 
@@ -1395,6 +1482,39 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                             ),
                         ]
                     ),
+                    # Node Expression
+                    html.Div(
+                        style=sidebar_box_style,
+                        children=[
+                            build_sidebar_box_header("Node Density Plot", 'node-expression-box'),
+                            html.Div(
+                                id="node-expression-box-contents",
+                                style={'margin' : '0px', 'visibility' : 'hidden'},
+                                children=[
+                                    html.Div(
+                                        style={'padding-bottom' : '10px'},
+                                        children=[
+                                            html.Label('Separate By'),
+                                            create_density_condition_select(amx)
+                                        ],
+                                    ),
+                                    dcc.Graph(
+                                        id = 'node-density-plot',
+                                        figure = create_node_densityplot(gem, amx, None, 'All'),
+                                        config =  {
+                                            'toImageButtonOptions' : {
+                                                'filename': 'kinc_3d_node_densityplot',
+                                                'width': 800,
+                                                'height': 800,
+                                                'format': 'svg',
+                                                'scale' : 1
+                                            }
+                                        },
+                                    ),
+                                ]
+                            ),
+                        ]
+                    ),
                     # Edge Table
                     html.Div(
                         style=sidebar_box_style,
@@ -1420,7 +1540,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                                         style={'padding-bottom' : '10px'},
                                         children=[
                                             html.Label('Color Samples By'),
-                                            create_condition_select(amx, sample_col)
+                                            create_scatterplot_condition_select(amx, sample_col)
                                         ],
                                     ),
                                     dcc.Graph(
@@ -1430,7 +1550,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                                             'toImageButtonOptions' : {
                                                 'filename': 'kinc_3d_expression_scatterplot',
                                                 'width': 800,
-                                                'height': 600,
+                                                'height': 800,
                                                 'format': 'svg',
                                                 'scale' : 1
                                             }
@@ -1508,11 +1628,13 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
     @app.callback(
         [dash.dependencies.Output('edge-expression-3dview', 'figure'),
          dash.dependencies.Output('edge-table', 'children'),
-         dash.dependencies.Output('node-table', 'children')],
+         dash.dependencies.Output('node-table', 'children'),
+         dash.dependencies.Output('node-density-plot', 'figure')],
         [dash.dependencies.Input('network-3dview', 'clickData'),
-         dash.dependencies.Input('coexp-condition-select', 'value')],
+         dash.dependencies.Input('coexp-condition-select', 'value'),
+         dash.dependencies.Input('density-condition-select', 'value')],
         [dash.dependencies.State('edge-expression-3dview', 'figure')])
-    def set_current_edge(clickData, color_col, figure):
+    def set_current_edge(clickData, coexp_col, density_col, figure):
         edge_index = None
         node = None
         if (clickData):
@@ -1528,15 +1650,17 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                 source = row_vals['Source']
                 target = row_vals['Target']
                 edge_nodes = [source, target]
-                scatterplot = create_expression_scatterplot(gem, amx, elayers, color_col, edge_index)
+                scatterplot = create_expression_scatterplot(gem, amx, elayers, coexp_col, edge_index)
                 edge_table = create_dash_edge_table(net, edge_index)
                 node_table = create_dash_node_table(net, nmeta, vlayers, None)
+                density_plot = create_node_densityplot(gem, amx, None, density_col)
             if (nfound):
                 node = edge_index = points[0]['customdata']
                 node_table = create_dash_node_table(net, nmeta, vlayers, node)
                 edge_table = create_dash_edge_table(net, None)
+                density_plot = create_node_densityplot(gem, amx, node, density_col)
 
-            return [scatterplot, edge_table, node_table]
+            return [scatterplot, edge_table, node_table, density_plot]
 
 
         raise dash.exceptions.PreventUpdate
@@ -1611,7 +1735,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
     )
     def toggle_scatterplot_box(toggle):
         if (toggle % 2 == 1):
-            return {'margin' : '0px', 'visibility' : 'visible', 'max-height' : '500px', 'padding' : '10px'}
+            return {'margin' : '0px', 'visibility' : 'visible', 'max-height' : '610px', 'padding' : '10px'}
         else:
             return {'margin' : '0px', 'visibility' : 'hidden', 'height' : '0px', 'padding' : '0px'}
 
@@ -1648,7 +1772,21 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
         if (toggle % 2 == 1):
             return {
                 'margin' : '0px', 'visibility' : 'visible',
-                'max-height' : '250px', 'padding' : '10px',
+                'max-height' : '600px', 'padding' : '10px',
+                'overflow-y': 'auto',
+            }
+        else:
+            return {'margin' : '0px', 'visibility' : 'hidden', 'height' : '0px', 'padding' : '0px'}
+
+    @app.callback(
+        dash.dependencies.Output('node-expression-box-contents', 'style'),
+        [dash.dependencies.Input('node-expression-box-toggle', 'n_clicks')]
+    )
+    def toggle_node_table_box(toggle):
+        if (toggle % 2 == 1):
+            return {
+                'margin' : '0px', 'visibility' : 'visible',
+                'max-height' : '600px', 'padding' : '10px',
                 'overflow-y': 'auto',
             }
         else:
@@ -1693,7 +1831,7 @@ def main():
     parser.add_argument('--emx', dest='gem_path', type=str, required=True, help="(retuired) The path to the log2 transformed Gene Expression Matrix or Metabolite abundance matrix.")
     parser.add_argument('--amx', dest='amx_path', type=str, required=True, help="(required) The path to the tab-delimited annotation matrix. The matrix must have at least one column that contains a unique list of sample names.")
     parser.add_argument('--sample_col', dest='sample_col', type=str, required=False, default='Sample', help="(optional) The name of the column in the annotation matrix that contains the unique sample names.  Defaults to 'Sample'")
-    parser.add_argument('--nmeta', dest='nmeta', type=str, required=False, help="(optional) The path to a tab-delimited node meta data file. The format of the file must have 4 columns, with the first containing the node name, the second a controlled vocabulary term ID, the third the term definition and the fourth the vocubulary name.")
+    parser.add_argument('--nmeta', dest='nmeta', type=str, required=False, help="(optional) The path to a tab-delimited file containing controlled vocabulary (e.g GO, KEGG, InterPRO, etc.) assignments to nodes. The file can have any number of fields but, the first column must contain the node names and there must be three other columns with the names 'CV', 'Term' and 'Definition' where 'CV' is the name of the controlled vocabulary (e.g. GO, KEGG, InterPro), 'Term' is the name of the controlled vocabulary term (e.g. GO:0005515) and the 'Definition' is the description for the term.")
     parser.add_argument('--debug', dest='debug', action='store_true', default=False, help="(optional).  Add this argument to enable Dash application debugging mode.")
     parser.add_argument('--redo-layout', dest='redo_layout', action='store_true', default=False, help=" (optional). If the 2D and 3D network layout has already been constructed it will be loaded from a file. Add this arugment to force the layouts to be rebuilt and not loaded from the files. To prevent Dash from rerunning the layout on callbacks, this option results in the program terminating. To view the application, restart without this option.")
     parser.add_argument('--iterations', dest='iterations', type=int, default=100, help="(optional). The number of iterations to perform when calculating the Force Atlas2 layout.  This argument is only used the first time a network is viewed or if the --redo_layout argument is provided.")
