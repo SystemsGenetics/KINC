@@ -14,6 +14,7 @@ import plotly as py
 import seaborn as sns
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
+import plotly.express as px
 from fa2 import ForceAtlas2
 import random
 import dash
@@ -656,35 +657,39 @@ def create_node_densityplot(gem, amx, node = None, density_col = 'All'):
     density_col : The name of the column in the annotation matrix by which
        the samples should be divided.
     """
-    fig_height = 500
+    fig_height = 400
     if node is None:
         fig = go.Figure(go.Scatter3d())
         fig.update_layout(height=fig_height)
         return fig
 
-    expr = []
-    labels = []
-    showlegend = False
-    if density_col == 'All':
-        expr.append(gem.loc[node].dropna())
-        labels.append(node)
-    else:
-        showlegend = True
-        categories = amx[density_col].unique()
-        for category in categories:
-            samples = amx.index[amx[density_col] == category].values
-            expr.append(gem.loc[node][samples].dropna())
-            labels.append(category)
 
-    fig = ff.create_distplot(expr, labels, show_hist=False, bin_size=.2)
+    sdata = pd.DataFrame(dict(X=gem.loc[node].values))
+    sdata.index = gem.columns
+    sdata = sdata.join(amx, how='left')
+
+    showlegend=False
+    if density_col == 'All':
+        fig = px.violin(sdata, y='X', box=True, points="all",
+                   hover_data=sdata.columns)
+    else:
+        showlegend=True
+        fig = px.violin(sdata, y='X', x=density_col, color=density_col, box=True, points="all",
+                   hover_data=sdata.columns)
+
     fig.update_layout(
         height=fig_height,
-        title=dict(text = node, xanchor = 'left', yanchor = 'top', y=0.93, x=0.08),
+        title=dict(text=node, yanchor = 'top', xanchor = 'left',
+            y=0.93, x=0.08,),
         showlegend=showlegend,
-        legend=dict(itemsizing = 'constant', yanchor = 'top', xanchor = 'left',
-            y=0.95, x=0.01, bgcolor="rgba(0,0,0,0.05)"),
-        margin=dict(l=10, r=10, t=60, b=10),
+        legend=dict(itemsizing = 'constant', bgcolor="rgba(0,0,0,0.05)"),
+        legend_orientation="h",
+        legend_title_text = "",
+        xaxis=dict(visible = False),
+        yaxis=dict(visible = False),
+        margin=dict(l=10, r=10, t=40, b=10),
     )
+
     return fig
 
 
@@ -1486,7 +1491,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                     html.Div(
                         style=sidebar_box_style,
                         children=[
-                            build_sidebar_box_header("Node Density Plot", 'node-expression-box'),
+                            build_sidebar_box_header("Node Distribution Plot", 'node-expression-box'),
                             html.Div(
                                 id="node-expression-box-contents",
                                 style={'margin' : '0px', 'visibility' : 'hidden'},
