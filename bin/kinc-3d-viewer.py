@@ -808,8 +808,9 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
         height=fig_height,
         title="",
         showlegend=showlegend,
-        legend=dict(itemsizing = 'constant', yanchor = 'top', xanchor = 'left',
-            y=0.95, x=0.01, bgcolor="rgba(0,0,0,0.05)"),
+        legend=dict(itemsizing = 'constant', bgcolor="rgba(0,0,0,0.05)"),
+        legend_orientation="h",
+        legend_title_text = "",
         margin=dict(l=10, r=10, t=0, b=10),
         scene=dict(
           aspectmode="cube",
