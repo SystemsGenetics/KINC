@@ -30,9 +30,6 @@ from progress.bar import IncrementalBar
 import socket
 
 
-
-
-
 def load_network(file_path):
     """
     Imports the KINC-generated network file (either full or Tidy versions).
@@ -365,7 +362,7 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
 
 
 def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'Score',
-       camera = None, aspect = None):
+       camera = None, aspect = None, selected_points = None):
     """
     Uses Plotly to create the interactive 3D visualization of the network.
 
@@ -399,14 +396,26 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
         Z = vlayers['Test_Name']
     if layer_by == 'Relationship':
         Z = vlayers['Rel']
-    # Add the network nodes as the first trace.
+
+    # Set the node size by degree.
     nsize = np.log10(vlayers['Degree'])*10
-    nsize[nsize < 4] = 4
+    nsize[nsize < 5] = 5
+
+    # Set the node colors
+    nbgcolors = np.repeat("#FFFFFF", vlayers.shape[0])
+    nlcolors  = np.repeat("#888888", vlayers.shape[0])
+    if selected_points is not None:
+        for p in selected_points:
+            pi = ((vlayers['X'] == p['x']) & (vlayers['Y'] == p['y']) &
+                  (Z == p['z']))
+            nbgcolors[pi] = '#FF0000'
+            nlcolors[pi] = '#FFFF00'
+
+    # Add the network nodes as the first trace.
     fig1 = go.Figure(data=[go.Scatter3d(x=vlayers['X'], y=vlayers['Y'],
-                   z=Z, mode='markers',
-                   opacity = 0.5,
-                   marker=dict(symbol='circle', size=nsize,
-                               line=dict(width=1, color="#888888")),
+                   z=Z, mode='markers', opacity = 0.9,
+                   marker=dict(symbol='circle', size=nsize, color=nbgcolors,
+                               line=dict(width=2, color=nlcolors)),
                    text="Node: " + vlayers['Vertex'],
                    customdata=vlayers['Vertex'],
                    hoverinfo='text', name='Nodes')])
@@ -472,6 +481,7 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
     if aspect:
         fig1.layout.scene.aspectratio = aspect
 
+    network_fig = fig1
     return fig1
 
 
@@ -679,7 +689,7 @@ def create_node_densityplot(gem, amx, node = None, density_col = 'All'):
 
     fig.update_layout(
         height=fig_height,
-        title=dict(text=node, yanchor = 'top', xanchor = 'left',
+        title=dict(text="", yanchor = 'top', xanchor = 'left',
             y=0.93, x=0.08,),
         showlegend=showlegend,
         legend=dict(itemsizing = 'constant', bgcolor="rgba(0,0,0,0.05)"),
@@ -1371,7 +1381,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
     }
 
     internal_js = write_to_data_uri("""
-     """)
+    """)
 
     external_scripts = [
         'https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js',
@@ -1398,21 +1408,31 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                     "background-color" : "black", "margin" : "0px",
                 },
                 children=[
-                    dcc.Graph(
-                        id = 'network-3dview',
-                        style = {
-                            "height" : "100vh"
-                        },
-                        figure = create_network_plot(net, vlayers, elayers),
-                        config =  {
-                            'toImageButtonOptions' : {
-                                'filename': 'kinc_3d_network_view',
-                                'width': 800,
-                                'height': 600,
-                                'format': 'svg',
-                                'scale' : 2
-                            }
-                        }
+                    html.Div(id='selected-points', style={'display': 'none'}),
+                    html.Div(id='selected-edges', style={'display': 'none'}),
+                    dcc.Loading(
+                        id="loading-spinner",
+                        type="circle",
+                        color='#FFFFFF',
+                        fullscreen=False,
+                        children=[
+                            dcc.Graph(
+                                id = 'network-3dview',
+                                style = {
+                                    "height" : "100vh"
+                                },
+                                figure = create_network_plot(net, vlayers, elayers),
+                                config =  {
+                                    'toImageButtonOptions' : {
+                                        'filename': 'kinc_3d_network_view',
+                                        'width': 800,
+                                        'height': 600,
+                                        'format': 'svg',
+                                        'scale' : 2
+                                    }
+                                }
+                            ),
+                        ],
                     ),
                     dcc.Input(
                         id='current-network-3dview-camera',
@@ -1578,7 +1598,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                             ),
                         ]
                     ),
-                    # network stats
+                    # Network stats
                     html.Div(
                         style=sidebar_box_style,
                         children=[
@@ -1629,27 +1649,41 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
         ] # End app layout children
     ) # End app layout
 
+    @app.callback(
+        [dash.dependencies.Output('selected-points', 'children'),
+         dash.dependencies.Output('node-density-plot', 'figure'),
+         dash.dependencies.Output('node-table', 'children')],
+        [dash.dependencies.Input('network-3dview', 'clickData'),
+         dash.dependencies.Input('density-condition-select', 'value')])
+    def select_current_node(clickData, density_col):
+        selected_points = []
+        if (clickData):
+            points = clickData['points']
+            nfound = re.match('^Node: (.*?)$', points[0]['text'])
+            if (nfound):
+                for p in clickData['points']:
+                    selected_points.append(p)
+                node = points[0]['customdata']
+                selected_points = json.dumps(selected_points)
+                node_table = create_dash_node_table(net, nmeta, vlayers, node)
+                density_plot = create_node_densityplot(gem, amx, node, density_col)
+                return [selected_points, density_plot, node_table]
+        raise dash.exceptions.PreventUpdate
 
     # Callback when an object in the network plot is clicked.
     @app.callback(
         [dash.dependencies.Output('edge-expression-3dview', 'figure'),
-         dash.dependencies.Output('edge-table', 'children'),
-         dash.dependencies.Output('node-table', 'children'),
-         dash.dependencies.Output('node-density-plot', 'figure')],
+         dash.dependencies.Output('edge-table', 'children')],
         [dash.dependencies.Input('network-3dview', 'clickData'),
-         dash.dependencies.Input('coexp-condition-select', 'value'),
-         dash.dependencies.Input('density-condition-select', 'value')],
-        [dash.dependencies.State('edge-expression-3dview', 'figure')])
-    def set_current_edge(clickData, coexp_col, density_col, figure):
+         dash.dependencies.Input('coexp-condition-select', 'value')])
+    def set_current_edge(clickData, coexp_col):
         edge_index = None
         node = None
         if (clickData):
-            scatterplot = figure
             node_table = None
             edge_table = None
             points = clickData['points']
             efound = re.match('^Edge: (.*?) \(co\) (.*?)$', points[0]['text'])
-            nfound = re.match('^Node: (.*?)$', points[0]['text'])
             if (efound):
                 edge_index = points[0]['customdata']
                 row_vals = elayers.iloc[edge_index]
@@ -1658,17 +1692,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                 edge_nodes = [source, target]
                 scatterplot = create_expression_scatterplot(gem, amx, elayers, coexp_col, edge_index)
                 edge_table = create_dash_edge_table(net, edge_index)
-                node_table = create_dash_node_table(net, nmeta, vlayers, None)
-                density_plot = create_node_densityplot(gem, amx, None, density_col)
-            if (nfound):
-                node = edge_index = points[0]['customdata']
-                node_table = create_dash_node_table(net, nmeta, vlayers, node)
-                edge_table = create_dash_edge_table(net, None)
-                density_plot = create_node_densityplot(gem, amx, node, density_col)
-
-            return [scatterplot, edge_table, node_table, density_plot]
-
-
+                return [scatterplot, edge_table]
         raise dash.exceptions.PreventUpdate
 
 
@@ -1706,22 +1730,26 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
     @app.callback(
         dash.dependencies.Output('network-3dview', 'figure'),
         [dash.dependencies.Input('edge-color-select', 'value'),
-         dash.dependencies.Input('edge-layer-select', 'value')],
+         dash.dependencies.Input('edge-layer-select', 'value'),
+         dash.dependencies.Input('selected-points', 'children')],
         [dash.dependencies.State('current-network-3dview-camera', 'value'),
          dash.dependencies.State('current-network-3dview-aspect', 'value')]
     )
-    def update_network_plot(color_by,  layer_by, camera_vals, aspect_vals):
+    def update_network_plot(color_by, layer_by, selected_points, camera_vals, aspect_vals):
         camera = None
         aspect = None
         if (type(camera_vals) == str):
             camera = json.loads(camera_vals)
         if (type(aspect_vals) == str):
             aspect = json.loads(aspect_vals)
+        if selected_points is not None:
+            selected_points = json.loads(selected_points)
 
         if not camera and not aspect:
             raise dash.exceptions.PreventUpdate
 
-        return create_network_plot(net, vlayers, elayers, color_by, layer_by, camera, aspect)
+        return create_network_plot(net, vlayers, elayers, color_by, layer_by,
+                                   camera, aspect, selected_points)
 
 
     @app.callback(
