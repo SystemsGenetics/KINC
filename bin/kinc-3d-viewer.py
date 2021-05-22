@@ -224,6 +224,9 @@ def bin_edges(net):
     """
     net['Edge_Bin'] = np.around(np.abs(net['Similarity_Score']), decimals=2)
     net['Pval_Bin'] = np.round(-np.log10(net['p_value']))
+    if 'rank' in net.columns:
+        num_rank_bins = net.shape[0] / 100
+        net['Rank_Bin'] = 100 - np.round(net['rank']/num_rank_bins)
     if 'hotelling_p_value' in net.columns:
         net['HPval_Bin'] = np.round(-np.log10(net['hotelling_p_value']))
     if (net['r_squared'].dtype == 'object'):
@@ -270,7 +273,11 @@ def get_vertex_zlayers(net, glayout, net_prefix, redo_layout):
         rbin = row['Rsqr_Bin']
         rel = row['Relationship']
         test = row['Test_Name']
-        return(row[vtype], node['X'], node['Y'], ebin, pbin, hpbin, rbin, rel, test, node['Degree'], node['CC'])
+        kbin = np.nan
+        if 'rank' in net.columns:
+            kbin = row['Rank_Bin']
+        return(row[vtype], node['X'], node['Y'], ebin, pbin, hpbin, rbin, rel,
+               kbin, test, node['Degree'], node['CC'])
 
 
     if (redo_layout | (not os.path.exists(net_prefix + '.3Dvlayers.txt'))):
@@ -280,7 +287,8 @@ def get_vertex_zlayers(net, glayout, net_prefix, redo_layout):
         ltarget = net.apply(find_vlayers, vtype='Target', bar=bar, axis=1)
         print("")
 
-        columns = ['Vertex', 'X', 'Y', 'EBin', 'PBin', 'HPBin', 'RBin', 'Rel', 'Test_Name', 'Degree', 'CC']
+        columns = ['Vertex', 'X', 'Y', 'EBin', 'PBin', 'HPBin', 'RBin', 'Rel',
+                   'KBin', 'Test_Name', 'Degree', 'CC']
         vlayers = pd.DataFrame.from_records(lsource.append(ltarget).values, columns=columns)
         vlayers = vlayers[vlayers.duplicated() == False]
         # We want to place the node in the layer where it first appears.
@@ -331,6 +339,9 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
             hpbin = row['HPval_Bin']
         rbin = row['Rsqr_Bin']
         rel = row['Relationship']
+        kbin = np.nan
+        if 'rank' in net.columns:
+            kbin = row['Rank_Bin']
         test = row['Test_Name']
         source = glayout.loc[row["Source"]]
         target = glayout.loc[row["Target"]]
@@ -339,7 +350,7 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
                 row["Source"],
                 row["Target"],
                 row["Samples"],
-                ebin, pbin, hpbin, rbin, rel, test])
+                ebin, pbin, hpbin, rbin, rel, kbin, test])
 
     if (redo_layout | (not os.path.exists(net_prefix + '.3Delayers.txt'))):
         print("Calculating 3D edge layout.")
@@ -347,7 +358,9 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
         ledge = net.apply(place_elayers, bar=bar, axis=1)
         print("")
 
-        elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Source', 'Target', 'Samples', 'EBin', 'PBin', 'HPBin', 'RBin', 'Rel', 'Test_Name'])
+        elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Source',
+           'Target', 'Samples', 'EBin', 'PBin', 'HPBin', 'RBin', 'Rel',
+           'KBin', 'Test_Name'])
         elayers['name'] = elayers['Source'] + " (co) " + elayers['Target']
         elayers.to_csv(net_prefix + '.3Delayers.txt')
     else:
@@ -396,6 +409,8 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
         Z = vlayers['Test_Name']
     if layer_by == 'Relationship':
         Z = vlayers['Rel']
+    if layer_by == 'Rank':
+        Z = vlayers['KBin']
 
     # Set the node size by degree.
     nsize = np.log10(vlayers['Degree'])*10
@@ -436,12 +451,16 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
     if color_by == 'Relationship':
         slider_title = 'Relationship Type'
         include_slider = False
+    if color_by == 'Rank':
+        slider_title = 'KBin'
 
     layer_title = layer_by
     if layer_by == 'P-value':
         layer_title = '-log10(p)'
     if layer_by == 'Hotelling P-value (phased)':
         layer_title = '-log10(p)'
+    if layer_by == 'Rank':
+        layer_title = 'Binned Rank'
 
     (colorway, sliders, nticks) = create_binned_network_figure(fig1, elayers, color_by,
                             layer_by, slider_title, include_slider)
@@ -509,6 +528,8 @@ def create_binned_network_figure(figure, elayers, color_by = 'Score',
         color_col = 'Test_Name'
     if color_by == 'Relationship':
         color_col = 'Rel'
+    if color_by == 'Rank':
+        color_col = 'KBin'
 
     layer_col = 'EBin'
     if layer_by == 'Score':
@@ -523,6 +544,8 @@ def create_binned_network_figure(figure, elayers, color_by = 'Score',
         layer_col = 'Test_Name'
     if layer_by == 'Relationship':
         layer_col = 'Rel'
+    if layer_by == 'Rank':
+        layer_col = 'KBin'
 
     # Add edge traces to the figure, one each per bin.
     layer_bins = np.flip(np.sort(elayers[layer_col].unique()))
@@ -927,7 +950,7 @@ def create_dash_edge_table(net, edge_index = None):
         'margin': '0px', 'padding' : '0 0 0 20', "border-bottom": "1px solid #BBBBBB"
     }
 
-    net_fixed = net.drop(['Samples', 'Edge_Bin', 'Pval_Bin', 'Rsqr_Bin', 'Relationship'], axis=1)
+    net_fixed = net.drop(['Samples', 'Edge_Bin', 'Pval_Bin', 'Rsqr_Bin', 'Relationship', 'Rank_Bin'], axis=1)
     if ('HPval_Bin' in net_fixed.columns):
         net_fixed = net_fixed.drop(['HPval_Bin'], axis=1)
     for colname in net_fixed.columns:
@@ -1235,6 +1258,8 @@ def create_edge_color_select(net):
         options.append('Test Name')
     if 'r_squared' in net.columns:
         options.append('R^2')
+    if 'rank' in net.columns:
+        options.append('Rank')
     options.append('Relationship')
 
     select = dcc.Dropdown(
@@ -1275,6 +1300,8 @@ def create_edge_layer_select(net):
         options.append('Test Name')
     if 'r_squared' in net.columns:
         options.append('R^2')
+    if 'rank' in net.columns:
+        options.append('Rank')
     options.append('Relationship')
 
     select = dcc.Dropdown(
