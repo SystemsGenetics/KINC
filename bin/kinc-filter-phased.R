@@ -61,8 +61,8 @@ if (length(opt$out_prefix) > 0) {
 }
 
 # Make sure KINC.R is at the correct vresion.
-if(packageVersion("KINC.R") < "1.2") {
-    stop("This script requires KINC.R > 1.2")
+if(packageVersion("KINC.R") < "1.3") {
+    stop("This script requires KINC.R > 1.3")
 }
 suppressMessages(library("KINC.R"))
 

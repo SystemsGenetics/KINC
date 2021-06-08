@@ -53,8 +53,8 @@ if (is.null(opt$save_condition_networks)){
 }
 
 # Make sure KINC.R is at the correct vresion.
-if(packageVersion("KINC.R") < "1.1") {
-    stop("This script requires KINC.R > 1.1")
+if(packageVersion("KINC.R") < "1.3") {
+    stop("This script requires KINC.R > 1.3")
 }
 suppressMessages(library("KINC.R"))
 suppressMessages(library("dplyr"))
