@@ -70,6 +70,7 @@ message('    \\/_/\\/_/ \\/_____/ \\/_/\\/_/\\/___/\\/_/ \\/_/\\/ / ')
 message("")
 message("This script uses KINC.R, a companion R library for KINC")
 message("https://github.com/SystemsGenetics/KINC.R")
+message(paste0("KINC.R v", packageVersion("KINC.R")))
 message("-------------------------------------------------------")
 
 

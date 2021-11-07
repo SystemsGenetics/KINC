@@ -57,7 +57,7 @@ if (length(opt$suffix) > 0) {
    suffix = opt$suffix
 }
 
-# Make sure KINC.R is at the correct vresion.
+# Make sure KINC.R is at the correct version.
 if (packageVersion("KINC.R") < "1.3") {
     stop("This script requires KINC.R > 1.3")
 }
@@ -74,6 +74,7 @@ message('    \\/_/\\/_/ \\/_____/ \\/_/\\/_/\\/___/\\/_/ \\/_/\\/ / ')
 message("")
 message("This script uses KINC.R, a companion R library for KINC")
 message("https://github.com/SystemsGenetics/KINC.R")
+message(paste0("KINC.R v", packageVersion("KINC.R")))
 message("-------------------------------------------------------")
 
 # If a base category was provided then find the sample IDs
@@ -159,13 +160,14 @@ for (i in 1:num_chunks) {
     }
 
     chunk_net = loadKINCNetwork(opt$net, nrows, skip)
-    chunk_net = filterBiasedEdges(chunk_net, ematrix, threads=threads,
+    results = filterBiasedEdges(chunk_net, ematrix, threads=threads,
         wa_th=opt$wa_th, mtt_th=opt$mtt_th, wa_samples=wa_samples)
+    rm(chunk_net)
 
     net_name = paste0(net_prefix, '-filtered.', suffix)
     if (i == 1) {
-        saveKINCNetwork(chunk_net, net_name, append=FALSE)
+        saveKINCNetwork(results, net_name, append=FALSE)
     } else {
-        saveKINCNetwork(chunk_net, net_name, append=TRUE)
+        saveKINCNetwork(results, net_name, append=TRUE)
     }
 }
