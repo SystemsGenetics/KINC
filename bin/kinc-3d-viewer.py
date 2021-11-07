@@ -39,13 +39,20 @@ def load_network(file_path):
     return : A pandas dataframe containing the network.
     """
 
-    net = pd.read_csv(file_path, sep="\t")
+    net = pd.read_csv(file_path, sep="\t", index_col=None)
 
     # Make sure the file has the required columns
     columns = net.columns
     if ('Source' not in columns) | ('Target' not in columns) | ('Samples' not in columns) | ('p_value' not in columns) | ('r_squared' not in columns) |('Test_Name' not in columns):
         print("ERROR:  The network file does not seem to be  KINC tidy file. It is missing one or more of the following column headers: Source, Target, Samples, p_value, r_squared or Test_Name. Please check the file.")
         exit(1)
+
+    # The source and target names cannot be numeric or it throws off igraph.
+    if net['Source'].dtype == 'int64':
+        net['Source'] = 'n' + net['Source'].astype(str)
+
+    if net['Target'].dtype == 'int64':
+        net['Target'] = 'n' + net['Target'].astype(str)
 
     return net
 
@@ -66,6 +73,11 @@ def load_gem(file_path):
     """
 
     gem = pd.read_csv(file_path, sep="\t")
+
+    # The source and target names cannot be numeric or it throws off igraph.
+    if gem.index.dtype == 'int64':
+        gem.index = 'n' + gem.index.map(str)
+
     return gem
 
 
