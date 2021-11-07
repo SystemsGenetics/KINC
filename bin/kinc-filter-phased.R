@@ -61,8 +61,8 @@ if (length(opt$out_prefix) > 0) {
 }
 
 # Make sure KINC.R is at the correct vresion.
-if(packageVersion("KINC.R") < "1.2") {
-    stop("This script requires KINC.R > 1.2")
+if(packageVersion("KINC.R") < "1.3") {
+    stop("This script requires KINC.R > 1.3")
 }
 suppressMessages(library("KINC.R"))
 
@@ -77,6 +77,7 @@ message('    \\/_/\\/_/ \\/_____/ \\/_/\\/_/\\/___/\\/_/ \\/_/\\/ / ')
 message("")
 message("This script uses KINC.R, a companion R library for KINC")
 message("https://github.com/SystemsGenetics/KINC.R")
+message(paste0("KINC.R v", packageVersion("KINC.R")))
 message("-------------------------------------------------------")
 
 
