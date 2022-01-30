@@ -110,6 +110,12 @@ def calculate_2d_layout(g, iterations):
     return layout
 
 
+def reduce_graph(g, minsize):
+    """
+    Reduces the size of the network to only include subgraphs of size `minsize`.
+    """
+    sgraphs = g.decompose(minelements = minsize)
+    return ig.union(sgraphs)
 
 def main():
     """
@@ -129,6 +135,8 @@ def main():
 
     parser.add_argument('--outfile', dest='outfile', type=str, required=True, help="The name of the output graphml file.")
 
+    parser.add_argument('--minsize', dest='minsize', type=int, default=1, help="The minimum number of nodes that a disconnected subgraph must have to be included in the output file. Defaults to 2.")
+
     args = parser.parse_args()
 
     # Make sure the paths exist
@@ -139,6 +147,10 @@ def main():
     print("Reading network file...")
     net = load_network(args.net_path)
     g = get_iGraph(net, args.directional)
+
+    if args.minsize > 2:
+        g = reduce_graph(g, args.minsize)
+
     g["name"] = args.graph_name
     g["uname"] = args.graph_id
 
