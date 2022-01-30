@@ -9,6 +9,9 @@ option_list = list(
     make_option(c("--sim_col"), type="character", default='Similarity_Score',
               help="The name of the similarity column in the network file.",
               metavar="character"),
+    make_option(c("--hcmethod"), type="character", default='ward.D',
+              help="A character string naming the hierarchical clustering method to use. Can be one of \"ward.D\", \"single\", \"complete\", \"average\", \"mcquitty\", \"median\", or \"centroid\".",
+              metavar="character"),
     make_option(c("--out_prefix"), type="character", default=NULL,
               help="(optional). The file name prefix used for the ouput files. If this arugment is not provided then the original network file name is used as a prefix.", metavar="character"),
     make_option(c("--no_meta"), type="logical", default=FALSE, action="store_true",
@@ -83,6 +86,5 @@ if (ignore_inverse == TRUE) {
 } else {
     print("...inverse edges will be included.")
 }
-lcm = findLinkedCommunities(net, net_prefix, meta = meta,
-        ignore_inverse = ignore_inverse, th = opt$th,
-        min.vertices = opt$min_verticies)
+lcm = findLinkedCommunities(net, net_prefix, meta = meta, hcmethod = opt$hcmethod,
+        ignore_inverse = ignore_inverse, th = opt$th, min.vertices = opt$min_verticies)
