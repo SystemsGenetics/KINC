@@ -1,4 +1,4 @@
-all: develop latest v3.4.x v3.3.x v3.2.x
+all: develop latest v3.5.x v3.4.x v3.3.x v3.2.x
 
 develop: develop-cpu develop-gpu
 
@@ -12,7 +12,7 @@ develop-cpu:
             .
 
 develop-gpu:
-    docker build \
+	docker build \
             -t systemsgenetics/kinc:develop-gpu \
             --build-arg NVIDIA_HEADLESS=0 \
             --build-arg ACE_REVISION=v3.2.0 \
@@ -40,6 +40,26 @@ latest-gpu:
 		--build-arg KINC_REVISION=v3.4.2 \
 		--build-arg KINC_R_REVISION=v1.2 \
 		.
+v3.5.x: v3.5.x-cpu v3.5.x-gpu
+
+v3.5.x-cpu:
+	docker build \
+		-t systemsgenetics/kinc:3.5.0-cpu \
+		--build-arg NVIDIA_HEADLESS=1 \
+		--build-arg ACE_REVISION=v3.2.0 \
+		--build-arg KINC_REVISION=v3.5.0 \
+		--build-arg KINC_R_REVISION=v1.2 \
+		.
+
+v3.5.x-gpu:
+	docker build \
+		-t systemsgenetics/kinc:3.5.0-gpu \
+		--build-arg NVIDIA_HEADLESS=0 \
+		--build-arg ACE_REVISION=v3.2.0 \
+		--build-arg KINC_REVISION=v3.5.0 \
+		--build-arg KINC_R_REVISION=v1.2 \
+		.
+
 
 v3.4.x: v3.4.x-cpu v3.4.x-gpu
 
