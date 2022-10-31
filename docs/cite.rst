@@ -1,14 +1,10 @@
 How to Cite KINC
 ================
-If you find KINC useful and would like to cite it please consider the following:
+If you find KINC useful in your research, please cite the following two publications:
 
-The following paper introduces the GMM approach as implemented in KINC for condition-specific modeling:
+**Shealy, B. T., Burns, J. J. R., Smith, M. C., Alex Feltus, F., & Ficklin, S. P. (2019). GPU Implementation of Pairwise Gaussian Mixture Models for Multi-Modal Gene Co-Expression Networks. IEEE Access, 7, 160845–160857.**
 
-- Sherman BT, Burns J, Feltus FA, Smith M, Ficklin SP.  GPU Implementation of Pairwise Gaussian Mixture Models for Multi-Modal Gene Co-Expression Networks (2019). IEEE Access. 7, 160845-160857
-
-A second manuscript describing the full KINC pipeline for a Bioinformatic audience is currently in preparation. If you prefer to refer directly to the software itself please consider the following:
-
-- Josh Burns, Ben Shealy, Alex Feltus, Melissa Smith, & Stephen Ficklin. (2019, June 25). SystemsGenetics/KINC: Version 3.3.0 (Version v3.3.0). Zenodo. http://doi.org/10.5281/zenodo.3256358
+**Burns, J. J. R., Shealy, B. T., Greer, M. S., Hadish, J. A., McGowan, M. T., Biggs, T., Smith, M. C., Feltus, F. A., & Ficklin, S. P. (2022). Addressing noise in co-expression network construction. Briefings in Bioinformatics, 23(1). https://doi.org/10.1093/bib/bbab495**
 
 Publications Using KINC
 =======================
