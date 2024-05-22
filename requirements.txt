@@ -5,7 +5,7 @@ pandas
 scipy
 seaborn
 plotly
-fa2
 dash
 progress
 python-igraph
+fa2

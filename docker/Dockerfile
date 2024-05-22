@@ -1,5 +1,4 @@
-FROM nvidia/cuda:11.6.0-devel-ubuntu20.04
-MAINTAINER Ben Shealy <btsheal@clemson.edu>
+FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
 
 ARG NVIDIA_HEADLESS=0
 ARG ACE_REVISION="develop"
@@ -17,7 +16,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 RUN apt-get update -qq \
 	&& apt-get install -qq -y \
-		qt5-default \
 		clinfo \
 		git \
 		libboost-dev \
@@ -27,11 +25,14 @@ RUN apt-get update -qq \
 		libopenmpi-dev \
 		ocl-icd-opencl-dev \
 		python3-pip \
-        cmake
+		qtcreator qtbase5-dev qt5-qmake cmake
+
 
 
 # Install headless driver for cpu image
-RUN if [ ${NVIDIA_HEADLESS} = 1 ]; then apt-get install -qq -y nvidia-headless-495 ; fi
+RUN if [ ${NVIDIA_HEADLESS} = 1 ]; then \
+	apt-get install -qq -y nvidia-driver-535 nvidia-headless-535 ; \
+fi
 
 # add NVIDIA platform to OpenCL
 RUN mkdir -p /etc/OpenCL/vendors \
@@ -82,39 +83,37 @@ else \
 fi
 
 
-# Add in a few additional requirements for the >=3.4 version of KINC. These are needed
-# for the R and Python scripts in the bin folder.
+# Add in a few additional requirements for the >=3.4 version of KINC. 
+# These are needed for the R and Python scripts in the bin folder.
 RUN if ! echo "${KINC_REVISION}" | grep -Eq 'v3\.[32]\.[0-9]$' ; then \
-    apt-get install -qq -y \
-        m4 \
-        autoconf \
-        automake \
-        libxml2-dev \
-        bison \
-        flex \
-        build-essential \
-        libcurl4-gnutls-dev \
-        libssl-dev \
-        software-properties-common; \
+    apt-get install -qq -y m4 autoconf automake libxml2-dev \
+        bison flex build-essential libcurl4-gnutls-dev \
+        libssl-dev software-properties-common libgit2-dev \
+		libfontconfig1-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev \
+		libpng-dev libtiff5-dev libjpeg-dev; \
+fi
+
+# Install R
+ENV DEBIAN_FRONTEND=noninteractive
+RUN if ! echo "${KINC_REVISION}" | grep -Eq 'v3\.[32]\.[0-9]$' ; then \
+    apt-get -qq install -y r-base; \ 
 fi
 
 # Install KINC.R
-ENV DEBIAN_FRONTEND=noninteractive
 RUN if ! echo "${KINC_REVISION}" | grep -Eq 'v3\.[32]\.[0-9]$' ; then \
-    apt-get -qq install -y r-base \
-    && R -q -e "install.packages('devtools', dependencies=TRUE, repos='http://cran.us.r-project.org')" \
+    R -q -e "install.packages('devtools')" \
     && R -e "library('devtools'); install_github('SystemsGenetics/KINC.R', ref='${KINC_R_REVISION}')"; \
 fi
 
 # install python dependencies
 WORKDIR /opt/KINC
 
-RUN if [ -e requirements.txt ]; then pip3 install  -r requirements.txt; fi
+#RUN if [ -e requirements.txt ]; then pip3 install  -r requirements.txt; fi
 
 
 
 # initialize default work directory
-WORKDIR /workspace
+#WORKDIR /workspace
 
 # Tini for signal processing and zombie killing.
 ENV TINI_VERSION v0.19.0

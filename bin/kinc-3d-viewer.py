@@ -301,7 +301,7 @@ def get_vertex_zlayers(net, glayout, net_prefix, redo_layout):
 
         columns = ['Vertex', 'X', 'Y', 'EBin', 'PBin', 'HPBin', 'RBin', 'Rel',
                    'KBin', 'Test_Name', 'Degree', 'CC']
-        vlayers = pd.DataFrame.from_records(lsource.append(ltarget).values, columns=columns)
+        vlayers = pd.DataFrame.from_records(pd.concat([lsource, ltarget]), columns=columns)
         vlayers = vlayers[vlayers.duplicated() == False]
         # We want to place the node in the layer where it first appears.
         vlayers = vlayers.groupby(by=['Vertex']).apply(lambda g: g[g['EBin'] == g['EBin'].max()])
