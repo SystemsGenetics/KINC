@@ -108,7 +108,7 @@ fi
 # install python dependencies
 WORKDIR /opt/KINC
 
-#RUN if [ -e requirements.txt ]; then pip3 install  -r requirements.txt; fi
+RUN if [ -e requirements.txt ]; then pip3 install  -r requirements.txt; fi
 
 
 

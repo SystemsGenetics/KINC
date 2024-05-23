@@ -8,4 +8,6 @@ plotly
 dash
 progress
 python-igraph
-fa2
+Cython
+networkx
+fa2_modified
