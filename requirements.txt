@@ -4,8 +4,10 @@ numpy
 pandas
 scipy
 seaborn
-python-igraph
 plotly
-fa2
 dash
 progress
+python-igraph
+Cython
+networkx
+fa2_modified

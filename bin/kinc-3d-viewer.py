@@ -13,6 +13,8 @@ import igraph as ig
 import plotly as py
 import seaborn as sns
 import plotly.graph_objects as go
+import plotly.figure_factory as ff
+import plotly.express as px
 from fa2 import ForceAtlas2
 import random
 import dash
@@ -28,9 +30,6 @@ from progress.bar import IncrementalBar
 import socket
 
 
-
-
-
 def load_network(file_path):
     """
     Imports the KINC-generated network file (either full or Tidy versions).
@@ -40,13 +39,20 @@ def load_network(file_path):
     return : A pandas dataframe containing the network.
     """
 
-    net = pd.read_csv(file_path, sep="\t")
+    net = pd.read_csv(file_path, sep="\t", index_col=None)
 
     # Make sure the file has the required columns
     columns = net.columns
     if ('Source' not in columns) | ('Target' not in columns) | ('Samples' not in columns) | ('p_value' not in columns) | ('r_squared' not in columns) |('Test_Name' not in columns):
         print("ERROR:  The network file does not seem to be  KINC tidy file. It is missing one or more of the following column headers: Source, Target, Samples, p_value, r_squared or Test_Name. Please check the file.")
         exit(1)
+
+    # The source and target names cannot be numeric or it throws off igraph.
+    if net['Source'].dtype == 'int64':
+        net['Source'] = 'n' + net['Source'].astype(str)
+
+    if net['Target'].dtype == 'int64':
+        net['Target'] = 'n' + net['Target'].astype(str)
 
     return net
 
@@ -67,6 +73,11 @@ def load_gem(file_path):
     """
 
     gem = pd.read_csv(file_path, sep="\t")
+
+    # The source and target names cannot be numeric or it throws off igraph.
+    if gem.index.dtype == 'int64':
+        gem.index = 'n' + gem.index.map(str)
+
     return gem
 
 
@@ -103,9 +114,11 @@ def load_node_meta(file_path):
     node name, the second a controlled vocabulary term ID, the third the
     term definition and the fourth the vocubulary name.
     """
-    nmeta = pd.read_csv(file_path, sep="\t")
-    nmeta.columns = ['Node', 'Term', 'Definition', 'Vocabulary']
-    nmeta.index = nmeta['Node']
+    nmeta = pd.read_csv(file_path, sep="\t", dtype='str')
+    headers = nmeta.columns.values
+    headers[0] = 'Node'
+    nmeta.columns = headers
+    nmeta.set_index('Node', inplace=True)
     return nmeta
 
 
@@ -223,6 +236,9 @@ def bin_edges(net):
     """
     net['Edge_Bin'] = np.around(np.abs(net['Similarity_Score']), decimals=2)
     net['Pval_Bin'] = np.round(-np.log10(net['p_value']))
+    if 'rank' in net.columns:
+        num_rank_bins = net.shape[0] / 100
+        net['Rank_Bin'] = 100 - np.round(net['rank']/num_rank_bins)
     if 'hotelling_p_value' in net.columns:
         net['HPval_Bin'] = np.round(-np.log10(net['hotelling_p_value']))
     if (net['r_squared'].dtype == 'object'):
@@ -269,7 +285,11 @@ def get_vertex_zlayers(net, glayout, net_prefix, redo_layout):
         rbin = row['Rsqr_Bin']
         rel = row['Relationship']
         test = row['Test_Name']
-        return(row[vtype], node['X'], node['Y'], ebin, pbin, hpbin, rbin, rel, test, node['Degree'], node['CC'])
+        kbin = np.nan
+        if 'rank' in net.columns:
+            kbin = row['Rank_Bin']
+        return(row[vtype], node['X'], node['Y'], ebin, pbin, hpbin, rbin, rel,
+               kbin, test, node['Degree'], node['CC'])
 
 
     if (redo_layout | (not os.path.exists(net_prefix + '.3Dvlayers.txt'))):
@@ -279,8 +299,9 @@ def get_vertex_zlayers(net, glayout, net_prefix, redo_layout):
         ltarget = net.apply(find_vlayers, vtype='Target', bar=bar, axis=1)
         print("")
 
-        columns = ['Vertex', 'X', 'Y', 'EBin', 'PBin', 'HPBin', 'RBin', 'Rel', 'Test_Name', 'Degree', 'CC']
-        vlayers = pd.DataFrame.from_records(lsource.append(ltarget).values, columns=columns)
+        columns = ['Vertex', 'X', 'Y', 'EBin', 'PBin', 'HPBin', 'RBin', 'Rel',
+                   'KBin', 'Test_Name', 'Degree', 'CC']
+        vlayers = pd.DataFrame.from_records(pd.concat([lsource, ltarget]), columns=columns)
         vlayers = vlayers[vlayers.duplicated() == False]
         # We want to place the node in the layer where it first appears.
         vlayers = vlayers.groupby(by=['Vertex']).apply(lambda g: g[g['EBin'] == g['EBin'].max()])
@@ -330,6 +351,9 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
             hpbin = row['HPval_Bin']
         rbin = row['Rsqr_Bin']
         rel = row['Relationship']
+        kbin = np.nan
+        if 'rank' in net.columns:
+            kbin = row['Rank_Bin']
         test = row['Test_Name']
         source = glayout.loc[row["Source"]]
         target = glayout.loc[row["Target"]]
@@ -338,7 +362,7 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
                 row["Source"],
                 row["Target"],
                 row["Samples"],
-                ebin, pbin, hpbin, rbin, rel, test])
+                ebin, pbin, hpbin, rbin, rel, kbin, test])
 
     if (redo_layout | (not os.path.exists(net_prefix + '.3Delayers.txt'))):
         print("Calculating 3D edge layout.")
@@ -346,7 +370,9 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
         ledge = net.apply(place_elayers, bar=bar, axis=1)
         print("")
 
-        elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Source', 'Target', 'Samples', 'EBin', 'PBin', 'HPBin', 'RBin', 'Rel', 'Test_Name'])
+        elayers = pd.DataFrame.from_records(ledge, columns=['X', 'Y', 'Source',
+           'Target', 'Samples', 'EBin', 'PBin', 'HPBin', 'RBin', 'Rel',
+           'KBin', 'Test_Name'])
         elayers['name'] = elayers['Source'] + " (co) " + elayers['Target']
         elayers.to_csv(net_prefix + '.3Delayers.txt')
     else:
@@ -361,7 +387,7 @@ def get_edge_zlayers(net, glayout, net_prefix, redo_layout):
 
 
 def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'Score',
-       camera = None, aspect = None):
+       camera = None, aspect = None, selected_points = None):
     """
     Uses Plotly to create the interactive 3D visualization of the network.
 
@@ -395,12 +421,28 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
         Z = vlayers['Test_Name']
     if layer_by == 'Relationship':
         Z = vlayers['Rel']
+    if layer_by == 'Rank':
+        Z = vlayers['KBin']
+
+    # Set the node size by degree.
+    nsize = np.log10(vlayers['Degree'])*10
+    nsize[nsize < 5] = 5
+
+    # Set the node colors
+    nbgcolors = np.repeat("#FFFFFF", vlayers.shape[0])
+    nlcolors  = np.repeat("#888888", vlayers.shape[0])
+    if selected_points is not None:
+        for p in selected_points:
+            pi = ((vlayers['X'] == p['x']) & (vlayers['Y'] == p['y']) &
+                  (Z == p['z']))
+            nbgcolors[pi] = '#FF0000'
+            nlcolors[pi] = '#FFFF00'
+
     # Add the network nodes as the first trace.
     fig1 = go.Figure(data=[go.Scatter3d(x=vlayers['X'], y=vlayers['Y'],
-                   z=Z, mode='markers',
-                   opacity = 0.5,
-                   marker=dict(symbol='circle', size=np.log10(vlayers['Degree'])*4,
-                               line=dict(width=1, color="#888888")),
+                   z=Z, mode='markers', opacity = 0.9,
+                   marker=dict(symbol='circle', size=nsize, color=nbgcolors,
+                               line=dict(width=2, color=nlcolors)),
                    text="Node: " + vlayers['Vertex'],
                    customdata=vlayers['Vertex'],
                    hoverinfo='text', name='Nodes')])
@@ -421,12 +463,16 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
     if color_by == 'Relationship':
         slider_title = 'Relationship Type'
         include_slider = False
+    if color_by == 'Rank':
+        slider_title = 'KBin'
 
     layer_title = layer_by
     if layer_by == 'P-value':
         layer_title = '-log10(p)'
     if layer_by == 'Hotelling P-value (phased)':
         layer_title = '-log10(p)'
+    if layer_by == 'Rank':
+        layer_title = 'Binned Rank'
 
     (colorway, sliders, nticks) = create_binned_network_figure(fig1, elayers, color_by,
                             layer_by, slider_title, include_slider)
@@ -466,6 +512,7 @@ def create_network_plot(net, vlayers, elayers, color_by = 'Score', layer_by = 'S
     if aspect:
         fig1.layout.scene.aspectratio = aspect
 
+    network_fig = fig1
     return fig1
 
 
@@ -493,6 +540,8 @@ def create_binned_network_figure(figure, elayers, color_by = 'Score',
         color_col = 'Test_Name'
     if color_by == 'Relationship':
         color_col = 'Rel'
+    if color_by == 'Rank':
+        color_col = 'KBin'
 
     layer_col = 'EBin'
     if layer_by == 'Score':
@@ -507,6 +556,8 @@ def create_binned_network_figure(figure, elayers, color_by = 'Score',
         layer_col = 'Test_Name'
     if layer_by == 'Relationship':
         layer_col = 'Rel'
+    if layer_by == 'Rank':
+        layer_col = 'KBin'
 
     # Add edge traces to the figure, one each per bin.
     layer_bins = np.flip(np.sort(elayers[layer_col].unique()))
@@ -637,6 +688,59 @@ def create_avg_cc_distribution_plot(vlayers):
 
 
 
+
+def create_node_densityplot(gem, amx, node = None, density_col = 'All'):
+    """
+    Uses Plotly to create an interactive density plot of expression
+
+    gem :  The GEM dataframe created by the load_gem function.
+
+    amx : The annotation matrix dataframe created by the load_amx function.
+
+    node : The name of the node to display
+
+    density_col : The name of the column in the annotation matrix by which
+       the samples should be divided.
+    """
+    fig_height = 400
+    if node is None:
+        fig = go.Figure(go.Scatter3d())
+        fig.update_layout(height=fig_height)
+        return fig
+
+
+    sdata = pd.DataFrame(dict(X=gem.loc[node].values))
+    sdata.index = gem.columns
+    sdata = sdata.join(amx, how='left')
+
+    showlegend=False
+    if density_col == 'All':
+        fig = px.violin(sdata, y='X', box=True, points="all",
+                   hover_data=sdata.columns)
+    else:
+        showlegend=True
+        fig = px.violin(sdata, y='X', x=density_col, color=density_col, box=True, points="all",
+                   hover_data=sdata.columns)
+
+    fig.update_layout(
+        height=fig_height,
+        title=dict(text="", yanchor = 'top', xanchor = 'left',
+            y=0.93, x=0.08,),
+        showlegend=showlegend,
+        legend=dict(itemsizing = 'constant', bgcolor="rgba(0,0,0,0.05)"),
+        legend_orientation="h",
+        legend_title_text = "",
+        xaxis=dict(visible = False),
+        yaxis=dict(visible = False),
+        margin=dict(l=10, r=10, t=40, b=10),
+    )
+
+    return fig
+
+
+
+
+
 def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index = None):
     """
     Uses Plotly to create the interactive 3D scatterplot of co-expression
@@ -659,8 +763,11 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
 
     return : a Plotly figure object.
     """
+    fig_height = 500
     if edge_index is None:
-        return go.Figure(go.Scatter3d())
+        fig = go.Figure(go.Scatter3d())
+        fig.update_layout(height=fig_height)
+        return fig
 
     node1 = elayers.iloc[edge_index]['Source']
     node2 = elayers.iloc[edge_index]['Target']
@@ -743,10 +850,12 @@ def create_expression_scatterplot(gem, amx, elayers, color_col=None, edge_index 
                         text= sdata.index, hoverinfo='text')])
 
     fig2.update_layout(
-        height=400,
+        height=fig_height,
         title="",
         showlegend=showlegend,
-        legend={'itemsizing': 'constant'},
+        legend=dict(itemsizing = 'constant', bgcolor="rgba(0,0,0,0.05)"),
+        legend_orientation="h",
+        legend_title_text = "",
         margin=dict(l=10, r=10, t=0, b=10),
         scene=dict(
           aspectmode="cube",
@@ -853,7 +962,7 @@ def create_dash_edge_table(net, edge_index = None):
         'margin': '0px', 'padding' : '0 0 0 20', "border-bottom": "1px solid #BBBBBB"
     }
 
-    net_fixed = net.drop(['Samples', 'Edge_Bin', 'Pval_Bin', 'Rsqr_Bin', 'Relationship'], axis=1)
+    net_fixed = net.drop(['Samples', 'Edge_Bin', 'Pval_Bin', 'Rsqr_Bin', 'Relationship', 'Rank_Bin'], axis=1)
     if ('HPval_Bin' in net_fixed.columns):
         net_fixed = net_fixed.drop(['HPval_Bin'], axis=1)
     for colname in net_fixed.columns:
@@ -1014,8 +1123,8 @@ def create_dash_node_table(net, nmeta, vlayers, node = None):
         )
         if not nmeta is None:
             columns = nmeta.columns
-            if not nmeta is None:
-                rows = nmeta.loc[node]
+            if node in nmeta.index:
+                rows = nmeta.loc[[node]]
                 for index, row in rows.iterrows():
                     table_rows.append(
                         html.Tr([
@@ -1023,7 +1132,7 @@ def create_dash_node_table(net, nmeta, vlayers, node = None):
                                 colSpan = 2,
                                 children=[
                                     html.Label(
-                                        "{term}".format(term = row['Term']),
+                                        "{cv}: {term}".format(cv = row['CV'], term = row['Term']),
                                         style= {'font-weight' : 'bold'}
                                     ),
                                     html.Div(
@@ -1034,14 +1143,7 @@ def create_dash_node_table(net, nmeta, vlayers, node = None):
                             )
                         ])
                     )
-            else:
-                div_children.append(
-                    html.Div('There is no additional information about this node.')
-                )
-        else:
-            div_children.append(
-                html.Div('There are no node meta data provided. Use the --nmeta option to load node data when running this application.')
-            )
+
         div_children.append(
             html.Table(
                 style = {
@@ -1063,11 +1165,47 @@ def create_dash_node_table(net, nmeta, vlayers, node = None):
     )
 
 
+def create_density_condition_select(amx):
+    """
+    Creates a Dash select dropdown for selecting the condition to view.
+
+    This dropbox is intended to change the 3D co-expression scatterplot.
+
+    amx : The annotation matrix dataframe created by the load_amx function.
+
+    return : A Dash dcc.Dropdown object.
+
+    """
+    columns = np.sort(amx.columns.values)
+
+    # Holds the list of columns to keep.
+    keep = []
+    keep.append('All')
+
+    # Exclude any columns that are not categorical, that only have only one
+    # category or that have as many values as there are rows.
+    for col in columns:
+        if pd.api.types.is_object_dtype(amx[col]):
+            if len(amx[col].dropna().unique()) <= 1:
+                continue
+            if len(amx[col].dropna().unique()) == amx[col].size:
+                continue
+            keep.append(col)
+
+    # Build the select element.
+    select = dcc.Dropdown(
+        id = 'density-condition-select',
+        style = {'color' : 'black'},
+        options = [
+          {'label' : col, 'value' : col} for col in keep
+        ],
+        value = 'All'
+    )
+    return select
 
 
 
-
-def create_condition_select(amx, sample_col = 'Cluster'):
+def create_scatterplot_condition_select(amx, sample_col = 'Cluster'):
     """
     Creates a Dash select dropdown for selecting the condition to view.
 
@@ -1132,6 +1270,8 @@ def create_edge_color_select(net):
         options.append('Test Name')
     if 'r_squared' in net.columns:
         options.append('R^2')
+    if 'rank' in net.columns:
+        options.append('Rank')
     options.append('Relationship')
 
     select = dcc.Dropdown(
@@ -1172,6 +1312,8 @@ def create_edge_layer_select(net):
         options.append('Test Name')
     if 'r_squared' in net.columns:
         options.append('R^2')
+    if 'rank' in net.columns:
+        options.append('Rank')
     options.append('Relationship')
 
     select = dcc.Dropdown(
@@ -1278,7 +1420,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
     }
 
     internal_js = write_to_data_uri("""
-     """)
+    """)
 
     external_scripts = [
         'https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js',
@@ -1305,21 +1447,31 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                     "background-color" : "black", "margin" : "0px",
                 },
                 children=[
-                    dcc.Graph(
-                        id = 'network-3dview',
-                        style = {
-                            "height" : "100vh"
-                        },
-                        figure = create_network_plot(net, vlayers, elayers),
-                        config =  {
-                            'toImageButtonOptions' : {
-                                'filename': 'kinc_3d_network_view',
-                                'width': 800,
-                                'height': 600,
-                                'format': 'svg',
-                                'scale' : 2
-                            }
-                        }
+                    html.Div(id='selected-points', style={'display': 'none'}),
+                    html.Div(id='selected-edges', style={'display': 'none'}),
+                    dcc.Loading(
+                        id="loading-spinner",
+                        type="circle",
+                        color='#FFFFFF',
+                        fullscreen=False,
+                        children=[
+                            dcc.Graph(
+                                id = 'network-3dview',
+                                style = {
+                                    "height" : "100vh"
+                                },
+                                figure = create_network_plot(net, vlayers, elayers),
+                                config =  {
+                                    'toImageButtonOptions' : {
+                                        'filename': 'kinc_3d_network_view',
+                                        'width': 800,
+                                        'height': 600,
+                                        'format': 'svg',
+                                        'scale' : 2
+                                    }
+                                }
+                            ),
+                        ],
                     ),
                     dcc.Input(
                         id='current-network-3dview-camera',
@@ -1395,6 +1547,39 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                             ),
                         ]
                     ),
+                    # Node Expression
+                    html.Div(
+                        style=sidebar_box_style,
+                        children=[
+                            build_sidebar_box_header("Node Distribution Plot", 'node-expression-box'),
+                            html.Div(
+                                id="node-expression-box-contents",
+                                style={'margin' : '0px', 'visibility' : 'hidden'},
+                                children=[
+                                    html.Div(
+                                        style={'padding-bottom' : '10px'},
+                                        children=[
+                                            html.Label('Separate By'),
+                                            create_density_condition_select(amx)
+                                        ],
+                                    ),
+                                    dcc.Graph(
+                                        id = 'node-density-plot',
+                                        figure = create_node_densityplot(gem, amx, None, 'All'),
+                                        config =  {
+                                            'toImageButtonOptions' : {
+                                                'filename': 'kinc_3d_node_densityplot',
+                                                'width': 800,
+                                                'height': 800,
+                                                'format': 'svg',
+                                                'scale' : 1
+                                            }
+                                        },
+                                    ),
+                                ]
+                            ),
+                        ]
+                    ),
                     # Edge Table
                     html.Div(
                         style=sidebar_box_style,
@@ -1420,7 +1605,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                                         style={'padding-bottom' : '10px'},
                                         children=[
                                             html.Label('Color Samples By'),
-                                            create_condition_select(amx, sample_col)
+                                            create_scatterplot_condition_select(amx, sample_col)
                                         ],
                                     ),
                                     dcc.Graph(
@@ -1430,7 +1615,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                                             'toImageButtonOptions' : {
                                                 'filename': 'kinc_3d_expression_scatterplot',
                                                 'width': 800,
-                                                'height': 600,
+                                                'height': 800,
                                                 'format': 'svg',
                                                 'scale' : 1
                                             }
@@ -1452,7 +1637,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
                             ),
                         ]
                     ),
-                    # network stats
+                    # Network stats
                     html.Div(
                         style=sidebar_box_style,
                         children=[
@@ -1503,42 +1688,50 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
         ] # End app layout children
     ) # End app layout
 
+    @app.callback(
+        [dash.dependencies.Output('selected-points', 'children'),
+         dash.dependencies.Output('node-density-plot', 'figure'),
+         dash.dependencies.Output('node-table', 'children')],
+        [dash.dependencies.Input('network-3dview', 'clickData'),
+         dash.dependencies.Input('density-condition-select', 'value')])
+    def select_current_node(clickData, density_col):
+        selected_points = []
+        if (clickData):
+            points = clickData['points']
+            nfound = re.match('^Node: (.*?)$', points[0]['text'])
+            if (nfound):
+                for p in clickData['points']:
+                    selected_points.append(p)
+                node = points[0]['customdata']
+                selected_points = json.dumps(selected_points)
+                node_table = create_dash_node_table(net, nmeta, vlayers, node)
+                density_plot = create_node_densityplot(gem, amx, node, density_col)
+                return [selected_points, density_plot, node_table]
+        raise dash.exceptions.PreventUpdate
 
     # Callback when an object in the network plot is clicked.
     @app.callback(
         [dash.dependencies.Output('edge-expression-3dview', 'figure'),
-         dash.dependencies.Output('edge-table', 'children'),
-         dash.dependencies.Output('node-table', 'children')],
+         dash.dependencies.Output('edge-table', 'children')],
         [dash.dependencies.Input('network-3dview', 'clickData'),
-         dash.dependencies.Input('coexp-condition-select', 'value')],
-        [dash.dependencies.State('edge-expression-3dview', 'figure')])
-    def set_current_edge(clickData, color_col, figure):
+         dash.dependencies.Input('coexp-condition-select', 'value')])
+    def set_current_edge(clickData, coexp_col):
         edge_index = None
         node = None
         if (clickData):
-            scatterplot = figure
             node_table = None
             edge_table = None
             points = clickData['points']
             efound = re.match('^Edge: (.*?) \(co\) (.*?)$', points[0]['text'])
-            nfound = re.match('^Node: (.*?)$', points[0]['text'])
             if (efound):
                 edge_index = points[0]['customdata']
                 row_vals = elayers.iloc[edge_index]
                 source = row_vals['Source']
                 target = row_vals['Target']
                 edge_nodes = [source, target]
-                scatterplot = create_expression_scatterplot(gem, amx, elayers, color_col, edge_index)
+                scatterplot = create_expression_scatterplot(gem, amx, elayers, coexp_col, edge_index)
                 edge_table = create_dash_edge_table(net, edge_index)
-                node_table = create_dash_node_table(net, nmeta, vlayers, None)
-            if (nfound):
-                node = edge_index = points[0]['customdata']
-                node_table = create_dash_node_table(net, nmeta, vlayers, node)
-                edge_table = create_dash_edge_table(net, None)
-
-            return [scatterplot, edge_table, node_table]
-
-
+                return [scatterplot, edge_table]
         raise dash.exceptions.PreventUpdate
 
 
@@ -1576,22 +1769,26 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
     @app.callback(
         dash.dependencies.Output('network-3dview', 'figure'),
         [dash.dependencies.Input('edge-color-select', 'value'),
-         dash.dependencies.Input('edge-layer-select', 'value')],
+         dash.dependencies.Input('edge-layer-select', 'value'),
+         dash.dependencies.Input('selected-points', 'children')],
         [dash.dependencies.State('current-network-3dview-camera', 'value'),
          dash.dependencies.State('current-network-3dview-aspect', 'value')]
     )
-    def update_network_plot(color_by,  layer_by, camera_vals, aspect_vals):
+    def update_network_plot(color_by, layer_by, selected_points, camera_vals, aspect_vals):
         camera = None
         aspect = None
         if (type(camera_vals) == str):
             camera = json.loads(camera_vals)
         if (type(aspect_vals) == str):
             aspect = json.loads(aspect_vals)
+        if selected_points is not None:
+            selected_points = json.loads(selected_points)
 
         if not camera and not aspect:
             raise dash.exceptions.PreventUpdate
 
-        return create_network_plot(net, vlayers, elayers, color_by, layer_by, camera, aspect)
+        return create_network_plot(net, vlayers, elayers, color_by, layer_by,
+                                   camera, aspect, selected_points)
 
 
     @app.callback(
@@ -1611,7 +1808,7 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
     )
     def toggle_scatterplot_box(toggle):
         if (toggle % 2 == 1):
-            return {'margin' : '0px', 'visibility' : 'visible', 'max-height' : '500px', 'padding' : '10px'}
+            return {'margin' : '0px', 'visibility' : 'visible', 'max-height' : '610px', 'padding' : '10px'}
         else:
             return {'margin' : '0px', 'visibility' : 'hidden', 'height' : '0px', 'padding' : '0px'}
 
@@ -1648,7 +1845,21 @@ def build_application(net, gem, amx, nmeta, vlayers, elayers, sample_col,
         if (toggle % 2 == 1):
             return {
                 'margin' : '0px', 'visibility' : 'visible',
-                'max-height' : '250px', 'padding' : '10px',
+                'max-height' : '600px', 'padding' : '10px',
+                'overflow-y': 'auto',
+            }
+        else:
+            return {'margin' : '0px', 'visibility' : 'hidden', 'height' : '0px', 'padding' : '0px'}
+
+    @app.callback(
+        dash.dependencies.Output('node-expression-box-contents', 'style'),
+        [dash.dependencies.Input('node-expression-box-toggle', 'n_clicks')]
+    )
+    def toggle_node_table_box(toggle):
+        if (toggle % 2 == 1):
+            return {
+                'margin' : '0px', 'visibility' : 'visible',
+                'max-height' : '600px', 'padding' : '10px',
                 'overflow-y': 'auto',
             }
         else:
@@ -1693,7 +1904,7 @@ def main():
     parser.add_argument('--emx', dest='gem_path', type=str, required=True, help="(retuired) The path to the log2 transformed Gene Expression Matrix or Metabolite abundance matrix.")
     parser.add_argument('--amx', dest='amx_path', type=str, required=True, help="(required) The path to the tab-delimited annotation matrix. The matrix must have at least one column that contains a unique list of sample names.")
     parser.add_argument('--sample_col', dest='sample_col', type=str, required=False, default='Sample', help="(optional) The name of the column in the annotation matrix that contains the unique sample names.  Defaults to 'Sample'")
-    parser.add_argument('--nmeta', dest='nmeta', type=str, required=False, help="(optional) The path to a tab-delimited node meta data file. The format of the file must have 4 columns, with the first containing the node name, the second a controlled vocabulary term ID, the third the term definition and the fourth the vocubulary name.")
+    parser.add_argument('--nmeta', dest='nmeta', type=str, required=False, help="(optional) The path to a tab-delimited file containing controlled vocabulary (e.g GO, KEGG, InterPRO, etc.) assignments to nodes. The file can have any number of fields but, the first column must contain the node names and there must be three other columns with the names 'CV', 'Term' and 'Definition' where 'CV' is the name of the controlled vocabulary (e.g. GO, KEGG, InterPro), 'Term' is the name of the controlled vocabulary term (e.g. GO:0005515) and the 'Definition' is the description for the term.")
     parser.add_argument('--debug', dest='debug', action='store_true', default=False, help="(optional).  Add this argument to enable Dash application debugging mode.")
     parser.add_argument('--redo-layout', dest='redo_layout', action='store_true', default=False, help=" (optional). If the 2D and 3D network layout has already been constructed it will be loaded from a file. Add this arugment to force the layouts to be rebuilt and not loaded from the files. To prevent Dash from rerunning the layout on callbacks, this option results in the program terminating. To view the application, restart without this option.")
     parser.add_argument('--iterations', dest='iterations', type=int, default=100, help="(optional). The number of iterations to perform when calculating the Force Atlas2 layout.  This argument is only used the first time a network is viewed or if the --redo_layout argument is provided.")

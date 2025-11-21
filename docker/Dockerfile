@@ -1,5 +1,4 @@
-FROM nvidia/cuda:10.0-devel
-MAINTAINER Ben Shealy <btsheal@clemson.edu>
+FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
 
 ARG NVIDIA_HEADLESS=0
 ARG ACE_REVISION="develop"
@@ -11,10 +10,12 @@ ENV CPLUS_INCLUDE_PATH="${CUDADIR}/include:${CPLUS_INCLUDE_PATH}"
 ENV LIBRARY_PATH="${CUDADIR}/lib64:${LIBRARY_PATH}"
 ENV LD_LIBRARY_PATH="${CUDADIR}/lib64:${LD_LIBRARY_PATH}"
 
-# install package dependencies
+# Install package dependencies
+# the first two lines are needed for installing the tzdata dependency
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
 RUN apt-get update -qq \
 	&& apt-get install -qq -y \
-		qt5-default \
 		clinfo \
 		git \
 		libboost-dev \
@@ -23,11 +24,15 @@ RUN apt-get update -qq \
 		libopenblas-dev \
 		libopenmpi-dev \
 		ocl-icd-opencl-dev \
-		python3-pip
+		python3-pip \
+		qtcreator qtbase5-dev qt5-qmake cmake
+
 
 
 # Install headless driver for cpu image
-RUN if [ ${NVIDIA_HEADLESS} = 1 ]; then apt-get install -qq -y nvidia-headless-418 ; fi
+RUN if [ ${NVIDIA_HEADLESS} = 1 ]; then \
+	apt-get install -qq -y nvidia-driver-535 nvidia-headless-535 ; \
+fi
 
 # add NVIDIA platform to OpenCL
 RUN mkdir -p /etc/OpenCL/vendors \
@@ -78,30 +83,25 @@ else \
 fi
 
 
-# Add in a few additional requirements for the >=3.4 version of KINC. These are needed
-# for the R and Python scripts in the bin folder.
+# Add in a few additional requirements for the >=3.4 version of KINC. 
+# These are needed for the R and Python scripts in the bin folder.
 RUN if ! echo "${KINC_REVISION}" | grep -Eq 'v3\.[32]\.[0-9]$' ; then \
-    apt-get install -qq -y \
-        m4 \
-        autoconf \
-        automake \
-        libxml2-dev \
-        bison \
-        flex \
-        build-essential \
-        libcurl4-gnutls-dev \
-        libssl-dev \
-        software-properties-common; \
+    apt-get install -qq -y m4 autoconf automake libxml2-dev \
+        bison flex build-essential libcurl4-gnutls-dev \
+        libssl-dev software-properties-common libgit2-dev \
+		libfontconfig1-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev \
+		libpng-dev libtiff5-dev libjpeg-dev; \
+fi
+
+# Install R
+ENV DEBIAN_FRONTEND=noninteractive
+RUN if ! echo "${KINC_REVISION}" | grep -Eq 'v3\.[32]\.[0-9]$' ; then \
+    apt-get -qq install -y r-base; \ 
 fi
 
 # Install KINC.R
-ENV DEBIAN_FRONTEND=noninteractive
 RUN if ! echo "${KINC_REVISION}" | grep -Eq 'v3\.[32]\.[0-9]$' ; then \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 \
-    && add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran40/' \
-    && apt-get update -qq \
-    && apt-get -qq install -y r-base \
-    && R -q -e "install.packages('devtools', dependencies=TRUE, repos='http://cran.us.r-project.org')" \
+    R -q -e "install.packages('devtools')" \
     && R -e "library('devtools'); install_github('SystemsGenetics/KINC.R', ref='${KINC_R_REVISION}')"; \
 fi
 
@@ -113,7 +113,7 @@ RUN if [ -e requirements.txt ]; then pip3 install  -r requirements.txt; fi
 
 
 # initialize default work directory
-WORKDIR /workspace
+#WORKDIR /workspace
 
 # Tini for signal processing and zombie killing.
 ENV TINI_VERSION v0.19.0

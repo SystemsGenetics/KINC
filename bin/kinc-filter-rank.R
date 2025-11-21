@@ -53,8 +53,8 @@ if (is.null(opt$save_condition_networks)){
 }
 
 # Make sure KINC.R is at the correct vresion.
-if(packageVersion("KINC.R") < "1.1") {
-    stop("This script requires KINC.R > 1.1")
+if(packageVersion("KINC.R") < "1.3") {
+    stop("This script requires KINC.R > 1.3")
 }
 suppressMessages(library("KINC.R"))
 suppressMessages(library("dplyr"))
@@ -70,6 +70,7 @@ message('    \\/_/\\/_/ \\/_____/ \\/_/\\/_/\\/___/\\/_/ \\/_/\\/ / ')
 message("")
 message("This script uses KINC.R, a companion R library for KINC")
 message("https://github.com/SystemsGenetics/KINC.R")
+message(paste0("KINC.R v", packageVersion("KINC.R")))
 message("-------------------------------------------------------")
 
 
