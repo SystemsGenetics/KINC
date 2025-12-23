@@ -1,0 +1,5 @@
+# Documentation build requirements for ReadTheDocs
+
+sphinx>=4.0.0
+sphinx_rtd_theme>=1.0.0
+sphinx-autodoc-typehints>=1.12.0
