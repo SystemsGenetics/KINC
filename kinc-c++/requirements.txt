@@ -1,0 +1,13 @@
+argparse
+matplotlib
+numpy
+pandas
+scipy
+seaborn
+plotly
+dash
+progress
+python-igraph
+Cython
+networkx
+fa2_modified

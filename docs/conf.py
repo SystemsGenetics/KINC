@@ -17,9 +17,9 @@ copyright = '2024, KINC Development Team'
 author = 'Stephen Ficklin, Ben Shealy, Josh Burns et al'
 
 # The short X.Y version
-version = '3.4'
+version = '4.0'
 # The full version, including alpha/beta/rc tags
-release = 'v3.4.2'
+release = 'v4.0.0a'
 
 # -- General configuration ---------------------------------------------------
 

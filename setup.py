@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="kinc",
-    version="3.4.2",
+    version="4.0.0a",
     author="KINC Development Team",
     description="Knowledge Independent Network Construction in Python",
     long_description=long_description,
